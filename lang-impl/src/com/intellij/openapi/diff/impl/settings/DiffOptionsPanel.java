@@ -1,0 +1,255 @@
+package com.intellij.openapi.diff.impl.settings;
+
+import com.intellij.application.options.colors.*;
+import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.*;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Comparator;
+
+public class DiffOptionsPanel implements OptionsPanel {
+  private final ColorAndFontOptions myOptions;
+  private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
+  private LabeledComponent<ColorPanel> myBackgoundColorPanelComponent;
+  private JList myOptionsList;
+  private JPanel myWholePanel;
+  private LabeledComponent<ColorPanel> myStripeMarkColorComponent;
+
+
+  public DiffOptionsPanel(ColorAndFontOptions options) {
+
+    myOptions = options;
+
+    myOptionsList.setCellRenderer(new OptionsReneder());
+    myOptionsList.setModel(myOptionsModel);
+
+    ListSelectionModel selectionModel = myOptionsList.getSelectionModel();
+    selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    selectionModel.addListSelectionListener(new ListSelectionListener() {
+          public void valueChanged(ListSelectionEvent e) {
+            TextDiffType selection = getSelectedOption();
+            ColorPanel background = getBackgroundColorPanel();
+            ColorPanel stripeMark = getStripeMarkColorPanel();
+            if (selection == null) {
+              background.setEnabled(false);
+              stripeMark.setEnabled(false);
+            } else {
+              background.setEnabled(true);
+              stripeMark.setEnabled(true);
+              MyColorAndFontDescription description = getSelectedDescription();
+              if (description != null) {
+                background.setSelectedColor(description.getBackgroundColor());
+                stripeMark.setSelectedColor(description.getStripeMarkColor());
+              }
+            }
+
+            myDispatcher.getMulticaster().selectedOptionChanged(selection);
+          }
+        });
+
+    getBackgroundColorPanel().addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        MyColorAndFontDescription selectedDescription = getSelectedDescription();
+        ColorPanel colorPanel = getBackgroundColorPanel();
+        if (!checkModifiableScheme()) {
+          colorPanel.setSelectedColor(selectedDescription.getBackgroundColor());
+          return;
+        }
+        selectedDescription.setBackgroundColor(colorPanel.getSelectedColor());
+        myDispatcher.getMulticaster().settingsChanged();
+      }
+    });
+    getStripeMarkColorPanel().addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        MyColorAndFontDescription selectedDescription = getSelectedDescription();
+        ColorPanel colorPanel = getStripeMarkColorPanel();
+        if (!checkModifiableScheme()) {
+          colorPanel.setSelectedColor(selectedDescription.getStripeMarkColor());
+          return;
+        }
+        selectedDescription.setStripeMarkColor(colorPanel.getSelectedColor());
+        myDispatcher.getMulticaster().settingsChanged();
+      }
+    });
+  }
+
+
+
+
+  public void addListener(final ColorAndFontSettingsListener listener) {
+    myDispatcher.addListener(listener);
+
+  }
+
+  public void updateDescription(final ColorAndFontOptions options) {
+  }
+
+  public JPanel getPanel() {
+    return myWholePanel;
+  }
+
+  public void updateOptionsList() {
+    myOptionsModel.clear();
+    myDescriptions.clear();
+    HashMap<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.assignKeys(TextDiffType.MERGE_TYPES.iterator(), TextDiffType.ATTRIBUTES_KEY);
+    for (int i = 0; i < myOptions.getCurrentDescriptions().length; i++) {
+      EditorSchemeAttributeDescriptor description = myOptions.getCurrentDescriptions()[i];
+      TextAttributesKey type = TextAttributesKey.find(description.getType());
+      if (description.getGroup() == ColorAndFontOptions.DIFF_GROUP &&
+          typesByKey.keySet().contains(type)) {
+        myOptionsModel.add(typesByKey.get(type));
+        myDescriptions.put(type.getExternalName(), (MyColorAndFontDescription)description);
+      }
+    }
+    ListScrollingUtil.ensureSelectionExists(myOptionsList);
+
+  }
+
+  public Runnable showOption(final String path, final SearchableConfigurable configurable, final String option, final boolean highlight) {
+    return null;
+  }
+
+  public void applyChangesToScheme() {
+    MyColorAndFontDescription description = getSelectedDescription();
+    if (description != null) {
+      description.apply(myOptions.getSelectedScheme());
+    }
+  }
+
+  public void selectOption(final String typeToSelect) {
+
+    for (int i = 0; i < myOptionsModel.getItems().size(); i++) {
+      Object o = myOptionsModel.get(i);
+      if (o instanceof TextDiffType) {
+        if (typeToSelect.equals(((TextDiffType)o).getDisplayName())) {
+          ListScrollingUtil.selectItem(myOptionsList, i);
+          return;
+        }
+      }
+    }
+
+
+  }
+
+
+  private static final Comparator<TextDiffType> TEXT_DIFF_TYPE_COMPARATOR = new Comparator<TextDiffType>() {
+      public int compare(TextDiffType textDiffType, TextDiffType textDiffType1) {
+        return textDiffType.getDisplayName().compareToIgnoreCase(textDiffType1.getDisplayName());
+      }
+    };
+  private final SortedListModel<TextDiffType> myOptionsModel = new SortedListModel<TextDiffType>(TEXT_DIFF_TYPE_COMPARATOR);
+  private final HashMap<String, MyColorAndFontDescription> myDescriptions = new HashMap<String,MyColorAndFontDescription>();
+  private TextDiffType getSelectedOption() {
+    return (TextDiffType)myOptionsList.getSelectedValue();
+  }
+
+  private boolean checkModifiableScheme() {
+    boolean isDefault = myOptions.currentSchemeIsDefault();
+    if (isDefault) ColorAndFontPanel.showReadOnlyMessage(myWholePanel, myOptions.currentSchemeIsShared());
+    return !isDefault;
+  }
+
+  private MyColorAndFontDescription getSelectedDescription() {
+    TextDiffType selection = getSelectedOption();
+    if (selection == null) return null;
+    return myDescriptions.get(selection.getAttributesKey().getExternalName());
+  }
+
+  private ColorPanel getBackgroundColorPanel() {
+    return myBackgoundColorPanelComponent.getComponent();
+  }
+
+  private ColorPanel getStripeMarkColorPanel() {
+    return myStripeMarkColorComponent.getComponent();
+  }
+
+  public static void addSchemeDescriptions(ArrayList<EditorSchemeAttributeDescriptor> descriptions, EditorColorsScheme scheme) {
+    for (TextDiffType diffType : TextDiffType.MERGE_TYPES) {
+      descriptions.add(new MyColorAndFontDescription(diffType, scheme));
+    }
+  }
+
+  private static class OptionsReneder extends ColoredListCellRenderer {
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      TextDiffType diffType = (TextDiffType)value;
+      append(diffType.getDisplayName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+  }
+
+
+  private static class MyColorAndFontDescription implements EditorSchemeAttributeDescriptor {
+    private Color myBackgroundColor;
+    private Color myStripebarColor;
+    private Color myOriginalBackground;
+    private Color myOriginalStripebar;
+    private final EditorColorsScheme myScheme;
+    private final TextDiffType myDiffType;
+
+    public MyColorAndFontDescription(TextDiffType diffType, EditorColorsScheme scheme) {
+      myScheme = scheme;
+      myDiffType = diffType;
+      TextAttributes attrs = diffType.getTextAttributes(myScheme);
+      myBackgroundColor = attrs.getBackgroundColor();
+      myStripebarColor = attrs.getErrorStripeColor();
+      myOriginalBackground = myBackgroundColor;
+      myOriginalStripebar = myStripebarColor;
+    }
+
+    public void apply(EditorColorsScheme scheme) {
+      TextAttributesKey key = myDiffType.getAttributesKey();
+      TextAttributes attrs = new TextAttributes(null, myBackgroundColor, null, EffectType.BOXED, Font.PLAIN);
+      attrs.setErrorStripeColor(myStripebarColor);
+      scheme.setAttributes(key, attrs);
+    }
+
+    public String getGroup() {
+      return ColorAndFontOptions.DIFF_GROUP;
+    }
+
+    public EditorColorsScheme getScheme() {
+      return myScheme;
+    }
+
+    public String getType() {
+      return myDiffType.getAttributesKey().getExternalName();
+    }
+
+    public boolean isModified() {
+      TextAttributes attrs = myDiffType.getTextAttributes(myScheme);
+      return !Comparing.equal(myOriginalBackground, attrs.getBackgroundColor()) ||
+             !Comparing.equal(myOriginalStripebar, attrs.getErrorStripeColor());
+    }
+
+    public void setBackgroundColor(Color selectedColor) {
+      myBackgroundColor = selectedColor;
+    }
+
+    public Color getBackgroundColor() {
+      return myBackgroundColor;
+    }
+
+    public void setStripeMarkColor(Color selectedColor) {
+      myStripebarColor = selectedColor;
+    }
+
+    public Color getStripeMarkColor() {
+      return myStripebarColor;
+    }
+  }
+}

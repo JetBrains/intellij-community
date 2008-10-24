@@ -67,7 +67,7 @@ public class ClickNavigator {
            text.charAt(offset) == '\n' || text.charAt(offset) == '\r';
   }
 
-  private static boolean highlightDataContainsOffset(HighlightData data, int offset) {
+  public static boolean highlightDataContainsOffset(HighlightData data, int offset) {
     return offset >= data.getStartOffset() && offset <= data.getEndOffset();
   }
 
@@ -151,7 +151,7 @@ public class ClickNavigator {
     }
   }
 
-  private static void setCursor(final Editor view, int type) {
+  public static void setCursor(final Editor view, int type) {
     view.getContentComponent().setCursor(Cursor.getPredefinedCursor(type));
   }
 

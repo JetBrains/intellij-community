@@ -3,8 +3,12 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diff.impl.settings.DiffColorsForm;
+import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
+import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -15,9 +19,7 @@ import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -36,16 +38,18 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class ColorAndFontOptions extends BaseConfigurable implements EditorOptionsProvider {
-  private  ColorAndFontPanel myPanel;
+public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract implements EditorOptionsProvider {
   private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
   public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
@@ -53,10 +57,21 @@ public class ColorAndFontOptions extends BaseConfigurable implements EditorOptio
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
   private boolean mySomeSchemesDeleted = false;
+  private ArrayList<NewColorAndFontPanel> mySubPanels;
+  private boolean myResetCompleted = false;
+  private boolean myApplyCompleted = false;
 
   public boolean isModified() {
+    boolean result = isModifiedImpl();
+    if (result) {
+      myApplyCompleted = false;
+    }
+    return result;
+  }
+
+  private boolean isModifiedImpl() {
     if (mySomeSchemesDeleted) return true;
-    
+
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
 
     for (MyColorScheme scheme : mySchemes.values()) {
@@ -127,9 +142,8 @@ public class ColorAndFontOptions extends BaseConfigurable implements EditorOptio
     initScheme(newScheme);
 
     mySchemes.put(name, newScheme);
-    myPanel.resetSchemesCombo();
-    myPanel.changeToScheme(newScheme);
-    selectScheme(newScheme.getName());
+    selectScheme(newScheme.getName());    
+    resetSchemesCombo();
   }
 
   public void addImportedScheme(final EditorColorsScheme imported) {
@@ -137,61 +151,236 @@ public class ColorAndFontOptions extends BaseConfigurable implements EditorOptio
     initScheme(newScheme);
 
     mySchemes.put(imported.getName(), newScheme);
-    myPanel.resetSchemesCombo();
-    myPanel.changeToScheme(newScheme);
     selectScheme(newScheme.getName());
-
-  }  
+    resetSchemesCombo();
+  }
 
   public void removeScheme(String name) {
     if (mySelectedScheme.getName().equals(name)) {
       //noinspection HardCodedStringLiteral
-      myPanel.changeToScheme(selectScheme("Default"));
+      selectScheme("Default");
     }
 
     mySchemes.remove(name);
-    myPanel.resetSchemesCombo();
+    resetSchemesCombo();
     mySomeSchemesDeleted = true;
   }
 
   public void apply() throws ConfigurationException {
-    EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
+    if (!myApplyCompleted) {
+      try {
+        EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
-    myColorsManager.removeAllSchemes();
-    for (MyColorScheme scheme : mySchemes.values()) {
-      if (!scheme.isDefault()) {
-        scheme.apply();
-        myColorsManager.addColorsScheme(scheme.getOriginalScheme());
+        myColorsManager.removeAllSchemes();
+        for (MyColorScheme scheme : mySchemes.values()) {
+            if (!scheme.isDefault()) {
+              scheme.apply();
+              myColorsManager.addColorsScheme(scheme.getOriginalScheme());
+            }
+          }
+
+        EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
+        myColorsManager.setGlobalScheme(originalScheme);
+
+        applyChangesToEditors();
+
+        myResetCompleted = false;
+        reset();        
       }
+      finally {
+        myApplyCompleted = true;
+
+
+      }
+
+
     }
 
-    EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
-    myColorsManager.setGlobalScheme(originalScheme);
 
+//    initAll();
+//    resetSchemesCombo();
+
+
+  }
+
+  private void applyChangesToEditors() {
     EditorFactory.getInstance().refreshAllEditors();
-
-    initAll();
-    myPanel.resetSchemesCombo();
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project openProject : openProjects) {
       FileStatusManager.getInstance(openProject).fileStatusesChanged();
       DaemonCodeAnalyzer.getInstance(openProject).restart();
     }
-
-    myPanel.apply();
   }
 
-  public JComponent createComponent() {
+  private boolean myIsReset = false;
+
+  private void resetSchemesCombo() {
+    myIsReset = true;
+    try {
+      for (NewColorAndFontPanel subPanel : mySubPanels) {
+        subPanel.resetSchemesCombo();
+      }
+    }
+    finally {
+      myIsReset = false;
+    }
+  }
+
+  protected Configurable[] buildConfigurables() {
     initAll();
-    myPanel = new ColorAndFontPanel(this);
-    myPanel.setPreferredSize(new Dimension(650, 600));
-    return myPanel;
+
+    mySubPanels = createSubPanels();
+
+    for (NewColorAndFontPanel subPanel : mySubPanels) {
+      subPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
+        public void schemeChanged(final EditorColorsScheme scheme) {
+          if (!myIsReset) {
+            resetSchemesCombo();
+          }
+        }
+      });
+    }
+
+    List<Configurable> result = new ArrayList<Configurable>();
+
+    for (final NewColorAndFontPanel subPanel : mySubPanels) {
+      result.add(new Configurable(){
+        @Nls
+        public String getDisplayName() {
+          return subPanel.getDisplayName();
+        }
+
+        public Icon getIcon() {
+          return null;
+        }
+
+        public String getHelpTopic() {
+          return null;
+        }
+
+        public JComponent createComponent() {
+          return subPanel;
+        }
+
+        public boolean isModified() {
+          return ColorAndFontOptions.this.isModified();
+        }
+
+        public void apply() throws ConfigurationException {
+          ColorAndFontOptions.this.apply();
+        }
+
+        public void reset() {
+          ColorAndFontOptions.this.reset();
+        }
+
+        public void disposeUIResources() {
+          subPanel.dispose();
+        }
+      });
+    }
+
+    return result.toArray(new Configurable[result.size()]);
   }
 
-  public JComponent getPreferredFocusedComponent() {
-    return myPanel.getPreferedFocusComponent();
+  private ArrayList<NewColorAndFontPanel> createSubPanels() {
+
+    ArrayList<NewColorAndFontPanel> result = new ArrayList<NewColorAndFontPanel>();
+
+    ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
+    for (ColorSettingsPage page : pages) {
+      final SimpleEditorPreview preview = new SimpleEditorPreview(this, page);
+      NewColorAndFontPanel panel = NewColorAndFontPanel.create(preview,
+                                                            page.getDisplayName(),
+                                                            this);
+
+      panel.addOptionListListener(new ColorAndFontSettingsListener.Abstract(){
+        public void selectedOptionChanged(final Object selected) {
+          preview.blinkSelectedHighlightType((EditorSchemeAttributeDescriptor)selected);
+        }
+      });
+      result.add(panel);
+    }
+
+    result.add(createDiffPanel());
+
+    result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(), ColorAndFontOptions.FILE_STATUS_GROUP, this));
+
+    final JPanel scopePanel = createChooseScopePanel();
+    result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(){
+      public Component getPanel() {
+
+        return scopePanel;
+      }
+
+    }, ColorAndFontOptions.SCOPES_GROUP, this));
+
+
+    return result;
   }
+
+  private NewColorAndFontPanel createDiffPanel() {
+    final DiffPreviewPanel diffPreviewPanel = new DiffPreviewPanel();
+    diffPreviewPanel.setMergeRequest(null);
+    final DiffOptionsPanel optionsPanel = new DiffOptionsPanel(this);
+
+    optionsPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
+      public void actionPerformed(final ActionEvent e) {
+        optionsPanel.applyChangesToScheme();
+        diffPreviewPanel.updateView();
+      }
+    });
+
+
+    SchemesPanel schemesPanel = new SchemesPanel(this);
+
+    schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
+      public void schemeChanged(final EditorColorsScheme scheme) {
+        diffPreviewPanel.setColorScheme(getSelectedScheme());
+        optionsPanel.updateOptionsList();
+        diffPreviewPanel.updateView();
+      }
+    } );
+
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, diffPreviewPanel,ColorAndFontOptions.DIFF_GROUP);
+
+  }
+
+  private JPanel createChooseScopePanel() {
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    JPanel panel = new JPanel(new GridBagLayout());
+    //panel.setBorder(new LineBorder(Color.red));
+    if (projects.length == 0) return panel;
+    GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                   new Insets(0, 0, 0, 0), 0, 0);
+    final Project contextProject = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    final Project project = contextProject != null ? contextProject : projects[0];
+
+    JButton button = new JButton(ApplicationBundle.message("button.edit.scopes"));
+    button.setPreferredSize(new Dimension(230, button.getPreferredSize().height));
+    panel.add(button, gc);
+    gc.gridx = GridBagConstraints.REMAINDER;
+    gc.weightx = 1;
+    panel.add(new JPanel(), gc);
+
+    gc.gridy++;
+    gc.gridx=0;
+    gc.weighty = 1;
+    panel.add(new JPanel(), gc);
+    button.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final ScopeChooserConfigurable configurable = ScopeChooserConfigurable.getInstance(project);
+        final boolean isOk = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+        if (isOk) {
+          //TODO lesya
+          reset();
+        }
+      }
+    });
+    return panel;
+  }
+
 
   private void initAll() {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
@@ -243,7 +432,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements EditorOptio
   }
 
   private static void initDiffDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
-    DiffColorsForm.addSchemeDescriptions(descriptions, scheme);
+    DiffOptionsPanel.addSchemeDescriptions(descriptions, scheme);
   }
                                
   private static void initFileStatusDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
@@ -343,17 +532,32 @@ public class ColorAndFontOptions extends BaseConfigurable implements EditorOptio
   }
 
   public void reset() {
-    initAll();
-    myPanel.reset();
+    if (!myResetCompleted) {
+      try {
+        mySomeSchemesDeleted = false;
+        initAll();
+        resetSchemesCombo();
+      }
+      finally {
+        myResetCompleted = true;
+      }
+    }
+
   }
 
   public void disposeUIResources() {
-    if (myPanel != null) {
-      myPanel.dispose();
-    }
-    myPanel = null;
+    mySubPanels = null;
+    myResetCompleted = false;
+    myApplyCompleted = false;
   }
 
+  public boolean currentSchemeIsDefault() {
+    return mySelectedScheme.isDefault();
+  }
+
+  public boolean currentSchemeIsShared() {
+    return ColorSettingsUtil.isSharedScheme(mySelectedScheme);
+  }
 
 
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
@@ -639,16 +843,32 @@ public class ColorAndFontOptions extends BaseConfigurable implements EditorOptio
   }
 
   @Nullable
-  public Runnable enableSearch(String option) {
-    return myPanel.showOption(this, option, true);
+  public Runnable enableSearch(final String option) {
+    return showOption(option, true);
+  }
+
+  private Runnable showOption(final String option, final boolean highlight) {
+    return new Runnable(){
+      public void run() {
+        if (mySubPanels != null) {
+          for (NewColorAndFontPanel subPanel : mySubPanels) {
+            subPanel.showOption(ColorAndFontOptions.this, option, highlight).run();
+          }
+        }
+      }
+    };
   }
 
   @Nullable
   public Runnable selectOption(String option) {
-    return myPanel.showOption(this, option, false);
+    return showOption(option, false);
   }
 
   public Map<String, String> processListOptions(){
-    return myPanel.processListOptions();
+    HashMap<String, String> result = new HashMap<String, String>();
+    for (NewColorAndFontPanel subPanel : mySubPanels) {
+      result.putAll(subPanel.processListOptions());
+    }
+    return result;
   }
 }
