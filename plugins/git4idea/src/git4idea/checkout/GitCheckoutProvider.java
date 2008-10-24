@@ -38,7 +38,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
    */
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     BasicAction.saveAll();
-    GitCheckoutDialog dialog = new GitCheckoutDialog(project);
+    GitCloneDialog dialog = new GitCloneDialog(project);
     dialog.show();
     if (!dialog.isOK()) {
       return;

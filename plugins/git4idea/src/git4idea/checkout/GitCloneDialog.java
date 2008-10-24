@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  *
  * @author Constantine.Plotnikov
  */
-public class GitCheckoutDialog extends DialogWrapper {
+public class GitCloneDialog extends DialogWrapper {
   /**
    * The parttern for SSH urls in form [user@]host:path
    */
@@ -102,7 +102,7 @@ public class GitCheckoutDialog extends DialogWrapper {
    *
    * @param project a project for checkout action
    */
-  public GitCheckoutDialog(Project project) {
+  public GitCloneDialog(Project project) {
     super(project, true);
     myProject = project;
     init();
@@ -376,6 +376,6 @@ public class GitCheckoutDialog extends DialogWrapper {
    */
   @Override
   protected String getDimensionServiceKey() {
-    return "GitCheckoutDialog";
+    return "GitCloneDialog";
   }
 }
