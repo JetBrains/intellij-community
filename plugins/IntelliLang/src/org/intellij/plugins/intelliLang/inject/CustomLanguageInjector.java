@@ -232,9 +232,11 @@ public final class CustomLanguageInjector implements ProjectComponent {
       final Trinity<String, Integer, Integer> trin;
       if (owner instanceof PsiParameter) {
         psiMethod = PsiTreeUtil.getParentOfType(owner, PsiMethod.class, false);
-        if (psiMethod == null) continue;
-        trin = Trinity.create(psiMethod.getName(), psiMethod.getParameterList().getParametersCount(),
-                              psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
+        final PsiParameterList parameterList = psiMethod == null? null : psiMethod.getParameterList();
+        // don't check catchblock parameters & etc.
+        if (parameterList == null || parameterList != owner.getParent()) continue;
+        trin = Trinity.create(psiMethod.getName(), parameterList.getParametersCount(),
+                              parameterList.getParameterIndex((PsiParameter)owner));
       }
       else if (owner instanceof PsiMethod) {
         psiMethod = (PsiMethod)owner;
