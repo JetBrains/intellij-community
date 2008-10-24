@@ -112,14 +112,14 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   public String getPresentableText() {
-    return myReferenceElement.getReferenceName();
+    return PsiNameHelper.getPresentableText(myReferenceElement.getReferenceName(), myReferenceElement.getTypeArguments());
   }
 
   @Nullable
   public String getCanonicalText() {
     PsiClass resolved = resolve();
     if (resolved == null) return null;
-    if (resolved instanceof PsiTypeParameter) return ((PsiTypeParameter) resolved).getName();
+    if (resolved instanceof PsiTypeParameter) return resolved.getName();
     final String qName = resolved.getQualifiedName();
     if (isRaw()) return qName;
 

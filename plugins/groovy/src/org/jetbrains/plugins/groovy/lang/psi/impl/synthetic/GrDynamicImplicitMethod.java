@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWind
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -126,7 +127,11 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   }
 
   public PsiType getReturnType() {
-    return myMethod.getReturnType();
+    final PsiType typeElement = myMethod.getDeclaredReturnType();
+    if (typeElement == null) {
+      return TypesUtil.getJavaLangObject(myMethod);
+    }
+    return typeElement;
   }
 
   public PsiTypeElement getReturnTypeElement() {

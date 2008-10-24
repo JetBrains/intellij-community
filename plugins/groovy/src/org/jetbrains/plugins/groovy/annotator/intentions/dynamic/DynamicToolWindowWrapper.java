@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -96,6 +97,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   private static String[] myColumnNames = {"Dynamic element", "Type"};
 
   private MyTreeTable myTreeTable;
+
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper");
 
   public TreeTable getTreeTable() {
     getToolWindow();
@@ -217,6 +220,17 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
                                                      int row,
                                                      int column) {
         if (value instanceof String) {
+          final GrTypeElement typeElement;
+          try {
+            typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(((String)value));
+            if (typeElement != null){
+              String shortName = typeElement.getType().getPresentableText();
+              return new JLabel(shortName);
+            }
+          }
+          catch (IncorrectOperationException e) {
+            LOG.debug("Type cannot be created", e);
+          }
           return new JLabel(QuickfixUtil.shortenType((String)value));
         }
 
@@ -640,7 +654,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       if (value instanceof DClassElement) {
         final String containingClassName = ((DClassElement)value).getName();
         //        append(className, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        append(QuickfixUtil.shortenType(containingClassName), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        final String classShortName = QuickfixUtil.shortenType(containingClassName);
+        append(classShortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
 
       if (value instanceof DItemElement) {
@@ -655,7 +670,9 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
         }
 
         if (value instanceof DMethodElement) {
-          appendMethodParameters((DMethodElement)value);
+          appendMethodParameters(name, (DMethodElement)value);
+        } else if (value instanceof DPropertyElement) {
+          setToolTipText(name);
         }
       }
     }
@@ -675,17 +692,21 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       append(name, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
 
-    private void appendMethodParameters(DMethodElement value) {
-      append("(", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+    private void appendMethodParameters(final String name, DMethodElement value) {
+      StringBuilder buffer = new StringBuilder();
+      buffer.append("(");
 
       final String[] types = mapToUnqualified(QuickfixUtil.getArgumentsNames(value.getPairs()));
       for (int i = 0; i < types.length; i++) {
-        if (i != 0) append(", ", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        if (i != 0) buffer.append(", ");
 
         String type = types[i];
-        append(type, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        buffer.append(type);
       }
-      append(")", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      buffer.append(")");
+
+      append(buffer.toString(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      setToolTipText(name + buffer.toString());
     }
 
     private static String[] mapToUnqualified(final String[] argumentsNames) {

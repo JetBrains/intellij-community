@@ -233,6 +233,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return classes[0];
   }
 
+  @NotNull
   public GrTypeElement createTypeElement(String typeText) throws IncorrectOperationException {
     final GroovyFileBase file = createDummyFile("def " + typeText + " someVar");
 
@@ -243,7 +244,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
     if (!(statement instanceof GrVariableDeclaration)) throw new IncorrectOperationException("");
     GrVariableDeclaration decl = (GrVariableDeclaration) statement;
-    return decl.getTypeElementGroovy();
+    final GrTypeElement element = decl.getTypeElementGroovy();
+    if (element == null) throw new IncorrectOperationException("");
+
+    return element;
   }
 
   public GrTypeElement createTypeElement(PsiType type) throws IncorrectOperationException {
