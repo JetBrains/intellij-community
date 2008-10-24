@@ -582,9 +582,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   protected void updateSelection(@Nullable NamedConfigurable configurable) {
-    if (configurable != null) {
-      myState.lastEditedConfigurable = configurable.getDisplayName();
-    }
     myDetails.setText(configurable != null ? configurable.getBannerSlogan() : null);
 
     myCurrentConfigurable = configurable;
