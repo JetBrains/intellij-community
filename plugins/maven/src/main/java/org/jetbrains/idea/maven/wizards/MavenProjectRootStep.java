@@ -167,7 +167,6 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
     }
 
     public void disposeUIResources() {
-      myForm.disposeUIResources();
     }
   }
 }

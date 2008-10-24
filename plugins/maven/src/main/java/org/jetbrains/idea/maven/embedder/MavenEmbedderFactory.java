@@ -165,13 +165,20 @@ public class MavenEmbedderFactory {
   public static MavenEmbedderWrapper createEmbedderForRead(MavenGeneralSettings settings,
                                                            MavenConsole console,
                                                            MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, console, new MyCustomizer(projectsTree, false));
+    return createEmbedder(settings, console, new MyCustomizer(projectsTree, false, false));
   }
 
   public static MavenEmbedderWrapper createEmbedderForResolve(MavenGeneralSettings settings,
                                                               MavenConsole console,
                                                               MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, console, new MyCustomizer(projectsTree, true));
+    return createEmbedderForResolve(settings, console, projectsTree, false);
+  }
+
+  public static MavenEmbedderWrapper createEmbedderForResolve(MavenGeneralSettings settings,
+                                                              MavenConsole console,
+                                                              MavenProjectsTree projectsTree,
+                                                              boolean strictResolve) {
+    return createEmbedder(settings, console, new MyCustomizer(projectsTree, true, strictResolve));
   }
 
   public static MavenEmbedderWrapper createEmbedderForExecute(MavenGeneralSettings settings,
@@ -256,10 +263,12 @@ public class MavenEmbedderFactory {
   public static class MyCustomizer implements ContainerCustomizer {
     private MavenProjectsTree myProjectsTree;
     private boolean isOnline;
+    private boolean isStrict;
 
-    public MyCustomizer(MavenProjectsTree projectsTree, boolean online) {
+    public MyCustomizer(MavenProjectsTree projectsTree, boolean online, boolean strict) {
       myProjectsTree = projectsTree;
       isOnline = online;
+      isStrict = strict;
     }
 
     public void customize(PlexusContainer c) {
@@ -278,6 +287,7 @@ public class MavenEmbedderFactory {
       d = c.getComponentDescriptor(WagonManager.ROLE);
       d.setImplementation(CustomWagonManager.class.getName());
       c.getContext().put(CustomWagonManager.IS_ONLINE, isOnline);
+      c.getContext().put(CustomWagonManager.IS_STRICT, isStrict);
 
       d = c.getComponentDescriptor(ExtensionManager.class.getName());
       d.setImplementation(CustomExtensionManager.class.getName());

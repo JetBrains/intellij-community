@@ -36,7 +36,7 @@
             </constraints>
             <properties>
               <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-              <text value="Maven user &amp;settings file"/>
+              <text value="Maven User &amp;Settings File"/>
             </properties>
           </component>
           <component id="bde1e" class="com.intellij.openapi.ui.LabeledComponent" binding="mavenHomeComponent">
@@ -45,7 +45,7 @@
             </constraints>
             <properties>
               <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-              <text value="Maven &amp;home directory"/>
+              <text value="Maven &amp;Home Directory"/>
             </properties>
           </component>
           <component id="b0be5" class="javax.swing.JCheckBox" binding="mavenHomeOverrideCheckBox" default-binding="true">

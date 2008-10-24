@@ -30,24 +30,13 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   private JTable myTable;
   private JButton myUpdateButton;
 
-  private Timer myRepaintTimer;
-
   private AnimatedIcon myUpdatingIcon;
   private Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
+  private Timer myRepaintTimer;
 
   public MavenIndicesConfigurable(Project project) {
     myProject = project;
     myManager = MavenProjectIndicesManager.getInstance(myProject);
-
-    myUpdatingIcon = new AsyncProcessIcon(IndicesBundle.message("maven.indices.updating"));
-
-    myRepaintTimer = new Timer(
-        AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT,
-        new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            myTable.repaint();
-          }
-        });
 
     configControls();
   }
@@ -141,13 +130,22 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
     myTable.getColumnModel().getColumn(2).setPreferredWidth(50);
     myTable.getColumnModel().getColumn(3).setPreferredWidth(20);
 
-    myRepaintTimer.start();
+    myUpdatingIcon = new AsyncProcessIcon(IndicesBundle.message("maven.indices.updating"));
     myUpdatingIcon.resume();
+
+    myRepaintTimer = new Timer(
+        AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT,
+        new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            myTable.repaint();
+          }
+        });
+    myRepaintTimer.start();
   }
 
   public void disposeUIResources() {
-    myUpdatingIcon.dispose();
     myRepaintTimer.stop();
+    myUpdatingIcon.dispose();
   }
 
   private class MyTableModel extends AbstractTableModel {

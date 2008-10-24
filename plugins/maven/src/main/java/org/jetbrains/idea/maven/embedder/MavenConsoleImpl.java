@@ -116,8 +116,16 @@ public class MavenConsoleImpl extends MavenConsole {
       public void run() {
         MessageView messageView = myProject.getComponent(MessageView.class);
 
+        Content content = PeerFactory.getInstance().getContentFactory().createContent(
+          myConsoleView.getComponent(), myTitle, true);
+        content.putUserData(CONSOLE_KEY, MavenConsoleImpl.this);
+        messageView.getContentManager().addContent(content);
+        messageView.getContentManager().setSelectedContent(content);
+
+        // remove unused tabs
         for (Content each : messageView.getContentManager().getContents()) {
           if (each.isPinned()) continue;
+          if (each == content) continue;
 
           MavenConsoleImpl console = each.getUserData(CONSOLE_KEY);
           if (console == null) continue;
@@ -125,15 +133,9 @@ public class MavenConsoleImpl extends MavenConsole {
           if (!myTitle.equals(console.myTitle)) continue;
 
           if (console.isFinished()) {
-            messageView.getContentManager().removeContent(each, true);
+            messageView.getContentManager().removeContent(each, false);
           }
         }
-
-        Content content = PeerFactory.getInstance().getContentFactory().createContent(
-          myConsoleView.getComponent(), myTitle, true);
-        content.putUserData(CONSOLE_KEY, MavenConsoleImpl.this);
-        messageView.getContentManager().addContent(content);
-        messageView.getContentManager().setSelectedContent(content);
 
         ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         toolWindow.activate(null);

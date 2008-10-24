@@ -132,7 +132,6 @@ public abstract class MavenGeneralConfigurable implements Configurable {
   }
 
   public void disposeUIResources() {
-    mavenPathsForm.disposeUIResources();
   }
 
   @Nls

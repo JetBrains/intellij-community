@@ -37,14 +37,15 @@ public class MavenEnvironmentForm {
   private JCheckBox mavenHomeOverrideCheckBox;
   private JCheckBox mavenSettingsFileOverrideCheckBox;
   private JCheckBox localRepositoryOverrideCheckBox;
-  private Overrider mavenHomeOverrider;
-  private Overrider mavenSettingsFileOverrider;
-  private Overrider localRepositoryOverrider;
+  private PathOverrider mavenHomeOverrider;
+  private PathOverrider mavenSettingsFileOverrider;
+  private PathOverrider localRepositoryOverrider;
 
   public MavenEnvironmentForm() {
     mavenHomeComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.home.directory"), "", null,
                                                               new FileChooserDescriptor(false, true, false, false, false, false));
-    mavenHomeOverrider = new Overrider(mavenHomeComponent, mavenHomeOverrideCheckBox, new Overrider.DefaultFileProvider() {
+
+    mavenHomeOverrider = new PathOverrider(mavenHomeComponent, mavenHomeOverrideCheckBox, new PathOverrider.PathProvider() {
       @Nullable
       protected File getFile() {
         return MavenEmbedderFactory.resolveMavenHomeDirectory("");
@@ -54,7 +55,7 @@ public class MavenEnvironmentForm {
     mavenSettingsFileComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.settings.file"), "", null,
                                                                       new FileChooserDescriptor(true, false, false, false, false, false));
     mavenSettingsFileOverrider =
-      new Overrider(mavenSettingsFileComponent, mavenSettingsFileOverrideCheckBox, new Overrider.DefaultFileProvider() {
+      new PathOverrider(mavenSettingsFileComponent, mavenSettingsFileOverrideCheckBox, new PathOverrider.PathProvider() {
         @Nullable
         protected File getFile() {
           return MavenEmbedderFactory.resolveUserSettingsFile("");
@@ -64,10 +65,12 @@ public class MavenEnvironmentForm {
     localRepositoryComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.local.repository"), "", null,
                                                                     new FileChooserDescriptor(false, true, false, false, false, false));
     localRepositoryOverrider =
-      new Overrider(localRepositoryComponent, localRepositoryOverrideCheckBox, new Overrider.DefaultFileProvider() {
+      new PathOverrider(localRepositoryComponent, localRepositoryOverrideCheckBox, new PathOverrider.PathProvider() {
         @Nullable
         protected File getFile() {
-          return MavenEmbedderFactory.resolveLocalRepository(mavenHomeOverrider.getText(), mavenSettingsFileOverrider.getText(), "");
+          return MavenEmbedderFactory.resolveLocalRepository(mavenHomeOverrider.getText(),
+                                                             mavenSettingsFileOverrider.getText(),
+                                                             "");
         }
       });
   }
@@ -90,26 +93,15 @@ public class MavenEnvironmentForm {
     localRepositoryOverrider.setText(data.getLocalRepository());
   }
 
-  public void disposeUIResources() {
-    mavenHomeOverrider.dispose();
-    mavenSettingsFileOverrider.dispose();
-    localRepositoryOverrider.dispose();
-  }
-
   public JComponent getPanel() {
     return panel;
   }
 
-  public static class Overrider {
-    interface DefaultTextProvider {
-      String getText();
-    }
-
-    static abstract class DefaultFileProvider implements DefaultTextProvider {
-
-      public String getText() {
+  private static class PathOverrider {
+    static abstract class PathProvider {
+      public String getPath() {
         final File file = getFile();
-        return file != null ? file.getPath() : "";
+        return file == null ? "" : file.getPath();
       }
 
       @Nullable
@@ -118,7 +110,7 @@ public class MavenEnvironmentForm {
 
     private final TextFieldWithBrowseButton component;
     private final JCheckBox checkBox;
-    private final DefaultTextProvider defaultTextProvider;
+    private final PathProvider pathProvider;
 
     private String overrideText;
     private ActionListener listener = new ActionListener() {
@@ -127,30 +119,27 @@ public class MavenEnvironmentForm {
       }
     };
 
-    public Overrider(final LabeledComponent<TextFieldWithBrowseButton> component,
-                     final JCheckBox checkBox,
-                     DefaultTextProvider defaultTextProvider) {
+    public PathOverrider(final LabeledComponent<TextFieldWithBrowseButton> component,
+                         final JCheckBox checkBox,
+                         PathProvider pathProvider) {
       this.component = component.getComponent();
       this.checkBox = checkBox;
-      this.defaultTextProvider = defaultTextProvider;
+      this.pathProvider = pathProvider;
       checkBox.addActionListener(listener);
-    }
-
-    public void dispose() {
-      checkBox.removeActionListener(listener);
     }
 
     private void update() {
       final boolean override = checkBox.isSelected();
 
-      component.getTextField().setEditable(override);
-      component.getButton().setEnabled(override);
+      component.setEditable(override);
+      component.setEnabled(override);
+
       if (override) {
         component.setText(overrideText);
       }
       else {
         overrideText = component.getText();
-        component.setText(defaultTextProvider.getText());
+        component.setText(pathProvider.getPath());
       }
     }
 

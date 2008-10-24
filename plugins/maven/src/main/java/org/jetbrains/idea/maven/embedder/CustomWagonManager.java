@@ -18,17 +18,20 @@ import java.util.Set;
 
 public class CustomWagonManager extends DefaultWagonManager {
   public static final String IS_ONLINE = "IS_ONLINE";
+  public static final String IS_STRICT = "IS_STRICT";
 
   private boolean isOnline;
 
   private Set<MavenId> myUnresolvedIds = new HashSet<MavenId>();
   private boolean isOpen;
+  private boolean isStrict;
   private boolean isInProcess = false;
 
   @Override
   public void contextualize(Context context) throws ContextException {
     super.contextualize(context);
     isOnline = (Boolean)context.get(IS_ONLINE);
+    isStrict = (Boolean)context.get(IS_STRICT);
   }
 
   public Set<MavenId> getUnresolvedIds() {
@@ -118,7 +121,7 @@ public class CustomWagonManager extends DefaultWagonManager {
 
   private void postResolve(Artifact artifact) {
     if (!artifact.isResolved()) myUnresolvedIds.add(new MavenId(artifact));
-    artifact.setResolved(true);
+    if (!isStrict) artifact.setResolved(true);
   }
 
   @Override

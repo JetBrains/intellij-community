@@ -78,7 +78,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertExcludes("project", "target", "userExcludedFolder");
 
     generateSources();
-    
+
     assertSources("project", "userSourceFolder");
     assertExcludes("project", "target", "userExcludedFolder");
   }
@@ -333,11 +333,9 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertSources("project", "src/main/java", "src/main/resources", "target/src");
   }
 
-  public void testPluginSourcesWithInvalidDependency() throws Exception {
-    if (ignore()) return;
-
+  public void testDoNotUpdatePluginSourcesWithInvalidDependency() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirs("src");
+    createProjectSubDirs("src/foo");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -365,7 +363,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "          </goals>" +
                   "          <configuration>" +
                   "            <sources>" +
-                  "              <source>src</source>" +
+                  "              <source>src/foo</source>" +
                   "            </sources>" +
                   "          </configuration>" +
                   "        </execution>" +
@@ -376,7 +374,68 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     generateSources();
     assertModules("project");
 
-    assertSources("project", "src/main/java", "src/main/resources", "src");
+    assertSources("project", "src/main/java", "src/main/resources");
+  }
+
+  public void testPluginSourcesWithIntermoduleDependency() throws Exception {
+    createProjectSubDirs("m1/src/main/java",
+                         "m1/src/main/resources",
+                         "m1/src/foo");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<dependencies>" +
+                    "  <dependency>" +
+                    "    <groupId>test</groupId>" +
+                    "    <artifactId>m2</artifactId>" +
+                    "    <version>1</version>" +
+                    "  </dependency>" +
+                    "</dependencies>" +
+
+                    "<build>" +
+                    "  <plugins>" +
+                    "    <plugin>" +
+                    "      <groupId>org.codehaus.mojo</groupId>" +
+                    "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                    "      <executions>" +
+                    "        <execution>" +
+                    "          <id>someId</id>" +
+                    "          <phase>generate-sources</phase>" +
+                    "          <goals>" +
+                    "            <goal>add-source</goal>" +
+                    "          </goals>" +
+                    "          <configuration>" +
+                    "            <sources>" +
+                    "              <source>src/foo</source>" +
+                    "            </sources>" +
+                    "          </configuration>" +
+                    "        </execution>" +
+                    "      </executions>" +
+                    "    </plugin>" +
+                    "  </plugins>" +
+                    "</build>");
+
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>");
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    generateSources();
+    assertSources("m1", "src/main/java", "src/main/resources", "src/foo");
   }
 
   public void testDownloadingNecessaryPlugins() throws Exception {
@@ -677,7 +736,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "target/src/main",
                   "src/main/resources");
   }
-  
+
   public void testUnexcludeNewSources() throws Exception {
     createProjectSubDirs("target/foo");
     createProjectSubDirs("target/src");

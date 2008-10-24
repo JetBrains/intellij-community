@@ -75,19 +75,18 @@ public abstract class MavenConsole {
   public abstract void attachToProcess(ProcessHandler processHandler);
 
   public void systemMessage(int level, String string, Throwable throwable) {
-    printMessage(level, string, throwable, OutputType.SYSTEM);
+    printMessage(level, string, throwable);
   }
 
-  public void printMessage(int level, String string, Throwable throwable, OutputType type) {
-    if (level == LEVEL_AUTO) {
-      level = getLevel(string);
-      if (!isSuppressed(level)) {
-        doPrint(string, type);
-      }
+  public void printMessage(int level, String string, Throwable throwable) {
+    if (isSuppressed(level)) return;
+
+    OutputType type = OutputType.NORMAL;
+    if (throwable != null || level == LEVEL_WARN || level == LEVEL_ERROR || level == LEVEL_FATAL) {
+      type = OutputType.ERROR;
     }
-    else {
-      doPrint(composeLine(level, string), type);
-    }
+
+    doPrint(composeLine(level, string), type);
 
     if (level == LEVEL_FATAL) {
       setOutputPaused(false);
@@ -130,7 +129,7 @@ public abstract class MavenConsole {
       }
       else {
         doPrint(LINE_SEPARATOR +
-                "To view full stack traces, please go to the Maven Settings->General and check the 'Print Exception Stack Traces' box." +
+                "To view full stack traces, please go to the Settings->Maven and check the 'Print Exception Stack Traces' box." +
                 LINE_SEPARATOR,
                 type);
       }

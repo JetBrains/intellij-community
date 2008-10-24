@@ -424,7 +424,7 @@ public class MavenProjectsTree {
   public void generateSources(MavenGeneralSettings coreSettings,
                               MavenConsole console,
                               MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, console);
+    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, console, this, true);
 
     try {
       for (MavenProjectModel each : getProjects()) {
