@@ -519,8 +519,9 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
     @Override
     public Component getDefaultComponent(final Container aContainer) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getDefaultComponent(cycleRootAncestor);
+      final Editor editor = aContainer instanceof EditorTextField ? ((EditorTextField)aContainer).getEditor():null;
+      if (editor != null) return editor.getContentComponent();
+      return aContainer;
     }
   }
 
