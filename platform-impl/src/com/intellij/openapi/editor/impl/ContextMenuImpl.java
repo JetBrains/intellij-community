@@ -228,11 +228,17 @@ public class ContextMenuImpl extends JPanel implements Disposable {
                 final ActionButtonLook look = getButtonLook();
                 look.paintIcon(g, this, getIcon());
               }
+
+              if (getPopState() == ActionButton.POPPED) {
+                final ActionButtonLook look = getButtonLook();
+                look.paintBackground(g, this);
+                look.paintIcon(g, this, getIcon());
+              }
             }
 
             @Override
             public boolean isOpaque() {
-              return myContextMenuPanel.isPaintChildren();
+              return myContextMenuPanel.isPaintChildren() || getPopState() == ActionButton.POPPED;
             }
 
             @Override
