@@ -113,7 +113,7 @@ public abstract class MavenRunnerConfigurable implements Configurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.project.maven.runner";
   }
 
   public void disposeUIResources() {

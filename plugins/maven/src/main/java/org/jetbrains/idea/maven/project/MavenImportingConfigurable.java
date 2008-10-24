@@ -34,7 +34,7 @@ public class MavenImportingConfigurable implements Configurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.project.maven.importing";
   }
 
   public JComponent createComponent() {

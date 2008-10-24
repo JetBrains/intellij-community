@@ -147,6 +147,6 @@ public abstract class MavenGeneralConfigurable implements Configurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.project.maven";
   }
 }

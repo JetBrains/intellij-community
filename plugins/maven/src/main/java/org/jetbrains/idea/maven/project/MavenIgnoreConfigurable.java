@@ -64,7 +64,7 @@ public class MavenIgnoreConfigurable implements Configurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.project.maven.ignored.files";
   }
 
   public JComponent createComponent() {

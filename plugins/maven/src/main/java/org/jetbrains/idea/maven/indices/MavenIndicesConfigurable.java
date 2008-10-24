@@ -113,7 +113,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.project.maven.repository.indices";
   }
 
   public JComponent createComponent() {
