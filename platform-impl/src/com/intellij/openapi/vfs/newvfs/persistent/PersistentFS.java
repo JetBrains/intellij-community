@@ -181,6 +181,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return FSRecords.getModCount(id);
   }
 
+  @Override
+  public int getCheapFileSystemModificationCount() {
+    return FSRecords.getLocalModCount();
+  }
+
   public int getFilesystemModificationCount() {
     return FSRecords.getModCount();
   }

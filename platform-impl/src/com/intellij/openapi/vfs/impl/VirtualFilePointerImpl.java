@@ -24,6 +24,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private final VirtualFilePointerListener myListener;
   private boolean disposed = false;
   private int useCount;
+  private long myLastUpdated = -1;
 
   private static final Key<Throwable> CREATE_TRACE = Key.create("CREATION_TRACE");
   private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
@@ -133,6 +134,10 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   void update() {
+    long fsModCount = myVirtualFileManager.getModificationCount();
+    if (myLastUpdated == fsModCount) return;
+    myLastUpdated = fsModCount;
+
     if (!isFileRetrieved()) {
       LOG.assertTrue(myUrl != null);
       myFile = myVirtualFileManager.findFileByUrl(myUrl);

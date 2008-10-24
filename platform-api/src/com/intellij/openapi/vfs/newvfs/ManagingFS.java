@@ -40,6 +40,9 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   public abstract int getModificationCount(VirtualFile fileOrDirectory);
 
+  // Only counts modifications done in current IDEA session
+  public abstract int getCheapFileSystemModificationCount();
+
   public abstract int getFilesystemModificationCount();
 
   public abstract boolean areChildrenLoaded(VirtualFile dir);

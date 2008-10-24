@@ -610,7 +610,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  private void incModCount(int id) throws IOException {
+  private static void incModCount(int id) throws IOException {
     ourLocalModificationCount++;
     final int count = getModCount() + 1;
     getRecords().putInt(HEADER_GLOBAL_MODCOUNT_OFFSET, count);
@@ -619,6 +619,12 @@ public class FSRecords implements Disposable, Forceable {
     while (parent != 0) {
       setModCount(parent, count);
       parent = getParent(parent);
+    }
+  }
+
+  public static int getLocalModCount() {
+    synchronized (lock) {
+      return ourLocalModificationCount;
     }
   }
 

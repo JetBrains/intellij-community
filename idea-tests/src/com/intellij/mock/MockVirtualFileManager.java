@@ -3,6 +3,7 @@ package com.intellij.mock;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NotNull;
@@ -91,4 +92,7 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
     
   }
 
+  public long getModificationCount() {
+    return ModificationTracker.EVER_CHANGED.getModificationCount();
+  }
 }

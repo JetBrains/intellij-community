@@ -3,6 +3,7 @@ package com.intellij.history.integration.stubs;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
@@ -106,5 +107,9 @@ public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
 
   public void fireBeforeRefreshStart(boolean asynchronous) {
     throw new UnsupportedOperationException();
+  }
+
+  public long getModificationCount() {
+    return ModificationTracker.EVER_CHANGED.getModificationCount();
   }
 }

@@ -307,4 +307,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 event.getNewParent() + ", requestor = " + event.getRequestor());
     }
   }
+
+  public long getModificationCount() {
+    return ManagingFS.getInstance().getCheapFileSystemModificationCount();
+  }
 }
