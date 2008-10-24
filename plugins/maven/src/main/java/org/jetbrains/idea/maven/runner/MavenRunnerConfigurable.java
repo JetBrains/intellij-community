@@ -32,6 +32,8 @@ import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.List;
+import java.awt.*;
 
 /**
  * Creates the form for the Maven2 build setup and is responsible for updating the
@@ -153,6 +155,7 @@ public abstract class MavenRunnerConfigurable implements Configurable {
   private class MyPropertiesPanel extends AddEditRemovePanel<Pair<String, String>> {
     public MyPropertiesPanel() {
       super(new MyPropertiesTableModel(), new ArrayList<Pair<String, String>>(), null);
+      setPreferredSize(new Dimension(100, 100));
     }
 
     protected Pair<String, String> addItem() {

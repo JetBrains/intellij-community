@@ -7,19 +7,17 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenGeneralConfigurable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.runner.CompositeConfigurable;
 
 import javax.swing.*;
 
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
+public class MavenRunConfigurationSettings extends SettingsEditor<MavenRunConfiguration> {
   private MavenRunConfiguration configuration;
-
   Configurable myCompositeConfigurable;
 
-  public MavenRunnerSettingsEditor(final Project p) {
+  public MavenRunConfigurationSettings(final Project p) {
     myCompositeConfigurable = new CompositeConfigurable(
        new MavenRunnerParametersConfigurable() {
       protected MavenRunnerParameters getParameters() {

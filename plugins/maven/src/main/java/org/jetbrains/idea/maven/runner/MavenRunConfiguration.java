@@ -38,7 +38,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new MavenRunnerSettingsEditor(getProject());
+    return new MavenRunConfigurationSettings(getProject());
   }
 
   public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
