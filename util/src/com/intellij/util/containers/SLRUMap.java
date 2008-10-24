@@ -3,9 +3,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,7 +24,7 @@ public class SLRUMap<K,V> {
     myProtectedQueueSize = protectedQueueSize;
     myProbationalQueueSize = probationalQueueSize;
 
-    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f, true) {
+    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f) {
       protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
         if (size() > myProtectedQueueSize) {
           myProbationalQueue.put(eldest.getKey(), eldest.getValue());
@@ -35,7 +35,7 @@ public class SLRUMap<K,V> {
       }
     };
 
-    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f, true) {
+    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f) {
       protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
         if (size() > myProbationalQueueSize) {
           onDropFromCache(eldest.getKey(), eldest.getValue());
