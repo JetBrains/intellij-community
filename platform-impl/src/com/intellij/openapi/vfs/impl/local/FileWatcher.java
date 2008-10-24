@@ -244,6 +244,9 @@ public class FileWatcher {
                 LOG.error("Illegal watcher command: " + command);
               }
             }
+            else if (LOG.isDebugEnabled()) {
+              LOG.debug("not watcheable, filtered: " + path);
+            }
           }
         }
       }
@@ -255,6 +258,9 @@ public class FileWatcher {
 
   private void writeLine(String line) throws IOException {
     try {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("to fsnotifier: " + line);
+      }
       notifierWriter.write(line);
       notifierWriter.newLine();
       notifierWriter.flush();
@@ -275,7 +281,13 @@ public class FileWatcher {
 
   @Nullable
   private String readLine() throws IOException {
-    return notifierReader != null ? notifierReader.readLine() : null;
+    if (notifierReader == null) return null;
+
+    final String line = notifierReader.readLine();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("fsnotifier says: " + line);
+    }
+    return line;
   }
 
   private boolean isWatcheable(final String path) {
