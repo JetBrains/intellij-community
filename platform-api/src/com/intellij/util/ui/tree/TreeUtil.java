@@ -21,6 +21,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -760,8 +761,68 @@ public final class TreeUtil {
     }
   }
 
+  public static RelativePoint getPointForSelection(JTree aTree) {
+    final int[] rows = aTree.getSelectionRows();
+    if (rows == null || rows.length == 0) {
+      return RelativePoint.getCenterOf(aTree);
+    }
+    return getPointForRow(aTree, rows[rows.length - 1]);
+  }
+
+  public static RelativePoint getPointForRow(JTree aTree, int aRow) {
+    return getPointForPath(aTree, aTree.getPathForRow(aRow));
+  }
+
+  public static RelativePoint getPointForPath(JTree aTree, TreePath path) {
+    final Rectangle rowBounds = aTree.getPathBounds(path);
+    rowBounds.x += 20;
+    return getPointForBounds(aTree, rowBounds);
+  }
+
+  public static RelativePoint getPointForBounds(JComponent aComponent, final Rectangle aBounds) {
+    return new RelativePoint(aComponent, new Point(aBounds.x, (int)aBounds.getMaxY()));
+  }
+
+  public static boolean isOverSelection(final JTree tree, final Point point) {
+    TreePath path = tree.getPathForLocation(point.x, point.y);
+    return path != null && tree.getSelectionModel().isPathSelected(path);
+  }
+
+  public static void dropSelectionButUnderPoint(JTree tree, Point treePoint) {
+    final TreePath toRetain = tree.getPathForLocation(treePoint.x, treePoint.y);
+    if (toRetain == null) return;
+
+    TreePath[] selection = tree.getSelectionModel().getSelectionPaths();
+    selection = selection == null ? new TreePath[0] : selection;
+    for (TreePath each : selection) {
+      if (toRetain.equals(each)) continue;
+      tree.getSelectionModel().removeSelectionPath(each);
+    }
+  }
+
   public interface Traverse{
     boolean accept(Object node);
+  }
+
+  public static void ensueSelection(JTree tree) {
+    final TreePath[] paths = tree.getSelectionPaths();
+
+    if (paths != null) {
+      if (paths.length > 1) return;
+      if (paths.length == 1) {
+        if (tree.isRootVisible()) return;
+        if (paths[0].getPathCount() > 1) return;
+      }
+    }
+
+
+    for (int eachRow = 0; eachRow < tree.getVisibleRowCount(); eachRow++) {
+      final TreePath eachPath = tree.getPathForRow(eachRow);
+      if (eachPath == null) continue;
+      if (!tree.isRootVisible() && eachPath.getPathCount() == 1) continue;
+      tree.setSelectionPath(eachPath);
+      break;
+    }
   }
 
 }

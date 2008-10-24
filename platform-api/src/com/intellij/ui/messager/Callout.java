@@ -16,8 +16,8 @@
 package com.intellij.ui.messager;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.ui.TreeUtils;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -36,7 +36,7 @@ public class Callout {
   public static final int SOUTH_EAST = 4;
 
   public static void showText(JTree tree, TreePath path, int direction, String text) {
-    showText(TreeUtils.getPointForPath(tree, path), direction, text);
+    showText(TreeUtil.getPointForPath(tree, path), direction, text);
   }
 
   public static void showTextBelow(JComponent component, String text) {

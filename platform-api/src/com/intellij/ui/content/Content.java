@@ -18,6 +18,7 @@ package com.intellij.ui.content;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,8 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setComponent(JComponent component);
 
   void setPreferredFocusableComponent(JComponent component);
+
+  void setPreferredFocusedComponent(Computable<JComponent> computable);
 
   void setIcon(Icon icon);
 

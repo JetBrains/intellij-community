@@ -378,6 +378,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     if (treeState != null) {
       treeState.applyTo(myTree);
     }
+
+    TreeUtil.ensueSelection(myTree);
   }
 
   public void installComparator() {

@@ -22,6 +22,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -572,10 +573,10 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   }
 
   public boolean isOverSelection(final Point point) {
-    return TreeUtils.isOverSelection(this, point);
+    return TreeUtil.isOverSelection(this, point);
   }
 
   public void dropSelectionButUnderPoint(final Point point) {
-    TreeUtils.dropSelectionButUnderPoint(this, point);
+    TreeUtil.dropSelectionButUnderPoint(this, point);
   }
 }

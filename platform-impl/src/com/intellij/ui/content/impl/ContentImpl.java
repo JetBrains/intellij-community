@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
@@ -35,12 +36,13 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private ActionGroup myActions;
   private String myPlace;
 
-  private JComponent myPreferredFocusableComponent;
   private AlertIcon myAlertIcon;
 
   private boolean myAlerting = false;
   private JComponent myActionsContextComponent;
   private JComponent mySearchComponent;
+
+  private Computable<JComponent> myFocusRequest;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -59,11 +61,19 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public JComponent getPreferredFocusableComponent() {
-    return myPreferredFocusableComponent == null ? myComponent : myPreferredFocusableComponent;
+    return myFocusRequest == null ? myComponent : myFocusRequest.compute();
   }
 
   public void setPreferredFocusableComponent(final JComponent c) {
-    myPreferredFocusableComponent = c;
+    setPreferredFocusedComponent(new Computable<JComponent>() {
+      public JComponent compute() {
+        return c;
+      }
+    });
+  }
+
+  public void setPreferredFocusedComponent(final Computable<JComponent> computable) {
+    myFocusRequest = computable;
   }
 
   public void setIcon(Icon icon) {
@@ -217,7 +227,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     }
 
     myComponent = null;
-    myPreferredFocusableComponent = null;
+    myFocusRequest = null;
     myManager = null;
 
     clearUserData();

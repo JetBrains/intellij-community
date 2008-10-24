@@ -5,8 +5,8 @@ import com.intellij.ide.dnd.DnDEnabler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.TreeUtils;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,7 +49,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
   }
 
   public void dropSelectionButUnderPoint(final Point point) {
-    TreeUtils.dropSelectionButUnderPoint(this, point);
+    TreeUtil.dropSelectionButUnderPoint(this, point);
   }
 
   @NotNull

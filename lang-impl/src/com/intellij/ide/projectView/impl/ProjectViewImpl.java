@@ -52,6 +52,8 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
@@ -491,7 +493,17 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, getComponent(), ToolWindowAnchor.LEFT);
+      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, false, ToolWindowAnchor.LEFT, myProject);
+      final ContentManager contentManager = toolWindow.getContentManager();
+      final Content content = contentManager.getFactory().createContent(getComponent(), ToolWindowId.PROJECT_VIEW, false);
+      contentManager.addContent(content);
+
+      content.setPreferredFocusedComponent(new Computable<JComponent>() {
+        public JComponent compute() {
+          final AbstractProjectViewPane current = getCurrentProjectViewPane();
+          return current != null ? current.getComponentToFocus() : null;
+        }
+      });
       toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowProject.png"));
     }
 
