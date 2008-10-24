@@ -735,15 +735,21 @@ public class CreateFromUsageUtils {
     GlobalSearchScope descendantsSearchScope = GlobalSearchScope.moduleWithDependenciesScope(moduleForFile);
     final PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
     final PsiMember[] members = method ? cache.getMethodsByName(memberName, searchScope) : cache.getFieldsByName(memberName, searchScope);
+
     for (int i = 0; i < members.length; ++i) {
       final PsiMember member = members[i];
+
       if (!member.hasModifierProperty(PsiModifier.PRIVATE) && member.hasModifierProperty(PsiModifier.STATIC) == staticAccess) {
         final PsiClass containingClass = member.getContainingClass();
+
         if (containingClass != null) {
           for(PsiClass clazz: ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).findAll()) {
-            possibleClassNames.add(clazz.getQualifiedName());
+            final String qName = clazz.getQualifiedName();
+            if (qName != null) possibleClassNames.add(qName);
           }
-          possibleClassNames.add(containingClass.getQualifiedName());
+          
+          final String qName = containingClass.getQualifiedName();
+          if (qName != null) possibleClassNames.add(qName);
         }
       }
       members[i] = null;
