@@ -4,13 +4,13 @@
 
 package com.intellij.facet.impl.ui;
 
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportConfigurable;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportProvider;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.project.Project;
-import com.intellij.facet.ui.libraries.LibraryInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public abstract class VersionedFrameworkSupportProvider extends FrameworkSupport
   }
 
   @NotNull
-  public VersionConfigurable createConfigurable(final Project project) {
+  public VersionConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
     return new VersionConfigurable(getVersions(), getDefaultVersion());
   }
 

@@ -29,7 +29,18 @@ public abstract class FrameworkSupportProvider {
   }
 
   @NotNull
-  public abstract FrameworkSupportConfigurable createConfigurable(@Nullable final Project project);
+  public FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+    return createConfigurable(model.getProject());
+  }
+
+  /**
+   * @deprecated override {@link FrameworkSupportProvider#createConfigurable(FrameworkSupportModel)} instead
+   */
+  @Deprecated
+  @NotNull
+  public FrameworkSupportConfigurable createConfigurable(@Nullable final Project project) {
+    return null;
+  }
 
   @NonNls
   @Nullable
@@ -64,6 +75,7 @@ public abstract class FrameworkSupportProvider {
     return false;
   }
 
+  @NotNull @NonNls
   public final String getId() {
     return myId;
   }

@@ -25,6 +25,7 @@ import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +55,14 @@ public class AddSupportForFrameworksPanel {
   private final Computable<String> myBaseDirForLibrariesGetter;
   private final List<FrameworkSupportProvider> myProviders;
   private final LibraryDownloadingMirrorsMap myMirrorsMap;
+  private final FrameworkSupportModelImpl myModel;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
                                       Computable<String> baseDirForLibrariesGetter) {
     myLibrariesContainer = librariesContainer;
     myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
     myProviders = providers;
+    myModel = new FrameworkSupportModelImpl(myLibrariesContainer.getProject());
     createNodes();
     myMirrorsMap = creatMirrorsMap();
 
@@ -206,7 +209,7 @@ public class AddSupportForFrameworksPanel {
         }
         parentNode = createNode(parentProvider, nodes, groups);
       }
-      node = new FrameworkSupportSettings(provider, parentNode);
+      node = new FrameworkSupportSettings(provider, parentNode, myModel);
       nodes.put(provider.getId(), node);
       groups.put(provider.getGroupId(), node);
     }
@@ -319,11 +322,13 @@ public class AddSupportForFrameworksPanel {
     private final List<FrameworkSupportSettings> myChildren = new ArrayList<FrameworkSupportSettings>();
     private LibraryCompositionSettings myLibraryCompositionSettings;
 
-    private FrameworkSupportSettings(final FrameworkSupportProvider provider, final FrameworkSupportSettings parentNode) {
+    private FrameworkSupportSettings(final FrameworkSupportProvider provider, final FrameworkSupportSettings parentNode,
+                                     final FrameworkSupportModelImpl context) {
       myProvider = provider;
       myParentNode = parentNode;
-      myConfigurable = provider.createConfigurable(myLibrariesContainer.getProject());
       myCheckBox = new JCheckBox(provider.getTitle());
+      context.registerComponent(provider, this);
+      myConfigurable = provider.createConfigurable(context);
       if (parentNode != null) {
         parentNode.myChildren.add(this);
       }
@@ -336,6 +341,10 @@ public class AddSupportForFrameworksPanel {
       });
 
       setConfigurableComponentEnabled(false);
+    }
+
+    public JCheckBox getCheckBox() {
+      return myCheckBox;
     }
 
     public void setEnabled(final boolean enable) {
