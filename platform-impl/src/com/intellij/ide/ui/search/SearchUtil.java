@@ -44,6 +44,8 @@ public class SearchUtil {
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private static final Pattern QUOTED = Pattern.compile("\\\"([^\\\"]+)\\\"");
 
+  public static final String HIGHLIGHT_WITH_BORDER = "searchUtil.highlightWithBorder";
+
   private SearchUtil() {
   }
 
@@ -195,6 +197,9 @@ public class SearchUtil {
                                                 JComponent rootComponent,
                                                 String option,
                                                 boolean force) {
+
+    rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null);
+
     if (option == null || option.trim().length() == 0) return false;
     boolean highlight = false;
     if (rootComponent instanceof JCheckBox) {
@@ -235,10 +240,26 @@ public class SearchUtil {
         }
       }
     }
+
+
     final Component[] components = rootComponent.getComponents();
     for (Component component : components) {
       if (component instanceof JComponent) {
         final boolean innerHighlight = traverseComponentsTree(configurable, glassPanel, (JComponent)component, option, force);
+
+        if (!highlight && !innerHighlight) {
+          final Border border = rootComponent.getBorder();
+          if (border instanceof TitledBorder) {
+            final String title = ((TitledBorder)border).getTitle();
+            if (isComponentHighlighted(title, option, force, configurable)) {
+              highlight = true;
+              glassPanel.addSpotlight(rootComponent);
+              rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
+            }
+          }
+        }
+
+
         if (innerHighlight) {
           highlight = true;
         }
@@ -253,12 +274,13 @@ public class SearchUtil {
     final Set<String> options =
       configurable != null ? searchableOptionsRegistrar.replaceSynonyms(searchableOptionsRegistrar.getProcessedWords(option), configurable) : null;
     if (options == null || options.isEmpty()) {
-      return text.indexOf(option) != -1;
+      return text.toLowerCase().indexOf(option.toLowerCase()) != -1;
     }
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
     if (!force) {
       options.retainAll(tokens);
-      return !options.isEmpty();
+      final boolean highlight = !options.isEmpty();
+      return highlight || text.toLowerCase().indexOf(option.toLowerCase()) != -1;
     }
     else {
       options.removeAll(tokens);

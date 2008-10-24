@@ -4,6 +4,9 @@
 
 package com.intellij.openapi.options.ex;
 
+import com.intellij.ide.ui.search.SearchUtil;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
@@ -23,6 +26,7 @@ public class GlassPanel extends JComponent {
   protected RenderingHints myHints;
 
   private JComponent myPanel;
+  private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
 
 
   public GlassPanel(JComponent containingPanel) {
@@ -44,11 +48,8 @@ public class GlassPanel extends JComponent {
   public void paintSpotlight(final Graphics g, final JComponent surfaceComponent) {
     Dimension size = surfaceComponent.getSize();
     if (myLightComponents.size() > 0) {
-      int width = size.width;
-      int height = size.height;
-
-      int hInset = 3;
-      int vInset = 4;
+      int width = size.width - 1;
+      int height = size.height - 1;
 
       Rectangle2D screen = new Rectangle2D.Double(0, 0, width, height);
       final Rectangle visibleRect = myPanel.getVisibleRect();
@@ -57,18 +58,28 @@ public class GlassPanel extends JComponent {
       Area mask = new Area(screen);
 
       for (JComponent lightComponent : myLightComponents) {
-        if (!lightComponent.isShowing()) continue;
-        final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
-        final int x = panelPoint.x;
-        final int y = panelPoint.y;
-        final Area area = new Area(new RoundRectangle2D.Double(x - hInset, y - vInset, lightComponent.getWidth() + hInset * 2, lightComponent.getHeight() + vInset * 2, 6, 6));
+        final Area area = getComponentArea(surfaceComponent, lightComponent);
+        if (area == null) continue;
+
+        if (lightComponent instanceof JLabel) {
+          final JLabel label = (JLabel)lightComponent;
+          final Component labelFor = label.getLabelFor();
+          if (labelFor instanceof JComponent) {
+            final Area labelForArea = getComponentArea(surfaceComponent, (JComponent)labelFor);
+            if (labelForArea != null) {
+              area.add(labelForArea);
+            }
+          }
+        }
+
         area.intersect(innerPanel);
         mask.subtract(area);
       }
 
       Graphics2D g2 = (Graphics2D)g;
+
       Color shieldColor = new Color(0.0f, 0.0f, 0.0f, 0.2f);
-      Color boundsColor = new Color(0.0f, 0.0f, 0.0f, 0.25f);
+      Color boundsColor = Color.gray;
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setColor(shieldColor);
       g2.fill(mask);
@@ -76,6 +87,31 @@ public class GlassPanel extends JComponent {
       g2.setColor(boundsColor);
       g2.draw(mask);
     }
+  }
+
+  @Nullable
+  private Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent) {
+    if (!lightComponent.isShowing()) return null;
+
+    final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
+    final int x = panelPoint.x;
+    final int y = panelPoint.y;
+
+    Insets insetsToIgnore = lightComponent.getInsets();
+    final boolean isWithBorder = Boolean.TRUE.equals(lightComponent.getClientProperty(SearchUtil.HIGHLIGHT_WITH_BORDER));
+
+    if (insetsToIgnore == null || isWithBorder) {
+      insetsToIgnore = EMPTY_INSETS;
+    }
+
+    int hInset = isWithBorder ? 1 : 7;
+    int vInset = isWithBorder ? 1 : 5;
+    final Area area = new Area(new RoundRectangle2D.Double(x - hInset + insetsToIgnore.left,
+                                                           y - vInset + insetsToIgnore.top,
+                                                           lightComponent.getWidth() + hInset * 2 - insetsToIgnore.right - insetsToIgnore.left,
+                                                           lightComponent.getHeight() + vInset * 2 - insetsToIgnore.top - insetsToIgnore.bottom,
+                                                           6, 6));
+    return area;
   }
 
   protected static Kernel getBlurKernel(int blurSize) {

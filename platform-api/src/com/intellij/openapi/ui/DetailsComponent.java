@@ -38,7 +38,7 @@ public class DetailsComponent {
 
   private JPanel myComponent;
 
-  private JComponent myContentWrapper;
+  private JComponent myContent;
 
 
   private Banner myBannerLabel;
@@ -50,10 +50,12 @@ public class DetailsComponent {
   private boolean myDetailsEnabled = true;
   private String[] myPrefix;
 
+  private Wrapper myContentGutter = new Wrapper();
+
   public DetailsComponent() {
     myComponent = new JPanel(new BorderLayout()) {
       protected void paintComponent(final Graphics g) {
-        if (NullableComponent.Check.isNull(myContentWrapper) || !myDetailsEnabled) return;
+        if (NullableComponent.Check.isNull(myContent) || !myDetailsEnabled) return;
 
         GraphicsConfig c = new GraphicsConfig(g);
         c.setAntialiasing(true);
@@ -99,6 +101,8 @@ public class DetailsComponent {
     };
 
     myComponent.setOpaque(false);
+    myContentGutter.setOpaque(false);
+    myContentGutter.setBorder(null);
 
     myBanner = new NonOpaquePanel(new BorderLayout());
     myBannerLabel = new Banner();
@@ -112,13 +116,14 @@ public class DetailsComponent {
 
   private void revalidateDetailsMode() {
     myComponent.removeAll();
+    myComponent.add(myContentGutter, BorderLayout.CENTER);
 
     if (myDetailsEnabled) {
       myComponent.add(myBanner, BorderLayout.NORTH);
     }
 
-    if (myContentWrapper != null) {
-      myComponent.add(myContentWrapper, BorderLayout.CENTER);
+    if (myContent != null) {
+      myContentGutter.add(myContent, BorderLayout.CENTER);
       invalidateContentBorder();
     }
 
@@ -137,17 +142,17 @@ public class DetailsComponent {
   }
 
   public void setContent(@Nullable JComponent c) {
-    if (myContentWrapper != null) {
-      myComponent.remove(myContentWrapper);
+    if (myContent != null) {
+      myContentGutter.remove(myContent);
     }
 
-    myContentWrapper = new MyWrapper(c);
+    myContent = new MyWrapper(c);
 
-    myContentWrapper.setOpaque(false);
+    myContent.setOpaque(false);
 
     invalidateContentBorder();
 
-    myComponent.add(myContentWrapper, BorderLayout.CENTER);
+    myContentGutter.add(myContent, BorderLayout.CENTER);
 
     updateBanner();
 
@@ -157,10 +162,10 @@ public class DetailsComponent {
 
   private void invalidateContentBorder() {
     if (myDetailsEnabled) {
-      myContentWrapper.setBorder(new EmptyBorder(5, 5, 5, 5));
+      myContent.setBorder(new EmptyBorder(5, 5, 5, 5));
     }
     else {
-      myContentWrapper.setBorder(null);
+      myContent.setBorder(null);
     }
   }
 
@@ -182,7 +187,7 @@ public class DetailsComponent {
   }
 
   private void updateBanner() {
-    if (NullableComponent.Check.isNull(myContentWrapper)) {
+    if (NullableComponent.Check.isNull(myContent)) {
       myBannerLabel.setText(null);
     }
     else {
@@ -198,6 +203,10 @@ public class DetailsComponent {
 
   public JComponent getComponent() {
     return myComponent;
+  }
+
+  public JComponent getContentGutter() {
+    return myContentGutter;
   }
 
   public void setBannerMinHeight(final int height) {

@@ -69,7 +69,7 @@ public class OptionsEditorDialog extends DialogWrapper {
     if (errors.size() == 0) {
       setErrorText(null);
     } else {
-      setErrorText("Applying changes was incomplete due to errors");
+      setErrorText("Changes were not applied because of an error");
     }
 
     return errors.size() == 0;

@@ -33,6 +33,7 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -179,7 +180,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     myModificationChecker = new MergingUpdateQueue("OptionsModificationChecker", 1000, false, this, this, this);
     mySpotlightUpdate = new MergingUpdateQueue("OptionsSplotlight", 500, false, this, this, this);
 
-    IdeGlassPaneUtil.installPainter(myContentWrapper, mySpotlightPainter, this);
+    IdeGlassPaneUtil.installPainter(myOwnDetails.getContentGutter(), mySpotlightPainter, this);
   }
 
   private float readPropertion(final float defaultValue, final String propertyName) {
@@ -493,6 +494,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
       catch (ConfigurationException e) {
         errors.put(each, e);
+        LOG.debug(e);
       }
     }
 
@@ -532,7 +534,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     public void update(DocumentEvent e) {
       final String text = mySearch.getText();
-      if (text == null || text.length() == 0) {
+      if (text == null || text.trim().length() == 0) {
         myContext.setHoldingFilter(false);
         myFiltered = null;
       } else {
@@ -736,12 +738,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     Configurable myLastConfigurable;
     String myLastText;
 
-    GlassPanel myGP = new GlassPanel(myContentWrapper);
+    GlassPanel myGP = new GlassPanel(myOwnDetails.getContentGutter());
     boolean myVisible;
 
     public void executePaint(final Component component, final Graphics2D g) {
       if (myVisible && myGP.isVisible()) {
-        myGP.paintSpotlight(g, myContentWrapper);
+        myGP.paintSpotlight(g, myOwnDetails.getContentGutter());
       }
     }
 
@@ -750,20 +752,28 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       if (current != null && !myConfigurable2Content.containsKey(current)) return false;
 
-      final String text = mySearch.getText();
+      String text = mySearch.getText();
+      text = text != null ? text.trim() : text;
 
       try {
         if (myLastConfigurable == current && myLastText != null && myLastText.equals(text)) return true;
+        myLastText = text;
 
-        if (!(current instanceof SearchableConfigurable)) {
+        if (current == null) {
           myVisible = false;
           myGP.clear();
           return true;
         }
 
-        myGP.clear();
+        SearchableConfigurable searchable;
+        if (current instanceof SearchableConfigurable) {
+          searchable = (SearchableConfigurable)current;
+        } else {
+          searchable = new SearachableWrappper(current);
+        }
 
-        final SearchableConfigurable searchable = (SearchableConfigurable)current;
+        myGP.clear();
+        
         final Runnable runnable = SearchUtil.lightOptions(searchable, myContentWrapper, text, myGP);
         if (runnable != null) {
           myVisible = true;
@@ -785,7 +795,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
       finally {
         myLastConfigurable = current;
-        myContentWrapper.repaint();
+        myOwnDetails.getComponent().repaint();
       }
 
       return true;
@@ -794,6 +804,55 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     @Override
     public boolean needsRepaint() {
       return true;
+    }
+  }
+
+  private class SearachableWrappper implements SearchableConfigurable {
+    private Configurable myConfigurable;
+
+    private SearachableWrappper(final Configurable configurable) {
+      myConfigurable = configurable;
+    }
+
+    public String getId() {
+      return myConfigurable.getClass().getName();
+    }
+
+    public Runnable enableSearch(final String option) {
+      return null;
+    }
+
+    @Nls
+    public String getDisplayName() {
+      return myConfigurable.getDisplayName();
+    }
+
+    public Icon getIcon() {
+      return myConfigurable.getIcon();
+    }
+
+    public String getHelpTopic() {
+      return myConfigurable.getHelpTopic();
+    }
+
+    public JComponent createComponent() {
+      return myConfigurable.createComponent();
+    }
+
+    public boolean isModified() {
+      return myConfigurable.isModified();
+    }
+
+    public void apply() throws ConfigurationException {
+      myConfigurable.apply();
+    }
+
+    public void reset() {
+      myConfigurable.reset();
+    }
+
+    public void disposeUIResources() {
+      myConfigurable.disposeUIResources();
     }
   }
 
