@@ -466,4 +466,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   public void queryPlace(@NotNull final Place place) {
     place.putPath("sdkTab", myTabbedPane.getSelectedTitle());
   }
+
+  public void setHistory(final History history) {
+  }
 }

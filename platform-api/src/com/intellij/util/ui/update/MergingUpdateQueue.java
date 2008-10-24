@@ -25,14 +25,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private boolean myActive;
 
-  private final Set<Update> mySheduledUpdates = new TreeSet<Update>();
+  private final Map<Update, Update> mySheduledUpdates = new TreeMap<Update, Update>();
 
   private Alarm myWaiterForMerge = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
@@ -146,7 +146,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
           final Update[] all;
 
           synchronized (mySheduledUpdates) {
-            all = mySheduledUpdates.toArray(new Update[mySheduledUpdates.size()]);
+            all = mySheduledUpdates.keySet().toArray(new Update[mySheduledUpdates.size()]);
             mySheduledUpdates.clear();
           }
 
@@ -182,7 +182,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   protected void execute(final Update[] update) {
     for (final Update each : update) {
-      if (isExpired(each)) continue;
+      if (isExpired(each)) {
+        each.setRejected();
+        continue;
+      }
 
       if (each.executeInWriteAction()) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -231,11 +234,11 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private boolean eatThisOrOthers(Update update) {
-    if (mySheduledUpdates.contains(update)) {
+    if (mySheduledUpdates.containsKey(update)) {
       return false;
     }
 
-    final Update[] updates = mySheduledUpdates.toArray(new Update[mySheduledUpdates.size()]);
+    final Update[] updates = mySheduledUpdates.keySet().toArray(new Update[mySheduledUpdates.size()]);
     for (Update eachInQueue : updates) {
       if (eachInQueue.canEat(update)) {
         return true;
@@ -252,8 +255,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private void put(Update update) {
-    mySheduledUpdates.remove(update);
-    mySheduledUpdates.add(update);
+    final Update existing = mySheduledUpdates.remove(update);
+    if (existing != null && existing != update) {
+      existing.setProcessed();
+      existing.setRejected();
+    }
+    mySheduledUpdates.put(update, update);
   }
 
   protected static boolean passThroughForUnitTesting() {

@@ -87,6 +87,8 @@ public class Place implements ComparableObject {
 
   public interface Navigator {
 
+    void setHistory(History history);
+
     ActionCallback navigateTo(@Nullable Place place, final boolean requestFocus);
 
     void queryPlace(@NotNull Place place);

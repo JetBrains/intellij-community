@@ -70,6 +70,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   @NonNls public static final String TREE_NAME = "treeName";
 
   protected History myHistory = new History(new Place.Navigator() {
+    public void setHistory(final History history) {
+      myHistory = history;
+    }
+
     public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
       return null;
     }

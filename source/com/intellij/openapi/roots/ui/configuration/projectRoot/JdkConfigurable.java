@@ -82,6 +82,9 @@ public class JdkConfigurable extends NamedConfigurable<Sdk> implements Place.Nav
     mySdkEditor.disposeUIResources();
   }
 
+  public void setHistory(final History history) {
+  }
+
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
     return mySdkEditor.navigateTo(place, requestFocus);
   }

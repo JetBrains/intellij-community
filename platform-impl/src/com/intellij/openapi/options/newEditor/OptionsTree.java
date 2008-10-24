@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.LoadingNode;
@@ -152,8 +153,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   }
 
-  void select(@Nullable Configurable configurable) {
-    queueSelection(configurable);
+  ActionCallback select(@Nullable Configurable configurable) {
+    return queueSelection(configurable);
   }
 
   public void selectFirst() {
@@ -166,7 +167,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
   }
 
-  void queueSelection(final Configurable configurable) {
+  ActionCallback queueSelection(final Configurable configurable) {
+    final ActionCallback callback = new ActionCallback();
     final Update update = new Update(this) {
       public void run() {
         if (configurable == null) {
@@ -180,10 +182,18 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
               myContext.fireSelected(configurable, OptionsTree.this);
             }
           });
+          callback.setDone();
         }
+      }
+
+      @Override
+      public void setRejected() {
+        super.setRejected();
+        callback.setRejected();
       }
     };
     mySelection.queue(update);
+    return callback;
   }
 
   void revalidateTree() {

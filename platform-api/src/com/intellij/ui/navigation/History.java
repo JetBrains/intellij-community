@@ -17,6 +17,7 @@
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,9 +97,13 @@ public final class History {
     myNavigatedNow = true;
     final Place next = myHistory.get(nextPos);
     try {
-      myRoot.navigateTo(next, false).doWhenDone(new Runnable() {
+      final ActionCallback callback = myRoot.navigateTo(next, false);
+      callback.doWhenDone(new Runnable() {
         public void run() {
           myCurrentPos = nextPos;
+        }
+      }).doWhenProcessed(new Runnable() {
+        public void run() {
           myNavigatedNow = false;
         }
       });

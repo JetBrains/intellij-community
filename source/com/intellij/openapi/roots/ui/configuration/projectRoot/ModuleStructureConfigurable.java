@@ -777,4 +777,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       }
     }
   }
+
+
 }

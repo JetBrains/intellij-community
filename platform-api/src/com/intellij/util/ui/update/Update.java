@@ -25,6 +25,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
   public static final int HIGH_PRIORITY = 10;
 
   private boolean myProcessed;
+  private boolean myRejected;
   private boolean myExecuteInWriteAction;
 
   private int myPriority = LOW_PRIORITY;
@@ -91,5 +92,13 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
 
   public boolean canEat(Update update) {
     return false;
+  }
+
+  public void setRejected() {
+    myRejected = true;
+  }
+
+  public boolean isRejected() {
+    return myRejected;
   }
 }

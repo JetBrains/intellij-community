@@ -511,4 +511,6 @@ public class ModuleEditor implements Place.Navigator {
 
   }
 
+  public void setHistory(final History history) {
+  }
 }

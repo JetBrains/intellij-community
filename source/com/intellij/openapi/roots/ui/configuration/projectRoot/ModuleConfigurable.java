@@ -16,6 +16,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
+import com.intellij.ui.navigation.History;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,4 +124,6 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements Pla
     }
   }
 
+  public void setHistory(final History history) {
+  }
 }

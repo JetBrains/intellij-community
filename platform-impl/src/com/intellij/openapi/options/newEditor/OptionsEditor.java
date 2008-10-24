@@ -30,10 +30,10 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -210,6 +210,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           if (current != configurable) return;
 
 
+          myHistory.pushQueryPlace();
+
           updateDetails();
 
           myOwnDetails.setContent(myContentWrapper);
@@ -266,6 +268,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     if (!myConfigurable2Content.containsKey(configurable)) {
+      if (configurable instanceof Place.Navigator) {
+        ((Place.Navigator)configurable).setHistory(myHistory);
+      }
+
       configurable.reset();
     }
 
@@ -273,7 +279,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       public void run() {
         myConfigurable2Content.put(configurable, content.get());
         result.setDone();
-        myConfigurable2LoadCallback.remove(configurable);
       }
     });
   }
@@ -534,7 +539,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     public void update(DocumentEvent e) {
       final String text = mySearch.getText();
-      if (text == null || text.trim().length() == 0) {
+      if (getFilterText().length() == 0) {
         myContext.setHoldingFilter(false);
         myFiltered = null;
       } else {
@@ -602,10 +607,21 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-    return new ActionCallback.Done();
+    final Configurable config = (Configurable)place.getPath("configurable");
+    final String filter = (String)place.getPath("filter");
+
+    mySearch.setText(filter);
+    return myTree.select(config);
   }
 
   public void queryPlace(@NotNull final Place place) {
+    final Configurable current = getContext().getCurrentConfigurable();
+    place.putPath("configurable", current);
+    place.putPath("filter", getFilterText());
+
+    if (current instanceof Place.Navigator) {
+      ((Place.Navigator)current).queryPlace(place);
+    }
   }
 
   public void dispose() {
@@ -752,8 +768,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       if (current != null && !myConfigurable2Content.containsKey(current)) return false;
 
-      String text = mySearch.getText();
-      text = text != null ? text.trim() : text;
+      String text = getFilterText();
 
       try {
         if (myLastConfigurable == current && myLastText != null && myLastText.equals(text)) return true;
@@ -801,10 +816,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       return true;
     }
 
+
     @Override
     public boolean needsRepaint() {
       return true;
     }
+  }
+
+  private String getFilterText() {
+    return mySearch.getText() != null ? mySearch.getText().trim() : "";
   }
 
   private class SearachableWrappper implements SearchableConfigurable {
@@ -903,4 +923,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     mySearch.setText("");
   }
 
+  public void setHistory(final History history) {
+  }
 }
