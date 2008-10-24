@@ -19,6 +19,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public class RenameDialog extends RefactoringDialog {
     createNewNameComponent();
     init();
 
-    myNameLabel.setText(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()));
+    myNameLabel.setText("<html>" + XmlTagUtilBase.escapeString(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()), false) + "</html>");
     boolean toSearchInComments = isToSearchInCommentsForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
@@ -171,7 +172,7 @@ public class RenameDialog extends RefactoringDialog {
     panel.setBorder(IdeBorderFactory.createBorder());
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.weighty = 1;
+    gbConstraints.weighty = 0;
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -191,11 +192,13 @@ public class RenameDialog extends RefactoringDialog {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
     gbConstraints.gridx = 0;
+    gbConstraints.weighty = 1;
     panel.add(myNameSuggestionsField.getComponent(), gbConstraints);
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
+    gbConstraints.weighty = 0;
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
     myCbSearchInComments = new NonFocusableCheckBox();
