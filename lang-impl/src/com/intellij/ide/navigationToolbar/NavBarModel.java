@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -86,6 +87,11 @@ public class NavBarModel {
   }
 
   protected boolean updateModel(DataContext dataContext) {
+    final String disableNavbarProperty = System.getProperty("idea.disable.empty.navbar");
+    if (disableNavbarProperty != null && Boolean.valueOf(disableNavbarProperty).booleanValue()) {
+      final Editor editor = LangDataKeys.EDITOR.getData(dataContext);
+      if (editor == null) return false;
+    }
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
       psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
