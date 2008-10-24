@@ -21,7 +21,9 @@
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties/>
+        <properties>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.git.root.tooltip"/>
+        </properties>
       </component>
       <component id="80a58" class="javax.swing.JLabel">
         <constraints>
@@ -53,6 +55,7 @@
             </constraints>
             <properties>
               <text resource-bundle="git4idea/i18n/GitBundle" key="merge.no.commit"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.no.commit.tooltip"/>
             </properties>
           </component>
           <component id="bc48b" class="javax.swing.JCheckBox" binding="myNoFastForwardCheckBox" default-binding="true">
@@ -61,6 +64,7 @@
             </constraints>
             <properties>
               <text resource-bundle="git4idea/i18n/GitBundle" key="merge.no.fast.forward"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.no.fast.forward.tooltip"/>
             </properties>
           </component>
           <component id="de8fb" class="javax.swing.JCheckBox" binding="mySquashCommitCheckBox" default-binding="true">
@@ -69,6 +73,7 @@
             </constraints>
             <properties>
               <text resource-bundle="git4idea/i18n/GitBundle" key="merge.squash.commit"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.squash.tooltip"/>
             </properties>
           </component>
           <hspacer id="5babc">
@@ -81,7 +86,8 @@
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="add.log.information"/>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="merge.add.log.information"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.add.log.information.tooltip"/>
             </properties>
           </component>
         </children>
@@ -92,6 +98,7 @@
         </constraints>
         <properties>
           <text value=""/>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.current.branch.tooltip"/>
         </properties>
       </component>
       <grid id="6a98a" binding="myBranchToMergeContainer" layout-manager="GridBagLayout">
@@ -108,7 +115,7 @@
         </constraints>
         <properties>
           <labelFor value="108e4"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="commit.message"/>
+          <text resource-bundle="git4idea/i18n/GitBundle" key="merge.commit.message"/>
           <verticalAlignment value="0"/>
         </properties>
       </component>
@@ -127,7 +134,9 @@
             <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
-        <properties/>
+        <properties>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.commit.message.tooltip"/>
+        </properties>
       </component>
       <component id="3bcd7" class="javax.swing.JComboBox" binding="myStrategy">
         <constraints>
@@ -138,6 +147,7 @@
           <model>
             <item value="&lt;default&gt;"/>
           </model>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="merge.strategy.tooltip"/>
         </properties>
       </component>
       <hspacer id="3b657">

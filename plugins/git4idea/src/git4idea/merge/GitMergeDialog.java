@@ -121,6 +121,7 @@ public class GitMergeDialog extends DialogWrapper {
    */
   private void initBranchChooser() {
     myBranchChooser = new ElementsChooser<String>(true);
+    myBranchChooser.setToolTipText(GitBundle.getString("merge.branches.tooltip"));
     GridBagConstraints c = new GridBagConstraints();
     c.insets = new Insets(0, 0, 0, 0);
     c.gridx = 0;
