@@ -111,9 +111,13 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     if (!myShowing) {
-      myCurrentOpacity = 0;
+      //myCurrentOpacity = 0;
 
-      if (myHideTimer != null && myHideTimer.isRunning()) myHideTimer.stop();
+      if (myHideTimer != null && myHideTimer.isRunning()) {
+        myHideTimer.stop();
+        myHideTimer = null;
+      }
+
       super.show();
       setOpaque(false);
 
@@ -122,6 +126,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
         myShowTimer = new Timer(1500, new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
+            if (myShowTimer == null) return;
             myShowTimer.stop();
 
             myShowTimer = new Timer(50, new ActionListener() {
@@ -155,13 +160,17 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   @Override
   public void hide() {
     if (myShowing) {
-      if (myShowTimer != null && myShowTimer.isRunning()) myShowTimer.stop();
+      if (myShowTimer != null && myShowTimer.isRunning()) {
+        myShowTimer.stop();
+        myShowTimer = null;
+      }
 
       if (myHideTimer == null || !myHideTimer.isRunning()) {
         myShowing = false;
 
         myHideTimer = new Timer(700, new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
+            if (myHideTimer == null) return;
             myHideTimer.stop();
 
             myHideTimer = new Timer(50, new ActionListener() {
@@ -229,7 +238,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
                 look.paintIcon(g, this, getIcon());
               }
 
-              if (getPopState() == ActionButton.POPPED) {
+              if (myContextMenuPanel.isShown() && getPopState() == ActionButton.POPPED) {
                 final ActionButtonLook look = getButtonLook();
                 look.paintBackground(g, this);
                 look.paintIcon(g, this, getIcon());
@@ -335,6 +344,10 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       g2.drawImage(myBufferedImage, 0, 0, myBufferedImage.getWidth(null), myBufferedImage.getHeight(null), null);
 
       g2.setComposite(old);
+    }
+
+    public boolean isShown() {
+      return myContextMenu.myCurrentOpacity == 100;
     }
   }
 }
