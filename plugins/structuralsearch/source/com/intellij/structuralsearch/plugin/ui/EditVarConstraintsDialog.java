@@ -513,6 +513,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private static class EditScriptDialog extends DialogWrapper {
     private Editor editor;
+    private JPanel myPanel;
 
     public EditScriptDialog(final Project project, String text) {
       super(project, true);
@@ -521,7 +522,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
       editor = createEditor(project, text, "1.groovy");
 
       init();
-      setSize(300, 300);
+
+      myPanel.add(BorderLayout.CENTER, editor.getComponent());
     }
 
     @Override
@@ -529,8 +531,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
       return getClass().getName();
     }
 
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return editor.getContentComponent();
+    }
+
     protected JComponent createCenterPanel() {
-      return editor.getComponent();
+      return myPanel;
     }
 
     String getScriptText() {
