@@ -32,6 +32,8 @@ public class PyJavaClassType implements PyType {
   }
 
   public String getName() {
+    if (myClass != null)
     return myClass.getName();
+    else return null;
   }
 }
