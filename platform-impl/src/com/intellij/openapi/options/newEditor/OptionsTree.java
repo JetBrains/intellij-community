@@ -5,8 +5,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.LoadingNode;
@@ -378,21 +378,27 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       ArrayList<SimpleNode> result = new ArrayList<SimpleNode>();
       for (int i = 0; i < myGroups.size(); i++) {
         ConfigurableGroup eachGroup = myGroups.get(i);
-        final Configurable[] kids = eachGroup.getConfigurables();
-        if (kids.length > 0) {
-          for (int j = 0; j < kids.length; j++) {
-            Configurable eachKid = kids[j];
-            if (isInvisibleNode(eachKid)) {
-              result.addAll(OptionsTree.this.buildChildren(eachKid, this, eachGroup));
-            }
-            else {
-              result.add(new EditorNode(this, eachKid, eachGroup));
-            }
-          }
-        }
+        result.addAll(buildGroup(eachGroup));
       }
 
       return result.toArray(new SimpleNode[result.size()]);
+    }
+
+    private List<EditorNode> buildGroup(final ConfigurableGroup eachGroup) {
+      List<EditorNode> result = new ArrayList<EditorNode>();
+      final Configurable[] kids = eachGroup.getConfigurables();
+      if (kids.length > 0) {
+        for (Configurable eachKid : kids) {
+          if (isInvisibleNode(eachKid)) {
+            result.addAll(OptionsTree.this.buildChildren(eachKid, this, eachGroup));
+          }
+          else {
+            result.add(new EditorNode(this, eachKid, eachGroup));
+          }
+        }
+
+      }
+      return sort(result);
     }
   }
 
@@ -400,19 +406,28 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     return child instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)child).isVisible();
   }
 
+  private static List<EditorNode> sort(List<EditorNode> c) {
+    List<EditorNode> cc = new ArrayList<EditorNode>(c);
+    Collections.sort(cc, new Comparator<EditorNode>() {
+      public int compare(final EditorNode o1, final EditorNode o2) {
+        return o1.getConfigurable().getDisplayName().compareToIgnoreCase(o2.getConfigurable().getDisplayName());
+      }
+    });
+    return cc;
+  }
+
   private List<EditorNode> buildChildren(final Configurable configurable, SimpleNode parent, final ConfigurableGroup group) {
     if (configurable instanceof Configurable.Composite) {
       final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
       final List<EditorNode> result = new ArrayList<EditorNode>(kids.length);
-      for (int i = 0; i < kids.length; i++) {
-        Configurable child = kids[i];
+      for (Configurable child : kids) {
         if (isInvisibleNode(child)) {
           result.addAll(buildChildren(child, parent, group));
         }
         result.add(new EditorNode(parent, child, group));
-        myContext.registerKid(configurable, kids[i]);
+        myContext.registerKid(configurable, child);
       }
-      return result;
+      return result; // TODO: DECIDE IF INNERS SHOULD BE SORTED: sort(result);
     } else {
       return Collections.EMPTY_LIST;
     }
