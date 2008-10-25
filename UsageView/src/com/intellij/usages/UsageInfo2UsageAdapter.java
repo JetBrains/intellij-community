@@ -50,6 +50,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
 
   private final UsageInfo myUsageInfo;
   private int myLineNumber;
+  private int myOffset = -1;
   protected Icon myIcon;
   private String myTooltipText;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
@@ -69,14 +70,22 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
         int startOffset = range.getStartOffset() + myUsageInfo.startOffset;
         int endOffset = range.getStartOffset() + myUsageInfo.endOffset;
 
-        myLineNumber = getLineNumber(document, startOffset);
+        if (document != null) {
+          myLineNumber = getLineNumber(document, startOffset);
 
-        if (endOffset > document.getTextLength()) {
-          LOG.assertTrue(false,
-                         "Invalid usage info, psiElement:" + element + " end offset: " + endOffset + " psiFile: " + psiFile.getName());
+          if (endOffset > document.getTextLength()) {
+            LOG.assertTrue(false,
+                           "Invalid usage info, psiElement:" + element + " end offset: " + endOffset + " psiFile: " + psiFile.getName());
+          }
+
+          myRangeMarkers.add(document.createRangeMarker(startOffset, endOffset));
+          initChunks();
+        } else {  // element over light virtual file
+          myTextChunks = new TextChunk[] {
+            new TextChunk(null, element.getText())
+          };
+          myOffset = element.getTextOffset();
         }
-
-        myRangeMarkers.add(document.createRangeMarker(startOffset, endOffset));
 
         if (element instanceof PsiFile) {
           myIcon = null;
@@ -87,7 +96,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
 
         myTooltipText = myUsageInfo.getTooltipText();
 
-        initChunks();
         return new MyUsagePresentation();
       }
     });
@@ -175,7 +183,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   private OpenFileDescriptor getDescriptor() {
-    return isValid() ? new OpenFileDescriptor(getProject(), getFile(), getRangeMarker().getStartOffset()) : null;
+    return isValid() ?
+           new OpenFileDescriptor(
+             getProject(),
+             getFile(),
+             myRangeMarkers.size() > 0 ?
+               getRangeMarker().getStartOffset():
+               myOffset // element over light virtual file
+           ) :
+           null;
   }
 
   private Project getProject() {
@@ -314,6 +330,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
 
     @NotNull
     public String getPlainText() {
+      if (myRangeMarkers.size() == 0) { // element over light virtual file
+        return myTextChunks[0].getText();
+      }
+
       int startOffset = ChunkExtractor.getStartOffset(myRangeMarkers);
       final PsiElement element = getElement();
       if (element != null && startOffset != -1) {
