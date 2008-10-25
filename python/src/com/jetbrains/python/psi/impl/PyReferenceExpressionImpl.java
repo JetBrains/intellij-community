@@ -22,6 +22,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -46,6 +48,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
+
   public PyReferenceExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -106,10 +109,28 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
    * Resolves reference to the most obvious point.
    * Imported module names: to module file (or directory for a qualifier). 
    * Other identifiers: to most recent definition before this reference.
+   * This implementation is cached.
+   * @see #resolveInner().
   **/
   public
   @Nullable
   PsiElement resolve() {
+    final PsiManager manager = getElement().getManager();
+    if (manager instanceof PsiManagerImpl) {
+      final ResolveCache cache = ((PsiManagerImpl)manager).getResolveCache();
+      return cache.resolveWithCaching(this, Resolver.INSTANCE, false, false);
+    }
+    else return resolveInner();
+  }
+
+  /**
+   * Does actual resolution of resolve().
+   * @return resolution result.
+   * @see #resolve()
+   */
+  public
+  @Nullable
+  PsiElement resolveInner() {
     final String referencedName = getReferencedName();
     if (referencedName == null) return null;
 
@@ -123,8 +144,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
           /* NOTE: can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
           This is because isPsiUpToDate() relies on identity of objects returned by FileViewProvider.getPsi().
-          If we ever need to exactly tell a dir from __init__.py, that logic has to change. 
-          */ 
+          If we ever need to exactly tell a dir from __init__.py, that logic has to change.
+          */
         }
         else return null; // dir without __init__.py does not resolve
       }
@@ -139,13 +160,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           // enrich the type info with any fields assigned nearby
           List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
           if (qualifier_path != null) {
-            /*
-            PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression> proc =
-              new PyResolveUtil.AssignmentCollectProcessor<PyQualifiedExpression>(qualifier_path)
-            ;
-            PyResolveUtil.treeCrawlUp(proc, qualifier);
-            */
-            for (PyExpression ex : /*proc.getResult()*/ collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
+            for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
               if (referencedName.equals(ex.getName())) return ex;
             }
           }
@@ -225,15 +240,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     
     return ret.toArray(new ResolveResult[ret.size()]);
-    /*
-    if (getQualifier() != null) {
-      return ResolveResult.EMPTY_ARRAY; // TODO?
-    }
-
-    PyResolveUtil.MultiResolveProcessor processor = new PyResolveUtil.MultiResolveProcessor(referencedName);
-    PyResolveUtil.treeWalkUp(processor, this, this, this);
-    return processor.getResults();
-    */
   }
 
   public String getCanonicalText() {
@@ -407,6 +413,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     return null;
+  }
+
+  // our very own caching resolver
+  private static class Resolver implements ResolveCache.Resolver {
+
+    public static Resolver INSTANCE = new Resolver(); 
+
+    @Nullable
+    public PsiElement resolve(final PsiReference ref, final boolean incompleteCode) {
+      assert ref instanceof PyReferenceExpressionImpl;
+      return ((PyReferenceExpressionImpl)ref).resolveInner(); // TODO: make it more aestetic?  
+    }
   }
 
 }
