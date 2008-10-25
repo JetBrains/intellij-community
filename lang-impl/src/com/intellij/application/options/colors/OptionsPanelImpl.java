@@ -1,7 +1,6 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.EventDispatcher;
@@ -85,22 +84,15 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
   }
 
-  public void updateDescription(ColorAndFontOptions options) {
-    ColorAndFontDescription description = (ColorAndFontDescription)myOptionsList.getSelectedValue();
-
-    EditorColorsScheme scheme = options.getSelectedScheme();
-    myOptionsPanel.apply(description,scheme);
-  }
-
-  private void fillOptionsList(ColorAndFontOptions options, String category) {
+  private void fillOptionsList() {
 
     DefaultListModel listModel = (DefaultListModel)myOptionsList.getModel();
     listModel.removeAllElements();
 
-    EditorSchemeAttributeDescriptor[] descriptions = options.getCurrentDescriptions();
+    EditorSchemeAttributeDescriptor[] descriptions = myOptions.getCurrentDescriptions();
 
     for (EditorSchemeAttributeDescriptor description : descriptions) {
-      if (description.getGroup().equals(category)) {
+      if (description.getGroup().equals(myCategoryName)) {
         listModel.addElement(description);
       }
     }
@@ -108,7 +100,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
     Object selected = myOptionsList.getSelectedValue();
     if (selected instanceof EditorSchemeAttributeDescriptor) {
-      myDispatcher.getMulticaster().selectedOptionChanged((EditorSchemeAttributeDescriptor)selected);
+      myDispatcher.getMulticaster().selectedOptionChanged(selected);
     }
   }
 
@@ -121,7 +113,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   }
 
   public void updateOptionsList() {
-    fillOptionsList(myOptions, myCategoryName);
+    fillOptionsList();
     processListValueChanged();
   }
 

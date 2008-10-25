@@ -3,26 +3,17 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
-import com.intellij.application.options.SelectFontDialog;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,17 +22,9 @@ import java.util.ArrayList;
 public class SchemesPanel extends JPanel {
   private ColorAndFontOptions myOptions;
 
-  private JTextField myEditorFontSizeField;
-
-  private JTextField myLineSpacingField;
-  private JTextField myFontNameField;
   private JComboBox mySchemeComboBox;
 
-  private static ArrayList<String> myFontNamesVector;
-  private static HashMap<String, Boolean> myFontNameToIsMonospaced;
   private JButton myDeleteButton;
-
-  private boolean myIsInSchemeChange;
 
   private JButton myExportButton;
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
@@ -54,7 +37,6 @@ public class SchemesPanel extends JPanel {
     JPanel schemesGroup = new JPanel(new BorderLayout());
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(createFontPanel(), BorderLayout.NORTH);
     schemesGroup.add(createSchemePanel(), BorderLayout.NORTH);
     schemesGroup.add(panel, BorderLayout.CENTER);
     add(schemesGroup, BorderLayout.CENTER);
@@ -83,7 +65,7 @@ public class SchemesPanel extends JPanel {
           }
 
           if (areSchemesLoaded()) {
-            myDispatcher.getMulticaster().schemeChanged();
+            myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
           }
         }
       }
@@ -104,114 +86,6 @@ public class SchemesPanel extends JPanel {
   public static <T> T safeCast(final Object obj, final Class<T> expectedClass) {
     if (expectedClass.isInstance(obj)) return (T)obj;
     return null;
-  }
-
-  private EditorColorsScheme getCurrentScheme() {
-    return myOptions.getSelectedScheme();
-  }
-
-  private JPanel createFontPanel() {
-    JPanel editorFontPanel = new JPanel();
-    editorFontPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("group.editor.font")));
-    editorFontPanel.setLayout(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.weightx = 0;
-    gbConstraints.weighty = 1;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    gbConstraints.gridwidth = 1;
-
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
-    gbConstraints.gridwidth = 1;
-    editorFontPanel.add(new JLabel(ApplicationBundle.message("label.font.name")), gbConstraints);
-
-    myFontNameField = new MyTextField(20);
-    myFontNameField.setEditable(false);
-    myFontNameField.setFocusable(false);
-
-    gbConstraints.gridx = 1;
-    gbConstraints.insets = new Insets(0, 0, 0, 2);
-    editorFontPanel.add(myFontNameField, gbConstraints);
-
-    JButton myFontNameButton = new FixedSizeButton(myFontNameField);
-    gbConstraints.gridx = 2;
-    gbConstraints.insets = new Insets(0, 0, 0, 8);
-    editorFontPanel.add(myFontNameButton, gbConstraints);
-
-    gbConstraints.gridx = 3;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
-    editorFontPanel.add(new JLabel(ApplicationBundle.message("editbox.font.size")), gbConstraints);
-    gbConstraints.gridx = 4;
-    gbConstraints.insets = new Insets(0, 0, 0, 8);
-    myEditorFontSizeField = new MyTextField(4);
-    gbConstraints.gridx = 5;
-    editorFontPanel.add(myEditorFontSizeField, gbConstraints);
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
-    gbConstraints.gridx = 6;
-    editorFontPanel.add(new JLabel(ApplicationBundle.message("editbox.line.spacing")), gbConstraints);
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
-    gbConstraints.gridx = 7;
-    myLineSpacingField = new MyTextField(4);
-    editorFontPanel.add(myLineSpacingField, gbConstraints);
-    gbConstraints.weightx = 1;
-    gbConstraints.gridx = 8;
-    editorFontPanel.add(new TailPanel(), gbConstraints);
-
-    myFontNameButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        EditorColorsScheme current = getCurrentScheme();
-        if (ColorAndFontOptions.isDefault(current) || ColorSettingsUtil.isSharedScheme(current)) {
-          showReadOnlyMessage(SchemesPanel.this, ColorSettingsUtil.isSharedScheme(current));
-          return;
-        }
-
-        selectFont();
-      }
-    });
-
-    myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
-        if (myIsInSchemeChange) return;
-        int fontSize = 12;
-        try {
-          fontSize = Integer.parseInt(myEditorFontSizeField.getText());
-        }
-        catch (NumberFormatException e) {
-          // OK, ignore
-        }
-        finally {
-          if (fontSize < 1) fontSize = 1;
-          if (fontSize > 30) fontSize = 30;
-
-          getCurrentScheme().setEditorFontSize(fontSize);
-          updateDescription(true);
-        }
-      }
-    });
-
-    myLineSpacingField.getDocument().addDocumentListener(new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
-        if (myIsInSchemeChange) return;
-        float lineSpacing = 1;
-        try {
-          lineSpacing = Float.parseFloat(myLineSpacingField.getText());
-        }
-        catch (NumberFormatException e) {
-          // OK, ignore
-        }
-        finally {
-          if (lineSpacing <= 0) lineSpacing = 1;
-          if (lineSpacing > 30) lineSpacing = 30;
-          if (getCurrentScheme().getLineSpacing() != lineSpacing) {
-            getCurrentScheme().setLineSpacing(lineSpacing);
-          }
-          updateDescription(true);
-        }
-      }
-    });
-
-    return editorFontPanel;
   }
 
   public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
@@ -319,62 +193,7 @@ public class SchemesPanel extends JPanel {
     }
   }
 
-  private void selectFont() {
-    initFontTables();
-
-    java.util.List<String> fontNamesVector = (java.util.List<String>)myFontNamesVector.clone();
-    HashMap fontNameToIsMonospaced = (HashMap)myFontNameToIsMonospaced.clone();
-    String initialFontName = myFontNameField.getText();
-    if (!fontNamesVector.contains(EditorSettingsExternalizable.DEFAULT_FONT_NAME)) {
-      fontNamesVector.add(0, EditorSettingsExternalizable.DEFAULT_FONT_NAME);
-    }
-    if (!fontNamesVector.contains(initialFontName)) {
-      fontNamesVector.add(0, initialFontName);
-    }
-    SelectFontDialog selectFontDialog = new SelectFontDialog(this, fontNamesVector, initialFontName, fontNameToIsMonospaced);
-    selectFontDialog.show();
-    if (!selectFontDialog.isOK()) {
-      return;
-    }
-    String fontName = selectFontDialog.getFontName();
-    if (fontName != null) {
-      myFontNameField.setText(fontName);
-      getCurrentScheme().setEditorFontName(fontName);
-      updateDescription(true);
-    }
-  }
-
-  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-  private void initFontTables() {
-    if (myFontNamesVector == null) {
-      myFontNamesVector = new ArrayList<String>();
-      myFontNameToIsMonospaced = new HashMap<String, Boolean>();
-
-      ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(new InitFontsRunnable(), ApplicationBundle.message("progress.analyzing.fonts"), false, null);
-    }
-  }
-
-  private void changeToScheme(EditorColorsScheme scheme) {
-    myIsInSchemeChange = true;
-
-    myLineSpacingField.setText(Float.toString(getCurrentScheme().getLineSpacing()));
-    myEditorFontSizeField.setText(Integer.toString(getCurrentScheme().getEditorFontSize()));
-    myFontNameField.setText(getCurrentScheme().getEditorFontName());
-
-    if (ColorAndFontOptions.isDefault(scheme)) {
-      myLineSpacingField.setEnabled(false);
-      myEditorFontSizeField.setEditable(false);
-      myFontNameField.setEnabled(false);
-    }
-    else {
-      myLineSpacingField.setEnabled(true);
-      myEditorFontSizeField.setEditable(true);
-      myFontNameField.setEnabled(true);
-    }
-
-    myIsInSchemeChange = false;
-
+  private void changeToScheme() {
     updateDescription(false);
   }
 
@@ -389,89 +208,36 @@ public class SchemesPanel extends JPanel {
     return true;
   }
 
-  public void reset() {
-    //TODO fonts
-    myIsInSchemeChange = true;
-    myFontNameField.setText(getCurrentScheme().getEditorFontName());
-    myEditorFontSizeField.setText(Integer.toString(getCurrentScheme().getEditorFontSize()));
-    myLineSpacingField.setText(Float.toString(getCurrentScheme().getLineSpacing()));
-    myIsInSchemeChange = false;
+  public void resetSchemesCombo(final Object source) {
+    if (this != source) {
+      setListLoaded(false);
 
-    //changeToScheme(getCurrentScheme());
-  }
+      String selectedSchemeBackup = myOptions.getSelectedScheme().getName();
+      mySchemeComboBox.removeAllItems();
 
-  public void resetSchemesCombo() {
-    setListLoaded(false);
+      String[] schemeNames = myOptions.getSchemeNames();
+      for (String schemeName : schemeNames) {
+        mySchemeComboBox.addItem(schemeName);
+      }
 
-    String selectedSchemeBackup = myOptions.getSelectedScheme().getName();
-    mySchemeComboBox.removeAllItems();
+      mySchemeComboBox.setSelectedItem(selectedSchemeBackup);
+      setListLoaded(true);
 
-    String[] schemeNames = myOptions.getSchemeNames();
-    for (String schemeName : schemeNames) {
-      mySchemeComboBox.addItem(schemeName);
+      changeToScheme();
+
+      myDispatcher.getMulticaster().schemeChanged(this);
     }
-
-    mySchemeComboBox.setSelectedItem(selectedSchemeBackup);
-    setListLoaded(true);
-
-    changeToScheme(myOptions.getSelectedScheme());
-
-    myDispatcher.getMulticaster().schemeChanged();
   }
 
   private void setListLoaded(final boolean b) {
     myListLoaded = b;
   }
 
-  private class InitFontsRunnable implements Runnable {
-    public void run() {
-      ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-
-      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      String[] fontNames = graphicsEnvironment.getAvailableFontFamilyNames();
-      for (final String fontName : fontNames) {
-        //noinspection HardCodedStringLiteral
-        if (fontName.endsWith(".bold") || fontName.endsWith(".italic")) {
-          continue;
-        }
-        try {
-          Font plainFont = new Font(fontName, Font.PLAIN, 12);
-          if (plainFont.canDisplay('W')) {
-            Font boldFont = plainFont.deriveFont(Font.BOLD);
-            if (progress != null) {
-              progress.setText(ApplicationBundle.message("progress.analysing.font", fontName));
-            }
-            FontMetrics plainMetrics = getFontMetrics(plainFont);
-            FontMetrics boldMetrics = getFontMetrics(boldFont);
-            myFontNamesVector.add(fontName);
-            int plainL = plainMetrics.charWidth('l');
-            int boldL = boldMetrics.charWidth('l');
-            int plainW = plainMetrics.charWidth('W');
-            int boldW = boldMetrics.charWidth('W');
-            int plainSpace = plainMetrics.charWidth(' ');
-            int boldSpace = boldMetrics.charWidth(' ');
-            boolean isMonospaced = plainL == plainW && plainL == boldL && plainW == boldW && plainSpace == boldSpace;
-            myFontNameToIsMonospaced.put(fontName, isMonospaced);
-          }
-        }
-        catch (Throwable e) {
-          // JRE has problems working with the font. Just skip.
-        }
-      }
-    }
-  }
-
-  private static class MyTextField extends JTextField {
-    public MyTextField(int size) {
-      super(size);
-    }
-
-    public Dimension getMinimumSize() {
-      return super.getPreferredSize();
-    }
-  }
-
   public void addListener(ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
+  }
+
+  public void disposeUIResources() {
+    
   }
 }

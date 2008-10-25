@@ -168,5 +168,10 @@ public class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
+  public void blinkSelectedHighlightType(final Object selected) {
+    
+  }
 
+  public void disposeUIResources() {
+  }
 }

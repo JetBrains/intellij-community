@@ -65,14 +65,6 @@ public class SimpleEditorPreview implements PreviewPanel{
     ((EditorMarkupModel)myEditor.getMarkupModel()).setErrorStripeVisible(true);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
 
-    //TODO
-    /*
-    new ClickNavigator(tab.myOptionsList).addClickNavigator(editor,
-                                                            page.getHighlighter(),
-                                                            highlightData,
-                                                            false
-    );*/
-
     addMouseMotionListener(myEditor, page.getHighlighter(), myHighlightData, false);
 
     CaretListener listener = new CaretListener() {
@@ -205,16 +197,17 @@ public class SimpleEditorPreview implements PreviewPanel{
 
   private static final int BLINK_COUNT = 3 * 2;
 
-  public void blinkSelectedHighlightType(EditorSchemeAttributeDescriptor description) {
-    if (description == null) return;
-    String type = description.getType();
+  public void blinkSelectedHighlightType(Object description) {
+    if (description instanceof EditorSchemeAttributeDescriptor){
+      String type = ((EditorSchemeAttributeDescriptor)description).getType();
 
-    java.util.List<HighlightData> highlights = startBlinkingHighlights(myEditor,
-                                                                       myHighlightData, type,
-                                                             myPage.getHighlighter(), true,
-                                                             myBlinkingAlarm, BLINK_COUNT, myPage);
+      java.util.List<HighlightData> highlights = startBlinkingHighlights(myEditor,
+                                                                         myHighlightData, type,
+                                                               myPage.getHighlighter(), true,
+                                                               myBlinkingAlarm, BLINK_COUNT, myPage);
 
-    scrollHighlightInView(highlights, type, myEditor);
+      scrollHighlightInView(highlights, type, myEditor);      
+    }
   }
 
   private static void scrollHighlightInView(final java.util.List<HighlightData> highlightDatas, final String type, final Editor editor) {
@@ -321,5 +314,12 @@ public class SimpleEditorPreview implements PreviewPanel{
 
   public void addListener(final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
+  }
+
+  public void disposeUIResources() {
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    editorFactory.releaseEditor(myEditor);
+    stopBlinking();
+
   }
 }

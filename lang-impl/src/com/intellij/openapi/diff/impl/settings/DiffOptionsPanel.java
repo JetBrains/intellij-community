@@ -97,9 +97,6 @@ public class DiffOptionsPanel implements OptionsPanel {
 
   }
 
-  public void updateDescription(final ColorAndFontOptions options) {
-  }
-
   public JPanel getPanel() {
     return myWholePanel;
   }

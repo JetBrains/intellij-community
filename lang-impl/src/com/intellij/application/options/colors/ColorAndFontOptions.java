@@ -63,6 +63,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private boolean myResetCompleted = false;
   private boolean myApplyCompleted = false;
+  private boolean myDisposeCompleted = false;
 
   public boolean isModified() {
     boolean listModified = isSchemeListModified();
@@ -161,7 +162,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     mySchemes.put(name, newScheme);
     selectScheme(newScheme.getName());    
-    resetSchemesCombo();
+    resetSchemesCombo(null);
   }
 
   public void addImportedScheme(final EditorColorsScheme imported) {
@@ -170,7 +171,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     mySchemes.put(imported.getName(), newScheme);
     selectScheme(newScheme.getName());
-    resetSchemesCombo();
+    resetSchemesCombo(null);
   }
 
   public void removeScheme(String name) {
@@ -180,7 +181,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     mySchemes.remove(name);
-    resetSchemesCombo();
+    resetSchemesCombo(null);
     mySomeSchemesDeleted = true;
   }
 
@@ -233,12 +234,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private boolean myIsReset = false;
 
-  private void resetSchemesCombo() {
+  private void resetSchemesCombo(Object source) {
     myIsReset = true;
     try {
-      myRootSchemesPanel.resetSchemesCombo();
-      for (NewColorAndFontPanel subPanel : mySubPanels) {
-        subPanel.resetSchemesCombo();
+      myRootSchemesPanel.resetSchemesCombo(source);
+      for (NewColorAndFontPanel subPartialConfigurable : mySubPanels) {
+        subPartialConfigurable.reset(source);
       }
     }
     finally {
@@ -257,18 +258,29 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   protected Configurable[] buildConfigurables() {
+    myDisposeCompleted = false;    
     initAll();
 
     mySubPanels = createSubPanels();
 
-    for (NewColorAndFontPanel subPanel : mySubPanels) {
-      subPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-        public void schemeChanged() {
+    for (NewColorAndFontPanel partialConfigurable : mySubPanels) {
+      partialConfigurable.addSchemesListener(new ColorAndFontSettingsListener.Abstract(){
+        public void schemeChanged(final Object source) {
           if (!myIsReset) {
-            resetSchemesCombo();
+            resetSchemesCombo(source);
           }
         }
       });
+
+      partialConfigurable.addDescriptionListener(new ColorAndFontSettingsListener.Abstract(){
+        @Override
+        public void fontChanged() {
+          for (NewColorAndFontPanel panel : mySubPanels) {
+            panel.updatePreview();
+          }
+        }
+      });
+
     }
 
     List<Configurable> result = new ArrayList<Configurable>();
@@ -289,14 +301,21 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         }
 
         public JComponent createComponent() {
-          return subPanel;
+          return subPanel.getPanel();
         }
 
         public boolean isModified() {
           for (MyColorScheme scheme : mySchemes.values()) {
-            for (EditorSchemeAttributeDescriptor descriptor : scheme.getDescriptors()) {
-              if (subPanel.contains(descriptor) && descriptor.isModified()) {
+            if (subPanel.containsFontOptions()) {
+              if (scheme.isFontModified()) {
                 return true;
+              }
+            }
+            else {
+              for (EditorSchemeAttributeDescriptor descriptor : scheme.getDescriptors()) {
+                if (subPanel.contains(descriptor) && descriptor.isModified()) {
+                  return true;
+                }
               }
             }
 
@@ -315,7 +334,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         }
 
         public void disposeUIResources() {
-          subPanel.dispose();
+          ColorAndFontOptions.this.disposeUIResources();
         }
       });
     }
@@ -327,6 +346,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     ArrayList<NewColorAndFontPanel> result = new ArrayList<NewColorAndFontPanel>();
 
+    result.add(createFontConfigurable());
+
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (ColorSettingsPage page : pages) {
       final SimpleEditorPreview preview = new SimpleEditorPreview(this, page);
@@ -334,11 +355,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
                                                             page.getDisplayName(),
                                                             this);
 
-      panel.addOptionListListener(new ColorAndFontSettingsListener.Abstract(){
-        public void selectedOptionChanged(final Object selected) {
-          preview.blinkSelectedHighlightType((EditorSchemeAttributeDescriptor)selected);
-        }
-      });
+
       result.add(panel);
     }
 
@@ -359,6 +376,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return result;
   }
 
+  private NewColorAndFontPanel createFontConfigurable() {
+    return new NewColorAndFontPanel(new SchemesPanel(this), new FontOptions(this), new FontEditorPreview(this), "Font"){
+      @Override
+      public boolean containsFontOptions() {
+        return true;
+      }
+    };
+  }
+
   private NewColorAndFontPanel createDiffPanel() {
     final DiffPreviewPanel diffPreviewPanel = new DiffPreviewPanel();
     diffPreviewPanel.setMergeRequest(null);
@@ -375,7 +401,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     SchemesPanel schemesPanel = new SchemesPanel(this);
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-      public void schemeChanged() {
+      public void schemeChanged(final Object source) {
         diffPreviewPanel.setColorScheme(getSelectedScheme());
         optionsPanel.updateOptionsList();
         diffPreviewPanel.updateView();
@@ -573,15 +599,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   public void reset() {
     super.reset();
     if (!myResetCompleted) {
-
       if (myRootSchemesPanel == null) {
         myRootSchemesPanel = new SchemesPanel(this);
 
         myRootSchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
           @Override
-          public void schemeChanged() {
+          public void schemeChanged(final Object source) {
             if (!myIsReset) {
-              resetSchemesCombo();
+              resetSchemesCombo(source);
             }
           }
         });
@@ -592,7 +617,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       try {
         mySomeSchemesDeleted = false;
         initAll();
-        resetSchemesCombo();
+        resetSchemesCombo(null);
       }
       finally {
         myResetCompleted = true;
@@ -602,7 +627,22 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   public void disposeUIResources() {
-    super.disposeUIResources();
+    if (!myDisposeCompleted) {
+      try {
+        super.disposeUIResources();
+        if (mySubPanels != null) {
+            for (NewColorAndFontPanel subPanel : mySubPanels) {
+              subPanel.disposeUIResources();
+            }
+          }
+        if (myRootSchemesPanel != null) {
+            myRootSchemesPanel.disposeUIResources();
+          }
+      }
+      finally {
+        myDisposeCompleted = true;
+      }
+    }
     mySubPanels = null;
     myResetCompleted = false;
     myApplyCompleted = false;
@@ -834,9 +874,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public boolean isModified() {
-      if (myFontSize != myParentScheme.getEditorFontSize()) return true;
-      if (myLineSpacing != myParentScheme.getLineSpacing()) return true;
-      if (!myFontName.equals(myParentScheme.getEditorFontName())) return true;
+      if (isFontModified()) return true;
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         if (descriptor.isModified()) {
@@ -844,6 +882,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         }
       }
 
+      return false;
+    }
+
+    private boolean isFontModified() {
+      if (myFontSize != myParentScheme.getEditorFontSize()) return true;
+      if (myLineSpacing != myParentScheme.getLineSpacing()) return true;
+      if (!myFontName.equals(myParentScheme.getEditorFontName())) return true;
       return false;
     }
 
@@ -909,8 +954,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return new Runnable(){
       public void run() {
         if (mySubPanels != null) {
-          for (NewColorAndFontPanel subPanel : mySubPanels) {
-            subPanel.showOption(ColorAndFontOptions.this, option, highlight).run();
+          for (NewColorAndFontPanel subPartialConfigurable : mySubPanels) {
+            subPartialConfigurable.showOption(ColorAndFontOptions.this, option, highlight).run();
           }
         }
       }
@@ -924,8 +969,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   public Map<String, String> processListOptions(){
     HashMap<String, String> result = new HashMap<String, String>();
-    for (NewColorAndFontPanel subPanel : mySubPanels) {
-      result.putAll(subPanel.processListOptions());
+    for (NewColorAndFontPanel subPartialConfigurable : mySubPanels) {
+      result.putAll(subPartialConfigurable.processListOptions());
     }
     return result;
   }

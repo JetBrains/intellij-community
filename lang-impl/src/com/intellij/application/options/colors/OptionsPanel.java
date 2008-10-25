@@ -8,8 +8,6 @@ import javax.swing.*;
 public interface OptionsPanel {
   void addListener(ColorAndFontSettingsListener listener);
 
-  void updateDescription(ColorAndFontOptions options);
-
   JPanel getPanel();
 
   void updateOptionsList();

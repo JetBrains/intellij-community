@@ -11,7 +11,9 @@ public class NewColorAndFontPanel extends JPanel {
   private final String myCategory;
 
   public NewColorAndFontPanel(final SchemesPanel schemesPanel,
-                              final OptionsPanel optionsPanel, final PreviewPanel previewPanel, final String category) {
+                              final OptionsPanel optionsPanel,
+                              final PreviewPanel previewPanel,
+                              final String category) {
     super(new BorderLayout());
     mySchemesPanel = schemesPanel;
     myOptionsPanel = optionsPanel;
@@ -31,14 +33,14 @@ public class NewColorAndFontPanel extends JPanel {
       add(top, BorderLayout.CENTER);
     }
 
-    previewPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
+    previewPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
       public void selectionInPreviewChanged(final String typeToSelect) {
         optionsPanel.selectOption(typeToSelect);
       }
     });
 
-    optionsPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
+    optionsPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
       public void settingsChanged() {
         if (schemesPanel.updateDescription(true)) {
@@ -46,11 +48,14 @@ public class NewColorAndFontPanel extends JPanel {
           previewPanel.updateView();
         }
       }
+
+      public void selectedOptionChanged(final Object selected) {
+        myPreviewPanel.blinkSelectedHighlightType(selected);
+      }
+
     });
-
-
-    mySchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-      public void schemeChanged() {
+    mySchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
+      public void schemeChanged(final Object source) {
         myOptionsPanel.updateOptionsList();
         myPreviewPanel.updateView();
       }
@@ -65,17 +70,11 @@ public class NewColorAndFontPanel extends JPanel {
     final OptionsPanel optionsPanel = new OptionsPanelImpl(descriptionPanel, options, schemesPanel, category);
 
 
-
-    
     return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category);
   }
 
-  public void addOptionListListener(ColorAndFontSettingsListener listener){
-    myOptionsPanel.addListener(listener);
-  }
-
   public Runnable showOption(final ColorAndFontOptions colorAndFontOptions, final String option, final boolean highlight) {
-    return new Runnable(){
+    return new Runnable() {
       public void run() {
 
       }
@@ -86,7 +85,7 @@ public class NewColorAndFontPanel extends JPanel {
     return mySchemesPanel.areSchemesLoaded();
   }
 
-  public Map<String,String> processListOptions() {
+  public Map<String, String> processListOptions() {
     return null;
   }
 
@@ -95,22 +94,39 @@ public class NewColorAndFontPanel extends JPanel {
     return myCategory;
   }
 
-  public void reset() {
-    resetSchemesCombo();
+  public void reset(Object source) {
+    resetSchemesCombo(source);
   }
 
-  public void dispose() {
+  public void disposeUIResources() {
+    myPreviewPanel.disposeUIResources();
   }
 
-  public void addListener(final ColorAndFontSettingsListener schemeListener) {
+  public void addSchemesListener(final ColorAndFontSettingsListener schemeListener) {
     mySchemesPanel.addListener(schemeListener);
   }
 
-  public void resetSchemesCombo() {
-    mySchemesPanel.resetSchemesCombo();
+  private void resetSchemesCombo(Object source) {
+    mySchemesPanel.resetSchemesCombo(source);
   }
 
   public boolean contains(final EditorSchemeAttributeDescriptor descriptor) {
     return descriptor.getGroup().equals(myCategory);
+  }
+
+  public JComponent getPanel() {
+    return this;
+  }
+
+  public void updatePreview() {
+    myPreviewPanel.updateView();
+  }
+
+  public void addDescriptionListener(final ColorAndFontSettingsListener listener) {
+    myOptionsPanel.addListener(listener);
+  }
+
+  public boolean containsFontOptions() {
+    return false;
   }
 }

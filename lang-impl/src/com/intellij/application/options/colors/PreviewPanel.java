@@ -3,6 +3,9 @@ package com.intellij.application.options.colors;
 import java.awt.*;
 
 public interface PreviewPanel {
+  void blinkSelectedHighlightType(Object selected);
+
+  void disposeUIResources();
 
   class Empty implements PreviewPanel{
     public Component getPanel() {
@@ -13,6 +16,14 @@ public interface PreviewPanel {
     }
 
     public void addListener(final ColorAndFontSettingsListener listener) {
+
+    }
+
+    public void blinkSelectedHighlightType(final Object selected) {
+
+    }
+
+    public void disposeUIResources() {
 
     }
   }
