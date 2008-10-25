@@ -207,54 +207,66 @@ public class ExpressionParsing extends Parsing {
   }
 
   public boolean parseMemberExpression(PsiBuilder builder, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parsePrimaryExpression(builder, isTargetExpression)) {
-      expr.drop();
-      return false;
-    }
+    // in sequence a.b.... .c all members but last are always references, and the last may be target.
+    boolean recast_first_identifier = false;
+    do {
+      boolean first_identifier_is_target = isTargetExpression && ! recast_first_identifier;
+      PsiBuilder.Marker expr = builder.mark();
+      if (!parsePrimaryExpression(builder, first_identifier_is_target)) {
+        expr.drop();
+        return false;
+      }
 
-    while (true) {
-      final IElementType tokenType = builder.getTokenType();
-      if (tokenType == PyTokenTypes.DOT) {
-        builder.advanceLexer();
-        checkMatches(PyTokenTypes.IDENTIFIER, "name expected");
-        if (isTargetExpression && builder.getTokenType() != PyTokenTypes.DOT) {
-          expr.done(PyElementTypes.TARGET_EXPRESSION);
+      while (true) {
+        final IElementType tokenType = builder.getTokenType();
+        if (tokenType == PyTokenTypes.DOT) {
+          if (first_identifier_is_target) {
+            recast_first_identifier = true;
+            expr.rollbackTo();
+            break;
+          }
+          else recast_first_identifier = false; 
+          builder.advanceLexer();
+          checkMatches(PyTokenTypes.IDENTIFIER, "name expected");
+          if (isTargetExpression && builder.getTokenType() != PyTokenTypes.DOT) {
+            expr.done(PyElementTypes.TARGET_EXPRESSION);
+          }
+          else {
+            expr.done(PyElementTypes.REFERENCE_EXPRESSION);
+          }
+          expr = expr.precede();
         }
-        else {
-          expr.done(PyElementTypes.REFERENCE_EXPRESSION);
+        else if (tokenType == PyTokenTypes.LPAR) {
+          parseArgumentList(builder);
+          expr.done(PyElementTypes.CALL_EXPRESSION);
+          expr = expr.precede();
         }
-        expr = expr.precede();
-      }
-      else if (tokenType == PyTokenTypes.LPAR) {
-        parseArgumentList(builder);
-        expr.done(PyElementTypes.CALL_EXPRESSION);
-        expr = expr.precede();
-      }
-      else if (tokenType == PyTokenTypes.LBRACKET) {
-        builder.advanceLexer();
-        if (builder.getTokenType() == PyTokenTypes.COLON) {
-          PsiBuilder.Marker sliceMarker = builder.mark();
-          sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
-          parseSliceEnd(builder, expr);
-        }
-        else {
-          parseExpressionOptional();
+        else if (tokenType == PyTokenTypes.LBRACKET) {
+          builder.advanceLexer();
           if (builder.getTokenType() == PyTokenTypes.COLON) {
+            PsiBuilder.Marker sliceMarker = builder.mark();
+            sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
             parseSliceEnd(builder, expr);
           }
           else {
-            checkMatches(PyTokenTypes.RBRACKET, "] expected");
-            expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
+            parseExpressionOptional();
+            if (builder.getTokenType() == PyTokenTypes.COLON) {
+              parseSliceEnd(builder, expr);
+            }
+            else {
+              checkMatches(PyTokenTypes.RBRACKET, "] expected");
+              expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
+            }
           }
+          expr = expr.precede();
         }
-        expr = expr.precede();
-      }
-      else {
-        expr.drop();
-        break;
+        else {
+          expr.drop();
+          break;
+        }
       }
     }
+    while (recast_first_identifier);
 
     return true;
   }

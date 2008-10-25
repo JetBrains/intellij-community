@@ -255,6 +255,22 @@ public class PyResolveUtil {
     return path;
   }
 
+  public static String toPath(PyQualifiedExpression expr, String separator) {
+    if (expr == null) return "";
+    List<PyQualifiedExpression> path = unwindQualifiers(expr);
+    if (path != null) {
+      StringBuilder buf = new StringBuilder();
+      boolean is_not_first = false;
+      for (PyQualifiedExpression ex : path) {
+        if (is_not_first) buf.append(separator);
+        else is_not_first = true;
+        buf.append(ex.getName());
+      }
+      return buf.toString();
+    }
+    else return expr.getName();
+  }
+
   public static class CollectProcessor<T extends PsiElement> implements PsiScopeProcessor {
 
     Class<T>[] my_collectables;
