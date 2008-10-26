@@ -137,8 +137,11 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
       PsiType nominal = getNominalType(method);
       if (nominal != null && nominal.equals(PsiType.VOID)) return nominal;
       PsiType inferred = getInferredType(method);
-      if (inferred == null) return nominal;
-      return inferred;
+      if (nominal == null) return inferred;
+      if (inferred != null) {
+        if (nominal.isAssignableFrom(inferred)) return inferred;
+      }
+      return nominal;
     }
 
     private PsiType getNominalType(GrMethod method) {
