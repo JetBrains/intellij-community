@@ -33,9 +33,12 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  * @author ilyas
  */
 public class HandlerUtils {
+  private HandlerUtils() {
+  }
 
   public static boolean isEnabled(@NotNull final Editor editor, @NotNull final DataContext dataContext,
                                   @NotNull final EditorActionHandler originalHandler) {
+    if (editor.getProject() == null) return false;
     if (getLanguage(dataContext) == GroovyFileType.GROOVY_FILE_TYPE.getLanguage() ||
         getLanguage(dataContext) == GspFileType.GSP_FILE_TYPE.getLanguage()) {
       return true;
