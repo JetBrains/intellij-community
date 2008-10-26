@@ -16,14 +16,12 @@ package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
@@ -49,29 +47,26 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     return ATTRS;
   }
 
-  private static final AttributesDescriptor[] ATTRS;
-
-  static {
-    ATTRS = new AttributesDescriptor[]{
-        new AttributesDescriptor(DefaultHighlighter.LINE_COMMENT_ID, DefaultHighlighter.LINE_COMMENT),
-        new AttributesDescriptor(DefaultHighlighter.BLOCK_COMMENT_ID, DefaultHighlighter.BLOCK_COMMENT),
-        new AttributesDescriptor(DefaultHighlighter.DOC_COMMENT_ID, DefaultHighlighter.DOC_COMMENT_CONTENT),
-        new AttributesDescriptor(DefaultHighlighter.DOC_COMMENT_TAG_ID, DefaultHighlighter.DOC_COMMENT_TAG),
-        new AttributesDescriptor(DefaultHighlighter.KEYWORD_ID, DefaultHighlighter.KEYWORD),
-        new AttributesDescriptor(DefaultHighlighter.NUMBER_ID, DefaultHighlighter.NUMBER),
-        new AttributesDescriptor(DefaultHighlighter.GSTRING_ID, DefaultHighlighter.GSTRING),
-        new AttributesDescriptor(DefaultHighlighter.STRING_ID, DefaultHighlighter.STRING),
-        new AttributesDescriptor(DefaultHighlighter.REGEXP_ID, DefaultHighlighter.REGEXP),
-        new AttributesDescriptor(DefaultHighlighter.BRACES_ID, DefaultHighlighter.BRACES),
-        new AttributesDescriptor(DefaultHighlighter.OPERATION_SIGN_ID, DefaultHighlighter.OPERATION_SIGN),
-        new AttributesDescriptor(DefaultHighlighter.BAD_CHARACTER_ID, DefaultHighlighter.BAD_CHARACTER),
-        new AttributesDescriptor(DefaultHighlighter.WRONG_STRING_ID, DefaultHighlighter.WRONG_STRING),
-        new AttributesDescriptor(DefaultHighlighter.UNTYPED_ACCESS_ID, DefaultHighlighter.UNTYPED_ACCESS),
-        new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
-        new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
-        new AttributesDescriptor(DefaultHighlighter.STATIC_METHOD_ACCESS_ID, DefaultHighlighter.STATIC_METHOD_ACCESS),
+  private static final AttributesDescriptor[] ATTRS =
+    new AttributesDescriptor[]{
+      new AttributesDescriptor(DefaultHighlighter.LINE_COMMENT_ID, DefaultHighlighter.LINE_COMMENT),
+      new AttributesDescriptor(DefaultHighlighter.BLOCK_COMMENT_ID, DefaultHighlighter.BLOCK_COMMENT),
+      new AttributesDescriptor(DefaultHighlighter.DOC_COMMENT_ID, DefaultHighlighter.DOC_COMMENT_CONTENT),
+      new AttributesDescriptor(DefaultHighlighter.DOC_COMMENT_TAG_ID, DefaultHighlighter.DOC_COMMENT_TAG),
+      new AttributesDescriptor(DefaultHighlighter.KEYWORD_ID, DefaultHighlighter.KEYWORD),
+      new AttributesDescriptor(DefaultHighlighter.NUMBER_ID, DefaultHighlighter.NUMBER),
+      new AttributesDescriptor(DefaultHighlighter.GSTRING_ID, DefaultHighlighter.GSTRING),
+      new AttributesDescriptor(DefaultHighlighter.STRING_ID, DefaultHighlighter.STRING),
+      new AttributesDescriptor(DefaultHighlighter.REGEXP_ID, DefaultHighlighter.REGEXP),
+      new AttributesDescriptor(DefaultHighlighter.BRACES_ID, DefaultHighlighter.BRACES),
+      new AttributesDescriptor(DefaultHighlighter.OPERATION_SIGN_ID, DefaultHighlighter.OPERATION_SIGN),
+      new AttributesDescriptor(DefaultHighlighter.BAD_CHARACTER_ID, DefaultHighlighter.BAD_CHARACTER),
+      new AttributesDescriptor(DefaultHighlighter.WRONG_STRING_ID, DefaultHighlighter.WRONG_STRING),
+      new AttributesDescriptor(DefaultHighlighter.UNTYPED_ACCESS_ID, DefaultHighlighter.UNTYPED_ACCESS),
+      new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
+      new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
+      new AttributesDescriptor(DefaultHighlighter.STATIC_METHOD_ACCESS_ID, DefaultHighlighter.STATIC_METHOD_ACCESS),
     };
-  }
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
@@ -80,30 +75,30 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
 
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    return SyntaxHighlighterFactory.getSyntaxHighlighter(GroovyFileType.GROOVY_LANGUAGE, null, null);
+    return new GroovySyntaxHighlighter();
   }
 
   @NonNls
   @NotNull
   public String getDemoText() {
     return "import javax.swing.JPanel\n" +
-        "  ### \n" +
-        "<gdoc>/**\n" +
-        " * This is Groovydoc comment\n" +
-        " * <doctag>@see</doctag> java.lang.String#equals\n" +
-        " */</gdoc>\n" +
-        "<annotation>@SpecialBean</annotation> \n" +
-        "class Demo {\n" +
-        "//This is a line comment\n" +
-        "/* This is a block comment */\n" +
-        "  static def foo(int i) { return [i, i] }\n" +
-        "  static def <statfield>panel</statfield> = new JPanel()\n" +
-        "}\n" +
-        "\n" +
-        "Demo.<statfield>panel</statfield>.size = " +
-        "Demo.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
-        "'JetBrains'.matches(/Jw+Bw+/) \n" +
-        "<untyped>untyped</untyped>.<untyped>doSomething</untyped>()";
+           "  ### \n" +
+           "<gdoc>/**\n" +
+           " * This is Groovydoc comment\n" +
+           " * <doctag>@see</doctag> java.lang.String#equals\n" +
+           " */</gdoc>\n" +
+           "<annotation>@SpecialBean</annotation> \n" +
+           "class Demo {\n" +
+           "//This is a line comment\n" +
+           "/* This is a block comment */\n" +
+           "  static def foo(int i) { return [i, i] }\n" +
+           "  static def <statfield>panel</statfield> = new JPanel()\n" +
+           "}\n" +
+           "\n" +
+           "Demo.<statfield>panel</statfield>.size = " +
+           "Demo.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
+           "'JetBrains'.matches(/Jw+Bw+/) \n" +
+           "<untyped>untyped</untyped>.<untyped>doSomething</untyped>()";
   }
 
   @Nullable
