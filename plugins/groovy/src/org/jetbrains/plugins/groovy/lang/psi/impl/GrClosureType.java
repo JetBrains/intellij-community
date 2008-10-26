@@ -19,14 +19,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-
-import java.util.Collection;
 
 /**
  * @author ven
@@ -201,8 +198,7 @@ public class GrClosureType extends PsiClassType {
       if (parameter instanceof GrParameter) {
         optionals[i] = ((GrParameter)parameter).isOptional();
       } else if (i == 0) { // for implicit "it" parameter
-        final Collection<PsiReference> all = ReferencesSearch.search(parameter).findAll();
-        optionals[i] = all.size() == 0;
+        optionals[i] = true;
       } else {
         optionals[i] = false;
       }
