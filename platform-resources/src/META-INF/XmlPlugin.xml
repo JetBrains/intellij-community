@@ -231,6 +231,8 @@
       <category>XML</category>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
+
+    <lang.implementationTextSelectioner language="XML" implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
   </extensions>
   <application-components>
     <component>
