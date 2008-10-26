@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
@@ -37,6 +36,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
@@ -85,11 +85,6 @@ public class UIUtil {
 
       }
     }
-  }
-
-  public static void updateFrameIcon(final Frame frame) {
-    final Image image = ImageLoader.loadFromResource("/icon.png");
-    frame.setIconImage(image);
   }
 
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
@@ -813,14 +808,10 @@ public class UIUtil {
     }
   }
 
-  public static void updateDialogIcon(final JDialog dialog) {
-    updateDialogIcon(dialog, ImageLoader.loadFromResource("/icon.png"));
-  }
-
-  public static void updateDialogIcon(final JDialog dialog, final Image image) {
+  public static void updateDialogIcon(final JDialog dialog, final List<Image> images) {
     try {
-      final Method method = dialog.getClass().getMethod("setIconImage", Image.class);
-      method.invoke(dialog, image);
+      final Method method = dialog.getClass().getMethod("setIconImages", List.class);
+      method.invoke(dialog, images);
     }
     catch (Exception e) {
       // ignore - no JDK 6

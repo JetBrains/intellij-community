@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ public class ConfigImportHelper {
       }
 
       UIUtil.setToolkitModal(dlg);
-      UIUtil.updateDialogIcon(dlg);
+      AppUIUtil.updateDialogIcon(dlg);
       dlg.setVisible(true);
       if (dlg.isImportEnabled()) {
         File instHome = dlg.getSelectedFile();

@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, keymapManager, application, commandLineArgs);
     setRootPane(myRootPane);
 
-    UIUtil.updateFrameIcon(this);
+    AppUIUtil.updateFrameIcon(this);
     final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     setBounds(10, 10, screenSize.width - 20, screenSize.height - 40);
 

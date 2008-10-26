@@ -22,6 +22,7 @@ import java.awt.*;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.List;
 
 public abstract class DialogWrapperPeer {
   public abstract void setUndecorated(boolean undecorated);
@@ -145,5 +146,7 @@ public abstract class DialogWrapperPeer {
   public abstract void repaint();
   public abstract void pack();
 
-  public abstract void setIconImage(Image image);
+  public abstract void setIconImages(List<Image> image);
+
+  public abstract void setAppIcons();
 }

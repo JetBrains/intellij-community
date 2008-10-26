@@ -1,6 +1,7 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +29,7 @@ public class FrameWrapper implements Disposable {
   private JComponent myComponent = null;
   private JComponent myPreferedFocus = null;
   private String myTitle = "";
-  private Image myImage = ImageLoader.loadFromResource("/icon.png");
+  private Image myImage = ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getIconUrl());
   private boolean myCloseOnEsc = false;
   private JFrame myFrame;
   private final Map myDatas = new HashMap();

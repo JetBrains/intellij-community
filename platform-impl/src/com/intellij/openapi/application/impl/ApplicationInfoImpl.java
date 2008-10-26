@@ -31,6 +31,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myBuildNumber = null;
   private String myLogoUrl = null;
   private String myAboutLogoUrl = null;
+  @NonNls private String myIconUrl = "/icon.png";
+  @NonNls private String mySmallIconUrl = "/icon_small.png";
+  @NonNls private String myOpaqueIconUrl = "/icon.png";
   private Calendar myBuildDate = null;
   private String myPackageCode = null;
   private boolean myShowLicensee = true;
@@ -54,6 +57,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_LOGO = "logo";
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String ELEMENT_ABOUT = "about";
+  @NonNls private static final String ELEMENT_ICON = "icon";
+  @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
+  @NonNls private static final String ATTRIBUTE_SIZE16 = "size16";
+  @NonNls private static final String ATTRIBUTE_SIZE32OPAQUE = "size32opaque";
   @NonNls private static final String ELEMENT_PACKAGE = "package";
   @NonNls private static final String ATTRIBUTE_CODE = "code";
   @NonNls private static final String ELEMENT_LICENSEE = "licensee";
@@ -117,6 +124,18 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myAboutLogoUrl;
   }
 
+  public String getIconUrl() {
+    return myIconUrl;
+  }
+
+  public String getSmallIconUrl() {
+    return mySmallIconUrl;
+  }
+
+  public String getOpaqueIconUrl() {
+    return myOpaqueIconUrl;
+  }
+
   public String getPackageCode() {
     return myPackageCode;
   }
@@ -178,17 +197,22 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myShowLicensee;
   }
 
+  private static ApplicationInfoImpl ourShadowInstance;
+
   public static ApplicationInfoEx getShadowInstance() {
-    ApplicationInfoImpl instance = new ApplicationInfoImpl();
-    try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream(IDEA_PATH +
-                                                                                         ApplicationNamesInfo.getComponentName() + XML_EXTENSION));
-      instance.readExternal(doc.getRootElement());
+    if (ourShadowInstance == null) {
+      ourShadowInstance = new ApplicationInfoImpl();
+      try {
+        Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream(IDEA_PATH +
+                                                                                           ApplicationNamesInfo.getComponentName() +
+                                                                                           XML_EXTENSION));
+        ourShadowInstance.readExternal(doc.getRootElement());
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return instance;
+    return ourShadowInstance;
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
@@ -229,6 +253,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
     if (aboutLogoElement != null) {
       myAboutLogoUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
+    }
+
+    Element iconElement = parentNode.getChild(ELEMENT_ICON);
+    if (iconElement != null) {
+      myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
+      mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
+      myOpaqueIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32OPAQUE);
     }
 
     Element packageElement = parentNode.getChild(ELEMENT_PACKAGE);

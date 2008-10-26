@@ -1,6 +1,6 @@
 package com.intellij.help.impl;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.help.*;
@@ -682,7 +682,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
       if(myFrame==null){
         myFrame=new JFrame(helpTitle);
         resize = true;
-        UIUtil.updateFrameIcon(myFrame);
+        AppUIUtil.updateFrameIcon(myFrame);
         WindowListener l=new WindowAdapter(){
           public void windowClosing(WindowEvent e){
             myFrame.setVisible(false);

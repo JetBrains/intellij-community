@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SpeedSearchBase;
@@ -40,6 +41,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   public static Object HAVE_INITIAL_SELECTION = new Object();
@@ -263,8 +265,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.pack();
   }
 
-  public void setIconImage(final Image image) {
+  public void setIconImages(final List<Image> image) {
     UIUtil.updateDialogIcon(myDialog, image);
+  }
+
+  public void setAppIcons() {
+    setIconImages(AppUIUtil.getAppIconImages());
   }
 
   public Dimension getPreferredSize() {
