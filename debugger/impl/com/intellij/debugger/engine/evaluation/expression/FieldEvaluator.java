@@ -5,7 +5,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.JVMName;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -13,35 +13,69 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Iterator;
 
 public class FieldEvaluator implements Evaluator {
   private Evaluator myObjectEvaluator;
-  private JVMName myClassName;
-  private String myFieldName;
+  private final TargetClassFilter myTargetClassFilter;
+  private final String myFieldName;
   private Object myEvaluatedQualifier;
   private Field myEvaluatedField;
 
-  public FieldEvaluator(Evaluator objectEvaluator, JVMName contextClass, String fieldName) {
+  public interface TargetClassFilter {
+    TargetClassFilter ALL = new TargetClassFilter() {
+      public boolean acceptClass(final ReferenceType refType) {
+        return true;
+      }
+    };
+    boolean acceptClass(ReferenceType refType);
+  }
+  
+  public FieldEvaluator(Evaluator objectEvaluator, TargetClassFilter filter, @NonNls String fieldName) {
     myObjectEvaluator = objectEvaluator;
-    myClassName = contextClass;
     myFieldName = fieldName;
+    myTargetClassFilter = filter;
+  }
+
+  public static TargetClassFilter createClassFilter(PsiType psiType) {
+    if(psiType instanceof PsiArrayType) {
+      return TargetClassFilter.ALL;
+    }
+    PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+    if (psiClass != null) {
+      return createClassFilter(psiClass);
+    }
+    return new FQNameClassFilter(psiType.getCanonicalText());
+  }
+
+  public static TargetClassFilter createClassFilter(PsiClass psiClass) {
+    if (psiClass instanceof PsiAnonymousClass) {
+      return TargetClassFilter.ALL;
+    }
+    if (PsiUtil.isLocalClass(psiClass)) {
+      return new LocalClassFilter(psiClass.getName());
+    }
+    final String name = JVMNameUtil.getNonAnonymousClassName(psiClass);
+    return name != null? new FQNameClassFilter(name) : TargetClassFilter.ALL;
   }
 
   @Nullable
   private Field findField(Type t, final EvaluationContextImpl context) throws EvaluateException {
     if(t instanceof ClassType) {
       ClassType cls = (ClassType) t;
-      if(cls.name().equals(getClassName(context))) {
+      if(myTargetClassFilter.acceptClass(cls)) {
         return cls.fieldByName(myFieldName);
       }
-      for (Iterator iterator = cls.interfaces().iterator(); iterator.hasNext();) {
-        InterfaceType interfaceType = (InterfaceType) iterator.next();
-        Field field = findField(interfaceType, context);
-        if(field != null) {
+      for (final InterfaceType interfaceType : cls.interfaces()) {
+        final Field field = findField(interfaceType, context);
+        if (field != null) {
           return field;
         }
       }
@@ -49,13 +83,12 @@ public class FieldEvaluator implements Evaluator {
     }
     else if(t instanceof InterfaceType) {
       InterfaceType iface = (InterfaceType) t;
-      if(iface.name().equals(getClassName(context))) {
+      if(myTargetClassFilter.acceptClass(iface)) {
         return iface.fieldByName(myFieldName);
       }
-      for (Iterator iterator = iface.superinterfaces().iterator(); iterator.hasNext();) {
-        InterfaceType interfaceType = (InterfaceType) iterator.next();
-        Field field = findField(interfaceType, context);
-        if(field != null) {
+      for (final InterfaceType interfaceType : iface.superinterfaces()) {
+        final Field field = findField(interfaceType, context);
+        if (field != null) {
           return field;
         }
       }
@@ -163,11 +196,41 @@ public class FieldEvaluator implements Evaluator {
     return modifier;
   }
 
-  private String myClassNameCached = null;
-  private String getClassName(final EvaluationContextImpl context) throws EvaluateException {
-    if (myClassNameCached == null) {
-      myClassNameCached = myClassName.getName(context.getDebugProcess());
+  private static final class FQNameClassFilter implements TargetClassFilter {
+    private final String myQName;
+
+    private FQNameClassFilter(String qName) {
+      myQName = qName;
     }
-    return myClassNameCached;
+
+    public boolean acceptClass(final ReferenceType refType) {
+      return refType.name().equals(myQName);
+    }
+  }
+
+  private static final class LocalClassFilter implements TargetClassFilter{
+    private final String myLocalClassShortName;
+
+    private LocalClassFilter(String localClassShortName) {
+      myLocalClassShortName = localClassShortName;
+    }
+
+    public boolean acceptClass(final ReferenceType refType) {
+      final String name = refType.name();
+      final int index = name.lastIndexOf(myLocalClassShortName);
+      if (index < 0) {
+        return false;
+      }
+      for (int idx = index - 1; idx >= 0; idx--) {
+        final char ch = name.charAt(idx);
+        if (ch == '$') {
+          return idx < (index - 1);
+        }
+        if (!Character.isDigit(ch)) {
+          return false;
+        }
+      }
+      return false;
+    }
   }
 }

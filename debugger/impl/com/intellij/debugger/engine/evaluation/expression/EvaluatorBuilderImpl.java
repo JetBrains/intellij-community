@@ -394,8 +394,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           Evaluator objectEvaluator = new ThisEvaluator(iterationCount);
           //noinspection HardCodedStringLiteral
-          final JVMName contextClassName = JVMNameUtil.getContextClassJVMQualifiedName(myPosition);
-          myResult = new FieldEvaluator(objectEvaluator, contextClassName != null? contextClassName : JVMNameUtil.getJVMQualifiedName(getContextPsiClass()), "val$" + localName);
+          final PsiClass classAt = myPosition != null? JVMNameUtil.getClassAt(myPosition) : null;
+          FieldEvaluator.TargetClassFilter filter = FieldEvaluator.createClassFilter(classAt != null? classAt : getContextPsiClass());
+          myResult = new FieldEvaluator(objectEvaluator, filter, "val$" + localName);
           return;
         }
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
@@ -433,7 +434,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           objectEvaluator = new ThisEvaluator(iterationCount);
         }
-        myResult = new FieldEvaluator(objectEvaluator, JVMNameUtil.getJVMQualifiedName(fieldClass), psiField.getName());
+        myResult = new FieldEvaluator(objectEvaluator, FieldEvaluator.createClassFilter(fieldClass), psiField.getName());
       } else {
         //let's guess what this could be
         PsiElement nameElement = expression.getReferenceNameElement(); // get "b" part
@@ -454,14 +455,15 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             // this is a call to a 'static' field
             PsiClass psiClass = (PsiClass)qualifierTarget;
             final JVMName typeName = JVMNameUtil.getJVMQualifiedName(psiClass);
-            myResult = new FieldEvaluator(new TypeEvaluator(typeName), typeName, name);
+            myResult = new FieldEvaluator(new TypeEvaluator(typeName), FieldEvaluator.createClassFilter(psiClass), name);
           }
           else {
             PsiType type = qualifier.getType();
-            if(type == null)
+            if(type == null) {
               throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
                 DebuggerBundle.message("evaluation.error.qualifier.type.unknown", qualifier.getText()))
               );
+            }
 
             qualifier.accept(this);
             if (myResult == null) {
@@ -470,7 +472,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
               );
             }
 
-            myResult = new FieldEvaluator(myResult, JVMNameUtil.getJVMQualifiedName(type), name);
+            myResult = new FieldEvaluator(myResult, FieldEvaluator.createClassFilter(type), name);
           }
         }
         else {
@@ -721,7 +723,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if (type instanceof PsiPrimitiveType) {
         final JVMName typeName = JVMNameUtil.getJVMRawText(((PsiPrimitiveType)type).getBoxedTypeName());
-        myResult = new FieldEvaluator(new TypeEvaluator(typeName), typeName, "TYPE");
+        myResult = new FieldEvaluator(new TypeEvaluator(typeName), FieldEvaluator.TargetClassFilter.ALL, "TYPE");
       }
       else {
         myResult = new ClassObjectEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)));
