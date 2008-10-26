@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,6 +56,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
     return extension == null ? null : new ExtensionSortKey(extension);
   }
 
+  @Nullable
   public static String extension(final PsiFile file) {
     return file == null || file.getVirtualFile() == null ? null : file.getVirtualFile().getFileType().getDefaultExtension();
   }
