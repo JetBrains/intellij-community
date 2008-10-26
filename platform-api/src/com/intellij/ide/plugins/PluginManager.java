@@ -64,7 +64,7 @@ public class PluginManager {
   @NonNls public static final String META_INF = "META-INF";
   private static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
   @NonNls private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
-  private static List<String> ourAvailableModules = new ArrayList<String>();
+  private static final List<String> ourAvailableModules = new ArrayList<String>();
 
   public static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -648,7 +648,9 @@ public class PluginManager {
     final Set<PluginId> optionalDependencies = new HashSet<PluginId>(Arrays.asList(pluginDescriptor.getOptionalDependentPluginIds()));
     for (final PluginId dependentPluginId : dependentPluginIds) {
       if (processed.contains(dependentPluginId)) continue;
-      if (ourAvailableModules.isEmpty() && isModuleDependency(dependentPluginId)) {  // TODO[yole] should this condition be a parameter?
+
+      // TODO[yole] should this condition be a parameter?
+      if (isModuleDependency(dependentPluginId) && (ourAvailableModules.isEmpty() || ourAvailableModules.contains(dependentPluginId.getIdString()))) {  
         continue;
       }
       if (!optionalDependencies.contains(dependentPluginId)) {
