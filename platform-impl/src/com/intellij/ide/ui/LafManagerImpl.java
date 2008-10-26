@@ -78,6 +78,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font", "TitledBorder.font", "ToolBar.font",
     "ToolTip.font", "Tree.font"
   };
+  @NonNls private static final String[] ourFileChooserTextKeys = new String[] {
+    "FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText", "FileChooser.listViewActionLabelText",
+    "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"
+  };
+
   private HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>>();
   private UISettings myUiSettings;
 
@@ -352,6 +357,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   public void updateUI(){
     UIDefaults lookAndFeelDefaults=UIManager.getLookAndFeelDefaults();
     initInputMapDefaults(lookAndFeelDefaults);
+    patchFileChooserStrings(lookAndFeelDefaults);
     if (shouldPatchLAFFonts()) {
       storeOriginalFontDefaults(lookAndFeelDefaults);
       initFontDefaults(lookAndFeelDefaults);
@@ -365,6 +371,15 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       updateUI(frame);
     }
     fireLookAndFeelChanged();
+  }
+
+  private void patchFileChooserStrings(final UIDefaults defaults) {
+    if (!defaults.containsKey(ourFileChooserTextKeys [0])) {
+      // Alloy L&F does not define strings for names of context menu actions, so we have to patch them in here
+      for (String key : ourFileChooserTextKeys) {
+        defaults.put(key, IdeBundle.message(key));
+      }
+    }
   }
 
   private void restoreOriginalFontDefaults(UIDefaults defaults) {
