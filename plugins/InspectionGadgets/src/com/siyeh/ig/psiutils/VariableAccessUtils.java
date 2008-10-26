@@ -73,6 +73,14 @@ public class VariableAccessUtils{
         return visitor.isReturned();
     }
 
+    public static boolean variableValueIsUsed(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+        final VariableValueUsedVisitor visitor =
+                new VariableValueUsedVisitor(variable);
+        context.accept(visitor);
+        return visitor.isVariableValueUsed();
+    }
+
     public static boolean arrayContentsAreAccessed(
             @NotNull PsiVariable variable, @NotNull PsiElement context) {
         final ArrayContentsAccessedVisitor visitor =
@@ -286,11 +294,9 @@ public class VariableAccessUtils{
         final PsiElement[] children = context.getChildren();
         for (PsiElement child : children) {
             if (child == directChild) {
-                return variableIsAssignedAtPoint(variable, directChild,
-                        point);
+                return variableIsAssignedAtPoint(variable, directChild, point);
             }
-            if (variableIsAssigned(variable,
-                    child)) {
+            if (variableIsAssigned(variable, child)) {
                 return true;
             }
         }

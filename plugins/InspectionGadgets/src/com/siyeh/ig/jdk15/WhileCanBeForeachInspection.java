@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.jdk15;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -41,27 +40,32 @@ import org.jetbrains.annotations.Nullable;
 
 public class WhileCanBeForeachInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "WhileLoopReplaceableByForEach";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "while.can.be.foreach.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "while.can.be.foreach.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new WhileCanBeForeachFix();
     }
@@ -73,6 +77,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             return InspectionGadgetsBundle.message("foreach.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement whileElement = descriptor.getPsiElement();
@@ -159,11 +164,8 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             final CodeStyleSettings codeStyleSettings =
                     CodeStyleSettingsManager.getSettings(project);
             @NonNls final String finalString;
-            if(codeStyleSettings.GENERATE_FINAL_PARAMETERS) {
-                finalString = "final ";
-            } else {
-                finalString = "";
-            }
+            finalString =
+                    codeStyleSettings.GENERATE_FINAL_PARAMETERS ? "final " : "";
             @NonNls final StringBuilder out = new StringBuilder(64);
             out.append("for(");
             out.append(finalString);
@@ -380,17 +382,14 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 final PsiBlockStatement block = (PsiBlockStatement)body;
                 final PsiCodeBlock codeBlock = block.getCodeBlock();
                 final PsiStatement[] statements = codeBlock.getStatements();
-                if (statements.length > 0) {
-                    return statements[0];
-                } else {
-                    return null;
-                }
+                return statements.length > 0 ? statements[0] : null;
             } else {
                 return body;
             }
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new WhileCanBeForeachVisitor();
     }
@@ -498,8 +497,19 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             if (isIteratorHasNextCalled(declaredVariable, body)) {
                 return false;
             }
-            return !VariableAccessUtils.variableIsAssigned(declaredVariable,
-                    body);
+            if (VariableAccessUtils.variableIsAssigned(declaredVariable,
+                    body)) {
+                return false;
+            }
+            PsiElement nextSibling = whileStatement.getNextSibling();
+            while (nextSibling != null) {
+                if (VariableAccessUtils.variableValueIsUsed(declaredVariable,
+                        nextSibling)) {
+                    return false;
+                }
+                nextSibling = nextSibling.getNextSibling();
+            }
+            return true;
         }
 
         private static boolean isHasNextCalled(PsiVariable iterator,
