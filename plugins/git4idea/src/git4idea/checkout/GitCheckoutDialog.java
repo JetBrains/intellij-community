@@ -299,6 +299,7 @@ public class GitCheckoutDialog extends DialogWrapper {
     };
     myGitRoot.addActionListener(l);
     l.actionPerformed(null);
+    myIncludeTagsCheckBox.addActionListener(l);
   }
 
   /**
