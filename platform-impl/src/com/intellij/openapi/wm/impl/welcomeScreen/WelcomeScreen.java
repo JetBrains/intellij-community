@@ -7,8 +7,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -30,6 +30,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -276,17 +277,16 @@ public class WelcomeScreen {
       CAPTION_IMAGE = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenCaptionUrl());
       DEVELOPER_SLOGAN = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenDeveloperSloganUrl());
 
-      if (CAPTION_IMAGE instanceof ImageIcon) {
-        Image image = ((ImageIcon)CAPTION_IMAGE).getImage();
-        final int[] pixels = new int[1];
-        final PixelGrabber pixelGrabber = new PixelGrabber(image, CAPTION_IMAGE.getIconWidth() - 1, CAPTION_IMAGE.getIconHeight() - 1, 1, 1, pixels, 0, 1);
-        try {
-          pixelGrabber.grabPixels();
-          CAPTION_BACKGROUND = new Color(pixels[0]);
-        }
-        catch (InterruptedException e) {
-          //ignore exception
-        }
+      BufferedImage image = new BufferedImage(CAPTION_IMAGE.getIconWidth(), CAPTION_IMAGE.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+      CAPTION_IMAGE.paintIcon(null, image.getGraphics(), 0, 0);
+      final int[] pixels = new int[1];
+      final PixelGrabber pixelGrabber = new PixelGrabber(image, CAPTION_IMAGE.getIconWidth() - 1, CAPTION_IMAGE.getIconHeight() - 1, 1, 1, pixels, 0, 1);
+      try {
+        pixelGrabber.grabPixels();
+        CAPTION_BACKGROUND = new Color(pixels[0]);
+      }
+      catch (InterruptedException e) {
+        //ignore exception
       }
     }
   }
