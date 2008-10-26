@@ -62,6 +62,8 @@
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.platform.PlatformFileProjectDirectoryRule"/>
 
     <applicationConfigurable implementation="com.intellij.profile.codeInspection.ui.PlatformInspectionsConfigurable" order="before intentions"/>
+
+    <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener"/>
   </extensions>
   <project-components>
     <component>
