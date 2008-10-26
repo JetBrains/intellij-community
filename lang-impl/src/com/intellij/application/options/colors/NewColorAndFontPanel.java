@@ -1,7 +1,10 @@
 package com.intellij.application.options.colors;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Map;
 
 public class NewColorAndFontPanel extends JPanel {
@@ -85,8 +88,10 @@ public class NewColorAndFontPanel extends JPanel {
     return mySchemesPanel.areSchemesLoaded();
   }
 
+  @NotNull
   public Map<String, String> processListOptions() {
-    return null;
+    // TODO[lesya] implement
+    return Collections.emptyMap();
   }
 
 
