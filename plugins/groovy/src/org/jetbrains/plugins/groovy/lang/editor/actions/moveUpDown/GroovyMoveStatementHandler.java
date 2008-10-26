@@ -44,7 +44,7 @@ public class GroovyMoveStatementHandler extends EditorWriteActionHandler {
   }
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
-    return HandlerUtils.isEnabled(editor, dataContext, myOriginalHandler);
+    return editor.getProject() != null && HandlerUtils.isEnabled(editor, dataContext, myOriginalHandler);
   }
 
 
