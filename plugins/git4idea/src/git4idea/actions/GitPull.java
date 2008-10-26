@@ -27,11 +27,11 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandRunnable;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -67,7 +67,7 @@ public class GitPull extends BasicAction {
 
       VcsException ex = cmdr.getException();
       if (ex != null) {
-        GitUtil.showOperationError(project, ex, "git fetch");
+        GitUIUtil.showOperationError(project, ex, "git fetch");
         return;
       }
 
@@ -75,7 +75,7 @@ public class GitPull extends BasicAction {
       manager.runProcessWithProgressSynchronously(cmdr, GitBundle.message("fetching.tags.title", repoURL), false, project);
       ex = cmdr.getException();
       if (ex != null) {
-        GitUtil.showOperationError(project, ex, "git fetch --tags");
+        GitUIUtil.showOperationError(project, ex, "git fetch --tags");
         return;
       }
 
@@ -104,7 +104,7 @@ public class GitPull extends BasicAction {
       manager.runProcessWithProgressSynchronously(cmdr, GitBundle.message("merging.branch", selectedBranch.getName()), false, project);
       ex = cmdr.getException();
       if (ex != null) {
-        GitUtil.showOperationError(project, ex, "git merge");
+        GitUIUtil.showOperationError(project, ex, "git merge");
       }
     }
   }

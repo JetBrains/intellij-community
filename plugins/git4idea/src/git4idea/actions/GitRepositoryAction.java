@@ -63,7 +63,7 @@ public abstract class GitRepositoryAction extends AnAction {
     VirtualFile defaultRootVar = null;
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {
-        final VirtualFile root = GitUtil.getGitRoot(file);
+        final VirtualFile root = GitUtil.gitRootOrNull(file);
         if (root != null) {
           defaultRootVar = root;
           break;

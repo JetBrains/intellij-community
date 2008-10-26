@@ -21,11 +21,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.GitUIUtil;
 
 /**
  * Initial code for show submitted files action
@@ -36,27 +36,39 @@ public class GitShowAllSubmittedFilesAction {
    *
    * @param project  a project
    * @param settings a git settings
-   * @param revision a revision number
+   * @param revision a file revision
    * @param file     file affected by the revision
    */
   public static void showSubmittedFiles(final Project project,
                                         GitVcsSettings settings,
                                         final VcsFileRevision revision,
                                         final VirtualFile file) {
-    VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
+    showSubmittedFiles(project, settings, revision.getRevisionNumber().asString(), file);
+  }
+
+  /**
+   * Show submitted files
+   *
+   * @param project  a project
+   * @param settings a git settings
+   * @param revision a revision number
+   * @param file     file affected by the revision
+   */
+  public static void showSubmittedFiles(final Project project, GitVcsSettings settings, final String revision, final VirtualFile file) {
+    VirtualFile vcsRoot = GitUtil.getGitRoot(file);
     assert vcsRoot != null;
     GitCommand command = new GitCommand(project, settings, vcsRoot);
     try {
-      String revNumber = revision.getRevisionNumber().asString();
-      final CommittedChangeList changeList = command.getRevisionChanges(revNumber);
+      final CommittedChangeList changeList = command.getRevisionChanges(revision);
       if (changeList != null) {
-        AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList, getTitle(revNumber));
+        AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList, getTitle(revision));
       }
     }
     catch (VcsException e) {
-      GitUtil.showOperationError(project, e, "git show");
+      GitUIUtil.showOperationError(project, e, "git show");
     }
   }
+
 
   /**
    * Get dialog title

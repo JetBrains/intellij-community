@@ -20,7 +20,6 @@ package git4idea;
  */
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -29,9 +28,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -146,28 +144,6 @@ public class GitUtil {
     }
     else if (file.equals(basePath)) return ".";
     return file.substring(baseDir.getPath().length() + 1);
-  }
-
-  /**
-   * Show error associated with the specified operation
-   *
-   * @param project   the project
-   * @param ex        the exception
-   * @param operation the operation name
-   */
-  public static void showOperationError(final Project project, final VcsException ex, @NonNls @NotNull final String operation) {
-    showOperationError(project, operation, ex.getMessage());
-  }
-
-  /**
-   * Show error associated with the specified operation
-   *
-   * @param project   the project
-   * @param message   the error description
-   * @param operation the operation name
-   */
-  public static void showOperationError(final Project project, final String operation, final String message) {
-    Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
   }
 
   /**
@@ -321,6 +297,23 @@ public class GitUtil {
    * @throws IllegalArgumentException if the file is not under git
    */
   public static VirtualFile getGitRoot(@NotNull final VirtualFile file) {
+    final VirtualFile root = gitRootOrNull(file);
+    if (root != null) {
+      return root;
+    }
+    else {
+      throw new IllegalArgumentException("The file " + file.getPath() + " is not under git.");
+    }
+  }
+
+  /**
+   * Return a git root for the file path (the parent directory with ".git" subdirectory)
+   *
+   * @return git root for the file
+   * @throws IllegalArgumentException if the file is not under git
+   */
+  @Nullable
+  public static VirtualFile gitRootOrNull(@NotNull final VirtualFile file) {
     VirtualFile root = file;
     while (root != null) {
       if (root.findFileByRelativePath(".git") != null) {
@@ -328,7 +321,7 @@ public class GitUtil {
       }
       root = root.getParent();
     }
-    throw new IllegalArgumentException("The file " + file.getPath() + " is not under git.");
+    return root;
   }
 
 

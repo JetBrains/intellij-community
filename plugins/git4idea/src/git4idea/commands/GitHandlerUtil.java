@@ -20,8 +20,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
-import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,7 +201,7 @@ public class GitHandlerUtil {
         ensureError(exitCode);
         EventQueue.invokeLater(new Runnable() {
           public void run() {
-            GitUtil.showOperationError(myHandler.project(), myOperationName, getAllErrors());
+            GitUIUtil.showOperationError(myHandler.project(), myOperationName, getAllErrors());
           }
         });
       }
@@ -244,7 +244,7 @@ public class GitHandlerUtil {
     public void startFailed(final Throwable exception) {
       EventQueue.invokeLater(new Runnable() {
         public void run() {
-          GitUtil.showOperationError(myHandler.project(), myOperationName, exception.getMessage());
+          GitUIUtil.showOperationError(myHandler.project(), myOperationName, exception.getMessage());
         }
       });
     }

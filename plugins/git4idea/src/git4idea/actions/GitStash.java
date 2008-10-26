@@ -25,6 +25,7 @@ import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandRunnable;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -59,7 +60,7 @@ public class GitStash extends BasicAction {
 
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"}) VcsException ex = cmdr.getException();
       if (ex != null) {
-        GitUtil.showOperationError(project, ex, "git stash");
+        GitUIUtil.showOperationError(project, ex, "git stash");
         break;
       }
     }

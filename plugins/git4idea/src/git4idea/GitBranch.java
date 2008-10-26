@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitSimpleHandler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,10 @@ public class GitBranch {
   private final String name;
   private final boolean remote;
   private final boolean active;
+  /**
+   * The name that specifies that git is on specific commit rather then on some branch
+   */
+  @NonNls public static final String NO_BRANCH_NAME = "(no branch)";
 
   public GitBranch(@NotNull Project project, @NotNull String name, boolean active, boolean remote) {
     this.project = project;
@@ -77,7 +82,7 @@ public class GitBranch {
       String line = lines.nextToken();
       if (line != null && line.startsWith("*")) {
         //noinspection HardCodedStringLiteral
-        if ("* (no branch)".equals(line)) {
+        if (line.endsWith(NO_BRANCH_NAME)) {
           return null;
         }
         else {

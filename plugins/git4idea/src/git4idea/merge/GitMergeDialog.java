@@ -20,12 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.NotNull;
+import git4idea.ui.GitUIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -98,6 +97,7 @@ public class GitMergeDialog extends DialogWrapper {
    */
   public GitMergeDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
+    setTitle(GitBundle.getString("merge.branch.title"));
     myProject = project;
     initBranchChooser();
     myNoCommitCheckBox.addActionListener(new ActionListener() {
@@ -111,7 +111,12 @@ public class GitMergeDialog extends DialogWrapper {
       }
     });
     setOKActionEnabled(false);
-    setupRoots(roots, defaultRoot);
+    GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranchText);
+    myGitRoot.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        updateBranches();
+      }
+    });
     updateBranches();
     init();
   }
@@ -166,37 +171,12 @@ public class GitMergeDialog extends DialogWrapper {
 
 
   /**
-   * Setup roots combobox
-   *
-   * @param roots       the repository roots
-   * @param defaultRoot the defatul root
-   */
-  private void setupRoots(final List<VirtualFile> roots, final VirtualFile defaultRoot) {
-    for (VirtualFile root : roots) {
-      myGitRoot.addItem(new GitRootWrapper(root));
-    }
-    myGitRoot.setSelectedItem(new GitRootWrapper(defaultRoot));
-    myGitRoot.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateBranches();
-      }
-    });
-  }
-
-  /**
    * Setup branches for git root, this method should be called when root is changed.
    */
   private void updateBranches() {
     try {
-      GitRootWrapper rootWrapper = (GitRootWrapper)myGitRoot.getSelectedItem();
-      GitBranch current = GitBranch.current(myProject, rootWrapper.myRoot);
-      if (current == null) {
-        myCurrentBranchText.setText(GitBundle.getString("merge.no.active.branch"));
-      }
-      else {
-        myCurrentBranchText.setText(current.getName());
-      }
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, rootWrapper.myRoot, "branch");
+      VirtualFile root = getSelectedRoot();
+      GitSimpleHandler handler = new GitSimpleHandler(myProject, root, "branch");
       handler.setNoSSH(true);
       handler.setSilent(true);
       handler.addParameters("-a", "--no-merged");
@@ -219,8 +199,8 @@ public class GitMergeDialog extends DialogWrapper {
     if (!isOK()) {
       throw new IllegalStateException("The handler could be retrieved only if dialog was completed successfully.");
     }
-    GitRootWrapper rootWrapper = (GitRootWrapper)myGitRoot.getSelectedItem();
-    GitLineHandler h = new GitLineHandler(myProject, rootWrapper.myRoot, "merge");
+    VirtualFile root = (VirtualFile)myGitRoot.getSelectedItem();
+    GitLineHandler h = new GitLineHandler(myProject, root, "merge");
     h.setNoSSH(true);
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
@@ -270,54 +250,6 @@ public class GitMergeDialog extends DialogWrapper {
    * @return selected root
    */
   public VirtualFile getSelectedRoot() {
-    return ((GitRootWrapper)myGitRoot.getSelectedItem()).myRoot;
-  }
-
-  /**
-   * A root wrapper class
-   */
-  private class GitRootWrapper {
-    /**
-     * The virtual file for the root
-     */
-    final VirtualFile myRoot;
-    /**
-     * The url
-     */
-    final String myUrl;
-
-    /**
-     * A wrapper constructo
-     *
-     * @param root a git root to use
-     */
-    public GitRootWrapper(@NotNull final VirtualFile root) {
-      myRoot = root;
-      myUrl = root.getPresentableUrl();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean equals(final Object obj) {
-      return obj instanceof GitRootWrapper && myUrl.equals(((GitRootWrapper)obj).myUrl);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString() {
-      return myUrl;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-      return myUrl.hashCode();
-    }
+    return (VirtualFile)myGitRoot.getSelectedItem();
   }
 }
