@@ -70,6 +70,7 @@
     <completion.contributor implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyCompetionContributor"/>
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
+    <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>
 
 
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
@@ -127,6 +128,7 @@
     <lang.formatter language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.formatter.GspFormattingModelBuilder"/>
     <lang.parserDefinition language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.parsing.gsp.GspParserDefinition"/>
     <lang.fileViewProviderFactory language="GSP" implementationClass="org.jetbrains.plugins.grails.lang.gsp.GspFileviewProviderFactory"/>
+    <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.grails.lang.gsp.formatter.settings.GspIndentOptionsProvider"/>
 
     <codeInsight.parameterInfo language="GSP"
                                implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
