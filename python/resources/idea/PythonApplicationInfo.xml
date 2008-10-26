@@ -4,6 +4,7 @@
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_logo.png"/>
   <about url="/idea_about.png"/>
+  <icon size32="/icon.png" size16="/icon_small.png" size32opaque="/icon.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm"/>
 
