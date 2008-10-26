@@ -44,7 +44,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
   /**
    * the default cygwin executable
    */
-  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\cygwin\\bin", "C:\\Program Files\\Git\\bin"};
+  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\cygwin\\bin", "C:\\Program Files\\Git\\bin", "C:\\Program Files (x86)\\Git\\bin"};
   /**
    * Windows executable name
    */
