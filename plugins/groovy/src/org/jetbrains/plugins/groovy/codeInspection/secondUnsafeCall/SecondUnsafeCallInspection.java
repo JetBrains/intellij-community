@@ -77,7 +77,7 @@ public class SecondUnsafeCallInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroovyInspectionBundle.message("second.unsafe.call");
+    return "Probable bugs (Groovy)";
   }
 
   @Nls
