@@ -51,6 +51,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract UpdateUrls getUpdateUrls();
 
+  public abstract String getDocumentationUrl();
+
   public abstract String getSupportUrl();
 
   public static interface UpdateUrls {
