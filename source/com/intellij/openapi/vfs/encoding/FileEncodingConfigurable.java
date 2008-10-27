@@ -55,7 +55,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return "topicId771616";
+    return "reference.settingsdialog.project.file.encodings";
   }
 
   public String getId() {
