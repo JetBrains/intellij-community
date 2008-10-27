@@ -401,7 +401,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   private static class MyIndex<K> extends MapReduceIndex<K, TIntArrayList, Void> {
     public MyIndex(final IndexStorage<K, TIntArrayList> storage) {
-      super(null, storage);
+      super(null, null, storage);
     }
 
     public void updateWithMap(final int inputId, final Map<K, TIntArrayList> oldData, final Map<K, TIntArrayList> newData) throws StorageException {

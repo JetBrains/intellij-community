@@ -185,7 +185,7 @@ public class FileBasedIndex implements ApplicationComponent {
       try {
         final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getCacheSize());
         final IndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
-        final UpdatableIndex<K, V, FileContent> index = createIndex(extension, memStorage);
+        final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));
         myExtentions.put(name, extension);
         break;
@@ -244,11 +244,11 @@ public class FileBasedIndex implements ApplicationComponent {
     return new File(PathManager.getIndexRoot(), "work_in_progress");
   }
 
-  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final FileBasedIndexExtension<K, V> extension, final IndexStorage<K, V> storage) {
+  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final ID<K, V> indexId, final FileBasedIndexExtension<K, V> extension, final IndexStorage<K, V> storage) {
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      return ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(this, storage);
+      return ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(indexId, this, storage);
     }
-    return new MapReduceIndex<K, V, FileContent>(extension.getIndexer(), storage);
+    return new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage);
   }
 
   @NonNls
@@ -280,7 +280,13 @@ public class FileBasedIndex implements ApplicationComponent {
       public void run() {
         for (ID<?, ?> indexId : myIndices.keySet()) {
           //noinspection ConstantConditions
-          getIndex(indexId).flush();
+          try {
+            getIndex(indexId).flush();
+          }
+          catch (StorageException e) {
+            LOG.info(e);
+            requestRebuild(indexId);
+          }
         }
       }
     });

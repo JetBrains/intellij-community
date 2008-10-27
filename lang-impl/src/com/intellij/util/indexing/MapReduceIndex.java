@@ -19,6 +19,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Value, Input> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
+  private final ID<Key, Value> myIndexId;
   private final DataIndexer<Key, Value, Input> myIndexer;
   private final IndexStorage<Key, Value> myStorage;
   
@@ -28,7 +29,15 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final Runnable myFlushRequest = new Runnable() {
     public void run() {
       if (canFlush()) {
-        flush();
+        try {
+          flush();
+        }
+        catch (StorageException e) {
+          LOG.info(e);
+          if (myIndexId != null) {
+            FileBasedIndex.getInstance().requestRebuild(myIndexId);
+          }
+        }
       }
       else {
         myFlushAlarm.addRequest(myFlushRequest, 20000 /* 20 sec */);  // postpone flushing
@@ -47,7 +56,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   };
 
 
-  public MapReduceIndex(DataIndexer<Key, Value, Input> indexer, final IndexStorage<Key, Value> storage) {
+  public MapReduceIndex(@Nullable final ID<Key, Value> indexId, DataIndexer<Key, Value, Input> indexer, final IndexStorage<Key, Value> storage) {
+    myIndexId = indexId;
     myIndexer = indexer;
     myStorage = storage;
   }
@@ -69,13 +79,22 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  public void flush() {
+  public void flush() throws StorageException{
     try {
       getReadLock().lock();
       myStorage.flush();
     }
     catch (IOException e) {
-      LOG.error(e);
+      throw new StorageException(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof StorageException || cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      else {
+        throw e;
+      }
     }
     finally {
       getReadLock().unlock();

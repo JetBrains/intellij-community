@@ -199,7 +199,8 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     return version;
   }
 
-  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final FileBasedIndex owner, IndexStorage<Integer, SerializedStubTree> storage) {
+  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final ID<Integer, SerializedStubTree> indexId,
+                                                                                            final FileBasedIndex owner, IndexStorage<Integer, SerializedStubTree> storage) {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
       memStorage.addBufferingStateListsner(new MemoryIndexStorage.BufferingStateListener() {
@@ -208,7 +209,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         }
       });
     }
-    return new MyIndex(owner, storage, getIndexer());
+    return new MyIndex(indexId, owner, storage, getIndexer());
   }
 
   /**
@@ -283,9 +284,9 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   }
 
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
-    public MyIndex(final FileBasedIndex owner, final IndexStorage<Integer, SerializedStubTree> storage,
+    public MyIndex(final ID<Integer, SerializedStubTree> indexId, final FileBasedIndex owner, final IndexStorage<Integer, SerializedStubTree> storage,
                    final DataIndexer<Integer, SerializedStubTree, FileContent> indexer) {
-      super(indexer, storage);
+      super(indexId, indexer, storage);
       try {
         checkNameStorage();
       }

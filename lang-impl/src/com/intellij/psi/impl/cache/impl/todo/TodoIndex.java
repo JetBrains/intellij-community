@@ -149,13 +149,14 @@ public class TodoIndex implements CustomImplementationFileBasedIndexExtension<To
     return myInputFilter;
   }
 
-  public UpdatableIndex<TodoIndexEntry, Integer, FileContent> createIndexImplementation(final FileBasedIndex owner, IndexStorage<TodoIndexEntry, Integer> storage) {
-    return new MyIndex(storage, getIndexer());
+  public UpdatableIndex<TodoIndexEntry, Integer, FileContent> createIndexImplementation(final ID<TodoIndexEntry, Integer> indexId, final FileBasedIndex owner,
+                                                                                        IndexStorage<TodoIndexEntry, Integer> storage) {
+    return new MyIndex(indexId, storage, getIndexer());
   }
 
   static class MyIndex extends MapReduceIndex<TodoIndexEntry, Integer, FileContent> {
-    public MyIndex(final IndexStorage<TodoIndexEntry, Integer> storage, final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
-      super(indexer, storage);
+    public MyIndex(final ID<TodoIndexEntry, Integer> indexId, final IndexStorage<TodoIndexEntry, Integer> storage, final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
+      super(indexId, indexer, storage);
     }
 
     @Override
