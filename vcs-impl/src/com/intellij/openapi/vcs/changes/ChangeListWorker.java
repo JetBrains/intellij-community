@@ -266,10 +266,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         final ContentRevision before = change.getBeforeRevision();
         final ContentRevision after = change.getAfterRevision();
         if (before != null) {
-          result.add(before.getFile().getVirtualFile());
+          final VirtualFile file = before.getFile().getVirtualFile();
+          if (file != null) {
+            result.add(file);
+          }
         }
         if (after != null) {
-          result.add(after.getFile().getVirtualFile());
+          final VirtualFile file = after.getFile().getVirtualFile();
+          if (file != null) {
+            result.add(file);
+          }
         }
       }
     }
