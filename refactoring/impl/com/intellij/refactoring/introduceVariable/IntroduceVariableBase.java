@@ -58,15 +58,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
         editor.getSelectionModel().selectLineAtCaret();
       } else {
-        final PsiElement elementAtCaret = file.findElementAt(offset);
-        final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
-        PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
-        while (expression != null) {
-          if (!(expression instanceof PsiReferenceExpression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
-            expressions.add(expression);
-          }
-          expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
-        }
+        final List<PsiExpression> expressions = collectExpressions(file, offset, statementsInRange);
         if (expressions.isEmpty()) {
           editor.getSelectionModel().selectLineAtCaret();
         } else if (expressions.size() == 1) {
@@ -86,6 +78,24 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
       editor.getSelectionModel().removeSelection();
     }
+  }
+
+  public static List<PsiExpression> collectExpressions(final PsiFile file, final int offset, final PsiElement... statementsInRange) {
+    final PsiElement elementAtCaret = file.findElementAt(offset);
+    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+    for (PsiElement element : statementsInRange) {
+      if (element instanceof PsiExpressionStatement) {
+        expressions.add(((PsiExpressionStatement)element).getExpression());
+      }
+    }
+    PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+    while (expression != null) {
+      if (!expressions.contains(expression) && !(expression instanceof PsiReferenceExpression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
+        expressions.add(expression);
+      }
+      expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
+    }
+    return expressions;
   }
 
   public static PsiElement[] findStatementsAtOffset(final Editor editor, final PsiFile file, final int offset) {

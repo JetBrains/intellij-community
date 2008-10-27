@@ -14,7 +14,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -71,14 +70,7 @@ public class ElementToWorkOn {
           if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
             editor.getSelectionModel().selectLineAtCaret();
           } else {
-            final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
-            PsiExpression expression = PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class);
-            while (expression != null) {
-              if (!(expression instanceof PsiReferenceExpression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
-                expressions.add(expression);
-              }
-              expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
-            }
+            final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, offset, statementsInRange);
             if (expressions.isEmpty()) {
               editor.getSelectionModel().selectLineAtCaret();
             } else if (expressions.size() == 1) {
