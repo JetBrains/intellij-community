@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -44,6 +45,8 @@ public class VcsGeneralConfigurationPanel implements Configurable {
   private JPanel myAddConfirmationPanel;
   private JCheckBox myCbOfferToMoveChanges;
   private JComboBox myFailedCommitChangelistCombo;
+  private JLabel myRemoveConfirmationLabel;
+  private JLabel myAddConfirmationLabel;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -74,6 +77,9 @@ public class VcsGeneralConfigurationPanel implements Configurable {
     }
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
+
+    myAddConfirmationLabel.setText(VcsBundle.message("add.confirmation.label.text", ApplicationNamesInfo.getInstance().getProductName()));
+    myRemoveConfirmationLabel.setText(VcsBundle.message("remove.confirmation.label.text", ApplicationNamesInfo.getInstance().getProductName()));
   }
 
   public void apply() throws ConfigurationException {
