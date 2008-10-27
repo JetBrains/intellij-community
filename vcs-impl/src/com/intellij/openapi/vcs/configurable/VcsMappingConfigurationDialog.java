@@ -110,6 +110,19 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
                                   FileChooserDescriptor fileChooserDescriptor) {
       super(title, description, textField, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     }
+    
+    @Override
+    protected VirtualFile getInitialFile() {
+      // suggest project base dir only if nothing is typed in the component.
+      String text = getComponentText();
+      if(text.length() == 0) {
+        VirtualFile file = myProject.getBaseDir();
+        if(file != null) {
+          return file;
+        }
+      }
+      return super.getInitialFile();
+    }
 
     @Override
     protected void onFileChoosen(final VirtualFile chosenFile) {

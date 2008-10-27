@@ -21,9 +21,16 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
+ * Text component accessor. It wraps access to the content of text component
+ * and it might perform some translations between text representation and
+ * component objects.
+ *
  * @author dyoma
  */
 public interface TextComponentAccessor<T extends Component> {
+  /**
+   * The accessor that gets and changes whole text
+   */
   TextComponentAccessor<JTextField> TEXT_FIELD_WHOLE_TEXT = new TextComponentAccessor<JTextField>() {
     public String getText(JTextField textField) {
       return textField.getText();
@@ -34,6 +41,9 @@ public interface TextComponentAccessor<T extends Component> {
     }
   };
 
+  /**
+   * The accessor that replaces selection or whole text if there is no selection
+   */
   TextComponentAccessor<JTextField> TEXT_FIELD_SELECTED_TEXT = new TextComponentAccessor<JTextField>() {
     public String getText(JTextField textField) {
       String selectedText = textField.getSelectedText();
@@ -46,6 +56,9 @@ public interface TextComponentAccessor<T extends Component> {
     }
   };
 
+  /**
+   * The accessor that gets and changes whole text
+   */
   TextComponentAccessor<JComboBox> STRING_COMBOBOX_WHOLE_TEXT = new TextComponentAccessor<JComboBox>() {
     public String getText(JComboBox comboBox) {
       Object item = comboBox.getEditor().getItem();
@@ -56,7 +69,9 @@ public interface TextComponentAccessor<T extends Component> {
       comboBox.getEditor().setItem(text);
     }
   };
-
+  /**
+   * The accessor that gets and changes whole text
+   */
   TextComponentAccessor<TextFieldWithHistory> TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT = new TextComponentAccessor<TextFieldWithHistory>() {
     public String getText(TextFieldWithHistory textField) {
       return textField.getText();
@@ -67,7 +82,17 @@ public interface TextComponentAccessor<T extends Component> {
     }
   };
 
+  /**
+   * Get text from component
+   * @param component a component to examine
+   * @return the text (possibly adjusted)
+   */
   String getText(T component);
 
+  /**
+   * Set text to the component
+   * @param component the component
+   * @param text the text to set
+   */
   void setText(T component, String text);
 }
