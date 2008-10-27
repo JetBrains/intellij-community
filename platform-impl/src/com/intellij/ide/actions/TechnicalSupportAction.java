@@ -13,9 +13,15 @@ package com.intellij.ide.actions;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 
 public class TechnicalSupportAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    BrowserUtil.launchBrowser("http://www.jetbrains.com/support/idea/index.html");
+    BrowserUtil.launchBrowser(ApplicationInfoImpl.getShadowInstance().getSupportUrl());
+  }
+
+  @Override
+  public void update(final AnActionEvent e) {
+    e.getPresentation().setVisible(ApplicationInfoImpl.getShadowInstance().getSupportUrl() != null);
   }
 }

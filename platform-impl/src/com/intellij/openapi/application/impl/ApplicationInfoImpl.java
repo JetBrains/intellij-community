@@ -43,6 +43,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myWelcomeScreenDeveloperSloganUrl;
   private UpdateUrls myUpdateUrls;
   private UpdateUrls myEapUpdateUrls;
+  private String mySupportUrl;
   private boolean myEAP;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
@@ -79,6 +80,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_HELP_FILE = "file";
   @NonNls private static final String ATTRIBUTE_HELP_ROOT = "root";
   @NonNls private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
+  @NonNls private static final String ELEMENT_SUPPORT = "support";
 
   public void initComponent() { }
 
@@ -169,6 +171,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public UpdateUrls getUpdateUrls() {
     return isEAP() ? myEapUpdateUrls :  myUpdateUrls;
+  }
+
+  public String getSupportUrl() {
+    return mySupportUrl;
   }
 
   public UpdateUrls getEapUpdateUrls() {
@@ -298,6 +304,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
     Element eapUpdateUrls = parentNode.getChild(EAP_UPDATE_URLS_ELEMENT_NAME);
     myEapUpdateUrls = new UpdateUrlsImpl(eapUpdateUrls);
+
+    Element supportElement = parentNode.getChild(ELEMENT_SUPPORT);
+    if (supportElement != null) {
+      mySupportUrl = supportElement.getAttributeValue(ATTRIBUTE_URL);
+    }
 
     myPluginChooserPages = new ArrayList<PluginChooserPage>();
     final List children = parentNode.getChildren(PLUGINS_PAGE_ELEMENT_NAME);
