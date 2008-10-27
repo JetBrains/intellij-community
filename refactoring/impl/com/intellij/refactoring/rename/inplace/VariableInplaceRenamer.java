@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
@@ -244,7 +243,7 @@ public class VariableInplaceRenamer {
     PsiFile containingFile = elementToRename.getContainingFile();
     if (!PsiTreeUtil.isAncestor(containingFile, scopeElements[0], false)) return false;
 
-    String stringToSearch = ElementDescriptionUtil.getElementDescription(elementToRename, NonCodeSearchDescriptionLocation.NON_JAVA);
+    String stringToSearch = ((PsiVariable) elementToRename).getName();
     List<UsageInfo> usages = new ArrayList<UsageInfo>();
     if (stringToSearch != null) {
       TextOccurrencesUtil.addUsagesInStringsAndComments(elementToRename, stringToSearch, usages, new TextOccurrencesUtil.UsageInfoFactory() {
