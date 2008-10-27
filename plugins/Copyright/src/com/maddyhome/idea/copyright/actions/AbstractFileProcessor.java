@@ -31,8 +31,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -144,7 +142,8 @@ public abstract class AbstractFileProcessor
         assert virtualFile != null;
         if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(virtualFile).hasReadonlyFiles()) {
            final Runnable[] resultRunnable = new Runnable[1];
-            Runnable read = new Runnable()
+
+          execute(new Runnable()
             {
                 public void run()
                 {
@@ -157,22 +156,16 @@ public abstract class AbstractFileProcessor
                         logger.error(incorrectoperationexception);
                     }
                 }
-            };
-            if (resultRunnable[0] == null || resultRunnable[0].equals(EmptyRunnable.getInstance()))  {
-                return;
-            }
-            Runnable write = new Runnable()
-            {
-                public void run()
-                {
-                    if (resultRunnable[0] != null)
-                    {
-                        resultRunnable[0].run();
-                    }
-                }
-            };
-
-            execute(read, write);
+            }, new Runnable()
+              {
+                  public void run()
+                  {
+                      if (resultRunnable[0] != null)
+                      {
+                          resultRunnable[0].run();
+                      }
+                  }
+              });
         }
     }
 
