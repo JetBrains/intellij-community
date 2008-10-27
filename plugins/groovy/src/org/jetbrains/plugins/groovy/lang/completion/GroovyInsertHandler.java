@@ -47,7 +47,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
   public void handleInsert(InsertionContext context, LookupElement item) {
     @NonNls Object obj = item.getObject();
     if (obj instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) obj;
+      PsiMethod method = (PsiMethod)obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
       Editor editor = context.getEditor();
       Document document = editor.getDocument();
@@ -60,8 +60,10 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       PsiFile file = PsiDocumentManager.getInstance(method.getProject()).getPsiFile(document);
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
       PsiElement parent = elementAt != null ? elementAt.getParent() : null;
-      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression) parent).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER)
+      if (parent instanceof GrReferenceExpression &&
+          ((GrReferenceExpression)parent).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER) {
         return;
+      }
 
       if (parent instanceof GrAnnotationNameValuePair || parent.getParent() instanceof GrAnnotationNameValuePair) {
         document.insertString(offset, " = ");
@@ -107,9 +109,12 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
       CaretModel caretModel = editor.getCaretModel();
       int offset = context.getStartOffset() + clazz.getName().length();
+
+      final String text = document.getText();
       final PsiElement parent = elementAt.getParent();
       if (parent instanceof GrCodeReferenceElement &&
-          parent.getParent() instanceof GrNewExpression) {
+          parent.getParent() instanceof GrNewExpression &&
+          (offset == text.length() || !text.substring(offset).trim().startsWith("("))) {
         document.insertString(offset, "()");
         final PsiMethod[] methods = clazz.getConstructors();
         for (PsiMethod method : methods) {
@@ -139,8 +144,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
   private static void handleOverwrite(final int offset, final Document document) {
     final CharSequence sequence = document.getCharsSequence();
     int i = offset;
-    while (i < sequence.length() && (Character.isJavaIdentifierPart(sequence.charAt(i)) || sequence.charAt(i) == '\''))
-      i++;
+    while (i < sequence.length() && (Character.isJavaIdentifierPart(sequence.charAt(i)) || sequence.charAt(i) == '\'')) i++;
     document.deleteString(offset, i);
   }
 
@@ -151,11 +155,11 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     }
     @NonNls String[] exprs = {"true", "false", "null", "super", "this"};
     @NonNls String[] withSemi = {"break", "continue"};
-    @NonNls String[] withSpace = {"private", "public", "protected", "static", "transient", "abstract",
-            "native", "volatile", "strictfp", "boolean", "byte", "char", "short", "int", "float", "long", "double", "void",
-            "new", "try", "while", "with", "switch", "for", "return", "throw", "throws", "assert", "synchronized", "package",
-            "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else", "instanceof",
-            "import", "final",};
+    @NonNls String[] withSpace =
+      {"private", "public", "protected", "static", "transient", "abstract", "native", "volatile", "strictfp", "boolean", "byte", "char",
+        "short", "int", "float", "long", "double", "void", "new", "try", "while", "with", "switch", "for", "return", "throw", "throws",
+        "assert", "synchronized", "package", "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else",
+        "instanceof", "import", "final",};
     if (Arrays.asList(withSemi).contains(item.toString())) {
       item.setTailType(TailType.SEMICOLON);
       return;
