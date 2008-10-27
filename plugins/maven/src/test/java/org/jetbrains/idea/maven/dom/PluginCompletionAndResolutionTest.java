@@ -719,7 +719,7 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
     checkHighlighting();
   }
 
-  public void testDoNotHighlighInnerParameterProperties() throws Throwable {
+  public void testDoNotHighlighInnerParameterAttributes() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -741,6 +741,25 @@ public class PluginCompletionAndResolutionTest extends MavenCompletionAndResolut
                      "</build>");
 
     checkHighlighting();
+  }
+
+  public void testDoNotCompleteHighlighParameterAttributes() throws Throwable {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <source <caret>/>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom);
   }
 
   public void testWorksWithPropertiesInPluginId() throws Throwable {
