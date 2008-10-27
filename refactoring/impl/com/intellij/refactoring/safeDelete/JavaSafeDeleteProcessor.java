@@ -1,12 +1,13 @@
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -14,25 +15,23 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
-import com.intellij.ide.util.SuperMethodWarningUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashSet;
 
 public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor");
@@ -235,7 +234,24 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
 
     final PsiMethod[] methods = aClass.getMethods();
     for (PsiMethod method : methods) {
-      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (method.isConstructor()) { //skip non-private constructors with call to super only
+          final PsiCodeBlock body = method.getBody();
+          assert body != null;
+          final PsiStatement[] statements = body.getStatements();
+          if (statements.length == 0) continue;
+          if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+            final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+            if (expression instanceof PsiMethodCallExpression) {
+              PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+              if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
+                continue;
+              }
+            }
+          }
+        }
+        return false;
+      }
     }
 
     final PsiClass[] inners = aClass.getInnerClasses();
@@ -557,7 +573,10 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
         if (element.getParent().getParent() instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression call = (PsiMethodCallExpression)element.getParent().getParent();
           PsiReferenceExpression methodExpression = call.getMethodExpression();
-          if (methodExpression.getText().equals(PsiKeyword.SUPER) || methodExpression.getQualifierExpression() instanceof PsiSuperExpression) {
+          if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
+            isSafeDelete = true;
+          }
+          else if (methodExpression.getQualifierExpression() instanceof PsiSuperExpression) {
             final PsiMethod superMethod = call.resolveMethod();
             if (superMethod != null && MethodSignatureUtil.isSuperMethod(superMethod, method)) {
               isSafeDelete = true;
