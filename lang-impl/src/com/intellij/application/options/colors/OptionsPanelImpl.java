@@ -1,7 +1,5 @@
 package com.intellij.application.options.colors;
 
-import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.EventDispatcher;
 
@@ -9,8 +7,10 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   private JList myOptionsList;
@@ -104,10 +104,6 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     }
   }
 
-  private JList getOptionsList() {
-    return myOptionsList;
-  }
-
   public JPanel getPanel() {
     return this;
   }
@@ -117,33 +113,27 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     processListValueChanged();
   }
 
-  public Runnable showOption(final String path, final SearchableConfigurable configurable, final String option, final boolean highlight) {
-    return new Runnable() {
-      public void run() {
-        final JList list = getOptionsList();
-        final AbstractListModel listModel = (AbstractListModel)list.getModel();
-        if (!selectItem(listModel, list, option, true, configurable, highlight)){
-          selectItem(listModel, list, option, false, configurable, highlight);
+  public Runnable showOption(final String option) {
+
+    DefaultListModel model = (DefaultListModel)myOptionsList.getModel();
+
+    for (int i = 0; i < model.size(); i++) {
+      Object o = model.get(i);
+      if (o instanceof EditorSchemeAttributeDescriptor) {
+        String type = ((EditorSchemeAttributeDescriptor)o).getType();
+        if (type.toLowerCase().contains(option.toLowerCase())) {
+          final int i1 = i;
+          return new Runnable() {
+            public void run() {
+              ListScrollingUtil.selectItem(myOptionsList, i1);
+            }
+          };
+
         }
       }
-    };
-
-  }
-
-  private static boolean selectItem(final AbstractListModel listModel,
-                             final JList list,
-                             final String option,
-                             boolean forceSelect,
-                             final SearchableConfigurable configurable,
-                             boolean highlight) {
-    for(int i = 0; i < listModel.getSize(); i++){
-      String descriptor = listModel.getElementAt(i).toString().toLowerCase();
-      if (SearchUtil.isComponentHighlighted(descriptor, option, forceSelect, configurable)){
-        ListScrollingUtil.selectItem(list, i);
-        return true;
-      }
     }
-    return false;
+
+    return null;
   }
 
   public void applyChangesToScheme() {
@@ -167,5 +157,19 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
       }
     }
 
+  }
+
+  public Map<String, String> processListOptions() {
+    HashMap<String, String> result = new HashMap<String, String>();
+    EditorSchemeAttributeDescriptor[] descriptions = myOptions.getCurrentDescriptions();
+
+    for (EditorSchemeAttributeDescriptor description : descriptions) {
+      if (description.getGroup().equals(myCategoryName)) {
+        result.put(description.getType(), "");
+      }
+    }
+
+
+    return result;
   }
 }

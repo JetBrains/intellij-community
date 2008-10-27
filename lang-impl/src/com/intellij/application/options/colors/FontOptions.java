@@ -4,7 +4,6 @@ import com.intellij.application.options.SelectFontDialog;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -20,6 +19,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class FontOptions extends JPanel implements OptionsPanel{
   private ColorAndFontOptions myOptions;
@@ -69,7 +69,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   }
 
-  public Runnable showOption(final String path, final SearchableConfigurable configurable, final String option, final boolean highlight) {
+  public Runnable showOption(final String option) {
     return null;
   }
 
@@ -302,5 +302,9 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   public JPanel getPanel() {
     return this;
+  }
+
+  public Map<String, String> processListOptions() {
+    return new HashMap<String, String>();
   }
 }

@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.Map;
 
 public class NewColorAndFontPanel extends JPanel {
@@ -76,12 +75,8 @@ public class NewColorAndFontPanel extends JPanel {
     return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category);
   }
 
-  public Runnable showOption(final ColorAndFontOptions colorAndFontOptions, final String option, final boolean highlight) {
-    return new Runnable() {
-      public void run() {
-
-      }
-    };
+  public Runnable showOption(final String option) {
+    return myOptionsPanel.showOption(option);
   }
 
   public boolean areSchemesLoaded() {
@@ -90,8 +85,7 @@ public class NewColorAndFontPanel extends JPanel {
 
   @NotNull
   public Map<String, String> processListOptions() {
-    // TODO[lesya] implement
-    return Collections.emptyMap();
+    return myOptionsPanel.processListOptions();
   }
 
 

@@ -1,8 +1,7 @@
 package com.intellij.application.options.colors;
 
-import com.intellij.openapi.options.SearchableConfigurable;
-
 import javax.swing.*;
+import java.util.Map;
 
 
 public interface OptionsPanel {
@@ -12,9 +11,11 @@ public interface OptionsPanel {
 
   void updateOptionsList();
 
-  Runnable showOption(String path, SearchableConfigurable configurable, String option, boolean highlight);
+  Runnable showOption(String option);
 
   void applyChangesToScheme();
 
   void selectOption(String typeToSelect);
+
+  Map<String, String> processListOptions();
 }

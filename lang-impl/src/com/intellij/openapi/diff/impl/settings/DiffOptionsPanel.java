@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
@@ -22,6 +21,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Map;
 
 public class DiffOptionsPanel implements OptionsPanel {
   private final ColorAndFontOptions myOptions;
@@ -118,9 +118,48 @@ public class DiffOptionsPanel implements OptionsPanel {
 
   }
 
-  public Runnable showOption(final String path, final SearchableConfigurable configurable, final String option, final boolean highlight) {
+  public Runnable showOption(final String option) {
+
+
+    AbstractListModel model = (AbstractListModel)myOptionsList.getModel();
+
+    for (int i = 0; i < model.getSize(); i++) {
+      Object o = model.getElementAt(i);
+      if (o instanceof TextDiffType) {
+        String type = ((TextDiffType)o).getDisplayName();
+        if (type.toLowerCase().contains(option.toLowerCase())) {
+          final int i1 = i;
+          return new Runnable() {
+            public void run() {
+              ListScrollingUtil.selectItem(myOptionsList, i1);
+            }
+          };
+
+        }
+      }
+    }
+
     return null;
+
+
   }
+
+  public Map<String, String> processListOptions() {
+    java.util.HashMap<String, String> result = new java.util.HashMap<String, String>();
+    HashMap<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.assignKeys(TextDiffType.MERGE_TYPES.iterator(), TextDiffType.ATTRIBUTES_KEY);
+    for (int i = 0; i < myOptions.getCurrentDescriptions().length; i++) {
+      EditorSchemeAttributeDescriptor description = myOptions.getCurrentDescriptions()[i];
+      TextAttributesKey type = TextAttributesKey.find(description.getType());
+      if (description.getGroup() == ColorAndFontOptions.DIFF_GROUP &&
+          typesByKey.keySet().contains(type)) {
+        result.put(type.getExternalName(), "");
+      }
+    }
+
+
+    return result;
+  }
+
 
   public void applyChangesToScheme() {
     MyColorAndFontDescription description = getSelectedDescription();

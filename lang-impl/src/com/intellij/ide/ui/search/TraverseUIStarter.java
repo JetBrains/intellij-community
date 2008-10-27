@@ -5,7 +5,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
-import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
@@ -81,8 +81,8 @@ public class TraverseUIStarter implements ApplicationStarter {
       }
       if (configurable instanceof KeymapConfigurable){
         processKeymap(configurableElement);
-      } else if (configurable instanceof ColorAndFontOptions){
-        processColorAndFontsSettings((ColorAndFontOptions)configurable, configurableElement);
+      } else if (configurable instanceof OptionsContainingConfigurable){
+        processColorAndFontsSettings((OptionsContainingConfigurable)configurable, configurableElement);
       } else if (configurable instanceof CodeStyleSchemesConfigurable){
         processCodeStyleConfigurable((CodeStyleSchemesConfigurable)configurable, configurableElement);
       }
@@ -103,7 +103,7 @@ public class TraverseUIStarter implements ApplicationStarter {
     }
   }
 
-  private static void processColorAndFontsSettings(final ColorAndFontOptions configurable, final Element configurableElement) {
+  private static void processColorAndFontsSettings(final OptionsContainingConfigurable configurable, final Element configurableElement) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Map<String, String> optionsPath = configurable.processListOptions();
     final TreeSet<OptionDescription> result = new TreeSet<OptionDescription>();
