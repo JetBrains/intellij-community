@@ -18,6 +18,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -98,14 +99,19 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       }
     });
     myTypesList.addListSelectionListener(new ListSelectionListener() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
           return;
         }
 
         final ModuleType typeSelected = (ModuleType)myTypesList.getSelectedValue();
-        //noinspection HardCodedStringLiteral
-        myModuleDescriptionPane.setText("<html><body><font face=\"verdana\" size=\"-1\">" + typeSelected.getDescription() + "</font></body></html>");
+
+        final StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
+        sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
+        sb.append(typeSelected.getDescription()).append("</font></body></html>");
+
+        myModuleDescriptionPane.setText(sb.toString());
 
         fireStateChanged();
         SwingUtilities.invokeLater(new Runnable(){
