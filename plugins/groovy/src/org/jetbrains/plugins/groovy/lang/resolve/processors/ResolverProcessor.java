@@ -30,6 +30,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.Res
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author ven
@@ -37,6 +38,7 @@ import java.util.Set;
 public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
   protected String myName;
   private EnumSet<ResolveKind> myResolveTargetKinds;
+  private Set<String> myProcessedClasses = new HashSet<String>();
   protected PsiElement myPlace;
   private
   @NotNull
@@ -71,6 +73,16 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
       if (myTypeArguments.length > 0 && namedElement instanceof PsiClass) {
         substitutor = substitutor.putAll((PsiClass) namedElement, myTypeArguments);
+      }
+
+      if (namedElement instanceof PsiClass) {
+        final PsiClass aClass = (PsiClass)namedElement;
+        final String fqn = aClass.getQualifiedName();
+        if (!myProcessedClasses.contains(fqn)) {
+          myProcessedClasses.add(fqn);
+        } else {
+          return true;
+        }
       }
 
       boolean isAccessible = isAccessible(namedElement);
