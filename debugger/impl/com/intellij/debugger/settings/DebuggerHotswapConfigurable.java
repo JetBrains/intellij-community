@@ -65,7 +65,7 @@ public class DebuggerHotswapConfigurable implements Configurable{
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.idesettings.debugger.hotswap";
   }
 
   public JComponent createComponent() {

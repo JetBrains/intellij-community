@@ -259,6 +259,6 @@ public class DebuggerDataViewsConfigurable implements Configurable {
   }
 
   public String getHelpTopic() {
-    return "topicId367253";
+    return "reference.idesettings.debugger.dataviews";
   }
 }

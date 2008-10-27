@@ -68,7 +68,7 @@ public class DebuggerLaunchingConfigurable implements Configurable{
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.idesettings.debugger.launching";
   }
 
   public JComponent createComponent() {

@@ -54,7 +54,7 @@ public class UserRenderersConfigurable implements Configurable{
   }
 
   public String getHelpTopic() {
-    return null; // todo
+    return "reference.idesettings.debugger.typerenderers"; 
   }
 
   public JComponent createComponent() {

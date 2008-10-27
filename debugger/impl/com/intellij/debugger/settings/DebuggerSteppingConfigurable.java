@@ -67,7 +67,7 @@ public class DebuggerSteppingConfigurable implements Configurable{
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.idesettings.debugger.stepping";
   }
 
   public JComponent createComponent() {
