@@ -1,7 +1,7 @@
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
+import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.DataManager;
@@ -62,16 +62,21 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private SchemesPanel myRootSchemesPanel;
 
-  private boolean myDisposeCompleted = false;
-  private boolean myResetCompleted = false;
+  private boolean myInitResetCompleted = false;
+  private boolean myInitResetInvoked = false;
 
-  private boolean isModifiedImpl(){
-    return isSchemeListModified() || isSomeSchemeModified();
-  }
+  private boolean myRevertChangesCompleted = false;
+
+  private boolean myApplyCompleted = false;
+  private boolean myDisposeCompleted = false;
 
   public boolean isModified() {
     boolean listModified = isSchemeListModified();
-    //boolean schemeModified = isSomeSchemeModified();
+    boolean schemeModified = isSomeSchemeModified();
+
+    if (listModified || schemeModified) {
+      myApplyCompleted = false;
+    }
 
     return listModified;
   }
@@ -177,25 +182,39 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   public void apply() throws ConfigurationException {
-    if (isModifiedImpl()) {
-      EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
+    if (!myApplyCompleted) {
+      try {
+        EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
-      myColorsManager.removeAllSchemes();
-      for (MyColorScheme scheme : mySchemes.values()) {
-          if (!scheme.isDefault()) {
-            scheme.apply();
-            myColorsManager.addColorsScheme(scheme.getOriginalScheme());
+        myColorsManager.removeAllSchemes();
+        for (MyColorScheme scheme : mySchemes.values()) {
+            if (!scheme.isDefault()) {
+              scheme.apply();
+              myColorsManager.addColorsScheme(scheme.getOriginalScheme());
+            }
           }
-        }
 
-      EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
-      myColorsManager.setGlobalScheme(originalScheme);
+        EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
+        myColorsManager.setGlobalScheme(originalScheme);
 
-      applyChangesToEditors();
+        applyChangesToEditors();
 
-      resetImpl();
+        reset();
+      }
+      finally {
+        myApplyCompleted = true;
+
+
+      }
+
 
     }
+
+
+//    initAll();
+//    resetSchemesCombo();
+
+
   }
 
   private void applyChangesToEditors() {
@@ -386,7 +405,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         final ScopeChooserConfigurable configurable = ScopeChooserConfigurable.getInstance(project);
         final boolean isOk = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
         if (isOk) {
-          myResetCompleted = false;
+          myInitResetCompleted = false;
+          myInitResetInvoked = false;
           reset();
         }
       }
@@ -544,24 +564,62 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return IconLoader.getIcon("/general/configurableColorsAndFonts.png");
   }
 
-  public void reset() {
-    if (!myResetCompleted || isModifiedImpl()) {
-      super.reset();
-      resetImpl();
+  private void revertChanges(){
+    if (!myRevertChangesCompleted) {
+      ensureSchemesPanel();
+
+
+      try {
+        resetImpl();
+      }
+      finally {
+        myRevertChangesCompleted = true;
+      }
     }
 
   }
 
   private void resetImpl() {
-    try {
+    mySomeSchemesDeleted = false;
+    initAll();
+    resetSchemesCombo(null);
+  }
+
+  public void reset() {
+    if (!myInitResetInvoked) {
+      super.reset();
+      if (!myInitResetCompleted) {
+        ensureSchemesPanel();
+
+        try {
+          resetImpl();
+        }
+        finally {
+          myInitResetCompleted = true;
+        }
+      }
+
+      myInitResetInvoked = true;
+    }
+    else {
+      revertChanges();
+    }
+
+  }
+
+  public void resetFromChild() {
+    if (!myInitResetCompleted) {
       ensureSchemesPanel();
-      mySomeSchemesDeleted = false;
-      initAll();
-      resetSchemesCombo(null);
+
+
+      try {
+        resetImpl();
+      }
+      finally {
+        myInitResetCompleted = true;
+      }
     }
-    finally {
-      myResetCompleted = true;
-    }
+
   }
 
   private void ensureSchemesPanel() {
@@ -598,7 +656,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
     }
     mySubPanels = null;
-    myResetCompleted = false;
+
+    myInitResetCompleted = false;
+    myInitResetInvoked = false;
+    myRevertChangesCompleted = false;
+
+    myApplyCompleted = false;
     myRootSchemesPanel = null;
   }
 
@@ -925,6 +988,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable {
     private final NewColorAndFontPanel mySubPanel;
+    private boolean mySubInitInvoked = false;
 
     public InnerSearchableConfigurable(final NewColorAndFontPanel subPanel) {
       mySubPanel = subPanel;
@@ -951,12 +1015,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       for (MyColorScheme scheme : mySchemes.values()) {
         if (mySubPanel.containsFontOptions()) {
           if (scheme.isFontModified()) {
+            myRevertChangesCompleted = false;
             return true;
           }
         }
         else {
           for (EditorSchemeAttributeDescriptor descriptor : scheme.getDescriptors()) {
             if (mySubPanel.contains(descriptor) && descriptor.isModified()) {
+              myRevertChangesCompleted = false;
               return true;
             }
           }
@@ -973,7 +1039,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public void reset() {
-      ColorAndFontOptions.this.reset();
+      if (!mySubInitInvoked) {
+        if (!myInitResetCompleted) {
+          ColorAndFontOptions.this.resetFromChild();
+        }
+        mySubInitInvoked = true;
+      }
+      else {
+        ColorAndFontOptions.this.revertChanges();
+      }
     }
 
     public void disposeUIResources() {
