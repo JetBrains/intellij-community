@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.xml.CustomChildren;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.XmlName;
@@ -12,6 +11,7 @@ import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.Configuration;
+import org.jetbrains.idea.maven.dom.model.ConfigurationParameter;
 import org.jetbrains.idea.maven.dom.model.PluginExecution;
 import org.jetbrains.idea.maven.dom.plugin.MavenPluginModel;
 import org.jetbrains.idea.maven.dom.plugin.Mojo;
@@ -26,7 +26,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
   public void registerExtensions(@NotNull Configuration config, @NotNull DomExtensionsRegistrar r) {
     MavenPluginModel pluginModel = MavenPluginDomUtil.getMavenPlugin(config);
     if (pluginModel == null) {
-      r.registerCustomChildrenExtension(AnyParameter.class);
+      r.registerCustomChildrenExtension(ConfigurationParameter.class);
       return;
     }
 
@@ -79,18 +79,18 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
   private void registerPluginParameter(DomExtensionsRegistrar r, final Parameter parameter, final String parameterName) {
     DomExtension e;
     if (isCollection(parameter)) {
-      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), AnyParameter.class);
+      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), ConfigurationParameter.class);
       e.addExtender(new DomExtender() {
         public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
           for (String each : collectPossibleNameForCollectionParameter(parameterName)) {
-            DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(each), AnyParameter.class);
+            DomExtension inner = registrar.registerCollectionChildrenExtension(new XmlName(each), ConfigurationParameter.class);
             inner.putUserData(DomExtension.KEY_DECLARATION, parameter);
           }
         }
       });
     }
     else {
-      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), AnyParameter.class);
+      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), ConfigurationParameter.class);
     }
     e.putUserData(DomExtension.KEY_DECLARATION, parameter);
 
@@ -117,10 +117,5 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<Configurati
                                                    "java.util.Set",
                                                    "java.util.Collection");
     return collectionClasses.contains(type);
-  }
-
-  public static interface AnyParameter extends DomElement {
-    @CustomChildren
-    List<AnyParameter> getChildren();
   }
 }

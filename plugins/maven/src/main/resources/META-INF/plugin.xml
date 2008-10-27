@@ -44,6 +44,7 @@
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="first"/>
     <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.Configuration" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
+    <dom.extender domClass="org.jetbrains.idea.maven.dom.model.ConfigurationParameter" extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction</className>
