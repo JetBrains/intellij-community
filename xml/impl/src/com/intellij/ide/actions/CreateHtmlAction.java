@@ -5,22 +5,19 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -121,33 +118,7 @@ public class CreateHtmlAction extends CreateElementActionBase {
 
   public void update(final AnActionEvent e) {
     super.update(e);
-    DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Presentation presentation = e.getPresentation();
-    if (presentation.isEnabled()) {
-      Module module = LangDataKeys.MODULE.getData(dataContext);
-      if (module != null) {
-        IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
-        if (view != null) {
-          ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-          PsiDirectory[] dirs = view.getDirectories();
-          boolean inSourceRoot = false;
-          for (PsiDirectory dir : dirs) {
-            //todo[nik] check dir is under web facet?
-            String packageName = projectFileIndex.getPackageNameByDirectory(dir.getVirtualFile());
-            if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && packageName != null) {
-              inSourceRoot = true;
-              break;
-            }
-          }
-          if (!inSourceRoot) return;
-        }
-      }
-
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-    }
-
     final FileTypeManager manager = FileTypeManager.getInstance();
     final FileType fileType = manager.getFileTypeByExtension(HtmlFileType.DOT_DEFAULT_EXTENSION);
     if (fileType == FileTypes.PLAIN_TEXT) {
