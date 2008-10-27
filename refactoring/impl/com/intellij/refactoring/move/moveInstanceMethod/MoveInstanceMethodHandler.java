@@ -115,7 +115,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     }
 
     if (message != null) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
       return;
     }
