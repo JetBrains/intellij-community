@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
@@ -96,6 +97,8 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
       if (!CodeInsightUtilBase.prepareFileForWrite(tag.getContainingFile())) {
         return;
       }
+
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
       if (child == null) return;
