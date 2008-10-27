@@ -203,7 +203,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
       params.getProgramParametersList().add("--debug");
     }
 
-    addScriptEncodingSettings(params);
+    //addScriptEncodingSettings(params);
   }
 
   private void addScriptEncodingSettings(final JavaParameters params) {
