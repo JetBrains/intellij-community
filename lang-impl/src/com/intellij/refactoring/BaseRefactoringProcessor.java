@@ -9,6 +9,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -118,6 +119,7 @@ public abstract class BaseRefactoringProcessor {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
     final Ref<Language> refErrorLanguage = new Ref<Language>();
+    final Ref<Boolean> refProcessCanceled = new Ref<Boolean>();
 
     final Runnable findUsagesRunnable = new Runnable() {
       public void run() {
@@ -128,6 +130,9 @@ public abstract class BaseRefactoringProcessor {
             }
             catch (UnknownReferenceTypeException e) {
               refErrorLanguage.set(e.getElementLanguage());
+            }
+            catch (ProcessCanceledException e) {
+              refProcessCanceled.set(Boolean.TRUE);
             }
           }
         });
@@ -140,6 +145,11 @@ public abstract class BaseRefactoringProcessor {
 
     if (!refErrorLanguage.isNull()) {
       Messages.showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
+      return;
+    }
+    if (!refProcessCanceled.isNull()) {
+      Messages.showErrorDialog(myProject, "Index corruption detected. Please retry the refactoring - indexes will be rebuilt automatically",
+                               RefactoringBundle.message("error.title"));
       return;
     }
 
