@@ -101,11 +101,11 @@ public class CompilerPaths {
     String projectName = FileUtil.toSystemIndependentName(project.getLocation());
     int start = projectName.lastIndexOf('/');
     if (start >= 0) {
-      start += 1;
       int end = projectName.lastIndexOf('.');
-      if (end < 0) {
+      if (end < start) {
         end = projectName.length();
       }
+      start += 1;
       if (start <= end) {
         projectName = projectName.substring(start, end);
       }
