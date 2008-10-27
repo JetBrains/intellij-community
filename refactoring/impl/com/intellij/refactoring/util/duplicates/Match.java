@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -377,18 +376,24 @@ public final class Match {
     if (returnType != null) {
       final PsiElement parent = getMatchEnd().getParent();
       if (parent instanceof PsiExpression) {
-        PsiMember member = null;
+        JavaResolveResult result = null;
         if (parent instanceof PsiMethodCallExpression) {
-          member = ((PsiMethodCallExpression)parent).resolveMethod();
+          result = ((PsiMethodCallExpression)parent).resolveMethodGenerics();
         }
         else if (parent instanceof PsiReferenceExpression) {
-          final PsiElement resolved = ((PsiReferenceExpression)parent).resolve();
-          member = resolved instanceof PsiMember ? (PsiMember)resolved : null;
+          result = ((PsiReferenceExpression)parent).advancedResolve(false);
         }
-        if (member != null) {
-          final PsiImmediateClassType expressionType = new PsiImmediateClassType(member.getContainingClass(), PsiSubstitutor.EMPTY);
-          if (weakerType(psiMethod, returnType, expressionType)) {
-            return expressionType;
+        if (result != null) {
+          final PsiElement element = result.getElement();
+          if (element instanceof PsiMember) {
+            final PsiClass psiClass = ((PsiMember)element).getContainingClass();
+            if (psiClass != null) {
+              final JavaPsiFacade facade = JavaPsiFacade.getInstance(parent.getProject());
+              final PsiClassType expressionType = facade.getElementFactory().createType(psiClass, result.getSubstitutor());
+              if (weakerType(psiMethod, returnType, expressionType)) {
+                return expressionType;
+              }
+            }
           }
         }
       }
