@@ -646,7 +646,8 @@ public class HighlightUtil {
   @NotNull
   public static String formatType(@Nullable PsiType type) {
     if (type == null) return PsiKeyword.NULL;
-    return type.getInternalCanonicalText();
+    String text = type.getInternalCanonicalText();
+    return text == null ? PsiKeyword.NULL : text;
   }
 
 
