@@ -4,13 +4,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -20,12 +22,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression, Constants {
+public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl");
   @NonNls private static final String GET_CLASS_METHOD = "getClass";
 
   public PsiMethodCallExpressionImpl() {
-    super(METHOD_CALL_EXPRESSION);
+    super(JavaElementType.METHOD_CALL_EXPRESSION);
   }
 
   public PsiType getType() {
@@ -43,7 +45,11 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
   @NotNull
   public PsiReferenceParameterList getTypeArgumentList() {
-    return getMethodExpression().getParameterList();
+    PsiReferenceExpression expression = getMethodExpression();
+    PsiReferenceParameterList result = expression.getParameterList();
+    if (result != null) return result;
+    LOG.error("Invalid method call expression. Children:\n" + DebugUtil.psiTreeToString(expression, false));
+    return result;
   }
 
   @NotNull
@@ -71,18 +77,18 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         return getFirstChildNode();
 
       case ChildRole.ARGUMENT_LIST:
-        return TreeUtil.findChild(this, EXPRESSION_LIST);
+        return TreeUtil.findChild(this, JavaElementType.EXPRESSION_LIST);
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == EXPRESSION_LIST) {
+    if (i == JavaElementType.EXPRESSION_LIST) {
       return ChildRole.ARGUMENT_LIST;
     }
     else {
-      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
+      if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.METHOD_EXPRESSION;
       }
       return ChildRoleBase.NONE;
@@ -124,7 +130,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
           }
           else {
             ASTNode parent = call.getNode().getTreeParent();
-            while (parent != null && parent.getElementType() != CLASS) parent = parent.getTreeParent();
+            while (parent != null && parent.getElementType() != JavaElementType.CLASS) parent = parent.getTreeParent();
             if (parent != null) {
               qualifierType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType((PsiClass)parent.getPsi());
             }
