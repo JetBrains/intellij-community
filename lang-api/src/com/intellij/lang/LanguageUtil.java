@@ -53,7 +53,7 @@ public final class LanguageUtil {
     return list.toArray(new Language[list.size()]);
   }
 
-  public static boolean isInTeplateLanguageFile(@Nullable final PsiElement element) {
+  public static boolean isInTemplateLanguageFile(@Nullable final PsiElement element) {
     if (element == null) return false;
 
     final PsiFile psiFile = element.getContainingFile();
