@@ -1369,7 +1369,7 @@ public class XmlUtil {
         }
       }
       else {
-        if (element.getManager().areElementsEquivalent(element, context)) {
+        if (element == context) {
           LOG.error("Context==element: " + element.getClass());
           return null;
         }
