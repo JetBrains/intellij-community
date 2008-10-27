@@ -61,6 +61,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
     final int caretOffset = editor.getCaretModel().getOffset();
     final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
+    caretMarker.setGreedyToRight(true);
 
     final XmlExtension.Runner<String, IncorrectOperationException> runAfter =
       new XmlExtension.Runner<String, IncorrectOperationException>() {
@@ -73,7 +74,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
             qualifyWithPrefix(namespacePrefix, element, document);
             PsiDocumentManager.getInstance(project).commitDocument(document);
           }
-          editor.getCaretModel().moveToOffset(caretMarker.getStartOffset());
+          editor.getCaretModel().moveToOffset(caretMarker.getEndOffset());
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
           doDefault(context, item);
         }
