@@ -115,6 +115,9 @@ public final class InjectedLanguage {
     if (language.getID().startsWith("$")) {
       return false;
     }
+    if (language.getID().equals("InjectedFreeMarker") && "true".equals(System.getProperty("inject.freemarker"))) {
+      return true;
+    }                                    
     if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
       return false;
     }
