@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public class NewColorAndFontPanel extends JPanel {
@@ -11,16 +13,18 @@ public class NewColorAndFontPanel extends JPanel {
   private OptionsPanel myOptionsPanel;
   private PreviewPanel myPreviewPanel;
   private final String myCategory;
+  private Collection<String> myOptionList;
 
   public NewColorAndFontPanel(final SchemesPanel schemesPanel,
                               final OptionsPanel optionsPanel,
                               final PreviewPanel previewPanel,
-                              final String category) {
+                              final String category, final Collection<String> optionList) {
     super(new BorderLayout());
     mySchemesPanel = schemesPanel;
     myOptionsPanel = optionsPanel;
     myPreviewPanel = previewPanel;
     myCategory = category;
+    myOptionList = optionList;
 
     JPanel top = new JPanel(new BorderLayout());
 
@@ -65,14 +69,14 @@ public class NewColorAndFontPanel extends JPanel {
 
   }
 
-  public static NewColorAndFontPanel create(final PreviewPanel previewPanel, String category, final ColorAndFontOptions options) {
+  public static NewColorAndFontPanel create(final PreviewPanel previewPanel, String category, final ColorAndFontOptions options, Collection<String> optionList) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
 
     final ColorAndFontDescriptionPanel descriptionPanel = new ColorAndFontDescriptionPanel();
     final OptionsPanel optionsPanel = new OptionsPanelImpl(descriptionPanel, options, schemesPanel, category);
 
 
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category);
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category, optionList);
   }
 
   public Runnable showOption(final String option) {
@@ -85,7 +89,16 @@ public class NewColorAndFontPanel extends JPanel {
 
   @NotNull
   public Map<String, String> processListOptions() {
-    return myOptionsPanel.processListOptions();
+    if (myOptionList == null) {
+      return myOptionsPanel.processListOptions();
+    }
+    else {
+      HashMap<String, String> result = new HashMap<String, String>();
+      for (String s : myOptionList) {
+        result.put(s, "");
+      }
+      return result;
+    }
   }
 
 

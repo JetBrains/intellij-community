@@ -307,7 +307,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       final SimpleEditorPreview preview = new SimpleEditorPreview(this, page);
       NewColorAndFontPanel panel = NewColorAndFontPanel.create(preview,
                                                             page.getDisplayName(),
-                                                            this);
+                                                            this, null);
 
 
       result.add(panel);
@@ -315,7 +315,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     result.add(createDiffPanel());
 
-    result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(), ColorAndFontOptions.FILE_STATUS_GROUP, this));
+    result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(), ColorAndFontOptions.FILE_STATUS_GROUP, this, collectFileTypes()));
 
     final JPanel scopePanel = createChooseScopePanel();
     result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(){
@@ -324,14 +324,24 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         return scopePanel;
       }
 
-    }, ColorAndFontOptions.SCOPES_GROUP, this));
+    }, ColorAndFontOptions.SCOPES_GROUP, this, null));
 
 
     return result;
   }
 
+  private Collection<String> collectFileTypes() {
+    ArrayList<String> result = new ArrayList<String>();
+    FileStatus[] statuses = FileStatusFactory.SERVICE.getInstance().getAllFileStatuses();
+
+    for (FileStatus status : statuses) {
+      result.add(status.getText());
+    }
+    return result;
+  }
+
   private NewColorAndFontPanel createFontConfigurable() {
-    return new NewColorAndFontPanel(new SchemesPanel(this), new FontOptions(this), new FontEditorPreview(this), "Font"){
+    return new NewColorAndFontPanel(new SchemesPanel(this), new FontOptions(this), new FontEditorPreview(this), "Font", null){
       @Override
       public boolean containsFontOptions() {
         return true;
@@ -362,7 +372,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
     } );
 
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, diffPreviewPanel,ColorAndFontOptions.DIFF_GROUP);
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, diffPreviewPanel,ColorAndFontOptions.DIFF_GROUP, null);
 
   }
 
