@@ -105,7 +105,9 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     if (owner != null && owner == c) {
       myManager.getFocusManager().requestFocus(new FocusCommand() {
         public ActionCallback run() {
-          myFocusWatcher.setFocusedComponentImpl(c);
+          if (c.isFocusOwner()) {
+            myFocusWatcher.setFocusedComponentImpl(c);
+          }
           return new ActionCallback.Done();
         }
       }, myForced).doWhenDone(new Runnable() {
@@ -132,7 +134,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private void updateFocusedComponentForWatcher(final Component c) {
     final WindowWatcher watcher = ((WindowManagerImpl)WindowManager.getInstance()).getWindowWatcher();
     final FocusWatcher focusWatcher = watcher.getFocusWatcherFor(c);
-    if (focusWatcher != null) {
+    if (focusWatcher != null && c.isFocusOwner()) {
       focusWatcher.setFocusedComponentImpl(c);
     }
   }
