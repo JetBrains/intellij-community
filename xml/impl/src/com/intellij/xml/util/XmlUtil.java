@@ -1369,6 +1369,10 @@ public class XmlUtil {
         }
       }
       else {
+        if (element.getManager().areElementsEquivalent(element, context)) {
+          LOG.error("Context==element: " + element.getClass());
+          return null;
+        }
         element = context;
       }
     }
