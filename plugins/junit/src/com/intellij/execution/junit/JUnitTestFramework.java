@@ -23,6 +23,7 @@ package com.intellij.execution.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFramework;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
 public class JUnitTestFramework implements TestFramework {
@@ -38,7 +39,10 @@ public class JUnitTestFramework implements TestFramework {
       for (PsiMethod method : methods) {
         if (AnnotationUtil.isAnnotated(method, "org.junit.Before", false)) return method;
       }
-      return (PsiMethod)psiClass.add(factory.createMethodFromText("@org.junit.Before public void setUp() throws Exception {\n}", null));
+      final PsiMethod method =
+        (PsiMethod)psiClass.add(factory.createMethodFromText("@org.junit.Before public void setUp() throws Exception {\n}", null));
+      JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(method);
+      return method;
     }
 
     final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();\n}", null);
