@@ -1,7 +1,7 @@
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.OptionsContainingConfigurable;
+import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.DataManager;
@@ -386,7 +386,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         final ScopeChooserConfigurable configurable = ScopeChooserConfigurable.getInstance(project);
         final boolean isOk = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
         if (isOk) {
-          //TODO lesya
+          myResetCompleted = false;
           reset();
         }
       }
