@@ -137,7 +137,7 @@ public class GroovyAnnotator implements Annotator {
       if (file.isScript()) {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
-      if (DomainClassUtils.isDomainClassFile(element.getContainingFile().getVirtualFile())) {
+      if (DomainClassUtils.isDomainClassFile(element.getContainingFile().getVirtualFile(), element.getProject())) {
         checkDomainClass((GroovyFile) element, holder);
       }
     } else {
