@@ -100,6 +100,6 @@ public class MavenSettings implements SearchableConfigurable.Parent {
   }
 
   public String getHelpTopic() {
-    return null;
+    return myConfigurable.getHelpTopic();
   }
 }
