@@ -103,15 +103,17 @@ public abstract class CreateClassFix {
         if (!(file instanceof GroovyFileBase || file instanceof GspFile)) return;
         GroovyFileBase groovyFile = file instanceof GspFile ? ((GspFile) file).getGroovyLanguageRoot() : (GroovyFileBase) file;
         final String qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
-        final PsiManager manager = myRefElement.getManager();
+        final PsiManager manager = PsiManager.getInstance(project);
         final String name = myRefElement.getReferenceName();
         final Module module = ModuleUtil.findModuleForPsiElement(file);
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module);
         if (targetDirectory == null) return;
 
         PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement);
-        addImportForClass(groovyFile, qualifier, targetClass);
-        putCursor(project, targetClass.getContainingFile(), targetClass);
+        if (targetClass != null) {
+          addImportForClass(groovyFile, qualifier, targetClass);
+          putCursor(project, targetClass.getContainingFile(), targetClass);
+        }
       }
 
     };
