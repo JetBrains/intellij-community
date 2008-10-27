@@ -1,6 +1,6 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.numeric.pointless_arithmetic_expression;
 
-public class PointlessArithmeticExpressionInspection
+public class PointlessArithmeticExpression
 {
     private static final int ZERO_CONSTANT = 0;
     private static final int ONE_CONSTANT = 1;
@@ -83,5 +83,9 @@ public class PointlessArithmeticExpressionInspection
         if (i < Integer.MIN_VALUE) {
             System.out.println("always false");
         }
+    }
+
+    double floatsOrDoubles() {
+        return 123.001 % 1.0;
     }
 }

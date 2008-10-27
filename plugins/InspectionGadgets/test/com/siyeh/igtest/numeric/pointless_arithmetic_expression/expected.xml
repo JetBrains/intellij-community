@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i + 0&lt;/code&gt; can be replaced with 'i' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;0+j&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;j - 0&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;j * ZERO_CONSTANT&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;j * ONE_CONSTANT&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>23</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;j / 1&lt;/code&gt; can be replaced with 'j' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>27</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;j%1&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;k&lt;=Integer.MAX_VALUE&lt;/code&gt; can be replaced with 'true' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>34</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;k&gt;=Integer.MIN_VALUE&lt;/code&gt; can be replaced with 'true' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>38</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;k&gt;Integer.MAX_VALUE&lt;/code&gt; can be replaced with 'false' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>42</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;k&lt;Integer.MIN_VALUE&lt;/code&gt; can be replaced with 'false' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>46</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;Integer.MAX_VALUE &gt;= k&lt;/code&gt; can be replaced with 'true' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>50</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;Integer.MIN_VALUE &lt;= k&lt;/code&gt; can be replaced with 'true' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>54</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;Integer.MAX_VALUE &lt; k&lt;/code&gt; can be replaced with 'false' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>58</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;Integer.MIN_VALUE &gt; k&lt;/code&gt; can be replaced with 'false' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>70</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i &gt; Integer.MAX_VALUE&lt;/code&gt; can be replaced with 'false' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>76</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i &lt;= Integer.MAX_VALUE&lt;/code&gt; can be replaced with 'true' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>80</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i &gt;= Integer.MIN_VALUE&lt;/code&gt; can be replaced with 'true' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>83</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i &lt; Integer.MIN_VALUE&lt;/code&gt; can be replaced with 'false' #loc</description>
+  </problem>
+
+</problems>

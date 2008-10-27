@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class PointlessArithmeticExpressionInspection
         extends BaseInspection {
 
     private static final Set<String> arithmeticTokens =
-            new HashSet<String>(4);
+            new HashSet<String>(9);
 
     static {
         arithmeticTokens.add("+");
@@ -58,6 +58,7 @@ public class PointlessArithmeticExpressionInspection
      */
     public boolean m_ignoreExpressionsContainingConstants = false;
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -65,16 +66,19 @@ public class PointlessArithmeticExpressionInspection
                 this, "m_ignoreExpressionsContainingConstants");
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "pointless.arithmetic.expression.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -122,10 +126,7 @@ public class PointlessArithmeticExpressionInspection
         }
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new PointlessArithmeticVisitor();
-    }
-
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new PointlessArithmeticFix();
     }
@@ -138,6 +139,7 @@ public class PointlessArithmeticExpressionInspection
                     "constant.conditional.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiExpression expression =
@@ -146,6 +148,10 @@ public class PointlessArithmeticExpressionInspection
                     calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);
         }
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new PointlessArithmeticVisitor();
     }
 
     private class PointlessArithmeticVisitor extends BaseInspectionVisitor {
@@ -224,7 +230,7 @@ public class PointlessArithmeticExpressionInspection
         }
 
         private boolean modExpressionIsPointless(PsiExpression rhs) {
-            return isOne(rhs);
+            return PsiType.INT.equals(rhs.getType()) && isOne(rhs);
         }
 
         private boolean comparisonExpressionIsPointless(PsiExpression lhs, PsiExpression rhs,
