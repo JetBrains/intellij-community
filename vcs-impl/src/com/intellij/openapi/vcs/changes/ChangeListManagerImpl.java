@@ -68,6 +68,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<LocalChangeListsLoadedListener>(
     "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
 
+  private boolean myShowLocalChangesInvalidated;
+
   private VcsListener myVcsListener = new VcsListener() {
     public void directoryMappingChanged() {
       VcsDirtyScopeManager.getInstanceChecked(myProject).markEverythingDirty();
@@ -271,6 +273,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
 
         updateIgnoredFiles(false);
+        myShowLocalChangesInvalidated = false;
       }
       myChangesViewManager.scheduleRefresh();
     }
@@ -517,7 +520,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public boolean isInUpdate() {
     synchronized (myDataLock) {
-      return myModifier.isInsideUpdate();
+      return myModifier.isInsideUpdate() || myShowLocalChangesInvalidated;
     }
   }
 
@@ -819,5 +822,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final EnsureUpToDateFromNonAWTThread worker = new EnsureUpToDateFromNonAWTThread(myProject);
     worker.execute();
     return worker.isDone();
+  }
+
+  // only a light attempt to show that some dirty scope request is asynchronously coming
+  // for users to see changes are not valid
+  // (commit -> asynch synch VFS -> asynch vcs dirty scope)
+  public void showLocalChangesInvalidated() {
+    synchronized (myDataLock) {
+      myShowLocalChangesInvalidated = true;
+    }
   }
 }

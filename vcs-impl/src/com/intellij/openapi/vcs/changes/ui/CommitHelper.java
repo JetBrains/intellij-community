@@ -292,6 +292,9 @@ public class CommitHelper {
     }
 
     public void doBeforeRefresh() {
+      final ChangeListManagerImpl clManager = (ChangeListManagerImpl) ChangeListManager.getInstance(myProject);
+      clManager.showLocalChangesInvalidated();
+
       myAction = ApplicationManager.getApplication().runReadAction(new Computable<LocalHistoryAction>() {
         public LocalHistoryAction compute() {
           return LocalHistory.startAction(myProject, myActionName);
