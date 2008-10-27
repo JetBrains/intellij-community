@@ -171,10 +171,11 @@ public class FSRecords implements Disposable, Forceable {
         try {
           closeFiles();
 
-          boolean deleted = FileUtil.delete(getCorruptionMarkerFile()) &&
-                            FileUtil.delete(namesFile) &&
-                            Storage.deleteFiles(attributesFile.getCanonicalPath()) &&
-                            FileUtil.delete(recordsFile);
+          boolean deleted = true;
+          deleted &= FileUtil.delete(getCorruptionMarkerFile());
+          deleted &= deleteWithSubordinates(namesFile);
+          deleted &= Storage.deleteFiles(attributesFile.getCanonicalPath());
+          deleted &= deleteWithSubordinates(recordsFile);
 
           if (!deleted) {
             throw new IOException("Cannot delete filesystem storage files");
@@ -186,6 +187,24 @@ public class FSRecords implements Disposable, Forceable {
 
         init();
       }
+    }
+
+    private static boolean deleteWithSubordinates(File file) {
+      final String baseName = file.getName();
+      final File[] files = file.getParentFile().listFiles(new FileFilter() {
+        public boolean accept(final File pathname) {
+          return pathname.getName().startsWith(baseName);
+        }
+      });
+
+      boolean ok = true;
+      if (files != null) {
+        for (File f : files) {
+          ok &= FileUtil.delete(f);
+        }
+      }
+
+      return ok;
     }
 
     private static void markDirty() throws IOException {
