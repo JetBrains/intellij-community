@@ -50,10 +50,14 @@ public class BranchConfigurationDialog extends DialogWrapper {
     init();
     setTitle(SvnBundle.message("configure.branches.title"));
 
+    if (configuration.getTrunkUrl() == null) {
+      configuration.setTrunkUrl(rootUrl);
+    }
+
     myTrunkLocationTextField.setText(configuration.getTrunkUrl());
     myTrunkLocationTextField.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        SelectLocationDialog dlg = new SelectLocationDialog(project, configuration.getTrunkUrl());
+        SelectLocationDialog dlg = new SelectLocationDialog(project, myTrunkLocationTextField.getText());
         dlg.show();
         if (dlg.isOK()) {
           myTrunkLocationTextField.setText(dlg.getSelectedURL());

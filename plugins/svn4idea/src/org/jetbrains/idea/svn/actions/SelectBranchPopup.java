@@ -66,7 +66,9 @@ public class SelectBranchPopup {
     }
 
     final List<String> items = new ArrayList<String>();
-    items.add(configuration.getTrunkUrl());
+    if (configuration.getTrunkUrl() != null) {
+      items.add(configuration.getTrunkUrl());
+    }
     for (String url : configuration.getBranchUrls()) {
       items.add(url);
     }
@@ -114,7 +116,7 @@ public class SelectBranchPopup {
       if (pos < 0) {
         return value;
       }
-      if (myTopLevel && !value.startsWith(myConfiguration.getTrunkUrl())) {
+      if (myTopLevel && ((myConfiguration.getTrunkUrl() == null) || (! value.startsWith(myConfiguration.getTrunkUrl())))) {
         return value.substring(pos+1) + "...";
       }
       return value.substring(pos+1);

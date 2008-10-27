@@ -147,6 +147,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
           }
         }, SvnBundle.message("loading.default.branches.configuration.text"), false, myProject);
         if (! exceptionRef.isNull()) {
+          // set empty configuration... to do not repeat forever when invoked in cycle
+          setConfiguration(vcsRoot, new SvnBranchConfiguration(), true);
           throw exceptionRef.get();
         }
         configuration = myConfigurationBean.myConfigurationMap.get(vcsRoot.getPath());

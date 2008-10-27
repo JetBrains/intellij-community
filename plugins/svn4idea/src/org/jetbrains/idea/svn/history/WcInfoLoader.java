@@ -111,7 +111,7 @@ public class WcInfoLoader {
     final List<WCInfoWithBranches.Branch> items = new ArrayList<WCInfoWithBranches.Branch>();
 
     final String trunkUrl = configuration.getTrunkUrl();
-    if (! SVNPathUtil.isAncestor(trunkUrl, url)) {
+    if ((trunkUrl != null) && (! SVNPathUtil.isAncestor(trunkUrl, url))) {
       items.add(new WCInfoWithBranches.Branch(trunkUrl));
     }
     final Map<String,List<SvnBranchItem>> branchMap = configuration.getLoadedBranchMap(myProject);
