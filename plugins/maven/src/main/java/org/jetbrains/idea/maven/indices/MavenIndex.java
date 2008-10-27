@@ -48,7 +48,7 @@ public class MavenIndex {
   public enum Kind {
     LOCAL, REMOTE
   }
-  
+
   private final NexusIndexer myIndexer;
   private ArtifactContextProducer myArtifactContextProducer;
   private final File myDir;
@@ -457,7 +457,7 @@ public class MavenIndex {
         String artifactId = artifactInfo.artifactId;
         String version = artifactInfo.version;
 
-        if (groupId == null  || artifactId == null || version == null) return null;
+        if (groupId == null || artifactId == null || version == null) return null;
 
         myData.groups.enumerate(groupId);
         myData.hasGroupCache.put(groupId, true);
@@ -540,25 +540,14 @@ public class MavenIndex {
     Boolean cached = cache.get(value);
     if (cached != null) return cached;
 
-    class FoundException extends RuntimeException {
-    }
-
     boolean result = doIndexTask(new IndexTask<Boolean>() {
       public Boolean doTask() throws Exception {
-        try {
-          set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
-            public boolean process(int record) throws IOException {
-              if (value.equals(set.valueOf(record))) {
-                throw new FoundException();
-              }
-              return true;
-            }
-          });
-        }
-        catch (FoundException ignore) {
-          return true;
-        }
-        return false;
+        return !set.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+          public boolean process(int record) throws IOException {
+            if (value.equals(set.valueOf(record))) return false;
+            return true;
+          }
+        });
       }
     }, false).booleanValue();
 

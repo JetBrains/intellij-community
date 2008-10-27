@@ -32,6 +32,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,9 @@ import java.util.Map;
 public class MavenProjectNavigator extends MavenTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
   public static final String MAVEN_NAVIGATOR_TOOLWINDOW_ID = "Maven Projects";
   private static final Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
+
+  private static final URL ADD_ICON_URL = MavenProjectNavigator.class.getResource("/general/add.png");
+  private static final URL SYNC_ICON_URL = MavenProjectNavigator.class.getResource("/actions/sync.png");
 
   private PomTreeViewSettings mySettings = new PomTreeViewSettings();
 
@@ -89,8 +93,8 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
   private void initMavenProjectsTree() {
     myTree = new SimpleTree() {
       private JLabel myLabel = new JLabel(ProjectBundle.message("maven.navigator.nothing.to.display",
-                                                                formatHtmlImage("/general/add.png"),
-                                                                formatHtmlImage("/actions/sync.png")));
+                                                                formatHtmlImage(ADD_ICON_URL),
+                                                                formatHtmlImage(SYNC_ICON_URL)));
 
       @Override
       protected void paintComponent(Graphics g) {

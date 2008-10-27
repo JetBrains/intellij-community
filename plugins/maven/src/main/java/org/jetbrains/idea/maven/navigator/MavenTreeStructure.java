@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 
@@ -51,6 +52,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
   private static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
   private static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
 
+  private static final URL ERROR_ICON_URL = MavenTreeStructure.class.getResource("/images/error.png");
+  private static final URL WARNING_ICON_URL = MavenTreeStructure.class.getResource("/images/warning.png");
+
+  private static final CustomNode[] EMPTY_NODES_ARRAY = new CustomNode[0];
   protected final Project myProject;
   protected final MavenProjectsManager myProjectsManager;
   protected final MavenEventsManager myEventsHandler;
@@ -150,8 +155,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     builder.select(node, null);
   }
 
-  protected String formatHtmlImage(String path) {
-    return "<img src=\"" + getClass().getResource(path) + "\"> ";
+  protected String formatHtmlImage(URL url) {
+    return "<img src=\"" + url + "\"> ";
   }
 
   public enum ErrorLevel {
@@ -159,9 +164,10 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
   }
 
   public abstract class CustomNode extends SimpleNode {
-    private CustomNode structuralParent;
+
+    private CustomNode myStructuralParent;
     private ErrorLevel myNodeErrorLevel = ErrorLevel.NONE;
-    private String myDescription;
+    private ErrorLevel myOverallErrorLevelCache = null;
 
     public CustomNode(CustomNode parent) {
       super(parent);
@@ -169,22 +175,19 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
 
     public void setStructuralParent(CustomNode structuralParent) {
-      this.structuralParent = structuralParent;
+      myStructuralParent = structuralParent;
+
     }
 
     @Override
     public NodeDescriptor getParentDescriptor() {
-      return structuralParent;
-    }
-
-    public CustomNode[] getChildren() {
-      return new CustomNode[0];
+      return myStructuralParent;
     }
 
     public <T extends CustomNode> T getParent(Class<T> aClass) {
       CustomNode node = this;
       while (true) {
-        node = node.structuralParent;
+        node = node.myStructuralParent;
         if (node == null || aClass.isInstance(node)) {
           //noinspection unchecked,ConstantConditions
           return (T)node;
@@ -193,10 +196,39 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
 
     public boolean isVisible() {
+      for (CustomNode each : getStructuralChildren()) {
+        if (each.isVisible()) return true;
+      }
       return shouldDisplay(this);
     }
 
+    public CustomNode[] getChildren() {
+      List<? extends CustomNode> children = getStructuralChildren();
+      if (children.isEmpty()) return EMPTY_NODES_ARRAY;
+
+      List<CustomNode> result = new ArrayList<CustomNode>();
+      for (CustomNode each : children) {
+        if (each.isVisible()) result.add(each);
+      }
+      return result.toArray(new CustomNode[result.size()]);
+    }
+
+    protected List<? extends CustomNode> getStructuralChildren() {
+      return Collections.emptyList();
+    }
+
+    protected void resetChildrenCaches() {
+      myOverallErrorLevelCache = null;
+    }
+
     public ErrorLevel getOverallErrorLevel() {
+      if (myOverallErrorLevelCache == null) {
+        myOverallErrorLevelCache = calcOverallErrorLevel();
+      }
+      return myOverallErrorLevelCache;
+    }
+
+    private ErrorLevel calcOverallErrorLevel() {
       ErrorLevel childrenErrorLevel = getChildrenErrorLevel();
       return childrenErrorLevel.compareTo(myNodeErrorLevel) > 0
              ? childrenErrorLevel
@@ -205,8 +237,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     public ErrorLevel getChildrenErrorLevel() {
       ErrorLevel result = ErrorLevel.NONE;
-      for (SimpleNode each : getChildren()) {
-        ErrorLevel eachLevel = ((CustomNode)each).getOverallErrorLevel();
+      for (CustomNode each : getStructuralChildren()) {
+        ErrorLevel eachLevel = each.getOverallErrorLevel();
         if (eachLevel.compareTo(result) > 0) result = eachLevel;
       }
       return result;
@@ -222,8 +254,9 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
       CustomNode each = this;
       while (each != null) {
+        each.resetChildrenCaches();
         each.updateNameAndDescription();
-        each = each.structuralParent;
+        each = each.myStructuralParent;
       }
     }
 
@@ -287,31 +320,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  public abstract class ListNode extends CustomNode {
-    public ListNode(CustomNode parent) {
-      super(parent);
-    }
-
-    @Override
-    public boolean isVisible() {
-      for (CustomNode each : getStructuralChildren()) {
-        if (each.isVisible()) return true;
-      }
-      return super.isVisible();
-    }
-
-    public CustomNode[] getChildren() {
-      List<CustomNode> result = new ArrayList<CustomNode>();
-      for (CustomNode each : getStructuralChildren()) {
-        if (each.isVisible()) result.add(each);
-      }
-      return result.toArray(new CustomNode[result.size()]);
-    }
-
-    protected abstract List<? extends CustomNode> getStructuralChildren();
-  }
-
-  public abstract class PomGroupNode extends ListNode {
+  public abstract class PomGroupNode extends CustomNode {
     public final List<PomNode> pomNodes = new ArrayList<PomNode>();
 
     public PomGroupNode(CustomNode parent) {
@@ -362,6 +371,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
         }
       }
       pomNodes.removeAll(children);
+
+      resetChildrenCaches();
       return children;
     }
 
@@ -371,6 +382,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       pomNode.setStructuralParent(this);
       insertSorted(pomNodes, pomNode);
 
+      resetChildrenCaches();
       updateGroupNode(wasVisible);
     }
 
@@ -381,7 +393,13 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       pomNodes.remove(pomNode);
       adoptOrphans(pomNode);
 
+      resetChildrenCaches();
       updateGroupNode(wasVisible);
+    }
+
+    public void reinsert(PomNode pomNode) {
+      pomNodes.remove(pomNode);
+      insertSorted(pomNodes, pomNode);
     }
 
     private void adoptOrphans(final PomNode pomNode) {
@@ -397,20 +415,17 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       return this;
     }
 
-    public void reinsert(PomNode pomNode) {
-      pomNodes.remove(pomNode);
-      insertSorted(pomNodes, pomNode);
-    }
-
-    protected void merge(PomGroupNode groupNode) {
+    private void merge(PomGroupNode groupNode) {
       for (PomNode pomNode : groupNode.pomNodes) {
         insertSorted(pomNodes, pomNode);
       }
       groupNode.clear();
+      resetChildrenCaches();
     }
 
     public void clear() {
       pomNodes.clear();
+      resetChildrenCaches();
     }
 
     private void updateGroupNode(boolean wasVisible) {
@@ -485,7 +500,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  public class PomNode extends ListNode {
+  public class PomNode extends CustomNode {
     final private MavenProjectModel myProjectModel;
     private String savedPath = "";
     private String actionIdPrefix = "";
@@ -656,7 +671,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       for (MavenProjectModelProblem each : problems) {
         desc.append("<tr>");
         if (first) {
-          desc.append("<td valign=top>" + formatHtmlImage(critical ? "/images/error.png" : "/images/warning.png") + "</td>");
+          desc.append("<td valign=top>" + formatHtmlImage(critical ? ERROR_ICON_URL : WARNING_ICON_URL) + "</td>");
           desc.append("<td valign=top>" + (critical ? "Errors" : "Warnings") + ":</td>");
           first = false;
         }
@@ -741,7 +756,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
       }
     }
 
-    private ListNode getVisibleParent() {
+    private CustomNode getVisibleParent() {
       return getParent(getTreeViewSettings().groupStructurally
                        ? NonModulePomsNode.class
                        : RootNode.class);
@@ -898,7 +913,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  public abstract class GoalGroupNode extends ListNode {
+  public abstract class GoalGroupNode extends CustomNode {
     final List<GoalNode> goalNodes = new ArrayList<GoalNode>();
     private final PomNode pomNode;
 
@@ -1000,7 +1015,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  public class ProfilesNode extends ListNode {
+  public class ProfilesNode extends CustomNode {
     final List<ProfileNode> profileNodes = new ArrayList<ProfileNode>();
 
     public ProfilesNode(final CustomNode parent) {
@@ -1080,7 +1095,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  public class PluginsNode extends ListNode {
+  public class PluginsNode extends CustomNode {
     final List<PluginNode> pluginNodes = new ArrayList<PluginNode>();
 
     public PluginsNode(final PomNode parent) {

@@ -128,7 +128,9 @@ public class MavenProjectsTree {
     // todo hook for IDEADEV-27583
     if (isNew) {
       VirtualFile f = project.getFile();
-      assert !readFiles.contains(f) : "new file alread read " + f;
+      if (readFiles.contains(f)) {
+        assert false : "new file alread read " + f;
+      }
     }
 
     if (!readFiles.contains(project.getFile())) {
