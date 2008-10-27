@@ -26,9 +26,11 @@ public class MoveChanges implements ChangeListCommand {
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    for(LocalChangeList fromList: myMovedFrom.keySet()) {
-      final Collection<Change> changesInList = myMovedFrom.get(fromList);
-      dispatcher.getMulticaster().changesMoved(changesInList, fromList, myListCopy);
+    if ((myMovedFrom != null) && (myListCopy != null)) {
+      for(LocalChangeList fromList: myMovedFrom.keySet()) {
+        final Collection<Change> changesInList = myMovedFrom.get(fromList);
+        dispatcher.getMulticaster().changesMoved(changesInList, fromList, myListCopy);
+      }
     }
   }
 
