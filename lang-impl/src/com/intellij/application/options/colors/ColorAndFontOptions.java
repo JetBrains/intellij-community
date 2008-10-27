@@ -62,17 +62,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private SchemesPanel myRootSchemesPanel;
 
-  private boolean myResetCompleted = false;
-  private boolean myApplyCompleted = false;
   private boolean myDisposeCompleted = false;
+  private boolean myResetCompleted = false;
+
+  private boolean isModifiedImpl(){
+    return isSchemeListModified() || isSomeSchemeModified();
+  }
 
   public boolean isModified() {
     boolean listModified = isSchemeListModified();
-    boolean schemeModified = isSomeSchemeModified();
-
-    if (listModified || schemeModified) {
-      myApplyCompleted = false;
-    }
+    //boolean schemeModified = isSomeSchemeModified();
 
     return listModified;
   }
@@ -178,40 +177,25 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   public void apply() throws ConfigurationException {
-    if (!myApplyCompleted) {
-      try {
-        EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
+    if (isModifiedImpl()) {
+      EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
-        myColorsManager.removeAllSchemes();
-        for (MyColorScheme scheme : mySchemes.values()) {
-            if (!scheme.isDefault()) {
-              scheme.apply();
-              myColorsManager.addColorsScheme(scheme.getOriginalScheme());
-            }
+      myColorsManager.removeAllSchemes();
+      for (MyColorScheme scheme : mySchemes.values()) {
+          if (!scheme.isDefault()) {
+            scheme.apply();
+            myColorsManager.addColorsScheme(scheme.getOriginalScheme());
           }
+        }
 
-        EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
-        myColorsManager.setGlobalScheme(originalScheme);
+      EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
+      myColorsManager.setGlobalScheme(originalScheme);
 
-        applyChangesToEditors();
+      applyChangesToEditors();
 
-        myResetCompleted = false;
-        reset();        
-      }
-      finally {
-        myApplyCompleted = true;
-
-
-      }
-
+      resetImpl();
 
     }
-
-
-//    initAll();
-//    resetSchemesCombo();
-
-
   }
 
   private void applyChangesToEditors() {
@@ -561,21 +545,23 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   public void reset() {
-    super.reset();
-    if (!myResetCompleted) {
-      ensureSchemesPanel();
-
-
-      try {
-        mySomeSchemesDeleted = false;
-        initAll();
-        resetSchemesCombo(null);
-      }
-      finally {
-        myResetCompleted = true;
-      }
+    if (!myResetCompleted || isModifiedImpl()) {
+      super.reset();
+      resetImpl();
     }
 
+  }
+
+  private void resetImpl() {
+    try {
+      ensureSchemesPanel();
+      mySomeSchemesDeleted = false;
+      initAll();
+      resetSchemesCombo(null);
+    }
+    finally {
+      myResetCompleted = true;
+    }
   }
 
   private void ensureSchemesPanel() {
@@ -613,7 +599,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
     mySubPanels = null;
     myResetCompleted = false;
-    myApplyCompleted = false;
     myRootSchemesPanel = null;
   }
 
