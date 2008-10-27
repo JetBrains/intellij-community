@@ -17,9 +17,8 @@ package git4idea.checkout;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
@@ -155,7 +154,22 @@ public class GitCloneDialog extends DialogWrapper {
     fcd.setTitle(GitBundle.getString("clone.destination.directory.title"));
     fcd.setDescription(GitBundle.getString("clone.destination.directory.description"));
     fcd.setHideIgnored(false);
-    myParentDirectory.addBrowseFolderListener(fcd.getTitle(), fcd.getDescription(), myProject, fcd);
+    myParentDirectory.addActionListener(
+      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(fcd.getTitle(), fcd.getDescription(), myParentDirectory,
+                                                                           myProject, fcd, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+        @Override
+        protected VirtualFile getInitialFile() {
+          // suggest project base dir only if nothing is typed in the component.
+          String text = getComponentText();
+          if (text.length() == 0) {
+            VirtualFile file = myProject.getBaseDir();
+            if (file != null) {
+              return file;
+            }
+          }
+          return super.getInitialFile();
+        }
+      });
     final DocumentListener updateOkButtonListener = new DocumentListener() {
       // update Ok button state depending on the current state of the fields
       public void insertUpdate(final DocumentEvent e) {
