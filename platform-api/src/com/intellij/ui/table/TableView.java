@@ -48,6 +48,11 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     setSizes();
   }
 
+  @Override
+  public ListTableModel<Item> getListTableModel() {
+    return (ListTableModel<Item>)super.getModel();
+  }
+
   public TableCellRenderer getCellRenderer(int row, int column) {
     ColumnInfo columnInfo = getListTableModel().getColumnInfos()[convertColumnIndexToModel(column)];
     TableCellRenderer renderer = columnInfo.getRenderer(getListTableModel().getItems().get(row));
