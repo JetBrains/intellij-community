@@ -7,8 +7,8 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author ilyas
@@ -41,8 +41,7 @@ public class GroovyDebuggerSettingsConfigurable implements Configurable {
   }
 
   public String getHelpTopic() {
-    // todo implement me!
-    return null;
+    return "reference.idesettings.debugger.groovy";
   }
 
   public JComponent createComponent() {
