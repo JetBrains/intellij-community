@@ -39,7 +39,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     myRelevantLanguages = null;
   }
 
-  private Set<PsiFile> myRootsInUpdate = new HashSet<PsiFile>(4);
+  private final Set<PsiFile> myRootsInUpdate = new HashSet<PsiFile>(4);
 
   public CompositeLanguageFileViewProvider(final PsiManager manager, final VirtualFile virtualFile, final boolean physical) {
     super(manager, virtualFile, physical);

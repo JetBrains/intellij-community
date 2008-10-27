@@ -163,13 +163,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
     setProgressLimit(1L * tools.length * elements.length);
+    final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     JobUtil.invokeConcurrentlyForAll(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
-        if (progress != null) {
-          if (progress.isCanceled()) {
-            return false;
-          }
+        if (progress != null && progress.isCanceled()) {
+          return false;
         }
 
         final ProgressManager progressManager = ProgressManager.getInstance();
@@ -184,7 +183,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             if(elementVisitor == null) {
               LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
             }
-            final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
             tool.inspectionStarted(session);
             for (PsiElement element : elements) {
               progressManager.checkCanceled();
@@ -197,7 +195,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
               appendDescriptors(holder.getResults(), tool);
             }
           }
-        },progress);
+        }, progress);
         return true;
       }
     }, "Inspection tools");

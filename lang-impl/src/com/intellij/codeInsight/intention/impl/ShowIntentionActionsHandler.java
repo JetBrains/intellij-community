@@ -61,58 +61,67 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     ShowIntentionsPass.getActionsToShow(editor, file, intentionsToShow, errorFixesToShow, inspectionFixesToShow, intentionActions, -1);
     
     if (!codeAnalyzer.isAllAnalysisFinished(file)) {
-      errorFixesToShow.clear();
-      inspectionFixesToShow.clear();
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile == null) return;
-      final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      final int offset = editor.getCaretModel().getOffset();
-      final PsiElement element = file.findElementAt(offset);
-      if (element == null) return;
-      final Task.Backgroundable task = new Task.Backgroundable(project, ActionsBundle.message("action.ShowIntentionActions.text"), true) {
-        public void run(@NotNull final ProgressIndicator indicator) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              final TextRange textRange = element.getTextRange();
-              final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, textRange.getStartOffset(), textRange.getEndOffset());
-              pass.collectInformation(indicator);
-              for (HighlightInfo info : pass.getHighlights()) {
-                if (info.quickFixActionRanges != null) {
-                  final boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
-                  for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRanges : info.quickFixActionRanges) {
-                    if (actionRanges.second.contains(offset)) {
-                      final IntentionAction action = actionRanges.first.getAction();
-                      if (action instanceof PsiElementBaseIntentionAction ? ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, element) : action.isAvailable(project, editor, file)) {
-                        if (isError) {
-                          errorFixesToShow.add(actionRanges.first);
-                        }
-                        else {
-                          inspectionFixesToShow.add(actionRanges.first);
-                        }
+      runPassesAndShowIntentions(project, editor, file, intentionsToShow);
+    }
+    else if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
+      IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
+    }
+  }
+
+  private static void runPassesAndShowIntentions(final Project project, final Editor editor, final PsiFile file, final ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow) {
+    final ArrayList<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    final ArrayList<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    errorFixesToShow.clear();
+    inspectionFixesToShow.clear();
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return;
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiElement element = file.findElementAt(offset);
+    if (element == null) return;
+    final Task.Backgroundable task = new Task.Backgroundable(project, ActionsBundle.message("action.ShowIntentionActions.text"), true) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            final TextRange textRange = element.getTextRange();
+            final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, textRange.getStartOffset(), textRange.getEndOffset());
+            pass.collectInformation(indicator);
+            for (HighlightInfo info : pass.getHighlights()) {
+              if (info.quickFixActionRanges != null) {
+                final boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
+                for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRanges : info.quickFixActionRanges) {
+                  if (actionRanges.second.contains(offset)) {
+                    final IntentionAction action = actionRanges.first.getAction();
+                    boolean available = action instanceof PsiElementBaseIntentionAction ?
+                                        ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, element) :
+                                        action.isAvailable(project, editor, file);
+                    if (available) {
+                      if (isError) {
+                        errorFixesToShow.add(actionRanges.first);
+                      }
+                      else {
+                        inspectionFixesToShow.add(actionRanges.first);
                       }
                     }
                   }
                 }
               }
-
             }
-          });
-          SwingUtilities.invokeLater(new Runnable(){
-            public void run() {
-              if (editor.getComponent().isDisplayable()) {
-                if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
-                  IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
-                }
+
+          }
+        });
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            if (editor.getComponent().isDisplayable()) {
+              if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
+                IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
               }
             }
-          });
-        }
-      };
-      ProgressManager.getInstance().run(task);
-    }
-    else if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
-        IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
+          }
+        });
       }
+    };
+    ProgressManager.getInstance().run(task);
   }
 
   public boolean startInWriteAction() {

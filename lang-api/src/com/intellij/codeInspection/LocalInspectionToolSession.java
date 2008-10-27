@@ -8,9 +8,9 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
 
 public class LocalInspectionToolSession extends UserDataHolderBase {
-  private PsiFile myFile;
-  private int myStartOffset;
-  private int myEndOffset;
+  private final PsiFile myFile;
+  private final int myStartOffset;
+  private final int myEndOffset;
 
   public LocalInspectionToolSession(final PsiFile file, final int startOffset, final int endOffset) {
     myFile = file;
