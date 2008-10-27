@@ -78,7 +78,7 @@ public class JavaInlineHandler implements RefactoringActionHandler {
       final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
       final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
       InlineLocalHandler.invoke(project, editor, (PsiLocalVariable) element, refExpr);
-    } else if (element instanceof PsiMethod) {
+    } else if (element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (method.isConstructor() && !InlineMethodHandler.isChainingConstructor(method)) {
         InlineToAnonymousClassHandler.invoke(project, editor, method.getContainingClass());
