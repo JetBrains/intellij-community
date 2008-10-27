@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
@@ -39,6 +40,8 @@ import java.util.Locale;
 public class CompilerPaths {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
   private static volatile String ourSystemPath;
+  @NonNls private static final String PROJECT_FILE_EXTENSION = ".ipr";
+
   /**
    * Returns a directory
    * @param project
@@ -98,18 +101,21 @@ public class CompilerPaths {
     if (project.isDefault()) {
       return project.getName();
     }
+
     String projectName = FileUtil.toSystemIndependentName(project.getLocation());
-    int start = projectName.lastIndexOf('/');
-    if (start >= 0) {
-      int end = projectName.lastIndexOf('.');
-      if (end < start) {
-        end = projectName.length();
-      }
-      start += 1;
-      if (start <= end) {
-        projectName = projectName.substring(start, end);
-      }
+    if (projectName.endsWith("/")) {
+      projectName = projectName.substring(0, projectName.length() - 1);
     }
+
+    final int lastSlash = projectName.lastIndexOf('/');
+    if (lastSlash >= 0 && (lastSlash + 1) < projectName.length()) {
+      projectName = projectName.substring(lastSlash + 1);
+    }
+
+    if (StringUtil.endsWithIgnoreCase(projectName, PROJECT_FILE_EXTENSION)) {
+      projectName = projectName.substring(0, projectName.length() - PROJECT_FILE_EXTENSION.length());
+    }
+    
     projectName = projectName.toLowerCase(Locale.US);
     return projectName;
   }
