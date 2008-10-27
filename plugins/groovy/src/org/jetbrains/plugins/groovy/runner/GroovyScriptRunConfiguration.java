@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.runner;
 
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
@@ -33,19 +34,26 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
-import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -131,6 +139,11 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
+    // Setting up process encoding according to locale
+    final ArrayList<String> list = new ArrayList<String>();
+    CompilerUtil.addLocaleOptions(list, false);
+    params.getVMParametersList().addAll(list);
+
     //add starter configuration parameters
     String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
     if (groovyHome.length() == 0) {
@@ -171,7 +184,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     final String confpath = groovyHome + GROOVY_STARTER_CONF;
     params.getProgramParametersList().add(confpath);
 
-
     params.getProgramParametersList().add("--classpath");
 
     // Clear module libraries from JDK's occurrences
@@ -182,6 +194,23 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
     if (isDebugEnabled) {
       params.getProgramParametersList().add("--debug");
+    }
+    addScriptEncodingSettings(params);
+  }
+
+  private void addScriptEncodingSettings(final JavaParameters params) {
+    //Setting up script charset
+    // MUST be last parameter
+    Charset charset;
+    final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl("file://" + scriptPath);
+    charset = EncodingProjectManager.getInstance(getProject()).getEncoding(fileByUrl, true);
+    if (charset == null) {
+      charset = EncodingManager.getInstance().getDefaultCharset();
+      if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), charset)) {
+        params.getProgramParametersList().add("--encoding=" + charset.displayName());
+      }
+    } else {
+      params.getProgramParametersList().add("--encoding=" + charset.displayName());
     }
   }
 

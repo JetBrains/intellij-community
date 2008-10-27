@@ -36,27 +36,32 @@ public class GroovycRunner {
 
   public static final String CLASSPATH = "classpath";
   public static final String IS_GRAILS = "is_grails";
+  public static final String ENCODING = "encoding";
   public static final String OUTPUTPATH = "outputpath";
   public static final String TEST_OUTPUTPATH = "test_outputpath";
   public static final String TEST_FILE = "test_file";
+
   public static final String SRC_FILE = "src_file";
-
   public static final String COMPILED_START = "%%c";
+
   public static final String COMPILED_END = "/%c";
-
   public static final String TO_RECOMPILE_START = "%%rc";
+
   public static final String TO_RECOMPILE_END = "/%rc";
-
   public static final String MESSAGES_START = "%%m";
-  public static final String MESSAGES_END = "/%m";
 
+  public static final String MESSAGES_END = "/%m";
   public static final String SEPARATOR = "%$%";
+
+  private GroovycRunner() {
+  }
 
   public static void main(String[] args) {
     String moduleClasspath = null;
     String moduleOutputPath = null;
     String moduleTestOutputPath = null;
     boolean isGrails = false;
+    String encoding = null;
 
     if (args.length != 1) {
       System.err.println("There is no arguments for groovy compiler");
@@ -97,6 +102,10 @@ public class GroovycRunner {
           isGrails = "true".equals(s);
         }
 
+        if (line.startsWith(ENCODING)) {
+          encoding = reader.readLine();
+        }
+
         if (line.startsWith(OUTPUTPATH)) {
           moduleOutputPath = reader.readLine();
         }
@@ -126,7 +135,8 @@ public class GroovycRunner {
     MyGroovyCompiler groovyCompiler = new MyGroovyCompiler();
     if (srcFiles.isEmpty() && testFiles.isEmpty()) return;
 
-    MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, moduleClasspath, moduleTestOutputPath, moduleOutputPath, isGrails);
+    MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, moduleClasspath, moduleTestOutputPath, moduleOutputPath, isGrails,
+                                                                   encoding);
 
     MessageCollector messageCollector = new MessageCollector();
     MyGroovyCompiler.MyExitStatus exitStatus = groovyCompiler.compile(messageCollector, myCompilationUnits);
@@ -195,9 +205,12 @@ public class GroovycRunner {
     }
   }
 
-  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, List testFilesToCompile, String classpath, String testOutputPath, String ordinaryOutputPath, boolean isGrailsModule) {
-    final CompilationUnit sourceUnit = createCompilationUnit(srcFilesToCompile, classpath, ordinaryOutputPath, isGrailsModule);
-    final CompilationUnit testUnit = createCompilationUnit(testFilesToCompile, classpath, testOutputPath, isGrailsModule);
+  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, List testFilesToCompile, String classpath, String testOutputPath,
+                                                           String ordinaryOutputPath,
+                                                           boolean isGrailsModule,
+                                                           final String encoding) {
+    final CompilationUnit sourceUnit = createCompilationUnit(srcFilesToCompile, classpath, ordinaryOutputPath, isGrailsModule, encoding);
+    final CompilationUnit testUnit = createCompilationUnit(testFilesToCompile, classpath, testOutputPath, isGrailsModule, encoding);
     MyCompilationUnits myCompilationUnits = myFactory.create(sourceUnit, testUnit);
 
     for (int i = 0; i < srcFilesToCompile.size(); i++) {
@@ -214,10 +227,14 @@ public class GroovycRunner {
     return myCompilationUnits;
   }
 
-  private static CompilationUnit createCompilationUnit(List srcFiles, String classpath, String outputPath, boolean isGrailsModule) {
+  private static CompilationUnit createCompilationUnit(List srcFiles, String classpath, String outputPath, boolean isGrailsModule,
+                                                       final String encoding) {
     CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
     compilerConfiguration.setOutput(new PrintWriter(System.err));
     compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);
+    if (encoding != null){
+      compilerConfiguration.setSourceEncoding(encoding);
+    }
     compilerConfiguration.setClasspath(classpath);
     compilerConfiguration.setTargetDirectory(outputPath);
 

@@ -21,7 +21,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.compiler.impl.CompilerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +46,7 @@ import org.jetbrains.plugins.groovy.runner.RunnerUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.nio.charset.Charset;
 
 /**
  * @author ilyas
@@ -134,6 +142,11 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
 
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
+    // Setting up process encoding according to locale
+    final ArrayList<String> list = new ArrayList<String>();
+    CompilerUtil.addLocaleOptions(list, false);
+    params.getVMParametersList().addAll(list);
+
     //add starter configuration parameters
     String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
     final String confpath = gantHome + GANT_STARTER_CONF;
@@ -189,7 +202,26 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     if (isDebugEnabled) {
       params.getProgramParametersList().add("--debug");
     }
+
+    addScriptEncodingSettings(params);
   }
+
+  private void addScriptEncodingSettings(final JavaParameters params) {
+    //Setting up script charset
+    // MUST be last parameter
+    Charset charset;
+    final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl("file://" + scriptPath);
+    charset = EncodingProjectManager.getInstance(getProject()).getEncoding(fileByUrl, true);
+    if (charset == null) {
+      charset = EncodingManager.getInstance().getDefaultCharset();
+      if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), charset)) {
+        params.getProgramParametersList().add("--encoding=" + charset.displayName());
+      }
+    } else {
+      params.getProgramParametersList().add("--encoding=" + charset.displayName());
+    }
+  }
+
 
   private void configureScript(JavaParameters params) {
     // add scriptGroovy

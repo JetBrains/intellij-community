@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -28,19 +29,22 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.groovy.compiler.rt.MessageCollector;
@@ -52,6 +56,7 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -93,8 +98,6 @@ public class GroovyCompiler implements TranslatingCompiler {
 //      commandLine.addParameter("-Xdebug");
 //      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5557");
 
-      //todo: check it
-      //commandLine.addParameter("-c UTF-8");     //charset ==  --encoding
       commandLine.addParameter("-cp");
 
       String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
@@ -107,9 +110,8 @@ public class GroovyCompiler implements TranslatingCompiler {
       String groovyPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
       String grailsPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
 
-      String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 || groovyPath.length() == 0
-                        ? grailsPath
-                        : groovyPath) + "/lib";
+      String libPath =
+        (moduleType instanceof GrailsModuleType && grailsPath.length() > 0 || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
 
       libPath = libPath.replace(File.separatorChar, '/');
       VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
@@ -126,8 +128,10 @@ public class GroovyCompiler implements TranslatingCompiler {
       commandLine.addParameter(classPathBuilder.toString());
       commandLine.addParameter(XMX_COMPILER_PROPERTY);
 
-      //commandLine.addParameter("-Xdebug");
-      //commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=6789");     
+      // Setting up process encoding according to locale
+      final ArrayList<String> list = new ArrayList<String>();
+      CompilerUtil.addLocaleOptions(list, false);
+      commandLine.addParameters(list);
 
       commandLine.addParameter(GroovycRunner.class.getName());
 
@@ -318,6 +322,12 @@ public class GroovyCompiler implements TranslatingCompiler {
     //Grails injections  support
     printer.println(GroovycRunner.IS_GRAILS);
     printer.println(GrailsConfigUtils.getInstance().isSDKConfigured(module) && module.getModuleType() instanceof GrailsModuleType);
+
+    final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
+    if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
+      printer.println(GroovycRunner.ENCODING);
+      printer.println(ideCharset.name());
+    }
 
     //production output
     printer.println(GroovycRunner.OUTPUTPATH);
