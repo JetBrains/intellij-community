@@ -2,13 +2,14 @@ package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class SimpleTextCellAppearance implements ModifiableCellAppearance {
   private Icon myIcon;
   private SimpleTextAttributes myTextAttributes;
-  private String myText;
+  private final String myText;
 
   public static SimpleTextCellAppearance invalid(String text, Icon icon) {
     return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -20,7 +21,7 @@ public class SimpleTextCellAppearance implements ModifiableCellAppearance {
     return result;
   }
 
-  public SimpleTextCellAppearance(String text, Icon icon, SimpleTextAttributes textAttributes) {
+  public SimpleTextCellAppearance(@NotNull String text, Icon icon, SimpleTextAttributes textAttributes) {
     myIcon = icon;
     myTextAttributes = textAttributes;
     myText = text;
