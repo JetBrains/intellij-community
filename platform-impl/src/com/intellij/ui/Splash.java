@@ -9,12 +9,13 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Splash extends JWindow {
-  private static final Color ideaDARK_BLUE = new Color(0, 35, 135);
   private Icon myImage;
   private JLabel myLabel;
   private boolean myShowLicenseeInfo;
+  private Color myTextColor;
 
-  public Splash(String imageName) {
+  public Splash(String imageName, final Color textColor) {
+    myTextColor = textColor;
     Icon originalImage = IconLoader.getIcon(imageName);
     myShowLicenseeInfo = ApplicationInfoImpl.getShadowInstance().showLicenseeInfo();
     myImage = new MyIcon(originalImage);
@@ -46,7 +47,7 @@ public class Splash extends JWindow {
 
       if (myShowLicenseeInfo) {
         g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
-        g.setColor(ideaDARK_BLUE);
+        g.setColor(myTextColor);
         g.drawString(LicenseManager.getInstance().licensedToMessage(), x + 20, y + getIconHeight() - 52);
         g.drawString(LicenseManager.getInstance().licensedRestrictionsMessage(), x + 20, y + getIconHeight() - 32);
       }

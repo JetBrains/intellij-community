@@ -9,6 +9,7 @@ import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -131,7 +132,8 @@ public class IdeaApplication {
 
     public void premain(String[] args) {
       if (MainImpl.shouldShowSplash(args)) {
-        final Splash splash = new Splash(ApplicationInfoImpl.getShadowInstance().getLogoUrl());
+        final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+        final Splash splash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             splash.show();

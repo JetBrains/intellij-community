@@ -19,6 +19,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.ArrayList;
+import java.awt.*;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, ApplicationComponent {
 
@@ -30,6 +31,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myMinorVersion = null;
   private String myBuildNumber = null;
   private String myLogoUrl = null;
+  private Color myLogoTextColor = new Color(0, 35, 135);  // idea blue
   private String myAboutLogoUrl = null;
   @NonNls private String myIconUrl = "/icon.png";
   @NonNls private String mySmallIconUrl = "/icon_small.png";
@@ -56,6 +58,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_DATE = "date";
   @NonNls private static final String ELEMENT_LOGO = "logo";
   @NonNls private static final String ATTRIBUTE_URL = "url";
+  @NonNls private static final String ATTRIBUTE_TEXTCOLOR = "textcolor";
   @NonNls private static final String ELEMENT_ABOUT = "about";
   @NonNls private static final String ELEMENT_ICON = "icon";
   @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
@@ -118,6 +121,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getLogoUrl() {
     return myLogoUrl;
+  }
+
+  public Color getLogoTextColor() {
+    return myLogoTextColor;
   }
 
   public String getAboutLogoUrl() {
@@ -248,6 +255,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element logoElement = parentNode.getChild(ELEMENT_LOGO);
     if (logoElement != null) {
       myLogoUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
+      final int rgb = Integer.parseInt(logoElement.getAttributeValue(ATTRIBUTE_TEXTCOLOR), 16);
+      myLogoTextColor = new Color(rgb); 
     }
 
     Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);

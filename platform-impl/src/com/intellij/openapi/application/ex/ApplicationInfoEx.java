@@ -10,6 +10,7 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
 
+import java.awt.*;
 import java.util.List;
 
 public abstract class ApplicationInfoEx extends ApplicationInfo {
@@ -19,6 +20,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   }
 
   public abstract String getLogoUrl();
+
+  public abstract Color getLogoTextColor();
 
   public abstract String getAboutLogoUrl();
 
