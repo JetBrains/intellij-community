@@ -75,12 +75,7 @@ public class SearchUtil {
           _processComponent(configurable, configurableOptions, md.getDetails().getComponent());
         }
         else {
-          try {
-            _processComponent(configurable, configurableOptions, configurable.createComponent());
-          }
-          catch (Throwable e) {
-            e.printStackTrace();
-          }
+          _processComponent(configurable, configurableOptions, configurable.createComponent());
         }
       }
     }
