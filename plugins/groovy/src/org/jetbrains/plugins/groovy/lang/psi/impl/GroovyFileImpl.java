@@ -311,7 +311,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public PsiElement getContext() {
-    return myContext;
+    if (myContext != null) {
+      return myContext;
+    }
+    return super.getContext();
   }
 
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
@@ -322,7 +325,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public void setContext(PsiElement context) {
-    myContext = context;
+    if (context != null) {
+      myContext = context;
+    }
   }
 
   @NotNull
