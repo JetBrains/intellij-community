@@ -3,12 +3,13 @@ package com.intellij.find.impl;
 import com.intellij.find.*;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -93,9 +94,10 @@ public class FindInProjectUtil {
       model.setModuleName(module.getName());
     }
 
-    if (model.getModuleName() == null || dataContext.getData(DataConstants.EDITOR) == null) {
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    if (model.getModuleName() == null || editor == null) {
       model.setDirectoryName(directoryName);
-      model.setProjectScope(directoryName == null && module == null && model.getCustomScopeName() == null || dataContext.getData(DataConstants.EDITOR) != null);
+      model.setProjectScope(directoryName == null && module == null && model.getCustomScopeName() == null || editor != null);
     }
   }
 
@@ -115,12 +117,7 @@ public class FindInProjectUtil {
       }
       virtualFile = JarFileSystem.getInstance().findFileByPath(path);
     }
-    if (virtualFile != null) {
-      return psiManager.findDirectory(virtualFile);
-    }
-    else {
-      return null;
-    }
+    return virtualFile == null ? null : psiManager.findDirectory(virtualFile);
   }
 
   private static void addFilesUnderDirectory(PsiDirectory directory, Collection<PsiFile> fileList, boolean isRecursive, Pattern fileMaskRegExp) {
@@ -167,12 +164,9 @@ public class FindInProjectUtil {
 
   @Nullable
   private static Pattern createFileMaskRegExp(FindModel findModel) {
-    if (findModel.getFileFilter() != null) {
-      return Pattern.compile(PatternUtil.convertToRegex(findModel.getFileFilter()), Pattern.CASE_INSENSITIVE);
-    }
-    else {
-      return null;
-    }
+    return findModel.getFileFilter() == null
+           ? null
+           : Pattern.compile(PatternUtil.convertToRegex(findModel.getFileFilter()), Pattern.CASE_INSENSITIVE);
   }
 
   public static void findUsages(final FindModel findModel,
@@ -188,15 +182,15 @@ public class FindInProjectUtil {
       
       int i = 0;
       long totalFilesSize = 0;
-      final int[] count = new int[]{0};
+      final int[] count = {0};
       boolean warningShown = false;
 
       boolean skipAllLarge = false;
       boolean processAllLarge = false;
 
+      final UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
       for (final PsiFile psiFile : psiFiles) {
-        if (UsageViewManager.getInstance(project).searchHasBeenCancelled()) break;
-        ProgressManager.getInstance().checkCanceled();
+        usageViewManager.checkSearchCanceled();
         if (customScope != null && !ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
             return PsiSearchScopeUtil.isInScope(customScope, psiFile);
@@ -252,7 +246,7 @@ public class FindInProjectUtil {
               if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return; // do not decompile .class files
               final Document document = manager.getDocument(virtualFile);
               if (document != null) {
-                addToUsages(project, document, consumer, findModel, psiFile, count);
+                addToUsages(project, document, consumer, findModel, psiFile, count, usageViewManager);
 
                 if (progress != null) {
                   progress.setFraction((double)index / psiFiles.size());
@@ -307,7 +301,7 @@ public class FindInProjectUtil {
   }
 
   private static long getFileLength(final VirtualFile virtualFile) {
-    final long[] length = new long[] {-1L};
+    final long[] length = {-1L};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (!virtualFile.isValid()) return;
@@ -506,12 +500,7 @@ public class FindInProjectUtil {
       PsiDirectory directory = psiManager.findDirectory(root);
       if (directory != null) {
         GlobalSearchScope moduleContent = GlobalSearchScope.directoryScope(directory, true);
-        if (result == null) {
-          result = moduleContent;
-        }
-        else {
-          result = result.uniteWith(moduleContent);
-        }
+        result = result == null ? moduleContent : result.uniteWith(moduleContent);
       }
     }
     if (result == null) {
@@ -542,32 +531,29 @@ public class FindInProjectUtil {
       ;
   }
 
-  private static void addToUsages(@NotNull Project project,
-                                  @NotNull Document document,
-                                  @NotNull AsyncFindUsagesProcessListener consumer,
-                                  @NotNull FindModel findModel,
-                                  @NotNull final PsiFile psiFile,
-                                  @NotNull final int[] count) {
+  private static void addToUsages(@NotNull Project project, @NotNull Document document, @NotNull AsyncFindUsagesProcessListener consumer,
+                                     @NotNull FindModel findModel, @NotNull final PsiFile psiFile, @NotNull final int[] count,
+                                     UsageViewManager usageViewManager) {
     CharSequence text = document.getCharsSequence();
+    if (text == null) return;
     int textLength = document.getTextLength();
-    if (text != null) {
-      int offset = 0;
-      FindManager findManager = FindManager.getInstance(project);
-      while (offset < textLength) {
-        FindResult result = findManager.findString(text, offset, findModel);
-        if (!result.isStringFound()) break;
+    int offset = 0;
+    FindManager findManager = FindManager.getInstance(project);
+    while (offset < textLength) {
+      usageViewManager.checkSearchCanceled();
+      FindResult result = findManager.findString(text, offset, findModel);
+      if (!result.isStringFound()) break;
 
-        UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
-        consumer.foundUsage(info);
-        count[0]++;
+      UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
+      consumer.foundUsage(info);
+      count[0]++;
 
-        final int prevOffset = offset;
-        offset = result.getEndOffset();
+      final int prevOffset = offset;
+      offset = result.getEndOffset();
 
-        if (prevOffset == offset) {
-          // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
-          ++offset;
-        }
+      if (prevOffset == offset) {
+        // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
+        ++offset;
       }
     }
   }
@@ -707,8 +693,8 @@ public class FindInProjectUtil {
     private final Processor<Usage> processor;
     private int count;
 
-    public AsyncFindUsagesProcessListener2ProcessorAdapter(Processor<Usage> _processor) {
-      processor = _processor;
+    public AsyncFindUsagesProcessListener2ProcessorAdapter(Processor<Usage> processor) {
+      this.processor = processor;
     }
 
     public void foundUsage(UsageInfo info) {

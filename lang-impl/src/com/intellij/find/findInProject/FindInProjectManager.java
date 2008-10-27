@@ -91,8 +91,9 @@ public class FindInProjectManager {
               myIsFindInProgress = true;
 
               try {
-                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
-                                             new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor));
+                FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter consumer =
+                  new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor);
+                FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, consumer);
               }
               finally {
                 myIsFindInProgress = false;

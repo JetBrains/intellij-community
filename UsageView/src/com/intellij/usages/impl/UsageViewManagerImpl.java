@@ -16,8 +16,6 @@
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -204,6 +202,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return mySearchHasBeenCancelled;
   }
 
+  public void checkSearchCanceled() throws ProcessCanceledException {
+    if (searchHasBeenCancelled()) throw new ProcessCanceledException();
+    ProgressManager.getInstance().checkCanceled();
+  }
+
   private class SearchForUsagesRunnable implements Runnable {
     private final AtomicInteger myUsageCount = new AtomicInteger(0);
     private final AtomicReference<Usage> myFirstUsage = new AtomicReference<Usage>();
@@ -271,10 +274,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
       UsageSearcher usageSearcher = mySearcherFactory.create();
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
-          if (mySearchHasBeenCancelled) return false;
+          checkSearchCanceled();
           int usageCount = myUsageCount.incrementAndGet();
           if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-            myFirstUsage.compareAndSet(null,usage);
+            myFirstUsage.compareAndSet(null, usage);
           }
           UsageViewImpl usageView = getUsageView();
           if (usageView != null) {
@@ -304,7 +307,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                            myPresentation.getScopeText());
 
             if (notFoundActions == null || notFoundActions.isEmpty()) {
-              Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
               ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO, message, IconLoader.getIcon("/actions/find.png"),
                                                                        null);
             }

@@ -17,6 +17,7 @@ package com.intellij.usages;
 
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,8 @@ public abstract class UsageViewManager {
   public abstract void setCurrentSearchCancelled(boolean flag);
 
   public abstract boolean searchHasBeenCancelled();
+
+  public abstract void checkSearchCanceled() throws ProcessCanceledException;
 
   public interface UsageViewStateListener {
     void usageViewCreated(UsageView usageView);
