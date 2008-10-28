@@ -227,6 +227,9 @@
     <refactoring.extractIncludeHandler language="XHTML" implementationClass="com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
 
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
+
+    <browserSettingsProvider implementation="com.intellij.ide.browsers.BrowsersConfiguration"/>
+    
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>

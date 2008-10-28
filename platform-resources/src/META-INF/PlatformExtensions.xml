@@ -107,6 +107,9 @@
   <!-- Customizations -->
   <applicationConfigurable implementation="com.intellij.ide.ui.customization.CustomizationConfigurable"/>
 
+  <!-- Web Browser -->
+  <applicationConfigurable implementation="com.intellij.ide.BrowserSettings"/>
+
   <!-- Plugins -->
   <applicationConfigurable implementation="com.intellij.ide.plugins.PluginManagerConfigurable"/>
   <applicationConfigurable implementation="com.intellij.util.net.HttpConfigurable"/>

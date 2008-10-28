@@ -35,7 +35,6 @@ public class WebBrowsersPanel extends JPanel {
 
     mySettingsPanel = new JPanel();
     mySettingsPanel.setLayout(new BoxLayout(mySettingsPanel, BoxLayout.Y_AXIS));
-    mySettingsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
     add(mySettingsPanel, BorderLayout.NORTH);
 

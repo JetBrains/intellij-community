@@ -1,5 +1,6 @@
 package com.intellij.ide.browsers;
 
+import com.intellij.ide.BrowserSettingsProvider;
 import com.intellij.ide.browsers.actions.WebOpenInAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -11,7 +12,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlBundle;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +33,8 @@ import java.util.Map;
  * @author spleaner
  */
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(id = "other", file = "$APP_CONFIG$/browsers.xml")})
-public class BrowsersConfiguration implements ApplicationComponent, Configurable, PersistentStateComponent<Element> {
+public class BrowsersConfiguration extends BrowserSettingsProvider implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.BrowsersConfiguration");
-  private static final Icon ICON = IconLoader.getIcon("/general/browsersettings.png");
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static enum BrowserFamily {
@@ -150,19 +148,6 @@ public class BrowsersConfiguration implements ApplicationComponent, Configurable
   }
 
   public void disposeComponent() {
-  }
-
-  @Nls
-  public String getDisplayName() {
-    return XmlBundle.message("browsers.configuration.name");
-  }
-
-  public Icon getIcon() {
-    return ICON;
-  }
-
-  public String getHelpTopic() {
-    return null;
   }
 
   public JComponent createComponent() {

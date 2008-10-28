@@ -1,11 +1,7 @@
 package com.intellij.ide;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private MyComponent myComponent;
@@ -23,11 +17,9 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   public void apply() {
     GeneralSettings settings = GeneralSettings.getInstance();
 
-    settings.setBrowserPath(myComponent.myBrowserPathField.getText());
     settings.setReopenLastProject(myComponent.myChkReopenLastProject.isSelected());
     settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
-    settings.setUseDefaultBrowser(myComponent.myUseSystemDefaultBrowser.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
     settings.setSearchInBackground(myComponent.mySearchInBackground.isSelected());
 
@@ -44,19 +36,15 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     }
 
 
-
-
   }
 
   public boolean isModified() {
     boolean isModified = false;
     GeneralSettings settings = GeneralSettings.getInstance();
-    isModified |= !Comparing.strEqual(settings.getBrowserPath(), myComponent.myBrowserPathField.getText());
     isModified |= settings.isReopenLastProject() != myComponent.myChkReopenLastProject.isSelected();
     isModified |= settings.isSyncOnFrameActivation() != myComponent.myChkSyncOnFrameActivation.isSelected();
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
-    isModified |= settings.isUseDefaultBrowser() != myComponent.myUseSystemDefaultBrowser.isSelected();
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
 
     int inactiveTimeout = -1;
@@ -65,18 +53,14 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     }
     catch (NumberFormatException e) {
     }
+
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
-
-
-
     isModified |= settings.isSearchInBackground() != myComponent.mySearchInBackground.isSelected();
-
 
     return isModified;
   }
 
   public JComponent createComponent() {
-
 //    optionGroup.add(getDiffOptions().getPanel());
     myComponent = new MyComponent();
 
@@ -85,11 +69,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
         myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected());
       }
     });
-
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-    myComponent.myBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, descriptor);
-
-
 
     return myComponent.myPanel;
   }
@@ -104,7 +83,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
   public void reset() {
     GeneralSettings settings = GeneralSettings.getInstance();
-    myComponent.myBrowserPathField.setText(settings.getBrowserPath());
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
     myComponent.myChkSaveOnFrameDeactivation.setSelected(settings.isSaveOnFrameDeactivation());
@@ -113,16 +91,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myTfInactiveTimeout.setText(Integer.toString(settings.getInactiveTimeout()));
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
-
-    
-
-    if (settings.isUseDefaultBrowser()) {
-      myComponent.myUseSystemDefaultBrowser.setSelected(true);
-    }
-    else {
-      myComponent.myUseUserDefinedBrowser.setSelected(true);
-    }
-    myComponent.updateBrowserField();
 
     myComponent.mySearchInBackground.setSelected(settings.isSearchInBackground());
   }
@@ -140,41 +108,17 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
   private static class MyComponent {
     JPanel myPanel;
-    private TextFieldWithBrowseButton myBrowserPathField;
 
     private JCheckBox myChkReopenLastProject;
     private JCheckBox myChkSyncOnFrameActivation;
     private JCheckBox myChkSaveOnFrameDeactivation;
     private JCheckBox myChkAutoSaveIfInactive;
     private JTextField myTfInactiveTimeout;
-    private JRadioButton myUseSystemDefaultBrowser;
-    private JRadioButton myUseUserDefinedBrowser;
     public JCheckBox myConfirmExit;
     private JCheckBox mySearchInBackground;
 
 
     public MyComponent() {
-      if (BrowserUtil.canStartDefaultBrowser()) {
-        ActionListener actionListener = new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            updateBrowserField();
-          }
-        };
-        myUseSystemDefaultBrowser.addActionListener(actionListener);
-        myUseUserDefinedBrowser.addActionListener(actionListener);
-      }
-      else {
-        myUseSystemDefaultBrowser.setVisible(false);
-        myUseUserDefinedBrowser.setVisible(false);
-      }
-    }
-
-    private void updateBrowserField() {
-      if (!BrowserUtil.canStartDefaultBrowser()) {
-        return;
-      }
-      myBrowserPathField.getTextField().setEnabled(myUseUserDefinedBrowser.isSelected());
-      myBrowserPathField.getButton().setEnabled(myUseUserDefinedBrowser.isSelected());
     }
   }
 
