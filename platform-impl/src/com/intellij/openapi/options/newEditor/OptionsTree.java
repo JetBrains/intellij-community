@@ -472,7 +472,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     @Override
     String getText() {
-      return myConfigurable.getDisplayName();
+      return myConfigurable.getDisplayName().replace("\n", " ");
     }
 
     @Override
