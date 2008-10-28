@@ -282,28 +282,31 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           mySchemesManager.removeScheme(group);
         }
       }
-      myTemplatesById.remove(template.getId());
       myTemplates.remove(template.getKey());
     }
   }
 
   private void addTemplateImpl(Template template) {
-    if (!myTemplates.containsKey(template.getKey()) && !myTemplatesById.containsKey(template.getId())) {
+    if (!myTemplates.containsKey(template.getKey())) {
       myTemplates.put(template.getKey(), template);
 
-      final String id = template.getId();
-      if (id != null) {
-        myTemplatesById.put(id, template);
-      }
       myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
     }
     myDeletedTemplates.remove(template.getKey());
 
   }
 
+  private void addTemplateById(Template template) {
+    if (!myTemplatesById.containsKey(template.getId())) {
+      final String id = template.getId();
+      if (id != null) {
+        myTemplatesById.put(id, template);
+      }
+    }
+  }
+
   public void removeTemplate(Template template) {
     myTemplates.remove(template.getKey());
-    myTemplatesById.remove(template.getId());
 
     TemplateImpl templImpl = (TemplateImpl)template;
     String groupName = templImpl.getGroupName();
@@ -412,22 +415,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     for (final Object o1 : root.getChildren(TEMPLATE)) {
       Element element = (Element)o1;
 
-      String name = element.getAttributeValue(NAME);
-      String value = element.getAttributeValue(VALUE);
-      String description;
-      String resourceBundle = element.getAttributeValue(RESOURCE_BUNDLE);
-      String key = element.getAttributeValue(KEY);
-      String id = element.getAttributeValue(ID);
-      if (resourceBundle != null && key != null) {
-        ResourceBundle bundle = ResourceBundle.getBundle(resourceBundle);
-        description = bundle.getString(key);
-      }
-      else {
-        description = element.getAttributeValue(DESCRIPTION);
-      }
-      String shortcut = element.getAttributeValue(SHORTCUT);
-      TemplateImpl template = addTemplate(name, value, groupName, description, shortcut, isDefault, id);
-      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(name) || myTemplates.containsKey(name));
+      TemplateImpl template = readTemplateFromElement(isDefault, groupName, element);
+      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(template.getKey()) || myTemplates.containsKey(template.getKey()));
 
       if(!doNotRegister) {
         template.setToReformat(Boolean.parseBoolean(element.getAttributeValue(TO_REFORMAT)));
@@ -483,6 +472,41 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   }
 
+  private TemplateImpl readTemplateFromElement(final boolean isDefault, final String groupName, final Element element) {
+    String name = element.getAttributeValue(NAME);
+    String value = element.getAttributeValue(VALUE);
+    String description;
+    String resourceBundle = element.getAttributeValue(RESOURCE_BUNDLE);
+    String key = element.getAttributeValue(KEY);
+    String id = element.getAttributeValue(ID);
+    if (resourceBundle != null && key != null) {
+      ResourceBundle bundle = ResourceBundle.getBundle(resourceBundle);
+      description = bundle.getString(key);
+    }
+    else {
+      description = element.getAttributeValue(DESCRIPTION);
+    }
+    String shortcut = element.getAttributeValue(SHORTCUT);
+    return addTemplate(name, value, groupName, description, shortcut, isDefault, id);
+  }
+
+  public void readHiddenTemplateFile(Document document) throws InvalidDataException {
+    if (document == null) {
+      throw new InvalidDataException();
+    }
+    Element root = document.getRootElement();
+    if (root == null || !TEMPLATE_SET.equals(root.getName())) {
+      throw new InvalidDataException();
+    }
+
+    for (final Object o1 : root.getChildren(TEMPLATE)) {
+
+      addTemplateById(readTemplateFromElement(false, null, (Element)o1));
+    }
+
+
+  }
+
   private static void saveTemplate(TemplateImpl template, Element templateSetElement) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
@@ -527,7 +551,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   public void setTemplates(List<TemplateGroup> newGroups) {
     myTemplates.clear();
-    myTemplatesById.clear();
     myDeletedTemplates.clear();
     for (TemplateImpl template : myDefaultTemplates.values()) {
       myDeletedTemplates.add(template.getKey());
