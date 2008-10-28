@@ -6,7 +6,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
@@ -50,9 +49,9 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     return myStaticGenericInfo.createInvocation(method);
   }
 
-  public final void checkInitialized() {
-    if (myInitialized) return;
-    if (myComputing.get() == Boolean.TRUE) return;
+  public final boolean checkInitialized() {
+    if (myInitialized) return true;
+    if (myComputing.get() == Boolean.TRUE) return false;
 
     myStaticGenericInfo.buildMethodMaps();
 
@@ -61,25 +60,12 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
       synchronized (myInvocationHandler) {
-        if (myInitialized) return;
+        if (myInitialized) return true;
 
 
         if (registrar != null) {
           final List<DomExtensionImpl> fixeds = registrar.getFixeds();
           final List<DomExtensionImpl> collections = registrar.getCollections();
-          if (!fixeds.isEmpty() || !collections.isEmpty()) {
-            final CustomDomChildrenDescriptionImpl description = myStaticGenericInfo.getCustomNameChildrenDescription();
-            if (description != null) {
-              for (final XmlTag tag : CustomDomChildrenDescriptionImpl.CUSTOM_TAGS_GETTER.fun(myInvocationHandler)) {
-                final DomInvocationHandler handler = myInvocationHandler.getManager().getCachedHandler(tag);
-                if (handler != null) {
-                  handler.detach();
-                }
-              }
-            }
-          }
-
-
           final List<DomExtensionImpl> attributes = registrar.getAttributes();
           if (!attributes.isEmpty()) {
             myAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(myStaticGenericInfo.getAttributes());
@@ -111,6 +97,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     finally {
       myComputing.set(null);
     }
+    return true;
   }
 
   @Nullable

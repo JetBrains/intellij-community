@@ -48,7 +48,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     myDomManager = domManager;
   }
 
-  public final synchronized void buildMethodMaps() {
+  public final synchronized boolean buildMethodMaps() {
     if (!myInitialized) {
       final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myDomManager, myClass);
       final JavaMethod customChildrenGetter = builder.getCustomChildrenGetter();
@@ -95,6 +95,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
       myValueElement = builder.isValueElement();
       myInitialized = true;
     }
+    return true;
   }
 
   private void addAdder(final CollectionChildDescriptionImpl description, final Collection<JavaMethod> methods) {
@@ -105,8 +106,8 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
   }
 
-  public void checkInitialized() {
-    buildMethodMaps();
+  public boolean checkInitialized() {
+    return buildMethodMaps();
   }
 
   public final Invocation createInvocation(final JavaMethod method) {

@@ -19,7 +19,7 @@ import java.util.List;
  */
 public abstract class DomGenericInfoEx implements DomGenericInfo {
 
-  public abstract void checkInitialized();
+  public abstract boolean checkInitialized();
 
   public abstract Invocation createInvocation(final JavaMethod method);
 

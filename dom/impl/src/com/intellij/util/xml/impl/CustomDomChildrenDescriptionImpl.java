@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Collections;
 import java.lang.reflect.Type;
 
 /**
@@ -45,6 +46,9 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
 
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomInvocationHandler parent) {
+    if (!parent.getGenericInfo().checkInitialized()) {
+      return Collections.emptyList();
+    }
     return parent.getCollectionChildren(this, CUSTOM_TAGS_GETTER);
   }
 
