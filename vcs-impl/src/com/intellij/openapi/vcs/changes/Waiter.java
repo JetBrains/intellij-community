@@ -1,12 +1,12 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
-
-import javax.swing.*;
 
 public class Waiter implements Runnable {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.Waiter");
@@ -42,7 +42,7 @@ public class Waiter implements Runnable {
         }
       }
     }
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         synchronized (myLock) {
           if (! myDone) {
@@ -53,7 +53,7 @@ public class Waiter implements Runnable {
         myRunnable.run();
         ChangesViewManager.getInstance(myProject).refreshView();
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   public void done() {
