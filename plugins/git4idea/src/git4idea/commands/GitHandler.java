@@ -43,9 +43,13 @@ import java.util.*;
  */
 public abstract class GitHandler {
   /**
+   * Error codes that are ignored for the handler
+   */
+  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<Integer>();
+  /**
    * Error list
    */
-  private final List<VcsException> errors = Collections.synchronizedList(new LinkedList<VcsException>());
+  private final List<VcsException> myErrors = Collections.synchronizedList(new LinkedList<VcsException>());
   /**
    * the logger
    */
@@ -136,19 +140,37 @@ public abstract class GitHandler {
   }
 
   /**
+   * Add error code to ignored list
+   * @param code the code to ignore
+   */
+  public void ignoreErrorCode(int code) {
+    myIgnoredErrorCodes.add(code);
+  }
+
+  /**
+   * Check if error code should be ignored
+   * @param code a code to check
+   * @return true if error code is ignorable
+   */
+  public boolean isIgnoredErrorCode(int code) {
+    return myIgnoredErrorCodes.contains(code);
+  }
+
+
+  /**
    * add error to the error list
    *
    * @param ex VcsExetpion
    */
   public void addError(VcsException ex) {
-    errors.add(ex);
+    myErrors.add(ex);
   }
 
   /**
    * @return unmodifiable list of errors.
    */
   public List<VcsException> errors() {
-    return Collections.unmodifiableList(errors);
+    return Collections.unmodifiableList(myErrors);
   }
 
   /**

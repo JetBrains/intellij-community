@@ -155,7 +155,7 @@ public class GitHandlerUtil {
     handler.addLineListener(new GitLineHandlerListenerProgress(manager.getProgressIndicator(), handler, "") {
       @Override
       public void processTerminted(final int exitCode) {
-        if (exitCode != 0) {
+        if (exitCode != 0 && !handler.isIgnoredErrorCode(exitCode)) {
           ensureError(exitCode);
         }
       }
@@ -197,7 +197,7 @@ public class GitHandlerUtil {
      * {@inheritDoc}
      */
     public void processTerminted(final int exitCode) {
-      if (exitCode != 0) {
+      if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
         ensureError(exitCode);
         EventQueue.invokeLater(new Runnable() {
           public void run() {

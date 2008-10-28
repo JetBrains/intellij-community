@@ -122,7 +122,7 @@ public class GitSimpleHandler extends GitHandler {
     final String[] result = new String[1];
     addListener(new GitHandlerListener() {
       public void processTerminted(final int exitCode) {
-        if (exitCode == 0) {
+        if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
           result[0] = getStdout();
         }
         else {

@@ -15,8 +15,14 @@
  */
 package git4idea.merge;
 
+import com.intellij.ide.util.ElementsChooser;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * Utilities for merge
@@ -55,4 +61,67 @@ public class GitMergeUtil {
     }
   }
 
+  /**
+   * Initialize no commit checkbox (for both merge and pull dialog)
+   *
+   * @param addLogInformationCheckBox a log information checkbox
+   * @param commitMessage a commit message text field or null
+   * @param noCommitCheckBox a no commit checkbox to configure
+   */
+  public static void setupNoCommitCheckbox(final JCheckBox addLogInformationCheckBox, final JTextField commitMessage,
+                                            final JCheckBox noCommitCheckBox) {
+    noCommitCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final boolean selected = noCommitCheckBox.isSelected();
+        if(commitMessage != null) {
+          commitMessage.setEnabled(!selected);
+        }
+        if (selected) {
+          addLogInformationCheckBox.setSelected(false);
+        }
+        addLogInformationCheckBox.setEnabled(!selected);
+      }
+    });
+  }
+
+  /**
+   * Setup strategies dropdown. The set of strategies changes according to amount of selected elements in branchChooser.
+   * 
+   * @param branchChooser a branch chooser
+   * @param noCommitCheckBox no commit checkbox
+   * @param strategy a strategy selector
+   */
+  public static void setupStrategies(final ElementsChooser<String> branchChooser,
+                                      final JCheckBox noCommitCheckBox, final JComboBox strategy) {
+    final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
+      private void updateStrategies(final List<String> elements) {
+        strategy.removeAllItems();
+        for (String s : getMergeStrategies(elements.size())) {
+          strategy.addItem(s);
+        }
+        strategy.setSelectedItem(DEFAULT_STRATEGY);
+      }
+      public void elementMarkChanged(final String element, final boolean isMarked) {
+        final List<String> elements = branchChooser.getMarkedElements();
+        if (elements.size() == 0) {
+          strategy.setEnabled(false);
+          updateStrategies(elements);
+        }
+        else if (elements.size() == 1) {
+          strategy.setEnabled(true);
+          updateStrategies(elements);
+          noCommitCheckBox.setEnabled(true);
+          noCommitCheckBox.setSelected(false);
+        }
+        else {
+          strategy.setEnabled(true);
+          updateStrategies(elements);
+          noCommitCheckBox.setEnabled(false);
+          noCommitCheckBox.setSelected(false);
+        }
+      }
+    };
+    listener.elementMarkChanged(null, true);
+    branchChooser.addElementsMarkListener(listener);
+  }
 }

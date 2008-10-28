@@ -100,16 +100,7 @@ public class GitMergeDialog extends DialogWrapper {
     setTitle(GitBundle.getString("merge.branch.title"));
     myProject = project;
     initBranchChooser();
-    myNoCommitCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final boolean selected = myNoCommitCheckBox.isSelected();
-        myCommitMessage.setEnabled(!selected);
-        if (selected) {
-          myAddLogInformationCheckBox.setSelected(false);
-        }
-        myAddLogInformationCheckBox.setEnabled(!selected);
-      }
-    });
+    GitMergeUtil.setupNoCommitCheckbox(myAddLogInformationCheckBox, myCommitMessage, myNoCommitCheckBox);
     setOKActionEnabled(false);
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranchText);
     myGitRoot.addActionListener(new ActionListener() {
@@ -135,38 +126,13 @@ public class GitMergeDialog extends DialogWrapper {
     c.weighty = 1;
     c.fill = GridBagConstraints.BOTH;
     myBranchToMergeContainer.add(myBranchChooser, c);
-    myBranchChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
-      private void updateStrategies(final List<String> elements) {
-        myStrategy.removeAllItems();
-        for (String s : GitMergeUtil.getMergeStrategies(elements.size())) {
-          myStrategy.addItem(s);
-        }
-        myStrategy.setSelectedItem(GitMergeUtil.DEFAULT_STRATEGY);
-      }
-
+    GitMergeUtil.setupStrategies(myBranchChooser, myNoCommitCheckBox, myStrategy);
+    final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
       public void elementMarkChanged(final String element, final boolean isMarked) {
-        final List<String> elements = myBranchChooser.getMarkedElements();
-        if (elements.size() == 0) {
-          setOKActionEnabled(false);
-          myStrategy.setEnabled(false);
-          updateStrategies(elements);
-        }
-        else if (elements.size() == 1) {
-          setOKActionEnabled(true);
-          myStrategy.setEnabled(true);
-          updateStrategies(elements);
-          myNoCommitCheckBox.setEnabled(true);
-          myNoCommitCheckBox.setSelected(false);
-        }
-        else {
-          setOKActionEnabled(true);
-          myStrategy.setEnabled(true);
-          updateStrategies(elements);
-          myNoCommitCheckBox.setEnabled(false);
-          myNoCommitCheckBox.setSelected(false);
-        }
+        setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
       }
-    });
+    };
+    listener.elementMarkChanged(null,true);
   }
 
 
