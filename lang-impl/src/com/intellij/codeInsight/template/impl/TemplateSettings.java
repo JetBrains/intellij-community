@@ -419,25 +419,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       boolean doNotRegister = isDefault && (myDeletedTemplates.contains(template.getKey()) || myTemplates.containsKey(template.getKey()));
 
       if(!doNotRegister) {
-        template.setToReformat(Boolean.parseBoolean(element.getAttributeValue(TO_REFORMAT)));
-        template.setToShortenLongNames(Boolean.parseBoolean(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
-        template.setDeactivated(Boolean.parseBoolean(element.getAttributeValue(DEACTIVATED)));
-
-
-        for (final Object o : element.getChildren(VARIABLE)) {
-          Element e = (Element)o;
-          String variableName = e.getAttributeValue(NAME);
-          String expression = e.getAttributeValue(EXPRESSION);
-          String defaultValue = e.getAttributeValue(DEFAULT_VALUE);
-          boolean isAlwaysStopAt = Boolean.parseBoolean(e.getAttributeValue(ALWAYS_STOP_AT));
-          template.addVariable(variableName, expression, defaultValue, isAlwaysStopAt);
-        }
-
-        Element context = element.getChild(CONTEXT);
-        if (context != null) {
-          template.getTemplateContext().readExternal(context);
-        }
-
         created.put(template.getKey(), template);
       }
 
@@ -472,7 +453,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   }
 
-  private TemplateImpl readTemplateFromElement(final boolean isDefault, final String groupName, final Element element) {
+  private TemplateImpl readTemplateFromElement(final boolean isDefault, final String groupName, final Element element) throws
+                                                                                                                       InvalidDataException {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -487,7 +469,28 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       description = element.getAttributeValue(DESCRIPTION);
     }
     String shortcut = element.getAttributeValue(SHORTCUT);
-    return addTemplate(name, value, groupName, description, shortcut, isDefault, id);
+    TemplateImpl template = addTemplate(name, value, groupName, description, shortcut, isDefault, id);
+
+    template.setToReformat(Boolean.parseBoolean(element.getAttributeValue(TO_REFORMAT)));
+    template.setToShortenLongNames(Boolean.parseBoolean(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
+    template.setDeactivated(Boolean.parseBoolean(element.getAttributeValue(DEACTIVATED)));
+
+
+    for (final Object o : element.getChildren(VARIABLE)) {
+      Element e = (Element)o;
+      String variableName = e.getAttributeValue(NAME);
+      String expression = e.getAttributeValue(EXPRESSION);
+      String defaultValue = e.getAttributeValue(DEFAULT_VALUE);
+      boolean isAlwaysStopAt = Boolean.parseBoolean(e.getAttributeValue(ALWAYS_STOP_AT));
+      template.addVariable(variableName, expression, defaultValue, isAlwaysStopAt);
+    }
+
+    Element context = element.getChild(CONTEXT);
+    if (context != null) {
+      template.getTemplateContext().readExternal(context);
+    }
+
+    return template;
   }
 
   public void readHiddenTemplateFile(Document document) throws InvalidDataException {
