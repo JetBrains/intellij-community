@@ -218,7 +218,7 @@ final class EditorTabbedContainer implements Disposable {
     if (tab != null) return;
 
 
-    tab = new TabInfo(comp).setText(getTabTitle(file)).setIcon(icon).setTooltipText(tooltip).setObject(file);
+    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file);
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
     tabActions.add(new CloseTab(comp, tab));
@@ -227,9 +227,9 @@ final class EditorTabbedContainer implements Disposable {
     myTabs.addTab(tab, indexToInsert);
   }
 
-  public String getTabTitle(final VirtualFile file) {
+  public static String calcTabTitle(final Project project, final VirtualFile file) {
     for (EditorTabTitleProvider provider : Extensions.getExtensions(EditorTabTitleProvider.EP_NAME)) {
-      final String result = provider.getEditorTabTitle(myProject, file);
+      final String result = provider.getEditorTabTitle(project, file);
       if (result != null) {
         return result;
       }

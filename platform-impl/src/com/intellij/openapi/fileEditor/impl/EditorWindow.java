@@ -465,7 +465,7 @@ public class EditorWindow {
   protected void updateFileName(VirtualFile file) {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
-      setTitleAt(index, myTabbedPane.getTabTitle(file));
+      setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
       setToolTipTextAt(index, getManager().getFileTooltipText(file));
     }
   }
