@@ -83,6 +83,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private ActionCallback myInitialized = new ActionCallback();
   private boolean myToDisposeRemovedContent = true;
 
+  private int myAttractionCount;
+
   public RunnerContentUi(Project project,
                          RunnerLayoutUi ui,
                          ActionManager actionManager,
@@ -153,6 +155,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
         if (newSelection != null) {
           newSelection.stopAlerting();
+          getGridFor(newSelection).processAddToUi(false);
+        }
+
+        if (oldSelection != null) {
+          getGridFor(oldSelection).processRemoveFromUi(false);
         }
       }
     });
@@ -263,8 +270,16 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myManager = manager;
     myManager.addContentManagerListener(new ContentManagerListener() {
       public void contentAdded(final ContentManagerEvent event) {
-        getGridFor(event.getContent(), true).add(event.getContent(), false);
+        final GridImpl grid = getGridFor(event.getContent(), true);
+
+        grid.add(event.getContent(), false);
+
+        if (getSelectedGrid() == grid) {
+          grid.processAddToUi(false);
+        }
+
         updateTabsUI(false);
+
 
         event.getContent().addPropertyChangeListener(RunnerContentUi.this);
       }
@@ -275,6 +290,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         GridImpl grid = (GridImpl)findGridFor(event.getContent());
         if (grid != null) {
           grid.remove(event.getContent());
+          grid.processRemoveFromUi(false);
           removeGridIfNeeded(grid);
         }
         updateTabsUI(false);
@@ -706,13 +722,16 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       if (!myUiLastStateWasRestored) {
         myUiLastStateWasRestored = true;
 
+        //noinspection SSBasedInspection
+        // [kirillk] this is done later since restoreUiState doesn't work properly in the addNotify call chain
+        //todo to investigate and to fix (may cause extra flickering)
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             restoreLastUiState().doWhenDone(new Runnable() {
               public void run() {
                 if (!myWasEverAdded) {
                   myWasEverAdded = true;
-                  attractByCondition(LayoutViewOptions.STARTUP, false);
+                  attractOnStartup();
                   myInitialized.setDone();
                 }
               }
@@ -729,6 +748,18 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
       saveUiState();
     }
+  }
+
+  @SuppressWarnings({"SSBasedInspection"})
+  // [kirillk] this is done later since "startup" attractions should be done gently, only if no explicit calls are done
+  private void attractOnStartup() {
+    final int currentCount = myAttractionCount;
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (currentCount < myAttractionCount) return;
+        attractByCondition(LayoutViewOptions.STARTUP, false);
+      }
+    });
   }
 
   public void attract(final Content content, boolean afterInitialized) {
@@ -751,6 +782,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
         final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
         if (activate) {
+          myAttractionCount++;
           policy.attract(content, myRunnerUi);
         } else {
           policy.clearAttraction(content, myRunnerUi);

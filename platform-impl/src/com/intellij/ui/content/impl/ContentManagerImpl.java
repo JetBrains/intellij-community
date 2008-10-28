@@ -371,7 +371,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     };
 
     if (focused || requestFocus) {
-      getFocusManager().requestFocus(myFocusProxy, true).doWhenDone(selection);
+      getFocusManager().requestFocus(myFocusProxy, true).doWhenProcessed(selection);
     }
     else {
       selection.run();

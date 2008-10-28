@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class TimedDeadzone {
 
-  public static final Length DEFAULT = new Length(200);
+  public static final Length DEFAULT = new Length(150);
   public static final Length NULL = new Length(-1);
   
   private Alarm myAlarm;

@@ -198,6 +198,8 @@ public class TipManager implements Disposable {
   public void dispose() {
     Disposer.dispose(this);
 
+    hideTooltip(true);
+
     myIsDisposed = true;
     myShowAlarm.cancelAllRequests();
     myMouseListener = null;

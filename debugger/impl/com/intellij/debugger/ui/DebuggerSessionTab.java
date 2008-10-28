@@ -188,23 +188,33 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     vars.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR, myVariablesPanel.getTree());
     myUi.addContent(vars, 0, PlaceInGrid.center, false);
 
+    for (Content each : myUi.getContents()) {
+      updateStatus(each);  
+    }
+
     myUi.addListener(new ContentManagerAdapter() {
       public void selectionChanged(ContentManagerEvent event) {
-        final Content content = event.getContent();
-        if (content.getComponent() instanceof DebuggerView) {
-          final DebuggerView view = (DebuggerView)content.getComponent();
-          if (content.isSelected()) {
-            view.setUpdateEnabled(true);
-            if (view.isRefreshNeeded()) {
-              view.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
-            }
-          }
-          else {
-            view.setUpdateEnabled(false);
-          }
-        }
+        updateStatus(event.getContent());
       }
     }, this);
+
+
+
+  }
+
+  private void updateStatus(final Content content) {
+    if (content.getComponent() instanceof DebuggerView) {
+      final DebuggerView view = (DebuggerView)content.getComponent();
+      if (content.isSelected()) {
+        view.setUpdateEnabled(true);
+        if (view.isRefreshNeeded()) {
+          view.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
+        }
+      }
+      else {
+        view.setUpdateEnabled(false);
+      }
+    }
   }
 
   private Project getProject() {

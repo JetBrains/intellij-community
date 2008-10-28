@@ -67,24 +67,38 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
 
+    processAddToUi(true);
+  }
 
-    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
-      cell.restoreProportions();
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+
+    processRemoveFromUi(true);
+  }
+
+  public void processAddToUi(boolean restoreProportions) {
+    if (restoreProportions) {
+      for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
+        cell.restoreProportions();
+      }
     }
 
     updateSelection(true);
   }
 
-  public void removeNotify() {
-    super.removeNotify();
 
+  public void processRemoveFromUi(boolean savePropertions) {
     if (Disposer.isDisposed(this)) return;
 
-    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
-      cell.saveProportions();
+    if (savePropertions) {
+      for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
+        cell.saveProportions();
+      }
     }
 
     updateSelection(false);
@@ -229,6 +243,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
   void saveSplitterProportions(final PlaceInGrid placeInGrid) {
     if (!RunnerContentUi.ensureValid(this)) return;
+
+    final GridCellImpl cell = myPlaceInGrid2Cell.get(placeInGrid);
+
+    if (!cell.isValidForCalculatePropertions()) return;
 
     final TabImpl tab = (TabImpl)getTab();
 

@@ -476,6 +476,10 @@ public class GridCellImpl implements GridCell, Disposable {
     return "GridCell.Tab." + myContainer.getTab().getIndex() + "." + myPlaceInGrid.name();
   }
 
+  public boolean isValidForCalculatePropertions() {
+    return !isDetached() && getContentCount() > 0;
+  }
+
   public void minimize(Content content) {
     minimize(new Content[]{content});
   }

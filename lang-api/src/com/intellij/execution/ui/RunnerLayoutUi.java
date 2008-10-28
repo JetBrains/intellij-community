@@ -56,6 +56,8 @@ public interface RunnerLayoutUi  {
 
   void updateActionsNow();
 
+  Content[] getContents();
+  
 
   abstract class Factory {
     protected Factory() {

@@ -256,4 +256,12 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     myContentUI.setAdditionalFocusActions(group);
     return this;
   }
+
+  public Content[] getContents() {
+    Content[] contents = new Content[getContentManager().getContentCount()];
+    for (int i = 0; i < contents.length; i++) {
+      contents[i] = getContentManager().getContent(i);
+    }
+    return contents;
+  }
 }
