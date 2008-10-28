@@ -212,7 +212,7 @@ public class MavenEmbedderWrapper {
   private static <T> T doExecute(final Executor<T> executor, MavenProcess p) throws MavenProcessCanceledException {
     final Ref<T> result = new Ref<T>();
     final boolean[] cancelled = new boolean[1];
-    final Exception[] exception = new Exception[1];
+    final Throwable[] exception = new Throwable[1];
 
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
@@ -222,7 +222,7 @@ public class MavenEmbedderWrapper {
         catch (ProcessCanceledException e) {
           cancelled[0] = true;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           exception[0] = e;
         }
       }
