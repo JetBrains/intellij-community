@@ -24,8 +24,8 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -142,15 +142,13 @@ public class UpdateHighlightersUtil {
           result.add(info);
         }
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Removed segment highlighters:" + (oldHighlights.size() - result.size()));
-      }
     }
     MarkupModel markup = document.getMarkupModel(project);
 
     for (HighlightInfo info : getHighlightsToRemove(markup)) {
       infosToRemove.put(info, info);
     }
+    result.removeAll(infosToRemove.keySet());
 
     List<HighlightInfo> reallyRemoved = new ArrayList<HighlightInfo>();
     Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>(oldHighlights == null ? 10 : oldHighlights.size());
@@ -190,16 +188,24 @@ public class UpdateHighlightersUtil {
         info.group = group;
 
         HighlightInfo toRemove = infosToRemove.remove(info);
-        if (toRemove != null) {
+        if (toRemove != null && toRemove.highlighter.isValid()) {
           info.highlighter = toRemove.highlighter;
-          info.fixMarker = toRemove.fixMarker;
-          info.quickFixActionMarkers = toRemove.quickFixActionMarkers;
           reallyRemoved.add(toRemove);
         }
         else {
           createRangeHighlighter(project, document, ranges2markersCache, psiFile, info, infoStartOffset, infoEndOffset, markup);
           changed = true;
         }
+        ranges2markersCache.put(new TextRange(infoStartOffset, infoEndOffset), info.highlighter);
+        if (info.quickFixActionRanges != null) {
+          info.quickFixActionMarkers = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(info.quickFixActionRanges.size());
+          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+            TextRange textRange = pair.second;
+            RangeMarker marker = getOrCreate(document, ranges2markersCache, textRange);
+            info.quickFixActionMarkers.add(Pair.create(pair.first, marker));
+          }
+        }
+        info.fixMarker = getOrCreate(document, ranges2markersCache, new TextRange(info.fixStartOffset, info.fixEndOffset));
 
         result.add(info);
       }
@@ -261,25 +267,10 @@ public class UpdateHighlightersUtil {
     highlighter.setErrorStripeMarkColor(info.getErrorStripeMarkColor(psiFile));
     highlighter.setErrorStripeTooltip(info);
     highlighter.setGutterIconRenderer(info.getGutterIconRenderer());
-
-    ranges2markersCache.put(new TextRange(infoStartOffset, infoEndOffset), info.highlighter);
-    if (info.quickFixActionRanges != null) {
-      info.quickFixActionMarkers = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(info.quickFixActionRanges.size());
-      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-        TextRange textRange = pair.second;
-        RangeMarker marker = getOrCreate(document, ranges2markersCache, textRange, highlighter);
-        info.quickFixActionMarkers.add(Pair.create(pair.first, marker));
-      }
-    }
-    info.fixMarker = getOrCreate(document, ranges2markersCache, new TextRange(info.fixStartOffset, info.fixEndOffset), highlighter);
   }
 
-  private static RangeMarker getOrCreate(Document document, Map<TextRange, RangeMarker> ranges2markersCache, TextRange textRange,
-                                         RangeHighlighterEx highlighter) {
+  private static RangeMarker getOrCreate(Document document, Map<TextRange, RangeMarker> ranges2markersCache, TextRange textRange) {
     RangeMarker marker = ranges2markersCache.get(textRange);
-    if (marker == null && textRange.getStartOffset() == highlighter.getStartOffset() && textRange.getEndOffset() == highlighter.getEndOffset()) {
-      marker = highlighter;
-    }
     if (marker == null) {
       marker = document.createRangeMarker(textRange);
       ranges2markersCache.put(textRange, marker);
