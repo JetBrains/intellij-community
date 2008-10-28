@@ -256,7 +256,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
 
         @Nls
         public String getDisplayName() {
-            return "XSLT Support";
+            return "XSLT";
         }
 
         @Nullable

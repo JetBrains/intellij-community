@@ -97,6 +97,8 @@
       <className>org.intellij.lang.xpath.xslt.intentions.InlineXslAttribute</className>
       <category>XSLT</category>
     </intentionAction>
+
+    <applicationConfigurable implementation="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" />
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
@@ -104,7 +106,6 @@
 
     <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.XsltContextProviderExtension" />
 
-    <configurationProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" />
   </extensions>
 
   <!-- Plugin's application components -->
