@@ -20,6 +20,8 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -130,13 +132,11 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     private static File getCorruptionMarkerFile() {
-      File basePath = new File(PathManager.getSystemPath() + "/caches/");
-      File brokenMarker = new File(basePath, "corruption.marker");
-      return brokenMarker;
+      return new File(basePath(), "corruption.marker");
     }
 
     private static void init() {
-      File basePath = new File(PathManager.getSystemPath() + "/caches/");
+      final File basePath = basePath();
       basePath.mkdirs();
 
       final File namesFile = new File(basePath, "names.dat");
@@ -182,11 +182,33 @@ public class FSRecords implements Disposable, Forceable {
           }
         }
         catch (IOException e1) {
+          final Runnable warnAndShutdown = new Runnable() {
+            public void run() {
+              JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                            "Fatal Error",
+                                            "Files in " + basePath.getPath() + " are locked. IntelliJ IDEA will not be able to start up",
+                                            JOptionPane.ERROR_MESSAGE);
+              System.exit(1);
+            }
+          };
+
+          if (EventQueue.isDispatchThread()) {
+            warnAndShutdown.run();
+          }
+          else {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(warnAndShutdown);
+          }
+
           throw new RuntimeException("Can't rebuild filesystem storage ", e1);
         }
 
         init();
       }
+    }
+
+    private static File basePath() {
+      return new File(PathManager.getSystemPath() + "/caches/");
     }
 
     private static boolean deleteWithSubordinates(File file) {
