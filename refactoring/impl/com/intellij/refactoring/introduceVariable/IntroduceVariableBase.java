@@ -115,72 +115,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
     final JList list = new JList(model);
     list.setCellRenderer(new DefaultListCellRenderer() {
-      void appendText(PsiExpression expr, StringBuffer buf) {
-        if (expr instanceof PsiNewExpression) {
-          final PsiAnonymousClass anonymousClass = ((PsiNewExpression)expr).getAnonymousClass();
-          final PsiExpressionList argumentList = ((PsiNewExpression)expr).getArgumentList();
-          if (argumentList == null) {
-            buf.append(expr.getText());
-          } else {
-            final String args = argumentList.getExpressions().length > 0 ? "(...)" : "()";
-            if (anonymousClass != null) {
-              buf.append("new ").append(anonymousClass.getBaseClassType().getPresentableText()).append(args).append(" {...}");
-            } else {
-              final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)expr).getClassReference();
-              if (reference != null) {
-                buf.append("new ").append(reference.getText()).append(args);
-              } else {
-                buf.append(expr.getText());
-              }
-            }
-          }
-        } else if (expr instanceof PsiReferenceExpression) {
-          final PsiExpression qualifierExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
-          if (qualifierExpression != null) {
-            appendText(qualifierExpression, buf);
-            buf.append(".");
-          }
-          buf.append(((PsiReferenceExpression)expr).getReferenceName());
-        } else if (expr instanceof PsiMethodCallExpression) {
-          appendText(((PsiMethodCallExpression)expr).getMethodExpression(), buf);
-          final PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
-          if (args.length > 0) {
-            buf.append("(...)");
-          } else {
-            buf.append("()");
-          }
-        } else if (expr instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expr;
-          appendText(assignmentExpression.getLExpression(), buf);
-          buf.append(assignmentExpression.getOperationSign().getText());
-          appendText(assignmentExpression.getRExpression(), buf);
-        }
-        else if (expr instanceof PsiConditionalExpression) {
-          final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expr;
-          appendText(conditionalExpression.getCondition(), buf);
-          buf.append(" ? ");
-          appendText(conditionalExpression.getThenExpression(), buf);
-          buf.append(" : ");
-          appendText(conditionalExpression.getElseExpression(), buf);
-        }
-        else if (expr instanceof PsiBinaryExpression) {
-          final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expr;
-          appendText(binaryExpression.getLOperand(), buf);
-          buf.append(binaryExpression.getOperationSign().getText());
-          appendText(binaryExpression.getROperand(), buf);
-        }
-        else if (expr instanceof PsiPostfixExpression) {
-          appendText(((PsiPostfixExpression)expr).getOperand(), buf);
-          buf.append(((PsiPostfixExpression)expr).getOperationSign().getText());
-        }
-        else if (expr instanceof PsiPrefixExpression) {
-          buf.append(((PsiPrefixExpression)expr).getOperationSign().getText());
-          appendText(((PsiPrefixExpression)expr).getOperand(), buf);
-        }
-        else if (expr != null) {
-          buf.append(expr.getText());
-        }
-      }
 
       @Override
       public Component getListCellRendererComponent(final JList list,
@@ -191,7 +125,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
         final StringBuffer buf = new StringBuffer();
-        appendText((PsiExpression)value, buf);
+        ((PsiExpression)value).accept(new PsiExpressionTrimRenderer(buf));
         setText(buf.toString());
         return rendererComponent;
       }
