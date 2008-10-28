@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
@@ -50,7 +51,7 @@ public abstract class PsiAnchor {
     }
 
     TextRange textRange = element.getTextRange();
-    if (textRange == null) {
+    if (textRange == null || element instanceof LightElement) {
       return new HardReference(element);
     }
 
