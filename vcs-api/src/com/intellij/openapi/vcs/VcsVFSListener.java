@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -137,16 +138,26 @@ public abstract class VcsVFSListener {
         filesToDelete.addAll(deletedFiles);
       }
       else {
-        AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
-        Collection<FilePath> filePaths = helper.selectFilePathsToProcess(deletedFiles, getDeleteTitle(), null, getSingleFileDeleteTitle(),
-                                                                         getSingleFileDeletePromptTemplate(),
-                                                                         myRemoveOption);
+        Collection<FilePath> filePaths = selectFilePathsToDelete(deletedFiles);
         if (filePaths != null) {
           filesToDelete.addAll(filePaths);
         }
       }
     }
     performDeletion(filesToDelete);
+  }
+
+  /**
+   * Select file paths to delete
+   *
+   * @param deletedFiles deleted files set
+   * @return selected files or null (that is considered as empty file set)
+   */
+  @Nullable
+  protected Collection<FilePath> selectFilePathsToDelete(final List<FilePath> deletedFiles) {
+    AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
+    return helper.selectFilePathsToProcess(deletedFiles, getDeleteTitle(), null, getSingleFileDeleteTitle(),
+                                           getSingleFileDeletePromptTemplate(), myRemoveOption);
   }
 
   private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
