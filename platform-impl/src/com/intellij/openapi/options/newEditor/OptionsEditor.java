@@ -307,7 +307,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     final String[] result = new String[list.size()];
     int add = 0;
     for (int i = list.size() - 1; i >=0; i--) {
-      result[add++] = list.get(i).getDisplayName();
+      result[add++] = list.get(i).getDisplayName().replace('\n', ' ');
     }
     return result;
   }
