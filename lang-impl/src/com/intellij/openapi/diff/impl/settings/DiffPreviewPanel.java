@@ -36,6 +36,7 @@ public class DiffPreviewPanel implements PreviewPanel {
     mergePanel.setEditorProperty(MergePanel2.LINE_MARKERS_AREA, Boolean.FALSE);
     mergePanel.setEditorProperty(MergePanel2.ADDITIONAL_LINES, 1);
     mergePanel.setEditorProperty(MergePanel2.ADDITIONAL_COLUMNS, 1);
+    mergePanel.setScrollToFirstDiff(false);
 
     for (int i = 0; i < MergePanel2.EDITORS_COUNT; i++) {
       final EditorMouseListener motionListener = new EditorMouseListener(i);

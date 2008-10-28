@@ -93,6 +93,7 @@ public class MergePanel2 implements DiffViewer {
   private final SyncScrollSupport myScrollSupport = new SyncScrollSupport();
   private final DiffDivider[] myDividers = new DiffDivider[]{new DiffDivider(FragmentSide.SIDE2),
                                                              new DiffDivider(FragmentSide.SIDE1)};
+  private boolean myScrollToFirstDiff = true;
 
   private final LabeledComponent[] myEditorsPanels = new LabeledComponent[EDITORS_COUNT];
   private final EditorPlace.EditorListener myPlaceListener = new EditorPlace.EditorListener() {
@@ -150,6 +151,10 @@ public class MergePanel2 implements DiffViewer {
     myBuilder = builder;
   }
 
+  public void setScrollToFirstDiff(final boolean scrollToFirstDiff) {
+    myScrollToFirstDiff = scrollToFirstDiff;
+  }
+
   public Editor getEditor(int index) {
     return getEditorPlace(index).getEditor();
   }
@@ -191,7 +196,9 @@ public class MergePanel2 implements DiffViewer {
     for (int i = 0; i < myDividers.length; i++) {
       myDividers[i].listenEditors(sides[i]);
     }
-    myPanel.requestScrollEditors();
+    if (myScrollToFirstDiff) {
+      myPanel.requestScrollEditors();
+    }
   }
 
   private void disposeMergeList() {
@@ -293,7 +300,9 @@ public class MergePanel2 implements DiffViewer {
     public void scrollEditors() {
       Editor centerEditor = getEditor(1);
       JComponent centerComponent = centerEditor.getContentComponent();
-      if (centerComponent.isShowing()) centerComponent.requestFocus();
+      if (centerComponent.isShowing()) {
+        centerComponent.requestFocus();
+      }
       int[] toLeft = getPrimaryBegginings(myDividers[0].getPaint());
       int[] toRight = getPrimaryBegginings(myDividers[1].getPaint());
       int line;
