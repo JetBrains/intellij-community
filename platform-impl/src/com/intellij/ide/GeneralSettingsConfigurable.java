@@ -7,10 +7,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,11 +15,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.nio.charset.Charset;
 
 public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private MyComponent myComponent;
-  @NonNls private static final String SYSTEM_DEFAULT_ENCODING = "System Default";
+
 
   public void apply() {
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -50,13 +45,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
 
 
-    final Object item = myComponent.myEncodingsCombo.getSelectedItem();
-    if (SYSTEM_DEFAULT_ENCODING.equals(item)) {
-      EncodingManager.getInstance().setDefaultCharsetName("");
-    }
-    else if (item != null) {
-      EncodingManager.getInstance().setDefaultCharsetName(((Charset)item).name());
-    }
+
   }
 
   public boolean isModified() {
@@ -82,7 +71,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
     isModified |= settings.isSearchInBackground() != myComponent.mySearchInBackground.isSelected();
 
-    isModified |= isEncodingModified();
 
     return isModified;
   }
@@ -137,18 +125,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.updateBrowserField();
 
     myComponent.mySearchInBackground.setSelected(settings.isSearchInBackground());
-
-    final DefaultComboBoxModel encodingsModel = new DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets());
-    encodingsModel.insertElementAt(SYSTEM_DEFAULT_ENCODING, 0);
-    myComponent.myEncodingsCombo.setModel(encodingsModel);
-
-    final String name = EncodingManager.getInstance().getDefaultCharsetName();
-    if (StringUtil.isEmpty(name)) {
-      myComponent.myEncodingsCombo.setSelectedItem(SYSTEM_DEFAULT_ENCODING);
-    }
-    else {
-      myComponent.myEncodingsCombo.setSelectedItem(EncodingManager.getInstance().getDefaultCharset());
-    }
   }
 
   public void disposeUIResources() {
@@ -160,14 +136,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     return "preferences.general";
   }
 
-  public boolean isEncodingModified() {
-    final Object item = myComponent.myEncodingsCombo.getSelectedItem();
-    if (SYSTEM_DEFAULT_ENCODING.equals(item)) {
-      return !StringUtil.isEmpty(EncodingManager.getInstance().getDefaultCharsetName());
-    }
 
-    return !Comparing.equal(item, EncodingManager.getInstance().getDefaultCharset());
-  }
 
   private static class MyComponent {
     JPanel myPanel;
@@ -182,7 +151,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     private JRadioButton myUseUserDefinedBrowser;
     public JCheckBox myConfirmExit;
     private JCheckBox mySearchInBackground;
-    private JComboBox myEncodingsCombo;
+
 
     public MyComponent() {
       if (BrowserUtil.canStartDefaultBrowser()) {

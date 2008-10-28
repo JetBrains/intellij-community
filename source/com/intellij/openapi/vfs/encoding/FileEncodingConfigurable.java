@@ -12,6 +12,8 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.Nls;
@@ -32,7 +34,9 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
   private JCheckBox myTransparentNativeToAsciiCheckBox;
   private JPanel myPropertiesFilesEncodingCombo;
   private Charset mySelectedCharsetForPropertiesFiles;
+  private JComboBox myIdeEncodingsCombo;
   private ChooseFileEncodingAction myAction;
+  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
 
   public static FileEncodingConfigurable getInstance(final Project project) {
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FileEncodingConfigurable.class);
@@ -70,8 +74,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
     myAction = new ChooseFileEncodingAction(null) {
       public void update(final AnActionEvent e) {
         super.update(e);
-        getTemplatePresentation().setText(mySelectedCharsetForPropertiesFiles == null ?
-                                          IdeBundle.message("encoding.name.system.default") :
+        getTemplatePresentation().setText(mySelectedCharsetForPropertiesFiles == null ? SYSTEM_DEFAULT :
                                           mySelectedCharsetForPropertiesFiles.displayName());
       }
 
@@ -89,6 +92,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
   }
 
   public boolean isModified() {
+    if (isEncodingModified()) return true;
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
 
     Map<VirtualFile, Charset> editing = myTreeView.getValues();
@@ -101,6 +105,15 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
     return !same;
   }
 
+  public boolean isEncodingModified() {
+    final Object item = myIdeEncodingsCombo.getSelectedItem();
+    if (SYSTEM_DEFAULT.equals(item)) {
+      return !StringUtil.isEmpty(EncodingManager.getInstance().getDefaultCharsetName());
+    }
+
+    return !Comparing.equal(item, EncodingManager.getInstance().getDefaultCharset());
+  }
+
   public void apply() throws ConfigurationException {
     Map<VirtualFile,Charset> result = myTreeView.getValues();
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
@@ -108,6 +121,14 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
     encodingManager.setDefaultCharsetForPropertiesFiles(null, mySelectedCharsetForPropertiesFiles);
     encodingManager.setNative2AsciiForPropertiesFiles(null, myTransparentNativeToAsciiCheckBox.isSelected());
     encodingManager.setUseUTFGuessing(null, myAutodetectUTFEncodedFilesCheckBox.isSelected());
+
+    final Object item = myIdeEncodingsCombo.getSelectedItem();
+    if (SYSTEM_DEFAULT.equals(item)) {
+      EncodingManager.getInstance().setDefaultCharsetName("");
+    }
+    else if (item != null) {
+      EncodingManager.getInstance().setDefaultCharsetName(((Charset)item).name());
+    }
   }
 
   public void reset() {
@@ -118,6 +139,18 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
     mySelectedCharsetForPropertiesFiles = encodingManager.getDefaultCharsetForPropertiesFiles(null);
     myAction.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", myAction.getTemplatePresentation(),
                                       ActionManager.getInstance(), 0));
+
+    final DefaultComboBoxModel encodingsModel = new DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets());
+    encodingsModel.insertElementAt(SYSTEM_DEFAULT, 0);
+    myIdeEncodingsCombo.setModel(encodingsModel);
+
+    final String name = EncodingManager.getInstance().getDefaultCharsetName();
+    if (StringUtil.isEmpty(name)) {
+      myIdeEncodingsCombo.setSelectedItem(SYSTEM_DEFAULT);
+    }
+    else {
+      myIdeEncodingsCombo.setSelectedItem(EncodingManager.getInstance().getDefaultCharset());
+    }
  }
 
   public void disposeUIResources() {
