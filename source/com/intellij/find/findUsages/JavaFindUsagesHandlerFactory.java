@@ -7,6 +7,7 @@ package com.intellij.find.findUsages;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.lang.java.JavaFindUsagesProvider;
 
 /**
  * @author peter
@@ -43,7 +44,7 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   }
 
   public boolean canFindUsages(final PsiElement element) {
-    return true;
+    return new JavaFindUsagesProvider().canFindUsagesFor(element);
   }
 
   public FindUsagesHandler createFindUsagesHandler(final PsiElement element, final boolean forHighlightUsages) {
