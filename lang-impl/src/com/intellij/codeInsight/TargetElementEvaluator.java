@@ -15,5 +15,5 @@ public interface TargetElementEvaluator {
   boolean includeSelfInGotoImplementation(@NotNull PsiElement element);
 
   @Nullable
-  PsiElement getElementByReference(PsiReference ref);
+  PsiElement getElementByReference(PsiReference ref, final int flags);
 }

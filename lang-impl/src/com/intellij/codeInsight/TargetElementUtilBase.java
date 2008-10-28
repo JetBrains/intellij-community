@@ -208,7 +208,7 @@ public class TargetElementUtilBase {
     final Language language = ref.getElement().getLanguage();
     final TargetElementEvaluator evaluator = targetElementEvaluator.forLanguage(language);
     if (evaluator != null) {
-      final PsiElement element = evaluator.getElementByReference(ref);
+      final PsiElement element = evaluator.getElementByReference(ref, flags);
       if (element != null) return element;
     }
 
