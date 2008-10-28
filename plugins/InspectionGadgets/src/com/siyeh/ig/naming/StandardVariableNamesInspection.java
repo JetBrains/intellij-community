@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
@@ -63,26 +62,30 @@ public class StandardVariableNamesInspection extends BaseInspection {
         s_boxingClasses.put("char", "java.lang.Character");
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "standard.variable.names.display.name");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
-        final String expectedType = s_expectedTypes.get((String)infos[0]);
-        final LanguageLevel languageLevel = (LanguageLevel)infos[1];
-        if (!LanguageLevel.JDK_1_3.equals(languageLevel) &&
-                !LanguageLevel.JDK_1_4.equals(languageLevel)) {
+        final PsiVariable variable = (PsiVariable)infos[0];
+        final String name = variable.getName();
+        final String expectedType = s_expectedTypes.get(name);
+        if (PsiUtil.isLanguageLevel5OrHigher(variable)) {
             final String boxedType = s_boxingClasses.get(expectedType);
             if (boxedType != null) {
                 return InspectionGadgetsBundle.message(
@@ -94,11 +97,12 @@ public class StandardVariableNamesInspection extends BaseInspection {
                 "standard.variable.names.problem.descriptor", expectedType);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new ExceptionNameDoesntEndWithExceptionVisitor();
+        return new StandardVariableNamesVisitor();
     }
 
-    private static class ExceptionNameDoesntEndWithExceptionVisitor
+    private static class StandardVariableNamesVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitVariable(@NotNull PsiVariable variable) {
@@ -113,19 +117,18 @@ public class StandardVariableNamesInspection extends BaseInspection {
             if (expectedType.equals(typeText)) {
                 return;
             }
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(variable);
             if (PsiUtil.isLanguageLevel5OrHigher(variable)) {
                 final PsiPrimitiveType unboxedType =
                         PsiPrimitiveType.getUnboxedType(type);
-                if (unboxedType == null) {
-                    return;
-                }
-                final String unboxedTypeText = unboxedType.getCanonicalText();
-                if (expectedType.equals(unboxedTypeText)) {
-                    return;
+                if (unboxedType != null) {
+                    final String unboxedTypeText =
+                            unboxedType.getCanonicalText();
+                    if (expectedType.equals(unboxedTypeText)) {
+                        return;
+                    }
                 }
             }
-            registerVariableError(variable, variableName, languageLevel);
+            registerVariableError(variable, variable);
         }
     }
 }
