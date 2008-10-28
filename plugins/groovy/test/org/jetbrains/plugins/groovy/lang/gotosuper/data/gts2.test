@@ -1,0 +1,7 @@
+interface A {}
+
+class <caret>B implements A {}
+-----
+interface <caret>A {}
+
+class B implements A {}
