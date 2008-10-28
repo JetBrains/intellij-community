@@ -1,6 +1,5 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -875,13 +874,6 @@ public class LibraryTableEditor implements Disposable {
 
     protected JComponent createCenterPanel() {
       return LibraryTableEditor.this.getComponent();
-    }
-
-    @Override
-    protected Action[] createActions() {
-      final Action action = getOKAction();
-      action.putValue(Action.NAME, CommonBundle.getCloseButtonText());
-      return new Action[]{action};
     }
   }
 
