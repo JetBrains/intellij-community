@@ -68,14 +68,15 @@ public class GitUIUtil {
         final GitRemote remote = (GitRemote)value;
         String startName;
         String endName;
-        if(defaultRemote != null && defaultRemote.equals(remote.name())) {
-          startName="<b>";
-          endName="</b>";
-        } else {
-          startName="";
-          endName="";
+        if (defaultRemote != null && defaultRemote.equals(remote.name())) {
+          startName = "<b>";
+          endName = "</b>";
         }
-        String text = "<html>"+startName+remote.name()+endName+" (<i>"+remote.url()+"</i>)</html>";
+        else {
+          startName = "";
+          endName = "";
+        }
+        String text = "<html>" + startName + remote.name() + endName + " (<i>" + remote.url() + "</i>)</html>";
         return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
       }
     };

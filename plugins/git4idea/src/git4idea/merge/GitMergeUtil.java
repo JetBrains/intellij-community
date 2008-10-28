@@ -16,6 +16,14 @@
 package git4idea.merge;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitRevisionNumber;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 
@@ -65,15 +73,16 @@ public class GitMergeUtil {
    * Initialize no commit checkbox (for both merge and pull dialog)
    *
    * @param addLogInformationCheckBox a log information checkbox
-   * @param commitMessage a commit message text field or null
-   * @param noCommitCheckBox a no commit checkbox to configure
+   * @param commitMessage             a commit message text field or null
+   * @param noCommitCheckBox          a no commit checkbox to configure
    */
-  public static void setupNoCommitCheckbox(final JCheckBox addLogInformationCheckBox, final JTextField commitMessage,
-                                            final JCheckBox noCommitCheckBox) {
+  public static void setupNoCommitCheckbox(final JCheckBox addLogInformationCheckBox,
+                                           final JTextField commitMessage,
+                                           final JCheckBox noCommitCheckBox) {
     noCommitCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final boolean selected = noCommitCheckBox.isSelected();
-        if(commitMessage != null) {
+        if (commitMessage != null) {
           commitMessage.setEnabled(!selected);
         }
         if (selected) {
@@ -86,13 +95,14 @@ public class GitMergeUtil {
 
   /**
    * Setup strategies dropdown. The set of strategies changes according to amount of selected elements in branchChooser.
-   * 
-   * @param branchChooser a branch chooser
+   *
+   * @param branchChooser    a branch chooser
    * @param noCommitCheckBox no commit checkbox
-   * @param strategy a strategy selector
+   * @param strategy         a strategy selector
    */
   public static void setupStrategies(final ElementsChooser<String> branchChooser,
-                                      final JCheckBox noCommitCheckBox, final JComboBox strategy) {
+                                     final JCheckBox noCommitCheckBox,
+                                     final JComboBox strategy) {
     final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
       private void updateStrategies(final List<String> elements) {
         strategy.removeAllItems();
@@ -101,6 +111,7 @@ public class GitMergeUtil {
         }
         strategy.setSelectedItem(DEFAULT_STRATEGY);
       }
+
       public void elementMarkChanged(final String element, final boolean isMarked) {
         final List<String> elements = branchChooser.getMarkedElements();
         if (elements.size() == 0) {
@@ -123,5 +134,31 @@ public class GitMergeUtil {
     };
     listener.elementMarkChanged(null, true);
     branchChooser.addElementsMarkListener(listener);
+  }
+
+  /**
+   * Show updates caused by git operation
+   *
+   * @param project    the context project
+   * @param exceptions the exception list
+   * @param root       the git root
+   * @param currentRev the revision before update
+   * @param actionName the action name
+   * @param actionInfo the information about the action
+   */
+  public static void showUpdates(final Project project,
+                                 final List<VcsException> exceptions,
+                                 final VirtualFile root,
+                                 final GitRevisionNumber currentRev,
+                                 final String actionName,
+                                 final ActionInfo actionInfo) {
+    final UpdatedFiles files = UpdatedFiles.create();
+    MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev, files);
+    collector.collect(exceptions);
+    if (exceptions.size() != 0) {
+      return;
+    }
+    ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
+    manager.showUpdateProjectInfo(files, actionName, actionInfo);
   }
 }

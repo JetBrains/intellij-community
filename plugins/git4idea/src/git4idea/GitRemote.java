@@ -19,8 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitSimpleHandler;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -54,7 +54,7 @@ public final class GitRemote {
    * A constructor
    *
    * @param name the name
-   * @param url the url
+   * @param url  the url
    */
   public GitRemote(@NotNull final String name, final String url) {
     myName = name;
@@ -88,7 +88,7 @@ public final class GitRemote {
    */
   @Override
   public boolean equals(final Object obj) {
-    return (obj instanceof  GitRemote) && myName.equals(((GitRemote)obj).myName);
+    return (obj instanceof GitRemote) && myName.equals(((GitRemote)obj).myName);
   }
 
   /**
@@ -103,7 +103,7 @@ public final class GitRemote {
    * List all remotes for the git root (git remote -v)
    *
    * @param project the context project
-   * @param root the git root
+   * @param root    the git root
    * @return a list of registered remotes
    */
   public static List<GitRemote> list(Project project, VirtualFile root) throws VcsException {
@@ -112,13 +112,13 @@ public final class GitRemote {
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("-v");
-    for(String line : handler.run().split("\n")) {
+    for (String line : handler.run().split("\n")) {
       int i = line.indexOf('\t');
-      if(i == -1) {
+      if (i == -1) {
         continue;
       }
       String name = line.substring(0, i);
-      String url = line.substring(i+1);
+      String url = line.substring(i + 1);
       remotes.add(new GitRemote(name, url));
     }
     return remotes;
@@ -133,30 +133,30 @@ public final class GitRemote {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, "remote");
     handler.setNoSSH(true);
     handler.setSilent(true);
-    handler.addParameters("show","-n", myName);
+    handler.addParameters("show", "-n", myName);
     String[] lines = handler.run().split("\n");
-    TreeMap<String,String> mapping = new TreeMap<String,String>();
+    TreeMap<String, String> mapping = new TreeMap<String, String>();
     TreeSet<String> branches = new TreeSet<String>();
     int i = 0;
-    if(!lines[i].startsWith("*") || !lines[i].endsWith(myName)) {
-      throw new IllegalStateException("Unexpected format for 'git remote show' line "+i+":"+lines[i]);
+    if (!lines[i].startsWith("*") || !lines[i].endsWith(myName)) {
+      throw new IllegalStateException("Unexpected format for 'git remote show' line " + i + ":" + lines[i]);
     }
-    if(i >= lines.length) {
-      throw new IllegalStateException("Premature end from 'git remote show' at line "+i);
-    }
-    i++;
-    if(!lines[i].startsWith(SHOW_URL_PREFIX) || !lines[i].endsWith(myUrl)) {
-      throw new IllegalStateException("Unexpected format for 'git remote show' line "+i+":"+lines[i]);
+    if (i >= lines.length) {
+      throw new IllegalStateException("Premature end from 'git remote show' at line " + i);
     }
     i++;
-    while( i < lines.length && lines[i].startsWith(SHOW_MAPPING_PREFIX) ) {
+    if (!lines[i].startsWith(SHOW_URL_PREFIX) || !lines[i].endsWith(myUrl)) {
+      throw new IllegalStateException("Unexpected format for 'git remote show' line " + i + ":" + lines[i]);
+    }
+    i++;
+    while (i < lines.length && lines[i].startsWith(SHOW_MAPPING_PREFIX)) {
       String local = lines[i].substring(SHOW_MAPPING_PREFIX.length());
       i++;
       String remote = lines[i].trim();
       i++;
-      mapping.put(local,remote);
+      mapping.put(local, remote);
     }
-    if(i < lines.length && lines[i].equals(SHOW_BRANCHES_LINE)) {
+    if (i < lines.length && lines[i].equals(SHOW_BRANCHES_LINE)) {
       i++;
       branches.addAll(Arrays.asList(lines[i].substring(4).split(" ")));
     }
@@ -179,7 +179,7 @@ public final class GitRemote {
     /**
      * A constructor from fields
      *
-     * @param branchMapping a map from local branches to remote branches
+     * @param branchMapping  a map from local branches to remote branches
      * @param trackedRemotes a set of tracked remotes
      */
     public Info(final Map<String, String> branchMapping, final Set<String> trackedRemotes) {
@@ -196,6 +196,7 @@ public final class GitRemote {
 
     /**
      * Get remote branch for the local branch
+     *
      * @param localBranchName a local branch name
      * @return a remote branch name or null if the mapping is not found
      */

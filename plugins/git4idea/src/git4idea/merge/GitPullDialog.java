@@ -117,7 +117,7 @@ public class GitPullDialog extends DialogWrapper {
       }
     };
     myBranchChooser.addElementsMarkListener(listener);
-    listener.elementMarkChanged(null,true);
+    listener.elementMarkChanged(null, true);
     GitMergeUtil.setupNoCommitCheckbox(myAddLogInformationCheckBox, null, myNoCommitCheckBox);
     GitMergeUtil.setupStrategies(myBranchChooser, myNoCommitCheckBox, myStrategy);
     init();
@@ -139,7 +139,7 @@ public class GitPullDialog extends DialogWrapper {
    * Validate dialog and enable buttons
    */
   private void validateDialog() {
-    if(getRemote().trim().length() == 0) {
+    if (getRemote().trim().length() == 0) {
       setOKActionEnabled(false);
       return;
     }
@@ -159,24 +159,24 @@ public class GitPullDialog extends DialogWrapper {
     };
     textField.getDocument().addDocumentListener(listener);
     listener.changedUpdate(null);
-    myGetBranchesButton.addActionListener(new ActionListener(){
+    myGetBranchesButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), "ls-remote");
         h.addParameters("--heads", myRemote.getSelectedItem().toString());
-        String output = GitHandlerUtil.doSynchronously(h, GitBundle.getString("pull.getting.remote.branches"), h.printCommandLine());
-        if(output == null) {
+        String output = GitHandlerUtil.doSynchronously(h, GitBundle.getString("pull.getting.remote.branches"), h.printableCommandLine());
+        if (output == null) {
           return;
         }
         myBranchChooser.removeAllElements();
-        for(String line : output.split("\n")) {
-          if(line.length() == 0) {
+        for (String line : output.split("\n")) {
+          if (line.length() == 0) {
             continue;
           }
           int pos = line.lastIndexOf('/');
-          if(pos == -1) {
+          if (pos == -1) {
             pos = line.lastIndexOf('\t');
           }
-          myBranchChooser.addElement(line.substring(pos+1), false);
+          myBranchChooser.addElement(line.substring(pos + 1), false);
         }
       }
     });
@@ -188,21 +188,22 @@ public class GitPullDialog extends DialogWrapper {
   public GitLineHandler pullHandler() {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), "pull");
     h.addParameters("--no-stat");
-    if(myNoCommitCheckBox.isSelected()) {
+    if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
-    } else {
-      if(myAddLogInformationCheckBox.isSelected()) {
+    }
+    else {
+      if (myAddLogInformationCheckBox.isSelected()) {
         h.addParameters("--log");
       }
     }
-    if(mySquashCommitCheckBox.isSelected()) {
+    if (mySquashCommitCheckBox.isSelected()) {
       h.addParameters("--squash");
     }
-    if(myNoFastForwardCheckBox.isSelected()) {
+    if (myNoFastForwardCheckBox.isSelected()) {
       h.addParameters("--no-ff");
     }
     String strategy = (String)myStrategy.getSelectedItem();
-    if(!GitMergeUtil.DEFAULT_STRATEGY.equals(strategy)) {
+    if (!GitMergeUtil.DEFAULT_STRATEGY.equals(strategy)) {
       h.addParameters("--strategy", strategy);
     }
     h.addParameters("-v");
@@ -221,25 +222,26 @@ public class GitPullDialog extends DialogWrapper {
       myBranchChooser.removeAllElements();
       GitRemote r = null;
       final int count = myRemote.getItemCount();
-      for(int i = 0; i< count; i++) {
+      for (int i = 0; i < count; i++) {
         GitRemote candidate = (GitRemote)myRemote.getItemAt(i);
-        if(candidate.name().equals(item)) {
+        if (candidate.name().equals(item)) {
           r = candidate;
           break;
         }
       }
-      if(r == null) {
+      if (r == null) {
         return;
       }
       GitRemote.Info ri = r.localInfo(myProject, gitRoot());
       String toSelect = ri.getRemoteForLocal(currentBranch());
-      for(String trackedBranch : ri.trackedBranches()) {
+      for (String trackedBranch : ri.trackedBranches()) {
         myBranchChooser.addElement(trackedBranch, trackedBranch.equals(toSelect));
       }
     }
     catch (VcsException e) {
       GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retriving.remotes"));
-    } finally {
+    }
+    finally {
       validateDialog();
     }
   }
@@ -261,19 +263,19 @@ public class GitPullDialog extends DialogWrapper {
       List<GitRemote> remotes = GitRemote.list(myProject, gitRoot());
       String branch = currentBranch();
       String remote = null;
-      if(branch!= null) {
-        remote = GitConfigUtil.getValue(myProject, gitRoot(), "branch."+branch+".remote");
+      if (branch != null) {
+        remote = GitConfigUtil.getValue(myProject, gitRoot(), "branch." + branch + ".remote");
       }
       myRemote.setRenderer(GitUIUtil.getGitRemoteListCellRenderer(remote));
       GitRemote toSelect = null;
       myRemote.removeAllItems();
-      for(GitRemote r : remotes) {
+      for (GitRemote r : remotes) {
         myRemote.addItem(r);
-        if(r.name().equals(remote)) {
+        if (r.name().equals(remote)) {
           toSelect = r;
         }
       }
-      if(toSelect != null) {
+      if (toSelect != null) {
         myRemote.setSelectedItem(toSelect);
       }
     }

@@ -134,7 +134,7 @@ public class GitHandlerUtil {
   private static void runInCurrentThread(final GitHandler handler, final ProgressIndicator indicator, final boolean setIndeterminateFlag) {
     handler.start();
     if (indicator != null) {
-      indicator.setText(GitBundle.message("git.running", handler.printCommandLine()));
+      indicator.setText(GitBundle.message("git.running", handler.printableCommandLine()));
       if (setIndeterminateFlag) {
         indicator.setIndeterminate(true);
       }

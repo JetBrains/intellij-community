@@ -132,7 +132,7 @@ public class GitMergeDialog extends DialogWrapper {
         setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
       }
     };
-    listener.elementMarkChanged(null,true);
+    listener.elementMarkChanged(null, true);
   }
 
 

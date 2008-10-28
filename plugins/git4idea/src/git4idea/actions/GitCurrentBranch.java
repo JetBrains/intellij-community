@@ -20,9 +20,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,10 +35,10 @@ public class GitCurrentBranch extends BasicAction {
   @Override
   protected void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] files)
     throws VcsException {
-
-    GitCommand cmd = new GitCommand(project, vcs.getSettings(), GitUtil.getVcsRoot(project, files[0]));
-    Messages.showInfoMessage(project, GitBundle.message("current.branch.message", cmd.currentBranch()),
-                             GitBundle.getString("current.branch.title"));
+    final VirtualFile root = GitUtil.getVcsRoot(project, files[0]);
+    final GitBranch gitBranch = GitBranch.current(project, root);
+    final String branchName = gitBranch != null ? gitBranch.getName() : GitBranch.NO_BRANCH_NAME;
+    Messages.showInfoMessage(project, GitBundle.message("current.branch.message", branchName), GitBundle.getString("current.branch.title"));
   }
 
   @Override

@@ -17,19 +17,16 @@ package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitPullDialog;
-import git4idea.merge.MergeChangeCollector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -52,8 +49,11 @@ public class GitPull extends GitRepositoryAction {
   /**
    * {@inheritDoc}
    */
-  protected void perform(@NotNull final Project project, @NotNull final List<VirtualFile> gitRoots, @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots, final List<VcsException> exceptions) throws VcsException {
+  protected void perform(@NotNull final Project project,
+                         @NotNull final List<VirtualFile> gitRoots,
+                         @NotNull final VirtualFile defaultRoot,
+                         final Set<VirtualFile> affectedRoots,
+                         final List<VcsException> exceptions) throws VcsException {
     GitPullDialog dialog = new GitPullDialog(project, gitRoots, defaultRoot);
     dialog.show();
     if (!dialog.isOK()) {
@@ -64,7 +64,7 @@ public class GitPull extends GitRepositoryAction {
     affectedRoots.add(root);
     GitRevisionNumber currentRev = GitRevisionNumber.resolve(project, root, "HEAD");
     try {
-      GitHandlerUtil.doSynchronously(h, GitBundle.message("pulling.title", dialog.getRemote()), h.printCommandLine());
+      GitHandlerUtil.doSynchronously(h, GitBundle.message("pulling.title", dialog.getRemote()), h.printableCommandLine());
     }
     finally {
       exceptions.addAll(h.errors());
@@ -72,14 +72,8 @@ public class GitPull extends GitRepositoryAction {
     if (exceptions.size() != 0) {
       return;
     }
-    final UpdatedFiles files = UpdatedFiles.create();
-    MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev, files);
-    collector.collect(exceptions);
-    if (exceptions.size() != 0) {
-      return;
-    }
-    ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
     GitVcs vcs = GitVcs.getInstance(project);
-    manager.showUpdateProjectInfo(files, getActionName(vcs), ActionInfo.UPDATE);
+    GitMergeUtil.showUpdates(project, exceptions, root, currentRev, getActionName(vcs), ActionInfo.UPDATE);
   }
+
 }

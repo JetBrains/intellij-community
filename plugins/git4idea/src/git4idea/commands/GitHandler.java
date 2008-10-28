@@ -141,6 +141,7 @@ public abstract class GitHandler {
 
   /**
    * Add error code to ignored list
+   *
    * @param code the code to ignore
    */
   public void ignoreErrorCode(int code) {
@@ -149,6 +150,7 @@ public abstract class GitHandler {
 
   /**
    * Check if error code should be ignored
+   *
    * @param code a code to check
    * @return true if error code is ignorable
    */
@@ -319,7 +321,7 @@ public abstract class GitHandler {
     try {
       // setup environment
       if (!myProject.isDefault() && !mySilent) {
-        GitVcs.getInstance(myProject).showMessages(printCommandLine());
+        GitVcs.getInstance(myProject).showMessages(printableCommandLine());
       }
       if (log.isDebugEnabled()) {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
@@ -373,7 +375,7 @@ public abstract class GitHandler {
   /**
    * @return a command line with full path to executable replace to "git"
    */
-  public String printCommandLine() {
+  public String printableCommandLine() {
     final GeneralCommandLine line = myCommandLine.clone();
     line.setExePath("git");
     return line.getCommandLineString();
