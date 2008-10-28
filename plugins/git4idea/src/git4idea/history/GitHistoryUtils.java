@@ -18,13 +18,23 @@ package git4idea.history;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.StringTokenizer;
+import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitContentRevision;
+import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * History utilities for Git
@@ -60,5 +70,55 @@ public class GitHistoryUtils {
     String revstr = lines[0];
     Date commitDate = GitUtil.parseTimestamp(lines[1]);
     return new GitRevisionNumber(revstr, commitDate);
+  }
+
+
+  /**
+   * Get history for the file
+   *
+   * @param project the context project
+   * @param path    the file path
+   * @return the list of the revisions
+   * @throws VcsException if there is problem with running git
+   */
+  public static List<VcsFileRevision> history(Project project, FilePath path) throws VcsException {
+    // adjust path using change manager
+    path = getLastCommitName(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(project, path);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, "log");
+    h.setNoSSH(true);
+    h.addParameters("-M", "--follow", "--name-only", "--pretty=format:%H%x00%ct%x00%an%x20<%ae>%x00%cn%x20<%ce>%x00%s%n%n%b%x00");
+    h.endOptions();
+    h.addRelativePaths(path);
+    String output = h.run();
+    List<VcsFileRevision> rc = new ArrayList<VcsFileRevision>();
+    StringTokenizer tk = new StringTokenizer(output, "\u0000\n", false);
+    String prefix = root.getPath() + "/";
+    while (tk.hasMoreTokens()) {
+      final GitRevisionNumber revision = new GitRevisionNumber(tk.nextToken("\u0000\n"), GitUtil.parseTimestamp(tk.nextToken("\u0000")));
+      final String author = GitUtil.adjustAuthorName(tk.nextToken("\u0000"), tk.nextToken("\u0000"));
+      final String message = tk.nextToken("\u0000").trim();
+      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + GitUtil.unescapePath(tk.nextToken("\u0000\n")), false);
+      rc.add(new GitFileRevision(project, revisionPath, revision, author, message, null));
+    }
+    return rc;
+  }
+
+  /**
+   * Get name of the file in the last commit. If file was renamed, returns the previous name.
+   *
+   * @param project the contenxt project
+   * @param path    the path to check
+   * @return the name of file in the last commit or argument
+   */
+  public static FilePath getLastCommitName(final Project project, FilePath path) {
+    final ChangeListManager changeManager = ChangeListManager.getInstance(project);
+    final Change change = changeManager.getChange(path);
+    if (change != null && change.getType() == Change.Type.MOVED) {
+      GitContentRevision r = (GitContentRevision)change.getBeforeRevision();
+      assert r != null : "Move change always have beforeRevision";
+      path = r.getFile();
+    }
+    return path;
   }
 }

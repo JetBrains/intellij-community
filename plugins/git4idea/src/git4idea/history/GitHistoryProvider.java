@@ -25,8 +25,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.util.ui.ColumnInfo;
-import git4idea.GitUtil;
-import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,13 +93,12 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    */
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
-    GitCommand command = new GitCommand(project, settings, GitUtil.getVcsRoot(project, filePath));
-    List<VcsFileRevision> revisions = command.log(filePath);
+    List<VcsFileRevision> revisions = GitHistoryUtils.history(project, filePath);
     return new VcsHistorySession(revisions) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         try {
-          return GitHistoryUtils.getCurrentRevision(project, filePath);
+          return GitHistoryUtils.getCurrentRevision(project, GitHistoryUtils.getLastCommitName(project, filePath));
         }
         catch (VcsException e) {
           // likely the file is not under VCS anymore.

@@ -20,17 +20,24 @@ package git4idea.diff;
  */
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
+import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
+import git4idea.GitVcs;
+import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -64,6 +71,18 @@ public class GitDiffProvider implements DiffProvider {
    */
   @Nullable
   public ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
-    return new GitContentRevision(VcsUtil.getFilePath(selectedFile.getPath()), (GitRevisionNumber)revisionNumber, project);
+    final String path = selectedFile.getPath();
+    try {
+      for (VcsFileRevision f : GitHistoryUtils.history(project, VcsUtil.getFilePath(path))) {
+        GitFileRevision gitRevision = (GitFileRevision)f;
+        if (f.getRevisionNumber().equals(revisionNumber)) {
+          return new GitContentRevision(gitRevision.getPath(), (GitRevisionNumber)revisionNumber, project);
+        }
+      }
+    }
+    catch (VcsException e) {
+      GitVcs.getInstance(project).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", path));
+    }
+    return null;
   }
 }

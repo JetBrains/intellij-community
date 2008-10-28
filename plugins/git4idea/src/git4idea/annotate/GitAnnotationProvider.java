@@ -29,6 +29,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.config.GitVcsSettings;
+import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,7 +95,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
             progress.setText(GitBundle.message("getting.history", file.getName()));
           }
           // TODO: Optimize it and fetch only log entries that we need.
-          final List<VcsFileRevision> revisions = command.log(filePath);
+          final List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, filePath);
 
           result.addLogEntries(revisions);
           annotation[0] = result;

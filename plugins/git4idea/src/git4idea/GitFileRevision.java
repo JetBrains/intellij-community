@@ -62,6 +62,13 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
     this.branch = branch;
   }
 
+  /**
+   * @return file path
+   */
+  public FilePath getPath() {
+    return path;
+  }
+
   public VcsRevisionNumber getRevisionNumber() {
     return revision;
   }

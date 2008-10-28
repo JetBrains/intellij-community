@@ -413,4 +413,19 @@ public class GitUtil {
       }
     }
   }
+
+  /**
+   * Return commiter name based on author name and commiter name
+   *
+   * @param authorName
+   * @param committerName
+   * @return just a name if they are equal, or name that includes both author and commiter
+   */
+  public static String adjustAuthorName(final String authorName, String committerName) {
+    if (!authorName.equals(committerName)) {
+      //noinspection HardCodedStringLiteral
+      committerName = authorName + ", via " + committerName;
+    }
+    return committerName;
+  }
 }
