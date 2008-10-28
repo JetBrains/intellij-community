@@ -80,7 +80,7 @@ public class AddAction extends BasicAction {
     SVNWCClient wcClient = vcs.createWCClient();
     wcClient.setEventHandler(new AddEventListener(project));
 
-    Collection<SVNException> exceptions = SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(wcClient, Arrays.asList(files));
+    Collection<SVNException> exceptions = SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(wcClient, Arrays.asList(files), true);
     if (! exceptions.isEmpty()) {
       final Collection<String> messages = new ArrayList<String>(exceptions.size());
       for (SVNException exception : exceptions) {

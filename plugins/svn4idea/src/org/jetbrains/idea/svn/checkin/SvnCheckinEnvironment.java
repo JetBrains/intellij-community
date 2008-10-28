@@ -320,13 +320,17 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files) {
+    return scheduleUnversionedFilesForAddition(wcClient, files, false);
+  }
+
+  public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files, final boolean recursive) {
     List<SVNException> exceptions = new ArrayList<SVNException>();
 
     Collections.sort(files, FilePathComparator.getInstance());
 
     for (VirtualFile file : files) {
       try {
-        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, false, true, false);
+        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, false, true, recursive);
       }
       catch (SVNException e) {
         exceptions.add(e);
