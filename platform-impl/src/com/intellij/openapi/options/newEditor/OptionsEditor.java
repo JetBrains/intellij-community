@@ -317,12 +317,40 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private void fireModification(final Configurable actual) {
-    if (!myConfigurable2Content.containsKey(actual)) return;
 
-    if (actual != null && actual.isModified()) {
-      getContext().fireModifiedAdded(actual, null);
-    } else if (actual != null && !actual.isModified() && !getContext().getErrors().containsKey(actual)) {
-      getContext().fireModifiedRemoved(actual, null);
+    Collection<Configurable> toCheck = colectAllParentsAndSiblings(actual);
+
+    for (Configurable configurable : toCheck) {
+      fireModificationForItem(configurable);
+    }
+
+  }
+
+  private Collection<Configurable> colectAllParentsAndSiblings(final Configurable actual) {
+    ArrayList<Configurable> result = new ArrayList<Configurable>();
+    Configurable nearestParent = getContext().getParentConfigurable(actual);
+
+    if (nearestParent != null) {
+      Configurable parent = nearestParent;
+      while (parent != null) {
+        result.add(parent);
+        parent = getContext().getParentConfigurable(parent);
+      }
+
+      result.addAll(getContext().getChildren(nearestParent));
+    }
+
+
+    return result;
+  }
+
+  private void fireModificationForItem(final Configurable configurable) {
+    if (myConfigurable2Content.containsKey(configurable)) {
+      if (configurable != null && configurable.isModified()) {
+        getContext().fireModifiedAdded(configurable, null);
+      } else if (configurable != null && !configurable.isModified() && !getContext().getErrors().containsKey(configurable)) {
+        getContext().fireModifiedRemoved(configurable, null);
+      }
     }
   }
 

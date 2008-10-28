@@ -2,14 +2,12 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.ui.speedSearch.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class OptionsEditorContext {
@@ -23,6 +21,7 @@ public class OptionsEditorContext {
   Map<Configurable, ConfigurationException> myErrors = new HashMap<Configurable, ConfigurationException>();
   private boolean myHoldingFilter;
   private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<Configurable, Configurable>();
+  private final MultiValuesMap<Configurable, Configurable> myParentToChildrenMap = new MultiValuesMap<Configurable, Configurable>();
 
 
   public OptionsEditorContext(ElementFilter.Active filter) {
@@ -119,6 +118,12 @@ public class OptionsEditorContext {
 
   public void registerKid(final Configurable parent, final Configurable kid) {
     myConfigurableToParentMap.put(kid,parent);
+    myParentToChildrenMap.put(parent, kid);
+  }
+
+  public Collection<Configurable> getChildren(final Configurable parent) {
+    Collection<Configurable> result = myParentToChildrenMap.get(parent);
+    return result == null ? Collections.EMPTY_SET : result;
   }
 
   interface ColleagueAction {
