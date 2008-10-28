@@ -46,7 +46,7 @@ public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurabl
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "reference.settingsdialog.project.template.languages";
   }
 
   protected String visualize(@NotNull final Language language) {
