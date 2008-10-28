@@ -440,7 +440,7 @@ public class PsiUtilBase {
   }
 
   @Nullable
-  public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file) {
+  public static Language reallyEvaluateLanguageInRange(final int start, final int end, final PsiFile file) {
     Language lang = null;
     int curOffset = start;
     do {
@@ -462,6 +462,29 @@ public class PsiUtilBase {
     }
     while(curOffset < end);
     return narrowLanguage(lang, file.getLanguage());
+  }
+
+  @Nullable
+  public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file) {
+    PsiElement elt = getElementAtOffset(file, start);
+
+    if (elt != null) {
+      elt = elt.getParent();
+      TextRange selectionRange = new TextRange(start, end);
+      TextRange range = elt.getTextRange();
+
+      while(!range.contains(selectionRange)) {
+        elt = elt.getParent();
+        if (elt == null) break;
+        range = elt.getTextRange();
+      }
+      
+      if (range.contains(selectionRange) && elt != null) {
+        return elt.getLanguage();
+      }
+    }
+
+    return reallyEvaluateLanguageInRange(start, end, file);
   }
 
   @Nullable
