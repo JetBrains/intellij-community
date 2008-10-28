@@ -20,6 +20,10 @@ public class MoveToGridAction extends BaseViewAction {
     }
 
     Grid grid = context.findGridFor(content[0]);
+    if (grid == null) {
+      setEnabled(e, false);
+      return;
+    }
     Tab tab = context.getTabFor(grid);
     setEnabled(e, !tab.isDefault() && grid.getContents().size() == 1);
   }
