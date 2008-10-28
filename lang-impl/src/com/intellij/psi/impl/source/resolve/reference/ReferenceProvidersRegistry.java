@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -204,6 +205,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   }
 
   public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz){
+    ProgressManager.getInstance().checkCanceled();
     assert context.isValid() : "Invalid context: " + context;
 
     final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers = getInstance(context.getProject()).getPairsByElement(context, clazz);
