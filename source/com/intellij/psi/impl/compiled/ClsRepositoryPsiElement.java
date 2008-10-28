@@ -2,6 +2,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
@@ -22,7 +23,9 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
   }
 
   public PsiManager getManager() {
-    return getContainingFile().getManager();
+    final PsiFile file = getContainingFile();
+    if (file == null) throw new PsiInvalidElementAccessException(this);
+    return file.getManager();
   }
 
   public PsiFile getContainingFile() {
