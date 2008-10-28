@@ -6,10 +6,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.TreeBuilderUtil;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -24,6 +21,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -154,12 +152,14 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   protected final AbstractTreeUpdater createUpdater() {
     return new AbstractTreeUpdater(this) {
-      protected void updateSubtree(DefaultMutableTreeNode node) {
+      @Override
+      protected ActionCallback beforeUpdate(final TreeUpdatePass pass) {
         if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
           validateCache();
           getTodoTreeStructure().validateCache();
         }
-        super.updateSubtree(node);
+
+        return ActionCallback.DONE;
       }
     };
   }

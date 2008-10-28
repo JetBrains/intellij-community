@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-class TreeUpdatePass {
+public class TreeUpdatePass {
 
   private DefaultMutableTreeNode myNode;
 

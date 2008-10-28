@@ -20,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class ActionCallback {
 
+  public static final ActionCallback DONE = new Done();
+  public static final ActionCallback REJECTED = new Rejected();
+
   ExecutionCallback myDone;
   ExecutionCallback myRejected;
 

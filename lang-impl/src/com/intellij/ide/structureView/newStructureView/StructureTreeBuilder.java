@@ -16,7 +16,6 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
 final class StructureTreeBuilder extends AbstractTreeBuilder {
@@ -74,16 +73,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
 
   protected boolean isSmartExpand() {
     return false;
-  }
-
-  protected final AbstractTreeUpdater createUpdater(){
-    return new AbstractTreeUpdater(this) {
-      protected void updateSubtree(DefaultMutableTreeNode node) {
-        if(!myProject.isDisposed()) {
-          super.updateSubtree(node);
-        }
-      }
-    };
   }
 
   @NotNull

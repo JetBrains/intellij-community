@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -132,6 +133,10 @@ public class AbstractTreeUpdater implements Disposable {
     myUpdateQueue.queue(update);
   }
 
+  /**
+   * @deprecated use addSubtreeToUpdate instead
+   * @param node
+   */
   protected void updateSubtree(DefaultMutableTreeNode node) {
     myTreeBuilder.updateSubtree(node);
   }
@@ -144,7 +149,11 @@ public class AbstractTreeUpdater implements Disposable {
 
     while(!myNodeQueue.isEmpty()){
       final TreeUpdatePass eachPass = myNodeQueue.removeFirst();
-      myTreeBuilder.getUi().updateSubtree(eachPass);
+      beforeUpdate(eachPass).doWhenDone(new Runnable() {
+        public void run() {
+          myTreeBuilder.getUi().updateSubtree(eachPass);
+        }
+      });
     }
 
     if (myRunAfterUpdate != null) {
@@ -159,6 +168,10 @@ public class AbstractTreeUpdater implements Disposable {
         }
       });
     }
+  }
+
+  protected ActionCallback beforeUpdate(TreeUpdatePass pass) {
+    return ActionCallback.DONE;
   }
 
   public boolean addSubtreeToUpdateByElement(Object element) {
