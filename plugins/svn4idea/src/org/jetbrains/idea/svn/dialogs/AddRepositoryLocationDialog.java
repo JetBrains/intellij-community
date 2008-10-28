@@ -59,8 +59,9 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     myCombo = new JComboBox(myPreviousLocations.toArray(new Object[myPreviousLocations.size()]));
     myCombo.setEditable(true);
     myCombo.setMinimumSize(new Dimension(250, 20));
-
+    gb.fill = GridBagConstraints.HORIZONTAL;
     mainPanel.add(myCombo, gb);
+    gb.fill = GridBagConstraints.NONE;
 
     myComboField = (JTextField)myCombo.getEditor().getEditorComponent();
     myComboField.addInputMethodListener(new InputMethodListener() {
@@ -94,7 +95,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     validateMe();
 
     final JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(mainPanel, new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+    wrapper.add(mainPanel, new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                   new Insets(0,0,0,0), 0,0));
     return wrapper;
   }
