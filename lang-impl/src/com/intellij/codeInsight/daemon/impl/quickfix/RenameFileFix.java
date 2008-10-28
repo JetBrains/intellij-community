@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -23,10 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class RenameFileFix implements IntentionAction, LocalQuickFix {
-  private final String myNewName;
+  private final String myNewFileName;
 
-  public RenameFileFix(String newName) {
-    myNewName = newName;
+  /**
+   * @param newFileName with extension
+   */
+  public RenameFileFix(String newFileName) {
+    myNewFileName = newFileName;
   }
 
   @NotNull
@@ -58,21 +62,20 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!file.isValid()) return false;
     VirtualFile vFile = file.getVirtualFile();
-    String newName = myNewName + "." + vFile.getExtension();
-
+    if (vFile == null) return false;
     final VirtualFile parent = vFile.getParent();
-    assert parent != null;
-    final VirtualFile newVFile = parent.findChild(newName);
+    if (parent == null) return false;
+    final VirtualFile newVFile = parent.findChild(myNewFileName);
     return newVFile == null || newVFile.equals(vFile);
   }
 
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
-    String newName = myNewName + "." + vFile.getExtension();
-    FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(project).getDocument(file));
-    try{
-      vFile.rename(file.getManager(), newName);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    FileDocumentManager.getInstance().saveDocument(document);
+    try {
+      vFile.rename(file.getManager(), myNewFileName);
     }
     catch(IOException e){
       MessagesEx.error(project, e.getMessage()).showLater();

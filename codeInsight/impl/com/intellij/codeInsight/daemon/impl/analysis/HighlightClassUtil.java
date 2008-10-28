@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -245,7 +246,7 @@ public class HighlightClassUtil {
           return errorResult;
         }
       }
-      QuickFixAction.registerQuickFixAction(errorResult, new RenameFileFix(aClass.getName()));
+      QuickFixAction.registerQuickFixAction(errorResult, new RenameFileFix(aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension()));
       QuickFixAction.registerQuickFixAction(errorResult, new RenamePublicClassFix(aClass));
     }
     return errorResult;
