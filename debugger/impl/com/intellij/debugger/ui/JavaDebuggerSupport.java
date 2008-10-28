@@ -184,9 +184,13 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       return 1;
     }
 
+    @Override
+    public Configurable getRootConfigurable() {
+      return new DebuggerLaunchingConfigurable();
+    }
+
     public Collection<? extends Configurable> getConfigurables(final Project project) {
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-      configurables.add(new DebuggerLaunchingConfigurable());
       configurables.add(new DebuggerDataViewsConfigurable(project));
       configurables.add(new DebuggerSteppingConfigurable(project));
       configurables.add(new UserRenderersConfigurable(project));

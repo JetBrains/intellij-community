@@ -21,7 +21,10 @@ import java.util.List;
 /**
  * @author Eugene Belyaev & Eugene Zhuravlev
  */
-public class DebuggerConfigurable extends SearchableConfigurable.Parent.Abstract {
+public class DebuggerConfigurable implements SearchableConfigurable.Parent {
+  private Configurable myRootConfigurable;
+  private Configurable[] myKids;
+
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableDebugger.png");
   }
@@ -34,32 +37,74 @@ public class DebuggerConfigurable extends SearchableConfigurable.Parent.Abstract
     return "project.propDebugger";
   }
 
-  protected Configurable[] buildConfigurables() {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if(project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
-    final List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      providers.add(support.getSettingsPanelProvider());
-    }
-    Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
-      public int compare(final DebuggerSettingsPanelProvider o1, final DebuggerSettingsPanelProvider o2) {
-        return o2.getPriority() - o1.getPriority();
+  public Configurable[] getConfigurables() {
+    if (myKids == null) {
+      Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      if(project == null) {
+        project = ProjectManager.getInstance().getDefaultProject();
       }
-    });
-    for (DebuggerSettingsPanelProvider provider : providers) {
-      configurables.addAll(provider.getConfigurables(project));
+      final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+      final List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
+      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+        providers.add(support.getSettingsPanelProvider());
+      }
+      Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
+        public int compare(final DebuggerSettingsPanelProvider o1, final DebuggerSettingsPanelProvider o2) {
+          return o2.getPriority() - o1.getPriority();
+        }
+      });
+      for (DebuggerSettingsPanelProvider provider : providers) {
+        configurables.addAll(provider.getConfigurables(project));
+        final Configurable rootConfigurable = provider.getRootConfigurable();
+        if (rootConfigurable != null) {
+          if (myRootConfigurable != null) {
+            configurables.add(rootConfigurable);
+          } else {
+            myRootConfigurable = rootConfigurable;
+          }
+        }
+      }
+      myKids = configurables.toArray(new Configurable[configurables.size()]);
     }
-    return configurables.toArray(new Configurable[configurables.size()]);
+    return myKids;
   }
 
   public void apply() throws ConfigurationException {
-    super.apply();
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       support.getSettingsPanelProvider().apply();
     }
+    if (myRootConfigurable != null) {
+      myRootConfigurable.apply();
+    }
+  }
+
+  public boolean hasOwnContent() {
+    return myRootConfigurable != null;
+  }
+
+  public boolean isVisible() {
+    return true;
+  }
+
+  public Runnable enableSearch(final String option) {
+    return null;
+  }
+
+  public JComponent createComponent() {
+    return myRootConfigurable != null ? myRootConfigurable.createComponent() : null;
+  }
+
+  public boolean isModified() {
+    return myRootConfigurable != null && myRootConfigurable.isModified();
+  }
+
+  public void reset() {
+    if (myRootConfigurable != null) {
+      myRootConfigurable.reset();
+    }
+  }
+
+  public void disposeUIResources() {
   }
 
   @NonNls
