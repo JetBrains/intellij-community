@@ -267,7 +267,7 @@ public class QuickListsPanel extends JPanel implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.idesettings.quicklists";
   }
 
   public JComponent createComponent() {
