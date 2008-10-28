@@ -5,7 +5,6 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -279,20 +278,8 @@ public class JVMNameUtil {
 
   @Nullable
   public static PsiClass getClassAt(SourcePosition position) {
-    final int offset = position.getOffset();
-    if (offset < 0) {
-      return null;
-    }
-    final PsiFile psiFile = position.getFile();
-    final PsiElement element;
-    if (psiFile instanceof PsiCompiledElement) {
-      element = psiFile.findElementAt(offset);
-    } 
-    else {
-      final FileViewProvider viewProvider = psiFile.getViewProvider();
-      element = viewProvider.findElementAt(offset, StdLanguages.JAVA);
-    }
-    return PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    final PsiElement element = position.getElementAt();
+    return (element != null) ? PsiTreeUtil.getParentOfType(element, PsiClass.class, false) : null;
   }
 
   @Nullable

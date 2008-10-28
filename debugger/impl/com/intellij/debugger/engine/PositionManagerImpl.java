@@ -7,7 +7,6 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -117,16 +116,9 @@ public class PositionManagerImpl implements PositionManager {
       return null;
     }
 
-    int lineNumber  = calcLineIndex(psiFile, location);
-
-    return SourcePosition.createFromLine(psiFile, lineNumber);
-  }
-
-  private int calcLineIndex(PsiFile psiFile,
-                            Location location) {
     LOG.assertTrue(myDebugProcess != null);
     if (location == null) {
-      return -1;
+      return SourcePosition.createFromLine(psiFile, -1);
     }
 
     int lineNumber;
@@ -140,14 +132,14 @@ public class PositionManagerImpl implements PositionManager {
     if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
       final String methodSignature = location.method().signature();
       if (methodSignature == null) {
-        return -1;
+        return SourcePosition.createFromLine(psiFile, -1);
       }
       final String methodName = location.method().name();
       if(methodName == null) {
-        return -1;
+        return SourcePosition.createFromLine(psiFile, -1);
       }
       if(location.declaringType() == null) {
-        return -1;
+        return SourcePosition.createFromLine(psiFile, -1);
       }
 
       final MethodFinder finder = new MethodFinder(location.declaringType().name(), methodSignature);
@@ -155,20 +147,12 @@ public class PositionManagerImpl implements PositionManager {
 
       final PsiMethod compiledMethod = finder.getCompiledMethod();
       if (compiledMethod == null) {
-        return -1;
+        return SourcePosition.createFromLine(psiFile, -1);
       }
-      final Document document = PsiDocumentManager.getInstance(myDebugProcess.getProject()).getDocument(psiFile);
-      if(document == null){
-        return -1;
-      }
-      final int offset = finder.getCompiledMethod().getTextOffset();
-      if (offset < 0) {
-        return -1;
-      }
-      return document.getLineNumber(offset);
+      return SourcePosition.createFromElement(compiledMethod);
     }
 
-    return lineNumber;
+    return SourcePosition.createFromLine(psiFile, lineNumber);
   }
 
   @Nullable
