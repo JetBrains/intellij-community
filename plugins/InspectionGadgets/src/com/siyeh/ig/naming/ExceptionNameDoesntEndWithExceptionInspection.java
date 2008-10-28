@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,31 +29,37 @@ import org.jetbrains.annotations.NotNull;
 public class ExceptionNameDoesntEndWithExceptionInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "ExceptionClassNameDoesntEndWithException";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "exception.name.doesnt.end.with.exception.display.name");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "exception.name.doesnt.end.with.exception.problem.descriptor");
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ExceptionNameDoesntEndWithExceptionVisitor();
     }
@@ -62,6 +69,9 @@ public class ExceptionNameDoesntEndWithExceptionInspection
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down into inner classes
+            if (aClass instanceof PsiTypeParameter) {
+                return;
+            }
             final String className = aClass.getName();
             if (className == null) {
                 return;
