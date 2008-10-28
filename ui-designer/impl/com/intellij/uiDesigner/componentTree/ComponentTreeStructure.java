@@ -93,18 +93,25 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     else if (element instanceof LwInspectionSuppression[] || element instanceof RadButtonGroup[]) {
       return myRootElement;
     }
-    else if(element instanceof ComponentPtr){ // RadContainer is also RadComponent
-      final ComponentPtr ptr=(ComponentPtr)element;
+    else if (element instanceof LwInspectionSuppression) {
+      return myEditor.getRootContainer().getInspectionSuppressions();
+    }
+    else if (element instanceof RadButtonGroup) {
+      return myEditor.getRootContainer().getButtonGroups();
+    }
+    else if (element instanceof ComponentPtr) { // RadContainer is also RadComponent
+      final ComponentPtr ptr = (ComponentPtr)element;
       if (!ptr.isValid()) return myRootElement;
-      final RadComponent component=ptr.getComponent();
-      if(component instanceof RadRootContainer){
+      final RadComponent component = ptr.getComponent();
+      if (component instanceof RadRootContainer) {
         return myRootElement;
-      }else{
+      }
+      else {
         return component.getParent() != null ? new ComponentPtr(myEditor, component.getParent(), false) : null;
       }
     }
-    else{
-      throw new IllegalArgumentException("unknown element: "+element);
+    else {
+      throw new IllegalArgumentException("unknown element: " + element);
     }
   }
 
