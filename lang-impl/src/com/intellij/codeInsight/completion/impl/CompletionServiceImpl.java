@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.io.StringWriter;
  * @author peter
  */
 public class CompletionServiceImpl extends CompletionService{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private Throwable myTrace = null;
   private CompletionProgressIndicator myCurrentCompletion;
 
@@ -79,7 +81,11 @@ public class CompletionServiceImpl extends CompletionService{
 
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
-      assert myTextBeforePosition.endsWith(matcher.getPrefix()) : "prefix should be some actual file string just before caret: " + matcher.getPrefix();
+      if (!myTextBeforePosition.endsWith(matcher.getPrefix())) {
+        final int len = myTextBeforePosition.length();
+        final String fragment = len > 100 ? myTextBeforePosition.substring(len - 100) : myTextBeforePosition;
+        LOG.error("prefix should be some actual file string just before caret: " + matcher.getPrefix() + "\n text=" + fragment);
+      }
       return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher);
     }
 
