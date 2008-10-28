@@ -161,4 +161,13 @@ public class GitVFSListener extends VcsVFSListener {
   protected boolean isDirectoryVersioningSupported() {
     return false;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected Collection<FilePath> selectFilePathsToDelete(final List<FilePath> deletedFiles) {
+    // For git asking about vcs delete does not make much sense. The result is practically identical.
+    return deletedFiles;
+  }
 }
