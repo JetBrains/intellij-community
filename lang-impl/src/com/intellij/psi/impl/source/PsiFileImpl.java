@@ -8,6 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -39,6 +40,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -242,6 +244,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
       final StubElement stub = stubs.next();
       if (stub.getStubType() != tree.getElementType()) {
+        rebuildStub();
         assert false: "Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " + tree.getElementType();
       }
       final PsiElement psi = stub.getPsi();
@@ -862,7 +865,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Nullable
-  private static StubElement bindStubs(ASTNode tree, Iterator<StubElement<?>> stubs) {
+  private StubElement bindStubs(ASTNode tree, Iterator<StubElement<?>> stubs) {
     if (tree instanceof ChameleonElement) {
       tree = ChameleonTransforming.transform((ChameleonElement)tree);
     }
@@ -872,6 +875,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
       final StubElement stub = stubs.next();
       if (stub.getStubType() != tree.getElementType()) {
+        rebuildStub();
+
         assert false: "Stub and PSI element type mismatch:  stub " + stub + ", AST " + tree.getElementType();
       }
 
@@ -886,5 +891,22 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     return null;
+  }
+
+  private void rebuildStub() {
+    final VirtualFile vFile = getVirtualFile();
+
+    if (vFile != null && vFile.isValid()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
+          if (doc != null) {
+            FileDocumentManager.getInstance().saveDocument(doc);
+          }
+        }
+      }, ModalityState.NON_MODAL);
+
+      FileBasedIndex.getInstance().requestReindex(vFile);
+    }
   }
 }
