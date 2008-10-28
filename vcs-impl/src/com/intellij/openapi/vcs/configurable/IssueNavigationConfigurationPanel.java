@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nls;
@@ -29,6 +30,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Configu
   private JButton myEditButton;
   private JButton myDeleteButton;
   private JButton myAddJiraPatternButton;
+  private JLabel myDescriptionLabel;
   private final Project myProject;
   private List<IssueNavigationLink> myLinks;
   private ListTableModel<IssueNavigationLink> myModel;
@@ -48,6 +50,8 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Configu
     super(new BorderLayout());
     myProject = project;
     add(myPanel, BorderLayout.CENTER);
+    myDescriptionLabel.setText(ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
+                               "checkin comments and link them to issues in your issue tracker:");
     reset();
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
