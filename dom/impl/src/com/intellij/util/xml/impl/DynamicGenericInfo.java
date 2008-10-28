@@ -54,12 +54,14 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     if (myComputing.get() == Boolean.TRUE) return false;
 
     myStaticGenericInfo.buildMethodMaps();
+    final XmlElement element = myInvocationHandler.getXmlElement();
+    assert element != null;
 
     myComputing.set(Boolean.TRUE);
     try {
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
-      synchronized (myInvocationHandler) {
+      synchronized (element) {
         if (myInitialized) return true;
 
 
