@@ -831,7 +831,9 @@ class RunConfigurable extends BaseConfigurable {
       super(ExecutionBundle.message("copy.configuration.action.name"),
             ExecutionBundle.message("copy.configuration.action.name"),
             COPY_ICON);
-      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
+
+      final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE);
+      registerCustomShortcutSet(action.getShortcutSet(), myTree);
     }
 
 
