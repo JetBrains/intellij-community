@@ -1,7 +1,7 @@
 class Test {
-    def c = 0
+    double c = 0
 }
 
-new Test().c.dou<caret>
+new Test().c.doubleVa<caret>
 -----
 doubleValue

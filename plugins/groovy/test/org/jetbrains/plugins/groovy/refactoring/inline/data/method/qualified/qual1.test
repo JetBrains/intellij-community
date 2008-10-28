@@ -16,7 +16,7 @@ class QasdWfsdEdfgh extends R {
         return foo
     }
 
-    def f = this
+    QasdWfsdEdfgh f = this
 
     static void boo() {
         println "aaa"

@@ -69,7 +69,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
   @Nullable
   public PsiType getReturnTypeGroovy() {
     if (myIsSetter) return PsiType.VOID;
-    return myProperty.getTypeGroovy();
+    return myProperty.getDeclaredType();
   }
 
   @Nullable

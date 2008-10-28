@@ -10,7 +10,7 @@ class A {
 
     public static void main(String[] args) {
         Closure cl = A.fact
-        def var = cl(5)
+        int var = cl(5)
         println(<ref>var.intValue())
     }
 }
