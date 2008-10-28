@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>UpperCaseFieldNameNotConstant.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Non-constant field with upper-case name</problem_class>
+    <description>Non-constant field &lt;code&gt;FOO&lt;/code&gt; with constant-style name #loc</description>
+  </problem>
+
+  <problem>
+    <file>UpperCaseFieldNameNotConstant.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Non-constant field with upper-case name</problem_class>
+    <description>Non-constant field &lt;code&gt;FOO2&lt;/code&gt; with constant-style name #loc</description>
+  </problem>
+
+  <problem>
+    <file>UpperCaseFieldNameNotConstant.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Non-constant field with upper-case name</problem_class>
+    <description>Non-constant field &lt;code&gt;FOO3&lt;/code&gt; with constant-style name #loc</description>
+  </problem>
+
+</problems>

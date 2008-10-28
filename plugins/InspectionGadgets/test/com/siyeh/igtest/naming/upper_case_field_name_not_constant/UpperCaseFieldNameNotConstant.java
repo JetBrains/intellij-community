@@ -1,6 +1,6 @@
-package com.siyeh.igtest.naming;
+package com.siyeh.igtest.naming.upper_case_field_name_not_constant;
 
-public class UpperCaseFieldNameNotConstantInspection {
+public class UpperCaseFieldNameNotConstant {
     public int FOO = 3;
     public static int FOO2 = 3;
     public final int FOO3 = 3;

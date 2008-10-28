@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,36 +26,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "upper.case.field.name.not.constant.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "NonConstantFieldWithUpperCaseName";
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "upper.case.field.name.not.constant.problem.descriptor");
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new ExceptionNameDoesntEndWithExceptionVisitor();
+        return new UpperCaseFieldNameNotConstantVisitor();
     }
 
-    private static class ExceptionNameDoesntEndWithExceptionVisitor
+    private static class UpperCaseFieldNameNotConstantVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitField(@NotNull PsiField field) {
