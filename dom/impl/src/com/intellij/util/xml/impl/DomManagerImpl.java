@@ -145,7 +145,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     });
 
     myFileFactory = PsiFileFactory.getInstance(project);
-    solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
+    /*solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
@@ -153,7 +153,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
           }
         }).booleanValue();
       }
-    }, project);
+    }, project);*/
 
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
