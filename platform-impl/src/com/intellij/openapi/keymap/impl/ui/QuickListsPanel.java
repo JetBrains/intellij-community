@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -99,10 +100,14 @@ public class QuickListsPanel extends JPanel implements Configurable {
           updateRightPanel(quickList);
           myQuickListsList.repaint();
         }
+        else {
+          addDescriptionLabel();
+        }
         myRightPanel.revalidate();
       }
     });
 
+    addDescriptionLabel();
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myQuickListsList);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -163,6 +168,13 @@ public class QuickListsPanel extends JPanel implements Configurable {
 
     panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
     return panel;
+  }
+
+  private void addDescriptionLabel() {
+    final JLabel descLabel =new JLabel("<html>Quick Lists allow you to define commonly used groups of actions (for example, refactoring or VCS actions)" +
+                 " and to assign keyboard shortcuts to such groups.</html>");
+    descLabel.setBorder(new EmptyBorder(0, 25, 0, 25));
+    myRightPanel.add(descLabel, BorderLayout.CENTER);
   }
 
 
