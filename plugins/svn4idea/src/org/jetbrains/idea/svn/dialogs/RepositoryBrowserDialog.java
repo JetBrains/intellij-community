@@ -976,7 +976,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress != null) {
-          progress.setText((move ? SvnBundle.message("progress.text.browser.moving") : SvnBundle.message("progress.text.browser.copying")) + src);
+          progress.setText((move ? SvnBundle.message("progress.text.browser.moving", src) : SvnBundle.message("progress.text.browser.copying", src)));
           progress.setText2(SvnBundle.message("progress.text.browser.remote.destination", dst));
         }
         SvnVcs vcs = SvnVcs.getInstance(myProject);
@@ -1003,20 +1003,26 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return;
     }
     SVNURL url = selectedNode.getURL();
-    SVNDirEntry dirEntry = selectedNode.getSVNDirEntry();
-    if (dirEntry == null) {
-      return;
-    }
-    File dir = selectFile("Destination directory", "Select checkout destination directory");
-    if (dir == null) {
-      return;
-    }
 
     final String relativePath;
-    if (dirEntry.getRepositoryRoot() != null) {
-      relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toString());
+    if (selectedNode.isRepositoryRoot()) {
+      relativePath = "";
     } else {
-      relativePath = dirEntry.getRelativePath();
+      final SVNDirEntry dirEntry = selectedNode.getSVNDirEntry();
+      if (dirEntry == null) {
+        return;
+      }
+      if (dirEntry.getRepositoryRoot() != null) {
+        relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toString());
+      } else {
+        relativePath = dirEntry.getRelativePath();
+      }
+    }
+
+    File dir = selectFile(SvnBundle.message("svn.checkout.destination.directory.title"),
+                          SvnBundle.message("svn.checkout.destination.directory.description"));
+    if (dir == null) {
+      return;
     }
 
     Project p = myProject;

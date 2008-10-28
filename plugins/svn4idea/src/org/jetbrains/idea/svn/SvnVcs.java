@@ -181,27 +181,27 @@ public class SvnVcs extends AbstractVcs {
 
     myRootsInfo = new SvnFileUrlMappingImpl(myProject, this);
 
-    final SvnBranchConfigurationManager.SvnSupportOptions supportOptions =
-      SvnBranchConfigurationManager.getInstance(myProject).getSupportOptions();
-    upgradeTo15(supportOptions);
-    changeListSynchronizationIdeaVersionToNative(supportOptions, bus);
-
     if (myProject.isDefault()) {
       myChangeListListener = null;
     } else {
+      final SvnBranchConfigurationManager.SvnSupportOptions supportOptions =
+      SvnBranchConfigurationManager.getInstance(myProject).getSupportOptions();
+      upgradeTo15(supportOptions);
+      changeListSynchronizationIdeaVersionToNative(supportOptions, bus);
+
       myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+
+      myMessageBusConnection = bus.connect();
+      myMessageBusConnection.subscribe(ProjectLevelVcsManagerImpl.VCS_MAPPING_CHANGED, new Runnable() {
+        public void run() {
+          invokeRefreshSvnRoots(true);
+        }
+      });
+
+      // do one time after project loaded
+      invokeRefreshSvnRoots(true);
     }
-
-    myMessageBusConnection = bus.connect();
-    myMessageBusConnection.subscribe(ProjectLevelVcsManagerImpl.VCS_MAPPING_CHANGED, new Runnable() {
-      public void run() {
-        invokeRefreshSvnRoots(true);
-      }
-    });
-
-    // do one time after project loaded
-    invokeRefreshSvnRoots(true);
   }
 
   public void invokeRefreshSvnRoots(final boolean hidden) {
@@ -321,7 +321,9 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    myMessageBusConnection.disconnect();
+    if (myMessageBusConnection != null) {
+      myMessageBusConnection.disconnect();
+    }
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     SvnApplicationSettings.getInstance().svnDeactivated();
     new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
