@@ -15,13 +15,11 @@ import org.jetbrains.idea.maven.dom.PropertyResolver;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class MavenResourceFilteringCompiler implements ClassPostProcessingCompiler {
   @NotNull
@@ -35,6 +33,8 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
     for (Module eachModule : context.getCompileScope().getAffectedModules()) {
       MavenProjectModel mavenProject = mavenProjectManager.findProject(eachModule);
       if (mavenProject == null) continue;
+
+      Properties properties = loadFilters(context, mavenProject);
 
       for (VirtualFile eachSourceRoot : context.getSourceRoots(eachModule)) {
         VirtualFile outputDir = null;
@@ -53,6 +53,7 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
                                outputDir,
                                config,
                                mavenProject.isFiltered(eachSourceRoot),
+                               properties,
                                result,
                                context.getProgressIndicator());
       }
@@ -61,19 +62,39 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
     return result.toArray(new ProcessingItem[result.size()]);
   }
 
+  private Properties loadFilters(CompileContext context, MavenProjectModel mavenProject) {
+    Properties properties = new Properties();
+    for (String each : mavenProject.getFilters()) {
+      try {
+        FileInputStream in = new FileInputStream(each);
+        try {
+          properties.load(in);
+        }
+        finally {
+          in.close();
+        }
+      }
+      catch (IOException e) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot read filter", each, -1, -1);
+      }
+    }
+    return properties;
+  }
+
   private void collectProcessingItems(Module module,
                                       VirtualFile sourceRoot,
                                       VirtualFile currentDir,
                                       VirtualFile outputDir,
                                       CompilerConfiguration config,
                                       boolean isSourceRootFiltered,
+                                      Properties properties,
                                       List<ProcessingItem> result,
                                       ProgressIndicator i) {
     i.checkCanceled();
 
     for (VirtualFile eachSourceFile : currentDir.getChildren()) {
       if (eachSourceFile.isDirectory()) {
-        collectProcessingItems(module, sourceRoot, eachSourceFile, outputDir, config, isSourceRootFiltered, result, i);
+        collectProcessingItems(module, sourceRoot, eachSourceFile, outputDir, config, isSourceRootFiltered, properties, result, i);
       }
       else {
         if (!config.isResourceFile(eachSourceFile.getName())) continue;
@@ -82,7 +103,7 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
         String relPath = VfsUtil.getRelativePath(eachSourceFile, sourceRoot, '/');
         VirtualFile outputFile = outputDir.findFileByRelativePath(relPath);
         if (outputFile != null) {
-          result.add(new MyProcessingItem(module, eachSourceFile, outputFile, isSourceRootFiltered));
+          result.add(new MyProcessingItem(module, eachSourceFile, outputFile, isSourceRootFiltered, properties));
           break;
         }
       }
@@ -108,7 +129,7 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
           String charset = getCharsetName(sourceFile);
           String text = new String(FileUtil.loadFileBytes(file), charset);
 
-          text = PropertyResolver.resolve(eachItem.getModule(), text);
+          text = PropertyResolver.resolve(eachItem.getModule(), text, eachItem.getProperties());
           FileUtil.writeToFile(file, text.getBytes(charset));
         }
         else {
@@ -156,13 +177,15 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
     private final VirtualFile mySourceFile;
     private final VirtualFile myOutputFile;
     private final boolean myFiltered;
+    private Properties myProperties;
     private final MyValididtyState myState;
 
-    public MyProcessingItem(Module module, VirtualFile sourceFile, VirtualFile outputFile, boolean isFiltered) {
+    public MyProcessingItem(Module module, VirtualFile sourceFile, VirtualFile outputFile, boolean isFiltered, Properties properties) {
       myModule = module;
       mySourceFile = sourceFile;
       myOutputFile = outputFile;
       myFiltered = isFiltered;
+      myProperties = properties;
       myState = new MyValididtyState(outputFile, isFiltered);
     }
 
@@ -181,6 +204,10 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
 
     public boolean isFiltered() {
       return myFiltered;
+    }
+
+    public Properties getProperties() {
+      return myProperties;
     }
 
     public ValidityState getValidityState() {

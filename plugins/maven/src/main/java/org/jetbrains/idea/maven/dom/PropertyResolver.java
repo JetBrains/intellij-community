@@ -24,11 +24,11 @@ import java.util.regex.Pattern;
 public class PropertyResolver {
   private static final Pattern PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
 
-  public static String resolve(Module module, String text) {
+  public static String resolve(Module module, String text, Properties additionalProperties) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
     MavenProjectModel mavenProject = manager.findProject(module);
     if (mavenProject == null) return text;
-    return doResolve(text, mavenProject, new Properties(), new Stack<String>());
+    return doResolve(text, mavenProject, additionalProperties, new Stack<String>());
   }
 
   public static String resolve(GenericDomValue<String> value) {

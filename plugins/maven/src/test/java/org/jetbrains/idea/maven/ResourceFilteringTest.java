@@ -149,7 +149,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertSources("project", "resources1", "resources2");
     compileModules("project");
 
-
     assertResult("target/classes/file1.properties", "value=1");
     assertResult("target/classes/file2.properties", "value=${project.version}");
   }
@@ -242,6 +241,41 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
     assertResult("target/classes/file.properties", "foo=main");
     assertResult("target/test-classes/file.properties", "foo=test");
+  }
+
+  public void testCustomFilters() throws Exception {
+    createProjectSubFile("filters/filter1.properties").setBinaryContent(
+      ("xxx=value\n" +
+       "yyy=${project.version}\n").getBytes());
+    createProjectSubFile("filters/filter2.properties").setBinaryContent(
+      ("zzz=value2").getBytes());
+    createProjectSubFile("resources/file.properties").setBinaryContent(
+      ("value1=${xxx}\n" +
+       "value2=${yyy}\n" +
+       "value3=${zzz}\n").getBytes());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <filters>" +
+                  "    <filter>filters/filter1.properties</filter>" +
+                  "    <filter>filters/filter2.properties</filter>" +
+                  "  </filters>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    assertSources("project", "resources");
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "value1=value\n" +
+                                                   "value2=1\n" +
+                                                   "value3=value2\n");
   }
 
   private void assertResult(String relativePath, String content) throws IOException {
