@@ -93,21 +93,13 @@ class ToolsPanel extends JPanel {
     setLayout(new GridBagLayout());
     GridBagConstraints constr;
 
-    // tools label
-    constr = new GridBagConstraints();
-    constr.gridx = 0;
-    constr.gridy = 0;
-    constr.anchor = GridBagConstraints.WEST;
-    constr.insets = new Insets(5, 5, 0, 0);
-    add(new JLabel(ToolsBundle.message("tools.caption")), constr);
-
     // tools list
     constr = new GridBagConstraints();
     constr.gridx = 0;
-    constr.gridy = 1;
+    constr.gridy = 0;
     constr.weightx = 1;
     constr.weighty = 1;
-    constr.insets = new Insets(0, 5, 0, 0);
+    constr.insets = new Insets(0, 2, 0, 0);
     constr.fill = GridBagConstraints.BOTH;
     constr.anchor = GridBagConstraints.WEST;
     add(tableScrollPane, constr);
@@ -119,7 +111,7 @@ class ToolsPanel extends JPanel {
     // right side buttons
     constr = new GridBagConstraints();
     constr.gridx = 1;
-    constr.gridy = 1;
+    constr.gridy = 0;
     constr.anchor = GridBagConstraints.NORTH;
     add(createRightButtonPane(), constr);
 
