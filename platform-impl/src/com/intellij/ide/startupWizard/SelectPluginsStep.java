@@ -256,7 +256,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     if (next instanceof SelectPluginsStep) {
       final SelectPluginsStep selectPluginsStep = (SelectPluginsStep)next;
       final String id = selectPluginsStep.getRequirePlugin();
-      if (id != null && model.getDisabledPluginIds().contains(id)) {
+      if (id != null && model.getDisabledPluginIds().contains(id) && !model.isLast(next)) {
         for (IdeaPluginDescriptor descriptor: selectPluginsStep.getPlugins()) {
           model.getDisabledPluginIds().add(descriptor.getPluginId().getIdString());
         }
@@ -264,5 +264,18 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
       }
     }
     return next;
+  }
+
+  @Override
+  public WizardStep onPrevious(final StartupWizardModel model) {
+    final WizardStep prev = super.onPrevious(model);
+    if (prev instanceof SelectPluginsStep) {
+      final SelectPluginsStep selectPluginsStep = (SelectPluginsStep)prev;
+      final String id = selectPluginsStep.getRequirePlugin();
+      if (id != null && model.getDisabledPluginIds().contains(id) && !model.isFirst(prev)) {
+        return model.getPreviousFor(prev);
+      }
+    }
+    return prev;
   }
 }

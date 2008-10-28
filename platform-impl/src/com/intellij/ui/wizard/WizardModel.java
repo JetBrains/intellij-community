@@ -123,11 +123,11 @@ public class WizardModel {
     return myCurrentState;
   }
 
-  private boolean isFirst(WizardStep step) {
+  public boolean isFirst(WizardStep step) {
     return mySteps.indexOf(step) == 0;
   }
 
-  private boolean isLast(WizardStep step) {
+  public boolean isLast(WizardStep step) {
     return mySteps.indexOf(step) == mySteps.size() - 1;
   }
 
@@ -135,7 +135,7 @@ public class WizardModel {
     return mySteps.get(mySteps.indexOf(wizardStep) + 1);
   }
 
-  final WizardStep getPreviousFor(WizardStep wizardStep) {
+  public final WizardStep getPreviousFor(WizardStep wizardStep) {
     return mySteps.get(mySteps.indexOf(wizardStep) - 1);
   }
 
