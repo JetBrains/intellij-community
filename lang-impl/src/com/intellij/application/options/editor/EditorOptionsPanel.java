@@ -48,7 +48,7 @@ public class EditorOptionsPanel {
   private JRadioButton myRbPreferMovingCaret;
   private JCheckBox myCbRenameLocalVariablesInplace;
   private JCheckBox myCbHighlightIdentifierUnderCaret;
-  private ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
+  private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private MyConfigurable myConfigurable;
 
 
@@ -209,6 +209,10 @@ public class EditorOptionsPanel {
     }
   }
 
+  public void disposeUIResources() {
+    myErrorHighlightingPanel.disposeUIResources();
+  }
+
   private int getMaxClipboardContents(){
     int maxClipboardContents = -1;
     try {
@@ -336,6 +340,7 @@ public class EditorOptionsPanel {
     }
 
     public void disposeUIResources() {
+      EditorOptionsPanel.this.disposeUIResources();
     }
   }
 
