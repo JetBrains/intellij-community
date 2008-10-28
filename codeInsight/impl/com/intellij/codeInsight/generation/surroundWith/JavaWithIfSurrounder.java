@@ -32,14 +32,21 @@ public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
 
     ifStatement = (PsiIfStatement)container.addAfter(ifStatement, statements[statements.length - 1]);
 
-    PsiCodeBlock thenBlock = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
-    thenBlock.addRange(statements[0], statements[statements.length - 1]);
-    container.deleteChildRange(statements[0], statements[statements.length - 1]);
+    final PsiStatement thenBranch = ifStatement.getThenBranch();
+    if (thenBranch != null) {
+      PsiCodeBlock thenBlock = ((PsiBlockStatement)thenBranch).getCodeBlock();
+      thenBlock.addRange(statements[0], statements[statements.length - 1]);
+      container.deleteChildRange(statements[0], statements[statements.length - 1]);
+    }
 
     ifStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(ifStatement);
-    TextRange range = ifStatement.getCondition().getTextRange();
-    TextRange textRange = new TextRange(range.getStartOffset(), range.getStartOffset());
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    return textRange;
+    final PsiExpression condition = ifStatement.getCondition();
+    if (condition != null) {
+      TextRange range = condition.getTextRange();
+      TextRange textRange = new TextRange(range.getStartOffset(), range.getStartOffset());
+      editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+      return textRange;
+    }
+    return ifStatement.getTextRange();
   }
 }
