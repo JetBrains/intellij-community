@@ -133,6 +133,7 @@ public class GitMergeDialog extends DialogWrapper {
       }
     };
     listener.elementMarkChanged(null, true);
+    myBranchChooser.addElementsMarkListener(listener);
   }
 
 
