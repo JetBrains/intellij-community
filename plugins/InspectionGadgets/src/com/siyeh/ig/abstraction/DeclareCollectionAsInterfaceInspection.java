@@ -111,10 +111,10 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             final PsiReferenceParameterList parameterList =
                     referenceElement.getParameterList();
             if (parameterList != null) {
-                newElementText.append('<');
                 final PsiTypeElement[] typeParameterElements =
                         parameterList.getTypeParameterElements();
                 if (typeParameterElements.length > 0) {
+                    newElementText.append('<');
                     final PsiTypeElement typeParameterElement1 =
                             typeParameterElements[0];
                     newElementText.append(typeParameterElement1.getText());
@@ -124,8 +124,8 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                                 typeParameterElements[i];
                         newElementText.append(typeParameterElement.getText());
                     }
+                    newElementText.append('>');
                 }
-                newElementText.append('>');
             }
             final PsiElement grandParent = parent.getParent();
             if (!(grandParent instanceof PsiTypeElement)) {
