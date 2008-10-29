@@ -123,7 +123,7 @@ class ChangeCollector {
    */
   private void collectDiffChanges() throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, "diff");
-    handler.addParameters("--name-status", "--diff-filter=ADMRUX", "-M", "HEAD");
+    handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD");
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.endOptions();
