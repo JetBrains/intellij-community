@@ -255,7 +255,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   public Icon getIcon(final boolean expanded) {
     if (isSyntheticJSP()) {
       final PsiElement element = getElement();
-      if (element != null) {
+      if (element != null && element.isValid()) {
         return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
                                 Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
       }

@@ -86,7 +86,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @Nullable
   public Icon getIcon(final boolean expanded) {
     final PsiElement element = getElement();
-    if (element != null) {
+    if (element != null && element.isValid()) {
       return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
     return null;
