@@ -5,12 +5,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
-import com.intellij.openapi.options.ex.ControlPanelSettingsEditor;
-import com.intellij.openapi.options.ex.ExplorerSettingsEditor;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -24,6 +25,10 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final String PREFER_CLASSIC_OPTIONS_EDITOR = "PREFER_CLASSIC_OPTIONS_EDITOR";
 
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
+    _showSettingsDialog(project, group, null);
+  }
+
+  private void _showSettingsDialog(final Project project, ConfigurableGroup[] group, Configurable toSelect) {
     group = filterEmptyGroups(group);
 
     if ("false".equalsIgnoreCase(System.getProperty("new.options.editor"))) {
@@ -31,11 +36,32 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
         showExplorerOptions(project, group);
       }
       else {
-        showControlPanelOptions(project, group, null);
+        showControlPanelOptions(project, group, toSelect);
       }
     } else {
-      new OptionsEditorDialog(project, group, null).show();
+      new OptionsEditorDialog(project, group, toSelect).show();
     }
+  }
+
+  public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
+    assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
+
+    Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
+    Configurable config = (Configurable)actualProject.getComponent(configurableClass);
+    if (config != null) {
+      config = (Configurable)ApplicationManager.getApplication().getComponent(configurableClass);
+    }
+
+    assert config != null : "Cannot find configurable: " + configurableClass.getName();
+
+    showSettingsDeialog(actualProject, config);
+  }
+
+  public void showSettingsDeialog(@NotNull final Project project, final Configurable toSelect) {
+    _showSettingsDialog(project, new ConfigurableGroup[]{
+      new ProjectConfigurablesGroup(project, false),
+      new IdeConfigurablesGroup()
+    }, toSelect);
   }
 
   private static ConfigurableGroup[] filterEmptyGroups(final ConfigurableGroup[] group) {

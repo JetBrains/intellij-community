@@ -18,6 +18,8 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -27,6 +29,10 @@ public abstract class ShowSettingsUtil {
   }
 
   public abstract void showSettingsDialog(Project project, ConfigurableGroup[] group);
+
+  public abstract void showSettingsDialog(@Nullable Project project, Class toSelect);
+
+  public abstract void showSettingsDeialog(@NotNull final Project project, final Configurable toSelect);
 
   public abstract boolean editConfigurable(Project project, Configurable configurable);
 
