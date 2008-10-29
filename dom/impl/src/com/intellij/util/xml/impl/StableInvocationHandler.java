@@ -81,9 +81,11 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
 
     if (AdvancedProxy.EQUALS_METHOD.equals(method)) {
       final Object arg = args[0];
-      if (!(arg instanceof StableElement)) return false;
+      if (arg instanceof StableElement) {
+        return myCachedValue.equals(((StableElement)arg).getWrappedElement());
+      }
+      return myCachedValue.equals(arg);
 
-      myCachedValue.equals(((StableElement)arg).getWrappedElement());
     }
     if (AdvancedProxy.HASHCODE_METHOD.equals(method)) {
       return myCachedValue.hashCode();
