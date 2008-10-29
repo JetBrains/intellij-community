@@ -60,7 +60,8 @@ import java.util.concurrent.locks.Lock;
 
 public class FileBasedIndex implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
-
+  @NonNls
+  private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNeedContentLoading = new HashSet<ID<?, ?>>();
@@ -130,10 +131,13 @@ public class FileBasedIndex implements ApplicationComponent {
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
         myRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
       }
-      for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        registerIndexer(extension);
-      }
 
+      final File corruptionMarker = new File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME);
+      final boolean currentVersionCorrupted = corruptionMarker.exists();
+      for (FileBasedIndexExtension<?, ?> extension : extensions) {
+        registerIndexer(extension, currentVersionCorrupted);
+      }
+      FileUtil.delete(corruptionMarker);
       dropUnregisteredIndices();
 
       // check if rebuild was requested for any index during registration
@@ -165,10 +169,10 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   /**
-   * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
-   * @param extension
+   * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted @param extension
+   * @param isCurrentVersionCorrupted
    */
-  private <K, V> void registerIndexer(final FileBasedIndexExtension<K, V> extension) throws IOException {
+  private <K, V> void registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
     if (extension.dependsOnFileContent()) {
@@ -176,7 +180,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = IndexInfrastructure.getVersionFile(name);
-    if (IndexInfrastructure.versionDiffers(versionFile, version)) {
+    if (isCurrentVersionCorrupted || IndexInfrastructure.versionDiffers(versionFile, version)) {
       FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
@@ -754,7 +758,7 @@ public class FileBasedIndex implements ApplicationComponent {
     cleanupProcessedFlag();
     myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
-  
+
   @Nullable
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
