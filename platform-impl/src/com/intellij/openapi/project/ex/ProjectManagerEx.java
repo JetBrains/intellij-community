@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 
@@ -39,6 +40,8 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   public abstract Project getCurrentTestProject();
+
+  @TestOnly
   public abstract void setCurrentTestProject(@Nullable Project project);
 
   @Nullable
