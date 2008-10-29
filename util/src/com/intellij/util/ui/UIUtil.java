@@ -185,7 +185,11 @@ public class UIUtil {
   }
 
   public static Color getListSelectionForeground() {
-    return UIManager.getColor("List.selectionForeground");
+    final Color color = UIManager.getColor("List.selectionForeground");
+    if (color == null) {
+      return UIManager.getColor("List[Selected].textForeground");  // Nimbus
+    }
+    return color;
   }
 
   public static Color getFieldForegroundColor() {
@@ -317,7 +321,11 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    return UIManager.getColor("List.selectionBackground");
+    final Color color = UIManager.getColor("List.selectionBackground");
+    if (color == null) {
+      return UIManager.getColor("List[Selected].textBackground");  // Nimbus
+    }
+    return color;
   }
 
   public static Color getTextFieldForeground() {
