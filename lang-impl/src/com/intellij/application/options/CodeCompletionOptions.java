@@ -42,7 +42,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Searchabl
   }
 
   public String getHelpTopic() {
-    return "preferences.codeCompletion";
+    return "reference.settingsdialog.IDE.editor.code.completion";
   }
 
   public String getId() {

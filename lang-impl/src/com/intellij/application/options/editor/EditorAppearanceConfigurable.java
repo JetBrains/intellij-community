@@ -134,7 +134,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settingsdialog.IDE.editor.appearance";
   }
 
   public JComponent createComponent() {

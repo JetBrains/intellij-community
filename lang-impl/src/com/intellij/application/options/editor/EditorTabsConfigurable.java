@@ -47,7 +47,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settingsdialog.IDE.editor.tabs";
   }
 
   public JComponent createComponent() {

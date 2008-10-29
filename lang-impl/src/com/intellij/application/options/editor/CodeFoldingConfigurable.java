@@ -30,7 +30,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settingsdialog.IDE.editor.code.folding";
   }
 
   public JComponent createComponent() {

@@ -847,7 +847,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   public String getHelpTopic() {
-    return "preferences.colorsFonts";
+    return "reference.settingsdialog.IDE.editor.colors";
   }
 
   private static class MyColorScheme extends EditorColorsSchemeImpl {

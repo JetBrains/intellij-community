@@ -165,7 +165,7 @@ public class EditorImportOptions implements EditorOptionsProvider {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settingsdialog.IDE.editor.autoimport";
   }
 
   public String getId() {

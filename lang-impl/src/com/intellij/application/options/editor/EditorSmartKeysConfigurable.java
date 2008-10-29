@@ -83,7 +83,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settingsdialog.IDE.editor.smartkey";
   }
 
   public JComponent createComponent() {
