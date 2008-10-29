@@ -76,22 +76,17 @@ public class FileReferenceQuickFixProvider {
     if (directory == null) return Collections.emptyList();
 
     if (fileReferenceSet.isCaseSensitive()) {
-      try {
-        fileReferenceSet.setCaseSensitive(false);
-        final PsiElement psiElement = reference.innerSingleResolve();
+      final PsiElement psiElement = reference.innerSingleResolve(false);
 
-        if (psiElement instanceof PsiNamedElement) {
-          final String existingElementName = ((PsiNamedElement)psiElement).getName();
+      if (psiElement instanceof PsiNamedElement) {
+        final String existingElementName = ((PsiNamedElement)psiElement).getName();
 
-          final RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
-          QuickFixAction.registerQuickFixAction(info, renameRefAction);
+        final RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
+        QuickFixAction.registerQuickFixAction(info, renameRefAction);
 
-          final RenameFileFix renameFileFix = new RenameFileFix(newFileName);
-          QuickFixAction.registerQuickFixAction(info, renameFileFix);
-          return Arrays.asList(renameRefAction, renameFileFix);
-        }
-      } finally {
-        fileReferenceSet.setCaseSensitive(true);
+        final RenameFileFix renameFileFix = new RenameFileFix(newFileName);
+        QuickFixAction.registerQuickFixAction(info, renameFileFix);
+        return Arrays.asList(renameRefAction, renameFileFix);
       }
     }
 

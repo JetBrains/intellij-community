@@ -40,7 +40,7 @@ public class FileReferenceSet {
   private FileReference[] myReferences;
   private PsiElement myElement;
   private final int myStartInElement;
-  private boolean myCaseSensitive;
+  private final boolean myCaseSensitive;
   private final String myPathString;
   private Collection<PsiFileSystemItem> myDefaultContexts;
   private final boolean myEndingSlashNotAllowed;
@@ -106,6 +106,7 @@ public class FileReferenceSet {
     final String s = range.substring(element.getText());
     myPathString = s.trim();
     myEndingSlashNotAllowed = true;
+    myCaseSensitive = false;
 
     reparse(s);
   }
@@ -121,10 +122,6 @@ public class FileReferenceSet {
 
   public boolean isCaseSensitive() {
     return myCaseSensitive;
-  }
-
-  public void setCaseSensitive(final boolean caseSensitive) {
-    myCaseSensitive = caseSensitive;
   }
 
   public boolean isEndingSlashNotAllowed() {

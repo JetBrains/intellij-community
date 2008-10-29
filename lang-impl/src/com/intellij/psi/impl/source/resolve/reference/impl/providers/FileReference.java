@@ -82,6 +82,10 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   }
 
   protected ResolveResult[] innerResolve() {
+    return innerResolve(getFileReferenceSet().isCaseSensitive());
+  }
+
+  protected ResolveResult[] innerResolve(boolean caseSensitive) {
     final String referenceText = getText();
     final TextRange range = getRangeInElement();
     if (range.isEmpty()) {
@@ -95,14 +99,15 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     final Collection<ResolveResult> result = new HashSet<ResolveResult>(contexts.size());
     for (final PsiFileSystemItem context : contexts) {
       if (context != null) {
-        innerResolveInContext(referenceText, context, result);
+        innerResolveInContext(referenceText, context, result, caseSensitive);
       }
     }
     final int resultCount = result.size();
     return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
   }
 
-  protected void innerResolveInContext(@NotNull final String text, @NotNull final PsiFileSystemItem context, final Collection<ResolveResult> result) {
+  protected void innerResolveInContext(@NotNull final String text, @NotNull final PsiFileSystemItem context, final Collection<ResolveResult> result,
+                                       final boolean caseSensitive) {
     if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast() || ".".equals(text) || "/".equals(text)) {
       result.add(new PsiElementResolveResult(context));
     }
@@ -120,13 +125,13 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
           resolvedContexts.add(new PsiElementResolveResult(context));
         }
         else {
-          innerResolveInContext(text.substring(0, separatorIndex), context, resolvedContexts);
+          innerResolveInContext(text.substring(0, separatorIndex), context, resolvedContexts, caseSensitive);
         }
         final String restOfText = text.substring(separatorIndex + 1);
         for (ResolveResult contextVariant : resolvedContexts) {
           final PsiFileSystemItem item = (PsiFileSystemItem)contextVariant.getElement();
           if (item != null) {
-            innerResolveInContext(restOfText, item, result);
+            innerResolveInContext(restOfText, item, result, caseSensitive);
           }
         }
       }
@@ -137,7 +142,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
             public boolean process(final PsiElement element) {
               final String name = ((PsiNamedElement)element).getName();
               if (name != null) {
-                if (myFileReferenceSet.isCaseSensitive() ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0) {
+                if (caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0) {
                   result.add(new PsiElementResolveResult(element));
                   return false;
                 }
@@ -265,8 +270,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   }
 
   @Nullable
-  public PsiFileSystemItem innerSingleResolve() {
-    final ResolveResult[] resolveResults = innerResolve();
+  public PsiFileSystemItem innerSingleResolve(final boolean caseSensitive) {
+    final ResolveResult[] resolveResults = innerResolve(caseSensitive);
     return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
   }
 
@@ -461,7 +466,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     static final MyResolver INSTANCE = new MyResolver();
 
     public ResolveResult[] resolve(FileReference ref, boolean incompleteCode) {
-      return ref.innerResolve();
+      return ref.innerResolve(ref.getFileReferenceSet().isCaseSensitive());
     }
   }
 }
