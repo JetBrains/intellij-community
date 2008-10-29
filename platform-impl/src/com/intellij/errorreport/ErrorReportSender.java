@@ -66,8 +66,14 @@ public class ErrorReportSender {
       this.notifierBean = notifierBean;
     }
 
-    public void checkNewBuild() throws NewBuildException, ConnectionException {
-      UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
+    public void checkNewBuild() throws NewBuildException {
+      UpdateChecker.NewVersion newVersion = null;
+      try {
+        newVersion = UpdateChecker.checkForUpdates();
+      }
+      catch (ConnectionException e) {
+        // ignore
+      }
       if (newVersion != null) {
         throw new NewBuildException(Integer.toString(newVersion.getLatestBuild()));
       }
