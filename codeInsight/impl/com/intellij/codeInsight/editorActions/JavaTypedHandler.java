@@ -134,6 +134,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     while(iterator.getTokenType() == JavaTokenType.LBRACE) {
       lbraceCount++;
       iterator.retreat();
+      if (iterator.atEnd()) return false;
     }
     if (lbraceCount == 0) return false;
     if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
