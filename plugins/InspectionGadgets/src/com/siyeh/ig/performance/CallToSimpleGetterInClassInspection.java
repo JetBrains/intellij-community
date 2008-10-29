@@ -38,23 +38,27 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreGetterCallsOnOtherObjects = false;
 
+    @Override
     @NotNull
     public String getID(){
         return "CallToSimpleGetterFromWithinClass";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "call.to.simple.getter.in.class.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "call.to.simple.getter.in.class.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -62,6 +66,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
                 this, "ignoreGetterCallsOnOtherObjects");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new InlineCallFix();
     }
@@ -74,6 +79,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
                     "call.to.simple.getter.in.class.inline.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement methodIdentifier = descriptor.getPsiElement();
@@ -98,12 +104,14 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
             final PsiStatement[] statements = body.getStatements();
             final PsiReturnStatement returnStatement =
                     (PsiReturnStatement) statements[0];
-            final PsiReferenceExpression returnValue = (PsiReferenceExpression)
+            final PsiExpression returnValue =
                     returnStatement.getReturnValue();
-            if (returnValue == null){
+            if (!(returnValue instanceof PsiReferenceExpression)){
                 return;
             }
-            final PsiField field = (PsiField)returnValue.resolve();
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) returnValue;
+            final PsiField field = (PsiField) referenceExpression.resolve();
             if (field == null){
                 return;
             }
@@ -133,6 +141,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new CallToSimpleGetterInClassVisitor();
     }
