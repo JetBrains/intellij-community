@@ -338,6 +338,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       }
 
       result.addAll(getContext().getChildren(nearestParent));
+    } else {
+      result.add(actual);
     }
 
 
