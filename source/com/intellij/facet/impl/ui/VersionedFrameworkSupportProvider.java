@@ -95,7 +95,7 @@ public abstract class VersionedFrameworkSupportProvider extends FrameworkSupport
       VersionedFrameworkSupportProvider.this.addSupport(module, rootModel, getSelectedVersion(), library);
     }
 
-    protected String getSelectedVersion() {
+    public String getSelectedVersion() {
       String version = null;
       if (myComboBox != null) {
         version = myComboBox.getSelectedItem().toString();
