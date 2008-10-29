@@ -213,9 +213,14 @@ public class GitHandlerUtil {
      * @param exitCode
      */
     protected void ensureError(final int exitCode) {
-      String text = getErrorText();
-      if ((text == null || text.length() == 0) && myHandler.errors().size() == 0) {
-        myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
+      if (myHandler.errors().size() == 0) {
+        String text = getErrorText();
+        if ((text == null || text.length() == 0) && myHandler.errors().size() == 0) {
+          myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
+        }
+        else {
+          myHandler.addError(new VcsException(text));
+        }
       }
     }
 
