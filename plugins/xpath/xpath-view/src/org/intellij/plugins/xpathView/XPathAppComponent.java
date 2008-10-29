@@ -60,7 +60,6 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
 
     private Config configuration = new Config();
     private ConfigUI configUI;
-    private Configurable[] myExtensions;
 
     @NotNull
     public String getComponentName() {
@@ -106,13 +105,7 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
 
     @Nullable
     public String getHelpTopic() {
-        final JTabbedPane tabbedPane = ((JTabbedPane)configUI.getParent());
-        final int index = tabbedPane.getSelectedIndex();
-        if (index == 0) {
-            return "xpath.settings";
-        } else {
-            return myExtensions[index - 1].getHelpTopic();
-        }
+      return "xpath.settings";
     }
 
     public JComponent createComponent() {
@@ -138,7 +131,6 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
 
     public void disposeUIResources() {
         configUI = null;
-        myExtensions = null;
     }
 
     /**
