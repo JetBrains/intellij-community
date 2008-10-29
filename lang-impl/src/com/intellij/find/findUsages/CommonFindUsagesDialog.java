@@ -3,6 +3,7 @@ package com.intellij.find.findUsages;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
@@ -27,6 +28,12 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
           FindUsagesUtil.isSearchForTextOccurencesAvailable(element, isSingleFile), !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
     init();
+  }
+
+  @Override
+  protected boolean isInFileOnly() {
+    return super.isInFileOnly() ||
+           myPsiElement != null && myPsiElement.getManager().getSearchHelper().getUseScope(myPsiElement)instanceof LocalSearchScope;
   }
 
   protected JPanel createFindWhatPanel() {
