@@ -54,10 +54,10 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
 
-    showSettingsDeialog(actualProject, config);
+    showSettingsDialog(actualProject, config);
   }
 
-  public void showSettingsDeialog(@NotNull final Project project, final Configurable toSelect) {
+  public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {
     _showSettingsDialog(project, new ConfigurableGroup[]{
       new ProjectConfigurablesGroup(project, false),
       new IdeConfigurablesGroup()
