@@ -19,10 +19,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -50,9 +52,16 @@ public abstract class GitRepositoryAction extends AnAction {
     GitVcs vcs = GitVcs.getInstance(project);
     final VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
     if (contentRoots == null || contentRoots.length == 0) {
+      Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.unconfigured.message"),
+                               GitBundle.getString("repository.action.missing.roots.title"));
       return;
     }
     final List<VirtualFile> roots = new ArrayList<VirtualFile>(GitUtil.gitRoots(Arrays.asList(contentRoots)));
+    if (roots.size() == 0) {
+      Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.misconfigured"),
+                               GitBundle.getString("repository.action.missing.roots.title"));
+      return;
+    }
     Collections.sort(roots, new Comparator<VirtualFile>() {
       public int compare(final VirtualFile o1, final VirtualFile o2) {
         return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
