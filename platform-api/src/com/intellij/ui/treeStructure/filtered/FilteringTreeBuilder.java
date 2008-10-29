@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.PatchedDefaultMutableTreeNode;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -26,15 +27,19 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   private MergingUpdateQueue myRefilterQueue;
 
-  public FilteringTreeBuilder(Project project, SimpleTree tree, ElementFilter filter, AbstractTreeStructure structure, Comparator<NodeDescriptor> comparator) {
-    super(tree, (DefaultTreeModel) tree.getModel(), new FilteringTreeStructure(project, filter, structure), comparator);
+  public FilteringTreeBuilder(Project project,
+                              SimpleTree tree,
+                              ElementFilter filter,
+                              AbstractTreeStructure structure,
+                              Comparator<NodeDescriptor> comparator) {
+    super(tree, (DefaultTreeModel)tree.getModel(), new FilteringTreeStructure(project, filter, structure), comparator);
     myTree = tree;
     initRootNode();
 
     if (filter instanceof ElementFilter.Active) {
       ((ElementFilter.Active)filter).addListener(new ElementFilter.Listener() {
-        public void update(final Object preferredSelection) {
-          refilter(preferredSelection);
+        public ActionCallback update(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
+          return refilter(preferredSelection, adjustSelection, now);
         }
       }, this);
     }
@@ -69,22 +74,34 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void refilter() {
-    refilter(null);
+    refilter(null, true, false);
   }
 
-  public void refilter(final Object preferredSelection) {
-    if (myRefilterQueue == null) {
-      refilterNow(preferredSelection);
-    } else {
+  public ActionCallback refilter(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
+    if (myRefilterQueue == null || now) {
+      return refilterNow(preferredSelection, adjustSelection);
+    }
+    else {
+      final ActionCallback result = new ActionCallback();
       myRefilterQueue.queue(new Update(this) {
         public void run() {
-          refilterNow(preferredSelection);
+          refilterNow(preferredSelection, adjustSelection).notifyWhenDone(result);
+        }
+
+        @Override
+        public void setRejected() {
+          super.setRejected();
+          result.setDone();
         }
       });
+
+      return result;
     }
   }
 
-  private void refilterNow(Object preferredSelection) {
+  private ActionCallback refilterNow(Object preferredSelection, final boolean adjustSelection) {
+    final ActionCallback result = new ActionCallback();
+
     Object selectedObject = getSelected();
 
     final Ref<Object> toSelect = new Ref<Object>(isSelectable(selectedObject) ? selectedObject : null);
@@ -93,66 +110,73 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     }
 
 
-    ((FilteringTreeStructure) getTreeStructure()).refilter();
+    ((FilteringTreeStructure)getTreeStructure()).refilter();
     updateFromRoot();
 
-    boolean wasSelected = false;
-    if (toSelect.get() != null && isSelectable(toSelect.get())) {
-      wasSelected = myTree.select(this, new SimpleNodeVisitor() {
-        public boolean accept(SimpleNode simpleNode) {
-          if (simpleNode instanceof FilteringTreeStructure.Node) {
-            FilteringTreeStructure.Node node = (FilteringTreeStructure.Node)simpleNode;
-            return node.getDelegate().equals(toSelect.get());
-          }
-          else {
-            return false;
-          }
-        }
-      }, true);
-    }
+    result.setDone();
 
-    if (!wasSelected) {
-      myTree.select(this, new SimpleNodeVisitor() {
-        public boolean accept(SimpleNode simpleNode) {
-          if (simpleNode instanceof FilteringTreeStructure.Node) {
-
-            final boolean isRoot = getTreeStructure().getRootElement() == simpleNode;
-            if (isRoot && !myTree.isRootVisible()) return false;
-
-            FilteringTreeStructure.Node node = (FilteringTreeStructure.Node)simpleNode;
-            if (isSelectable(node.getDelegate())) {
-              return true;
+    if (adjustSelection) {
+      boolean wasSelected = false;
+      if (toSelect.get() != null && isSelectable(toSelect.get())) {
+        wasSelected = myTree.select(this, new SimpleNodeVisitor() {
+          public boolean accept(SimpleNode simpleNode) {
+            if (simpleNode instanceof FilteringTreeStructure.Node) {
+              FilteringTreeStructure.Node node = (FilteringTreeStructure.Node)simpleNode;
+              return node.getDelegate().equals(toSelect.get());
+            }
+            else {
+              return false;
             }
           }
-          else {
+        }, true);
+      }
+
+      if (!wasSelected) {
+        myTree.select(this, new SimpleNodeVisitor() {
+          public boolean accept(SimpleNode simpleNode) {
+            if (simpleNode instanceof FilteringTreeStructure.Node) {
+
+              final boolean isRoot = getTreeStructure().getRootElement() == simpleNode;
+              if (isRoot && !myTree.isRootVisible()) return false;
+
+              FilteringTreeStructure.Node node = (FilteringTreeStructure.Node)simpleNode;
+              if (isSelectable(node.getDelegate())) {
+                return true;
+              }
+            }
+            else {
+              return false;
+            }
             return false;
           }
-          return false;
-        }
-      }, true);
-    }
+        }, true);
+      }
 
-    if (!wasSelected && myLastSuccessfulSelect != null) {
-      wasSelected = myTree.select(this, new SimpleNodeVisitor() {
-        public boolean accept(SimpleNode simpleNode) {
-          if (simpleNode instanceof FilteringTreeStructure.Node) {
-            Object object = ((FilteringTreeStructure.Node) simpleNode).getDelegate();
-            return myLastSuccessfulSelect.equals(object);
+      if (!wasSelected && myLastSuccessfulSelect != null) {
+        wasSelected = myTree.select(this, new SimpleNodeVisitor() {
+          public boolean accept(SimpleNode simpleNode) {
+            if (simpleNode instanceof FilteringTreeStructure.Node) {
+              Object object = ((FilteringTreeStructure.Node)simpleNode).getDelegate();
+              return myLastSuccessfulSelect.equals(object);
+            }
+            return false;
           }
-          return false;
+        }, true);
+        if (wasSelected) {
+          myLastSuccessfulSelect = getSelected();
         }
-      }, true);
-      if (wasSelected) {
+      }
+      else if (wasSelected) {
         myLastSuccessfulSelect = getSelected();
       }
-    } else if (wasSelected) {
-      myLastSuccessfulSelect = getSelected();
     }
+
+    return result;
   }
 
   @Nullable
   private Object getSelected() {
-    FilteringTreeStructure.Node selected = (FilteringTreeStructure.Node) myTree.getSelectedNode();
+    FilteringTreeStructure.Node selected = (FilteringTreeStructure.Node)myTree.getSelectedNode();
     return selected != null ? selected.getDelegate() : null;
   }
 

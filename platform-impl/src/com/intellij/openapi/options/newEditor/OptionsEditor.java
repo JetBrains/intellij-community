@@ -21,10 +21,7 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.navigation.BackAction;
-import com.intellij.ui.navigation.ForwardAction;
-import com.intellij.ui.navigation.History;
-import com.intellij.ui.navigation.Place;
+import com.intellij.ui.navigation.*;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
@@ -62,7 +59,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   OptionsTree myTree;
   MySearchField mySearch;
   Splitter myMainSplitter;
-  JComponent myToolbar;
+  JComponent myToolbarComponent;
 
   DetailsComponent myOwnDetails = new DetailsComponent().setEmptyContentText("Select configuration element in the tree to edit its settings");
   ContentWrapper myContentWrapper = new ContentWrapper();
@@ -85,6 +82,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   JPanel myLeftSide;
 
   boolean myFilterFocumentWasChanged;
+  private ActionToolbar myToolbar;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
@@ -118,15 +116,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     Disposer.register(this, myTree);
     mySearch.addDocumentListener(new DocumentListener() {
       public void insertUpdate(final DocumentEvent e) {
-        myFilter.update(e);
+        myFilter.update(e.getType(), true, false);
       }
 
       public void removeUpdate(final DocumentEvent e) {
-        myFilter.update(e);
+        myFilter.update(e.getType(), true, false);
       }
 
       public void changedUpdate(final DocumentEvent e) {
-        myFilter.update(e);
+        myFilter.update(e.getType(), true, false);
       }
     });
 
@@ -136,15 +134,28 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     toolbarActions.add(new ForwardAction(myTree));
     toolbarActions.addSeparator();
     toolbarActions.add(new ShowSearchFieldAction(this));
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, true);
-    tb.setTargetComponent(this);
-    myToolbar = tb.getComponent();
+    myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, true);
+    myToolbar.setTargetComponent(this);
+    myToolbarComponent = myToolbar.getComponent();
+
+    myHistory.addListener(new HistoryListener.Adapter() {
+      @Override
+      public void navigationFinished(final Place from, final Place to) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            if (myToolbarComponent.isShowing()) {
+              myToolbar.updateActionsImmediately();
+            }
+          }
+        });
+      }
+    }, this);
 
 
     myLeftSide = new JPanel(new BorderLayout());
 
     final NonOpaquePanel toolbarPanel = new NonOpaquePanel(new BorderLayout());
-    toolbarPanel.add(myToolbar, BorderLayout.NORTH);
+    toolbarPanel.add(myToolbarComponent, BorderLayout.NORTH);
     toolbarPanel.add(mySearchWrapper, BorderLayout.CENTER);
 
     myLeftSide.add(toolbarPanel, BorderLayout.NORTH);
@@ -197,25 +208,34 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return proportion;
   }
 
-  private void processSelected(final Configurable configurable, final Configurable oldConfigurable) {
+  private ActionCallback processSelected(final Configurable configurable, final Configurable oldConfigurable) {
+    if (isShowing(configurable)) return ActionCallback.DONE;
+
+    final ActionCallback result = new ActionCallback();
+    
     if (configurable == null) {
       myOwnDetails.setContent(null);
 
       updateSpotlight(true);
       checkModified(oldConfigurable);
+
+      result.setDone();
+
     } else {
       getUiFor(configurable).doWhenDone(new EdtRunnable() {
         public void runEdt() {
           final Configurable current = getContext().getCurrentConfigurable();
-          if (current != configurable) return;
-
+          if (current != configurable) {
+            result.setRejected();
+            return;
+          }
 
           myHistory.pushQueryPlace();
 
           updateDetails();
 
           myOwnDetails.setContent(myContentWrapper);
-          myOwnDetails.setBannerMinHeight(myToolbar.getHeight());
+          myOwnDetails.setBannerMinHeight(myToolbarComponent.getHeight());
           myOwnDetails.setText(getBannerText(configurable));
 
 
@@ -228,9 +248,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
           checkModified(oldConfigurable);
           checkModified(configurable);
+
+          result.setDone();
         }
       });
     }
+
+    return result;
   }
 
   private ActionCallback getUiFor(final Configurable configurable) {
@@ -360,6 +384,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     final Configurable current = getContext().getCurrentConfigurable();
     final ConfigurableContent content = myConfigurable2Content.get(current);
     content.set(myContentWrapper);
+  }
+
+  private boolean isShowing(Configurable configurable) {
+    final ConfigurableContent content = myConfigurable2Content.get(configurable);
+    return content != null && content.isShowing();
   }
 
   @Nullable
@@ -556,6 +585,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     Set<Configurable> myFiltered = null;
     ConfigurableHit myHits;
 
+    boolean myUpdateEnabled = true;
 
     public boolean shouldBeShowing(final SimpleNode value) {
       if (myFiltered == null) return true;
@@ -567,14 +597,28 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       return true;
     }
 
-    public void update(DocumentEvent e) {
+    public ActionCallback refilterFor(String text, boolean adjustSelection, final boolean now) {
+      try {
+        myUpdateEnabled = false;
+        mySearch.setText(text);
+      }
+      finally {
+        myUpdateEnabled = true;
+      }
+
+      return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
+    }
+
+    public ActionCallback update(DocumentEvent.EventType type, boolean adjustSeection, boolean now) {
+      if (!myUpdateEnabled) return ActionCallback.REJECTED;
+
       final String text = mySearch.getText();
       if (getFilterText().length() == 0) {
         myContext.setHoldingFilter(false);
         myFiltered = null;
       } else {
         myContext.setHoldingFilter(true);
-        myHits = myIndex.getConfigurables(myGroups, e.getType(), myFiltered, text, myProject);
+        myHits = myIndex.getConfigurables(myGroups, type, myFiltered, text, myProject);
         myFiltered = myHits.getAll();
       }
 
@@ -608,9 +652,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       updateSpotlight(false);
 
-      fireUpdate(myTree.findNodeFor(toSelect));
+      final ActionCallback callback = fireUpdate(adjustSeection ? myTree.findNodeFor(toSelect) : null, adjustSeection, now);
 
       myFilterFocumentWasChanged = true;
+
+      return callback;
     }
 
     private boolean isEmptyParent(Configurable configurable) {
@@ -640,8 +686,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     final Configurable config = (Configurable)place.getPath("configurable");
     final String filter = (String)place.getPath("filter");
 
-    mySearch.setText(filter);
-    return myTree.select(config);
+    final ActionCallback result = new ActionCallback();
+
+    myFilter.refilterFor(filter, false, true).doWhenDone(new Runnable() {
+      public void run() {
+        myTree.select(config).notifyWhenDone(result);
+      }
+    });
+
+    return result;
   }
 
   public void queryPlace(@NotNull final Place place) {
@@ -674,29 +727,32 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private class MyColleague extends OptionsEditorColleague.Adapter {
-    public void onSelected(final Configurable configurable, final Configurable oldConfigurable) {
-      processSelected(configurable, oldConfigurable);
+    public ActionCallback onSelected(final Configurable configurable, final Configurable oldConfigurable) {
+      return processSelected(configurable, oldConfigurable);
     }
 
     @Override
-    public void onModifiedRemoved(final Configurable configurable) {
-      updateIfCurrent(configurable);
+    public ActionCallback onModifiedRemoved(final Configurable configurable) {
+      return updateIfCurrent(configurable);
     }
 
     @Override
-    public void onModifiedAdded(final Configurable configurable) {
-      updateIfCurrent(configurable);
+    public ActionCallback onModifiedAdded(final Configurable configurable) {
+      return updateIfCurrent(configurable);
     }
 
     @Override
-    public void onErrorsChanged() {
-      updateIfCurrent(getContext().getCurrentConfigurable());
+    public ActionCallback onErrorsChanged() {
+      return updateIfCurrent(getContext().getCurrentConfigurable());
     }
 
-    private void updateIfCurrent(final Configurable configurable) {
+    private ActionCallback updateIfCurrent(final Configurable configurable) {
       if (getContext().getCurrentConfigurable() == configurable) {
         updateDetails();
         myOwnDetails.updateBannerActions();
+        return ActionCallback.DONE;
+      } else {
+        return ActionCallback.REJECTED;
       }
     }
   }
@@ -909,6 +965,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   abstract class ConfigurableContent {
     abstract void set(ContentWrapper wrapper);
+
+    abstract boolean isShowing();
   }
 
   class Simple extends ConfigurableContent {
@@ -924,6 +982,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     void set(final ContentWrapper wrapper) {
       myOwnDetails.setDetailsModeEnabled(true);
       wrapper.setContent(myComponent, getContext().getErrors().get(myConfigurable));
+    }
+
+    boolean isShowing() {
+      return myComponent != null && myComponent.isShowing();
     }
   }
 
@@ -946,6 +1008,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myOwnDetails.setDetailsModeEnabled(false);
       myDetails.setPrefix(getBannerText((Configurable)myConfigurable));
       wrapper.setContent(myMaster, myToolbar, myDetails, getContext().getErrors().get(myConfigurable));
+    }
+
+    boolean isShowing() {
+      return myDetails.getComponent().isShowing();
     }
   }
 

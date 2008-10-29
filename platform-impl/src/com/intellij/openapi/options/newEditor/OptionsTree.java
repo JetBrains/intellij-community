@@ -179,10 +179,13 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           final EditorNode editorNode = myConfigurable2Node.get(configurable);
           myBuilder.select(myBuilder.getVisibleNodeFor(editorNode), new Runnable() {
             public void run() {
-              myContext.fireSelected(configurable, OptionsTree.this);
+              myContext.fireSelected(configurable, OptionsTree.this).doWhenProcessed(new Runnable() {
+                public void run() {
+                  callback.setDone();
+                }
+              });
             }
           });
-          callback.setDone();
         }
       }
 
@@ -489,19 +492,22 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   public void dispose() {
   }
 
-  public void onSelected(final Configurable configurable, final Configurable oldConfigurable) {
-    queueSelection(configurable);
+  public ActionCallback onSelected(final Configurable configurable, final Configurable oldConfigurable) {
+    return queueSelection(configurable);
   }
 
-  public void onModifiedAdded(final Configurable colleague) {
+  public ActionCallback onModifiedAdded(final Configurable colleague) {
     myTree.repaint();
+    return ActionCallback.DONE;
   }
 
-  public void onModifiedRemoved(final Configurable configurable) {
+  public ActionCallback onModifiedRemoved(final Configurable configurable) {
     myTree.repaint();
+    return ActionCallback.DONE;
   }
 
-  public void onErrorsChanged() {
+  public ActionCallback onErrorsChanged() {
+    return ActionCallback.DONE;
   }
 
   public void processTextEvent(KeyEvent e) {

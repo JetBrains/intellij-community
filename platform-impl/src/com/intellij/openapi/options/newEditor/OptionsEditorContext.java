@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.speedSearch.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,64 +29,67 @@ public class OptionsEditorContext {
     myFilter = filter;
   }
 
-  void fireSelected(@Nullable final Configurable configurable, @NotNull OptionsEditorColleague requestor) {
-    if (myCurrentConfigurable == configurable) return;
+  ActionCallback fireSelected(@Nullable final Configurable configurable, @NotNull OptionsEditorColleague requestor) {
+    if (myCurrentConfigurable == configurable) return ActionCallback.REJECTED;
 
     final Configurable old = myCurrentConfigurable;
     myCurrentConfigurable = configurable;
 
-    notify(new ColleagueAction() {
-      public void process(final OptionsEditorColleague colleague) {
-        colleague.onSelected(configurable, old);
+    return notify(new ColleagueAction() {
+      public ActionCallback process(final OptionsEditorColleague colleague) {
+        return colleague.onSelected(configurable, old);
       }
     }, requestor);
 
   }
 
-  void fireModifiedAdded(@NotNull final Configurable configurable, OptionsEditorColleague requestor) {
-    if (myModified.contains(configurable)) return;
+  ActionCallback fireModifiedAdded(@NotNull final Configurable configurable, OptionsEditorColleague requestor) {
+    if (myModified.contains(configurable)) return ActionCallback.REJECTED;
 
     myModified.add(configurable);
 
-    notify(new ColleagueAction() {
-      public void process(final OptionsEditorColleague colleague) {
-        colleague.onModifiedAdded(configurable);
+    return notify(new ColleagueAction() {
+      public ActionCallback process(final OptionsEditorColleague colleague) {
+        return colleague.onModifiedAdded(configurable);
       }
     }, requestor);
 
   }
 
-  void fireModifiedRemoved(@NotNull final Configurable configurable, OptionsEditorColleague requestor) {
-    if (!myModified.contains(configurable)) return;
+  ActionCallback fireModifiedRemoved(@NotNull final Configurable configurable, OptionsEditorColleague requestor) {
+    if (!myModified.contains(configurable)) return ActionCallback.REJECTED;
 
     myModified.remove(configurable);
 
-    notify(new ColleagueAction() {
-      public void process(final OptionsEditorColleague colleague) {
-        colleague.onModifiedRemoved(configurable);
+    return notify(new ColleagueAction() {
+      public ActionCallback process(final OptionsEditorColleague colleague) {
+        return colleague.onModifiedRemoved(configurable);
       }
     }, requestor);
   }
 
-  public void fireErrorsChanged(final Map<Configurable, ConfigurationException> errors, OptionsEditorColleague requestor) {
-    if (myErrors.equals(errors)) return;
+  ActionCallback fireErrorsChanged(final Map<Configurable, ConfigurationException> errors, OptionsEditorColleague requestor) {
+    if (myErrors.equals(errors)) return ActionCallback.REJECTED;
 
     myErrors = errors != null ? errors : new HashMap<Configurable, ConfigurationException>();
 
-    notify(new ColleagueAction() {
-      public void process(final OptionsEditorColleague colleague) {
-        colleague.onErrorsChanged();
+    return notify(new ColleagueAction() {
+      public ActionCallback process(final OptionsEditorColleague colleague) {
+        return colleague.onErrorsChanged();
       }
     }, requestor);
   }
 
-  void notify(ColleagueAction action, OptionsEditorColleague requestor) {
+  ActionCallback notify(ColleagueAction action, OptionsEditorColleague requestor) {
+    final ActionCallback.Chunk chunk = new ActionCallback.Chunk();
     for (Iterator<OptionsEditorColleague> iterator = myColleagues.iterator(); iterator.hasNext();) {
       OptionsEditorColleague each = iterator.next();
       if (each != requestor) {
-        action.process(each);
+        chunk.add(action.process(each));
       }
     }
+
+    return chunk.getWhenProcessed();
   }
 
   public void fireReset(final Configurable configurable) {
@@ -127,7 +131,7 @@ public class OptionsEditorContext {
   }
 
   interface ColleagueAction {
-    void process(OptionsEditorColleague colleague);
+    ActionCallback process(OptionsEditorColleague colleague);
   }
 
 

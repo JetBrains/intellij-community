@@ -11,6 +11,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,18 +45,21 @@ public class OptionsEditorDialog extends DialogWrapper {
     myEditor = new OptionsEditor(myProject, myGroups, myPreselected);
     myEditor.getContext().addColleague(new OptionsEditorColleague.Adapter() {
       @Override
-      public void onModifiedAdded(final Configurable configurable) {
+      public ActionCallback onModifiedAdded(final Configurable configurable) {
         updateStatus();
+        return ActionCallback.DONE;
       }
 
       @Override
-      public void onModifiedRemoved(final Configurable configurable) {
+      public ActionCallback onModifiedRemoved(final Configurable configurable) {
         updateStatus();
+        return ActionCallback.DONE;
       }
 
       @Override
-      public void onErrorsChanged() {
+      public ActionCallback onErrorsChanged() {
         updateStatus();
+        return ActionCallback.DONE;
       }
     });
     Disposer.register(myDisposable, myEditor);

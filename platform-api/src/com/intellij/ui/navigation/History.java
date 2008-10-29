@@ -16,13 +16,16 @@
 
 package com.intellij.ui.navigation;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public final class History {
 
@@ -33,6 +36,7 @@ public final class History {
   private Place.Navigator myRoot;
 
   private boolean myNavigatedNow;
+  private CopyOnWriteArraySet<HistoryListener> myListeners = new CopyOnWriteArraySet<HistoryListener>();
 
   public History(@NotNull Place.Navigator root) {
     myRoot = root;
@@ -96,6 +100,8 @@ public final class History {
   private void goThere(final int nextPos) {
     myNavigatedNow = true;
     final Place next = myHistory.get(nextPos);
+    final Place from = getCurrent();
+    fireStarted(from, next);
     try {
       final ActionCallback callback = myRoot.navigateTo(next, false);
       callback.doWhenDone(new Runnable() {
@@ -105,6 +111,7 @@ public final class History {
       }).doWhenProcessed(new Runnable() {
         public void run() {
           myNavigatedNow = false;
+          fireFinished(from, next);
         }
       });
     }
@@ -168,6 +175,26 @@ public final class History {
     return checkPlace != null && checkPlace.getPath(pathElement) != null ? checkPlace : null;
   }
 
+  public void addListener(final HistoryListener listener, Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
+  }
+
+  private void fireStarted(Place from, Place to) {
+    for (HistoryListener each : myListeners) {
+      each.navigationStarted(from, to);
+    }
+  }
+
+  private void fireFinished(Place from, Place to) {
+    for (HistoryListener each : myListeners) {
+      each.navigationFinished(from, to);
+    }
+  }
 
 
 }

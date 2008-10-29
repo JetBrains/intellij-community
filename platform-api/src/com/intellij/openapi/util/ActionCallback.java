@@ -18,6 +18,9 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 public class ActionCallback {
 
   public static final ActionCallback DONE = new Done();
@@ -91,5 +94,25 @@ public class ActionCallback {
     }
   }
 
+  public static class Chunk {
+
+    Set<ActionCallback> myCallbacks = new LinkedHashSet<ActionCallback>();
+
+    public void add(ActionCallback callback) {
+      myCallbacks.add(callback);
+    }
+
+    public ActionCallback getWhenProcessed() {
+      final ActionCallback result = new ActionCallback(myCallbacks.size());
+      for (ActionCallback each : myCallbacks) {
+        each.doWhenProcessed(new Runnable() {
+          public void run() {
+            result.setDone();
+          }
+        });
+      }
+      return result;
+    }
+  }
 
 }

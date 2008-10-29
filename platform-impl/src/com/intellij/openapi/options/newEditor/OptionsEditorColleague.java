@@ -2,27 +2,32 @@ package com.intellij.openapi.options.newEditor;
 
 import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.ActionCallback;
 
 interface OptionsEditorColleague {
-  void onSelected(@Nullable Configurable configurable, final Configurable oldConfigurable);
+  ActionCallback onSelected(@Nullable Configurable configurable, final Configurable oldConfigurable);
 
-  void onModifiedAdded(final Configurable configurable);
+  ActionCallback onModifiedAdded(final Configurable configurable);
 
-  void onModifiedRemoved(final Configurable configurable);
+  ActionCallback onModifiedRemoved(final Configurable configurable);
 
-  void onErrorsChanged();
+  ActionCallback onErrorsChanged();
 
   class Adapter implements OptionsEditorColleague {
-    public void onSelected(@Nullable final Configurable configurable, final Configurable oldConfigurable) {
+    public ActionCallback onSelected(@Nullable final Configurable configurable, final Configurable oldConfigurable) {
+      return ActionCallback.DONE;
     }
 
-    public void onModifiedAdded(final Configurable configurable) {
+    public ActionCallback onModifiedAdded(final Configurable configurable) {
+      return ActionCallback.DONE;
     }
 
-    public void onModifiedRemoved(final Configurable configurable) {
+    public ActionCallback onModifiedRemoved(final Configurable configurable) {
+      return ActionCallback.DONE;
     }
 
-    public void onErrorsChanged() {
+    public ActionCallback onErrorsChanged() {
+      return ActionCallback.DONE;
     }
   }
 
