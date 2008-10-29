@@ -124,7 +124,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       if (myShowTimer == null || !myShowTimer.isRunning()) {
         myShowing = true;
 
-        myShowTimer = new Timer(1500, new ActionListener() {
+        myShowTimer = new Timer(500, new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             if (myShowTimer == null) return;
             myShowTimer.stop();
@@ -135,6 +135,8 @@ public class ContextMenuImpl extends JPanel implements Disposable {
                 if (myCurrentOpacity > 100) {
                   myCurrentOpacity = 100;
                   myShowTimer.stop();
+
+                  scheduleHide();
                 }
 
                 repaint();
@@ -154,6 +156,22 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     else {
       super.show();
     }
+  }
+
+  private void scheduleHide() {
+    if (myHideTimer != null && myHideTimer.isRunning()) {
+      myHideTimer.stop();
+      myHideTimer = null;
+    }
+    
+    myHideTimer = new Timer(1500, new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        toggleContextToolbar(false);
+      }
+    });
+
+    myHideTimer.setRepeats(false);
+    myHideTimer.start();
   }
 
   @SuppressWarnings({"deprecation"})
