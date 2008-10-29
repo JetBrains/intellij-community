@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
@@ -75,12 +76,12 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
           return PsiUtil.isConstantExpression(initializer);
         }
         else if (element instanceof PsiClass) {
-          return true;
+          return PsiTreeUtil.isAncestor(ExtractClassDialog.this.sourceClass, element, true);
         }
         return false;
       }
     };
-    memberInfo = MemberInfo.extractClassMembers(this.sourceClass, filter, true);
+    memberInfo = MemberInfo.extractClassMembers(this.sourceClass, filter, false);
     for (MemberInfo info : memberInfo) {
       if (info.getMember().equals(selectedMember)) {
         info.setChecked(true);
