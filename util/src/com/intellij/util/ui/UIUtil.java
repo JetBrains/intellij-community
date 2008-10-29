@@ -454,8 +454,17 @@ public class UIUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderNimbusLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().indexOf("Nimbus") >= 0;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaLookAndFeel() {
     return UIManager.getLookAndFeel().getName().indexOf("Mac OS X") >= 0;
+  }
+
+  public static boolean isFullRowSelectionLAF() {
+    return isUnderNimbusLookAndFeel() || isUnderQuaquaLookAndFeel();
   }
 
   public static boolean isUnderNativeMacLookAndFeel() {

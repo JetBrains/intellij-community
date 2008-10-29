@@ -60,7 +60,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
 
     // We paint background if and only if tree path is selected and tree has focus.
     // If path is selected and tree is not focused then we just paint focused border.
-    if (UIUtil.isUnderQuaquaLookAndFeel()) {
+    if (UIUtil.isFullRowSelectionLAF()) {
         setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
     else {
@@ -87,7 +87,13 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIcon(null);
     }
 
-    super.setOpaque(myOpaque || selected && hasFocus); // draw selection background even for non-opaque tree
+    if (UIUtil.isUnderNimbusLookAndFeel() && selected && hasFocus) {
+      super.setOpaque(false);  // avoid erasing Nimbus focus frame
+      super.setIconOpaque(false);
+    }
+    else {
+      super.setOpaque(myOpaque || selected && hasFocus); // draw selection background even for non-opaque tree
+    }
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     if (getFont() == null) {
@@ -107,7 +113,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * It guaranties readability of selected text in any LAF.
    */
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-    if (mySelected && myFocused) {
+    if (mySelected && (myFocused || UIUtil.isUnderNimbusLookAndFeel())) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
     }
     else {

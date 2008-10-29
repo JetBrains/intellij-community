@@ -320,7 +320,7 @@ public class SimpleColoredComponent extends JComponent {
       final Container parent = getParent();
       Color iconBackgroundColor = null;
       if (isIconOpaque()) {
-        if (parent != null && !myFocusBorderAroundIcon && !UIUtil.isUnderQuaquaLookAndFeel()) {
+        if (parent != null && !myFocusBorderAroundIcon && !UIUtil.isFullRowSelectionLAF()) {
           iconBackgroundColor = parent.getBackground();
         }
         else {
