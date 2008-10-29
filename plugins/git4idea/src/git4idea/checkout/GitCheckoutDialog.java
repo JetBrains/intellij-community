@@ -129,7 +129,7 @@ public class GitCheckoutDialog extends DialogWrapper {
    */
   private void checkOkButton() {
     final String sourceRev = getSourceBranch();
-    if (sourceRev.length() == 0) {
+    if (sourceRev == null || sourceRev.length() == 0) {
       setErrorText(null);
       setOKActionEnabled(false);
       return;
