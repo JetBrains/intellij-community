@@ -219,7 +219,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
       }
     }
-    if (type == DocumentEvent.EventType.REMOVE && currentConfigurables.equals(contentHits)) {
+    if (currentConfigurables.equals(contentHits)) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
     return hits;
