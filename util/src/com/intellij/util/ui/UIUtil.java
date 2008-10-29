@@ -697,6 +697,10 @@ public class UIUtil {
   public static boolean isWinLafOnVista() {
     return SystemInfo.isWindowsVista && "Windows".equals(UIManager.getLookAndFeel().getName());
   }
+  
+  public static boolean isStandardMenuLAF() {
+    return isWinLafOnVista() || "Nimbus".equals(UIManager.getLookAndFeel().getName());
+  }
 
   public static Color getFocusedFillColor() {
     return toAlpha(UIUtil.getListSelectionBackground(), 100);
@@ -908,6 +912,5 @@ public class UIUtil {
       SwingUtilities.invokeLater(runnable);
     }
   }
-
 }
 

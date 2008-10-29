@@ -80,7 +80,7 @@ public final class ActionMenu extends JMenu {
     if (popupMenu != null) {
       popupMenu.updateUI();
     }
-    if (UIUtil.isWinLafOnVista()) {
+    if (UIUtil.isStandardMenuLAF()) {
       setUI((MenuItemUI)UIManager.getUI(this));
     }
     else {
