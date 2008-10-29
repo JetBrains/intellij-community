@@ -56,7 +56,11 @@ public class HighlightUtil {
                 final PsiElement[] elements =
                         elementCollection.toArray(
                                 new PsiElement[elementCollection.size()]);
-                final Project project = elements[0].getProject();
+                final PsiElement firstElement = elements[0];
+                if (!firstElement.isValid()) {
+                    return;
+                }
+                final Project project = firstElement.getProject();
                 final FileEditorManager editorManager =
                         FileEditorManager.getInstance(project);
                 final EditorColorsManager editorColorsManager =
