@@ -18,7 +18,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 /**
@@ -36,15 +35,18 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   private Timer myHideTimer;
   private EditorImpl myEditor;
   private ContextMenuPanel myContextMenuPanel;
+  private boolean myDisposed;
 
   public ContextMenuImpl(@NotNull final JScrollPane container, @NotNull final EditorImpl editor) {
     setLayout(new BorderLayout(0, 0));
+    myEditor = editor;
+
     final ActionManager actionManager = ActionManager.getInstance();
 
     editor.addEditorMouseListener(new EditorMouseAdapter() {
       @Override
       public void mouseExited(final EditorMouseEvent e) {
-        if (!isInsideActivationArea(container, e)) {
+        if (!isInsideActivationArea(container, e.getMouseEvent().getPoint())) {
           toggleContextToolbar(false);
         }
       }
@@ -53,7 +55,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     editor.addEditorMouseMotionListener(new EditorMouseMotionAdapter() {
       @Override
       public void mouseMoved(final EditorMouseEvent e) {
-        toggleContextToolbar(isInsideActivationArea(container, e));
+        toggleContextToolbar(isInsideActivationArea(container, e.getMouseEvent().getPoint()));
       }
     });
 
@@ -67,8 +69,6 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       myActionGroup = (ActionGroup)action;
     }
 
-    myEditor = editor;
-
     myComponent = createComponent();
     add(myComponent);
 
@@ -76,15 +76,12 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     setOpaque(false);
   }
 
-  private static boolean isInsideActivationArea(JScrollPane container, EditorMouseEvent e) {
+  private static boolean isInsideActivationArea(JScrollPane container, Point p) {
     final JViewport viewport = container.getViewport();
     final Rectangle r = viewport.getBounds();
     final Point viewPosition = viewport.getViewPosition();
 
     final Rectangle activationArea = new Rectangle(0, 0, r.width, 150);
-    final MouseEvent event = e.getMouseEvent();
-    final Point p = event.getPoint();
-
     return activationArea.contains(p.x, p.y - viewPosition.y);
   }
 
@@ -98,7 +95,19 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   public void dispose() {
+    myDisposed = true;
     myEditor = null;
+
+    if (myHideTimer != null) {
+      myHideTimer.stop();
+      myHideTimer = null;
+    }
+
+    if (myShowTimer != null) {
+      myShowTimer.stop();
+      myShowTimer = null;
+    }
+
   }
 
   @SuppressWarnings({"deprecation"})
@@ -126,11 +135,13 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
         myShowTimer = new Timer(500, new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
-            if (myShowTimer == null) return;
+            if (myDisposed || myShowTimer == null) return;
             myShowTimer.stop();
 
             myShowTimer = new Timer(50, new ActionListener() {
               public void actionPerformed(final ActionEvent e) {
+                if (myDisposed) return;
+
                 myCurrentOpacity += 20;
                 if (myCurrentOpacity > 100) {
                   myCurrentOpacity = 100;
@@ -154,19 +165,27 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       }
     }
     else {
+      scheduleHide();
       super.show();
     }
   }
 
   private void scheduleHide() {
     if (myHideTimer != null && myHideTimer.isRunning()) {
-      myHideTimer.stop();
-      myHideTimer = null;
+      return;
     }
     
     myHideTimer = new Timer(1500, new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        toggleContextToolbar(false);
+        if (myDisposed) return;
+
+        if (myComponent.isVisible()) {
+          final Point location = MouseInfo.getPointerInfo().getLocation();
+          SwingUtilities.convertPointFromScreen(location,  myComponent);
+          if (!myComponent.getBounds().contains(location)) {
+            toggleContextToolbar(false);
+          }
+        }
       }
     });
 
@@ -188,7 +207,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
         myHideTimer = new Timer(700, new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
-            if (myHideTimer == null) return;
+            if (myDisposed || myHideTimer == null) return;
             myHideTimer.stop();
 
             myHideTimer = new Timer(50, new ActionListener() {
