@@ -16,6 +16,4 @@ public class BackgroundFromStartOption implements PerformInBackgroundOption {
   public void processSentToBackground() {
   }
 
-  public void processRestoredToForeground() {
-  }
 }

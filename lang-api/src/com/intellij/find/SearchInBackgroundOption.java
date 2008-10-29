@@ -31,7 +31,4 @@ public class SearchInBackgroundOption implements PerformInBackgroundOption {
     GeneralSettings.getInstance().setSearchInBackground(true);
   }
 
-  public void processRestoredToForeground() {
-    GeneralSettings.getInstance().setSearchInBackground(false);
-  }
 }

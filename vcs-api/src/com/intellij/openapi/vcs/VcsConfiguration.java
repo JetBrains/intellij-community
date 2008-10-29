@@ -275,7 +275,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
     }
 
     public void processSentToBackground() {}
-    public void processRestoredToForeground() {}
   }
 
   private class CommitInBackgroundOption implements PerformInBackgroundOption {
@@ -284,7 +283,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
     }
 
     public void processSentToBackground() {}
-    public void processRestoredToForeground() {}
   }
 
   private class EditInBackgroundOption implements PerformInBackgroundOption {
@@ -296,9 +294,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
       PERFORM_EDIT_IN_BACKGROUND = true;
     }
 
-    public void processRestoredToForeground() {
-      PERFORM_EDIT_IN_BACKGROUND = false;
-    }
   }
 
   private class CheckoutInBackgroundOption implements PerformInBackgroundOption {
@@ -310,9 +305,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
       PERFORM_CHECKOUT_IN_BACKGROUND = true;
     }
 
-    public void processRestoredToForeground() {
-      PERFORM_CHECKOUT_IN_BACKGROUND = false;
-    }
   }
 
   private class AddRemoveInBackgroundOption implements PerformInBackgroundOption {
@@ -324,9 +316,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
       PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
     }
 
-    public void processRestoredToForeground() {
-      PERFORM_ADD_REMOVE_IN_BACKGROUND = false;
-    }
   }
 
 }

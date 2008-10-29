@@ -23,10 +23,8 @@ public interface PerformInBackgroundOption {
   PerformInBackgroundOption DEAF = new PerformInBackgroundOption() {
     public boolean shouldStartInBackground() { return false; }
     public void processSentToBackground() {}
-    public void processRestoredToForeground() {}
   };
 
   boolean shouldStartInBackground();
   void processSentToBackground();
-  void processRestoredToForeground();
 }

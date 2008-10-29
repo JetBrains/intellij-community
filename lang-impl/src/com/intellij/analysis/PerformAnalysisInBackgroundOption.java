@@ -26,7 +26,4 @@ public class PerformAnalysisInBackgroundOption implements PerformInBackgroundOpt
     myUIOptions.ANALYSIS_IN_BACKGROUND = true;
   }
 
-  public void processRestoredToForeground() {
-    myUIOptions.ANALYSIS_IN_BACKGROUND = false;
-  }
 }

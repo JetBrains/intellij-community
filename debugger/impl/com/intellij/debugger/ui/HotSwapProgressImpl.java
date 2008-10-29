@@ -46,8 +46,6 @@ public class HotSwapProgressImpl extends HotSwapProgress{
       public void processSentToBackground() {
       }
 
-      public void processRestoredToForeground() {
-      }
     }, null, null, true) {
       public void cancel() {
         HotSwapProgressImpl.this.cancel();

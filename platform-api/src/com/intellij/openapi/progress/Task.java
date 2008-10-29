@@ -150,12 +150,6 @@ public abstract class Task implements TaskInfo {
       }
     }
 
-    public void processRestoredToForeground() {
-      if (myBackgroundOption != null) {
-        myBackgroundOption.processRestoredToForeground();
-      }
-    }
-
     public final boolean isModal() {
       return false;
     }
