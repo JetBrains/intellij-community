@@ -66,7 +66,7 @@ public class Settings implements Configurable, PersistentStateComponent<Element>
   private SettingsUI mySettingsUI;
 
   public String getDisplayName() {
-    return "IntelliLang";
+    return "Language Injection";
   }
 
   @Nullable
