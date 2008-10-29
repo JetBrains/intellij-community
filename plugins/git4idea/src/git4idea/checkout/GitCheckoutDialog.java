@@ -109,7 +109,9 @@ public class GitCheckoutDialog extends DialogWrapper {
   /**
    * A constructor
    *
-   * @param project the context project
+   * @param project     the context project
+   * @param roots       the git roots for the project
+   * @param defaultRoot the default root
    */
   public GitCheckoutDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
