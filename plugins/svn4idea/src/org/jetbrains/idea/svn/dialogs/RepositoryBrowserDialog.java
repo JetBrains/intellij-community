@@ -328,7 +328,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   @Nullable
-  private RepositoryTreeNode getSelectedNode() {
+  protected RepositoryTreeNode getSelectedNode() {
     return getRepositoryBrowser().getSelectedNode();
   }
 
@@ -835,7 +835,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     public void actionPerformed(AnActionEvent e) {
-      doCheckout(ProjectLevelVcsManager.getInstance(myProject).getCompositeCheckoutListener());
+      doCheckout(ProjectLevelVcsManager.getInstance(myProject).getCompositeCheckoutListener(), getSelectedNode());
       if (! ModalityState.NON_MODAL.equals(ModalityState.current())) {
         doOKAction();
       }
@@ -911,7 +911,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     fcd.setTitle(title);
     fcd.setDescription(description);
     fcd.setHideIgnored(false);
-    VirtualFile[] files = FileChooser.chooseFiles(getRepositoryBrowser(), fcd, null);
+    VirtualFile[] files = FileChooser.chooseFiles(myProject, fcd, null);
     if (files.length != 1 || files[0] == null) {
       return null;
     }
@@ -997,8 +997,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected void doCheckout(@Nullable final CheckoutProvider.Listener listener) {
-    final RepositoryTreeNode selectedNode = getSelectedNode();
+  protected void doCheckout(@Nullable final CheckoutProvider.Listener listener, final RepositoryTreeNode selectedNode) {
     if (selectedNode == null) {
       return;
     }

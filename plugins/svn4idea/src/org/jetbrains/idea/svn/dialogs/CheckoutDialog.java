@@ -45,7 +45,8 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
   }
 
   protected void doOKAction() {
-    doCheckout(myListener);
-    super.doOKAction();
+    final RepositoryTreeNode selectedNode = getSelectedNode();
+    close(OK_EXIT_CODE);
+    doCheckout(myListener, selectedNode);
   }
 }
