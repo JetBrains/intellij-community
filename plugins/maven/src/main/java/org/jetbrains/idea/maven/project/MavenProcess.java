@@ -85,11 +85,6 @@ public class MavenProcess {
       }
 
       @Override
-      public void processRestoredToForeground() {
-        task.setStartInForeground();
-      }
-
-      @Override
       public void processSentToBackground() {
         task.setStartInBackground();
       }
