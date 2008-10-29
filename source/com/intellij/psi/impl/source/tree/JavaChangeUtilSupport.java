@@ -62,6 +62,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
     }
     else if (original instanceof PsiModifierList) {
       final String text = original.getText();
+      assert text != null : "Text is null for " + original + "; " + original.getClass();
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(original);
       JavaLexer lexer = new JavaLexer(languageLevel);
       lexer.start(text, 0, text.length(), 0);
@@ -170,6 +171,11 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         final CompositeElement element = Parsing.parseTypeText(original.getManager(), originalText, 0, originalText.length(), table);
         if(generated) element.getTreeParent().acceptTree(new GeneratedMarkerVisitor());
         return element;
+      }
+      else if (type instanceof PsiIntersectionType) {
+        PsiIntersectionType intersectionType = (PsiIntersectionType)type;
+        LightTypeElement te = new LightTypeElement(original.getManager(), intersectionType.getConjuncts()[0]);
+        return ChangeUtil.generateTreeElement(te, table, manager);
       }
       else {
         PsiClassType classType = (PsiClassType)type;
@@ -307,7 +313,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
     return element;
   }
 
-  private static final Key<Boolean> ALREADY_ESCAPED = new Key<Boolean>("ALREADY_ESCAPED");  
+  private static final Key<Boolean> ALREADY_ESCAPED = new Key<Boolean>("ALREADY_ESCAPED");
   private static final Key<Boolean> ESCAPEMENT_ENGAGED = new Key<Boolean>("ESCAPEMENT_ENGAGED");
   private static boolean conversionMayApply(ASTNode element) {
     PsiElement psi = element.getPsi();
