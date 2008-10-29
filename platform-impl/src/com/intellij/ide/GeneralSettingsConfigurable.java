@@ -21,10 +21,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
-    settings.setSearchInBackground(myComponent.mySearchInBackground.isSelected());
-
     // AutoSave in inactive
-
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
     try {
       int newInactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
@@ -55,7 +52,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     }
 
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
-    isModified |= settings.isSearchInBackground() != myComponent.mySearchInBackground.isSelected();
 
     return isModified;
   }
@@ -91,8 +87,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myTfInactiveTimeout.setText(Integer.toString(settings.getInactiveTimeout()));
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
-
-    myComponent.mySearchInBackground.setSelected(settings.isSearchInBackground());
   }
 
   public void disposeUIResources() {
@@ -115,7 +109,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     private JCheckBox myChkAutoSaveIfInactive;
     private JTextField myTfInactiveTimeout;
     public JCheckBox myConfirmExit;
-    private JCheckBox mySearchInBackground;
 
 
     public MyComponent() {
