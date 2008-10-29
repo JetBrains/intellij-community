@@ -203,7 +203,7 @@ class LookupCellRenderer implements ListCellRenderer {
       Color proposedBackground = ((LookupValueWithUIHint)o).getColorHint();
 
       if (proposedBackground == null) {
-        proposedBackground = BACKGROUND_COLOR;
+        proposedBackground = background;
       }
 
       sampleBackground = proposedBackground;
