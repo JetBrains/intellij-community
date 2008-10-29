@@ -55,7 +55,8 @@ public class GitHistoryUtils {
    * @throws VcsException if there is problem with running git
    */
   @Nullable
-  public static VcsRevisionNumber getCurrentRevision(final Project project, final FilePath filePath) throws VcsException {
+  public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath) throws VcsException {
+    filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(project, filePath), "log");
     h.setNoSSH(true);
     h.setSilent(true);

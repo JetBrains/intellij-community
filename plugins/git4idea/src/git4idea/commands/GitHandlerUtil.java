@@ -210,7 +210,7 @@ public class GitHandlerUtil {
     /**
      * Ensure that at least one error is available in case if the process exited with non-zero exit code
      *
-     * @param exitCode
+     * @param exitCode the exit code of the process
      */
     protected void ensureError(final int exitCode) {
       if (myHandler.errors().size() == 0) {

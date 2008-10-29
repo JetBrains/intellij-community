@@ -20,6 +20,8 @@ package git4idea.diff;
  */
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -31,20 +33,46 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * Git diff provider
  */
 public class GitDiffProvider implements DiffProvider {
-  private final Project project;
+  /**
+   * The context project
+   */
+  private final Project myProject;
+  /**
+   * The status manager for the proejct
+   */
+  private FileStatusManager myStatusManager;
+  /**
+   *
+   */
+  private static final Set<FileStatus> myGoodStatuses;
 
-  public GitDiffProvider(@NotNull Project proj) {
-    project = proj;
+  static {
+    myGoodStatuses = new THashSet<FileStatus>();
+    myGoodStatuses.addAll(
+      Arrays.asList(FileStatus.NOT_CHANGED, FileStatus.DELETED, FileStatus.MODIFIED, FileStatus.MERGE, FileStatus.MERGED_WITH_CONFLICTS));
+  }
+
+  /**
+   * A constructor
+   *
+   * @param project the context project
+   */
+  public GitDiffProvider(@NotNull Project project) {
+    myProject = project;
+    myStatusManager = FileStatusManager.getInstance(myProject);
   }
 
   /**
@@ -60,7 +88,16 @@ public class GitDiffProvider implements DiffProvider {
    */
   @Nullable
   public ItemLatestState getLastRevision(VirtualFile file) {
-    return new ItemLatestState(new GitRevisionNumber(GitRevisionNumber.TIP, new Date(file.getModificationStamp())), true);
+    if (!myGoodStatuses.contains(myStatusManager.getStatus(file))) {
+      return null;
+    }
+    try {
+      final VcsRevisionNumber revision = GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()));
+      return new ItemLatestState(revision, true);
+    }
+    catch (VcsException e) {
+      return null;
+    }
   }
 
   /**
@@ -73,15 +110,15 @@ public class GitDiffProvider implements DiffProvider {
       return null;
     }
     try {
-      for (VcsFileRevision f : GitHistoryUtils.history(project, VcsUtil.getFilePath(path))) {
+      for (VcsFileRevision f : GitHistoryUtils.history(myProject, VcsUtil.getFilePath(path))) {
         GitFileRevision gitRevision = (GitFileRevision)f;
         if (f.getRevisionNumber().equals(revisionNumber)) {
-          return new GitContentRevision(gitRevision.getPath(), (GitRevisionNumber)revisionNumber, project);
+          return new GitContentRevision(gitRevision.getPath(), (GitRevisionNumber)revisionNumber, myProject);
         }
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(project).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", path));
+      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", path));
     }
     return null;
   }
