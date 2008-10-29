@@ -145,8 +145,10 @@ public class FSRecords implements Disposable, Forceable {
 
       try {
         if (getCorruptionMarkerFile().exists()) {
+          invalidateIndex();
           throw new IOException("Corruption marker file found");
         }
+
         myNames = new PersistentStringEnumerator(namesFile);
         myAttributes = Storage.create(attributesFile.getCanonicalPath());
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024);
@@ -204,6 +206,15 @@ public class FSRecords implements Disposable, Forceable {
         }
 
         init();
+      }
+    }
+
+    private static void invalidateIndex() {
+      try {
+        new File(PathManager.getIndexRoot(), "corruption.marker").createNewFile();
+      }
+      catch (IOException e) {
+        // OK, index root probably doesn't exist
       }
     }
 
