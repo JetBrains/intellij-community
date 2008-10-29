@@ -28,10 +28,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
-import git4idea.GitFileRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +69,9 @@ public class GitDiffProvider implements DiffProvider {
   @Nullable
   public ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
     final String path = selectedFile.getPath();
+    if (GitUtil.gitRootOrNull(selectedFile) == null) {
+      return null;
+    }
     try {
       for (VcsFileRevision f : GitHistoryUtils.history(project, VcsUtil.getFilePath(path))) {
         GitFileRevision gitRevision = (GitFileRevision)f;
