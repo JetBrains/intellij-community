@@ -106,10 +106,10 @@ public class RefactoringUtil {
     final PsiManager manager = occurrence.getManager();
     final String fieldName = newField.getName();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    final PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(fieldName, occurrence);
-    final PsiElementFactory factory = facade.getElementFactory();
     final PsiElement element = occurrence.getUserData(ElementToWorkOn.PARENT);
-    if (psiVariable != null && psiVariable.equals(newField) || PsiUtil.isAccessible(newField, element != null ? element : occurrence, null)) {
+    final PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(fieldName, element != null ? element : occurrence);
+    final PsiElementFactory factory = facade.getElementFactory();
+    if (psiVariable != null && psiVariable.equals(newField)) {
       return IntroduceVariableBase.replace(occurrence, factory.createExpressionFromText(fieldName, null), file);
     }
     else {
