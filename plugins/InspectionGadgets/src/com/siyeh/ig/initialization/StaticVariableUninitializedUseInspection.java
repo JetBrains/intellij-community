@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,23 +31,27 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
+    @Override
     @NotNull
     public String getID() {
         return "StaticVariableUsedBeforeInitialization";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.variable.used.before.initialization.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
       return InspectionGadgetsBundle.message(
               "static.variable.used.before.initialization.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -55,6 +59,7 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
                 this, "m_ignorePrimitives");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StaticVariableInitializationVisitor();
     }
@@ -70,7 +75,6 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
                 return;
             }
             final PsiClass containingClass = field.getContainingClass();
-
             if (containingClass == null) {
                 return;
             }
@@ -89,19 +93,37 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
             // (They need to.)
             final UninitializedReadCollector uninitializedReadCollector =
                     new UninitializedReadCollector();
+            boolean assigned = false;
             for(final PsiClassInitializer initializer : initializers) {
-                if(initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                    final PsiCodeBlock body = initializer.getBody();
-                    if(uninitializedReadCollector.blockAssignsVariable(
+                if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+                    continue;
+                }
+                final PsiCodeBlock body = initializer.getBody();
+                if(uninitializedReadCollector.blockAssignsVariable(
                             body, field)) {
-                        break;
-                    }
+                    assigned = true;
+                    break;
                 }
             }
-
-            final PsiExpression[] badReads =
+            if (assigned) {
+                final PsiExpression[] badReads =
+                        uninitializedReadCollector.getUninitializedReads();
+                for(PsiExpression badRead : badReads) {
+                    registerError(badRead);
+                }
+                return;
+            }
+            final PsiMethod[] methods = containingClass.getMethods();
+            for (PsiMethod method : methods) {
+                if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+                    continue;
+                }
+                final PsiCodeBlock body = method.getBody();
+                uninitializedReadCollector.blockAssignsVariable(body, field);
+            }
+            final PsiExpression[] moreBadReads =
                     uninitializedReadCollector.getUninitializedReads();
-            for(PsiExpression badRead : badReads) {
+            for (PsiExpression badRead : moreBadReads) {
                 registerError(badRead);
             }
         }
