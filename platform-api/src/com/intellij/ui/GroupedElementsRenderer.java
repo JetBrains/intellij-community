@@ -48,11 +48,17 @@ public abstract class GroupedElementsRenderer {
       myComponent.setBorder(ourSelectedBorder);
       setSelected(myComponent);
       setSelected(myTextLabel);
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        myTextLabel.setOpaque(true);
+      }
     }
     else {
       myComponent.setBorder(ourBorder);
       setDeselected(myComponent);
       setDeselected(myTextLabel);
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        myTextLabel.setOpaque(false);
+      }
     }
 
     myRendererComponent.setPrefereedWidth(preferredForcedWidth);
