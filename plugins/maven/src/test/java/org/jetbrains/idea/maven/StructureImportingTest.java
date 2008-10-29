@@ -507,6 +507,27 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForProject());
   }
 
+  public void testLanguageLevel6() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <source>1.6</source>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+    assertEquals(LanguageLevel.JDK_1_6, getLanguageLevelForProject());
+  }
+
   public void testLanguageLevelWhenCompilerPluginIsNotSpecified() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

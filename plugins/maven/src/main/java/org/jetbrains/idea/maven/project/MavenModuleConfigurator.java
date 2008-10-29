@@ -122,7 +122,7 @@ public class MavenModuleConfigurator {
     if ("1.3".equals(level)) return LanguageLevel.JDK_1_3;
     if ("1.4".equals(level)) return LanguageLevel.JDK_1_4;
     if ("1.5".equals(level)) return LanguageLevel.JDK_1_5;
-    if ("1.6".equals(level)) return LanguageLevel.JDK_1_5;
+    if ("1.6".equals(level)) return LanguageLevel.JDK_1_6;
 
     return null;
   }

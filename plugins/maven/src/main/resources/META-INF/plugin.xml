@@ -125,17 +125,21 @@
               class="org.jetbrains.idea.maven.project.action.ToggleProfileAction" text="Toggle profile"
               description="Activate/deactivate profile">
       </action>
+
+      <action id="Maven.ShowSettings"
+              class="org.jetbrains.idea.maven.project.action.EditSettingsAction" text="Maven Settings"
+              description="Edit Maven integration settings for the current project"
+              icon="/images/mavenSettings.png">
+      </action>
+
+      <action id="Maven.ShowDefaultSettings"
+              class="org.jetbrains.idea.maven.project.action.EditDefaultSettingsAction" text="Default Maven settings"
+              description="Edit default Maven integration settings"
+              icon="/general/applicationSettings.png">
+      </action>
     </group>
 
     <group id="Maven.Project">
-      <action id="Maven.AddManagedFile" class="org.jetbrains.idea.maven.project.action.AddManageFileAction"
-              text="Add Maven project" description="Add Maven project to managed files"
-              icon="/general/add.png">
-      </action>
-      <action id="Maven.RemoveManagedFiles" class="org.jetbrains.idea.maven.project.action.RemoveManagedFilesAction"
-              text="Remove Maven projects" description="Removes selected Maven projects from managed files"
-              icon="/general/remove.png">
-      </action>
       <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.action.ReimportAction"
               text="Re-import Maven projects" description="Re-import Maven projects into Idea project structure"
               icon="/actions/sync.png">
@@ -152,6 +156,22 @@
               text="Download artifacts" description="Download artifacts (sources, javadoc, plugins)"
               icon="/images/download.png">
       </action>
+
+      <action id="Maven.AddManagedFile" class="org.jetbrains.idea.maven.project.action.AddManageFileAction"
+              text="Add Maven project" description="Add Maven project to managed files"
+              icon="/general/add.png">
+      </action>
+      <action id="Maven.RemoveManagedFiles" class="org.jetbrains.idea.maven.project.action.RemoveManagedFilesAction"
+              text="Remove Maven projects" description="Removes selected Maven projects from managed files"
+              icon="/general/remove.png">
+      </action>
+
+      <action id="Maven.RunGoal"
+              class="org.jetbrains.idea.maven.project.action.RunGoalAction" text="_Run Goal"
+              description="Execute selected goal"
+              icon="/actions/execute.png">
+      </action>
+
     </group>
 
     <group id="Maven.EventsGroup">
@@ -183,6 +203,10 @@
       <reference id="Maven.AddManagedFile"/>
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
+      <reference id="Maven.RunGoal"/>
+      <separator/>
+      <reference id="Maven.ShowSettings"/>
+      <reference id="Maven.ShowDefaultSettings"/>
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
       <separator/>
@@ -192,6 +216,7 @@
     </group>
 
     <group id="Maven.PomMenu" popup="true">
+      <reference id="Maven.RunGoal"/>
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference id="Maven.RemoveManagedFiles"/>
@@ -201,6 +226,7 @@
     </group>
 
     <group id="Maven.GoalMenu" popup="true">
+      <reference id="Maven.RunGoal"/>
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference ref="Maven.EventsGroup"/>

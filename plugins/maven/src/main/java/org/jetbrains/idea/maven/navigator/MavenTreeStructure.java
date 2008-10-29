@@ -974,7 +974,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     @Nullable
     @NonNls
     protected String getActionId() {
-      return "RunClass";
+      //return "RunClass";
+      return "Maven.RunGoal";
     }
 
     @Nullable

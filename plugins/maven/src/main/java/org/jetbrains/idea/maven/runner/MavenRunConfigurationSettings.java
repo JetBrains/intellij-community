@@ -25,7 +25,7 @@ public class MavenRunConfigurationSettings extends SettingsEditor<MavenRunConfig
       }
     }, new MavenGeneralConfigurable() {
       protected MavenGeneralSettings getState() {
-        return configuration.getCoreSettings();
+        return configuration.getGeneralSettings();
       }
     }, new MavenRunnerConfigurable(p, true) {
       protected MavenRunnerSettings getState() {

@@ -72,19 +72,27 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return Module.EMPTY_ARRAY;
   }
 
-  public MavenGeneralSettings getCoreSettings() {
+  public MavenGeneralSettings getGeneralSettings() {
     return mySettings.myCoreSettings;
+  }
+
+  public void setGeneralSettings(MavenGeneralSettings settings) {
+    mySettings.myCoreSettings = settings;
   }
 
   public MavenRunnerSettings getRunnerSettings() {
     return mySettings.myRunnerSettings;
   }
 
+  public void setRunnerSettings(MavenRunnerSettings settings) {
+    mySettings.myRunnerSettings = settings;
+  }
+
   public MavenRunnerParameters getRunnerParameters() {
     return mySettings.myRunnerParameters;
   }
 
-  public void setRunnerParameters(MavenRunnerParameters p){
+  public void setRunnerParameters(MavenRunnerParameters p) {
     mySettings.myRunnerParameters = p;
   }
 
@@ -92,7 +100,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     super.readExternal(element);
 
     Element mavenSettingsElement = element.getChild(MavenSettings.TAG);
-    if(mavenSettingsElement!=null){
+    if (mavenSettingsElement != null) {
       mySettings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
 
       // fix old settings format

@@ -79,7 +79,7 @@ public class MavenRunnerParameters implements Cloneable {
 
     final MavenRunnerParameters that = (MavenRunnerParameters)o;
 
-    if (isPomExecution == that.isPomExecution) return false;
+    if (isPomExecution != that.isPomExecution) return false;
     if (myGoals != null ? !myGoals.equals(that.myGoals) : that.myGoals != null) return false;
     if (myWorkingDirPath != null ? !myWorkingDirPath.equals(that.myWorkingDirPath) : that.myWorkingDirPath != null) return false;
     if (myProfiles != null ? !myProfiles.equals(that.myProfiles) : that.myProfiles != null) return false;

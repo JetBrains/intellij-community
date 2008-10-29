@@ -38,7 +38,7 @@ public abstract class MavenGeneralConfigurable implements Configurable {
   private JComboBox comboboxMultiprojectBuildFailPolicy;
   private JComboBox comboboxPluginUpdatePolicy;
   private JCheckBox checkboxUsePluginRegistry;
-  private JCheckBox checkboxNonRecursive;
+  private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
   private final DefaultComboBoxModel comboboxModelOutputLevel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelChecksumPolicy = new DefaultComboBoxModel();
@@ -56,7 +56,7 @@ public abstract class MavenGeneralConfigurable implements Configurable {
 
   private void fillComboboxPluginUpdatePolicy() {
     ComboBoxUtil.setModel(comboboxPluginUpdatePolicy, comboboxModelPluginUpdatePolicy,
-                          new Object[][]{{true, "Check For Updates"}, {false, "Supress Checking"}});
+                          new Object[][]{{true, "Check For Updates"}, {false, "Suppress Checking"}});
   }
 
   private void fillComboboxChecksumPolicy() {
@@ -102,7 +102,7 @@ public abstract class MavenGeneralConfigurable implements Configurable {
 
     data.setPrintErrorStackTraces(checkboxProduceExceptionErrorMessages.isSelected());
     data.setUsePluginRegistry(checkboxUsePluginRegistry.isSelected());
-    data.setNonRecursive(checkboxNonRecursive.isSelected());
+    data.setNonRecursive(!checkboxRecursive.isSelected());
 
     Integer level = (Integer)ComboBoxUtil.getSelectedValue(comboboxModelOutputLevel);
     if (level != null) {
@@ -123,7 +123,7 @@ public abstract class MavenGeneralConfigurable implements Configurable {
 
     checkboxProduceExceptionErrorMessages.setSelected(data.isPrintErrorStackTraces());
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
-    checkboxNonRecursive.setSelected(data.isNonRecursive());
+    checkboxRecursive.setSelected(!data.isNonRecursive());
 
     ComboBoxUtil.select(comboboxModelOutputLevel, data.getOutputLevel());
     ComboBoxUtil.select(comboboxModelChecksumPolicy, data.getChecksumPolicy());
