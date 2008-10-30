@@ -21,7 +21,7 @@ public class LineMarkersPassFactory extends AbstractProjectComponent implements 
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
                                                                  new int[]{},
-                                                                 new int[]{Pass.UPDATE_ALL}, false, -1);
+                                                                 new int[]{Pass.UPDATE_ALL}, false, Pass.LINE_MARKERS);
   }
 
   @NonNls

@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
@@ -30,16 +31,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
-import com.intellij.packageDependencies.DependencyValidationManager;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -126,29 +127,32 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void projectOpened() {
+    assert !myInitialized : "Double Initializing";
     myStatusBarUpdater = new StatusBarUpdater(myProject);
 
-    myDaemonListeners = new DaemonListeners(myProject,this, myEditorTracker);
+    myDaemonListeners = new DaemonListeners(myProject, this, myEditorTracker);
     reloadScopes();
 
     myInitialized = true;
     myDisposed = false;
     myFileStatusMap.markAllFilesDirty();
   }
+
   public void projectClosed() {
+    assert myInitialized : "Disposing not initialized component";
+    assert !myDisposed : "Double dispose";
+
     // clear dangling references to PsiFiles/Documents. SCR#10358
     myFileStatusMap.markAllFilesDirty();
 
-    if (myDisposed) return;
-    if (myInitialized) {
-      myDaemonListeners.dispose();
-      stopProcess(false);
-      myPassExecutorService.dispose();
-      myStatusBarUpdater.dispose();
-    }
+    myDaemonListeners.dispose();
+    stopProcess(false);
+    myPassExecutorService.dispose();
+    myStatusBarUpdater.dispose();
 
     myDisposed = true;
     myLastSettings = null;
+    myInitialized = false;
   }
 
   void repaintErrorStripeRenderer(Editor editor) {
@@ -332,7 +336,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public static List<HighlightInfo> getHighlights(Document document, Project project) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     MarkupModel markup = document.getMarkupModel(project);
-    return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
+    List<HighlightInfo> infos = markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
+    if (infos != null) {
+      for (HighlightInfo info : infos) {
+        assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
+      }
+    }
+    return infos;
   }
 
   @NotNull
@@ -366,7 +376,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Collection<HighlightInfo> array = new ArrayList<HighlightInfo>();
 
     for (HighlightInfo info : highlights) {
-      if (info.highlighter.getStartOffset() <= offset && offset <= info.highlighter.getEndOffset()) {
+      if (isOffsetInsideHighlightInfo(offset, info, true)) {
         array.add(info);
       }
     }
@@ -380,24 +390,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     List<HighlightInfo> foundInfoList = new SmartList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
-      if (info.highlighter == null || !info.highlighter.isValid()) continue;
-      int startOffset = info.highlighter.getStartOffset();
-      int endOffset = info.highlighter.getEndOffset();
-      if (info.isAfterEndOfLine) {
-        startOffset += 1;
-        endOffset += 1;
-      }
-      if (startOffset > offset || offset > endOffset) {
-        if (!includeFixRange) continue;
-        if (info.fixMarker == null || !info.fixMarker.isValid()) continue;
-        startOffset = info.fixMarker.getStartOffset();
-        endOffset = info.fixMarker.getEndOffset();
-        if (info.isAfterEndOfLine) {
-          startOffset += 1;
-          endOffset += 1;
-        }
-        if (startOffset > offset || offset > endOffset) continue;
-      }
+      if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) continue;
 
       if (!foundInfoList.isEmpty()) {
         HighlightInfo foundInfo = foundInfoList.get(0);
@@ -416,11 +409,36 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return new HighlightInfoComposite(foundInfoList);
   }
 
+  private static boolean isOffsetInsideHighlightInfo(int offset, HighlightInfo info, boolean includeFixRange) {
+    if (info.highlighter == null || !info.highlighter.isValid()) return false;
+    int startOffset = info.highlighter.getStartOffset();
+    int endOffset = info.highlighter.getEndOffset();
+    if (info.isAfterEndOfLine) {
+      startOffset += 1;
+      endOffset += 1;
+    }
+    if (startOffset > offset || offset > endOffset) {
+      if (!includeFixRange) return false;
+      if (info.fixMarker == null || !info.fixMarker.isValid()) return false;
+      startOffset = info.fixMarker.getStartOffset();
+      endOffset = info.fixMarker.getEndOffset();
+      if (info.isAfterEndOfLine) {
+        startOffset += 1;
+        endOffset += 1;
+      }
+      if (startOffset > offset || offset > endOffset) return false;
+    }
+    return true;
+  }
+
   public static void setHighlights(Document document, List<HighlightInfo> highlights, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = document.getMarkupModel(project);
     stripWarningsCoveredByErrors(project, highlights, markup);
     markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, highlights);
+    for (HighlightInfo info : highlights) {
+      assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
+    }
 
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project); 
     if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl && ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater != null) {

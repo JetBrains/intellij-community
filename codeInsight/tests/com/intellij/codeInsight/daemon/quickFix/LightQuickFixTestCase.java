@@ -2,22 +2,23 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.RegExp;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -49,6 +50,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             try {
               String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)), "\n");
               configureFromFileText(ioFile.getName(), contents);
+              bringRealEditorBack();
               final Pair<String, Boolean> pair = parseActionHintImpl(getFile(), contents);
               final String text = pair.getFirst();
               final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
@@ -119,7 +121,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       if (!actionShouldBeAvailable) {
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
-      action.invoke(getProject(), getEditor(), getFile());
+      invoke(action);
       if (!shouldBeAvailableAfterExecution()) {
         final IntentionAction afterAction = findActionWithText(text);
         if (afterAction != null) {
@@ -129,6 +131,10 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       final String expectedFilePath = getBasePath() + "/after" + testName;
       checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
     }
+  }
+
+  protected void invoke(IntentionAction action) throws IncorrectOperationException {
+    action.invoke(getProject(), getEditor(), getFile());
   }
 
   protected IntentionAction findActionWithText(final String text) {
@@ -157,7 +163,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     });
 
     if (files == null) {
-      assertTrue("Test files not foundin " + testDirPath, false);
+      fail("Test files not found in " + testDirPath);
     }
 
     for (File file : files) {
@@ -169,40 +175,26 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
   protected List<IntentionAction> getAvailableActions() {
     final Collection<HighlightInfo> infos = doHighlighting();
-    return getAvailableActions(infos, getEditor(), getFile());
+    Editor editor = getEditor();
+    return getAvailableActions(infos, editor, getFile());
   }
 
   public static List<IntentionAction> getAvailableActions(final Collection<HighlightInfo> infos, final Editor editor, final PsiFile file) {
-    final int offset = editor.getCaretModel().getOffset();
-    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
-    if (infos != null) {
-      for (HighlightInfo info :infos) {
-        final int startOffset = info.fixStartOffset;
-        final int endOffset = info.fixEndOffset;
-        if (startOffset <= offset && offset <= endOffset
-            && info.quickFixActionRanges != null
-        ) {
-          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-            final HighlightInfo.IntentionActionDescriptor actionDescriptor = pair.first;
-            final TextRange range = pair.second;
-            final IntentionAction action = actionDescriptor.getAction();
-            final Project project = editor.getProject();
-            if (range.getStartOffset() <= offset && offset <= range.getEndOffset() && action.isAvailable(project, editor, file)) {
-              availableActions.add(action);
-              final List<IntentionAction> actions = actionDescriptor.getOptions(file.findElementAt(editor.getCaretModel().getOffset()));
-              if (actions != null) {
-                for (IntentionAction intentionAction : actions) {
-                  if (intentionAction.isAvailable(project, editor, file)) {
-                    availableActions.add(intentionAction);
-                  }
-                }
-              }
-            }
+    List<HighlightInfo.IntentionActionDescriptor> descriptors = QuickFixAction.getAvailableActions(editor, file, -1);
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
+      result.add(descriptor.getAction());
+      List<IntentionAction> options = descriptor.getOptions(element);
+      if (options != null) {
+        for (IntentionAction option : options) {
+          if (option.isAvailable(file.getProject(), editor, file)) {
+            result.add(option);
           }
         }
       }
     }
-    return availableActions;
+    return result;
   }
 
   @NonNls protected String getBasePath() {return null;}

@@ -18,9 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class VisibleLineMarkersPassFactory extends VisibleHighlightingPassFactory implements TextEditorHighlightingPassFactory {
   public VisibleLineMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
-                                                                 new int[]{},
-                                                                 new int[]{Pass.UPDATE_VISIBLE}, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[0], new int[]{Pass.UPDATE_VISIBLE}, false, Pass.VISIBLE_LINE_MARKERS);
   }
 
   @NonNls
@@ -34,7 +32,6 @@ public class VisibleLineMarkersPassFactory extends VisibleHighlightingPassFactor
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return null;
 
-    return new LineMarkersPass(file.getProject(), file, editor.getDocument(),
-                               textRange.getStartOffset(), textRange.getEndOffset(), false);
+    return new LineMarkersPass(file.getProject(), file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), false);
   }
 }

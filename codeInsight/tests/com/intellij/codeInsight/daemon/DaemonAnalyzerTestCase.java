@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -28,12 +30,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.module.Module;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
-import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.ExpectedHighlightingData;
@@ -48,11 +50,10 @@ import java.util.*;
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
+  private boolean toInitializeDaemon;
 
   protected void setUp() throws Exception {
     super.setUp();
-    //DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(getProject());
-    //codeAnalyzer.projectOpened();
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
     for (LocalInspectionTool tool : tools) {
       enableInspectionTool(tool);
@@ -86,12 +87,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     inspectionProfileManager.addProfile(profile);
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
+    toInitializeDaemon = ((ProjectEx)getProject()).isOptimiseTestLoadSpeed();
+    if (toInitializeDaemon) {
+      DaemonCodeAnalyzer.getInstance(getProject()).projectOpened();
+    }
   }
 
   protected void tearDown() throws Exception {
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(getProject());
-    codeAnalyzer.projectClosed();
-    codeAnalyzer.disposeComponent();
+    if (toInitializeDaemon) {
+      DaemonCodeAnalyzer.getInstance(getProject()).projectClosed();
+    }
     super.tearDown();
   }
 
@@ -160,7 +165,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected Collection<HighlightInfo> checkHighlighting(final ExpectedHighlightingData data) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    ((PsiFileImpl)myFile).calcTreeElement(); //to load text
+    //to load text
+    TreeUtil.clearCaches((TreeElement)myFile.getNode());
 
     //to initialize caches
     myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
@@ -195,20 +201,18 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
     return infos;
   }
+
   protected Collection<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-    final PsiFile file = myFile;
-    final Editor editor = myEditor;
 
     final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
 
     if (doTestLineMarkers()) {
-      collectLineMarkersForFile(file, editor, result);
+      collectLineMarkersForFile(getFile(), getEditor(), result);
     }
 
-    result.addAll(collectHighlighInfos(file, editor));
-
+    result.addAll(collectHighlighInfos(getFile(), getEditor()));
+    //
     boolean isToLaunchExternal = true;
     for (HighlightInfo info : result) {
       if (info.getSeverity() == HighlightSeverity.ERROR) {
@@ -218,9 +222,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     if (doTestCustomPass()) {
-      TextEditorHighlightingPass pass = getCustomPass(file, editor);
+      TextEditorHighlightingPass pass = getCustomPass(getFile(), getEditor());
       if (pass != null) {
         pass.collectInformation(new MockProgressIndicator());
+        pass.applyInformationToEditor();
         result.addAll(pass.getHighlights());
       }
     }
@@ -231,12 +236,34 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     if (isToLaunchExternal && doExternalValidation() || forceExternalValidation()) {
       ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().setErrorFoundFlag(getDocument(getFile()), false);
-      ExternalToolPass action3 = new ExternalToolPass(file, editor, 0, editor.getDocument().getTextLength());
-      action3.doCollectInformation(new MockProgressIndicator());
-      result.addAll(action3.getHighlights());
+      ExternalToolPass pass = new ExternalToolPass(getFile(), getEditor(), 0, getEditor().getDocument().getTextLength());
+      pass.collectInformation(new MockProgressIndicator());
+      pass.applyInformationToEditor();
+      result.addAll(pass.getHighlights());
     }
 
     return result;
+
+    /*
+    TIntArrayList toIgnore = new TIntArrayList();
+    if (!doTestLineMarkers()) {
+      toIgnore.add(Pass.UPDATE_OVERRIDEN_MARKERS);
+      toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
+      toIgnore.add(Pass.LINE_MARKERS);
+    }
+    MockProgressIndicator progress = new MockProgressIndicator();
+    List<TextEditorHighlightingPass> passes = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), toIgnore.toNativeArray());
+
+    for (TextEditorHighlightingPass pass : passes) {
+      pass.collectInformation(progress);
+    }
+    for (TextEditorHighlightingPass pass : passes) {
+      pass.applyInformationToEditor();
+    }
+
+    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
+    return infos == null ? Collections.<HighlightInfo>emptyList() : infos;
+    */
   }
 
   protected TextEditorHighlightingPass getCustomPass(final PsiFile file, final Editor editor) {
@@ -248,15 +275,15 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   private void collectLineMarkersForFile(final PsiFile file, final Editor editor, final List<HighlightInfo> result) {
-    LineMarkersPass lineMarkersPass =
-        new LineMarkersPass(myProject, file, editor.getDocument(), 0, editor.getDocument().getTextLength(), true);
-    lineMarkersPass.doCollectInformation(new MockProgressIndicator());
+    LineMarkersPass lineMarkersPass = new LineMarkersPass(myProject, file, editor.getDocument(), 0, editor.getDocument().getTextLength(), true);
+    lineMarkersPass.collectInformation(new MockProgressIndicator());
+    lineMarkersPass.applyInformationToEditor();
     Collection<LineMarkerInfo> infoCollection = lineMarkersPass.getMarkers();
     appendHighlightInfosFromLineMarkers(result, infoCollection);
 
-    SlowLineMarkersPass lineMarkersPass2 =
-        new SlowLineMarkersPass(myProject, file, editor.getDocument(), 0, editor.getDocument().getTextLength());
-    lineMarkersPass2.doCollectInformation(new MockProgressIndicator());
+    SlowLineMarkersPass lineMarkersPass2 = new SlowLineMarkersPass(myProject, file, editor.getDocument(), 0, editor.getDocument().getTextLength());
+    lineMarkersPass2.collectInformation(new MockProgressIndicator());
+    lineMarkersPass2.applyInformationToEditor();
     infoCollection = lineMarkersPass2.getMarkers();
     appendHighlightInfosFromLineMarkers(result, infoCollection);
   }
@@ -277,22 +304,25 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
   }
 
-  public static List<HighlightInfo> collectHighlighInfos(final PsiFile file, final Editor editor) {
+  private static List<HighlightInfo> collectHighlighInfos(final PsiFile file, final Editor editor) {
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     Document document = editor.getDocument();
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(file.getProject(), file, document, 0, file.getTextLength(), true);
-    action1.doCollectInformation(new MockProgressIndicator());
+    action1.collectInformation(new MockProgressIndicator());
+    action1.applyInformationToEditor();
     result.addAll(action1.getHighlights());
 
     PostHighlightingPassFactory phpFactory = file.getProject().getComponent(PostHighlightingPassFactory.class);
     if (phpFactory != null) {
-      PostHighlightingPass action2 = new PostHighlightingPass(file.getProject(), file, editor, 0, file.getTextLength());
-      action2.doCollectInformation(new MockProgressIndicator());
-      result.addAll(action2.getHighlights());
+      PostHighlightingPass php = new PostHighlightingPass(file.getProject(), file, editor, 0, file.getTextLength());
+      php.collectInformation(new MockProgressIndicator());
+      php.applyInformationToEditor();
+      result.addAll(php.getHighlights());
     }
 
     LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
-    inspectionsPass.doCollectInformation(new MockProgressIndicator());
+    inspectionsPass.collectInformation(new MockProgressIndicator());
+    inspectionsPass.applyInformationToEditor();
     result.addAll(inspectionsPass.getHighlights());
     return result;
   }

@@ -54,16 +54,12 @@ public class ProblemsHolder {
   }
 
   public void registerProblem(PsiReference reference, String descriptionTemplate, ProblemHighlightType highlightType) {
-    if (myProblems == null) {
-      myProblems = new ArrayList<ProblemDescriptor>(1);
-    }
-
     LocalQuickFix[] fixes = null;
     if (reference instanceof LocalQuickFixProvider) {
       fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
     }
 
-    myProblems.add(myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType, fixes));
+    registerProblem(myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType, fixes));
   }
 
   public void registerProblem(PsiReference reference) {
