@@ -78,6 +78,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     private int total;
     private Set<TestProxy> failed = new HashSet<TestProxy>();
     private Map<TestResultMessage, TestProxy> started = new HashMap<TestResultMessage, TestProxy>();
+    private TestProxy failedToStart = null;
     private long start;
     private long end;
     private JLabel statusLabel;
@@ -218,21 +219,32 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
             }
     }
 
+    public boolean wasTestStarted(TestResultMessage resultMessage) {
+      return started.get(resultMessage) != null;
+    }
+
     public void addTestResult(TestResultMessage result, List<Printable> output, int exceptionMark) {
-        final TestProxy testCase = started.get(result);
+        TestProxy testCase = started.get(result);
         if (testCase != null) {
-            testCase.setResultMessage(result);
-            testCase.setOutput(output);
-            testCase.setExceptionMark(exceptionMark);
+          if (failedToStart != null) {
+            output.addAll(failedToStart.getOutput());
+            exceptionMark += failedToStart.getExceptionMark();
+          }
+          testCase.setResultMessage(result);
+          failedToStart = null;
+        } else {
+          failedToStart = new TestProxy(); //do not remember testresultmessage: test hierarchy is not set
+          testCase = failedToStart;
         }
+
+        testCase.setOutput(output);
+        testCase.setExceptionMark(exceptionMark);
 
         model.addTestResult(result);
 
 
-        if (result.getResult() == MessageHelper.PASSED_TEST) {
-            //passed++;
-        } else if (result.getResult() == MessageHelper.FAILED_TEST) {
-            failed.add(started.get(result));
+        if (result.getResult() == MessageHelper.FAILED_TEST) {
+            failed.add(testCase);
             progress.setColor(ColorProgressBar.RED);
         }
         progress.setFraction((double) count / total);
@@ -462,6 +474,10 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
       tabbedPane.removeChangeListener(componentToRemove);
       removeAdditionalTabComponent(componentToRemove);
     }
+  }
+
+  public TestProxy getFailedToStart() {
+    return failedToStart;
   }
 
   private class OpenSourceSelectionListener implements TreeSelectionListener

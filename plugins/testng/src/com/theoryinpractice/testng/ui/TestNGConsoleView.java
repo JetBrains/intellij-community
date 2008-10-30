@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
+import com.theoryinpractice.testng.model.TestProxy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.testng.remote.strprotocol.TestResultMessage;
@@ -71,6 +72,9 @@ public class TestNGConsoleView implements ConsoleView
 
     public void addTestResult(TestResultMessage result) {
       if (testNGResults != null) {
+        if (!testNGResults.wasTestStarted(result)) {
+          flushOutput();
+        }
         int exceptionMark = 0;
         final String stackTrace = result.getStackTrace();
         if (stackTrace != null && stackTrace.length() > 10) {
@@ -95,17 +99,31 @@ public class TestNGConsoleView implements ConsoleView
 
     public void testStarted(TestResultMessage result) {
       if (testNGResults != null) {
-        synchronized (currentTestOutput) {
-          if (!currentTestOutput.isEmpty()) { //non empty for first test only
-            nonTestOutput.addAll(currentTestOutput);
-            currentTestOutput.clear();
-          }
-        }
+        flushOutput();
         testNGResults.testStarted(result);
       }
     }
 
-    private static String trimStackTrace(String stackTrace) {
+  private void flushOutput() {
+    synchronized (currentTestOutput) {
+      if (!currentTestOutput.isEmpty()) { //non empty for first test only
+        nonTestOutput.addAll(currentTestOutput);
+        currentTestOutput.clear();
+      }
+    }
+  }
+
+  public void flush() {
+    final TestProxy failedToStart = testNGResults.getFailedToStart();
+    if (failedToStart != null) {
+      final List<Printable> output = failedToStart.getOutput();
+      if (output != null) {
+        nonTestOutput.addAll(output);
+      }
+    }
+  }
+
+  private static String trimStackTrace(String stackTrace) {
         String[] lines = stackTrace.split("\n");
         StringBuilder builder = new StringBuilder();
 
