@@ -1,7 +1,8 @@
 package com.intellij.ide.todo.configurable;
 
-import com.intellij.ide.todo.TodoFilter;
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.todo.TodoFilter;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -9,7 +10,6 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -95,7 +95,7 @@ class FilterDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("preferences.externalToolsFilters");
+    HelpManager.getInstance().invokeHelp("reference.idesettings.todo.editfilter");
   }
 
   public JComponent getPreferredFocusedComponent() {
