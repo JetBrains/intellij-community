@@ -530,7 +530,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       toolNode.isProperSetting = mySelectedProfile.isProperSetting(key);
     }
-    updateOptionsAndDescriptionPanel(new TreePath(toolNode.getPath()));
+    if (Comparing.equal(myTree.getSelectionPath(), toolNode.getPath())) {
+      updateOptionsAndDescriptionPanel(new TreePath(toolNode.getPath()));
+    }
   }
 
   private void updateUpHierarchy(final MyTreeNode node, final MyTreeNode parent) {
