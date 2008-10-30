@@ -23,7 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class MavenModuleWizardStep extends ModuleWizardStep {
-  private static final Icon WIZARD_ICON = IconLoader.getIcon("/add_java_modulewizard.png");
+  private static final Icon WIZARD_ICON = IconLoader.getIcon("/addmodulewizard.png");
 
   private static final String INHERIT_GROUP_ID_KEY = "MavenModuleWizard.inheritGroupId";
   private static final String INHERIT_VERSION_KEY = "MavenModuleWizard.inheritVersion";
