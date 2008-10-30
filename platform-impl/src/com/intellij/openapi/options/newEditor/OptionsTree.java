@@ -18,21 +18,16 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.*;
 import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -47,6 +42,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   Map<Configurable, EditorNode> myConfigurable2Node = new HashMap<Configurable, EditorNode>();
 
   MergingUpdateQueue mySelection;
+  private OptionsTree.Renderer myRendrer;
 
   public OptionsTree(Project project, ConfigurableGroup[] groups, OptionsEditorContext context) {
     myProject = project;
@@ -62,16 +58,28 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     };
 
     myTree = new MyTree();
+    myTree.setBorder(new EmptyBorder(0, 1, 0, 0));
 
     myTree.setRowHeight(-1);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    myTree.setCellRenderer(new Renderer());
+    myRendrer = new Renderer();
+    myTree.setCellRenderer(myRendrer);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     myBuilder = new FilteringTreeBuilder(myProject, myTree, myContext.getFilter(), structure, new WeightBasedComparator(false)) {
       @Override
       protected boolean isSelectable(final Object nodeObject) {
         return nodeObject instanceof EditorNode;
+      }
+
+      @Override
+      public boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
+        if (nodeDescriptor instanceof SimpleNode) {
+          final SimpleNode node = (SimpleNode)getOriginalNode(((SimpleNode)nodeDescriptor));
+          if (myContext.isHoldingFilter()) return true;
+          if (node.getParent() == myRoot) return false;
+        }
+        return super.isAutoExpandNode(nodeDescriptor);
       }
     };
     myBuilder.setFilteringMerge(300);
@@ -101,7 +109,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     final JScrollPane scrolls = new JScrollPane(myTree);
     scrolls.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-    //myTree.setBorder(new EmptyBorder(2, 2, 2, 2));
     add(scrolls, BorderLayout.CENTER);
 
     mySelection = new MergingUpdateQueue("OptionsTree", 150, false, this, this, this).setRestartTimerOnAdd(true);
@@ -110,7 +117,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         final TreePath path = e.getNewLeadSelectionPath();
         if (path == null) {
           queueSelection(null);
-        } else {
+        }
+        else {
           final Base base = extractNode(path.getLastPathComponent());
           queueSelection(base != null ? base.getConfigurable() : null);
         }
@@ -212,7 +220,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       final SimpleNode parent = eachNode.getParent();
       if (parent instanceof EditorNode) {
         eachNode = (EditorNode)parent;
-      } else {
+      }
+      else {
         break;
       }
     }
@@ -225,7 +234,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     final List<Configurable> path = getPathToRoot(configurable);
     if (path.size() > 1) {
       return path.get(1);
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -277,7 +287,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           final DefaultMutableTreeNode prevValue = ((DefaultMutableTreeNode)value).getPreviousSibling();
           if (prevValue == null || prevValue instanceof LoadingNode) {
             group = editor.getGroup();
-          } else {
+          }
+          else {
             final Base prevBase = extractNode(prevValue);
             if (prevBase instanceof EditorNode) {
               final EditorNode prevEditor = (EditorNode)prevBase;
@@ -310,22 +321,24 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
           int indent = (left + right) * nestingLevel + (treeInsets != null ? treeInsets.left + treeInsets.right : 0);
 
-          forcedWidth = visibleRect.width > 0 ? visibleRect.width - indent: forcedWidth;
-        } 
+          forcedWidth = visibleRect.width > 0 ? visibleRect.width - indent : forcedWidth;
+        }
 
         result = configureComponent(base.getText(), base.getText(), null, null, selected, group != null,
-                                                group != null ? group.getDisplayName() : null, forcedWidth - 4);
+                                    group != null ? group.getDisplayName() : null, forcedWidth - 4);
 
 
         if (base.isError()) {
           fg = Color.red;
-        } else if (base.isModified()) {
+        }
+        else if (base.isModified()) {
           fg = Color.blue;
         }
 
         myHandle.setIcon(((SimpleTree)tree).getHandleIcon(node, path));
 
-      } else {
+      }
+      else {
         result = configureComponent(value.toString(), null, null, null, selected, false, null, -1);
       }
 
@@ -343,6 +356,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     protected JComponent createItemComponent() {
       myTextLabel = new ErrorLabel();
       return myTextLabel;
+    }
+
+    public boolean isUnderHandle(final Point point) {
+      final Point handlePoint = SwingUtilities.convertPoint(myRendererComponent, point, myHandle);
+      final Rectangle bounds = myHandle.getBounds();
+      return bounds.x < handlePoint.x && bounds.getMaxX() >= handlePoint.x;
     }
   }
 
@@ -442,7 +461,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         myContext.registerKid(configurable, child);
       }
       return result; // TODO: DECIDE IF INNERS SHOULD BE SORTED: sort(result);
-    } else {
+    }
+    else {
       return Collections.EMPTY_LIST;
     }
   }
@@ -479,7 +499,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     public int getWeight() {
       if (getParent() == myRoot) {
         return Integer.MAX_VALUE - myGroups.indexOf(myGroup);
-      } else {
+      }
+      else {
         return 0;
       }
     }
@@ -529,25 +550,90 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     myTree.processKeyEvent(e);
   }
 
-  private static class MyTree extends SimpleTree {
+  private class MyTree extends SimpleTree {
 
     private MyTree() {
-      setUI(new MytreeUi());
+      getInputMap().clear();
+      setUI(new MyTreeUi());
     }
 
+
+
     @Override
-      protected void configureUiHelper(final TreeUIHelper helper) {
+    protected void configureUiHelper(final TreeUIHelper helper) {
       helper.installToolTipHandler(this);
     }
 
     @Override
-      public boolean getScrollableTracksViewportWidth() {
+    public boolean getScrollableTracksViewportWidth() {
       return true;
     }
 
-    private static class MytreeUi extends BasicTreeUI {
+
+    @Override
+    public void processKeyEvent(final KeyEvent e) {
+      TreePath path = myTree.getSelectionPath();
+      if (path != null) {
+        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+          if (isExpanded(path)) {
+            collapsePath(path);
+            return;
+          }
+        } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+          if (isCollapsed(path)) {
+            expandPath(path);
+            return;
+          }
+        }
+      }
+
+      super.processKeyEvent(e);
+    }
+
+    @Override
+    protected void processMouseEvent(final MouseEvent e) {
+      final MyTreeUi ui = (MyTreeUi)myTree.getUI();
+      if (e.getID() == MouseEvent.MOUSE_RELEASED && UIUtil.isActionClick(e) && !ui.isToggleEvent(e)) {
+        final TreePath path = getPathForLocation(e.getX(), e.getY());
+        if (path != null) {
+          final Rectangle bounds = getPathBounds(path);
+          if (bounds != null && path.getLastPathComponent() instanceof DefaultMutableTreeNode) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+            final boolean selected = isPathSelected(path);
+            final boolean expanded = isExpanded(path);
+            final Component comp =
+              myRendrer.getTreeCellRendererComponent(this, node, selected, expanded, node.isLeaf(), getRowForPath(path), isFocusOwner());
+
+            comp.setBounds(bounds);
+            comp.validate();
+
+            Point point = new Point(e.getX() - bounds.x, e.getY() - bounds.y);
+            if (myRendrer.isUnderHandle(point)) {
+              ui.toggleExpandState(path);
+              e.consume();
+              return;
+            }
+          }
+        }
+      }
+
+      super.processMouseEvent(e);
+    }
+
+    private class MyTreeUi extends BasicTreeUI {
+
       @Override
-        protected boolean shouldPaintExpandControl(final TreePath path,
+      public void toggleExpandState(final TreePath path) {
+        super.toggleExpandState(path);
+      }
+
+      @Override
+      public boolean isToggleEvent(final MouseEvent event) {
+        return super.isToggleEvent(event);
+      }
+
+      @Override
+      protected boolean shouldPaintExpandControl(final TreePath path,
                                                  final int row,
                                                  final boolean isExpanded,
                                                  final boolean hasBeenExpanded,
