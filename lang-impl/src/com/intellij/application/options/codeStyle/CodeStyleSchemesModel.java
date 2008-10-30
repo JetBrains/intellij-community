@@ -165,4 +165,65 @@ public class CodeStyleSchemesModel {
   public CodeStyleScheme getSelectedGlobalScheme() {
     return myGlobalSelected;
   }
+
+  public void copyToProject(final CodeStyleScheme selectedScheme) {
+    if (mySettingsToClone.containsKey(myProjectScheme)) {
+      CodeStyleSettings projectSettings = mySettingsToClone.get(myProjectScheme);
+      projectSettings.copyFrom(getEditedSchemeSettings(selectedScheme));
+      myDispatcher.getMulticaster().schemeChanged(myProjectScheme);
+    }
+    else {
+      mySettingsToClone.put(myProjectScheme, getEditedSchemeSettings(selectedScheme).clone());
+      myDispatcher.getMulticaster().schemeChanged(myProjectScheme);
+    }
+  }
+
+  private CodeStyleSettings getEditedSchemeSettings(final CodeStyleScheme selectedScheme) {
+    if (mySettingsToClone.containsKey(selectedScheme)) {
+      return mySettingsToClone.get(selectedScheme);
+    }
+    else {
+      return selectedScheme.getCodeStyleSettings();
+    }
+  }
+
+  public CodeStyleScheme exportProjectScheme(final String name) {
+    CodeStyleScheme newScheme = createNewScheme(name, myProjectScheme);
+    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(getEditedSchemeSettings(myProjectScheme));
+    addScheme(newScheme, false);
+
+    return newScheme;
+  }
+
+  public CodeStyleScheme createNewScheme(final String preferredName, final CodeStyleScheme parentScheme) {
+    String name;
+    if (preferredName == null) {
+      // Generate using parent name
+      name = null;
+      for (int i = 1; name == null; i++) {
+        String currName = parentScheme.getName() + " (" + i + ")";
+        if (null == findSchemeByName(currName)) {
+          name = currName;
+        }
+      }
+    }
+    else {
+      name = null;
+      for (int i = 0; name == null; i++) {
+        String currName = i == 0 ? preferredName : preferredName + " (" + i + ")";
+        if (null == findSchemeByName(currName)) {
+          name = currName;
+        }
+      }
+    }
+
+    return new CodeStyleSchemeImpl(name, false, parentScheme);
+  }
+
+  private CodeStyleScheme findSchemeByName(final String name) {
+    for (CodeStyleScheme scheme : mySchemes) {
+      if (name.equals(scheme.getName())) return scheme;
+    }
+    return null;
+  }
 }

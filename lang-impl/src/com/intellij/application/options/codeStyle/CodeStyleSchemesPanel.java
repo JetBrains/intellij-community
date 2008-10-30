@@ -6,6 +6,7 @@ import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
@@ -30,6 +31,9 @@ public class CodeStyleSchemesPanel{
   private JRadioButton myUseProjectScheme;
   private JButton myImportButton;
   private JPanel myPanel;
+  private JButton myExportAsGlobalButton;
+  private JButton myCopyToProjectButton;
+  private boolean myIsReset = false;
 
   public Collection<CodeStyleScheme> getSchemes() {
     ArrayList<CodeStyleScheme> result = new ArrayList<CodeStyleScheme>();
@@ -98,11 +102,13 @@ public class CodeStyleSchemesPanel{
 
     myCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                onCombo();
-              }
-            });
+        if (!myIsReset) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  onCombo();
+                }
+              });
+        }
       }
     });
     mySaveAsButton.addActionListener(new ActionListener() {
@@ -116,11 +122,57 @@ public class CodeStyleSchemesPanel{
       }
     });
 
+    myCopyToProjectButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        onCopyToProject();
+      }
+    });
+
+    myExportAsGlobalButton.addActionListener(new ActionListener(){
+      public void actionPerformed(final ActionEvent e) {
+        onExportProjectScheme();
+      }
+    });
+
+
+  }
+
+  private void onExportProjectScheme() {
+    String name = Messages.showInputDialog("Enter new scheme name:", "Copy Project Scheme to Global List", Messages.getQuestionIcon());
+
+    if (name != null) {
+      CodeStyleScheme scheme = myModel.exportProjectScheme(name);
+
+      int switchToGlobal = Messages
+        .showYesNoDialog("Project scheme was copied to global scheme list as '" + scheme.getName() + ".\n" +
+                         "Switch to this created scheme?",
+                         "Copy Project Scheme to Global List", Messages.getQuestionIcon());
+
+
+      if (switchToGlobal == 0) {
+        myModel.setUsePerProjectSettings(false);
+        myModel.selectScheme(scheme, null);
+      }
+    }
 
   }
 
   private void onDelete() {
     myModel.removeScheme(getSelectedScheme());
+  }
+
+  private void onCopyToProject() {
+    myModel.copyToProject(getSelectedScheme());
+
+    int switchToProject = Messages
+      .showYesNoDialog("Scheme '" + getSelectedScheme().getName() + "' was copied to be used as the project scheme.\n" +
+                       "Switch to this created scheme?",
+                       "Copy Scheme to Project", Messages.getQuestionIcon());
+
+
+    if (switchToProject == 0) {
+      myModel.setUsePerProjectSettings(true);
+    }
   }
 
   private void onSaveAs() {
@@ -134,7 +186,7 @@ public class CodeStyleSchemesPanel{
     saveDialog.show();
     if (saveDialog.isOK()) {
       CodeStyleScheme selectedScheme = getSelectedScheme();
-      CodeStyleScheme newScheme = CodeStyleSchemes.getInstance().createNewScheme(saveDialog.getSchemeName(),
+      CodeStyleScheme newScheme = myModel.createNewScheme(saveDialog.getSchemeName(),
                                                                                  selectedScheme);
       myModel.addScheme(newScheme, true);
     }
@@ -161,12 +213,16 @@ public class CodeStyleSchemesPanel{
         myExportButton.setEnabled(!CodeStyleSchemesModel.cannotBeModified(selected));
       }
       mySaveAsButton.setEnabled(saveAsEnabled);
+      myCopyToProjectButton.setEnabled(true);
+      myExportAsGlobalButton.setEnabled(false);
     }
     else {
       mySaveAsButton.setEnabled(false);
       myDeleteButton.setEnabled(false);
       myExportButton.setEnabled(false);
       myImportButton.setEnabled(false);
+      myCopyToProjectButton.setEnabled(false);
+      myExportAsGlobalButton.setEnabled(true);
     }
   }
 
@@ -184,12 +240,19 @@ public class CodeStyleSchemesPanel{
   }
 
   public void resetSchemesCombo() {
-    Vector schemesVector = new Vector();
-    schemesVector.addAll(myModel.getSchemes());
-    DefaultComboBoxModel model = new DefaultComboBoxModel(schemesVector);
-    myCombo.setModel(model);
+    myIsReset = true;
+    try {
+      Vector schemesVector = new Vector();
+      schemesVector.addAll(myModel.getSchemes());
+      DefaultComboBoxModel model = new DefaultComboBoxModel(schemesVector);
+      myCombo.setModel(model);
+      myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
 
-    updateProjectSchemesRelatedUI();
+      updateProjectSchemesRelatedUI();
+    }
+    finally {
+      myIsReset = false;
+    }
 
 
   }
@@ -208,7 +271,14 @@ public class CodeStyleSchemesPanel{
   }
 
   public void onSelectedSchemeChanged() {
-    myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
+    myIsReset = true;
+    try {
+      myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
+    }
+    finally {
+      myIsReset = false;
+    }
+
     updateButtons();
   }
 

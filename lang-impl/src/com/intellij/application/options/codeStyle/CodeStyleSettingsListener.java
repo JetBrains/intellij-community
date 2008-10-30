@@ -1,5 +1,7 @@
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.psi.codeStyle.CodeStyleScheme;
+
 import java.util.EventListener;
 
 public interface CodeStyleSettingsListener extends EventListener {
@@ -10,4 +12,6 @@ public interface CodeStyleSettingsListener extends EventListener {
   void currentSettingsChanged();
 
   void usePerProjectSettingsOptionChanged();
+
+  void schemeChanged(CodeStyleScheme scheme);
 }

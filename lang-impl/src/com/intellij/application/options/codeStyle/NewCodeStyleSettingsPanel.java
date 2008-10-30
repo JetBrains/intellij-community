@@ -75,4 +75,12 @@ public class NewCodeStyleSettingsPanel extends JPanel {
       ((CodeStyleAbstractConfigurable)myTab).onSomethingChanged();
     }
   }
+
+  public void resetFromClone() {
+    if (myTab instanceof CodeStyleAbstractConfigurable) {
+      ((CodeStyleAbstractConfigurable)myTab).resetFromClone();
+    }
+
+
+  }
 }

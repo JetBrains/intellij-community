@@ -53,6 +53,10 @@ public class CodeStyleMainPanel extends JPanel {
       public void usePerProjectSettingsOptionChanged() {
         schemesPanel.usePerProjectSettingsOptionChanged();
       }
+
+      public void schemeChanged(final CodeStyleScheme scheme) {
+        ensurePanel(scheme).resetFromClone();
+      }
     });
 
     addWaitCard();
@@ -135,8 +139,11 @@ public class CodeStyleMainPanel extends JPanel {
   }
 
   private NewCodeStyleSettingsPanel ensureCurrentPanel() {
-    CodeStyleScheme scheme = myModel.getSelectedScheme();
 
+    return ensurePanel(myModel.getSelectedScheme());
+  }
+
+  private NewCodeStyleSettingsPanel ensurePanel(final CodeStyleScheme scheme) {
     String name = scheme.getName();
     if (!mySettingsPanels.containsKey(name)) {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);

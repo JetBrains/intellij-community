@@ -80,6 +80,12 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
     }
   }
 
+  public void resetFromClone(){
+    if (myPanel != null) {
+      myPanel.reset(myCloneSettings);
+    }
+  }
+
   public boolean isModified() {
     return myPanel != null && myPanel.isModified(mySettings);
   }

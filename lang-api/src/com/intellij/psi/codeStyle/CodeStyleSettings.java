@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   private ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
@@ -101,30 +103,76 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     try {
       CodeStyleSettings clone = (CodeStyleSettings)super.clone();
 
-      clone.myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
-      for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
-        clone.addCustomSettings((CustomCodeStyleSettings) settings.clone());
-      }
-
-      clone.FIELD_TYPE_TO_NAME = (TypeToNameMap)FIELD_TYPE_TO_NAME.clone();
-      clone.STATIC_FIELD_TYPE_TO_NAME = (TypeToNameMap)STATIC_FIELD_TYPE_TO_NAME.clone();
-      clone.PARAMETER_TYPE_TO_NAME = (TypeToNameMap)PARAMETER_TYPE_TO_NAME.clone();
-      clone.LOCAL_VARIABLE_TYPE_TO_NAME = (TypeToNameMap)LOCAL_VARIABLE_TYPE_TO_NAME.clone();
-
-      clone.PACKAGES_TO_USE_IMPORT_ON_DEMAND = (PackageTable)PACKAGES_TO_USE_IMPORT_ON_DEMAND.clone();
-      clone.IMPORT_LAYOUT_TABLE = (ImportLayoutTable)IMPORT_LAYOUT_TABLE.clone();
-
-      clone.OTHER_INDENT_OPTIONS = (IndentOptions)OTHER_INDENT_OPTIONS.clone();
-
-      clone.myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
-      for(Map.Entry<FileType,IndentOptions> optionEntry: myAdditionalIndentOptions.entrySet()) {
-        clone.myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
-      }
+      copyCustomSettings(this, clone);
       return clone;
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static void copyCustomSettings(CodeStyleSettings from, final CodeStyleSettings to) throws CloneNotSupportedException {
+    to.myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
+    for (final CustomCodeStyleSettings settings : from.myCustomSettings.values()) {
+      to.addCustomSettings((CustomCodeStyleSettings) settings.clone());
+    }
+
+    to.FIELD_TYPE_TO_NAME = (TypeToNameMap)from.FIELD_TYPE_TO_NAME.clone();
+    to.STATIC_FIELD_TYPE_TO_NAME = (TypeToNameMap)from.STATIC_FIELD_TYPE_TO_NAME.clone();
+    to.PARAMETER_TYPE_TO_NAME = (TypeToNameMap)from.PARAMETER_TYPE_TO_NAME.clone();
+    to.LOCAL_VARIABLE_TYPE_TO_NAME = (TypeToNameMap)from.LOCAL_VARIABLE_TYPE_TO_NAME.clone();
+
+    to.PACKAGES_TO_USE_IMPORT_ON_DEMAND = (PackageTable)from.PACKAGES_TO_USE_IMPORT_ON_DEMAND.clone();
+    to.IMPORT_LAYOUT_TABLE = (ImportLayoutTable)from.IMPORT_LAYOUT_TABLE.clone();
+
+    to.OTHER_INDENT_OPTIONS = (IndentOptions)from.OTHER_INDENT_OPTIONS.clone();
+
+    to.myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
+    for(Map.Entry<FileType, IndentOptions> optionEntry: from.myAdditionalIndentOptions.entrySet()) {
+      to.myAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
+    }
+  }
+
+  public void copyFrom(CodeStyleSettings settings) {
+    Field[] fields = getClass().getDeclaredFields();
+    for (Field field : fields) {
+      if (isPublic(field) && !isFinal(field)) {
+        try {
+          copyFieldValue(settings, field);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+    try {
+      copyCustomSettings(settings,  this);
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  private void copyFieldValue(final CodeStyleSettings settings, final Field field)
+    throws IllegalAccessException, CloneNotSupportedException {
+    Class<?> fieldType = field.getType();
+    if (fieldType.isPrimitive()) {
+      field.set(this, field.get(settings));
+    }
+    else if (fieldType.equals(String.class)) {
+      field.set(this, field.get(settings));
+    }
+    else {
+      System.out.println("Field not copied " + field.getName());
+    }
+  }
+
+  private static boolean isPublic(final Field field) {
+    return (field.getModifiers() & Modifier.PUBLIC) != 0;
+  }
+
+  private static boolean isFinal(final Field field) {
+    return (field.getModifiers() & Modifier.FINAL) != 0;
   }
 
 //----------------- GENERAL --------------------

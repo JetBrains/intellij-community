@@ -13,7 +13,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
@@ -30,6 +29,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   private CodeStyleSchemesModel myModel;
   private List<CodeStyleMainPanel> myPanels;
   private boolean myResetCompleted = false;
+  private boolean myInitResetInvoked = false;
   private boolean myRevertCompleted = false;
 
   private boolean myApplyCompleted = false;
@@ -59,27 +59,50 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       myResetCompleted = false;
       myRevertCompleted = false;
       myApplyCompleted = false;
+      myInitResetInvoked = false;
     }
   }
 
   @Override
   public void reset() {
-    if (!myResetCompleted) {
-      super.reset();
-      myModel.reset();
-      for (CodeStyleMainPanel panel : myPanels) {
-        panel.reset();
+    if (!myInitResetInvoked) {
+      if (!myResetCompleted) {
+        try {
+          resetImpl();
+        }
+        finally {
+          myResetCompleted = true;
+        }
       }
-      myResetCompleted = true;
+      myInitResetInvoked = true;
+    }
+    else {
+      revert();
+    }
+
+  }
+
+  private void resetImpl() {
+    myModel.reset();
+    for (CodeStyleMainPanel panel : myPanels) {
+      panel.reset();
+    }
+  }
+
+  public void resetFromChild() {
+    if (!myResetCompleted) {
+      try {
+        resetImpl();
+      }
+      finally {
+        myResetCompleted = true;
+      }
     }
   }
 
   public void revert() {
     if (!myRevertCompleted) {
-      myModel.reset();
-      for (CodeStyleMainPanel panel : myPanels) {
-        panel.reset();
-      }
+      resetImpl();
       myRevertCompleted = true;
     }
   }
@@ -92,7 +115,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       for (CodeStyleScheme scheme : new ArrayList<CodeStyleScheme>(myModel.getSchemes())) {
         final boolean isDefaultModified = CodeStyleSchemesModel.cannotBeModified(scheme) && isSchemeModified(scheme);
         if (isDefaultModified) {
-          CodeStyleScheme newscheme = CodeStyleSchemes.getInstance().createNewScheme(null, scheme);
+          CodeStyleScheme newscheme = myModel.createNewScheme(null, scheme);
           CodeStyleSettings settingsWillBeModified = scheme.getCodeStyleSettings();
           CodeStyleSettings notModifiedSettings = settingsWillBeModified.clone();
           ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(notModifiedSettings);
@@ -195,7 +218,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
         public void reset() {
           if (!myInitialResetInvoked) {
             try {
-              CodeStyleSchemesConfigurable.this.reset();
+              resetFromChild();
             }
             finally {
               myInitialResetInvoked = true;
@@ -246,6 +269,10 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
         public void usePerProjectSettingsOptionChanged() {
           myRootSchemesPanel.usePerProjectSettingsOptionChanged();
+        }
+
+        public void schemeChanged(final CodeStyleScheme scheme) {
+          //do nothing
         }
       });
     }
