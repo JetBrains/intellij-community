@@ -204,6 +204,15 @@ public class OptionsEditorDialog extends DialogWrapper {
     return myEditor.getPreferredFocusedComponent();
   }
 
+  protected void dispose() {
+    for (ConfigurableGroup group : myGroups) {
+      for (Configurable configurable : group.getConfigurables()) {
+        configurable.disposeUIResources();
+      }
+    }
+    super.dispose();
+  }
+
   private class ApplyAction extends AbstractAction {
     public ApplyAction() {
       super(CommonBundle.getApplyButtonText());

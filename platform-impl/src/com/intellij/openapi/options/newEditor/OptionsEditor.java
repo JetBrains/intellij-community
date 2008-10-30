@@ -715,9 +715,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
 
 
-    final Set<Configurable> configurables = myConfigurable2Content.keySet();
-    for (Iterator<Configurable> iterator = configurables.iterator(); iterator.hasNext();) {
-      Configurable each = iterator.next();
+    final Set<Configurable> configurables = new HashSet<Configurable>();
+    configurables.addAll(myConfigurable2Content.keySet());
+    configurables.addAll(myConfigurable2LoadCallback.keySet());
+    for (Configurable each : configurables) {
       each.disposeUIResources();
     }
   }

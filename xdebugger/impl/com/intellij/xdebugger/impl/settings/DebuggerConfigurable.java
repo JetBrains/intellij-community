@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   private Configurable myRootConfigurable;
-  private Configurable[] myKids;
+  private Configurable[] myChildren;
 
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableDebugger.png");
@@ -34,11 +34,11 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   public String getHelpTopic() {
-    return "project.propDebugger";
+    return myRootConfigurable != null? myRootConfigurable.getHelpTopic() : null;
   }
 
   public Configurable[] getConfigurables() {
-    if (myKids == null) {
+    if (myChildren == null) {
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       if(project == null) {
         project = ProjectManager.getInstance().getDefaultProject();
@@ -59,14 +59,15 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
         if (rootConfigurable != null) {
           if (myRootConfigurable != null) {
             configurables.add(rootConfigurable);
-          } else {
+          }
+          else {
             myRootConfigurable = rootConfigurable;
           }
         }
       }
-      myKids = configurables.toArray(new Configurable[configurables.size()]);
+      myChildren = configurables.toArray(new Configurable[configurables.size()]);
     }
-    return myKids;
+    return myChildren;
   }
 
   public void apply() throws ConfigurationException {
@@ -105,10 +106,12 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   public void disposeUIResources() {
+    myChildren = null;
+    myRootConfigurable = null;
   }
 
   @NonNls
   public String getId() {
-    return getHelpTopic();
+    return "project.propDebugger";
   }
 }
