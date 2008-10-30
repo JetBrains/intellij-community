@@ -10,8 +10,9 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,13 +33,28 @@ public class OptionsEditorDialog extends DialogWrapper {
 
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
+    init(project, groups, preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups));
+  }
+
+  public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, @NotNull String preselectedConfigurableDisplayName) {
+    super(project, true);
+    init(project, groups, getPreselectedByDisplayName(groups, preselectedConfigurableDisplayName));
+  }
+
+  private void init(final Project project, final ConfigurableGroup[] groups, final Configurable preselected) {
     myProject = project;
     myGroups = groups;
-    myPreselected = preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups);
+    myPreselected = preselected;
 
     setTitle("Settings");
 
     init();
+  }
+
+  private Configurable getPreselectedByDisplayName(final ConfigurableGroup[] groups, final String preselectedConfigurableDisplayName) {
+    Configurable result = findPreselectedByDisplyName(preselectedConfigurableDisplayName, groups);
+
+    return result == null ? findLastSavedConfigurable(groups) : result;
   }
 
   protected JComponent createCenterPanel() {
@@ -127,6 +143,19 @@ public class OptionsEditorDialog extends DialogWrapper {
 
     return null;
   }
+
+  @Nullable
+  private Configurable findPreselectedByDisplyName(final String preselectedConfigurableDisplayName,ConfigurableGroup[] groups) {
+    final java.util.List<Configurable> all = SearchUtil.expand(groups);
+    for (Configurable each : all) {
+      if (preselectedConfigurableDisplayName.equals(each.getDisplayName())) return each;
+    }
+
+    return null;
+
+  }
+
+
 
   @Override
   public void doCancelAction(final AWTEvent source) {

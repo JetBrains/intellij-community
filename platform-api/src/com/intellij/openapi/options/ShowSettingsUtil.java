@@ -32,6 +32,8 @@ public abstract class ShowSettingsUtil {
 
   public abstract void showSettingsDialog(@Nullable Project project, Class toSelect);
 
+  public abstract void showSettingsDialog(@Nullable Project project, @NotNull String nameToSelect);
+
   public abstract void showSettingsDialog(@NotNull final Project project, final Configurable toSelect);
 
   public abstract boolean editConfigurable(Project project, Configurable configurable);

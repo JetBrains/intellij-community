@@ -8,5 +8,9 @@ public abstract class CodeStyleSettingsUtil {
     return ServiceManager.getService(CodeStyleSettingsUtil.class);
   }
 
+  /**
+   * @deprecated
+   * use CodeStyleSettingsUtil.showCodeStyleSettings (Project, String) instead
+   */
   public abstract boolean showCodeStyleSettings(Project project, Class pageToSelect);
 }
