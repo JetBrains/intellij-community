@@ -76,11 +76,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     final NewVirtualFileSystem delegate = getFileSystem();
     VirtualFile fake = new FakeVirtualFile(name, this);
-    name = delegate.getCanonicallyCasedName(fake);    
+    name = delegate.getCanonicallyCasedName(fake);
 
-    int id = ourPersistence.getId(this, name);
-    if (id > 0) {
-      synchronized (this) {
+    synchronized (this) {
+      int id = ourPersistence.getId(this, name);
+      if (id > 0) {
         NewVirtualFile child = createChild(name, id);
         map.put(name, child);
         return child;
