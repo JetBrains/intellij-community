@@ -33,11 +33,13 @@ public class OptionsEditorDialog extends DialogWrapper {
 
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
+    myProject = project;
     init(project, groups, preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups));
   }
 
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, @NotNull String preselectedConfigurableDisplayName) {
     super(project, true);
+    myProject = project;
     init(project, groups, getPreselectedByDisplayName(groups, preselectedConfigurableDisplayName));
   }
 
