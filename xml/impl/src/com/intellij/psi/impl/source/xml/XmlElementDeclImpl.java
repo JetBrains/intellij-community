@@ -122,4 +122,8 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   public PsiElement getNameIdentifier() {
     return null;
   }
+
+  public PsiElement getNavigationElement() {
+    return this;
+  }
 }
