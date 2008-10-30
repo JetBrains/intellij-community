@@ -211,7 +211,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
 
     PsiJavaCodeReferenceElement methodRef = (PsiJavaCodeReferenceElement)element;
     PsiElement parent = methodRef.getParent();
-    LOG.assertTrue(parent instanceof PsiCallExpression);
+    LOG.assertTrue(parent instanceof PsiCallExpression, "call expression expected, found " + parent);
 
     PsiCallExpression call = (PsiCallExpression)parent;
 
