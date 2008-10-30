@@ -485,12 +485,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     });
 
     myTreeExpander = new DefaultTreeExpander(myTree);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myTree.requestFocus();
-      }
-    });
-
     myProfileFilter = new MyFilterComponent();
 
     return scrollPane;
