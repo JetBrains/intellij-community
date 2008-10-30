@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -245,39 +246,59 @@ public class XmlCompletionData extends CompletionData {
     }
 
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
-      final XmlTag parentOfType = PsiTreeUtil.getParentOfType(context, XmlTag.class);
-      if (parentOfType != null) {
-        final List<Object> results = new ArrayList<Object>();
-        final XmlFile containingFile = (XmlFile)parentOfType.getContainingFile();
+      XmlFile containingFile = null;
+      XmlFile descriptorFile = null;
+      final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
 
-        XmlFile descriptorFile = findDescriptorFile(parentOfType, containingFile);
+      if (tag != null) {
+        containingFile = (XmlFile)tag.getContainingFile();
+        descriptorFile = findDescriptorFile(tag, containingFile);
+      } else {
+        final XmlDocument document = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
 
-        if (descriptorFile != null) {
-          final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
+        if (document != null) {
+          containingFile = (XmlFile)document.getContainingFile();
 
-          final PsiElementProcessor processor = new PsiElementProcessor() {
-            public boolean execute(final PsiElement element) {
-              if (element instanceof XmlEntityDecl) {
-                final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
-                if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
-                  final String name = xmlEntityDecl.getName();
-                  final Object _item = getLookupItem(xmlEntityDecl);
-                  results.add(_item == null ? name : _item);
-                }
-              }
-              return true;
+          final FileType ft = containingFile.getFileType();
+
+          if(ft != StdFileTypes.XML) {
+            final String namespace = ft == StdFileTypes.XHTML || ft == StdFileTypes.JSPX ? XmlUtil.XHTML_URI:XmlUtil.HTML_URI;
+            final XmlNSDescriptor nsDescriptor = document.getDefaultNSDescriptor(namespace, true);
+
+            if (nsDescriptor != null) {
+              descriptorFile = nsDescriptor.getDescriptorFile();
             }
-          };
-
-          XmlUtil.processXmlElements(descriptorFile, processor, true);
-          if (descriptorFile != containingFile && containingFile.getFileType() == StdFileTypes.XML) {
-            final XmlProlog element = containingFile.getDocument().getProlog();
-            if (element != null) XmlUtil.processXmlElements(element, processor, true);
           }
-
-          return results.toArray(new Object[results.size()]);
         }
       }
+
+      if (descriptorFile != null) {
+        final List<Object> results = new ArrayList<Object>();
+        final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
+
+        final PsiElementProcessor processor = new PsiElementProcessor() {
+          public boolean execute(final PsiElement element) {
+            if (element instanceof XmlEntityDecl) {
+              final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+              if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
+                final String name = xmlEntityDecl.getName();
+                final Object _item = getLookupItem(xmlEntityDecl);
+                results.add(_item == null ? name : _item);
+              }
+            }
+            return true;
+          }
+        };
+
+        XmlUtil.processXmlElements(descriptorFile, processor, true);
+        if (descriptorFile != containingFile && containingFile.getFileType() == StdFileTypes.XML) {
+          final XmlProlog element = containingFile.getDocument().getProlog();
+          if (element != null) XmlUtil.processXmlElements(element, processor, true);
+        }
+
+        return results.toArray(new Object[results.size()]);
+      }
+
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
   }
