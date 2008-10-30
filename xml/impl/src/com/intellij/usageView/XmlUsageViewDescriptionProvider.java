@@ -1,5 +1,8 @@
 package com.intellij.usageView;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
+import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
 import com.intellij.psi.PsiElement;
@@ -25,6 +28,11 @@ public class XmlUsageViewDescriptionProvider implements ElementDescriptionProvid
       else if (element instanceof XmlAttributeValue) {
         return ((XmlAttributeValue)element).getValue();
       }
+    }
+
+    if (location instanceof HighlightUsagesDescriptionLocation) {
+      final FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage());
+      return provider.getType(element);
     }
     return null;
   }
