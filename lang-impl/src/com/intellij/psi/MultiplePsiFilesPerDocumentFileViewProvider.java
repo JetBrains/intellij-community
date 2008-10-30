@@ -4,23 +4,29 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileViewProvider {
-  private final ConcurrentHashMap<Language, PsiFile> myRoots = new ConcurrentHashMap<Language, PsiFile>(1, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 1);
+  private final ConcurrentMap<Language, PsiFile> myRoots = new ConcurrentHashMap<Language, PsiFile>(1, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 1);
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal = null;
 
   public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile virtualFile, boolean physical) {
@@ -65,7 +71,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
           ((PsiFileImpl)file).setOriginalFile(originalFile);
         }
       }
-      file = myRoots.cacheOrGet(target, file);
+      file = ConcurrencyUtil.cacheOrGet(myRoots, target, file);
     }
     return file;
   }
@@ -89,8 +95,16 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
     return files.toArray(new FileElement[files.size()]);
   }
 
+  @TestOnly
   public void checkAllTreesEqual() {
-    //TODO
+    Collection<PsiFile> roots = myRoots.values();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
+    documentManager.commitAllDocuments();
+    for (PsiFile root : roots) {
+      Document document = documentManager.getDocument(root);
+      PsiDocumentManagerImpl.checkConsistency(root, document);
+      assert root.getText().equals(document.getText());
+    }
   }
 
   public final MultiplePsiFilesPerDocumentFileViewProvider createCopy(final LightVirtualFile fileCopy) {
