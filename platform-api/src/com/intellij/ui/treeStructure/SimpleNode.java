@@ -172,6 +172,16 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return (SimpleNode) getParentDescriptor();
   }
 
+  public int getIndex(SimpleNode child) {
+    final SimpleNode[] kids = getChildren();
+    for (int i = 0; i < kids.length; i++) {
+      SimpleNode each = kids[i];
+      if (each.equals(child)) return i;
+    }
+
+    return -1;
+  }
+
   public abstract SimpleNode[] getChildren();
 
   public void accept(SimpleNodeVisitor visitor) {
@@ -212,6 +222,31 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   public Object[] getEqualityObjects() {
     return NONE;
   }
+
+  public boolean isContentHighlighted() {
+    return false;
+  }
+
+  public boolean isHighlightableContentNode(final SimpleNode kid) {
+    return true;
+  }
+
+  public int getChildCount() {
+    return getChildren().length;
+  }
+
+  public SimpleNode getChildAt(final int i) {
+    return getChildren()[i];
+  }
+
+  public boolean isParentOf(SimpleNode eachNode) {
+      SimpleNode eachParent = eachNode.getParent();
+      while (eachParent != null) {
+        if (eachParent == this) return true;
+        eachParent = eachParent.getParent();
+      }
+      return false;
+    }
 
   public static class ColoredFragment {
     private final String myText;

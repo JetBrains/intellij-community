@@ -11,6 +11,7 @@ import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -20,9 +21,9 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -60,17 +61,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
     };
 
-    myTree = new SimpleTree() {
-      @Override
-      protected void configureUiHelper(final TreeUIHelper helper) {
-        helper.installToolTipHandler(this);
-      }
-
-      @Override
-      public boolean getScrollableTracksViewportWidth() {
-        return true;
-      }
-    };
+    myTree = new MyTree();
 
     myTree.setRowHeight(-1);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -110,7 +101,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     final JScrollPane scrolls = new JScrollPane(myTree);
     scrolls.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-    myTree.setBorder(new EmptyBorder(2, 2, 2, 2));
+    //myTree.setBorder(new EmptyBorder(2, 2, 2, 2));
     add(scrolls, BorderLayout.CENTER);
 
     mySelection = new MergingUpdateQueue("OptionsTree", 150, false, this, this, this).setRestartTimerOnAdd(true);
@@ -245,10 +236,21 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   class Renderer extends GroupedElementsRenderer.Tree implements TreeCellRenderer {
 
+
+    private JLabel myHandle;
+
     @Override
     protected void layout() {
+      myRendererComponent.setOpaqueActive(false);
+
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-      myRendererComponent.add(myComponent, BorderLayout.CENTER);
+
+      final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
+      myHandle = new JLabel("", JLabel.CENTER);
+      myHandle.setOpaque(false);
+      content.add(myHandle, BorderLayout.WEST);
+      content.add(myComponent, BorderLayout.CENTER);
+      myRendererComponent.add(content, BorderLayout.CENTER);
     }
 
     public Component getTreeCellRendererComponent(final JTree tree,
@@ -263,8 +265,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       JComponent result;
       Color fg = UIUtil.getTreeTextForeground();
 
+      myHandle.setIcon(null);
+
       final Base base = extractNode(value);
       if (base instanceof EditorNode) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+
         final EditorNode editor = (EditorNode)base;
         ConfigurableGroup group = null;
         if (editor.getParent() == myRoot) {
@@ -308,7 +314,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         } 
 
         result = configureComponent(base.getText(), base.getText(), null, null, selected, group != null,
-                                                group != null ? group.getDisplayName() : null, forcedWidth);
+                                                group != null ? group.getDisplayName() : null, forcedWidth - 4);
 
 
         if (base.isError()) {
@@ -316,6 +322,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
         } else if (base.isModified()) {
           fg = Color.blue;
         }
+
+        myHandle.setIcon(((SimpleTree)tree).getHandleIcon(node, path));
+
       } else {
         result = configureComponent(value.toString(), null, null, null, selected, false, null, -1);
       }
@@ -325,12 +334,14 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : fg);
 
+      myTextLabel.setOpaque(selected);
+
+
       return result;
     }
 
     protected JComponent createItemComponent() {
       myTextLabel = new ErrorLabel();
-      myTextLabel.setOpaque(true);
       return myTextLabel;
     }
   }
@@ -454,6 +465,10 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       return list.toArray(new EditorNode[list.size()]);
     }
 
+    @Override
+    public boolean isContentHighlighted() {
+      return getParent() == myRoot;
+    }
 
     @Override
     Configurable getConfigurable() {
@@ -512,5 +527,50 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   public void processTextEvent(KeyEvent e) {
     myTree.processKeyEvent(e);
+  }
+
+  private static class MyTree extends SimpleTree {
+
+    private MyTree() {
+      setUI(new MytreeUi());
+    }
+
+    @Override
+      protected void configureUiHelper(final TreeUIHelper helper) {
+      helper.installToolTipHandler(this);
+    }
+
+    @Override
+      public boolean getScrollableTracksViewportWidth() {
+      return true;
+    }
+
+    private static class MytreeUi extends BasicTreeUI {
+      @Override
+        protected boolean shouldPaintExpandControl(final TreePath path,
+                                                 final int row,
+                                                 final boolean isExpanded,
+                                                 final boolean hasBeenExpanded,
+                                                 final boolean isLeaf) {
+        return false;
+      }
+
+      @Override
+      protected void paintHorizontalPartOfLeg(final Graphics g,
+                                              final Rectangle clipBounds,
+                                              final Insets insets,
+                                              final Rectangle bounds,
+                                              final TreePath path,
+                                              final int row,
+                                              final boolean isExpanded,
+                                              final boolean hasBeenExpanded,
+                                              final boolean isLeaf) {
+
+      }
+
+      @Override
+      protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
+      }
+    }
   }
 }

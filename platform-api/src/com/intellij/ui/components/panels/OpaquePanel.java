@@ -23,6 +23,9 @@ import java.awt.*;
  */
 public class OpaquePanel extends JPanel {
 
+
+  private boolean myOpaqueActive = true;
+
   public OpaquePanel() {
     this(null, null);
   }
@@ -41,8 +44,18 @@ public class OpaquePanel extends JPanel {
   }
 
   protected void paintComponent(Graphics g) {
-    g.setColor(getBackground());
-    Dimension size = getSize();
-    g.fillRect(0, 0, size.width, size.height);
+    if (myOpaqueActive) {
+      g.setColor(getBackground());
+      Dimension size = getSize();
+      g.fillRect(0, 0, size.width, size.height);
+    }
+  }
+
+  public boolean isOpaqueActive() {
+    return myOpaqueActive;
+  }
+
+  public void setOpaqueActive(final boolean opaqueActive) {
+    myOpaqueActive = opaqueActive;
   }
 }

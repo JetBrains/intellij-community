@@ -79,6 +79,26 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     @Override
+    public boolean isContentHighlighted() {
+      if (myDelegate instanceof SimpleNode) {
+        return ((SimpleNode)myDelegate).isContentHighlighted();
+      }
+
+      return false;
+    }
+
+    @Override
+    public boolean isHighlightableContentNode(final SimpleNode kid) {
+      if (myDelegate instanceof SimpleNode) {
+        return ((SimpleNode)myDelegate).isHighlightableContentNode(kid);
+      }
+
+      return false;
+    }
+
+
+
+    @Override
     protected void updateFileStatus() {
       
     }
@@ -166,6 +186,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   public void commit() {
     getStructure().commit();
   }
+
 
   public boolean hasSomethingToCommit() {
     return getStructure().hasSomethingToCommit();

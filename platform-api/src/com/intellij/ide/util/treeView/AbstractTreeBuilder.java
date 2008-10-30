@@ -31,9 +31,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
+import java.lang.ref.WeakReference;
 
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
+  private static final String TREE_BUILDER = "TreeBuilder";
 
   public AbstractTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
@@ -60,6 +62,8 @@ public class AbstractTreeBuilder implements Disposable {
   }
   protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final Comparator<NodeDescriptor> comparator,
                       final boolean updateIfInactive) {
+
+    tree.putClientProperty(TREE_BUILDER, new WeakReference(this));
 
     myUi = createUi();
     getUi().init(this, tree, treeModel, treeStructure, comparator, updateIfInactive);
@@ -313,5 +317,11 @@ public class AbstractTreeBuilder implements Disposable {
 
   public final void setCanYieldUpdate(boolean yield) {
     getUi().setCanYield(yield);
+  }
+
+  @Nullable
+  public static AbstractTreeBuilder getBuilderFor(JTree tree) {
+    final WeakReference ref = (WeakReference)tree.getClientProperty(TREE_BUILDER);
+    return ref != null ? (AbstractTreeBuilder)ref.get() : null;
   }
 }
