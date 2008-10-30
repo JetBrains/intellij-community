@@ -25,11 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
+ * Represents a class declaration in source.
  * User: yole
  * Date: 03.06.2005
- * Time: 0:26:47
- * To change this template use File | Settings | File Templates.
  */
 public interface PyClass extends PsiNamedElement, PyElement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub> {
   @NotNull
@@ -53,4 +51,10 @@ public interface PyClass extends PsiNamedElement, PyElement, NameDefiner, PyDocS
   PyTargetExpression[] getClassAttributes();
 
   PyTargetExpression[] getInstanceAttributes();
+
+  /**
+   * A lazy way to list ancestor classes.
+   * @return an iterable of ancerstor classes, presumably width first.
+   */
+  Iterable<PyClass> iterateAncestors();
 }
