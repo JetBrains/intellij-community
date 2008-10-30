@@ -16,8 +16,8 @@ import javax.swing.*;
  * Date: Jan 16, 2005
  */
 public class BackwardDependenciesAction extends BaseAnalysisAction {
-  private ScopeChooserCombo myCombo;
-  private JPanel myWholePanel;
+  private AdditionalSettingsPanel myPanel;
+
 
   public BackwardDependenciesAction() {
     super(AnalysisScopeBundle.message("action.backward.dependency.analysis"), AnalysisScopeBundle.message("action.analysis.noun"));
@@ -25,12 +25,25 @@ public class BackwardDependenciesAction extends BaseAnalysisAction {
 
   protected void analyze(@NotNull final Project project, final AnalysisScope scope) {
     scope.setSearchInLibraries(true); //find library usages in project
-    new BackwardDependenciesHandler(project, scope, new AnalysisScope(myCombo.getSelectedScope(), project)).analyze();
+    new BackwardDependenciesHandler(project, scope, new AnalysisScope(myPanel.myCombo.getSelectedScope(), project)).analyze();
+    myPanel = null;
+  }
+
+  @Override
+  protected void canceled() {
+    super.canceled();
+    myPanel = null;
   }
 
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
-    myCombo.init(project, null);
-    return myWholePanel;
+    myPanel = new AdditionalSettingsPanel();
+    myPanel.myCombo.init(project, null);
+    return myPanel.myWholePanel;
+  }
+
+  private static class AdditionalSettingsPanel {
+    private ScopeChooserCombo myCombo;
+    private JPanel myWholePanel;
   }
 }
