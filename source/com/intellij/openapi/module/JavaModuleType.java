@@ -120,7 +120,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   private static class WizardIconHolder {
-    private static final Icon WIZARD_ICON = IconLoader.getIcon("/add_java_modulewizard.png");
+    private static final Icon WIZARD_ICON = IconLoader.getIcon("/addmodulewizard.png");
   }
 
   private static Icon getWizardIcon() {
