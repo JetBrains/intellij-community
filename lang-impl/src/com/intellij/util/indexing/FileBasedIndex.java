@@ -1121,7 +1121,7 @@ public class FileBasedIndex implements ApplicationComponent {
       if (file.isDirectory()) {
         final ContentIterator iterator = new ContentIterator() {
           public boolean processFile(final VirtualFile fileOrDir) {
-            if (!fileOrDir.isDirectory()) {
+            if (!fileOrDir.isDirectory() && !SingleRootFileViewProvider.isTooLarge(fileOrDir)) {
               processor.process(fileOrDir);
             }
             return true;
@@ -1133,10 +1133,12 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
       else {
-        for (IndexableFileSet set : myIndexableSets) {
-          if (set.isInSet(file)) {
-            processor.process(file);
-            break;
+        if (!SingleRootFileViewProvider.isTooLarge(file)) {
+          for (IndexableFileSet set : myIndexableSets) {
+            if (set.isInSet(file)) {
+              processor.process(file);
+              break;
+            }
           }
         }
       }
