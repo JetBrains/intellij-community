@@ -11,6 +11,8 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -168,28 +170,35 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.getFamily());
     //LOG.assertTrue(!myMetaData.containsKey(metaData.myFamily), "Action '"+metaData.myFamily+"' already registered");
     if (!myMetaData.containsKey(key)){
-      try {
-        processMetaData(metaData);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      processMetaData(metaData);
     }
     myMetaData.put(key, metaData);
   }
 
-  private static void processMetaData(@NotNull final IntentionActionMetaData metaData) throws IOException {
+  private synchronized static void processMetaData(@NotNull final IntentionActionMetaData metaData) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
+
     final URL description = metaData.getDescription();
     if (description != null) {
-      SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
-      if (registrar == null) return;
-      @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
-      descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-      final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
-      words.addAll(registrar.getProcessedWords(metaData.getFamily()));
-      for (String word : words) {
-        registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
-      }
+      app.executeOnPooledThread(new Runnable(){
+        public void run() {
+          try {
+            SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+            if (registrar == null) return;
+            @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
+            descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
+            final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
+            words.addAll(registrar.getProcessedWords(metaData.getFamily()));
+            for (String word : words) {
+              registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
+            }
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+      });
     }
   }
 }
