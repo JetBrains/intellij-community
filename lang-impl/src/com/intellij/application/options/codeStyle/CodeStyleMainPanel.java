@@ -1,6 +1,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +63,13 @@ public class CodeStyleMainPanel extends JPanel {
     addWaitCard();
 
     add(schemesPanel.getPanel(), BorderLayout.NORTH);
-    add(mySettingsPanel, BorderLayout.CENTER);
+
+    DetailsComponent detComp = new DetailsComponent();
+    detComp.setPaintBorder(false);
+    detComp.setContent(mySettingsPanel);
+    detComp.setText(getDisplayName());
+
+    add(detComp.getComponent(), BorderLayout.CENTER);
 
     schemesPanel.resetSchemesCombo();
     schemesPanel.onSelectedSchemeChanged();

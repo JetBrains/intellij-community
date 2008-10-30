@@ -52,6 +52,8 @@ public class DetailsComponent {
 
   private Wrapper myContentGutter = new Wrapper();
 
+  private boolean myPaintBorder = true;
+
   public DetailsComponent() {
     myComponent = new JPanel(new BorderLayout()) {
       protected void paintComponent(final Graphics g) {
@@ -91,10 +93,12 @@ public class DetailsComponent {
 
         c.getG().draw(header);
 
-        final int down = getHeight() - insets.top - insets.bottom - 1;
-        g.drawLine(leftX, rightY, leftX, down);
-        g.drawLine(rightX, rightY, rightX, down);
-        g.drawLine(leftX, down, rightX, down);
+        if (myPaintBorder) {
+          final int down = getHeight() - insets.top - insets.bottom - 1;
+          g.drawLine(leftX, rightY, leftX, down);
+          g.drawLine(rightX, rightY, rightX, down);
+          g.drawLine(leftX, down, rightX, down);
+        }
 
         c.restore();
       }
@@ -193,6 +197,10 @@ public class DetailsComponent {
     else {
       myBannerLabel.setText(myBannerText);
     }
+  }
+
+  public void setPaintBorder(final boolean paintBorder) {
+    myPaintBorder = paintBorder;
   }
 
   public DetailsComponent setEmptyContentText(@Nullable final String emptyContentText) {
