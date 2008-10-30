@@ -16,7 +16,6 @@
 package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.checkout.GitCheckoutDialog;
@@ -39,7 +38,7 @@ public class GitCheckout extends GitRepositoryAction {
    */
   @Override
   @NotNull
-  protected String getActionName(@NotNull AbstractVcs abstractvcs) {
+  protected String getActionName() {
     return GitBundle.getString("checkout.action.name");
   }
 

@@ -19,7 +19,10 @@ package git4idea.actions;
  */
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +63,7 @@ public class GitMergeTool extends BasicAction {
    */
   @Override
   @NotNull
-  protected String getActionName(@NotNull AbstractVcs abstractvcs) {
+  protected String getActionName() {
     return GitBundle.getString("merge.tool.action.name");
   }
 

@@ -21,7 +21,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.TransactionRunnable;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -53,7 +56,7 @@ public abstract class BasicAction extends AnAction {
       return;
     }
 
-    String actionName = getActionName(vcs);
+    String actionName = getActionName();
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
 
     //Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction and returns all exceptions together.
@@ -128,7 +131,7 @@ public abstract class BasicAction extends AnAction {
   }
 
   @NotNull
-  protected abstract String getActionName(@NotNull AbstractVcs abstractvcs);
+  protected abstract String getActionName();
 
   protected boolean isRecursive() {
     return true;

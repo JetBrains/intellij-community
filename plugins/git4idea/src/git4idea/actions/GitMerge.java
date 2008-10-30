@@ -16,12 +16,10 @@
 package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
-import git4idea.GitVcs;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -42,7 +40,7 @@ public class GitMerge extends GitRepositoryAction {
    */
   @Override
   @NotNull
-  protected String getActionName(@NotNull AbstractVcs abstractvcs) {
+  protected String getActionName() {
     return GitBundle.getString("merge.action.name");
   }
 
@@ -72,7 +70,6 @@ public class GitMerge extends GitRepositoryAction {
     if (exceptions.size() != 0) {
       return;
     }
-    GitVcs vcs = GitVcs.getInstance(project);
-    GitMergeUtil.showUpdates(project, exceptions, root, currentRev, getActionName(vcs), ActionInfo.INTEGRATE);
+    GitMergeUtil.showUpdates(project, exceptions, root, currentRev, getActionName(), ActionInfo.INTEGRATE);
   }
 }

@@ -20,7 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.TransactionRunnable;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -84,7 +87,7 @@ public abstract class GitRepositoryAction extends AnAction {
     }
     final VirtualFile defaultRoot = defaultRootVar;
     final Set<VirtualFile> affectedRoots = new HashSet<VirtualFile>();
-    String actionName = getActionName(vcs);
+    String actionName = getActionName();
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
     //Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction and returns all exceptions together.
     List<VcsException> exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
@@ -105,11 +108,10 @@ public abstract class GitRepositoryAction extends AnAction {
   /**
    * Get name of action (for error reporting)
    *
-   * @param vcs a vcs to use
    * @return the name of action
    */
   @NotNull
-  protected abstract String getActionName(@NotNull AbstractVcs vcs);
+  protected abstract String getActionName();
 
 
   /**

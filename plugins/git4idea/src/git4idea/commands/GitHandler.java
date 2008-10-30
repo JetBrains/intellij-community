@@ -135,7 +135,7 @@ public abstract class GitHandler {
    * @param vcsRoot a process directory
    * @param command a command to execute
    */
-  public GitHandler(final Project project, final VirtualFile vcsRoot, final String command) {
+  protected GitHandler(final Project project, final VirtualFile vcsRoot, final String command) {
     this(project, GitUtil.getIOFile(vcsRoot), command);
   }
 

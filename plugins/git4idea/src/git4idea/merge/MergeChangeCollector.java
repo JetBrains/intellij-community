@@ -34,23 +34,23 @@ public class MergeChangeCollector {
   /**
    * Unmerged paths
    */
-  final HashSet<String> myUnmergedPaths = new HashSet<String>();
+  private final HashSet<String> myUnmergedPaths = new HashSet<String>();
   /**
    * The context project
    */
-  final Project myProject;
+  private final Project myProject;
   /**
    * The git root
    */
-  final VirtualFile myRoot;
+  private final VirtualFile myRoot;
   /**
    * Updates container
    */
-  final UpdatedFiles myUpdates;
+  private final UpdatedFiles myUpdates;
   /**
    * Revision number before update (used for diff)
    */
-  final GitRevisionNumber myStart;
+  private final GitRevisionNumber myStart;
 
   /**
    * A constructor

@@ -30,6 +30,8 @@ import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
+
 /**
  * Git content revision
  */
@@ -46,12 +48,20 @@ public class GitContentRevision implements ContentRevision {
    * the context project
    */
   @NotNull private final Project myProject;
+  /**
+   * The charset for the file
+   */
+  @Nullable private final Charset myCharset;
 
-
-  public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {
+  public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project, Charset charset) {
     myProject = project;
     myFile = file;
     myRevision = revision;
+    myCharset = charset;
+  }
+
+  public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {
+    this(file, revision, project, null);
   }
 
   @Nullable
@@ -61,6 +71,9 @@ public class GitContentRevision implements ContentRevision {
     }
     VirtualFile root = GitUtil.getGitRoot(myProject, myFile);
     GitSimpleHandler h = new GitSimpleHandler(myProject, root, "show");
+    if (myCharset != null) {
+      h.setCharset(myCharset);
+    }
     h.setNoSSH(true);
     h.addParameters(myRevision.getRev() + ":" + GitUtil.relativePath(root, myFile));
     return h.run();

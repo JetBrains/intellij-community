@@ -16,7 +16,6 @@ package git4idea.actions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +66,7 @@ public class GitStash extends BasicAction {
   }
 
   @NotNull
-  protected String getActionName(@NotNull AbstractVcs abstractvcs) {
+  protected String getActionName() {
     return GitBundle.getString("stash.action.name");
   }
 

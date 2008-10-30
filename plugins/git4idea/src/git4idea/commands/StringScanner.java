@@ -58,10 +58,8 @@ public class StringScanner {
 
   /**
    * Continue to the next line, the rest of the current line is skipped
-   *
-   * @return true if there is more data
    */
-  public boolean nextLine() {
+  public void nextLine() {
     while (!isEol()) {
       myPosition++;
     }
@@ -74,7 +72,6 @@ public class StringScanner {
         }
       }
     }
-    return hasMoreData();
   }
 
   /**

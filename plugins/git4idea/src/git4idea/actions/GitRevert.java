@@ -18,7 +18,6 @@ package git4idea.actions;
  */
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -65,7 +64,7 @@ public class GitRevert extends BasicAction {
 
   @Override
   @NotNull
-  protected String getActionName(@NotNull AbstractVcs abstractvcs) {
+  protected String getActionName() {
     return GitBundle.getString("revert.action.name");
   }
 

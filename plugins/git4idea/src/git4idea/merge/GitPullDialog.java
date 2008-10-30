@@ -89,7 +89,7 @@ public class GitPullDialog extends DialogWrapper {
   /**
    * The context project
    */
-  private Project myProject;
+  private final Project myProject;
 
   /**
    * A constructor

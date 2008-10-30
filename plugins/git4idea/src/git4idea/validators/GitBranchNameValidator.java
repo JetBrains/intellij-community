@@ -34,7 +34,7 @@ public class GitBranchNameValidator implements InputValidator {
 
   static {
     // based on the git-check-ref-format command description
-    final String goodChar = "[\\!-\\~&&[^\\^\\~\\:\\[\\]\\?\\*\\.\\/<>\\|'`]]";
+    final String goodChar = "[!-~&&[^\\^~:\\[\\]\\?\\*\\./<>\\|'`]]";
     final String component = "(?:" + goodChar + "+\\.?)+";
     REGEX = Pattern.compile(component + "+(?:/*" + component + ")*");
   }

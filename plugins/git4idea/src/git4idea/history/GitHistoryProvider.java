@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.util.ui.ColumnInfo;
-import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,20 +42,14 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    * the current project instance
    */
   private final Project project;
-  /**
-   * the git settings
-   */
-  private final GitVcsSettings settings;
 
   /**
    * A constructor
    *
-   * @param project  a context project
-   * @param settings a git settings
+   * @param project a context project
    */
-  public GitHistoryProvider(@NotNull Project project, @NotNull GitVcsSettings settings) {
+  public GitHistoryProvider(@NotNull Project project) {
     this.project = project;
-    this.settings = settings;
   }
 
   /**

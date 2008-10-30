@@ -53,7 +53,7 @@ public class GitDiffProvider implements DiffProvider {
   /**
    * The status manager for the proejct
    */
-  private FileStatusManager myStatusManager;
+  private final FileStatusManager myStatusManager;
   /**
    *
    */
@@ -113,7 +113,7 @@ public class GitDiffProvider implements DiffProvider {
       for (VcsFileRevision f : GitHistoryUtils.history(myProject, VcsUtil.getFilePath(path))) {
         GitFileRevision gitRevision = (GitFileRevision)f;
         if (f.getRevisionNumber().equals(revisionNumber)) {
-          return new GitContentRevision(gitRevision.getPath(), (GitRevisionNumber)revisionNumber, myProject);
+          return new GitContentRevision(gitRevision.getPath(), (GitRevisionNumber)revisionNumber, myProject, selectedFile.getCharset());
         }
       }
     }
