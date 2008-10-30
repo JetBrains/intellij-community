@@ -15,9 +15,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
 /**
  * @author nik
  */
@@ -41,7 +38,7 @@ public abstract class VersionedFrameworkSupportProvider extends FrameworkSupport
 
   @NotNull
   public VersionConfigurable createConfigurable(final @NotNull FrameworkSupportModel model) {
-    return new VersionConfigurable(getVersions(), getDefaultVersion());
+    return new VersionConfigurable(this, getVersions(), getDefaultVersion());
   }
 
   @NotNull
@@ -54,54 +51,4 @@ public abstract class VersionedFrameworkSupportProvider extends FrameworkSupport
     return FrameworkSupportConfigurable.DEFAULT_LIBRARY_NAME;
   }
 
-  public class VersionConfigurable extends FrameworkSupportConfigurable {
-    private JComboBox myComboBox;
-
-    public VersionConfigurable(String[] versions, String defaultVersion) {
-      if (versions.length > 0) {
-        if (defaultVersion == null) {
-          defaultVersion = versions[versions.length - 1];
-        }
-        myComboBox = new JComboBox();
-        String maxValue = "";
-        for (String version : versions) {
-          myComboBox.addItem(version);
-          FontMetrics fontMetrics = myComboBox.getFontMetrics(myComboBox.getFont());
-          if (fontMetrics.stringWidth(version) > fontMetrics.stringWidth(maxValue)) {
-            maxValue = version;
-          }
-        }
-        myComboBox.setPrototypeDisplayValue(maxValue + "_");
-        myComboBox.setSelectedItem(defaultVersion);
-      }
-    }
-
-    public JComponent getComponent() {
-      return myComboBox;
-    }
-
-    @NotNull
-    public LibraryInfo[] getLibraries() {
-      return VersionedFrameworkSupportProvider.this.getLibraries(getSelectedVersion());
-    }
-
-    @NonNls
-    @NotNull
-    public String getLibraryName() {
-      return VersionedFrameworkSupportProvider.this.getLibraryName(getSelectedVersion());
-    }
-
-    public void addSupport(final Module module, final ModifiableRootModel rootModel, final @Nullable Library library) {
-      VersionedFrameworkSupportProvider.this.addSupport(module, rootModel, getSelectedVersion(), library);
-    }
-
-    public String getSelectedVersion() {
-      String version = null;
-      if (myComboBox != null) {
-        version = myComboBox.getSelectedItem().toString();
-      }
-      return version;
-    }
-
-  }
 }
