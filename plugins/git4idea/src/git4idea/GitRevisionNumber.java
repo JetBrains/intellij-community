@@ -25,6 +25,7 @@ import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.StringTokenizer;
 
@@ -36,6 +37,17 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    * the name of tip revision
    */
   @NonNls public static final String TIP = "HEAD";
+  /**
+   * the hash from 40 zeros representing not yet created commit
+   */
+  public static final String NOT_COMMITED_HASH;
+
+  static {
+    char[] data = new char[40];
+    Arrays.fill(data, '0');
+    NOT_COMMITED_HASH = new String(data);
+  }
+
   /**
    * the revision number (40 character hashcode, tag, or reference). In some cases incomplete hashcode could be used.
    */

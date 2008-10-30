@@ -30,12 +30,18 @@ import java.util.Set;
  */
 public class GitCurrentBranch extends GitRepositoryAction {
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @NotNull
   protected String getActionName(@NotNull AbstractVcs abstractvcs) {
     return GitBundle.getString("current.branch.action.name");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot,

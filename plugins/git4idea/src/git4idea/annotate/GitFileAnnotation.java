@@ -55,7 +55,7 @@ public class GitFileAnnotation implements FileAnnotation {
   /**
    * The currently annotated lines
    */
-  private final List<LineInfo> myLineInfos = new ArrayList<LineInfo>();
+  private final ArrayList<LineInfo> myLineInfos = new ArrayList<LineInfo>();
   /**
    * The project reference
    */
@@ -80,17 +80,22 @@ public class GitFileAnnotation implements FileAnnotation {
    * the virtual file for which annotations are generated
    */
   private final VirtualFile myFile;
+  /**
+   * If true, file system is monitored for changes
+   */
+  private final boolean myMonitorFlag;
 
   /**
    * Date annotation aspect
    */
   private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspect() {
     public String getValue(int lineNumber) {
-      if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+      if (myLineInfos.size() <= lineNumber || lineNumber < 0 || myLineInfos.get(lineNumber) == null) {
         return "";
       }
       else {
-        return DATE_FORMAT.format(myLineInfos.get(lineNumber).getDate());
+        final Date date = myLineInfos.get(lineNumber).getDate();
+        return date == null ? "" : DATE_FORMAT.format(date);
       }
     }
   };
@@ -103,11 +108,12 @@ public class GitFileAnnotation implements FileAnnotation {
    */
   private final LineAnnotationAspect AUTHOR_ASPECT = new LineAnnotationAspect() {
     public String getValue(int lineNumber) {
-      if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+      if (myLineInfos.size() <= lineNumber || lineNumber < 0 || myLineInfos.get(lineNumber) == null) {
         return "";
       }
       else {
-        return myLineInfos.get(lineNumber).getAuthor();
+        final String author = myLineInfos.get(lineNumber).getAuthor();
+        return author == null ? "" : author;
       }
     }
   };
@@ -115,21 +121,31 @@ public class GitFileAnnotation implements FileAnnotation {
   /**
    * A constructor
    *
-   * @param project the project of annotation provider
+   * @param project     the project of annotation provider
+   * @param monitorFlag
    */
-  public GitFileAnnotation(@NotNull final Project project, @NotNull GitVcsSettings settings, @NotNull VirtualFile file) {
+  public GitFileAnnotation(@NotNull final Project project,
+                           @NotNull GitVcsSettings settings,
+                           @NotNull VirtualFile file,
+                           final boolean monitorFlag) {
     myProject = project;
     myFile = file;
     mySettings = settings;
-    myFileListener = new VirtualFileAdapter() {
-      @Override
-      public void contentsChanged(final VirtualFileEvent event) {
-        if (myFile != event.getFile()) return;
-        if (!event.isFromRefresh()) return;
-        fireAnnotationChanged();
-      }
-    };
-    VirtualFileManager.getInstance().addVirtualFileListener(myFileListener);
+    myMonitorFlag = monitorFlag;
+    if (myMonitorFlag) {
+      myFileListener = new VirtualFileAdapter() {
+        @Override
+        public void contentsChanged(final VirtualFileEvent event) {
+          if (myFile != event.getFile()) return;
+          if (!event.isFromRefresh()) return;
+          fireAnnotationChanged();
+        }
+      };
+      VirtualFileManager.getInstance().addVirtualFileListener(myFileListener);
+    }
+    else {
+      myFileListener = null;
+    }
   }
 
   /**
@@ -168,7 +184,9 @@ public class GitFileAnnotation implements FileAnnotation {
    * {@inheritDoc}
    */
   public void dispose() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
+    if (myMonitorFlag) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
+    }
   }
 
   /**
@@ -186,6 +204,9 @@ public class GitFileAnnotation implements FileAnnotation {
       return "";
     }
     final LineInfo info = myLineInfos.get(lineNumber);
+    if (info == null) {
+      return "";
+    }
     VcsFileRevision fileRevision = myRevisionMap.get(info.getRevision());
     if (fileRevision != null) {
       return GitBundle
@@ -221,7 +242,7 @@ public class GitFileAnnotation implements FileAnnotation {
    * {@inheritDoc}
    */
   public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
-    if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+    if (myLineInfos.size() <= lineNumber || lineNumber < 0 || myLineInfos.get(lineNumber) == null) {
       return null;
     }
     final LineInfo lineInfo = myLineInfos.get(lineNumber);
@@ -235,7 +256,7 @@ public class GitFileAnnotation implements FileAnnotation {
    * @param revision   the revision number
    * @param author     the author
    * @param line       the line content
-   * @param lineNumber the line number
+   * @param lineNumber the line number for revision
    * @throws VcsException in case when line could not be processed
    */
   public void appendLineInfo(final Date date,
@@ -249,7 +270,6 @@ public class GitFileAnnotation implements FileAnnotation {
     }
     myLineInfos.add(new LineInfo(date, revision, author));
     myContentBuffer.append(line);
-    myContentBuffer.append("\n");
   }
 
   /**
@@ -260,11 +280,12 @@ public class GitFileAnnotation implements FileAnnotation {
      * {@inheritDoc}
      */
     public String getValue(int lineNumber) {
-      if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+      if (myLineInfos.size() <= lineNumber || lineNumber < 0 || myLineInfos.get(lineNumber) == null) {
         return "";
       }
       else {
-        return String.valueOf(myLineInfos.get(lineNumber).getRevision().getShortRev());
+        final GitRevisionNumber revision = myLineInfos.get(lineNumber).getRevision();
+        return revision == null ? "" : String.valueOf(revision.getShortRev());
       }
     }
 
