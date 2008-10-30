@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
@@ -23,6 +24,7 @@ import java.util.Map;
 
 public class MergeInfoHolder {
   private final DecoratorManager myManager;
+  private Consumer<Boolean> myMixedRevisionsConsumer;
   private final SvnMergeInfoCache myMergeInfoCache;
 
   private final static String ourIntegratedText = SvnBundle.message("committed.changes.merge.status.integrated.text");
@@ -42,12 +44,13 @@ public class MergeInfoHolder {
 
   public MergeInfoHolder(final Project project, final DecoratorManager manager, final Getter<WCInfoWithBranches> rootGetter,
                          final Getter<WCInfoWithBranches.Branch> branchGetter,
-                         final Getter<String> wcPathGetter, Getter<Boolean> enabledHolder) {
+                         final Getter<String> wcPathGetter, Getter<Boolean> enabledHolder, final Consumer<Boolean> mixedRevisionsConsumer) {
     myRootGetter = rootGetter;
     myBranchGetter = branchGetter;
     myWcPathGetter = wcPathGetter;
     myEnabledHolder = enabledHolder;
     myManager = manager;
+    myMixedRevisionsConsumer = mixedRevisionsConsumer;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
     myCachedMap = new HashMap<Pair<String, String>, MergeinfoCached>();
 
@@ -85,10 +88,10 @@ public class MergeInfoHolder {
   public CommittedChangeListsListener createRefresher(final boolean ignoreEnabled) {
     if (refreshEnabled(ignoreEnabled)) {
       // on awt thread
-      final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myBranchGetter.get());
+      final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myWcPathGetter.get());
       myCachedMap.put(createKey(myRootGetter.get(), myBranchGetter.get()), (state == null) ? new MergeinfoCached() :
           new MergeinfoCached(new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>(state.getMap()), state.getCopyRevision()));
-      myMergeInfoCache.clear(myRootGetter.get(), myBranchGetter.get());
+      myMergeInfoCache.clear(myRootGetter.get(), myWcPathGetter.get());
 
       return new MyRefresher();
     }
@@ -140,6 +143,7 @@ public class MergeInfoHolder {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           myCachedMap.remove(createKey(myRefreshedRoot, myRefreshedBranch));
+          updateMixedRevisionsForPanel();
           myManager.repaintTree();
         }
       });
@@ -203,7 +207,7 @@ public class MergeInfoHolder {
         final SvnMergeInfoCache.MergeCheckResult result = cachedState.getMap().get(list.getNumber());
         return convert(result, true);
       } else {
-        final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myBranchGetter.get());
+        final MergeinfoCached state = myMergeInfoCache.getCachedState(myRootGetter.get(), myWcPathGetter.get());
         if (state == null) {
           refresh(ignoreEnabled);
           return ListMergeStatus.REFRESHING;
@@ -219,5 +223,9 @@ public class MergeInfoHolder {
 
   public ListChecker getDecorator() {
     return myDecorator;
+  }
+
+  public void updateMixedRevisionsForPanel() {
+    myMixedRevisionsConsumer.consume(myMergeInfoCache.isMixedRevisions(myRootGetter.get(), myWcPathGetter.get()));    
   }
 }

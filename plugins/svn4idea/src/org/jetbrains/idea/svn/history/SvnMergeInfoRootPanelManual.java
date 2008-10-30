@@ -33,6 +33,7 @@ public class SvnMergeInfoRootPanelManual {
   private JPanel myContentPanel;
   private JTextArea myUrlText;
   private JTextArea myLocalArea;
+  private JTextArea myMixedRevisions;
 
   private final Project myProject;
   private final NullableFunction<WCInfoWithBranches, WCInfoWithBranches> myRefresher;
@@ -177,6 +178,20 @@ public class SvnMergeInfoRootPanelManual {
     gb.fill = GridBagConstraints.NONE;
     myFixedSelectLocal = new FixedSizeButton(20);
     myContentPanel.add(myFixedSelectLocal, gb);
+
+    ++ gb.gridy;
+    gb.gridx = 0;
+    gb.gridwidth = 2;
+    myMixedRevisions = new JTextArea("Mixed Revision Working Copy");
+    myMixedRevisions.setForeground(Color.red);
+    myMixedRevisions.setBackground(myContentPanel.getBackground());
+    myContentPanel.add(myMixedRevisions, gb);
+
+    myMixedRevisions.setVisible(false);
+  }
+
+  public void setMixedRevisions(final boolean value) {
+    myMixedRevisions.setVisible(value);
   }
 
   private void calculateBranchPathByBranch(final String url) {

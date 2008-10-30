@@ -294,20 +294,21 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void showAlienCommit() {
-    final VcsDirtyScopeImpl dirtyScope = new VcsDirtyScopeImpl(myVcs, myProject);
+    final AlienDirtyScope dirtyScope = new AlienDirtyScope();
 
-    UpdateFilesHelper.iterateFileGroupFiles(myAccomulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
-      public void onFile(final String filePath, final String groupId) {
-        final FilePath file = FilePathImpl.create(new File(filePath));
-        dirtyScope.addDirtyFile(file);
-      }
-    });
     if (myMergeTarget != null) {
-      dirtyScope.addDirtyFile(myMergeTarget);
+      dirtyScope.addDir(myMergeTarget);
+    } else {
+      UpdateFilesHelper.iterateFileGroupFiles(myAccomulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
+        public void onFile(final String filePath, final String groupId) {
+          final FilePath file = FilePathImpl.create(new File(filePath));
+          dirtyScope.addFile(file);
+        }
+      });
     }
 
     final SvnChangeProvider provider = new SvnChangeProvider(myVcs);
-    final GatheringChangelistBuilder clb = new GatheringChangelistBuilder(myAccomulatedFiles, myMergeTarget == null ? null : myMergeTarget.getVirtualFile());
+    final GatheringChangelistBuilder clb = new GatheringChangelistBuilder(myProject, myAccomulatedFiles, myMergeTarget == null ? null : myMergeTarget.getVirtualFile());
     try {
       provider.getChanges(dirtyScope, clb, ProgressManager.getInstance().getProgressIndicator(), null);
     } catch (VcsException e) {

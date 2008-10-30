@@ -155,6 +155,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     myHighlightingOn = true;
     myFromHereDirection = true;
     setDirectionToPanels();
+    for (MergeInfoHolder holder : myHolders.values()) {
+      holder.updateMixedRevisionsForPanel();
+    }
 
     myManager.repaintTree();
   }
@@ -175,6 +178,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   public void turnOff() {
     myHighlightingOn = false;
+    for (SvnMergeInfoRootPanelManual panelManual : myMergePanels.values()) {
+      panelManual.setMixedRevisions(false);
+    }
 
     myManager.repaintTree();
   }
@@ -213,6 +219,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
                 gb.fill = GridBagConstraints.HORIZONTAL;
                 myPanelWrapper.add(emptyPanel, gb);
               } else {
+                for (MergeInfoHolder holder : myHolders.values()) {
+                  holder.updateMixedRevisionsForPanel();
+                }
                 myPanelWrapper.add(mainPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
               }
               myPanelWrapper.repaint();
@@ -352,6 +361,10 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }, new Getter<Boolean>() {
       public Boolean get() {
         return myHighlightingOn && panel.isEnabled();
+      }
+    }, new Consumer<Boolean>() {
+      public void consume(final Boolean aBoolean) {
+        panel.setMixedRevisions(aBoolean);
       }
     });
   }
