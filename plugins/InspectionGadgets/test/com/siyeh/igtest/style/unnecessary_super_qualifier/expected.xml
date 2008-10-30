@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>UnnecessarySuperQualifier.java</file>
+    <line>23</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'super' qualifier</problem_class>
+    <description>Qualifier &lt;code&gt;super&lt;/code&gt; is unnecessary in this context #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnnecessarySuperQualifier.java</file>
+    <line>24</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'super' qualifier</problem_class>
+    <description>Qualifier &lt;code&gt;super&lt;/code&gt; is unnecessary in this context #loc</description>
+  </problem>
+</problems>

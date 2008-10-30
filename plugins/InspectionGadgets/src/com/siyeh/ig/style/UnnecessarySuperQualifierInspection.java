@@ -15,21 +15,25 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySuperQualifierInspection extends BaseInspection {
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
@@ -37,6 +41,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
                 "unnecessary.super.qualifier.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -44,6 +49,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
         );
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessarySuperQualifierFix();
@@ -57,6 +63,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
                     "unnecessary.super.qualifier.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -64,6 +71,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessarySuperQualifierVisitor();
     }
@@ -71,6 +79,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
     private static class UnnecessarySuperQualifierVisitor
             extends BaseInspectionVisitor {
 
+        @Override
         public void visitSuperExpression(PsiSuperExpression expression) {
             super.visitSuperExpression(expression);
             final PsiJavaCodeReferenceElement qualifier =
@@ -136,9 +145,10 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
             if (parentClass == null) {
                 return false;
             }
-            final PsiMethod[] methods =
-                    parentClass.findMethodsBySignature(superMethod, false);
-            return methods.length <= 0;
+            final Query<PsiMethod> query = OverridingMethodsSearch.search(
+                    superMethod, new LocalSearchScope(parentClass), false);
+            final PsiMethod method = query.findFirst();
+            return method == null;
         }
     }
 }
