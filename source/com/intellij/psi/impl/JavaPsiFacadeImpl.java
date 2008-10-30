@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -410,49 +411,66 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     public void treeChanged(final PsiTreeChangeEventImpl event) {
-      boolean changedInsideCodeBlock = false;
-
       switch (event.getCode()) {
         case BEFORE_CHILDREN_CHANGE:
           if (event.getParent() instanceof PsiFile) {
-            changedInsideCodeBlock = true;
-            break; // May be caused by fake PSI event from PomTransaction. A real event will anyway follow.
+            return;  // May be caused by fake PSI event from PomTransaction. A real event will anyway follow.
           }
 
-          //noinspection fallthrough
-        case CHILDREN_CHANGED:
-          changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-          break;
-
+        case BEFORE_CHILD_REPLACEMENT:
         case BEFORE_CHILD_ADDITION:
         case BEFORE_CHILD_REMOVAL:
+          return;
+
         case CHILD_ADDED:
         case CHILD_REMOVED:
-          changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-          break;
-
-        case BEFORE_PROPERTY_CHANGE:
-        case PROPERTY_CHANGED:
-          changedInsideCodeBlock = false;
-          break;
-
-        case BEFORE_CHILD_REPLACEMENT:
         case CHILD_REPLACED:
-          changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
+          if (!contansStructureChanges(event.getParent(), event.getOldChild(), event.getChild())) return;
+          break;
+
+        case CHILDREN_CHANGED:
+          if (!contansStructureChanges(event.getParent(), event.getParent(), null)) return;
           break;
 
         case BEFORE_CHILD_MOVEMENT:
         case CHILD_MOVED:
-          changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && isInsideCodeBlock(event.getNewParent());
+        case BEFORE_PROPERTY_CHANGE:
+        case PROPERTY_CHANGED:
           break;
 
         default:
           LOG.error("Unknown code:" + event.getCode());
       }
 
-      if (!changedInsideCodeBlock) {
-        myModificationTracker.incOutOfCodeBlockModificationCounter();
+      myModificationTracker.incOutOfCodeBlockModificationCounter();
+    }
+
+    private static boolean contansStructureChanges(final PsiElement parent, PsiElement child1, PsiElement child2) {
+      try {
+        if (!isInsideCodeBlock(parent)) return true;
+        if (parent == null) return false;
+        if (parent.getLanguage() != StdLanguages.JAVA) return false;
+
+        if (containsClassesInside(child1)) return true;
+        if (child2 != child1 && containsClassesInside(child2)) return true;
+        return false;
       }
+      catch (PsiInvalidElementAccessException e) {
+        return true;
+      }
+    }
+
+    private static boolean containsClassesInside(final PsiElement element) {
+      if (element == null) return false;
+      if (element instanceof PsiClass) return true;
+
+      PsiElement child = element.getFirstChild();
+      while (child != null) {
+        if (containsClassesInside(child)) return true;
+        child = child.getNextSibling();
+      }
+
+      return false;
     }
 
     private static boolean isInsideCodeBlock(PsiElement element) {
