@@ -25,14 +25,13 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   public void incCounter(){
     myModificationCount++;
-    incOutOfCodeBlockModificationCounter();
     myJavaStructureModificationCount++;
-
-    myPublisher.modificationCountChanged();
+    incOutOfCodeBlockModificationCounter();
   }
 
   public void incOutOfCodeBlockModificationCounter() {
     myOutOfCodeBlockModificationCount++;
+    myPublisher.modificationCountChanged();
   }
 
   public void treeChanged(PsiTreeChangeEventImpl event) {

@@ -3,7 +3,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -413,10 +412,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     public void treeChanged(final PsiTreeChangeEventImpl event) {
       switch (event.getCode()) {
         case BEFORE_CHILDREN_CHANGE:
-          if (event.getParent() instanceof PsiFile) {
-            return;  // May be caused by fake PSI event from PomTransaction. A real event will anyway follow.
-          }
-
+        case BEFORE_PROPERTY_CHANGE:
+        case BEFORE_CHILD_MOVEMENT:
         case BEFORE_CHILD_REPLACEMENT:
         case BEFORE_CHILD_ADDITION:
         case BEFORE_CHILD_REMOVAL:
@@ -425,38 +422,42 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         case CHILD_ADDED:
         case CHILD_REMOVED:
         case CHILD_REPLACED:
-          if (!contansStructureChanges(event.getParent(), event.getOldChild(), event.getChild())) return;
+          processChange(event.getParent(), event.getOldChild(), event.getChild());
           break;
 
         case CHILDREN_CHANGED:
-          if (!contansStructureChanges(event.getParent(), event.getParent(), null)) return;
+          processChange(event.getParent(), event.getParent(), null);
           break;
 
-        case BEFORE_CHILD_MOVEMENT:
         case CHILD_MOVED:
-        case BEFORE_PROPERTY_CHANGE:
         case PROPERTY_CHANGED:
+          myModificationTracker.incCounter();
           break;
 
         default:
           LOG.error("Unknown code:" + event.getCode());
+          break;
       }
-
-      myModificationTracker.incOutOfCodeBlockModificationCounter();
     }
 
-    private static boolean contansStructureChanges(final PsiElement parent, PsiElement child1, PsiElement child2) {
+    private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
       try {
-        if (!isInsideCodeBlock(parent)) return true;
-        if (parent == null) return false;
-        if (parent.getLanguage() != StdLanguages.JAVA) return false;
+        if (!isInsideCodeBlock(parent)) {
+          if (parent != null && parent.getContainingFile() instanceof PsiClassOwner) {
+            myModificationTracker.incCounter();
+          }
+          else {
+            myModificationTracker.incOutOfCodeBlockModificationCounter();
+          }
+          return;
+        }
 
-        if (containsClassesInside(child1)) return true;
-        if (child2 != child1 && containsClassesInside(child2)) return true;
-        return false;
+        if (containsClassesInside(child1) || child2 != child1 && containsClassesInside(child2)) {
+          myModificationTracker.incCounter();
+        }
       }
       catch (PsiInvalidElementAccessException e) {
-        return true;
+        myModificationTracker.incCounter(); // Shall not happen actually, just a pre-release paranoia
       }
     }
 
