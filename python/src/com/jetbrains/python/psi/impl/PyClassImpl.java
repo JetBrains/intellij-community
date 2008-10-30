@@ -34,8 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -122,6 +121,74 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     return superClasses.toArray(new PsiElement[superClasses.size()]);
+  }
+
+  /* The implementation is manifestly lazy wrt psi scanning and uses stack rather sparingly.
+   It must be more efficient on deep and wide hierarchies, but it was more fun than efficiency that produced it.
+   */
+  public Iterable<PyClass> iterateAncestors() {
+    return new Iterable<PyClass>() {
+      public Iterator<PyClass> iterator() {
+        return new Iterator<PyClass>() {
+          List<PyClass> pending = new LinkedList<PyClass>();
+          Set<PyClass> seen = new HashSet<PyClass>();
+          Iterator<PyClass> percolator = getSuperClassesList().iterator();
+          PyClass prefetch = null;
+
+          public boolean hasNext() {
+            // due to already-seen filtering, there's no way but to try and see.
+            if (prefetch != null) return true;
+            try {
+              prefetch = next();
+              return true;
+            }
+            catch (NoSuchElementException e) {
+              return false;
+            }
+          }
+
+          public PyClass next() {
+            if (prefetch != null) {
+              PyClass ret = prefetch;
+              prefetch = null;
+              return ret;
+            }
+            if (percolator.hasNext()) {
+              PyClass it = percolator.next();
+              if (seen.contains(it)) return next();
+              pending.add(it);
+              seen.add(it);
+              return it;
+            }
+            else if (pending.size() > 0) {
+              PyClass it = pending.get(0);
+              pending.remove(0); // t, ts* = pending
+              percolator = it.iterateAncestors().iterator();
+              return next();
+            }
+            else throw new NoSuchElementException();
+          }
+
+          public void remove() {
+            //To change body of implemented methods use File | Settings | File Templates.
+          }
+        };
+      }
+    };
+  }
+
+  protected List<PyClass> getSuperClassesList() {
+    PsiElement[] superClassElements = getSuperClassElements();
+    if (superClassElements != null) {
+      List<PyClass> result = new ArrayList<PyClass>();
+      for(PsiElement element: superClassElements) {
+        if (element instanceof PyClass) {
+          result.add((PyClass) element);
+        }
+      }
+      return result;
+    }
+    return new ArrayList<PyClass>(0); 
   }
 
   @NotNull
@@ -272,4 +339,5 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public boolean mustResolveOutside() {
     return false;
   }
+
 }

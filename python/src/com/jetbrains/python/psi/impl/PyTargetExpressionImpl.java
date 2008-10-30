@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -29,6 +30,8 @@ import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -120,5 +123,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   public String toString() {
     return super.toString() + ": " + getName();
+  }
+
+  public Icon getIcon(final int flags) {
+    return Icons.FIELD_ICON; // for the rare cases it shows in structure view
   }
 }
