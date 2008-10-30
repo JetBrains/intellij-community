@@ -182,7 +182,7 @@
 
 
   <!-- Global Code Style -->
-  <applicationConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
+  <projectConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
 
   <!-- File Types -->
   <applicationConfigurable implementation="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
@@ -205,7 +205,7 @@
   <applicationConfigurable implementation="com.intellij.history.integration.ui.views.LocalHistoryConfigurable"/>
 
   <!-- Project Code Style -->
-  <projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable" order="before vcs"/>
+  <!--<projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable" order="before vcs"/>-->
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
   <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainSyntaxHighlighterFactory"/>

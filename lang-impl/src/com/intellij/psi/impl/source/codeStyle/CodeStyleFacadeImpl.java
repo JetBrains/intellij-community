@@ -3,8 +3,6 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.application.options.CodeStyleSchemesConfigurable;
-import com.intellij.application.options.ProjectCodeStyleConfigurable;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -45,10 +43,7 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   public boolean isUnsuitableCodestyleConfigurable(final Configurable c) {
-    final boolean showProjectCodeStyle = projectUsesOwnSettings();
-
-    return c instanceof ProjectCodeStyleConfigurable && !showProjectCodeStyle ||
-           c instanceof CodeStyleSchemesConfigurable && showProjectCodeStyle;
+    return false;
   }
 
   public int getRightMargin() {

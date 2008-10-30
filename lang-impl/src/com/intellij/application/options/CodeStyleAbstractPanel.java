@@ -31,6 +31,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -58,11 +59,20 @@ import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -73,36 +83,121 @@ public abstract class CodeStyleAbstractPanel {
   private final Editor myEditor;
   private final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
-  protected static final int[] ourWrappings = new int[]{CodeStyleSettings.DO_NOT_WRAP,
-    CodeStyleSettings.WRAP_AS_NEEDED,
-    CodeStyleSettings.WRAP_ON_EVERY_ITEM,
-    CodeStyleSettings.WRAP_ALWAYS};
+  protected static final int[] ourWrappings =
+    new int[]{CodeStyleSettings.DO_NOT_WRAP, CodeStyleSettings.WRAP_AS_NEEDED, CodeStyleSettings.WRAP_ON_EVERY_ITEM,
+      CodeStyleSettings.WRAP_ALWAYS};
   private long myLastDocumentModificationStamp;
   private String myTextToReformat = null;
   private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
+  private CodeStyleSchemesModel myModel;
+  private boolean mySomethingChanged = false;
+  private final PropertyChangeListener myPropListener = new PropertyChangeListener() {
+      public void propertyChange(final PropertyChangeEvent evt) {
+        processEvent();
+      }
+    };
+  private final ComponentAdapter myComponentListener = new ComponentAdapter(){
+    @Override
+    public void componentShown(final ComponentEvent e) {
+      processEvent();
+    }
+  };
+  private final AncestorListener myAncestorListener = new AncestorListener(){
+    public void ancestorAdded(final AncestorEvent event) {
+      Container container = event.getAncestor();
+      container.addComponentListener(myComponentListener);
+      container.addPropertyChangeListener(myPropListener);
+
+      if (container instanceof JComponent) {
+        ((JComponent)container).addAncestorListener(myAncestorListener);
+      }
+
+      processEvent();
+
+    }
+
+    public void ancestorRemoved(final AncestorEvent event) {
+      Container container = event.getAncestor();
+      if (container != null) {
+        container.removeComponentListener(myComponentListener);
+        container.removePropertyChangeListener(myPropListener);
+
+        if (container instanceof JComponent) {
+          ((JComponent)container).removeAncestorListener(myAncestorListener);
+        }
+      }
+
+      processEvent();
+    }
+
+    public void ancestorMoved(final AncestorEvent event) {
+    }
+  };
+
+  private void processEvent() {
+    if (myEditor.getComponent().isShowing() && isSomethingChanged()) {
+      myUpdateAlarm.addComponentRequest(new Runnable() {
+        public void run() {
+          try {
+            myUpdateAlarm.cancelAllRequests();
+            updatePreview();
+          }
+          finally {
+            setSomethingChanged(false);
+          }
+        }
+      }, 300);
+    }
+  }
+
+  private synchronized void setSomethingChanged(final boolean b) {
+    mySomethingChanged = b;
+  }
+
+  private synchronized boolean isSomethingChanged() {
+    return mySomethingChanged;
+  }
+
   protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
     myEditor = createEditor();
+
+    //addListeners();
+
     myUpdateAlarm.setActivationComponent(myEditor.getComponent());
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
         somethingChanged();
-        myUpdateAlarm.addComponentRequest(new Runnable() {
-          public void run() {
-            myUpdateAlarm.cancelAllRequests();
-            updatePreview();
-          }
-        }, 300);
-
       }
     });
   }
 
-  protected void somethingChanged() {
+  private void addListeners() {
+    JComponent component = myEditor.getComponent();
+    component.addPropertyChangeListener(myPropListener);
 
+    component.addComponentListener(myComponentListener);
+
+    component.addAncestorListener(myAncestorListener);
+
+    component.addHierarchyListener(new HierarchyListener(){
+      public void hierarchyChanged(final HierarchyEvent e) {
+        processEvent();
+      }
+    });
+  }
+
+  public void setModel(final CodeStyleSchemesModel model) {
+    myModel = model;
+  }
+
+  protected void somethingChanged() {
+    if (myModel != null) {
+      myModel.fireCurrentSettingsChanged();
+    }
   }
 
   protected void addPanelToWatch(Component component) {
@@ -132,14 +227,11 @@ public abstract class CodeStyleAbstractPanel {
     editor.setHighlighter(createHighlighter(scheme));
   }
 
+  /*
   protected void updatePreviewEditor() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myEditor.getDocument().setText(getPreviewText());
-      }
-    });
-    updatePreviewHighlighter((EditorEx) myEditor);
-  }
+    updatePreview(true);
+    updatePreviewHighlighter((EditorEx)myEditor);
+  } */
 
   protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
 
@@ -158,7 +250,7 @@ public abstract class CodeStyleAbstractPanel {
 
   protected abstract int getRightMargin();
 
-  protected final void updatePreview() {
+  public final void updatePreview() {
     if (!myShouldUpdatePreview || !myEditor.getComponent().isShowing()) {
       return;
     }
@@ -172,12 +264,11 @@ public abstract class CodeStyleAbstractPanel {
       project = ProjectManager.getInstance().getDefaultProject();
     }
     final Project finalProject = project;
-    CommandProcessor.getInstance().executeCommand(finalProject,
-                                                  new Runnable() {
-                                                    public void run() {
-                                                      replaceText(finalProject);
-                                                    }
-                                                  }, null, null);
+    CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
+      public void run() {
+        replaceText(finalProject);
+      }
+    }, null, null);
     myEditor.getSettings().setRightMargin(getRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
   }
@@ -187,9 +278,9 @@ public abstract class CodeStyleAbstractPanel {
       public void run() {
         try {
           //important not mark as generated not to get the classes before setting language level
-          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("a." + getFileTypeExtension(getFileType()),
-                                                                                   getFileType(), myTextToReformat,
-                                                                                   LocalTimeCounter.currentTime(), false, false);
+          PsiFile psiFile = PsiFileFactory.getInstance(project)
+            .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), myTextToReformat, LocalTimeCounter.currentTime(),
+                                false, false);
 
           prepareForReformat(psiFile);
           apply(mySettings);
@@ -291,7 +382,34 @@ public abstract class CodeStyleAbstractPanel {
     previewPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
-  protected @NonNls String getFileTypeExtension(FileType fileType) {
+  protected
+  @NonNls
+  String getFileTypeExtension(FileType fileType) {
     return fileType.getDefaultExtension();
+  }
+
+  public void onSomethingChanged() {
+    setSomethingChanged(true);
+    UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), new Runnable(){
+      public void run() {
+        addUpdatePreviewRequest();
+      }
+    });
+  }
+
+  private void addUpdatePreviewRequest() {
+    myUpdateAlarm.addComponentRequest(new Runnable() {
+      public void run() {
+        try {
+          myUpdateAlarm.cancelAllRequests();
+          if (isSomethingChanged()) {
+            updatePreview();
+          }
+        }
+        finally {
+          setSomethingChanged(false);
+        }
+      }
+    }, 300);
   }
 }

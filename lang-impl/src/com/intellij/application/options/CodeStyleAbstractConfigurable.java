@@ -34,6 +34,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 
 import javax.swing.*;
 
@@ -42,6 +43,7 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
   private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
   private final String myDisplayName;
+  private CodeStyleSchemesModel myModel;
 
   public CodeStyleAbstractConfigurable(CodeStyleSettings settings, CodeStyleSettings cloneSettings,
                                        final String displayName) {
@@ -60,6 +62,7 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
 
   public JComponent createComponent() {
     myPanel = createPanel(myCloneSettings);
+    myPanel.setModel(myModel);
     return myPanel.getPanel();
   }
 
@@ -90,5 +93,16 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
 
   public CodeStyleAbstractPanel getPanel() {
     return myPanel;
+  }
+
+  public void setModel(final CodeStyleSchemesModel model) {
+    if (myPanel != null) {
+      myPanel.setModel(model);
+    }
+    myModel = model;
+  }
+
+  public void onSomethingChanged() {
+    myPanel.onSomethingChanged();
   }
 }

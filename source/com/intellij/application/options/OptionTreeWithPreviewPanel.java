@@ -158,7 +158,8 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
       }
       int row = myOptionsTree.getRowForPath(treePath);
       myOptionsTree.repaint(myOptionsTree.getRowBounds(row));
-      updatePreview();
+      //updatePreview();
+      somethingChanged();
     }
   }
 

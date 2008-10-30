@@ -15,7 +15,6 @@ import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +81,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   protected void somethingChanged() {
+    super.somethingChanged();
     update();
   }
 
@@ -129,18 +129,20 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         final int selIndex = myIndentOptionsTabs.getSelectedIndex();
         if (selIndex != myLastSelectedTab) {
           myLastSelectedTab = selIndex;
-          updatePreviewEditor();
+          //updatePreviewEditor();
+          somethingChanged();
         }
       }
     });
 
     optionGroup.add(myIndentOptionsTabs.getComponent());
 
+    /*
     UiNotifyConnector.doWhenFirstShown(myPanel, new Runnable() {
       public void run() {
         updatePreviewEditor();
       }
-    });
+    });*/
 
     return optionGroup.createPanel();
   }
@@ -165,12 +167,18 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Nullable
   private FileTypeIndentOptionsProvider getSelectedIndentProvider() {
-    if (myIndentOptionsTabs == null) return null;
+    if (myIndentOptionsTabs == null) return getDefaultIndentProvider();
     final int selIndex = myIndentOptionsTabs.getSelectedIndex();
     if (selIndex >= 0 && selIndex < myIndentOptionsProviders.size()) {
       return myIndentOptionsProviders.get(selIndex);
     }
-    return null;
+    return getDefaultIndentProvider();
+  }
+
+  @Nullable
+  private static FileTypeIndentOptionsProvider getDefaultIndentProvider() {
+    FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+    return (providers.length == 0) ? null : providers[0];
   }
 
   public void apply(CodeStyleSettings settings) {

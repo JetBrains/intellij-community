@@ -1,543 +1,294 @@
 package com.intellij.application.options;
 
-import com.intellij.ide.DataManager;
+import com.intellij.application.options.codeStyle.*;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
-import com.intellij.util.Alarm;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
-public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
-  @NonNls
-  private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
-  private JPanel myPanel;
-  private JComboBox myCombo;
-  private JButton mySaveAsButton;
-  private JButton myDeleteButton;
-  private SettingsStack mySettingsStack;
-  private JPanel myRootPanel;
-  private String myOption = null;
-  private JButton myExportButton;
+public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract {
 
-  private static class SettingsStack extends JPanel {
-    private CardLayout myLayout;
-    private Map<String, CodeStyleSettingsPanel> mySchemes = new HashMap<String, CodeStyleSettingsPanel>();
-    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-    private String mySelectedScheme = null;
+  private CodeStyleSchemesPanel myRootSchemesPanel;
+  private CodeStyleSchemesModel myModel;
+  private List<CodeStyleMainPanel> myPanels;
+  private boolean myResetCompleted = false;
+  private boolean myRevertCompleted = false;
 
-    public SettingsStack(CodeStyleSchemes codeStyleSchemes, EditorSettingsExternalizable editorSettingsExternalizable) {
-      myLayout = new CardLayout();
-      setLayout(myLayout);
+  private boolean myApplyCompleted = false;
+  private final Project myProject;
 
-      addWaitCard();
-
-      CodeStyleSettings codeStyleSettings = codeStyleSchemes.getCurrentScheme().getCodeStyleSettings();
-      EditorSettingsExternalizable editorSettings = editorSettingsExternalizable;
-      editorSettings.setBlockIndent(codeStyleSettings.getIndentSize(null));
-    }
-
-    private void addWaitCard() {
-      JPanel waitPanel = new JPanel(new BorderLayout());
-      JLabel label = new JLabel(ApplicationBundle.message("label.loading.page.please.wait"));
-      label.setHorizontalAlignment(SwingConstants.CENTER);
-      waitPanel.add(label, BorderLayout.CENTER);
-      label.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-      waitPanel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-      add(WAIT_CARD, waitPanel);
-      mySelectedScheme = null;
-    }
-
-    public void addScheme(CodeStyleScheme scheme) {
-      CodeStyleSettings settings = scheme.getCodeStyleSettings();
-      if (cannotBeModified(scheme)) {
-        settings = settings.clone();
-      }
-      final CodeStyleSettingsPanel settingsPanel = new CodeStyleSettingsPanel(settings);
-      add(scheme.getName(), settingsPanel);
-      mySchemes.put(scheme.getName(), settingsPanel);
-    }
-
-    public void removeScheme(CodeStyleScheme scheme) {
-      final CodeStyleSettingsPanel panel = mySchemes.remove(scheme.getName());
-      if (panel != null) {
-        remove(panel);
-      }
-    }
-
-    public void selectScheme(final CodeStyleScheme scheme) {
-      myLayout.show(this, WAIT_CARD);
-
-      myAlarm.cancelAllRequests();
-      final Runnable request = new Runnable() {
-        public void run() {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              String name = scheme.getName();
-              mySchemes.get(name).init();
-              myLayout.show(SettingsStack.this, name);
-              mySelectedScheme = name;
-            }
-          });
-        }
-      };
-      myAlarm.addRequest(request, 200);
-    }
-
-    public CodeStyleSettingsPanel[] getPanels() {
-      final Collection<CodeStyleSettingsPanel> panels = mySchemes.values();
-      return panels.toArray(new CodeStyleSettingsPanel[panels.size()]);
-    }
-
-    public boolean isModified() {
-      final CodeStyleSettingsPanel[] panels = getPanels();
-      for (int i = 0; i < panels.length; i++) {
-        CodeStyleSettingsPanel panel = panels[i];
-        if (panel.isModified()) return true;
-      }
-      return false;
-    }
-
-    public void reset() {
-      final CodeStyleSettingsPanel[] panels = getPanels();
-      for (int i = 0; i < panels.length; i++) {
-        CodeStyleSettingsPanel panel = panels[i];
-        if (panel.isModified()) panel.reset();
-      }
-    }
-
-    public void apply() {
-      final CodeStyleSettingsPanel[] panels = getPanels();
-      for (int i = 0; i < panels.length; i++) {
-        CodeStyleSettingsPanel panel = panels[i];
-        if (panel.isModified()) panel.apply();
-      }
-    }
-
-    public void dispose() {
-      myAlarm.cancelAllRequests();
-      final CodeStyleSettingsPanel[] panels = getPanels();
-      for (int i = 0; i < panels.length; i++) {
-        CodeStyleSettingsPanel panel = panels[i];
-        panel.dispose();
-      }
-    }
-
-    @NonNls
-    public String getHelpTopic() {
-      CodeStyleSettingsPanel selectedPanel = mySchemes.get(mySelectedScheme);
-      if (selectedPanel == null) {
-        return "reference.settingsdialog.IDE.globalcodestyle";
-      }
-      return selectedPanel.getHelpTopic();
-    }
-
-    public void removeAllSchemes() {
-      dispose();
-      removeAll();
-      mySchemes = new com.intellij.util.containers.HashMap<String, CodeStyleSettingsPanel>();
-      addWaitCard();
-    }
-
-    public boolean isSchemeModified(CodeStyleScheme scheme) {
-      return mySchemes.get(scheme.getName()).isModified();
-    }
-
-    public CodeStyleSettings getSettings(CodeStyleScheme defaultScheme) {
-      return mySchemes.get(defaultScheme.getName()).getSettings();
-    }
-    public CodeStyleSettingsPanel getSettingsPanel(CodeStyleScheme defaultScheme) {
-      return mySchemes.get(defaultScheme.getName());
-    }
-
-    public Collection<String> getSchemeNames() {
-      return mySchemes.keySet();
-    }
-
-
-  }
-
-  public Collection<CodeStyleScheme> getSchemes() {
-    ArrayList<CodeStyleScheme> result = new ArrayList<CodeStyleScheme>();
-    for (int i = 0; i < myCombo.getItemCount(); i++) {
-      Object item = myCombo.getItemAt(i);
-      if (item instanceof CodeStyleScheme) {
-        result.add((CodeStyleScheme)item);
-      }
-    }
-    return result;
-  }
-
-  public boolean isModified() {
-    if (myPanel == null) return false; // Disposed
-    if (myPanel.getRootPane() != null) {
-      if (myOption != null){
-        final CodeStyleSettingsPanel activePanel = getActivePanel();
-        if (activePanel != null && activePanel.isInitialized()){
-          final Runnable runnable = activePanel.showOption(this, myOption);
-          if (runnable != null) {
-            runnable.run();
-          }
-          myOption = null;
-        }
-      }
-    }
-    if (getSelectedScheme() != CodeStyleSchemes.getInstance().getCurrentScheme()) return true;
-    Set<CodeStyleScheme> configuredSchemesSet = new HashSet<CodeStyleScheme>(getCurrentSchemes());
-    Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(CodeStyleSchemes.getInstance().getSchemes()));
-    if (!configuredSchemesSet.equals(savedSchemesSet)) return true;
-    return mySettingsStack.isModified();
+  public CodeStyleSchemesConfigurable(Project project) {
+    myProject = project;
   }
 
   public JComponent createComponent() {
-    mySettingsStack = new SettingsStack(CodeStyleSchemes.getInstance(), EditorSettingsExternalizable.getInstance());
+    myModel = ensureModel();
 
-    myPanel = new JPanel(new GridBagLayout());
-    Insets stdInsets = new Insets(2, 2, 2, 2);
-
-    myCombo = new JComboBox();
-    mySaveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
-    myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
-
-    int row = 0;
-    // 1st row
-    myPanel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")),
-                new GridBagConstraints(0, row, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, stdInsets,
-                                       0, 0));
-    myPanel.add(myCombo,
-                new GridBagConstraints(1, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                       stdInsets, 70, 0));
-    myPanel.add(mySaveAsButton,
-                new GridBagConstraints(2, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                       stdInsets, 0, 0));
-    myPanel.add(myDeleteButton,
-                new GridBagConstraints(3, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                       stdInsets, 0, 0));
-
-    final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> schemesManager = getSchemesManager();
-    if (schemesManager.isExportAvailable()) {
-      myExportButton = new JButton("Share...");
-      myExportButton.addActionListener(new ActionListener(){
-        public void actionPerformed(final ActionEvent e) {
-          CodeStyleScheme selected = getSelectedScheme();
-          ExportSchemeAction.doExport((CodeStyleSchemeImpl)selected, schemesManager);
-        }
-      });
-      myExportButton.setMnemonic('S');
-
-
-      myPanel.add(myExportButton,
-                  new GridBagConstraints(4, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                         stdInsets, 0, 0));
-
-
-    }
-
-    if (schemesManager.isImportAvailable()) {
-      JButton importButton = new JButton("Import Shared...");
-      importButton.setMnemonic('I');
-      importButton.addActionListener(new ActionListener(){
-        public void actionPerformed(final ActionEvent e) {
-          SchemesToImportPopup<CodeStyleScheme, CodeStyleSchemeImpl> popup = new SchemesToImportPopup<CodeStyleScheme, CodeStyleSchemeImpl>(myPanel){
-            protected void onSchemeSelected(final CodeStyleSchemeImpl scheme) {
-              if (scheme != null) {
-                mySettingsStack.addScheme(scheme);
-                ((DefaultComboBoxModel)myCombo.getModel()).addElement(scheme);
-                myCombo.setSelectedItem(scheme);
-              }
-
-            }
-          };
-          popup.show(schemesManager, getSchemes());
-
-        }
-      });
-
-      myPanel.add(importButton,
-                  new GridBagConstraints(5, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                         stdInsets, 0, 0));
-      
-    }
-
-    myPanel.add(new JPanel(),
-                new GridBagConstraints(6, row, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                       stdInsets, 0, 0));
-    // next row
-    row++;
-    myPanel.add(mySettingsStack,
-                new GridBagConstraints(0, row, 7, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       stdInsets, 0, 0));
-
-    myCombo.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                onCombo();
-              }
-            });
-      }
-    });
-    mySaveAsButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        onSaveAs();
-      }
-    });
-    myDeleteButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        onDelete();
-      }
-    });
-
-    reset();
-
-    myPanel.setPreferredSize(new Dimension(800, 650));
-
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null || !CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS) return myPanel;
-
-    final CardLayout cards = new CardLayout();
-
-    myRootPanel = new JPanel(cards);
-
-    myRootPanel.add(ApplicationBundle.message("title.settings"), myPanel);
-
-    final JPanel warningPanel =  new JPanel(new VerticalFlowLayout(VerticalFlowLayout.CENTER));
-    final JLabel label = new JLabel(ApplicationBundle.message("html.project.uses.own.code.style"));
-    label.setIcon(IconLoader.getIcon("/general/tip.png"));
-    label.setHorizontalAlignment(SwingConstants.CENTER);
-    warningPanel.add(label);
-
-    JButton editGlobal = new JButton(ApplicationBundle.message("title.edit.global.settings"));
-
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    buttonPanel.add(editGlobal);
-    warningPanel.add(buttonPanel);
-
-    editGlobal.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        cards.show(myRootPanel, ApplicationBundle.message("title.settings"));
-      }
-    });
-
-    myRootPanel.add(ApplicationBundle.message("title.warning"), warningPanel);
-    cards.show(myRootPanel, ApplicationBundle.message("title.warning"));
-
-    return myRootPanel;
+    return myRootSchemesPanel.getPanel();
   }
 
-  private static SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {
-    return ((CodeStyleSchemesImpl) CodeStyleSchemes.getInstance()).getSchemesManager();
+
+  @Override
+  public void disposeUIResources() {
+    if (myPanels != null) {
+      super.disposeUIResources();
+      for (CodeStyleMainPanel panel : myPanels) {
+        panel.disposeUIResources();
+      }
+      myPanels = null;
+      myModel = null;
+      myRootSchemesPanel = null;
+      myResetCompleted = false;
+      myRevertCompleted = false;
+      myApplyCompleted = false;
+    }
+  }
+
+  @Override
+  public void reset() {
+    if (!myResetCompleted) {
+      super.reset();
+      myModel.reset();
+      for (CodeStyleMainPanel panel : myPanels) {
+        panel.reset();
+      }
+      myResetCompleted = true;
+    }
+  }
+
+  public void revert() {
+    if (!myRevertCompleted) {
+      myModel.reset();
+      for (CodeStyleMainPanel panel : myPanels) {
+        panel.reset();
+      }
+      myRevertCompleted = true;
+    }
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    if (!myApplyCompleted) {
+      super.apply();
+
+      for (CodeStyleScheme scheme : new ArrayList<CodeStyleScheme>(myModel.getSchemes())) {
+        final boolean isDefaultModified = CodeStyleSchemesModel.cannotBeModified(scheme) && isSchemeModified(scheme);
+        if (isDefaultModified) {
+          CodeStyleScheme newscheme = CodeStyleSchemes.getInstance().createNewScheme(null, scheme);
+          CodeStyleSettings settingsWillBeModified = scheme.getCodeStyleSettings();
+          CodeStyleSettings notModifiedSettings = settingsWillBeModified.clone();
+          ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(notModifiedSettings);
+          ((CodeStyleSchemeImpl)newscheme).setCodeStyleSettings(settingsWillBeModified);
+          myModel.addScheme(newscheme, false);
+
+          if (myModel.getSelectedScheme() == scheme) {
+            myModel.selectScheme(newscheme, this);
+          }
+          
+        }
+      }
+
+      for (CodeStyleMainPanel panel : myPanels) {
+        panel.apply();
+      }
+
+      myModel.apply();
+      EditorFactory.getInstance().refreshAllEditors();
+
+      myApplyCompleted = true;
+    }
+
+  }
+
+  private boolean isSchemeModified(final CodeStyleScheme scheme) {
+    for (CodeStyleMainPanel panel : myPanels) {
+      if (panel.isModified(scheme)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  protected Configurable[] buildConfigurables() {
+    myPanels = new ArrayList<CodeStyleMainPanel>();
+
+    myPanels.add(new CodeStyleMainPanel(ensureModel(), new CodeStyleSettingsPanelFactory() {
+      public NewCodeStyleSettingsPanel createPanel(final CodeStyleScheme scheme) {
+        return new NewCodeStyleSettingsPanel(new CodeStyleAbstractConfigurable(scheme.getCodeStyleSettings(), ensureModel().getCloneSettings(scheme),
+                                                                            ApplicationBundle.message("title.general")) {
+          protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+            return new GeneralCodeStylePanel(settings);
+          }
+
+          public Icon getIcon() {
+            return FileTypes.PLAIN_TEXT.getIcon();
+          }
+
+          public String getHelpTopic() {
+            return "reference.settingsdialog.IDE.globalcodestyle.general";
+          }
+        });
+      }
+    }));
+
+    for (final CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
+      myPanels.add(new CodeStyleMainPanel(ensureModel(), new CodeStyleSettingsPanelFactory() {
+        public NewCodeStyleSettingsPanel createPanel(final CodeStyleScheme scheme) {
+          return new NewCodeStyleSettingsPanel(provider.createSettingsPage(scheme.getCodeStyleSettings(), ensureModel().getCloneSettings(scheme)));
+        }
+      }));
+    }
+
+    Configurable[] result = new Configurable[myPanels.size()];
+    for (int i = 0; i < result.length; i++) {
+      final CodeStyleMainPanel panel = myPanels.get(i);
+      result[i] = new SearchableConfigurable(){
+        private boolean myInitialResetInvoked = false;
+        @Nls
+        public String getDisplayName() {
+          return panel.getDisplayName();
+        }
+
+        public Icon getIcon() {
+          return null;
+        }
+
+        public String getHelpTopic() {
+          return panel.getHelpTopic();
+        }
+
+        public JComponent createComponent() {
+          return panel;
+        }
+
+        public boolean isModified() {
+          boolean someSchemeModified = panel.isModified();
+          if (someSchemeModified) {
+            myApplyCompleted = false;
+            myRevertCompleted = false;
+          }
+          return someSchemeModified;
+        }
+
+        public void apply() throws ConfigurationException {
+          CodeStyleSchemesConfigurable.this.apply();
+        }
+
+        public void reset() {
+          if (!myInitialResetInvoked) {
+            try {
+              CodeStyleSchemesConfigurable.this.reset();
+            }
+            finally {
+              myInitialResetInvoked = true;
+            }
+          }
+          else {
+            revert();
+          }
+
+        }
+
+        public String getId() {
+          return "preferences.sourceCode." + getDisplayName();
+        }
+
+        public Runnable enableSearch(final String option) {
+          return null;
+        }
+
+        public void disposeUIResources() {
+          CodeStyleSchemesConfigurable.this.disposeUIResources();
+        }
+      };
+    }
+
+    return result;
+  }
+
+  private CodeStyleSchemesModel ensureModel() {
+    if (myModel == null) {
+      myModel = new CodeStyleSchemesModel(myProject);
+      myRootSchemesPanel = new CodeStyleSchemesPanel(myModel);
+
+      myModel.addListener(new CodeStyleSettingsListener(){
+        public void currentSchemeChanged(final Object source) {
+          if (source != myRootSchemesPanel) {
+            myRootSchemesPanel.onSelectedSchemeChanged();
+          }
+        }
+
+        public void schemeListChanged() {
+          myRootSchemesPanel.resetSchemesCombo();
+        }
+
+        public void currentSettingsChanged() {
+          
+        }
+
+        public void usePerProjectSettingsOptionChanged() {
+          myRootSchemesPanel.usePerProjectSettingsOptionChanged();
+        }
+      });
+    }
+    return myModel;
   }
 
   public String getDisplayName() {
-    return ApplicationBundle.message("title.global.code.style");
+    return "Code Style";
   }
 
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableCodeStyle.png");
   }
 
-  public CodeStyleSettingsPanel getActivePanel() {
-    CodeStyleScheme currentScheme = getSelectedScheme();
-    return mySettingsStack.getSettingsPanel(currentScheme);
-  }
-
-  public void reset() {
-    mySettingsStack.removeAllSchemes();
-    initCombobox();
-    onCombo();
-  }
-
-  public void apply() throws ConfigurationException {
-    final CodeStyleScheme[] savedSchemes = CodeStyleSchemes.getInstance().getSchemes();
-    final Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(savedSchemes));
-    List<CodeStyleScheme> configuredSchemes = getCurrentSchemes();
-
-    for (CodeStyleScheme savedScheme : savedSchemes) {
-      if (!configuredSchemes.contains(savedScheme)) {
-        CodeStyleSchemes.getInstance().deleteScheme(savedScheme);
-      }
-    }
-
-    nextScheme:
-    for (CodeStyleScheme scheme : configuredSchemes) {
-      for (CodeStyleScheme saved : savedSchemes) {
-        if (Comparing.strEqual(saved.getName(), scheme.getName())) continue nextScheme;
-      }
-      CodeStyleSchemes.getInstance().addScheme(scheme);
-    }
-
-    CodeStyleScheme currentScheme = getSelectedScheme();
-    final boolean isDefaultModified = cannotBeModified(currentScheme) && mySettingsStack.isSchemeModified(currentScheme);
-    mySettingsStack.apply();
-    if (isDefaultModified) {
-      final CodeStyleScheme defaultScheme = currentScheme;
-      currentScheme = CodeStyleSchemes.getInstance().createNewScheme(null, defaultScheme);
-      ((CodeStyleSchemeImpl)currentScheme).setCodeStyleSettings(mySettingsStack.getSettings(defaultScheme));
-      CodeStyleSchemes.getInstance().addScheme(currentScheme);
-    }
-    CodeStyleSchemes.getInstance().setCurrentScheme(currentScheme);
-    if (isDefaultModified) {
-      initCombobox();
-    }
-    EditorFactory.getInstance().refreshAllEditors();
-  }
-
-  private static boolean cannotBeModified(final CodeStyleScheme currentScheme) {
-    return currentScheme.isDefault() || getSchemesManager().isShared(currentScheme);
-  }
-
-  private static boolean cannotBeDeleted(final CodeStyleScheme currentScheme) {
-    return currentScheme.isDefault();
-  }
-
-  private List<CodeStyleScheme> getCurrentSchemes() {
-    List<CodeStyleScheme> configuredSchemes = new ArrayList<CodeStyleScheme>();
-    final DefaultComboBoxModel model = (DefaultComboBoxModel)myCombo.getModel();
-    for (int i = 0; i < model.getSize(); i++) {
-      configuredSchemes.add((CodeStyleScheme)model.getElementAt(i));
-    }
-    return configuredSchemes;
-  }
-
-  public void disposeUIResources() {
-    if (myPanel != null) {
-      myPanel.removeAll();
-      myPanel = null;
-    }
-
-    if (mySettingsStack != null) {
-      mySettingsStack.dispose();
-      mySettingsStack = null;
-    }
-  }
-
   public String getHelpTopic() {
-    return mySettingsStack.getHelpTopic();
+    return "reference.settingsdialog.IDE.globalcodestyle";
   }
 
-  private void onDelete() {
-    final CodeStyleScheme scheme = getSelectedScheme();
-    mySettingsStack.removeScheme(scheme);
-    ((DefaultComboBoxModel)myCombo.getModel()).removeElement(scheme);
-  }
-
-  private void onSaveAs() {
-    CodeStyleScheme[] schemes = CodeStyleSchemes.getInstance().getSchemes();
-    ArrayList<String> names = new ArrayList<String>();
-    for (int i = 0; i < schemes.length; i++) {
-      CodeStyleScheme scheme = schemes[i];
-      names.add(scheme.getName());
-    }
-    SaveSchemeDialog saveDialog = new SaveSchemeDialog(myPanel, ApplicationBundle.message("title.save.code.style.scheme.as"), names);
-    saveDialog.show();
-    if (saveDialog.isOK()) {
-      CodeStyleScheme selectedScheme = getSelectedScheme();
-      CodeStyleScheme newScheme = CodeStyleSchemes.getInstance().createNewScheme(saveDialog.getSchemeName(),
-                                                                                 selectedScheme);
-      mySettingsStack.addScheme(newScheme);
-      ((DefaultComboBoxModel)myCombo.getModel()).addElement(newScheme);
-      myCombo.setSelectedItem(newScheme);
-    }
-  }
-
-  private void onCombo() {
-    if (myPanel == null) return; // disposed.
-
-    CodeStyleScheme selected = getSelectedScheme();
-    if (selected != null) {
-      mySettingsStack.selectScheme(selected);
-      updateButtons();
-    }
-  }
-
-  private void updateButtons() {
-    boolean deleteEnabled = false;
-    boolean saveAsEnabled = true;
-    CodeStyleScheme selected = getSelectedScheme();
-    if (selected != null) {
-      deleteEnabled = !cannotBeDeleted(selected);
-    }
-    myDeleteButton.setEnabled(deleteEnabled);
-    if (myExportButton != null) {
-      myExportButton.setEnabled(!cannotBeModified(selected));
-    }
-    mySaveAsButton.setEnabled(saveAsEnabled);
-  }
-
-  private CodeStyleScheme getSelectedScheme() {
-    Object selected = myCombo.getSelectedItem();
-    if (selected instanceof CodeStyleScheme) {
-      return (CodeStyleScheme)selected;
-    }
-    return null;
-  }
-
-  private void initCombobox() {
-    CodeStyleScheme[] schemes = CodeStyleSchemes.getInstance().getSchemes();
-    Vector schemesVector = new Vector();
-    for (int i = 0; i < schemes.length; i++) {
-      schemesVector.addElement(schemes[i]);
-      mySettingsStack.addScheme(schemes[i]);
-    }
-    DefaultComboBoxModel model = new DefaultComboBoxModel(schemesVector);
-    myCombo.setModel(model);
-    myCombo.setSelectedItem(CodeStyleSchemes.getInstance().getCurrentScheme());
-    if (myCombo.getSelectedItem() == null) {
-      if (myCombo.getItemCount() > 0) {
-        myCombo.setSelectedIndex(0);
-      }
-    }
-    updateButtons();
-  }
-
-  public static CodeStyleSchemesConfigurable getInstance() {
-    return ShowSettingsUtil.getInstance().findApplicationConfigurable(CodeStyleSchemesConfigurable.class);
+  public static CodeStyleSchemesConfigurable getInstance(Project project) {
+    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, CodeStyleSchemesConfigurable.class);
   }
 
   public void selectPage(Class pageToSelect) {
-    getActivePanel().selectTab(pageToSelect);
+    //TODO lesya
+    //getActivePanel().selectTab(pageToSelect);
+  }
+
+  public boolean isModified() {
+    boolean schemeListModified = myModel.isSchemeListModified();
+    if (schemeListModified) {
+      myApplyCompleted = false;
+      myRevertCompleted = false;
+    }
+    return schemeListModified;
   }
 
   public String getId() {
     return "preferences.sourceCode";
   }
 
-  @Nullable
-  public Runnable enableSearch(String option) {
-    myOption = option;
-    return new Runnable (){
-      public void run() {
-        //do nothing
-      }
-    };
-  }
-
   public HashSet<OptionDescription> processOptions() {
-    return getActivePanel().processOptions();
+    return new HashSet<OptionDescription>();
+    //TODO lesya
+    //return getActivePanel().processOptions();
   }
 }
