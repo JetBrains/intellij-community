@@ -15,6 +15,7 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
+import com.intellij.facet.impl.ui.VersionConfigurable;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -177,7 +178,7 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
     }
 
     public GroovyVersionConfigurable(Project project, String defaultVersion) {
-      super(getVersions(), defaultVersion);
+      super(GroovyFacetSupportProvider.this, getVersions(), defaultVersion);
       myFacetEditor = new GroovyFacetEditor(project, getDefaultVersion());
     }
   }
