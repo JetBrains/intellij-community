@@ -33,14 +33,12 @@ public class OptionsEditorDialog extends DialogWrapper {
 
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
-    myProject = project;
-    init(project, groups, preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups));
+    init(project, groups, preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups, project));
   }
 
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, @NotNull String preselectedConfigurableDisplayName) {
     super(project, true);
-    myProject = project;
-    init(project, groups, getPreselectedByDisplayName(groups, preselectedConfigurableDisplayName));
+    init(project, groups, getPreselectedByDisplayName(groups, preselectedConfigurableDisplayName, project));
   }
 
   private void init(final Project project, final ConfigurableGroup[] groups, final Configurable preselected) {
@@ -53,10 +51,11 @@ public class OptionsEditorDialog extends DialogWrapper {
     init();
   }
 
-  private Configurable getPreselectedByDisplayName(final ConfigurableGroup[] groups, final String preselectedConfigurableDisplayName) {
+  private static Configurable getPreselectedByDisplayName(final ConfigurableGroup[] groups, final String preselectedConfigurableDisplayName,
+                                                   final Project project) {
     Configurable result = findPreselectedByDisplyName(preselectedConfigurableDisplayName, groups);
 
-    return result == null ? findLastSavedConfigurable(groups) : result;
+    return result == null ? findLastSavedConfigurable(groups, project) : result;
   }
 
   protected JComponent createCenterPanel() {
@@ -131,8 +130,8 @@ public class OptionsEditorDialog extends DialogWrapper {
   }
 
   @Nullable
-  private Configurable findLastSavedConfigurable(ConfigurableGroup[] groups) {
-    final String id = PropertiesComponent.getInstance(myProject).getValue(OptionsEditor.LAST_SELECTED_CONFIGURABLE);
+  private static Configurable findLastSavedConfigurable(ConfigurableGroup[] groups, final Project project) {
+    final String id = PropertiesComponent.getInstance(project).getValue(OptionsEditor.LAST_SELECTED_CONFIGURABLE);
     if (id == null) return null;
 
     final java.util.List<Configurable> all = SearchUtil.expand(groups);
@@ -147,7 +146,7 @@ public class OptionsEditorDialog extends DialogWrapper {
   }
 
   @Nullable
-  private Configurable findPreselectedByDisplyName(final String preselectedConfigurableDisplayName,ConfigurableGroup[] groups) {
+  private static Configurable findPreselectedByDisplyName(final String preselectedConfigurableDisplayName,ConfigurableGroup[] groups) {
     final java.util.List<Configurable> all = SearchUtil.expand(groups);
     for (Configurable each : all) {
       if (preselectedConfigurableDisplayName.equals(each.getDisplayName())) return each;
