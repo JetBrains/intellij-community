@@ -74,47 +74,6 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
       pass.applyInformationToEditor();
     }
 
-
-    //if (doFolding()) {
-    //  final CodeFoldingPassFactory factory = getProject().getComponent(CodeFoldingPassFactory.class);
-    //  final TextEditorHighlightingPass highlightingPass = factory.createHighlightingPass(myFile, myEditor);
-    //  highlightingPass.collectInformation(progress);
-    //  highlightingPass.applyInformationToEditor();
-    //}
-
-    //GeneralHighlightingPassFactory gpf = getProject().getComponent(GeneralHighlightingPassFactory.class);
-    //TextEditorHighlightingPass ghp = gpf.createHighlightingPass(getFile(), getEditor());
-    //ghp.collectInformation(progress);
-    //Set<HighlightInfo> result = new HashSet<HighlightInfo>(ghp.getHighlights());
-    //
-    //PostHighlightingPassFactory phpFactory = getProject().getComponent(PostHighlightingPassFactory.class);
-    //TextEditorHighlightingPass php = phpFactory.createHighlightingPass(getFile(), getEditor());
-    //if (php != null) { //possible in CreateFileFromUsageTest
-    //  php.collectInformation(progress);
-    //  result.addAll(php.getHighlights());
-    //}
-    //
-    //LocalInspectionsPassFactory lipf = getProject().getComponent(LocalInspectionsPassFactory.class);
-    //TextEditorHighlightingPass lip = lipf.createHighlightingPass(getFile(), getEditor());
-    //lip.collectInformation(progress);
-    //result.addAll(lip.getHighlights());
-    //
-    //LineMarkersPassFactory lmf = getProject().getComponent(LineMarkersPassFactory.class);
-    //TextEditorHighlightingPass markersPass = lmf.createHighlightingPass(getFile(), getEditor());
-    //markersPass.collectInformation(progress);
-    //
-    //SlowLineMarkersPassFactory smf = getProject().getComponent(SlowLineMarkersPassFactory.class);
-    //TextEditorHighlightingPass slowPass = smf.createHighlightingPass(getFile(), getEditor());
-    //slowPass.collectInformation(progress);
-    //
-    //ghp.applyInformationToEditor();
-    //if (php != null) {
-    //  php.applyInformationToEditor();
-    //}
-    //lip.applyInformationToEditor();
-    //markersPass.applyInformationToEditor();
-    //slowPass.applyInformationToEditor();
-
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
     return infos == null ? Collections.<HighlightInfo>emptyList() : infos;
   }

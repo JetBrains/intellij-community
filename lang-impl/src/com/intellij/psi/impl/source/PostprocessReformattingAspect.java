@@ -46,7 +46,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   private volatile int myDisabledCounter = 0;
   private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
-  private ApplicationListener myApplicationListener = new ApplicationAdapter() {
+  private final ApplicationListener myApplicationListener = new ApplicationAdapter() {
     public void writeActionStarted(final Object action) {
       final CommandProcessor processor = CommandProcessor.getInstance();
       if (processor != null) {

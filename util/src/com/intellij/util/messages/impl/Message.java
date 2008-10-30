@@ -24,9 +24,9 @@ import com.intellij.util.messages.Topic;
 import java.lang.reflect.Method;
 
 public final class Message {
-  private Topic myTopic;
-  private Method myListenerMethod;
-  private Object[] myArgs;
+  private final Topic myTopic;
+  private final Method myListenerMethod;
+  private final Object[] myArgs;
 
   public Message(final Topic topic, final Method listenerMethod, final Object[] args) {
     myTopic = topic;
