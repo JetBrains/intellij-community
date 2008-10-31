@@ -370,8 +370,15 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   public JComponent getPanel() {
-    myPanelWrapper = new JPanel(new GridBagLayout());
-    myPanelWrapper.setPreferredSize(new Dimension(200, 800));
+    myPanelWrapper = new JPanel(new GridBagLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        final Dimension oldSize = super.getPreferredSize();
+        oldSize.width = 200;
+        return oldSize;
+      }
+    };
+    //myPanelWrapper.setPreferredSize(new Dimension(200, 800));
     final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     myPanelWrapper.add(myPanel, gb);
