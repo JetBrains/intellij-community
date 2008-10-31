@@ -371,12 +371,36 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private void fireModificationForItem(final Configurable configurable) {
-    if (myConfigurable2Content.containsKey(configurable)) {
-      if (configurable != null && configurable.isModified()) {
-        getContext().fireModifiedAdded(configurable, null);
-      } else if (configurable != null && !configurable.isModified() && !getContext().getErrors().containsKey(configurable)) {
-        getContext().fireModifiedRemoved(configurable, null);
+    if (configurable != null) {
+      if (!myConfigurable2Content.containsKey(configurable) && isParentWithContent(configurable)) {
+
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          public void run() {
+            initConfigurable(configurable, new ActionCallback(){
+              @Override
+              public void setDone() {
+                fireModifiationInt(configurable);
+              }
+            });
+          }
+        });
       }
+      else if (myConfigurable2Content.containsKey(configurable)) {
+        fireModifiationInt(configurable);
+      }
+    }
+  }
+
+  private static boolean isParentWithContent(final Configurable configurable) {
+    return configurable instanceof SearchableConfigurable.Parent &&
+        ((SearchableConfigurable.Parent)configurable).hasOwnContent();
+  }
+
+  private void fireModifiationInt(final Configurable configurable) {
+    if (configurable.isModified()) {
+      getContext().fireModifiedAdded(configurable, null);
+    } else if (!configurable.isModified() && !getContext().getErrors().containsKey(configurable)) {
+      getContext().fireModifiedRemoved(configurable, null);
     }
   }
 

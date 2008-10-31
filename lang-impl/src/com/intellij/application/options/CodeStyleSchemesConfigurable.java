@@ -45,6 +45,10 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     return myRootSchemesPanel.getPanel();
   }
 
+  @Override
+  public boolean hasOwnContent() {
+    return true;
+  }
 
   @Override
   public void disposeUIResources() {
