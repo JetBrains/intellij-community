@@ -2,6 +2,8 @@ package com.intellij.util.containers.hash;
 
 
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 
@@ -106,7 +108,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
 
 
-  public V put(final K key, final V value) {
+  public V put(final K key, @NotNull final V value) {
 
     final Entry<K, V>[] table = this.table;
 
