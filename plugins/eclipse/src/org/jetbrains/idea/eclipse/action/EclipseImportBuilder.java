@@ -188,7 +188,10 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
       return false;
     }
 
-    if (!ProjectMacrosUtil.checkMacros(dstProject, ideaProjectModel.getVariables())) {
+    final HashMap<String, String> map = new HashMap<String, String>();
+    map.keySet().addAll(ideaProjectModel.getVariables());
+
+    if (!ProjectMacrosUtil.checkMacros(dstProject, map)) {
       return false;
     }
 
