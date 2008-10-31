@@ -40,6 +40,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   @Nullable
   public abstract VirtualFile getFile(@NotNull FileEditor editor);
 
+  public abstract void updateFilePresentation(VirtualFile file);
+
   /**
    *
    * @return current window in splitters

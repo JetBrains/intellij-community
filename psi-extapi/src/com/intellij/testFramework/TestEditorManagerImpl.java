@@ -167,6 +167,9 @@ import java.util.Map;
     return LIGHT_VIRTUAL_FILE;
   }
 
+  public void updateFilePresentation(VirtualFile file) {
+  }
+
   public void unsplitWindow() {
     //To change body of implemented methods use File | Settings | File Templates.
   }

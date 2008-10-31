@@ -142,6 +142,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return file.getPresentableUrl();
   }
 
+  public void updateFilePresentation(VirtualFile file) {
+    if (!isFileOpen(file)) return;
+
+    updateFileColor(file);
+    updateFileIcon(file);
+    updateFileName(file);
+  }
 
   /**
    * Updates tab color for the specified <code>file</code>. The <code>file</code>
