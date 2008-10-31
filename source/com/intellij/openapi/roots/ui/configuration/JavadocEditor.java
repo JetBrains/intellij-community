@@ -5,8 +5,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
@@ -49,7 +49,7 @@ public class JavadocEditor extends ModuleElementsEditor {
   }
 
   public String getHelpTopic() {
-    return "project.paths.javadoc";
+    return "projectStructure.modules.paths";
   }
 
   public String getDisplayName() {

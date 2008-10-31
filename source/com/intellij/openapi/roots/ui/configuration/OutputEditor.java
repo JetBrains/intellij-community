@@ -81,6 +81,6 @@ public class OutputEditor extends ModuleElementsEditor {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return "project.paths.javadoc";
+    return "projectStructure.modules.paths";
   }
 }

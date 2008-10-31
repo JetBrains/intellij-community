@@ -96,7 +96,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   public String getHelpTopic() {
-    return "project.paths.paths";
+    return "projectStructure.modules.sources";
   }
 
   public String getDisplayName() {

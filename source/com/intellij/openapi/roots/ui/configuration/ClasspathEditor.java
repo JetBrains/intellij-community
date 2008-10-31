@@ -56,7 +56,7 @@ public class ClasspathEditor extends ModuleElementsEditor {
   }
 
   public String getHelpTopic() {
-    return "project.paths.order";
+    return "projectStructure.modules.dependencies";
   }
 
   public String getDisplayName() {
