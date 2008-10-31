@@ -258,6 +258,8 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   public JComponent createComponent() {
     reinintWholePanelIfNeeded();
 
+    updateSelectionFromTree();
+
     SwingUtilities.updateComponentTreeUI(myWholePanel);
     final JPanel panel = new JPanel(new BorderLayout()) {
       public Dimension getPreferredSize() {
