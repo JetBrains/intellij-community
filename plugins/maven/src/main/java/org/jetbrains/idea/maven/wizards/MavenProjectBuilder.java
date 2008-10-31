@@ -70,17 +70,19 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
   }
 
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().generalSettings = getGeneralSettings();
-    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().importingSettings = getImportingSettings();
-    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().downloadingSettings = getDownloadingSettings();
+    MavenWorkspaceSettings settings = project.getComponent(MavenWorkspaceSettingsComponent.class).getState();
+
+    settings.generalSettings = getGeneralSettings();
+    settings.importingSettings = getImportingSettings();
+    settings.downloadingSettings = getDownloadingSettings();
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
     manager.setManagedFiles(myFiles);
     manager.setActiveProfiles(mySelectedProfiles);
     manager.setImportedMavenProjectModelManager(myMavenProjectTree);
-    final List<Module> moduleList = manager.commit(model, modulesProvider);
 
+    List<Module> moduleList = manager.commit(model, modulesProvider);
     enusreRepositoryPathMacro();
     return moduleList;
   }

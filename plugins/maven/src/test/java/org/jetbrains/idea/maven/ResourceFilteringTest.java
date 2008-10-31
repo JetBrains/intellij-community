@@ -37,6 +37,38 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("target/classes/file.properties", "value=1");
   }
 
+  public void testPomVersionInModules() throws Exception {
+    createProjectSubFile("m1/resources/file.properties").setBinaryContent("value=${pom.version}".getBytes());
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>2</version>" +
+
+                    "<build>" +
+                    "  <resources>" +
+                    "    <resource>" +
+                    "      <directory>resources</directory>" +
+                    "      <filtering>true</filtering>" +
+                    "    </resource>" +
+                    "  </resources>" +
+                    "</build>");
+    importProject();
+    
+    assertSources("m1", "resources");
+    compileModules("project", "m1");
+
+    assertResult("m1/target/classes/file.properties", "value=2");
+  }
+
   public void testFilteringTestResources() throws Exception {
     createProjectSubFile("resources/file.properties").setBinaryContent("value=${project.version}".getBytes());
 

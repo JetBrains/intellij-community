@@ -125,7 +125,7 @@ public class MavenProjectsTree {
                                             ? new HashSet<MavenProjectModel>()
                                             : findInheritors(project);
 
-    // todo hook for IDEADEV-27583
+    // todo hook for IDEADEV-31568
     if (isNew) {
       VirtualFile f = project.getFile();
       if (readFiles.contains(f)) {
