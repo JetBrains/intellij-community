@@ -53,7 +53,7 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   private void addChange(final Change change) {
     final FilePath path = ChangesUtil.getFilePath(change);
     final VirtualFile vf = path.getVirtualFile();
-    if ((vf != null) && (mergeinfoChanged(path.getIOFile()) || myFiles.containsFile(vf)) && (! myCheckSet.contains(vf))) {
+    if ((mergeinfoChanged(path.getIOFile()) || ((vf != null) && myFiles.containsFile(vf))) && (! myCheckSet.contains(vf))) {
       myCheckSet.add(vf);
       myChanges.add(change);
     }
