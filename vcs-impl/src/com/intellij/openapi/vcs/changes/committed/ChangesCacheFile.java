@@ -121,10 +121,10 @@ public class ChangesCacheFile {
           }
         }
         if (duplicate) {
-          LOG.info("Skipping duplicate changelist " + list.getNumber());
+          debug("Skipping duplicate changelist " + list.getNumber());
           continue;
         }
-        LOG.info("Writing incoming changelist " + list.getNumber());
+        debug("Writing incoming changelist " + list.getNumber());
         result.add(list);
         long position = myStream.getFilePointer();
         //noinspection unchecked
@@ -140,6 +140,10 @@ public class ChangesCacheFile {
       closeStreams();
     }
     return result;
+  }
+
+  private static void debug(@NonNls String message) {
+    LOG.debug(message);
   }
 
   private void updateCachedRange(final CommittedChangeList list) {
@@ -191,7 +195,7 @@ public class ChangesCacheFile {
     myStream.writeLong(myLastCachedChangelist);
     myStream.writeShort(myHaveCompleteHistory ? 1 : 0);
     myStream.writeInt(myIncomingCount);
-    LOG.info("Saved header for cache of " + myLocation + ": last cached date=" + myLastCachedDate +
+    debug("Saved header for cache of " + myLocation + ": last cached date=" + myLastCachedDate +
              ", last cached number=" + myLastCachedChangelist + ", incoming count=" + myIncomingCount);
   }
 
@@ -453,7 +457,7 @@ public class ChangesCacheFile {
         }
         offset++;
       }
-      LOG.info("Loaded " + result.size() + " incoming changelists");
+      debug("Loaded " + result.size() + " incoming changelists");
     }
     finally {
       closeStreams();
@@ -493,7 +497,7 @@ public class ChangesCacheFile {
   private void saveIncoming(final IncomingChangeListData data) throws IOException {
     writePartial(data);
     if (data.accountedChanges.size() == data.changeList.getChanges().size()) {
-      LOG.info("Removing changelist " + data.changeList.getNumber() + " from incoming changelists");
+      debug("Removing changelist " + data.changeList.getNumber() + " from incoming changelists");
       myIndexStream.seek(data.indexOffset);
       writeIndexEntry(data.indexEntry.number, data.indexEntry.date, data.indexEntry.offset, true);
       myIncomingCount--;
@@ -528,7 +532,7 @@ public class ChangesCacheFile {
                                      final List<IncomingChangeListData> incomingData,
                                      final ReceivedChangeListTracker tracker) {
     boolean foundRevision = false;
-    LOG.info("Processing updated file " + path + ", revision " + number);
+    debug("Processing updated file " + path + ", revision " + number);
     for(IncomingChangeListData data: incomingData) {
       for(Change change: data.changeList.getChanges()) {
         ContentRevision afterRevision = change.getAfterRevision();
@@ -544,7 +548,7 @@ public class ChangesCacheFile {
         }
       }
     }
-    LOG.info(foundRevision ? "All changes for file found" : "Some of changes for file not found");
+    debug(foundRevision ? "All changes for file found" : "Some of changes for file not found");
     return !foundRevision;
   }
 
@@ -583,7 +587,7 @@ public class ChangesCacheFile {
         }
       }
     }
-    LOG.info("Loaded " + incomingData.size() + " incoming changelist pointers");
+    debug("Loaded " + incomingData.size() + " incoming changelist pointers");
     return incomingData;
   }
 
@@ -695,7 +699,7 @@ public class ChangesCacheFile {
         myDeletedFiles = new HashSet<FilePath>();
         myCreatedFiles = new HashSet<FilePath>();
         for(IncomingChangeListData data: list) {
-          LOG.info("Checking incoming changelist " + data.changeList.getNumber());
+          debug("Checking incoming changelist " + data.changeList.getNumber());
           boolean updated = false;
           for(Change change: data.changeList.getChanges()) {
             if (data.accountedChanges.contains(change)) continue;
@@ -732,39 +736,39 @@ public class ChangesCacheFile {
         }
         if (change.getBeforeRevision() == null) {
           final FilePath path = afterRevision.getFile();
-          LOG.info("Marking created file " + path);
+          debug("Marking created file " + path);
           myCreatedFiles.add(path);
         }
         if (incomingFiles != null && !incomingFiles.contains(afterRevision.getFile())) {
-          LOG.info("Skipping new/changed file outside of incoming files: " + afterRevision.getFile());
+          debug("Skipping new/changed file outside of incoming files: " + afterRevision.getFile());
           return true;
         }
-        LOG.info("Checking file " + afterRevision.getFile().getPath());
+        debug("Checking file " + afterRevision.getFile().getPath());
         FilePath localPath = ChangesUtil.getLocalPath(myProject, afterRevision.getFile());
 
         if (! FileUtil.isAncestor(myRootPath.getIOFile(), localPath.getIOFile(), false)) {
           // alien change in list; skip
-          LOG.info("Alien path " + localPath.getPresentableUrl() + " under root " + myRootPath.getPresentableUrl() + "; skipping.");
+          debug("Alien path " + localPath.getPresentableUrl() + " under root " + myRootPath.getPresentableUrl() + "; skipping.");
           return true;
         }
 
         localPath.refresh();
         VirtualFile file = localPath.getVirtualFile();
         if (isDeletedFile(myDeletedFiles, afterRevision)) {
-          LOG.info("Found deleted file");
+          debug("Found deleted file");
           return true;
         }
         else if (file != null) {
           VcsRevisionNumber revision = myCurrentRevisions.get(file);
           if (revision != null) {
-            LOG.info("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
+            debug("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
             //noinspection unchecked
             if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber(), changeList)) {
               return true;
             }
           }
           else {
-            LOG.info("Failed to fetch revision");
+            debug("Failed to fetch revision");
           }
         }
         else {
@@ -773,33 +777,33 @@ public class ChangesCacheFile {
             return true;
           }
           if (fileMarkedForDeletion(localPath)) {
-            LOG.info("File marked for deletion and not committed jet.");
+            debug("File marked for deletion and not committed jet.");
             return true;
           }
           if (wasSubsequentlyDeleted(afterRevision.getFile(), changeListData.indexOffset)) {
             return true;
           }
-          LOG.info("Could not find local file for change " + afterRevision.getFile().getPath());
+          debug("Could not find local file for change " + afterRevision.getFile().getPath());
         }
       }
       else {
         ContentRevision beforeRevision = change.getBeforeRevision();
         assert beforeRevision != null;
-        LOG.info("Checking deleted file " + beforeRevision.getFile());
+        debug("Checking deleted file " + beforeRevision.getFile());
         myDeletedFiles.add(beforeRevision.getFile());
         if (incomingFiles != null && !incomingFiles.contains(beforeRevision.getFile())) {
-          LOG.info("Skipping deleted file outside of incoming files: " + beforeRevision.getFile());
+          debug("Skipping deleted file outside of incoming files: " + beforeRevision.getFile());
           return true;
         }
         beforeRevision.getFile().refresh();
         if (beforeRevision.getFile().getVirtualFile() == null || myCreatedFiles.contains(beforeRevision.getFile())) {
           // if not deleted from vcs, mark as incoming, otherwise file already deleted
           final boolean locallyDeleted = myClManager.getDeletedFiles().contains(beforeRevision.getFile());
-          LOG.info(locallyDeleted ? "File deleted locally, change marked as incoming" : "File already deleted");
+          debug(locallyDeleted ? "File deleted locally, change marked as incoming" : "File already deleted");
           return !locallyDeleted;
         }
         else if (!myVcs.fileExistsInVcs(beforeRevision.getFile())) {
-          LOG.info("File exists locally and is unversioned");
+          debug("File exists locally and is unversioned");
           return true;
         }
         else {
@@ -807,10 +811,10 @@ public class ChangesCacheFile {
           final VcsRevisionNumber currentRevision = myCurrentRevisions.get(file);
           if ((currentRevision != null) && (currentRevision.compareTo(beforeRevision.getRevisionNumber()) > 0)) {
             // revived in newer revision - possibly was added file with same name
-            LOG.info("File with same name was added after file deletion");
+            debug("File with same name was added after file deletion");
             return true;
           }
-          LOG.info("File exists locally and no 'create' change found for it");
+          debug("File exists locally and no 'create' change found for it");
         }
       }
       return false;
@@ -847,14 +851,14 @@ public class ChangesCacheFile {
             if ((beforeRevision != null) && (c.getAfterRevision() == null)) {
               if (file.getIOFile().getAbsolutePath().equals(beforeRevision.getFile().getIOFile().getAbsolutePath()) ||
                   file.isUnder(beforeRevision.getFile(), false)) {
-                LOG.info("Found subsequent deletion for file " + file);
+                debug("Found subsequent deletion for file " + file);
                 return true;
               }
             } else if ((beforeRevision != null) && (c.getAfterRevision() != null) &&
                        (beforeRevision.getFile().getIOFile().getAbsolutePath().equals(
                          c.getAfterRevision().getFile().getIOFile().getAbsolutePath()))) {
               if (file.isUnder(beforeRevision.getFile(), true) && c.isIsReplaced()) {
-                LOG.info("For " + file + "some of parents is replaced: " + beforeRevision.getFile());
+                debug("For " + file + "some of parents is replaced: " + beforeRevision.getFile());
                 return true;
               }
             }
