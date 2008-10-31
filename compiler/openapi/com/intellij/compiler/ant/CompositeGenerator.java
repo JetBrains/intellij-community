@@ -24,32 +24,87 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * A composite generator
+ *
  * @author Eugene Zhuravlev
  *         Date: Mar 25, 2004
  */
-public class CompositeGenerator extends Generator{
-  private final List<Pair<Generator, Integer>> myGenerators = new ArrayList<Pair<Generator,Integer>>();
+public class CompositeGenerator extends Generator {
+  /**
+   * child generators
+   */
+  private final List<Pair<Generator, Integer>> myGenerators = new ArrayList<Pair<Generator, Integer>>();
+  /**
+   * New line property
+   */
+  private boolean hasLeadingNewline = true;
 
+  /**
+   * A constructor
+   */
   public CompositeGenerator() {
   }
 
+  /**
+   * A constructor that adds two elements
+   *
+   * @param generator1      the first generator
+   * @param generator2      the second generator
+   * @param emptyLinesCount the amount of new lines between two generators
+   */
   public CompositeGenerator(Generator generator1, Generator generator2, int emptyLinesCount) {
     add(generator1);
     add(generator2, emptyLinesCount);
   }
 
+  /**
+   * By default, the composite generator generates an empty newline before generating nested eleemnts.
+   * Setting the property to the false, allows suppressing it.
+   *
+   * @param value the new value of the property
+   */
+  public void setHasLeadingNewline(boolean value) {
+    hasLeadingNewline = value;
+  }
+
+  /**
+   * Add child generator with no emtpy lines before it
+   *
+   * @param generator the generator to add
+   */
   public final void add(Generator generator) {
     add(generator, 0);
   }
 
+  /**
+   * Add child generator with the specified amount of empty lines before it
+   *
+   * @param generator       a generator
+   * @param emptyLinesCount amount of empty lines
+   */
   public final void add(Generator generator, int emptyLinesCount) {
     myGenerators.add(new Pair<Generator, Integer>(generator, new Integer(emptyLinesCount)));
   }
 
+  /**
+   * Generate content.
+   *
+   * @param out output stream
+   * @throws IOException in case of IO propblem
+   * @see #setHasLeadingNewline(boolean)
+   */
   public void generate(PrintWriter out) throws IOException {
-    for (final Pair<Generator, Integer> myGenerator : myGenerators) {
-      final Pair<Generator, Integer> pair = (Pair<Generator, Integer>)myGenerator;
-      crlf(out);
+    boolean first = true;
+    for (final Pair<Generator, Integer> pair : myGenerators) {
+      if (first) {
+        if (hasLeadingNewline) {
+          crlf(out);
+        }
+        first = false;
+      }
+      else {
+        crlf(out);
+      }
       final int emptyLinesCount = pair.getSecond().intValue();
       for (int idx = 0; idx < emptyLinesCount; idx++) {
         crlf(out);
@@ -58,6 +113,9 @@ public class CompositeGenerator extends Generator{
     }
   }
 
+  /**
+   * @return amount of the child generators
+   */
   public final int getGeneratorCount() {
     return myGenerators.size();
   }

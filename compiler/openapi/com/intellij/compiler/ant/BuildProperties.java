@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -50,6 +51,7 @@ public abstract class BuildProperties extends CompositeGenerator {
   public static final @NonNls String PROPERTY_PROJECT_JDK_BIN = "project.jdk.bin";
   public static final @NonNls String PROPERTY_PROJECT_JDK_CLASSPATH = "project.jdk.classpath";
   public static final @NonNls String PROPERTY_SKIP_TESTS = "skip.tests";
+  public static final @NonNls String PROPERTY_LIBRARIES_PATTERNS = "library.patterns";
 
   protected abstract void createJdkGenerators(Project project);
 
@@ -65,107 +67,134 @@ public abstract class BuildProperties extends CompositeGenerator {
     return jdks.toArray(new Sdk[jdks.size()]);
   }
 
-  public static @NonNls
-  String getPropertyFileName(Project project) {
+  @NonNls
+  public static String getPropertyFileName(Project project) {
     return getProjectBuildFileName(project) + ".properties";
   }
 
-  public static @NonNls String getJdkPathId(@NonNls final String jdkName) {
+  @NonNls
+  public static String getJdkPathId(@NonNls final String jdkName) {
     return "jdk.classpath." + convertName(jdkName);
   }
 
-  public static @NonNls String getModuleChunkJdkClasspathProperty(@NonNls final String moduleChunkName) {
+  @NonNls
+  public static String getModuleChunkJdkClasspathProperty(@NonNls final String moduleChunkName) {
     return "module.jdk.classpath." + convertName(moduleChunkName);
   }
 
-  public static @NonNls String getModuleChunkJdkHomeProperty(@NonNls final String moduleChunkName) {
+  @NonNls
+  public static String getModuleChunkJdkHomeProperty(@NonNls final String moduleChunkName) {
     return "module.jdk.home." + convertName(moduleChunkName);
   }
 
-  public static @NonNls String getModuleChunkJdkBinProperty(@NonNls final String moduleChunkName) {
+  @NonNls
+  public static String getModuleChunkJdkBinProperty(@NonNls final String moduleChunkName) {
     return "module.jdk.bin." + convertName(moduleChunkName);
   }
 
-  public static @NonNls String getModuleChunkCompilerArgsProperty(@NonNls final String moduleName) {
+  @NonNls
+  public static String getModuleChunkCompilerArgsProperty(@NonNls final String moduleName) {
     return "compiler.args." + convertName(moduleName);
   }
 
-  public static @NonNls String getLibraryPathId(@NonNls final String libraryName) {
+  @NonNls
+  public static String getLibraryPathId(@NonNls final String libraryName) {
     return "library." + convertName(libraryName) + ".classpath";
   }
 
-  public static @NonNls String getJdkHomeProperty(@NonNls final String jdkName) {
+  @NonNls
+  public static String getJdkHomeProperty(@NonNls final String jdkName) {
     return "jdk.home." + convertName(jdkName);
   }
 
-  public static @NonNls String getJdkBinProperty(@NonNls final String jdkName) {
+  @NonNls
+  public static String getJdkBinProperty(@NonNls final String jdkName) {
     return "jdk.bin." + convertName(jdkName);
   }
 
-  public static @NonNls String getCompileTargetName(@NonNls String moduleName) {
+  @NonNls
+  public static String getCompileTargetName(@NonNls String moduleName) {
     return "compile.module." + convertName(moduleName);
   }
 
-  public static @NonNls String getOutputPathProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getOutputPathProperty(@NonNls String moduleName) {
     return convertName(moduleName) + ".output.dir";
   }
 
-  public static @NonNls String getOutputPathForTestsProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getOutputPathForTestsProperty(@NonNls String moduleName) {
     return convertName(moduleName) + ".testoutput.dir";
   }
 
-  public static @NonNls String getClasspathProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getClasspathProperty(@NonNls String moduleName) {
     return convertName(moduleName) + ".module.classpath";
   }
 
-  public static @NonNls String getRuntimeClasspathProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getRuntimeClasspathProperty(@NonNls String moduleName) {
     return convertName(moduleName) + ".runtime.module.classpath";
   }
 
-  public static @NonNls String getBootClasspathProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getBootClasspathProperty(@NonNls String moduleName) {
     return convertName(moduleName) + ".module.bootclasspath";
   }
 
-  public static @NonNls String getSourcepathProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getSourcepathProperty(@NonNls String moduleName) {
     return convertName(moduleName) + ".module.sourcepath";
   }
 
-  public static @NonNls String getTestSourcepathProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getTestSourcepathProperty(@NonNls String moduleName) {
     return convertName(moduleName) + ".module.test.sourcepath";
   }
 
-  public static @NonNls String getExcludedFromModuleProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getExcludedFromModuleProperty(@NonNls String moduleName) {
     return "excluded.from.module." + convertName(moduleName);
   }
 
-  public static @NonNls String getExcludedFromCompilationProperty(@NonNls String moduleName) {
+  @NonNls
+  public static String getExcludedFromCompilationProperty(@NonNls String moduleName) {
     return "excluded.from.compilation." + convertName(moduleName);
   }
 
-  public static @NonNls String getProjectBuildFileName(Project project) {
+  @NonNls
+  public static String getProjectBuildFileName(Project project) {
     return convertName(project.getName());
   }
 
-  public static @NonNls String getModuleChunkBuildFileName(final ModuleChunk chunk) {
+  @NonNls
+  public static String getModuleChunkBuildFileName(final ModuleChunk chunk) {
     return "module_" + convertName(chunk.getName());
   }
 
-  public static @NonNls String getModuleCleanTargetName(@NonNls String moduleName) {
+  @NonNls
+  public static String getModuleCleanTargetName(@NonNls String moduleName) {
     return "clean.module." + convertName(moduleName);
   }
 
-  public static @NonNls String getModuleChunkBasedirProperty(ModuleChunk chunk) {
+  @NonNls
+  public static String getModuleChunkBasedirProperty(ModuleChunk chunk) {
     return "module." + convertName(chunk.getName()) + ".basedir";
   }
 
   /**
    * left for compatibility
+   *
+   * @param module the module to get property for
+   * @return name of the property
    */
-  public static @NonNls String getModuleBasedirProperty(Module module) {
+  @NonNls
+  public static String getModuleBasedirProperty(Module module) {
     return "module." + convertName(module.getName()) + ".basedir";
   }
 
-  public static @NonNls String getProjectBaseDirProperty() {
+  @NonNls
+  public static String getProjectBaseDirProperty() {
     return "basedir";
   }
 
@@ -174,7 +203,9 @@ public abstract class BuildProperties extends CompositeGenerator {
   }
 
   public static File getProjectBaseDir(final Project project) {
-    return VfsUtil.virtualToIoFile(project.getBaseDir());
+    final VirtualFile baseDir = project.getBaseDir();
+    assert baseDir != null;
+    return VfsUtil.virtualToIoFile(baseDir);
   }
 
   /**
@@ -183,16 +214,19 @@ public abstract class BuildProperties extends CompositeGenerator {
    * @param name a name to convert
    * @return a converted name
    */
-  public static @NonNls String convertName(@NonNls final String name) {
+  @NonNls
+  public static String convertName(@NonNls final String name) {
     //noinspection HardCodedStringLiteral
     return name.replaceAll("\"", "").replaceAll("\\s+", "_").toLowerCase();
   }
 
-  public static @NonNls String getPathMacroProperty(@NonNls String pathMacro) {
+  @NonNls
+  public static String getPathMacroProperty(@NonNls String pathMacro) {
     return "path.variable." + convertName(pathMacro);
   }
 
-  public static @NonNls String propertyRef(@NonNls String propertyName) {
+  @NonNls
+  public static String propertyRef(@NonNls String propertyName) {
     return "${" + propertyName + "}";
   }
 
@@ -207,7 +241,8 @@ public abstract class BuildProperties extends CompositeGenerator {
     return canonicalFile;
   }
 
-  public static @NonNls String getTempDirForModuleProperty(@NonNls String moduleName) {
-    return "tmp.dir."+ convertName(moduleName);
+  @NonNls
+  public static String getTempDirForModuleProperty(@NonNls String moduleName) {
+    return "tmp.dir." + convertName(moduleName);
   }
 }

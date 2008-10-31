@@ -4,8 +4,10 @@
  */
 package com.intellij.compiler.ant;
 
+import com.intellij.compiler.ant.taskdefs.FileSet;
 import com.intellij.compiler.ant.taskdefs.Path;
 import com.intellij.compiler.ant.taskdefs.PathElement;
+import com.intellij.compiler.ant.taskdefs.PatternSetRef;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -15,14 +17,13 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -83,22 +84,83 @@ public class LibraryDefinitionsGeneratorFactory {
     }
     for (final Library library : sortedLibs.values()) {
       final String libraryName = library.getName();
-      final VirtualFile[] files = library.getFiles(OrderRootType.COMPILATION_CLASSES);
       final Path libraryPath = new Path(BuildProperties.getLibraryPathId(libraryName));
-      // note that it is assumed that directory entries inside library path are unordered
-      TreeSet<String> visitedPaths = new TreeSet<String>();
-      for (final VirtualFile file : files) {
-        final String path = GenerationUtils
-          .toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(), myGenOptions, !myProject.isSavePathsRelative());
-        visitedPaths.add(path);
-      }
-      for (final String path : visitedPaths) {
-        libraryPath.add(new PathElement(path));
-      }
+      genLibraryContent(myProject, myGenOptions, library, baseDir, libraryPath);
       gen.add(libraryPath, 1);
     }
     return gen.getGeneratorCount() > 0 ? gen : null;
   }
 
+  /**
+   * Generate library content
+   *
+   * @param project     the context project
+   * @param genOptions  the generation options
+   * @param library     the library which content is generated
+   * @param baseDir     the base directory
+   * @param libraryPath the composite generator to update
+   */
+  public static void genLibraryContent(final ProjectEx project,
+                                       final GenerationOptions genOptions,
+                                       final Library library,
+                                       final File baseDir,
+                                       final CompositeGenerator libraryPath) {
+    if (genOptions.expandJarDirectories) {
+      final VirtualFile[] files = library.getFiles(OrderRootType.COMPILATION_CLASSES);
+      // note that it is assumed that directory entries inside library path are unordered
+      TreeSet<String> visitedPaths = new TreeSet<String>();
+      for (final VirtualFile file : files) {
+        final String path = GenerationUtils
+          .toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(), genOptions, !project.isSavePathsRelative());
+        visitedPaths.add(path);
+      }
+      for (final String path : visitedPaths) {
+        libraryPath.add(new PathElement(path));
+      }
+    }
+    else {
+      TreeSet<String> urls = new TreeSet<String>(Arrays.asList(library.getUrls(OrderRootType.COMPILATION_CLASSES)));
+      for (String url : urls) {
+        File file = fileFromUrl(url);
+        final String path = GenerationUtils
+          .toRelativePath(file.getPath(), baseDir, BuildProperties.getProjectBaseDirProperty(), genOptions, !project.isSavePathsRelative());
+        if (url.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
+          libraryPath.add(new PathElement(path));
+        }
+        else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+          if (library.isJarDirectory(url)) {
+            final FileSet fileSet = new FileSet(path);
+            fileSet.add(new PatternSetRef(BuildProperties.PROPERTY_LIBRARIES_PATTERNS));
+            libraryPath.add(fileSet);
+          }
+          else {
+            libraryPath.add(new PathElement(path));
+          }
+        }
+        else {
+          throw new IllegalStateException("Unknown url type: " + url);
+        }
+      }
+    }
+  }
 
+  /**
+   * Gets file from jar of file URL
+   *
+   * @param url an url to parse
+   * @return
+   */
+  private static File fileFromUrl(String url) {
+    final String filePart;
+    if (url.startsWith(JarFileSystem.PROTOCOL_PREFIX) && url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
+      filePart = url.substring(JarFileSystem.PROTOCOL_PREFIX.length(), url.length() - JarFileSystem.JAR_SEPARATOR.length());
+    }
+    else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+      filePart = url.substring(JarFileSystem.PROTOCOL_PREFIX.length());
+    }
+    else {
+      throw new IllegalArgumentException("Unknown url type: " + url);
+    }
+    return new File(filePart.replace('/', File.separatorChar));
+  }
 }

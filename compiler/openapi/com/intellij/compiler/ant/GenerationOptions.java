@@ -23,49 +23,92 @@ import com.intellij.openapi.module.Module;
  * @author anna
  */
 public abstract class GenerationOptions {
-  /** This option specifies whether mulitfile or single file ant script is created. */
+  /**
+   * This option specifies whether mulitfile or single file ant script is created.
+   */
   public final boolean generateSingleFile;
-  /** This option specifies whehter standard javac or javac2 task is used */
+  /**
+   * This option specifies whehter standard javac or javac2 task is used
+   */
   public final boolean enableFormCompiler;
-  /** This option speciries whether files are backed up before generation */
+  /**
+   * This option speciries whether files are backed up before generation
+   */
   public final boolean backupPreviouslyGeneratedFiles;
-  /** This option specifies whether target JDK is forced during compilation or default ant JDK is used. */
+  /**
+   * This option specifies whether target JDK is forced during compilation or default ant JDK is used.
+   */
   public final boolean forceTargetJdk;
-  /** if true, the runtime classpath is inlined */
+  /**
+   * if true, the runtime classpath is inlined
+   */
   public final boolean inlineRuntimeClasspath;
+  /**
+   * if true, the runtime classpath is inlined
+   */
+  public final boolean expandJarDirectories;
+
 
   /**
    * A constructor
    *
-   * @param forceTargetJdk a value of corresponding option
-   * @param generateSingleFile  a value of corresponding option
-   * @param enableFormCompiler  a value of corresponding option
-   * @param backupPreviouslyGeneratedFiles  a value of corresponding option
-   * @param inlineRuntimeClasspath if true a runtiem classpaths are inlined
+   * @param forceTargetJdk                 a value of corresponding option
+   * @param generateSingleFile             a value of corresponding option
+   * @param enableFormCompiler             a value of corresponding option
+   * @param backupPreviouslyGeneratedFiles a value of corresponding option
+   * @param inlineRuntimeClasspath         if true, a runtiem classpaths are inlined
+   * @param expandJarDirectories           if true, jar directories are expaned
    */
-  public GenerationOptions(boolean forceTargetJdk, boolean generateSingleFile, boolean enableFormCompiler, boolean backupPreviouslyGeneratedFiles, boolean inlineRuntimeClasspath) {
+  public GenerationOptions(boolean forceTargetJdk,
+                           boolean generateSingleFile,
+                           boolean enableFormCompiler,
+                           boolean backupPreviouslyGeneratedFiles,
+                           boolean inlineRuntimeClasspath,
+                           boolean expandJarDirectories) {
     this.forceTargetJdk = forceTargetJdk;
     this.generateSingleFile = generateSingleFile;
     this.enableFormCompiler = enableFormCompiler;
     this.backupPreviouslyGeneratedFiles = backupPreviouslyGeneratedFiles;
     this.inlineRuntimeClasspath = inlineRuntimeClasspath;
+    this.expandJarDirectories = expandJarDirectories;
   }
 
   /**
    * A constructor
    *
-   * @param forceTargetJdk a value of corresponding option
-   * @param generateSingleFile  a value of corresponding option
-   * @param enableFormCompiler  a value of corresponding option
-   * @param backupPreviouslyGeneratedFiles  a value of corresponding option
+   * @param forceTargetJdk                 a value of corresponding option
+   * @param generateSingleFile             a value of corresponding option
+   * @param enableFormCompiler             a value of corresponding option
+   * @param backupPreviouslyGeneratedFiles a value of corresponding option
+   * @param inlineRuntimeClasspath         if true a runtiem classpaths are inlined
+   */
+  public GenerationOptions(boolean forceTargetJdk,
+                           boolean generateSingleFile,
+                           boolean enableFormCompiler,
+                           boolean backupPreviouslyGeneratedFiles,
+                           boolean inlineRuntimeClasspath) {
+    this(forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, inlineRuntimeClasspath, false);
+  }
+
+  /**
+   * A constructor
+   *
+   * @param forceTargetJdk                 a value of corresponding option
+   * @param generateSingleFile             a value of corresponding option
+   * @param enableFormCompiler             a value of corresponding option
+   * @param backupPreviouslyGeneratedFiles a value of corresponding option
    */
   @Deprecated
-  public GenerationOptions(boolean forceTargetJdk, boolean generateSingleFile, boolean enableFormCompiler, boolean backupPreviouslyGeneratedFiles) {
+  public GenerationOptions(boolean forceTargetJdk,
+                           boolean generateSingleFile,
+                           boolean enableFormCompiler,
+                           boolean backupPreviouslyGeneratedFiles) {
     this(forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, false);
   }
 
   /**
    * Substitute path prefix with macro reference if it matches some macro.
+   *
    * @param path a path to update
    * @return an updated path or argument
    */
@@ -73,6 +116,7 @@ public abstract class GenerationOptions {
 
   /**
    * Get property reference for the specified url of module output directory
+   *
    * @param url an URL to map
    * @return the property reference in the form ${..}
    */
@@ -85,6 +129,7 @@ public abstract class GenerationOptions {
 
   /**
    * Get the chunk that contains the specified module.
+   *
    * @param module the module to find
    * @return the chunk that contains specifid module
    */

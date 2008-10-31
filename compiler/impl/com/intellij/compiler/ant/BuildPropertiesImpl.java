@@ -35,7 +35,8 @@ public class BuildPropertiesImpl extends BuildProperties {
     add(new Property(getPropertyFileName(project)));
 
     //noinspection HardCodedStringLiteral
-    add(new Comment(CompilerBundle.message("generated.ant.build.disable.tests.property.comment"), new Property(PROPERTY_SKIP_TESTS, "true")));
+    add(
+      new Comment(CompilerBundle.message("generated.ant.build.disable.tests.property.comment"), new Property(PROPERTY_SKIP_TESTS, "true")));
     final JavacSettings javacSettings = JavacSettings.getInstance(project);
     if (genOptions.enableFormCompiler) {
       add(new Comment(
@@ -43,17 +44,14 @@ public class BuildPropertiesImpl extends BuildProperties {
       //noinspection HardCodedStringLiteral
       add(new Comment("  javac2.jar; jdom.jar; asm.jar; asm-commons.jar"));
       //noinspection HardCodedStringLiteral
-      add(new Tag("taskdef", new Pair[] {
-        new Pair<String, String>("name", "javac2"),
-        new Pair<String, String>("classname", "com.intellij.ant.Javac2"),
-      }));
+      add(new Tag("taskdef", new Pair<String, String>("name", "javac2"), new Pair<String, String>("classname", "com.intellij.ant.Javac2")));
     }
 
     add(new Comment(CompilerBundle.message("generated.ant.build.compiler.options.comment")), 1);
     //noinspection HardCodedStringLiteral
-    add(new Property(PROPERTY_COMPILER_GENERATE_DEBUG_INFO, javacSettings.DEBUGGING_INFO? "on" : "off"), 1);
+    add(new Property(PROPERTY_COMPILER_GENERATE_DEBUG_INFO, javacSettings.DEBUGGING_INFO ? "on" : "off"), 1);
     //noinspection HardCodedStringLiteral
-    add(new Property(PROPERTY_COMPILER_GENERATE_NO_WARNINGS, javacSettings.GENERATE_NO_WARNINGS? "on" : "off"));
+    add(new Property(PROPERTY_COMPILER_GENERATE_NO_WARNINGS, javacSettings.GENERATE_NO_WARNINGS ? "on" : "off"));
     add(new Property(PROPERTY_COMPILER_ADDITIONAL_ARGS, javacSettings.ADDITIONAL_OPTIONS_STRING));
     //noinspection HardCodedStringLiteral
     add(new Property(PROPERTY_COMPILER_MAX_MEMORY, Integer.toString(javacSettings.MAXIMUM_HEAP_SIZE) + "m"));
@@ -62,6 +60,10 @@ public class BuildPropertiesImpl extends BuildProperties {
 
     if (CompilerExcludes.isAvailable(project)) {
       add(new CompilerExcludes(project, genOptions));
+    }
+
+    if (!genOptions.expandJarDirectories) {
+      add(new LibraryPatterns(project, genOptions));
     }
 
     add(new CompilerResourcePatterns(project));
@@ -79,8 +81,8 @@ public class BuildPropertiesImpl extends BuildProperties {
       add(projectLibs);
     }
 
-    final Generator globalLibs = factory.create(registrar.getLibraryTable(), null,
-                                                CompilerBundle.message("generated.ant.build.global.libraries.comment"));
+    final Generator globalLibs =
+      factory.create(registrar.getLibraryTable(), null, CompilerBundle.message("generated.ant.build.global.libraries.comment"));
     if (globalLibs != null) {
       add(globalLibs);
     }
@@ -88,7 +90,7 @@ public class BuildPropertiesImpl extends BuildProperties {
     for (final LibraryTable table : registrar.getCustomLibraryTables()) {
       if (table.getLibraries().length != 0) {
         final Generator appServerLibs = factory.create(table, null, table.getPresentation().getDisplayName(true));
-        if (appServerLibs != null){
+        if (appServerLibs != null) {
           add(appServerLibs);
         }
       }
@@ -134,8 +136,10 @@ public class BuildPropertiesImpl extends BuildProperties {
         final File binPath = toCanonicalFile(new File(((JavaSdkType)sdkType).getBinPath(jdk)));
         final String relativePath = FileUtil.getRelativePath(homeDir, binPath);
         if (relativePath != null) {
-          add(new Property(BuildProperties.getJdkBinProperty(jdkName), propertyRef(jdkHomeProperty) + "/" + FileUtil.toSystemIndependentName(relativePath)), 1);
-        } else {
+          add(new Property(BuildProperties.getJdkBinProperty(jdkName),
+                           propertyRef(jdkHomeProperty) + "/" + FileUtil.toSystemIndependentName(relativePath)), 1);
+        }
+        else {
           add(new Property(BuildProperties.getJdkBinProperty(jdkName), FileUtil.toSystemIndependentName(binPath.getPath())), 1);
         }
 
@@ -146,9 +150,9 @@ public class BuildPropertiesImpl extends BuildProperties {
     }
 
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
-    add(new Property(PROPERTY_PROJECT_JDK_HOME, projectJdk != null? propertyRef(getJdkHomeProperty(projectJdk.getName())) : ""), 1);
-    add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""));
-    add(new Property(PROPERTY_PROJECT_JDK_CLASSPATH, projectJdk != null? getJdkPathId(projectJdk.getName()) : ""));
+    add(new Property(PROPERTY_PROJECT_JDK_HOME, projectJdk != null ? propertyRef(getJdkHomeProperty(projectJdk.getName())) : ""), 1);
+    add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null ? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""));
+    add(new Property(PROPERTY_PROJECT_JDK_CLASSPATH, projectJdk != null ? getJdkPathId(projectJdk.getName()) : ""));
   }
 
 }
