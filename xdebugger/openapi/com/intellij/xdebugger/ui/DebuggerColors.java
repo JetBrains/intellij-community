@@ -30,6 +30,6 @@ public interface DebuggerColors {
   TextAttributesKey EXECUTIONPOINT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("EXECUTIONPOINT_ATTRIBUTES");
   ColorKey RECURSIVE_CALL_ATTRIBUTES = ColorKey.createColorKey("RECURSIVE_CALL_ATTRIBUTES", new Color(255, 255, 215));
 
-  int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.CARET_ROW + 1;
+  int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.SYNTAX + 1;
   int EXECUTION_LINE_HIGHLIGHTERLAYER = HighlighterLayer.SELECTION - 1;
 }
