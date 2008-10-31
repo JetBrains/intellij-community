@@ -387,7 +387,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private List<CommittedChangeList> initCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
-    LOG.info("Initializing cache for " + cacheFile.getLocation());
+    debug("Initializing cache for " + cacheFile.getLocation());
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
     final ChangeBrowserSettings settings = provider.createDefaultSettings();
@@ -431,7 +431,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     int maxCount = 0;
     if (provider.refreshCacheByNumber()) {
       final long number = cacheFile.getLastCachedChangelist();
-      LOG.info("Refreshing cache for " + location + " since #" + number);
+      debug("Refreshing cache for " + location + " since #" + number);
       if (number >= 0) {
         defaultSettings.CHANGE_AFTER = Long.toString(number);
         defaultSettings.USE_CHANGE_AFTER_FILTER = true;
@@ -442,15 +442,19 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
     else {
       final Date date = cacheFile.getLastCachedDate();
-      LOG.info("Refreshing cache for " + location + " since " + date);
+      debug("Refreshing cache for " + location + " since " + date);
       defaultSettings.setDateAfter(date);
       defaultSettings.USE_DATE_AFTER_FILTER = true;
     }
     final List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, maxCount);
-    LOG.info("Loaded " + newChanges.size() + " new changelists");
+    debug("Loaded " + newChanges.size() + " new changelists");
     newLists.addAll(appendLoadedChanges(cacheFile, location, newChanges));
 
     return newLists;
+  }
+
+  private static void debug(@NonNls String message) {
+    LOG.debug(message);
   }
 
   private List<CommittedChangeList> appendLoadedChanges(final ChangesCacheFile cacheFile, final RepositoryLocation location,
@@ -501,7 +505,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     for(ChangesCacheFile cache: caches) {
       try {
         if (!cache.isEmpty()) {
-          LOG.info("Loading incoming changes for " + cache.getLocation());
+          debug("Loading incoming changes for " + cache.getLocation());
           result.addAll(cache.loadIncomingChanges());
         }
       }
@@ -510,13 +514,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       }
     }
     myCachedIncomingChangeLists = result;
-    LOG.info("Incoming changes loaded");
+    debug("Incoming changes loaded");
     notifyIncomingChangesUpdated(null);
     return result;
   }
 
   public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer) {
-    LOG.info("Loading incoming changes");
+    debug("Loading incoming changes");
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.loading.progress")) {
       public void run(@NotNull final ProgressIndicator indicator) {
         final List<CommittedChangeList> list = loadIncomingChanges();
@@ -534,7 +538,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
-    LOG.info("Processing updated files");
+    debug("Processing updated files");
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(final ChangesCacheFile cache: caches) {
       myPendingUpdateCount++;
@@ -545,14 +549,14 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
               pendingUpdateProcessed();
               return;
             }
-            LOG.info("Processing updated files in " + cache.getLocation());
+            debug("Processing updated files in " + cache.getLocation());
             boolean needRefresh = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
             if (needRefresh) {
-              LOG.info("Found unaccounted files, requesting refresh");
+              debug("Found unaccounted files, requesting refresh");
               processUpdatedFilesAfterRefresh(cache, updatedFiles);
             }
             else {
-              LOG.info("Clearing cached incoming changelists");
+              debug("Clearing cached incoming changelists");
               myCachedIncomingChangeLists = null;
               pendingUpdateProcessed();
             }
@@ -578,18 +582,18 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     refreshCacheAsync(cache, false, new RefreshResultConsumer() {
       public void receivedChanges(final List<CommittedChangeList> committedChangeLists) {
         try {
-          LOG.info("Processing updated files after refresh in " + cache.getLocation());
+          debug("Processing updated files after refresh in " + cache.getLocation());
           boolean result = true;
           if (committedChangeLists.size() > 0) {
             // received some new changelists, try to process updated files again
             result = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
           }
-          LOG.info(result ? "Still have unaccounted files" : "No more unaccounted files");
+          debug(result ? "Still have unaccounted files" : "No more unaccounted files");
           // for svn, we won't get exact revision numbers in updatedFiles, so we have to double-check by
           // checking revisions we have locally
           if (result) {
             cache.refreshIncomingChanges();
-            LOG.info("Clearing cached incoming changelists");
+            debug("Clearing cached incoming changelists");
             myCachedIncomingChangeLists = null;
           }
           pendingUpdateProcessed();
@@ -629,7 +633,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         if (file.isEmpty()) {
           continue;
         }
-        LOG.info("Refreshing incoming changes for " + file.getLocation());
+        debug("Refreshing incoming changes for " + file.getLocation());
         boolean changesForCache = file.refreshIncomingChanges();
         hasChanges |= changesForCache;
       }
@@ -644,7 +648,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public void refreshIncomingChangesAsync() {
-    LOG.info("Refreshing incoming changes in background");
+    debug("Refreshing incoming changes in background");
     myRefreshingIncomingChanges = true;
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.refresh.progress")) {
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -653,7 +657,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
       public void onSuccess() {
         myRefreshingIncomingChanges = false;
-        LOG.info("Incoming changes refresh complete, clearing cached incoming changes");
+        debug("Incoming changes refresh complete, clearing cached incoming changes");
         notifyReloadIncomingChanges();
       }
     };

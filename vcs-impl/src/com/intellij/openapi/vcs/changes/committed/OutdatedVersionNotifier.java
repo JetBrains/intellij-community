@@ -63,7 +63,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   private void requestLoadIncomingChanges() {
-    LOG.info("Requesting load of incoming changes");
+    debug("Requesting load of incoming changes");
     if (!myIncomingChangesRequested) {
       myIncomingChangesRequested = true;
       myCache.loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
@@ -73,6 +73,10 @@ public class OutdatedVersionNotifier implements ProjectComponent {
         }
       });
     }
+  }
+
+  private static void debug(@NonNls String message) {
+    LOG.debug(message);
   }
 
   public void projectOpened() {
@@ -96,7 +100,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   private void updateAllEditorsLater() {
-    LOG.info("Queueing update of editors");
+    debug("Queueing update of editors");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         updateAllEditors();
@@ -109,7 +113,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
       requestLoadIncomingChanges();
       return;
     }
-    LOG.info("Updating editors");
+    debug("Updating editors");
     final VirtualFile[] files = myFileEditorManager.getOpenFiles();
     for(VirtualFile file: files) {
       final Pair<CommittedChangeList,Change> pair = myCache.getIncomingChangeList(file);

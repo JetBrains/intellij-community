@@ -73,16 +73,20 @@ public class IncomingChangesIndicator implements ProjectComponent {
   private void refreshIndicator() {
     final List<CommittedChangeList> list = myCache.getCachedIncomingChanges();
     if (list == null || list.size() == 0) {
-      LOG.info("Refreshing indicator: no changes");
+      debug("Refreshing indicator: no changes");
       myIndicatorComponent.clear();
       myIndicatorComponent.setToolTipText("");
     }
     else {
-      LOG.info("Refreshing indicator: " + list.size() + " changes");
+      debug("Refreshing indicator: " + list.size() + " changes");
       myIndicatorComponent.showIcon();
       myIndicatorComponent.setToolTipText(VcsBundle.message("incoming.changes.indicator.tooltip", list.size()));
     }
     myIndicatorComponent.repaint();
+  }
+
+  private static void debug(@NonNls final String message) {
+    LOG.debug(message);
   }
 
   private class IndicatorComponent extends SimpleColoredComponent {
