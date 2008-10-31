@@ -72,6 +72,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
                                     getPsiFile(project, myAggregatorProject.getFile())) {
         protected void run() throws Throwable {
           MavenModel model = MavenUtil.getMavenModel(project, myAggregatorProject.getFile());
+          model.getPackaging().setStringValue("pom");
           Module module = model.getModules().addModule();
           module.setValue(getPsiFile(project, pom));
         }
