@@ -191,8 +191,8 @@ public class FSRecords implements Disposable, Forceable {
           final Runnable warnAndShutdown = new Runnable() {
             public void run() {
               JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                            "Fatal Error",
                                             "Files in " + basePath.getPath() + " are locked. IntelliJ IDEA will not be able to start up",
+                                            "Fatal Error",
                                             JOptionPane.ERROR_MESSAGE);
               System.exit(1);
             }
