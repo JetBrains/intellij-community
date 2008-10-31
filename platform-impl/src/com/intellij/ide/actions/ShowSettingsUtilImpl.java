@@ -48,7 +48,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
     Configurable config = (Configurable)actualProject.getComponent(configurableClass);
-    if (config != null) {
+    if (config == null) {
       config = (Configurable)ApplicationManager.getApplication().getComponent(configurableClass);
     }
 
