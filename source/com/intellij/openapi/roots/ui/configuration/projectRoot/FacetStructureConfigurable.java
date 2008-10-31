@@ -239,7 +239,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     if (topic != null) {
       return topic;
     }
-    return "concepts.facet";
+    return "reference.settingsdialog.project.structure.facet";
   }
 
   public String getId() {
