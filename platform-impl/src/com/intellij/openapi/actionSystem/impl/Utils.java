@@ -107,7 +107,7 @@ public class Utils{
     }
     long endTime = System.currentTimeMillis();
     if (endTime - startTime > 10 && LOG.isDebugEnabled()) {
-      LOG.debug("Long update for action " + action + ": " + (endTime-startTime) + " ms");
+      LOG.debug("Action " + action + ": updated in " + (endTime-startTime) + " ms");
     }
     return true;
   }

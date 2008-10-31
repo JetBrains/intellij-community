@@ -603,8 +603,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                   initComponent(componentInstance);
                   long endTime = System.nanoTime();
                   long ms = (endTime - startTime) / 1000000;
-                  if (ms > 10) {
-                    LOG.info("Long initialization for " + componentInstance.getClass().getName() + ": " + ms + " ms");
+                  if (ms > 10 && LOG.isDebugEnabled()) {
+                    LOG.debug(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
                   }
                   myInitialized = true;
                 }
