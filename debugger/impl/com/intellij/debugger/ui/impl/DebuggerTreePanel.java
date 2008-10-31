@@ -32,7 +32,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu popupMenu = createPopupMenu();
         if (popupMenu != null) {
-          popupMenu.getComponent().show(comp, x, y);
+          myTree.myTipManager.registerPopup(popupMenu.getComponent()).show(comp, x, y);
         }
       }
     };

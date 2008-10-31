@@ -10,6 +10,8 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuListener;
+import javax.swing.event.PopupMenuEvent;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -20,8 +22,10 @@ import java.awt.event.*;
  * Time: 4:23:11 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TipManager implements Disposable {
+public class TipManager implements Disposable, PopupMenuListener {
+
   private volatile boolean myIsDisposed = false;
+  private boolean myPopupShown;
 
   public static interface TipFactory {
     JComponent createToolTip (MouseEvent e);
@@ -71,6 +75,29 @@ public class TipManager implements Disposable {
     }
   }
 
+  public JPopupMenu registerPopup(JPopupMenu menu) {
+    menu.addPopupMenuListener(this);
+    return menu;
+  }
+
+  public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
+    myPopupShown = true;
+  }
+
+  public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
+    onPopupClosed(e);
+  }
+
+  public void popupMenuCanceled(final PopupMenuEvent e) {
+    onPopupClosed(e);
+  }
+
+  private void onPopupClosed(final PopupMenuEvent e) {
+    myPopupShown = false;
+    if (e.getSource() instanceof JPopupMenu) {
+      ((JPopupMenu)e.getSource()).removePopupMenuListener(this);
+    }
+  }
 
   private class MyMouseMotionListener extends MouseMotionAdapter {
     @Override
@@ -80,9 +107,7 @@ public class TipManager implements Disposable {
       myInsideComponent = true;
 
       if (myCurrentTooltip == null) {
-        final Rectangle compBounds = myComponent.getBounds();
-        final Point compPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myComponent);
-        if (compBounds.contains(compPoint)) {
+        if (isInsideComponent(e)) {
           tryTooltip(e);
         }
       } else {
@@ -91,14 +116,23 @@ public class TipManager implements Disposable {
         }
       }
     }
+
   }
+
+  private boolean isInsideComponent(final MouseEvent e) {
+    final Rectangle compBounds = myComponent.getBounds();
+    final Point compPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myComponent);
+    final boolean insideCoponent = compBounds.contains(compPoint);
+    return insideCoponent;
+  }
+
 
   private void tryTooltip(final MouseEvent e) {
     myShowAlarm.cancelAllRequests();
     myHideAlarm.cancelAllRequests();
     myShowAlarm.addRequest(new Runnable() {
       public void run() {
-        if (!myIsDisposed) {
+        if (!myIsDisposed && !myPopupShown) {
           showTooltip(e);
         }
       }

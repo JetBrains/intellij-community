@@ -39,16 +39,18 @@ public class DebuggerTreeBase extends DnDAwareTree {
   public DebuggerTreeBase(TreeModel model, Project project) {
     super(model);
     myProject = project;
-    UIUtil.setLineStyleAngled(this);
-    setRootVisible(false);
-    setShowsRootHandles(true);
-    setCellRenderer(new DebuggerTreeRenderer());
-    updateUI();
+
     myTipManager = new TipManager(this, new TipManager.TipFactory() {
           public JComponent createToolTip(MouseEvent e) {
             return DebuggerTreeBase.this.createToolTip(e);
           }
         });
+
+    UIUtil.setLineStyleAngled(this);
+    setRootVisible(false);
+    setShowsRootHandles(true);
+    setCellRenderer(new DebuggerTreeRenderer());
+    updateUI();
     TreeUtil.installActions(this);
   }
 
