@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Consumer;
 
@@ -25,6 +26,7 @@ public class JavaMethodMergingContributor extends CompletionContributor {
     if (parameters.getCompletionType() != CompletionType.SMART && parameters.getCompletionType() != CompletionType.BASIC) return true;
 
     final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
+    ProgressManager.getInstance().checkCanceled();
     if (!process.willAutoInsert(AutoCompletionPolicy.SETTINGS_DEPENDENT, result.getPrefixMatcher())) return true;
 
     final Ref<Boolean> wereNonGrouped = Ref.create(false);
