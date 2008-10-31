@@ -5,10 +5,14 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,6 +42,8 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
 
   private final DocumentationProvider myDocumentationProvider = new MetaDataDocumentationProvider();
   @NonNls private static final String NAME_ATTR_NAME = "name";
+  @NonNls private static final String BASE_SITEPOINT_URL = "http://reference.sitepoint.com/html/";
+
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
@@ -98,8 +104,13 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
           return formatDocFromComment(comment, ((XmlTag)element).getName());
         }
       }
-      return generateDoc(processor.result, name, typeName, processor.version);
-      
+
+      String doc = generateDoc(processor.result, name, typeName, processor.version);
+      if (doc != null) {
+        doc += generateHtmlAdditionalDocTemplate(originalElement);
+      }
+      return doc;
+
     } else if (element instanceof XmlAttributeDecl) {
       // Check for comment before attlist, it should not be right after previous declaration
       final PsiElement parent = element.getParent();
@@ -126,6 +137,42 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     }
 
     return super.generateDoc(element, originalElement);
+  }
+
+  static String generateHtmlAdditionalDocTemplate(@NotNull PsiElement element) {
+    StringBuilder buf = new StringBuilder();
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null) {
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+      boolean append;
+      if (tag instanceof HtmlTag) {
+        append = true;
+      }
+      else {
+        final FileViewProvider provider = containingFile.getViewProvider();
+        Language language;
+        if (provider instanceof TemplateLanguageFileViewProvider) {
+          language = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
+        }
+        else {
+          language = provider.getBaseLanguage();
+        }
+
+        append = language == XHTMLLanguage.INSTANCE;
+      }
+
+      if (tag != null) {
+        EntityDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(tag.getName());
+        if (descriptor != null && append) {
+          buf.append("<br>");
+          buf.append(XmlBundle.message("html.quickdoc.additional.template",
+                                       HtmlDocumentationProvider.getBaseHtmlExtDocUrl() + descriptor.getHelpRef(),
+                                       BASE_SITEPOINT_URL + tag.getName()));
+        }
+      }
+    }
+
+    return buf.toString();
   }
 
   public static String findDocRightAfterElement(final PsiElement parent, final String referenceName) {

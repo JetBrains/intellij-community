@@ -206,12 +206,14 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       buf.append(XmlBundle.message("xml.javadoc.defined.in.any.dtd.message"));
     }
 
-    buf.append(BR);
-
     if (!istag) {
       ColorSampleLookupValue.addColorPreviewAndCodeToLookup(element,buf);
     }
-    
+
+    if (element != null) {
+      buf.append(XmlDocumentationProvider.generateHtmlAdditionalDocTemplate(element));
+    }
+
     return buf.toString();
   }
 
@@ -292,6 +294,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   public static void setBaseHtmlExtDocUrl(String baseHtmlExtDocUrl) {
     HtmlDocumentationProvider.ourBaseHtmlExtDocUrl = baseHtmlExtDocUrl;
+  }
+
+  static String getBaseHtmlExtDocUrl() {
+    return ourBaseHtmlExtDocUrl;
   }
 
   public static void registerScriptDocumentationProvider(final DocumentationProvider provider) {
