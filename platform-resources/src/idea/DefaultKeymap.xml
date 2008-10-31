@@ -1216,6 +1216,13 @@
       <keyboard-shortcut first-keystroke="control alt H"/>
     </action>
 
+    <action id="CommentByBlockComment">
+      <keyboard-shortcut first-keystroke="control shift SLASH"/>
+      <keyboard-shortcut first-keystroke="control shift DIVIDE"/>
+      <keyboard-shortcut first-keystroke="meta shift SLASH"/>
+      <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
+    </action>
+
     <action id="ReplaceInPath">
       <keyboard-shortcut first-keystroke="control shift R"/>
     </action>
