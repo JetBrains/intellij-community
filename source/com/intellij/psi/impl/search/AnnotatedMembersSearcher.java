@@ -38,7 +38,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
     final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), scope);
     for (PsiElement elt : annotations) {
-      if (!notAnnotation(elt)) continue;
+      if (notAnnotation(elt)) continue;
 
       PsiAnnotation ann = (PsiAnnotation)elt;
       final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
