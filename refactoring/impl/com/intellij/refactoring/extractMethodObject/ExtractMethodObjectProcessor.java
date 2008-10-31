@@ -141,7 +141,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         innerClass.add(outputField);
       }
       final PsiField field = PropertyUtil.findPropertyField(myProject, innerClass, name, false);
-      LOG.assertTrue(field != null);
+      LOG.assertTrue(field != null, "i:" + i + "; output variables: " + Arrays.toString(outputVariables) + "; parameters: " + Arrays.toString(getMethod().getParameterList().getParameters()) + "; output field: " + outputField );
       innerClass.add(PropertyUtil.generateGetterPrototype(field));
     }
 
@@ -157,7 +157,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiCodeBlock body = getMethod().getBody();
     LOG.assertTrue(body != null);
     final List<PsiLocalVariable> vars = new ArrayList<PsiLocalVariable>();
-    final Map<PsiStatement, PsiStatement> replacementMap = new LinkedHashMap<PsiStatement, PsiStatement>();
+    final Map<PsiElement, PsiElement> replacementMap = new LinkedHashMap<PsiElement, PsiElement>();
     body.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReturnStatement(final PsiReturnStatement statement) {
@@ -180,16 +180,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
               PsiLocalVariable var = (PsiLocalVariable)declaredElement;
               if (Comparing.strEqual(var.getName(), variable.getName())) {
                 final PsiExpression initializer = var.getInitializer();
-                try {
-                  if (initializer == null) {
-                    replacementMap.put(statement, null);
-                  }
-                  else {
-                    replacementMap.put(statement, myElementFactory.createStatementFromText(var2FieldNames.get(var.getName()) + " = " + initializer.getText() + ";", statement));
-                  }
+                if (initializer == null) {
+                  replacementMap.put(statement, null);
                 }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
+                else {
+                  replacementMap.put(var, var);
                 }
               }
             }
@@ -220,10 +215,20 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    for (PsiStatement statement : replacementMap.keySet()) {
-      final PsiStatement replacement = replacementMap.get(statement);
+    for (PsiElement statement : replacementMap.keySet()) {
+      final PsiElement replacement = replacementMap.get(statement);
       if (replacement != null) {
-        statement.replace(replacement);
+        if (statement instanceof PsiLocalVariable) {
+          final PsiLocalVariable variable = (PsiLocalVariable)statement;
+          final PsiExpression initializer = variable.getInitializer();
+          LOG.assertTrue(initializer != null);
+          final PsiStatement assignmentStatement = myElementFactory.createStatementFromText(var2FieldNames.get(variable.getName()) + " = " + initializer.getText() + ";", statement);
+          final PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(statement, PsiDeclarationStatement.class);
+          LOG.assertTrue(declaration != null);
+          declaration.replace(assignmentStatement);
+        } else {
+          statement.replace(replacement);
+        }
       } else {
         statement.delete();
       }
