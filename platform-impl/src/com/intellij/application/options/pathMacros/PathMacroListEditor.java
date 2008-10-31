@@ -8,9 +8,10 @@ import com.intellij.openapi.project.ProjectBundle;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
+import java.util.Map;
 
 /**
  * @author dsl
@@ -28,7 +29,7 @@ public class PathMacroListEditor {
     this(null, false);
   }
 
-  public PathMacroListEditor(String[] undefinedMacroNames, boolean editOnlyPathsMode) {
+  public PathMacroListEditor(Map<String, String> undefinedMacroNames, boolean editOnlyPathsMode) {
     myPathMacroTable = undefinedMacroNames != null ? new PathMacroTable(undefinedMacroNames, editOnlyPathsMode) : new PathMacroTable();
     myScrollPane.setViewportView(myPathMacroTable);
     myAddButton.addActionListener(new ActionListener() {

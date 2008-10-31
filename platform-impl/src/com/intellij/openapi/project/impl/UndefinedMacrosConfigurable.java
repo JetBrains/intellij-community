@@ -14,6 +14,7 @@ import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -22,9 +23,9 @@ import java.awt.*;
 public class UndefinedMacrosConfigurable implements Configurable{
   private PathMacroListEditor myEditor;
   private final String myText;
-  private final String[] myUndefinedMacroNames;
+  private final Map<String, String> myUndefinedMacroNames;
 
-  public UndefinedMacrosConfigurable(String text, String[] undefinedMacroNames) {
+  public UndefinedMacrosConfigurable(String text, Map<String, String> undefinedMacroNames) {
     myText = text;
     myUndefinedMacroNames = undefinedMacroNames;
   }

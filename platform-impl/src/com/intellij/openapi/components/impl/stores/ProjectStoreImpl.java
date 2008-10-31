@@ -25,8 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.containers.*;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
@@ -41,6 +40,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.HashMap;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ProjectStoreImpl");
@@ -55,6 +55,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String PROJECT_CONFIG_DIR = "PROJECT_CONFIG_DIR";
 
   @NonNls private static final String NAME_ATTR = "name";
+  @NonNls private static final String DESCRIPTION_ATTR = "description";
   @NonNls public static final String USED_MACROS_ELEMENT_NAME = "UsedPathMacros";
   @NonNls public static final String ELEMENT_MACRO = "macro";
   static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
@@ -72,21 +73,22 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     myProject = project;
   }
 
-  private static String[] readUsedMacros(Element root) {
+  @Nullable
+  private static Map<String, String> readUsedMacros(Element root) {
     Element child = root.getChild(USED_MACROS_ELEMENT_NAME);
     if (child == null) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return new HashMap<String, String>();
     }
     final List children = child.getChildren(ELEMENT_MACRO);
-    final List<String> macroNames = new ArrayList<String>(children.size());
+    final Map<String, String> macroNames = new HashMap<String, String>(children.size());
     for (final Object aChildren : children) {
       final Element macro = (Element)aChildren;
-      String macroName = macro.getAttributeValue(BaseFileConfigurableStoreImpl.ATTRIBUTE_NAME);
+      String macroName = macro.getAttributeValue(NAME_ATTR);
       if (macroName != null) {
-        macroNames.add(macroName);
+        macroNames.put(macroName, macro.getAttributeValue(DESCRIPTION_ATTR));
       }
     }
-    return macroNames.toArray(new String[macroNames.size()]);
+    return macroNames;
   }
 
   public boolean checkVersion() {
@@ -413,7 +415,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         convert(root, originalVersion);
       }
 
-      final Set<String> usedMacros1 = new HashSet<String>(Arrays.asList(readUsedMacros(root)));
+      final Map<String, String> usedMacros1 = readUsedMacros(root);
       final boolean macrosOk = ProjectMacrosUtil.checkMacros(myProject, usedMacros1);
       if (!macrosOk) {
         throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
@@ -445,6 +447,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           Element macroElement = new Element(ELEMENT_MACRO);
 
           macroElement.setAttribute(NAME_ATTR, usedMacro);
+
+          final String description = PathMacros.getInstance().getDescription(usedMacro);
+          if (description != null) {
+            macroElement.setAttribute(DESCRIPTION_ATTR, description);
+          }
 
           usedMacrosElement.addContent(macroElement);
         }

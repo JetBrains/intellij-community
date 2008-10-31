@@ -97,7 +97,9 @@ public class ClasspathStorage implements StateStorage {
       final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
       final ClasspathStorageProvider.Classpath classpath = myConverter.getClasspath(element);
       final Set<String> macros = classpath.getUsedMacros();
-      final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), macros);
+      final HashMap<String, String> map = new HashMap<String, String>();
+      map.keySet().addAll(macros);
+      final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), map);
       PathMacroManager.getInstance(module).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);

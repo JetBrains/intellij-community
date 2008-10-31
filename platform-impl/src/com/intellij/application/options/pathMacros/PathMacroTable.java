@@ -5,7 +5,6 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -34,13 +33,13 @@ public class PathMacroTable extends Table {
       return pair.getFirst().compareTo(pair1.getFirst());
     }
   };
-  private final String[] myUndefinedMacroNames;
+  private final Map<String, String> myUndefinedMacroNames;
 
   public PathMacroTable() {
-    this(ArrayUtil.EMPTY_STRING_ARRAY, false);
+    this(null, false);
   }
 
-  public PathMacroTable(String[] undefinedMacroNames, boolean editOnlyPathsMode) {
+  public PathMacroTable(Map<String, String> undefinedMacroNames, boolean editOnlyPathsMode) {
     myEditOnlyPaths = editOnlyPathsMode;
     myUndefinedMacroNames = undefinedMacroNames;
     setModel(myTableModel);
@@ -174,8 +173,14 @@ public class PathMacroTable extends Table {
     for (String name : macroNames) {
       macros.add(Pair.create(name, Pair.create(myPathMacros.getValue(name).replace('/', File.separatorChar), myPathMacros.getDescription(name))));
     }
-    for (String undefinedMacroName : myUndefinedMacroNames) {
-      macros.add(new Pair<String, Pair<String, String>>(undefinedMacroName, new Pair<String, String>("", "")));
+
+    if (myUndefinedMacroNames != null) {
+      for (String undefinedMacroName : myUndefinedMacroNames.keySet()) {
+        String description = myUndefinedMacroNames.get(undefinedMacroName);
+        description = description == null ? "" : description;
+
+        macros.add(new Pair<String, Pair<String, String>>(undefinedMacroName, new Pair<String, String>("", description)));
+      }
     }
     Collections.sort(macros, MACRO_COMPARATOR);
   }

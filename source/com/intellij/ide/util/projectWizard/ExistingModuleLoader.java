@@ -19,10 +19,10 @@ import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.convert.CompositeConverterFactory;
 import com.intellij.ide.impl.convert.ModuleConverter;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.ide.impl.convert.ProjectFileVersion;
-import com.intellij.ide.impl.convert.CompositeConverterFactory;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Set;
 
 /**
@@ -89,8 +90,12 @@ public class ExistingModuleLoader extends ModuleBuilder {
         final Set<String> definedMacros = PathMacros.getInstance().getAllMacroNames();
         usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
         usedMacros.removeAll(definedMacros);
+
+        final HashMap<String, String> map = new HashMap<String, String>();
+        map.keySet().addAll(usedMacros);
+
         if (usedMacros.size() > 0) {
-          final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(current, usedMacros);
+          final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(current, map);
           if (!ok) {
             return false;
           }

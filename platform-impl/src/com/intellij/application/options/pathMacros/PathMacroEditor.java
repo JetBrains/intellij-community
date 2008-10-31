@@ -26,6 +26,7 @@ public class PathMacroEditor extends DialogWrapper {
   private JTextPane myDescriptionPane;
   private final Validator myValidator;
   private final DocumentListener myDocumentListener;
+  private String myExistingDescription;
 
   public interface Validator {
     boolean checkName(String name);
@@ -35,6 +36,7 @@ public class PathMacroEditor extends DialogWrapper {
   public PathMacroEditor(String title, String macroName, String value, String description, Validator validator, boolean editPathsOnly) {
     super(true);
     setTitle(title);
+    myExistingDescription = description;
     myValidator = validator;
     myNameField.setText(macroName);
     myDocumentListener = new DocumentAdapter() {
@@ -115,7 +117,7 @@ public class PathMacroEditor extends DialogWrapper {
   @Nullable
   public String getDescription() {
     if (myDescriptionPane == null) {
-      return null;
+      return myExistingDescription;
     }
 
     final String s = myDescriptionPane.getText();
