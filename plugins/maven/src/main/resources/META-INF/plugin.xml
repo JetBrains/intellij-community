@@ -37,6 +37,7 @@
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
 
     <iconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
+    <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
 
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenModelDomDescription"/>
@@ -63,6 +64,9 @@
   </application-components>
 
   <project-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
+    </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
     </component>

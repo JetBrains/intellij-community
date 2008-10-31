@@ -556,11 +556,11 @@ public class MavenProjectsTree {
   }
 
   public static interface Listener {
-    void projectAdded(MavenProjectModel n);
+    void projectAdded(MavenProjectModel project);
 
-    void projectUpdated(MavenProjectModel n);
+    void projectUpdated(MavenProjectModel project);
 
-    void projectRemoved(MavenProjectModel n);
+    void projectRemoved(MavenProjectModel project);
   }
 
   public static abstract class Visitor<Result> {

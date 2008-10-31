@@ -175,15 +175,15 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         myTree.repaint();
       }
 
-      public void projectAdded(final MavenProjectModel n) {
+      public void projectAdded(final MavenProjectModel project) {
         if (!isActivated) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) return;
 
-            final PomNode newNode = new PomNode(n);
-            myFileToNode.put(n.getFile(), newNode);
+            final PomNode newNode = new PomNode(project);
+            myFileToNode.put(project.getFile(), newNode);
             myRoot.addToStructure(newNode);
             myRoot.updateProfileNodes();
 
@@ -193,19 +193,19 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         });
       }
 
-      public void projectUpdated(final MavenProjectModel n) {
+      public void projectUpdated(final MavenProjectModel project) {
         if (!isActivated) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) return;
 
-            final PomNode pomNode = myFileToNode.get(n.getFile());
+            final PomNode pomNode = myFileToNode.get(project.getFile());
             if (pomNode != null) {
               pomNode.onFileUpdate();
             }
             else {
-              projectAdded(n);
+              projectAdded(project);
             }
             myRoot.updateProfileNodes();
             myTree.repaint();
@@ -213,16 +213,16 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
         });
       }
 
-      public void projectRemoved(final MavenProjectModel n) {
+      public void projectRemoved(final MavenProjectModel project) {
         if (!isActivated) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) return;
 
-            final PomNode pomNode = myFileToNode.get(n.getFile());
+            final PomNode pomNode = myFileToNode.get(project.getFile());
             if (pomNode != null) {
-              myFileToNode.remove(n.getFile());
+              myFileToNode.remove(project.getFile());
               pomNode.removeFromParent();
             }
             myRoot.updateProfileNodes();

@@ -44,26 +44,20 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
       updateIndicesList();
     }
 
-    getMavenProjectManager().addListener(new MavenProjectsManager.Listener() {
+    getMavenProjectManager().addListener(new MavenProjectsManager.ListenerAdapter() {
       public void activate() {
         updateIndicesList();
       }
 
-      public void profilesChanged(List<String> profiles) {
-      }
-
-      public void setIgnored(MavenProjectModel project, boolean on) {
-      }
-
-      public void projectAdded(MavenProjectModel n) {
+      public void projectAdded(MavenProjectModel project) {
         updateIndicesList();
       }
 
-      public void projectUpdated(MavenProjectModel n) {
+      public void projectUpdated(MavenProjectModel project) {
         updateIndicesList();
       }
 
-      public void projectRemoved(MavenProjectModel n) {
+      public void projectRemoved(MavenProjectModel project) {
         updateIndicesList();
       }
     });
