@@ -98,8 +98,8 @@ public class BalloonImpl implements Disposable, Balloon {
       case below:
         pos = BELOW;
         break;
-      case under:
-        pos = UNDER;
+      case above:
+        pos = ABOVE;
         break;
     }
 
@@ -291,7 +291,7 @@ public class BalloonImpl implements Disposable, Balloon {
   }
 
   public static final Position BELOW = new Below();
-  public static final Position UNDER = new Under();
+  public static final Position ABOVE = new Above();
   public static final Position AT_RIGHT = new AtRight();
   public static final Position AT_LEFT = new AtLeft();
 
@@ -329,7 +329,7 @@ public class BalloonImpl implements Disposable, Balloon {
 
   }
 
-  private static class Under extends Position {
+  private static class Above extends Position {
     Border createBorder(final BalloonImpl balloon) {
       return new EmptyBorder(balloon.getNormalInset(), balloon.getNormalInset(), balloon.getPointerLength(), balloon.getNormalInset());
     }
@@ -597,7 +597,7 @@ public class BalloonImpl implements Disposable, Balloon {
           balloon.get().setShowPointer(true);
 
           if (e.isControlDown()) {
-            balloon.get().show(new RelativePoint(e), BalloonImpl.UNDER);
+            balloon.get().show(new RelativePoint(e), BalloonImpl.ABOVE);
           }
           else if (e.isAltDown()) {
             balloon.get().show(new RelativePoint(e), BalloonImpl.BELOW);

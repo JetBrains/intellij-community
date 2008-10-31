@@ -8,7 +8,7 @@ public interface Balloon extends Disposable {
   void show(RelativePoint target, Position prefferedPosition);
 
   enum Position {
-    below, under, atLeft, atRight
+    below, above, atLeft, atRight
   }
 
 }

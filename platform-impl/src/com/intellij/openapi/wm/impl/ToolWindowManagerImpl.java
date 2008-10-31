@@ -804,7 +804,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (ToolWindowAnchor.TOP == anchor) {
       position.set(Balloon.Position.below);
     } else if (ToolWindowAnchor.BOTTOM == anchor) {
-      position.set(Balloon.Position.under);
+      position.set(Balloon.Position.above);
     } else if (ToolWindowAnchor.LEFT == anchor) {
       position.set(Balloon.Position.atRight);
     } else if (ToolWindowAnchor.RIGHT == anchor) {
