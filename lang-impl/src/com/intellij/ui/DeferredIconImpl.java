@@ -41,7 +41,13 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         target = list;
       }
       else {
-        target = c;
+        final Container tree = SwingUtilities.getAncestorOfClass(JTree.class, c);
+        if (tree != null) {
+          target = tree;
+        }
+        else {
+          target = c;
+        }
       }
 
       myLastTarget = target;
