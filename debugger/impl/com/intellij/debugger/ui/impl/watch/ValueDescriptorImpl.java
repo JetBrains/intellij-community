@@ -153,7 +153,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (exceptionObj != null) {
       try {
         final ReferenceType refType = exceptionObj.referenceType();
-        final List<Method> methods = refType.methodsByName("getStackTrace");
+        final List<Method> methods = refType.methodsByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
         if (methods.size() > 0) {
           final DebugProcessImpl process = evaluationContext.getDebugProcess();
           process.invokeMethod(evaluationContext, exceptionObj, methods.get(0), Collections.emptyList());
