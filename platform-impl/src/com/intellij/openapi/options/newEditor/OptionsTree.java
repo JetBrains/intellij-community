@@ -455,10 +455,15 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     List<EditorNode> cc = new ArrayList<EditorNode>(c);
     Collections.sort(cc, new Comparator<EditorNode>() {
       public int compare(final EditorNode o1, final EditorNode o2) {
-        return o1.getConfigurable().getDisplayName().compareToIgnoreCase(o2.getConfigurable().getDisplayName());
+        return getConfigurableDisplayName(o1.getConfigurable()).compareToIgnoreCase(getConfigurableDisplayName(o2.getConfigurable()));
       }
     });
     return cc;
+  }
+
+  private static String getConfigurableDisplayName(final Configurable c) {
+    final String name = c.getDisplayName();
+    return name != null ? name : "{ Unnamed Page:" + c.getClass().getSimpleName() + " }";
   }
 
   private List<EditorNode> buildChildren(final Configurable configurable, SimpleNode parent, final ConfigurableGroup group) {
@@ -489,7 +494,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myConfigurable = configurable;
       myGroup = group;
       myConfigurable2Node.put(configurable, this);
-      addPlainText(configurable.getDisplayName());
+      addPlainText(getConfigurableDisplayName(configurable));
     }
 
     protected EditorNode[] buildChildren() {
@@ -523,7 +528,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     @Override
     String getText() {
-      return myConfigurable.getDisplayName().replace("\n", " ");
+      return getConfigurableDisplayName(myConfigurable).replace("\n", " ");
     }
 
     @Override
