@@ -15,15 +15,12 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public class VcsException extends Exception {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsException");
   public static final VcsException[] EMPTY_ARRAY = new VcsException[0];
 
   private VirtualFile myVirtualFile;
@@ -42,7 +39,6 @@ public class VcsException extends Exception {
 
   public VcsException(Throwable throwable) {
     this(throwable.getMessage() != null ? throwable.getMessage() : throwable.getLocalizedMessage(), throwable);
-    LOG.info(throwable);
   }
 
   public VcsException(final String message, final Throwable cause) {
