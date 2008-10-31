@@ -147,7 +147,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
         }
 
         public String getHelpTopic() {
-          return null;
+          return "reference.projectsettings.compiler.excludes";
         }
 
         public JComponent createComponent() {

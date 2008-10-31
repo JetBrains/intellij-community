@@ -51,7 +51,7 @@ public class RmicConfigurable implements Configurable{
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.projectsettings.compiler.rmicompiler";
   }
 
   public JComponent createComponent() {

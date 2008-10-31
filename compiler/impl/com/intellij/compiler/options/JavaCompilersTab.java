@@ -72,7 +72,7 @@ public class JavaCompilersTab implements Configurable{
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.projectsettings.compiler.javacompiler";
   }
 
   public JComponent createComponent() {
