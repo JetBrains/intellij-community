@@ -33,13 +33,18 @@ public class MavenPluginInfoReaderTest extends MavenTestCase {
     assertEquals("compiler", p.getGoalPrefix());
 
     List<String> qualifiedGoals = new ArrayList<String>();
+    List<String> displayNames = new ArrayList<String>();
     List<String> goals = new ArrayList<String>();
     for (MavenPluginInfo.Mojo m : p.getMojos()) {
       goals.add(m.getGoal());
       qualifiedGoals.add(m.getQualifiedGoal());
+      displayNames.add(m.getDisplayName());
     }
 
     assertOrderedElementsAreEqual(goals, "compile", "testCompile");
-    assertOrderedElementsAreEqual(qualifiedGoals, "compiler:compile", "compiler:testCompile");
+    assertOrderedElementsAreEqual(qualifiedGoals,
+                                  "org.apache.maven.plugins:maven-compiler-plugin:2.0.2:compile",
+                                  "org.apache.maven.plugins:maven-compiler-plugin:2.0.2:testCompile");
+    assertOrderedElementsAreEqual(displayNames, "compiler:compile", "compiler:testCompile");
   }
 }

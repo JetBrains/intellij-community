@@ -77,8 +77,12 @@ public class MavenPluginInfo {
       return myGoal;
     }
 
-    public String getQualifiedGoal() {
+    public String getDisplayName() {
       return myGoalPrefix + ":" + myGoal;
+    }
+
+    public String getQualifiedGoal() {
+      return myGroupId + ":" + myArtifactId + ":" + myVersion + ":" + myGoal;
     }
   }
 }

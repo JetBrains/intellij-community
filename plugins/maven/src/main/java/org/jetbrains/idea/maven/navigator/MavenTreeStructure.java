@@ -930,12 +930,13 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
   public abstract class GoalNode extends CustomNode {
     private final String goal;
     private final PomNode pomNode;
-
+    private final String displayName;
     private String actionId;
 
-    public GoalNode(GoalGroupNode parent, String goal) {
+    public GoalNode(GoalGroupNode parent, String goal, String displayName) {
       super(parent);
       this.goal = goal;
+      this.displayName = displayName;
       pomNode = parent.pomNode;
       updateNameAndDescription();
       setUniformIcon(PHASE_ICON);
@@ -943,12 +944,9 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Override
     protected void updateNameAndDescription() {
-      String hint = null;
       actionId = pomNode.actionIdPrefix + goal;
-
-      hint = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
-
-      setNameAndDescription(goal, null, hint);
+      String hint = myEventsHandler.getActionDescription(pomNode.savedPath, goal);
+      setNameAndDescription(displayName, null, hint);
     }
 
     @Override
@@ -1007,7 +1005,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
   public class StandardGoalNode extends GoalNode {
     public StandardGoalNode(GoalGroupNode parent, String goal) {
-      super(parent, goal);
+      super(parent, goal, goal);
     }
 
     public boolean isVisible() {
@@ -1142,7 +1140,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
       if (myPluginInfo != null) {
         for (MavenPluginInfo.Mojo mojo : myPluginInfo.getMojos()) {
-          goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal()));
+          goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal(), mojo.getDisplayName()));
         }
       }
     }
@@ -1163,8 +1161,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
   }
 
   public class PluginGoalNode extends GoalNode {
-    public PluginGoalNode(PluginNode parent, String goal) {
-      super(parent, goal);
+    public PluginGoalNode(PluginNode parent, String goal, String displayName) {
+      super(parent, goal, displayName);
       setUniformIcon(PLUGIN_GOAL_ICON);
     }
   }
