@@ -115,14 +115,20 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> {
   }
 
   public Set<K> keySet() {
-    throw new UnsupportedOperationException();
+    synchronized (mutex) {
+      return super.keySet();
+    }
   }
 
   public Set<Map.Entry<K, V>> entrySet() {
-    throw new UnsupportedOperationException();
+    synchronized (mutex) {
+      return super.entrySet();
+    }
   }
 
   public Collection<V> values() {
-    throw new UnsupportedOperationException();
+    synchronized (mutex) {
+      return super.values();
+    }
   }
 }
