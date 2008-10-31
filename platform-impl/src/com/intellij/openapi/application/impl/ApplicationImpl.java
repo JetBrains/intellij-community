@@ -116,6 +116,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   );
   private boolean myIsFiringLoadingEvent = false;
+  private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
 
   protected void boostrapPicoContainer() {
@@ -853,8 +854,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void assertIsDispatchThread(@Nullable final JComponent component) {
-    if (component == null || component.getRootPane() == null) return;
-    assertIsDispatchThread();
+    if (component == null) return;
+
+    if (Boolean.TRUE.equals(component.getClientProperty(WAS_EVER_SHOWN))) {
+      assertIsDispatchThread();
+    } else {
+      final JRootPane root = component.getRootPane();
+      if (root != null) {
+        component.putClientProperty(WAS_EVER_SHOWN, Boolean.TRUE);
+        assertIsDispatchThread();
+      } 
+    }
   }
 
   public void assertWriteAccessAllowed() {
