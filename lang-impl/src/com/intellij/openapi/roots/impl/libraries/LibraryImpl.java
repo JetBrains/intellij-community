@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
@@ -127,7 +127,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     for (VirtualFile file : myRoots.get(rootType).getFiles()) {
       if (file.isDirectory()) {
         final Boolean expandRecursively = myJarDirectories.get(file.getUrl());
-        if (Boolean.TRUE.equals(expandRecursively)) {
+        if (expandRecursively != null) {
           addChildren(file, expanded, expandRecursively.booleanValue());
           continue;
         }
@@ -198,7 +198,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private Map<OrderRootType, VirtualFilePointerContainer> initRoots() {
     Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<OrderRootType, VirtualFilePointerContainer>(5);
 
-    for(OrderRootType rootType: OrderRootType.getAllTypes()) {
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       result.put(rootType, VirtualFilePointerManager.getInstance().createContainer(this));
     }
     result.put(OrderRootType.COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
@@ -364,7 +364,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         }
         final Boolean jarDirRecursive = myJarDirectories.get(url);
         final Boolean sourceJarDirRecursive = that.myJarDirectories.get(thatUrl);
-        if (jarDirRecursive == null? sourceJarDirRecursive != null : !jarDirRecursive.equals(sourceJarDirRecursive)) {
+        if (jarDirRecursive == null ? sourceJarDirRecursive != null : !jarDirRecursive.equals(sourceJarDirRecursive)) {
           return true;
         }
       }
@@ -439,14 +439,16 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       if (myBusConnection == null) {
         myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
         myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-          public void before(final List<? extends VFileEvent> events) {}
+          public void before(final List<? extends VFileEvent> events) {
+          }
 
           public void after(final List<? extends VFileEvent> events) {
             boolean changesDetected = false;
             for (VFileEvent event : events) {
               if (event instanceof VFileCopyEvent) {
                 final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-                if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) || isUnderJarDirectory(copyEvent.getFile().getUrl())) {
+                if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) ||
+                    isUnderJarDirectory(copyEvent.getFile().getUrl())) {
                   changesDetected = true;
                   break;
                 }
@@ -546,7 +548,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
 
   @Override
   public String toString() {
-    return "Library: name:"+myName+"; jars:"+myJarDirectories.keySet()+"; roots:"+myRoots.values();
+    return "Library: name:" + myName + "; jars:" + myJarDirectories.keySet() + "; roots:" + myRoots.values();
   }
 
   @Nullable("will return non-null value only for module level libraries")
