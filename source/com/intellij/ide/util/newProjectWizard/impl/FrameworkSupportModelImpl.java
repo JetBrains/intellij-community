@@ -50,10 +50,7 @@ public class FrameworkSupportModelImpl extends UserDataHolderBase implements Fra
 
   public boolean isFrameworkSelected(@NotNull @NonNls final String providerId) {
     final AddSupportForFrameworksPanel.FrameworkSupportSettings settings = mySettingsMap.get(providerId);
-    if (settings == null) {
-      throw new IllegalArgumentException("provider '" + providerId + "' not found");
-    }
-    return settings.getCheckBox().isSelected();
+    return settings != null && settings.getCheckBox().isSelected();
   }
 
   public void addFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {
