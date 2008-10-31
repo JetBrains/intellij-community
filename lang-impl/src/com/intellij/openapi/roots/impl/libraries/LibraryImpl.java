@@ -127,7 +127,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     for (VirtualFile file : myRoots.get(rootType).getFiles()) {
       if (file.isDirectory()) {
         final Boolean expandRecursively = myJarDirectories.get(file.getUrl());
-        if (expandRecursively != null) {
+        if (Boolean.TRUE.equals(expandRecursively)) {
           addChildren(file, expanded, expandRecursively.booleanValue());
           continue;
         }
