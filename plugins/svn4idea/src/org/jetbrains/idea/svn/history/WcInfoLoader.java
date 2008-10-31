@@ -41,7 +41,9 @@ public class WcInfoLoader {
     final List<WCInfoWithBranches> result = new ArrayList<WCInfoWithBranches>();
     for (WCInfo info : wcInfoList) {
       final WCInfoWithBranches wcInfoWithBranches = createInfo(info, vcs, urlMapping);
-      result.add(wcInfoWithBranches);
+      if (wcInfoWithBranches != null) {
+        result.add(wcInfoWithBranches);
+      }
     }
     return result;
   }
@@ -101,24 +103,29 @@ public class WcInfoLoader {
       return null;
     }
 
-    final List<WCInfoWithBranches.Branch> items = createBranchesList(url, configuration);
+    final List<WCInfoWithBranches.Branch> items = new ArrayList<WCInfoWithBranches.Branch>();
+    final String branchRoot = createBranchesList(url, configuration, items);
     return new WCInfoWithBranches(info.getPath(), info.getUrl(), info.getFormat(),
                                                                          info.getRepositoryRoot(), info.isIsWcRoot(), items, root,
-                                                                         configuration.getTrunkUrl());
+                                                                         branchRoot);
   }
 
-  private List<WCInfoWithBranches.Branch> createBranchesList(final String url, final SvnBranchConfiguration configuration) {
-    final List<WCInfoWithBranches.Branch> items = new ArrayList<WCInfoWithBranches.Branch>();
-
+  private String createBranchesList(final String url, final SvnBranchConfiguration configuration,
+                                                             final List<WCInfoWithBranches.Branch> items) {
+    String result = null;
     final String trunkUrl = configuration.getTrunkUrl();
     if ((trunkUrl != null) && (! SVNPathUtil.isAncestor(trunkUrl, url))) {
       items.add(new WCInfoWithBranches.Branch(trunkUrl));
+    } else if (trunkUrl != null) {
+      result = trunkUrl;
     }
     final Map<String,List<SvnBranchItem>> branchMap = configuration.getLoadedBranchMap(myProject);
     for (Map.Entry<String, List<SvnBranchItem>> entry : branchMap.entrySet()) {
       for (SvnBranchItem branchItem : entry.getValue()) {
         if (! SVNPathUtil.isAncestor(branchItem.getUrl(), url)) {
           items.add(new WCInfoWithBranches.Branch(branchItem.getUrl()));
+        } else {
+          result = branchItem.getUrl();
         }
       }
     }
@@ -128,6 +135,6 @@ public class WcInfoLoader {
         return Comparing.compare(o1.getUrl(), o2.getUrl());
       }
     });
-    return items;
+    return result;
   }
 }

@@ -173,6 +173,7 @@ public class BranchInfo {
         return goUpInRepo(revisionAsked, targetRevision, svnInfo.getURL().removePathTail(), newTrunkUrl);
       }
       catch (SVNException e) {
+        LOG.info(e);
         return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
     }
@@ -245,6 +246,7 @@ public class BranchInfo {
     
     final SVNInfo svnInfo = getInfo(pathFile);
     if (svnInfo == null || svnInfo.getRevision() == null || svnInfo.getURL() == null) {
+      LOG.info("Svninfo for " + pathFile + " is null or not full.");
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
 

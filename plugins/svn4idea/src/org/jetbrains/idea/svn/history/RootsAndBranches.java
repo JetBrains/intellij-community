@@ -30,6 +30,7 @@ import org.jetbrains.idea.svn.actions.RecordOnlyMergerFactory;
 import org.jetbrains.idea.svn.actions.ShowSvnMapAction;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
+import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedChangeListsChecker;
@@ -261,7 +262,16 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
         final SvnMergeInfoRootPanelManual panel = new SvnMergeInfoRootPanelManual(myProject,
                                                                                   new NullableFunction<WCInfoWithBranches, WCInfoWithBranches>() {
                                                                                     public WCInfoWithBranches fun(final WCInfoWithBranches wcInfoWithBranches) {
-                                                                                      return myDataLoader.reloadInfo(wcInfoWithBranches);
+
+                                                                                      final WCInfoWithBranches newInfo =
+                                                                                        myDataLoader.reloadInfo(wcInfoWithBranches);
+                                                                                      if (newInfo == null) {
+                                                                                        // reload all items
+                                                                                        myProject.getMessageBus().syncPublisher(SvnMapDialog.WC_CONVERTED).run();
+                                                                                        // do not reload right now
+                                                                                        return wcInfoWithBranches;
+                                                                                      }
+                                                                                      return newInfo;
                                                                                     }
                                                                                   }, new Runnable() {
             public void run() {
