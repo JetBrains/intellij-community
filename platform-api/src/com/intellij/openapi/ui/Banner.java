@@ -1,6 +1,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -95,7 +96,9 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
     for (int i = 0; i < text.length; i++) {
       final JLabel eachLabel = new JLabel(text[i]);
-      eachLabel.setBorder(new EmptyBorder(0, 0, 0, 4));
+      if (SystemInfo.isMac) {
+        eachLabel.setBorder(new EmptyBorder(0, 0, 0, 4));
+      }
       eachLabel.setVerticalTextPosition(JLabel.TOP);
       eachLabel.setFont(eachLabel.getFont().deriveFont(Font.BOLD, eachLabel.getFont().getSize()));
       myText.add(eachLabel);

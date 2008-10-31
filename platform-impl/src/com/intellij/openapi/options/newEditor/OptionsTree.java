@@ -1,5 +1,6 @@
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -7,6 +8,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.LoadingNode;
@@ -18,14 +20,17 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -257,6 +262,9 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
       myHandle = new JLabel("", JLabel.CENTER);
+      if (!SystemInfo.isMac) {
+        myHandle.setBorder(new EmptyBorder(0, 2, 0, 2));
+      }
       myHandle.setOpaque(false);
       content.add(myHandle, BorderLayout.WEST);
       content.add(myComponent, BorderLayout.CENTER);
@@ -274,8 +282,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
       JComponent result;
       Color fg = UIUtil.getTreeTextForeground();
-
-      myHandle.setIcon(null);
 
       final Base base = extractNode(value);
       if (base instanceof EditorNode) {
@@ -324,7 +330,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           forcedWidth = visibleRect.width > 0 ? visibleRect.width - indent : forcedWidth;
         }
 
-        result = configureComponent(base.getText(), base.getText(), null, null, selected, group != null,
+        result = configureComponent(base.getText(), base.getText(), null, null, row == -1 ? true : selected, group != null,
                                     group != null ? group.getDisplayName() : null, forcedWidth - 4);
 
 
@@ -335,12 +341,19 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
           fg = Color.blue;
         }
 
-        myHandle.setIcon(((SimpleTree)tree).getHandleIcon(node, path));
-
       }
       else {
         result = configureComponent(value.toString(), null, null, null, selected, false, null, -1);
       }
+
+      if (value instanceof DefaultMutableTreeNode) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+        TreePath nodePath = new TreePath(node.getPath());
+        myHandle.setIcon(((SimpleTree)tree).getHandleIcon(node, nodePath));
+      } else {
+        myHandle.setIcon(null);
+      }
+
 
       final Font font = myTextLabel.getFont();
       myTextLabel.setFont(font.deriveFont(myContext.isHoldingFilter() ? Font.BOLD : Font.PLAIN));
@@ -348,7 +361,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : fg);
 
       myTextLabel.setOpaque(selected);
-
 
       return result;
     }
