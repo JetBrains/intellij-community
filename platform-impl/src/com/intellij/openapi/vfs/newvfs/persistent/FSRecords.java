@@ -143,6 +143,10 @@ public class FSRecords implements Disposable, Forceable {
       final File attributesFile = new File(basePath, "attrib.dat");
       final File recordsFile = new File(basePath, "records.dat");
 
+      if (!namesFile.exists()) {
+        invalidateIndex();
+      }
+
       try {
         if (getCorruptionMarkerFile().exists()) {
           invalidateIndex();
