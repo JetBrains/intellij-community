@@ -1,9 +1,10 @@
 #if ( $PACKAGE_NAME != "" )package ${PACKAGE_NAME}
 #end
+#parse("File Header.java")
 
-class ${NAME}ControllerTests extends GroovyTestCase{
+class ${NAME}ControllerTests extends GroovyTestCase {
 
-  void testSomething (){
+  void testSomething() {
     
   }
 

@@ -30,10 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Set;
@@ -44,17 +47,40 @@ import java.util.Set;
 public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   private static final String EVAL_NAME = "_JETGROOVY_EVAL_";
 
-  private String createProperty(String text, String imports, String[] names) {
-    String classText = "\"" + imports + "class DUMMY { public groovy.lang.Closure " + EVAL_NAME + " = {" + getCommaSeparatedNamesList(names) + "->" + text + "}}\"";
+  private static String createProperty(String text, String imports, String[] names) {
+    String classText = "\"" +
+                       imports +
+                       "class DUMMY { " +
+                       "public groovy.lang.Closure " +
+                       EVAL_NAME +
+                       " = {" +
+                       getCommaSeparatedNamesList(names) +
+                       "->" +
+                       text +
+                       "}}\"";
 
     return "final java.lang.ClassLoader parentLoader = clazz.getClassLoader();\n" +
-        "   final groovy.lang.GroovyClassLoader loader = new groovy.lang.GroovyClassLoader(parentLoader);\n" +
-        "   final java.lang.Class c = loader.parseClass(" + classText + ", \"DUMMY.groovy\");\n" +
-        "   int i;\n" +
-        "   java.lang.reflect.Field[] fields = c.getFields();\n" +
-        "   for (int j = 0; j < fields.length; j++) if (fields[j].getName().equals(\"_JETGROOVY_EVAL_\")) {i = j; break;}\n" +
-        "   final java.lang.reflect.Field field = fields[i];\n" +
-        "   final java.lang.Object closure = field.get(c.newInstance());\n";
+           "   final groovy.lang.GroovyClassLoader loader = new groovy.lang.GroovyClassLoader(parentLoader);\n" +
+           "   final java.lang.Class c = loader.parseClass(" +
+           classText +
+           ", \"DUMMY.groovy\");\n" +
+           "   int i;\n" +
+           "   java.lang.reflect.Field[] fields = c.getFields();\n" +
+           "   for (int j = 0; j < fields.length; j++) if (fields[j].getName().equals(\"_JETGROOVY_EVAL_\")) {i = j; break;}\n" +
+           "   final java.lang.reflect.Field field = fields[i];\n" +
+           "   final java.lang.Object closure = field.get(c.newInstance());\n";
+  }
+
+  private static String unwrapVals(String[] vals) {
+    final String list = getCommaSeparatedNamesList(vals);
+    return "java.util.ArrayList resList = new java.util.ArrayList();" +
+                 "java.lang.Object[] vals = new java.lang.Object[]{" +
+                 list +
+                 "};" +
+                 "for (int iii =0; iii<vals.length; iii++){java.lang.Object o = vals[iii];" +
+                 "if (o instanceof groovy.lang.Reference) {o = ((groovy.lang.Reference)o).get();}" +
+                 "resList.add(o);}" +
+                 "java.lang.Object[] resVals = resList.toArray(new java.lang.Object[resList.size()]);";
   }
 
   public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
@@ -62,16 +88,35 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     String imports = textWithImports.getImports();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     final GroovyFile toEval = factory.createGroovyFile(text, false, context);
-
     final Set<String> namesList = new HashSet<String>();
+    final GrClosableBlock closure = PsiTreeUtil.getParentOfType(context, GrClosableBlock.class);
 
+    final Set<String> valList = new HashSet<String>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         PsiElement resolved = referenceExpression.resolve();
-        if (resolved instanceof GrVariableBase && !(resolved instanceof GrField) &&
-            !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
-          namesList.add(((GrVariableBase) resolved).getName());
+        if (resolved instanceof GrVariableBase && !(resolved instanceof GrField) && !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
+          final String name = ((GrVariableBase)resolved).getName();
+          namesList.add(name);
+          if (closure != null &&
+              PsiTreeUtil.findCommonParent(resolved, closure) != closure &&
+              !(resolved instanceof ClosureSyntheticParameter)) {
+            // Evaluating inside closure for outer variable definitions
+            // All non-local variables are accessed by references
+            valList.add("this." + name);
+          } else {
+            valList.add(name);
+          }
+        }
+      }
+
+      @Override
+      public void visitThisExpression(final GrThisReferenceExpression thisExpression) {
+        super.visitThisExpression(thisExpression);
+        if (closure != null && !(thisExpression.getParent() instanceof GrReferenceExpression)) {
+          final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(thisExpression.getProject());
+          thisExpression.replaceWithExpression(factory.createExpressionFromText("delegate"), false);
         }
       }
 
@@ -81,7 +126,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
         } else {
           PsiElement resolved = refElement.resolve();
           if (resolved instanceof PsiClass) {
-            String qName = ((PsiClass) resolved).getQualifiedName();
+            String qName = ((PsiClass)resolved).getQualifiedName();
             if (qName != null) {
               int dotIndex = qName.lastIndexOf(".");
               if (dotIndex < 0) return;
@@ -96,6 +141,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     text = toEval.getText();
 
     String[] names = namesList.toArray(new String[namesList.size()]);
+    String[] vals = valList.toArray(new String[valList.size()]);
 
     PsiClass contextClass = PsiUtil.getContextClass(context);
     boolean isStatic = isStaticContext(context);
@@ -112,6 +158,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     }
 
     javaText.append(createProperty(stripImports(text, toEval), imports, names));
+
     javaText.append("groovy.lang.ExpandoMetaClass emc = new groovy.lang.ExpandoMetaClass(clazz);\n");
     if (!isStatic) {
       javaText.append("emc.setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
@@ -121,13 +168,15 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(clazz, emc);\n");
     }
     javaText.append("emc.initialize();\n");
+    javaText.append(unwrapVals(vals));
     if (!isStatic) {
-      javaText.append("Object res = ((groovy.lang.MetaClassImpl)emc).invokeMethod(this, \"").append(EVAL_NAME).append("\", new Object[]{").
-          append(getCommaSeparatedNamesList(names)).append("});\n");
+      javaText.append("java.lang.Object res = ((groovy.lang.MetaClassImpl)emc).invokeMethod(this, \"").append(EVAL_NAME).append("\", ").
+        append("resVals").append(");\n");
       javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(mc);"); //try/finally is not supported
     } else {
-      javaText.append("Object res = ((groovy.lang.MetaClassImpl)emc).invokeStaticMethod(clazz, \"").append(EVAL_NAME).append("\", new Object[]{").
-          append(getCommaSeparatedNamesList(names)).append("});\n");
+      javaText.append("java.lang.Object res = ((groovy.lang.MetaClassImpl)emc).invokeStaticMethod(clazz, \"").append(EVAL_NAME)
+        .append("\", ").
+        append("resVals").append(");\n");
       javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(clazz, mc);\n");
     }
     javaText.append("res");
@@ -140,7 +189,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     return result;
   }
 
-  private String stripImports(String text, GroovyFile toEval) {
+  private static String stripImports(String text, GroovyFile toEval) {
     GrImportStatement[] imports = toEval.getImportStatements();
     for (int i = imports.length - 1; i >= 0; i--) {
       TextRange range = imports[i].getTextRange();
@@ -155,7 +204,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     return result;
   }
 
-  private String getCommaSeparatedNamesList(String[] names) {
+  private static String getCommaSeparatedNamesList(String[] names) {
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < names.length; i++) {
       if (i > 0) buffer.append(", ");
@@ -164,11 +213,10 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     return buffer.toString();
   }
 
-  private boolean isStaticContext(PsiElement context) {
+  private static boolean isStaticContext(PsiElement context) {
     PsiElement parent = context;
     while (parent != null) {
-      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner) parent).hasModifierProperty(PsiModifier.STATIC))
-        return true;
+      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) return true;
       if (parent instanceof GrTypeDefinition || parent instanceof GroovyFile) return false;
       parent = parent.getParent();
     }
