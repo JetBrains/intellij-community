@@ -3,6 +3,7 @@ package com.intellij.ide.startupWizard;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.wizard.WizardDialog;
 
 import javax.swing.*;
@@ -16,6 +17,11 @@ import java.util.List;
 public class StartupWizard extends WizardDialog<StartupWizardModel> {
   public StartupWizard(final List<ApplicationInfoEx.PluginChooserPage> pluginChooserPages) {
     super(true, true, new StartupWizardModel(pluginChooserPages));
+    getPeer().setAppIcons();
+  }
+
+  public StartupWizard(final Project project, final List<ApplicationInfoEx.PluginChooserPage> pluginChooserPages) {
+    super(project, true, new StartupWizardModel(pluginChooserPages));
     getPeer().setAppIcons();
   }
 

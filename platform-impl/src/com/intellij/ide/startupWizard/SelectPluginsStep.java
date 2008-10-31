@@ -33,7 +33,8 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   private static String[] ourSuffixes = new String[] { "integration", "support", "plugin" };
 
   public SelectPluginsStep(final String title, final Set<String> disabledPluginIds, final String requirePlugin) {
-    super(title, "Select the plugins to enable. Disabling unused plugins will improve IDE startup speed and performance.\n\nTo change plugin settings later, go to Settings | Plugins.");
+    super(title, "Select the plugins to enable. Disabling unused plugins will improve IDE startup speed and performance.\n\nTo change plugin settings later, go to Settings | Plugins.",
+          null);
     myDisabledPluginIds = disabledPluginIds;
     myRequirePlugin = requirePlugin;
     myPluginsList.setCellRenderer(new ListCellRenderer() {
