@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.extractMethodObject.ExtractMethodObjectDialog">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="20" y="320" width="509" height="302"/>
+      <xy x="20" y="320" width="509" height="288"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -22,12 +22,6 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
       </hspacer>
-      <vspacer id="e4b1">
-        <constraints>
-          <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-      </vspacer>
       <grid id="9a27a" binding="myInnerClassPanel" layout-manager="GridBagLayout">
         <constraints>
           <grid row="1" column="0" row-span="2" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -98,15 +92,6 @@
               <text value="pu&amp;blic"/>
             </properties>
           </component>
-          <component id="a05bf" class="javax.swing.JCheckBox" binding="myCbMakeStatic">
-            <constraints>
-              <grid row="3" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="0" left="0" bottom="0" right="11" weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="Make &amp;static"/>
-            </properties>
-          </component>
           <component id="5494d" class="javax.swing.JCheckBox" binding="myCbMakeVarargs">
             <constraints>
               <grid row="2" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
@@ -114,6 +99,15 @@
             </constraints>
             <properties>
               <text value="Make &amp;varargs"/>
+            </properties>
+          </component>
+          <component id="a05bf" class="javax.swing.JCheckBox" binding="myCbMakeStatic">
+            <constraints>
+              <grid row="3" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="0" left="0" bottom="0" right="11" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text value="Make &amp;static"/>
             </properties>
           </component>
         </children>
@@ -166,7 +160,7 @@
       <scrollpane id="54db0">
         <constraints>
           <grid row="9" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag top="5" left="5" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+          <gridbag top="5" left="5" bottom="0" right="0" weightx="0.0" weighty="0.5"/>
         </constraints>
         <properties>
           <minimumSize width="19" height="40"/>
@@ -184,7 +178,7 @@
       <grid id="70155" binding="myParametersTableContainer" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="1.0" weighty="0.0"/>
+          <gridbag weightx="1.0" weighty="0.5"/>
         </constraints>
         <properties/>
         <border type="none"/>

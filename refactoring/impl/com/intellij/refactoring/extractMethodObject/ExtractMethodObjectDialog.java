@@ -358,7 +358,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   private void methodSignature(final String INDENT, final StringBuffer buffer) {
     buffer.append("(");
     int count = 0;
-
+    final String indent = "    ";
     for (int i = 0; i < myVariableData.length; i++) {
       ParameterTablePanel.VariableData data = myVariableData[i];
       if (data.passAsParameter) {
@@ -373,6 +373,8 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
         if (count > 0) {
           buffer.append(", ");
         }
+        buffer.append("\n");
+        buffer.append(indent);
         buffer.append(typeText);
         buffer.append(" ");
         buffer.append(data.name);
