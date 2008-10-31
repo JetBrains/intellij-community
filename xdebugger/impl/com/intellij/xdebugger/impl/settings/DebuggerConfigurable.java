@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -24,13 +25,24 @@ import java.util.List;
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   private Configurable myRootConfigurable;
   private Configurable[] myChildren;
+  private String myProjectLocationHash;
+  public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
+
+  public DebuggerConfigurable(ProjectManager pm) {
+    pm.addProjectManagerListener(new ProjectManagerAdapter() {
+      public void projectClosed(final Project project) {
+        myChildren = null;
+        myRootConfigurable = null;
+      }
+    });
+  }
 
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableDebugger.png");
   }
 
   public String getDisplayName() {
-    return XDebuggerBundle.message("debugger.configurable.display.name");
+    return DISPLAY_NAME;
   }
 
   public String getHelpTopic() {
@@ -38,11 +50,20 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   public Configurable[] getConfigurables() {
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    if(project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+
+    final String locationHash = project.getLocationHash();
+    if (!locationHash.equals(myProjectLocationHash)) {
+      // clear data (if any) built for the previous projects 
+      myChildren = null;
+      myRootConfigurable = null;
+      myProjectLocationHash = locationHash;
+    }
+
     if (myChildren == null) {
-      Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-      if(project == null) {
-        project = ProjectManager.getInstance().getDefaultProject();
-      }
       final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
       final List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
       for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
@@ -106,8 +127,9 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   public void disposeUIResources() {
-    myChildren = null;
-    myRootConfigurable = null;
+    if (myRootConfigurable != null) {
+      myRootConfigurable.disposeUIResources();
+    }
   }
 
   @NonNls

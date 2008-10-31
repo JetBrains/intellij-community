@@ -1,14 +1,14 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.xdebugger.impl.settings.DebuggerConfigurable;
-import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.execution.ExecutionException;
+import com.intellij.xdebugger.impl.settings.DebuggerConfigurable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,9 +34,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   public GenericDebuggerParametersRunnerConfigurable(final Project project) {
     myDebuggerSettings.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        DebuggerConfigurable debuggerConfigurable = new DebuggerConfigurable();
-        SingleConfigurableEditor editor = new SingleConfigurableEditor(project, debuggerConfigurable);
-        editor.show();
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.DISPLAY_NAME);
         if("".equals(getPort())) {
           try {
             String address = DebuggerUtils.getInstance().findAvailableDebugAddress(getTransport() == DebuggerSettings.SOCKET_TRANSPORT);
