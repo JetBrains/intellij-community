@@ -73,7 +73,9 @@ public class GitUtil {
   @NotNull
   public static VirtualFile getVcsRoot(@NotNull final Project project, final VirtualFile virtualFile) {
     VirtualFile vfile = VcsUtil.getVcsRootFor(project, virtualFile);
-    if (vfile == null) vfile = project.getBaseDir();
+    if (vfile == null) {
+      throw new IllegalStateException("The file is not under git: " + virtualFile.getPath());
+    }
     return vfile;
   }
 
@@ -417,8 +419,8 @@ public class GitUtil {
   /**
    * Return commiter name based on author name and commiter name
    *
-   * @param authorName
-   * @param committerName
+   * @param authorName    the name of author
+   * @param committerName the name of commiter
    * @return just a name if they are equal, or name that includes both author and commiter
    */
   public static String adjustAuthorName(final String authorName, String committerName) {
