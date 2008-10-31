@@ -96,7 +96,7 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.Background";
   }
 
   public JComponent createComponent() {

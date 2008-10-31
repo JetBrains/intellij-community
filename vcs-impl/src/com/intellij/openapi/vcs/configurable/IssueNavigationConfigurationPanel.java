@@ -155,7 +155,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Configu
   }
 
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.Issue.Navigation";
   }
 
   public JComponent createComponent() {

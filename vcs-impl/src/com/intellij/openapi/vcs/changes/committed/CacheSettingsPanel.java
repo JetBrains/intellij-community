@@ -88,7 +88,7 @@ public class CacheSettingsPanel implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.Cache";
   }
 
   public JComponent createComponent() {

@@ -70,7 +70,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   }
 
   public String getHelpTopic() {
-    return "project.propVCSSupport";
+    return "project.propVCSSupport.Mappings";
   }
 
   public Icon getIcon() {

@@ -147,7 +147,7 @@ public class IgnoredSettingsPanel implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.Ignored.Files";
   }
 
   public JComponent getPanel() {

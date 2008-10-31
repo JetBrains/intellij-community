@@ -240,7 +240,7 @@ public class VcsGeneralConfigurationPanel implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.Confirmation";
   }
 
   public JComponent createComponent() {
