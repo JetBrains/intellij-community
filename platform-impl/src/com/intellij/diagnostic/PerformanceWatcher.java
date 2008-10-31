@@ -38,6 +38,8 @@ public class PerformanceWatcher implements ApplicationComponent {
   private File myCurHangLogDir;
   private List<StackTraceElement> myStacktraceCommonPart;
 
+  private static final int UNRESPONSIVE_THRESHOLD = 5;
+
   @NotNull
   public String getComponentName() {
     return "PerformanceWatcher";
@@ -118,21 +120,26 @@ public class PerformanceWatcher implements ApplicationComponent {
         break;
       }
       if (mySwingThreadCounter != myLoopCounter) {
-        if (myUnresponsiveDuration == 0) {
+        myUnresponsiveDuration++;
+        if (myUnresponsiveDuration == UNRESPONSIVE_THRESHOLD) {
           //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
           myCurHangLogDir = new File(myLogDir, myDateFormat.format(new Date()));
           myCurHangLogDir.mkdirs();
         }
-        myUnresponsiveDuration++;
-        dumpThreads();
+        if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
+          dumpThreads();
+        }
       }
-      else if (myUnresponsiveDuration > 0) {
-        //System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
-        myCurHangLogDir.renameTo(new File(myLogDir, getLogDirForHang()));
-        myUnresponsiveDuration = 0;
-        myCurHangLogDir = myLogDir;
+      else {
+        if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
+          //System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
+          myCurHangLogDir.renameTo(new File(myLogDir, getLogDirForHang()));
+          myUnresponsiveDuration = 0;
+          myCurHangLogDir = myLogDir;
 
-        myStacktraceCommonPart = null;
+          myStacktraceCommonPart = null;
+        }
+        myUnresponsiveDuration = 0;
       }
       myLoopCounter++;
       SwingUtilities.invokeLater(new SwingThreadRunnable(myLoopCounter));
