@@ -56,7 +56,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
           if (fieldBreakpoint != null) {
             if(DebuggerAction.isContextView(e)) {
               final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(e.getDataContext());
-              if (selectedNode != null) {
+              if (selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
                 ObjectReference object = ((FieldDescriptorImpl)selectedNode.getDescriptor()).getObject();
                 if(object != null) {
                   long id = object.uniqueID();
@@ -71,7 +71,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
             DialogWrapper dialog = manager.createConfigurationDialog(fieldBreakpoint, null);
             dialog.show();
           }
-        } else {
+        }
+        else {
           manager.removeBreakpoint(breakpoint);
         }
       }
@@ -124,6 +125,12 @@ public class ToggleFieldBreakpointAction extends AnAction {
       return null;
     }
 
+    final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(dataContext);
+    if(selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
+      FieldDescriptorImpl descriptor = (FieldDescriptorImpl)selectedNode.getDescriptor();
+      return descriptor.getSourcePosition(project, DebuggerAction.getDebuggerContext(dataContext));
+    }
+
     if(DebuggerAction.isContextView(event)) {
       DebuggerTree tree = (DebuggerTree)dataContext.getData(DebuggerActions.DEBUGGER_TREE);
       if(tree != null && tree.getSelectionPath() != null) {
@@ -141,15 +148,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
           }
         }
       }
+      return null;
     }
-
-    DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(dataContext);
-
-    if(selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
-      FieldDescriptorImpl descriptor = (FieldDescriptorImpl)selectedNode.getDescriptor();
-      return descriptor.getSourcePosition(project, DebuggerAction.getDebuggerContext(dataContext));
-    }
-
 
     Editor editor = event.getData(PlatformDataKeys.EDITOR);
     if(editor == null) {
