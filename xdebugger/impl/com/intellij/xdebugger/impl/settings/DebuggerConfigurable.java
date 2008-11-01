@@ -14,6 +14,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,7 +26,8 @@ import java.util.List;
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   private Configurable myRootConfigurable;
   private Configurable[] myChildren;
-  private String myProjectLocationHash;
+  private WeakReference<Project> myContextProject;
+
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
 
   public DebuggerConfigurable(ProjectManager pm) {
@@ -55,12 +57,11 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       project = ProjectManager.getInstance().getDefaultProject();
     }
 
-    final String locationHash = project.getLocationHash();
-    if (!locationHash.equals(myProjectLocationHash)) {
-      // clear data (if any) built for the previous projects 
+    if (myContextProject == null || myContextProject.get() != project) {
+      // clear cached data built for the previous projects 
       myChildren = null;
       myRootConfigurable = null;
-      myProjectLocationHash = locationHash;
+      myContextProject = new WeakReference<Project>(project);
     }
 
     if (myChildren == null) {
