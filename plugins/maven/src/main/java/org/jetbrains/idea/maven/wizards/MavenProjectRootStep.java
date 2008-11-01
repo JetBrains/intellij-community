@@ -19,15 +19,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenProjectRootStep extends ProjectImportWizardStep {
-
-  private MavenGeneralSettings myCoreSettings;
-  private MavenProjectBuilder myImportContext;
-  private MavenImportingSettings myImportingSettings;
-
   private final JPanel myPanel;
   private NamePathComponent myRootPathComponent;
   private final MavenImportingSettingsForm myImporterSettingsForm;
@@ -63,7 +55,7 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
     advancedButton.addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent event) {
         super.mouseClicked(event);
-        ShowSettingsUtil.getInstance().editConfigurable(myPanel, new MavenPathsConfigurable());
+        ShowSettingsUtil.getInstance().editConfigurable(myPanel, new MavenEnvironmentConfigurable());
       }
     });
   }
@@ -73,19 +65,19 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
   }
 
   public void updateDataModel() {
-    final MavenImportingSettings settings = getImportingSettings();
+    MavenImportingSettings settings = getImportingSettings();
     myImporterSettingsForm.getData(settings);
     suggestProjectNameAndPath(settings.getDedicatedModuleDir(), myRootPathComponent.getPath());
   }
 
   public boolean validate() throws ConfigurationException {
     updateDataModel(); // needed to make 'exhaustive search' take an effect.
-    return getImportContext().setRootDirectory(myRootPathComponent.getPath());
+    return getBuilder().setRootDirectory(myRootPathComponent.getPath());
   }
 
   public void updateStep() {
     if (!myRootPathComponent.isPathChangedByUser()) {
-      final VirtualFile rootDirectory = getImportContext().getRootDirectory();
+      final VirtualFile rootDirectory = getBuilder().getRootDirectory();
       final String path;
       if (rootDirectory != null) {
         path = rootDirectory.getPath();
@@ -105,25 +97,17 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
     return myRootPathComponent.getPathComponent();
   }
 
-  private MavenGeneralSettings getCoreSettings() {
-    if (myCoreSettings == null) {
-      myCoreSettings = ((MavenProjectBuilder)getBuilder()).getGeneralSettings();
-    }
-    return myCoreSettings;
+  @Override
+  public MavenProjectBuilder getBuilder() {
+    return (MavenProjectBuilder)super.getBuilder();
   }
 
-  public MavenProjectBuilder getImportContext() {
-    if (myImportContext == null) {
-      myImportContext = (MavenProjectBuilder)getBuilder();
-    }
-    return myImportContext;
+  private MavenGeneralSettings getGeneralSettings() {
+    return getBuilder().getGeneralSettings();
   }
 
-  public MavenImportingSettings getImportingSettings() {
-    if (myImportingSettings == null) {
-      myImportingSettings = ((MavenProjectBuilder)getBuilder()).getImportingSettings();
-    }
-    return myImportingSettings;
+  private MavenImportingSettings getImportingSettings() {
+    return getBuilder().getImportingSettings();
   }
 
   @NonNls
@@ -131,7 +115,7 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
     return "reference.dialogs.new.project.import.maven.page1";
   }
 
-  class MavenPathsConfigurable implements Configurable {
+  class MavenEnvironmentConfigurable implements Configurable {
     MavenEnvironmentForm myForm = new MavenEnvironmentForm();
 
     @Nls
@@ -155,15 +139,15 @@ public class MavenProjectRootStep extends ProjectImportWizardStep {
     }
 
     public boolean isModified() {
-      return myForm.isModified(getCoreSettings());
+      return myForm.isModified(getGeneralSettings());
     }
 
     public void apply() throws ConfigurationException {
-      myForm.setData(getCoreSettings());
+      myForm.setData(getGeneralSettings());
     }
 
     public void reset() {
-      myForm.getData(getCoreSettings());
+      myForm.getData(getGeneralSettings());
     }
 
     public void disposeUIResources() {
