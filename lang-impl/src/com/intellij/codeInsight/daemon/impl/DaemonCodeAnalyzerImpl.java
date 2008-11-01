@@ -337,9 +337,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     MarkupModel markup = document.getMarkupModel(project);
     List<HighlightInfo> infos = markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
+
     if (infos != null) {
+      final Set<RangeHighlighter> allHighlighters = new THashSet<RangeHighlighter>(Arrays.asList(markup.getAllHighlighters()));
+
       for (HighlightInfo info : infos) {
-        assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
+        assert allHighlighters.contains(info.highlighter);
       }
     }
     return infos;
