@@ -323,6 +323,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         }
       }
 
+      packagesMap.remove(qualifiedName);    // avoid SOE caused by returning a package as a subpackage of itself
       return packagesMap.values().toArray(new PsiPackage[packagesMap.size()]);
     }
 
