@@ -33,17 +33,19 @@ public abstract class ExternalCompiler implements BackendCompiler {
   public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
     final String[] commands = createStartupCommand(chunk, compileContext, outputDir);
 
-    @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append("Running compiler: ");
-      for (final String command : commands) {
-        buf.append(" ").append(command);
-      }
+    if (LOG.isDebugEnabled()) {
+      @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+      try {
+        buf.append("Running compiler: ");
+        for (final String command : commands) {
+          buf.append(" ").append(command);
+        }
 
-      LOG.info(buf.toString());
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
+        LOG.debug(buf.toString());
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(buf);
+      }
     }
 
     return Runtime.getRuntime().exec(commands);
