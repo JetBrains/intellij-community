@@ -28,6 +28,7 @@ import java.util.List;
 public class RollbackChangesDialog extends DialogWrapper {
   private Project myProject;
   private final boolean myRefreshSynchronously;
+  private final Runnable myAfterVcsRefreshInAwt;
   private MultipleChangeListBrowser myBrowser;
   @Nullable private JCheckBox myDeleteLocallyAddedFiles;
 
@@ -36,6 +37,11 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously) {
+    rollbackChanges(project, changes, refreshSynchronously, null);
+  }
+
+  public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously,
+                                     final Runnable afterVcsRefreshInAwt) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
@@ -54,24 +60,25 @@ public class RollbackChangesDialog extends DialogWrapper {
       }
     }
 
-    rollback(project, new ArrayList<LocalChangeList>(lists), validChanges, refreshSynchronously);
+    rollback(project, new ArrayList<LocalChangeList>(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt);
   }
 
   public static void rollback(final Project project,
                               final List<LocalChangeList> changeLists,
                               final List<Change> changes,
-                              final boolean refreshSynchronously) {
-    new RollbackChangesDialog(project, changeLists, changes, refreshSynchronously).show();
+                              final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
+    new RollbackChangesDialog(project, changeLists, changes, refreshSynchronously, afterVcsRefreshInAwt).show();
   }
 
   public RollbackChangesDialog(final Project project,
                                List<LocalChangeList> changeLists,
                                final List<Change> changes,
-                               final boolean refreshSynchronously) {
+                               final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
     super(project, true);
 
     myProject = project;
     myRefreshSynchronously = refreshSynchronously;
+    myAfterVcsRefreshInAwt = afterVcsRefreshInAwt;
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true);
     myBrowser.setToggleActionTitle("Include in rollback");
 
@@ -116,7 +123,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     doRollback(myProject, myBrowser.getCurrentIncludedChanges(),
-               myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(), myRefreshSynchronously);
+               myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(), myRefreshSynchronously, myAfterVcsRefreshInAwt);
   }
 
   @Nullable
@@ -133,7 +140,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   public static void doRollback(final Project project,
                                 final Collection<Change> changes,
                                 final boolean deleteLocallyAddedFiles,
-                                final boolean refreshSynchronously) {
+                                final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
 
@@ -141,7 +148,14 @@ public class RollbackChangesDialog extends DialogWrapper {
     final Runnable notifier = changeListManager.prepareForChangeDeletion(changes);
     final Runnable afterRefresh = new Runnable() {
       public void run() {
-        changeListManager.invokeAfterUpdate(notifier, InvokeAfterUpdateMode.SILENT, "Refresh change lists after update");
+        changeListManager.invokeAfterUpdate(new Runnable() {
+          public void run() {
+            notifier.run();
+            if (afterVcsRefreshInAwt != null) {
+              afterVcsRefreshInAwt.run();
+            }
+          }
+        }, InvokeAfterUpdateMode.SILENT, "Refresh change lists after update");
       }
     };
 
@@ -170,9 +184,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           }
         });
 
-        if (!refreshSynchronously) {
-          doRefresh(project, pathsToRefresh, true, afterRefresh);
-        }
+        doRefresh(project, pathsToRefresh, (! refreshSynchronously), afterRefresh);
 
         AbstractVcsHelper.getInstanceChecked(project).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
       }
@@ -185,13 +197,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     else {
       rollbackAction.run();
     }
-    if (refreshSynchronously) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          doRefresh(project, pathsToRefresh, false, afterRefresh);
-        }
-      });
-    }
+    ((ChangeListManagerImpl) changeListManager).showLocalChangesInvalidated();
   }
 
   private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous,

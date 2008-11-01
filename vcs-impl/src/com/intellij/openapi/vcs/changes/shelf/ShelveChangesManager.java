@@ -158,7 +158,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         },
         patchPath);
 
-    RollbackChangesDialog.doRollback(myProject, changes, true, false);
+    RollbackChangesDialog.doRollback(myProject, changes, true, false, null);
 
     final ShelvedChangeList changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
     myShelvedChangeLists.add(changeList);
