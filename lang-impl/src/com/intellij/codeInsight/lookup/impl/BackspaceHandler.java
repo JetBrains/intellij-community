@@ -32,7 +32,6 @@ public class BackspaceHandler extends EditorActionHandler {
       }
     }
     else{
-      lookup.setAdditionalPrefix(lookup.getAdditionalPrefix()); //to clear initial prefix
       lookup.hide();
     }
 

@@ -28,7 +28,11 @@ public class XmlCharFilter extends CharFilter {
     if (!lookup.isCompletion()) return false;
 
     PsiElement psiElement = lookup.getPsiElement();
-    final PsiFile file = lookup.getPsiFile();
+    PsiFile file = lookup.getPsiFile();
+    if (!(file instanceof XmlFile) && psiElement != null) {
+      file = psiElement.getContainingFile();
+    }
+
 
     if (file instanceof XmlFile) {
       if (psiElement != null) {

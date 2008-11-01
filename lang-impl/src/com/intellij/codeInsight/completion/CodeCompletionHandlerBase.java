@@ -78,6 +78,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
         else {
           time = indicator.getParameters().getInvocationCount() + 1;
+          indicator.getLookup().restorePrefix();
         }
       }
       indicator.closeAndFinish();

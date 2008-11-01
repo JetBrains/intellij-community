@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -67,6 +66,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private Boolean myPositionedAbove = null;
 
   private CaretListener myEditorCaretListener;
+  private SelectionListener myEditorSelectionListener;
   private EditorMouseListener myEditorMouseListener;
 
   private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
@@ -334,11 +334,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       myList.setVisibleRowCount(Math.min(myList.getModel().getSize(), CodeInsightSettings.getInstance().LOOKUP_HEIGHT));
 
       myAdComponent.setText(myAdText);
-      if (StringUtil.isNotEmpty(myAdText)) {
-        myAdComponent.setPreferredSize(new Dimension(myAdComponent.getPreferredSize().width, myProcessIcon.getPreferredSize().height));
-      } else {
-        myAdComponent.setPreferredSize(new Dimension(0, 0));
-      }
 
       if (!isEmpty) {
         if (oldSelected != null) {
@@ -460,16 +455,21 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myEditorCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e){
         int curOffset = myEditor.getCaretModel().getOffset();
-        final LookupElement item = getCurrentItem();
-        if (item == null || item == EMPTY_LOOKUP_ITEM) return;
-
         if (curOffset != myInitialOffset + myAdditionalPrefix.length()) {
-          myInitialPrefix = null;
+          hide();
+        }
+      }
+    };
+
+    myEditorSelectionListener = new SelectionListener() {
+      public void selectionChanged(final SelectionEvent e) {
+        if (!e.getNewRange().isEmpty()) {
           hide();
         }
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
+    myEditor.getSelectionModel().addSelectionListener(myEditorSelectionListener);
 
     myEditorMouseListener = new EditorMouseAdapter() {
       public void mouseClicked(EditorMouseEvent e){
@@ -718,10 +718,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     PsiFile file = getPsiFile();
     if (file == null) return null;
 
-    int offset = getEditor().getCaretModel().getOffset();
+    int offset = getLookupStart();
     if (offset > 0) return file.findElementAt(offset - 1);
 
-    return file.findElementAt(offset + 1);
+    return file.findElementAt(0);
   }
 
   public Editor getEditor() {
@@ -751,8 +751,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Disposer.dispose(this);
 
     if (fireCanceled) {
-      restorePrefix();
-
       fireLookupCanceled();
     }
   }
@@ -775,6 +773,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myProcessIcon.dispose();
     if (myEditorCaretListener != null) {
       myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
+      myEditor.getSelectionModel().removeSelectionListener(myEditorSelectionListener);
     }
     if (myEditorMouseListener != null) {
       myEditor.removeEditorMouseListener(myEditorMouseListener);
