@@ -64,6 +64,10 @@ public class ParameterToMapEntryTest extends UsefulTestCase {
     doTestImpl("A.groovy");
   }
 
+  public void testFormatter() throws Throwable {
+    doTestImpl("A.groovy");
+  }
+
   public void testClosureAtEnd() throws Throwable {
     doTestImpl("A.groovy");
   }

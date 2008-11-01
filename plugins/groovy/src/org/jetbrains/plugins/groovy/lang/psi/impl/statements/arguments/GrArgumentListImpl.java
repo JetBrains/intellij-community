@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,13 +108,21 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
         final PsiElement prevElem = PsiUtil.getPrevNonSpace(expression);
         final PsiElement nextElem = PsiUtil.getNextNonSpace(expression);
         getNode().removeChild(exprNode);
-        if (nextElem != null && nextElem.getNode() != null &&
-            (nextElem.getNode().getElementType() == mCOMMA)) {
+        if (nextElem != null && nextElem.getNode() != null && (nextElem.getNode().getElementType() == mCOMMA)) {
+          final PsiElement n = nextElem.getNextSibling();
           getNode().removeChild(nextElem.getNode());
+          if (n != null && n instanceof PsiWhiteSpace) {
+            getNode().removeChild(n.getNode());
+          }
         } else if (prevElem != null) {
           final ASTNode prev = prevElem.getNode();
           if (prev != null && prev.getElementType() == mCOMMA) {
+            final PsiElement p = prevElem.getPrevSibling();
             getNode().removeChild(prev);
+            getNode().removeChild(prevElem.getNode());
+            if (p != null && p instanceof PsiWhiteSpace) {
+              getNode().removeChild(p.getNode());
+            }
           }
         }
         return expression;
