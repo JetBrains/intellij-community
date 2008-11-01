@@ -114,6 +114,12 @@
                   serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl"/>
   <projectService serviceInterface="com.intellij.pom.PomModel" serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
 
+  <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
+                  serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>
+  <projectService serviceInterface="com.intellij.facet.FacetFinder" serviceImplementation="com.intellij.facet.impl.FacetFinderImpl"/>
+  <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
+                 serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
+
   <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
                   serviceImplementation="com.intellij.codeInsight.AutoPopupController"/>
 

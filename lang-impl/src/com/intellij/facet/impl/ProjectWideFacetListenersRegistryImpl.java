@@ -7,7 +7,6 @@ package com.intellij.facet.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.facet.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
@@ -25,7 +24,6 @@ import java.util.Map;
  * @author nik
  */
 public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListenersRegistry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl");
   private Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<FacetTypeId, EventDispatcher<ProjectWideFacetListener>>();
   private Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<FacetTypeId, WeakHashMap<Facet, Boolean>>();
   private Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
