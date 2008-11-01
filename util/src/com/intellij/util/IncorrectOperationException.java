@@ -17,7 +17,7 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NonNls;
 
-public class IncorrectOperationException extends Exception {
+public class IncorrectOperationException extends RuntimeException {
   public IncorrectOperationException() {
     this(null);
   }
