@@ -75,7 +75,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     }
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
-    return infos == null ? Collections.<HighlightInfo>emptyList() : infos;
+    return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
   }
 
   protected boolean doFolding() {

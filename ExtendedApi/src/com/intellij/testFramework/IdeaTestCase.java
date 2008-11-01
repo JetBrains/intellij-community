@@ -78,7 +78,7 @@ import java.util.HashSet;
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
-  protected static Collection<File> myFilesToDelete;
+  protected static final Collection<File> myFilesToDelete = new HashSet<File>();
   protected boolean myAssertionsInTestDetected;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.IdeaTestCase");
   public static Thread ourTestThread;
@@ -131,8 +131,6 @@ import java.util.HashSet;
     new File(tempdirpath).mkdir();
 
     initApplication();
-
-    myFilesToDelete = new HashSet<File>();
 
     setUpProject();
     markProjectCreationPlace();
@@ -330,7 +328,7 @@ import java.util.HashSet;
       myProjectManager = null;
       myProject = null;
       myModule = null;
-      myFilesToDelete = null;
+      myFilesToDelete.clear();
     }
   }
 
@@ -396,7 +394,7 @@ import java.util.HashSet;
     }
   }
 
-  protected void simulateProjectOpen(Project p) {
+  protected void simulateProjectOpen() {
     ModuleManagerImpl mm = (ModuleManagerImpl)ModuleManager.getInstance(myProject);
     StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
 

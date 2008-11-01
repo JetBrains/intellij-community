@@ -174,12 +174,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected List<IntentionAction> getAvailableActions() {
-    final Collection<HighlightInfo> infos = doHighlighting();
-    Editor editor = getEditor();
-    return getAvailableActions(infos, editor, getFile());
+    doHighlighting();
+    return getAvailableActions(getEditor(), getFile());
   }
 
-  public static List<IntentionAction> getAvailableActions(final Collection<HighlightInfo> infos, final Editor editor, final PsiFile file) {
+  public static List<IntentionAction> getAvailableActions(final Editor editor, final PsiFile file) {
     List<HighlightInfo.IntentionActionDescriptor> descriptors = QuickFixAction.getAvailableActions(editor, file, -1);
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     List<IntentionAction> result = new ArrayList<IntentionAction>();

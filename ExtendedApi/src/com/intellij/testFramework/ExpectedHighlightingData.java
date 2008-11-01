@@ -3,18 +3,22 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +42,7 @@ public class ExpectedHighlightingData {
   @NonNls private static final String INFO_MARKER = "info";
   @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
   @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
+  @NonNls private static final String LINE_MARKER = "lineMarker";
 
   private final PsiFile myFile;
 
@@ -58,6 +63,7 @@ public class ExpectedHighlightingData {
   }
   @SuppressWarnings("WeakerAccess")
   protected final Map<String,ExpectedHighlightingSet> highlightingTypes;
+  private final Map<RangeMarker, LineMarkerInfo> lineMarkerInfos = new THashMap<RangeMarker, LineMarkerInfo>();
 
   public ExpectedHighlightingData(Document document,boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);
@@ -84,7 +90,61 @@ public class ExpectedHighlightingData {
     highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
     highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
     initAdditionalHighlightingTypes();
+    extractExpectedLineMarkerSet(document);
     extractExpectedHighlightsSet(document);
+    refreshLineMarkers();
+  }
+
+  private void refreshLineMarkers() {
+    for (Map.Entry<RangeMarker, LineMarkerInfo> entry : lineMarkerInfos.entrySet()) {
+      RangeMarker rangeMarker = entry.getKey();
+      int startOffset = rangeMarker.getStartOffset();
+      int endOffset = rangeMarker.getEndOffset();
+      final LineMarkerInfo value = entry.getValue();
+      LineMarkerInfo markerInfo = new LineMarkerInfo(value.getElement(), startOffset, null, value.updatePass, new Function() {
+        public Object fun(Object o) {
+          return value.getLineMarkerTooltip();
+        }
+      }, null);
+      markerInfo.endOffset = endOffset;
+      entry.setValue(markerInfo);
+    }
+  }
+
+  private void extractExpectedLineMarkerSet(Document document) {
+    String text = document.getText();
+
+    @NonNls String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")>)(.*)";
+    Pattern p = Pattern.compile(pat, Pattern.DOTALL);
+    for (; ;) {
+      Matcher m = p.matcher(text);
+      if (!m.matches()) break;
+      int startOffset = m.start(1);
+      final String descr = m.group(3);
+      String rest = m.group(4);
+
+      document.replaceString(startOffset, m.end(1), "");
+
+      Pattern pat2 = Pattern.compile("(.*?)(</" + LINE_MARKER + ">)(.*)", Pattern.DOTALL);
+      final Matcher matcher2 = pat2.matcher(rest);
+      LOG.assertTrue(matcher2.matches(), "Cannot find closing </" + LINE_MARKER + ">");
+      String content = matcher2.group(1);
+      int endOffset = startOffset + matcher2.start(3);
+      String endTag = matcher2.group(2);
+
+      document.replaceString(startOffset, endOffset, content);
+      endOffset -= endTag.length();
+
+      LineMarkerInfo markerInfo = new LineMarkerInfo(myFile, startOffset, null, Pass.LINE_MARKERS, new Function() {
+        public Object fun(Object o) {
+          return descr;
+        }
+      }, null);
+      markerInfo.endOffset = endOffset;
+
+      lineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
+      text = document.getText();
+    }
   }
 
   /**
@@ -107,7 +167,7 @@ public class ExpectedHighlightingData {
 
     // er...
     // any code then <marker> (with optional descr="...") then any code then </marker> then any code
-    @NonNls String pat = ".*?(<(" + typesRegex + ")(?: descr=\\\"((?:[^\\\"\\\\]|\\\\\\\")*)\\\")?(?: type=\\\"([0-9A-Z_]+)\\\")?(?: foreground=\\\"([0-9xa-f]+)\\\")?(?: background=\\\"([0-9xa-f]+)\\\")?(?: effectcolor=\\\"([0-9xa-f]+)\\\")?(?: effecttype=\\\"([A-Z]+)\\\")?(?: fonttype=\\\"([0-9]+)\\\")?(/)?>)(.*)";
+    @NonNls String pat = ".*?(<(" + typesRegex + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)";
                  //"(.+?)</" + marker + ">).*";
     Pattern p = Pattern.compile(pat, Pattern.DOTALL);
     Out:
@@ -182,12 +242,11 @@ public class ExpectedHighlightingData {
             Field javaField = JavaHighlightInfoTypes.class.getField(typeString);
             type = (HighlightInfoType)javaField.get(null);
           }
-          catch(Exception e2) {
+          catch (Exception e2) {
             LOG.error(e);
           }
         }
-
-        LOG.assertTrue(type != null,"Wrong highlight type: " + typeString);
+        LOG.assertTrue(type != null, "Wrong highlight type: " + typeString);
       }
 
       highlightInfo.type = type;
@@ -204,6 +263,62 @@ public class ExpectedHighlightingData {
       result.addAll(set.infos);
     }
     return result;
+  }
+
+  public void checkLineMarkers(Collection<LineMarkerInfo> markerInfos, String text) {
+    String fileName = myFile == null ? "" : myFile.getName() + ": ";
+    String failMessage = "";
+
+    if (markerInfos != null) {
+      for (LineMarkerInfo info : markerInfos) {
+        if (!containsLineMarker(info, lineMarkerInfos.values())) {
+          final int startOffset = info.startOffset;
+          final int endOffset = info.endOffset;
+
+          int y1 = StringUtil.offsetToLineNumber(text, startOffset);
+          int y2 = StringUtil.offsetToLineNumber(text, endOffset);
+          int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
+          int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
+
+          if (failMessage.length() != 0) failMessage += '\n';
+          failMessage += fileName + "Extra line marker highlighted " +
+                            "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
+                            "(" + (x2 + 1) + ", " + (y2 + 1) + ")"
+                            + ": '"+info.getLineMarkerTooltip()+"'"
+                            ;
+        }
+      }
+    }
+
+    for (LineMarkerInfo expectedLineMarker : lineMarkerInfos.values()) {
+      if (!containsLineMarker(expectedLineMarker, markerInfos)) {
+        final int startOffset = expectedLineMarker.startOffset;
+        final int endOffset = expectedLineMarker.endOffset;
+
+        int y1 = StringUtil.offsetToLineNumber(text, startOffset);
+        int y2 = StringUtil.offsetToLineNumber(text, endOffset);
+        int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
+        int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
+
+        if (failMessage.length() != 0) failMessage += '\n';
+        failMessage += fileName + "Line marker was not highlighted " +
+                       "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
+                       "(" + (x2 + 1) + ", " + (y2 + 1) + ")"
+                       + ": '"+expectedLineMarker.getLineMarkerTooltip()+"'"
+          ;
+      }
+    }
+
+    if (failMessage.length() > 0) Assert.assertTrue(failMessage, false);
+  }
+
+  private static boolean containsLineMarker(LineMarkerInfo info, Collection<LineMarkerInfo> where) {
+    for (LineMarkerInfo markerInfo : where) {
+      if (markerInfo.startOffset == info.startOffset
+          && markerInfo.endOffset == info.endOffset
+          && Comparing.equal(info.getLineMarkerTooltip(), markerInfo.getLineMarkerTooltip())) return true;
+    }
+    return false;
   }
 
   public void checkResult(Collection<HighlightInfo> infos, String text) {

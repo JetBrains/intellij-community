@@ -1,9 +1,12 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -15,14 +18,11 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -41,6 +41,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -87,9 +88,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     inspectionProfileManager.addProfile(profile);
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
-    toInitializeDaemon = ((ProjectEx)getProject()).isOptimiseTestLoadSpeed();
+    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+    toInitializeDaemon = !daemonCodeAnalyzer.isInitialized();
     if (toInitializeDaemon) {
-      DaemonCodeAnalyzer.getInstance(getProject()).projectOpened();
+      daemonCodeAnalyzer.projectOpened();
     }
   }
 
@@ -187,13 +189,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
     }
 
-    data.checkResult(infos, myEditor.getDocument().getText());
-
+    String text = myEditor.getDocument().getText();
+    data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
+    data.checkResult(infos, text);
     return infos;
   }
 
   protected Collection<HighlightInfo> highlightErrors() {
-    Collection<HighlightInfo> infos = doHighlighting();
+    Collection<HighlightInfo> infos = new ArrayList<HighlightInfo>(doHighlighting());
     Iterator<HighlightInfo> iterator = infos.iterator();
     while (iterator.hasNext()) {
       HighlightInfo info = iterator.next();
@@ -205,6 +208,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected Collection<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
+    /*
     final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
 
     if (doTestLineMarkers()) {
@@ -243,8 +247,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     return result;
+    */
 
-    /*
     TIntArrayList toIgnore = new TIntArrayList();
     if (!doTestLineMarkers()) {
       toIgnore.add(Pass.UPDATE_OVERRIDEN_MARKERS);
@@ -262,8 +266,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
-    return infos == null ? Collections.<HighlightInfo>emptyList() : infos;
-    */
+    return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
   }
 
   protected TextEditorHighlightingPass getCustomPass(final PsiFile file, final Editor editor) {
@@ -274,58 +277,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return false;
   }
 
-  private void collectLineMarkersForFile(final PsiFile file, final Editor editor, final List<HighlightInfo> result) {
-    LineMarkersPass lineMarkersPass = new LineMarkersPass(myProject, file, editor.getDocument(), 0, editor.getDocument().getTextLength(), true);
-    lineMarkersPass.collectInformation(new MockProgressIndicator());
-    lineMarkersPass.applyInformationToEditor();
-    Collection<LineMarkerInfo> infoCollection = lineMarkersPass.getMarkers();
-    appendHighlightInfosFromLineMarkers(result, infoCollection);
-
-    SlowLineMarkersPass lineMarkersPass2 = new SlowLineMarkersPass(myProject, file, editor.getDocument(), 0, editor.getDocument().getTextLength());
-    lineMarkersPass2.collectInformation(new MockProgressIndicator());
-    lineMarkersPass2.applyInformationToEditor();
-    infoCollection = lineMarkersPass2.getMarkers();
-    appendHighlightInfosFromLineMarkers(result, infoCollection);
-  }
-
   protected boolean doTestLineMarkers() {
     return false;
   }
 
-  private static void appendHighlightInfosFromLineMarkers(final List<HighlightInfo> result, final Collection<LineMarkerInfo> infoCollection) {
-    for(LineMarkerInfo lineMarkerInfo:infoCollection) {
-      GutterIconRenderer gutterIconRenderer = lineMarkerInfo.createGutterRenderer();
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.INFO, lineMarkerInfo.startOffset,
-                                                                            lineMarkerInfo.endOffset, gutterIconRenderer != null
-                                                                                                        ? gutterIconRenderer.getTooltipText()
-                                                                                                        : lineMarkerInfo.getLineMarkerTooltip());
-      result.add(highlightInfo);
-      highlightInfo.setGutterIconRenderer(gutterIconRenderer);
-    }
-  }
-
-  private static List<HighlightInfo> collectHighlighInfos(final PsiFile file, final Editor editor) {
-    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
-    Document document = editor.getDocument();
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(file.getProject(), file, document, 0, file.getTextLength(), true);
-    action1.collectInformation(new MockProgressIndicator());
-    action1.applyInformationToEditor();
-    result.addAll(action1.getHighlights());
-
-    PostHighlightingPassFactory phpFactory = file.getProject().getComponent(PostHighlightingPassFactory.class);
-    if (phpFactory != null) {
-      PostHighlightingPass php = new PostHighlightingPass(file.getProject(), file, editor, 0, file.getTextLength());
-      php.collectInformation(new MockProgressIndicator());
-      php.applyInformationToEditor();
-      result.addAll(php.getHighlights());
-    }
-
-    LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
-    inspectionsPass.collectInformation(new MockProgressIndicator());
-    inspectionsPass.applyInformationToEditor();
-    result.addAll(inspectionsPass.getHighlights());
-    return result;
-  }
 
   protected boolean doExternalValidation() {
     return true;
@@ -335,17 +290,17 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return false;
   }
 
-  protected void findAndInvokeIntentionAction(final Collection<HighlightInfo> infos, String intentionActionName, final Editor editor,
+  protected static void findAndInvokeIntentionAction(final Collection<HighlightInfo> infos, String intentionActionName, final Editor editor,
                                               final PsiFile file) throws IncorrectOperationException {
     IntentionAction intentionAction = findIntentionAction(infos, intentionActionName, editor, file);
 
     assertNotNull(intentionAction);
-    intentionAction.invoke(myProject, myEditor, myFile);
+    intentionAction.invoke(file.getProject(), editor, file);
   }
 
-  protected IntentionAction findIntentionAction(final Collection<HighlightInfo> infos, final String intentionActionName, final Editor editor,
+  protected static IntentionAction findIntentionAction(final Collection<HighlightInfo> infos, final String intentionActionName, final Editor editor,
                                               final PsiFile file) {
-    IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(LightQuickFixTestCase.getAvailableActions(infos, editor, file),
+    IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(LightQuickFixTestCase.getAvailableActions(editor, file),
       intentionActionName
     );
 
@@ -356,7 +311,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         if (info.quickFixActionRanges != null) {
           for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
             IntentionAction action = pair.first.getAction();
-            if (action.isAvailable(getProject(), editor, file)) availableActions.add(action);
+            if (action.isAvailable(file.getProject(), editor, file)) availableActions.add(action);
           }
         }
       }

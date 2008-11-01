@@ -168,11 +168,15 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     final Document document = manager.getDocument(myVFile);
     assertNotNull("Can't create document for '" + fileName + "'", document);
     manager.reloadFromDisk(document);
+    document.insertString(0, " ");
+    document.deleteString(0, 1);
     myFile = getPsiManager().findFile(myVFile);
     assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
     assertTrue(myFile.isPhysical());
     myEditor = createEditor(myVFile);
     myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
   private static void setupEditorForInjectedLanguage() {
