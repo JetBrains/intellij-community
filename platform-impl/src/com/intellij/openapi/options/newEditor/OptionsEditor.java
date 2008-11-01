@@ -25,7 +25,9 @@ import com.intellij.ui.navigation.*;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -83,6 +85,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   boolean myFilterFocumentWasChanged;
   private ActionToolbar myToolbar;
+  private Window myWindow;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
@@ -192,6 +195,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     mySpotlightUpdate = new MergingUpdateQueue("OptionsSplotlight", 500, false, this, this, this);
 
     IdeGlassPaneUtil.installPainter(myOwnDetails.getContentGutter(), mySpotlightPainter, this);
+
+    new UiNotifyConnector.Once(this, new Activatable() {
+      public void showNotify() {
+        myWindow = SwingUtilities.getWindowAncestor(OptionsEditor.this);
+      }
+
+      public void hideNotify() {
+      }
+    });
   }
 
   private float readPropertion(final float defaultValue, final String propertyName) {
@@ -464,6 +476,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     public void actionPerformed(final ActionEvent e) {
       reset(myConfigurable, true);
+      checkModified(myConfigurable);
     }
 
     @Override
@@ -581,7 +594,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       Configurable each = iterator.next();
       try {
         each.apply();
-        getContext().fireModifiedRemoved(each, myColleague);
+        if (!each.isModified()) {
+          getContext().fireModifiedRemoved(each, null);
+        }
       }
       catch (ConfigurationException e) {
         errors.put(each, e);
@@ -800,7 +815,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   public void eventDispatched(final AWTEvent event) {
     if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED) {
       final MouseEvent me = (MouseEvent)event;
-      if (SwingUtilities.isDescendingFrom(me.getComponent(), myContentWrapper)) {
+      if (SwingUtilities.isDescendingFrom(me.getComponent(), myContentWrapper) || isPopupOverEditor(me.getComponent())) {
         queueModificationCheck(getContext().getCurrentConfigurable());
         return;
       }
@@ -824,6 +839,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         return getContext().getCurrentConfigurable() != configurable;
       }
     });
+  }
+
+  private boolean isPopupOverEditor(Component c) {
+    final Window wnd = SwingUtilities.getWindowAncestor(c);
+    if (wnd instanceof JWindow && myWindow != null && wnd.getParent() == myWindow) return true;
+    return false;
   }
 
   private static class MySearchField extends SearchTextField {

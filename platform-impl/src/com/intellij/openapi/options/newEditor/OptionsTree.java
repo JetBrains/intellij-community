@@ -27,6 +27,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.basic.BasicTreeUI;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -571,10 +572,16 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     private MyTree() {
       getInputMap().clear();
-      setUI(new MyTreeUi());
     }
 
-
+    @Override
+    public void setUI(final TreeUI ui) {
+      TreeUI actualUI = ui;
+      if (!(ui instanceof MyTreeUi)) {
+        actualUI = new MyTreeUi();
+      }
+      super.setUI(actualUI);
+    }
 
     @Override
     protected void configureUiHelper(final TreeUIHelper helper) {
