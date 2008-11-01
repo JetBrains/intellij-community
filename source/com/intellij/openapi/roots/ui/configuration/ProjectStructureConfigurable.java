@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
@@ -170,12 +171,19 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void initSidePanel() {
+    boolean isDefaultProject = myProject == ProjectManager.getInstance().getDefaultProject();
+
     mySidePanel = new SidePanel(this, myHistory);
     mySidePanel.addSeparator("Project Settings");
     addProjectConfig();
-    addModulesConfig();
+    if (!isDefaultProject) {
+      addModulesConfig();
+    }
     addProjectLibrariesConfig();
-    addFacetsConfig();
+
+    if (!isDefaultProject) {
+      addFacetsConfig();
+    }
     mySidePanel.addSeparator("Platform Settings");
     addJdkListConfig();
     addGlobalLibrariesConfig();

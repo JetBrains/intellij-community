@@ -12,7 +12,7 @@ public class TemplateProjectPropertiesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, new ConfigurableGroup[]{
-      new ProjectConfigurablesGroup(defaultProject)
+      new ProjectConfigurablesGroup(defaultProject, false)
     });
   }
 }
