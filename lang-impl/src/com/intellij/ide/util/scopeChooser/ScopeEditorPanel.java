@@ -268,7 +268,7 @@ public class ScopeEditorPanel {
     return toolbar.getComponent();
   }
 
-  private void rebuild(final boolean updateText, final Runnable runnable){
+  private void rebuild(final boolean updateText, final Runnable runnable, final boolean requestFocus){
     myUpdateAlarm.cancelAllRequests();
     final Runnable request = new Runnable() {
       public void run() {
@@ -280,7 +280,7 @@ public class ScopeEditorPanel {
             }
             try {
               if (!myProject.isDisposed()) {
-                updateTreeModel();
+                updateTreeModel(requestFocus);
               }
             }
             catch (ProcessCanceledException e) {
@@ -298,7 +298,7 @@ public class ScopeEditorPanel {
   }
 
   private void rebuild(final boolean updateText) {
-    rebuild(updateText, null);
+    rebuild(updateText, null, true);
   }
 
   private static void initTree(Tree tree) {
@@ -313,8 +313,8 @@ public class ScopeEditorPanel {
     new TreeSpeedSearch(tree);
   }
 
-  private void updateTreeModel() throws ProcessCanceledException {
-    PanelProgressIndicator progress = createProgressIndicator();
+  private void updateTreeModel(final boolean requestFocus) throws ProcessCanceledException {
+    PanelProgressIndicator progress = createProgressIndicator(requestFocus);
     progress.setBordersVisible(false); 
     myCurrentProgress = progress;
     Runnable updateModel = new Runnable() {
@@ -346,7 +346,7 @@ public class ScopeEditorPanel {
             finally {
               myCurrentProgress = null;
               //update label
-              setToComponent(myMatchingCountLabel);
+              setToComponent(myMatchingCountLabel, requestFocus);
             }
           }
         });
@@ -358,8 +358,8 @@ public class ScopeEditorPanel {
     ProgressManager.getInstance().runProcess(updateModel, progress);
   }
 
-  protected PanelProgressIndicator createProgressIndicator() {
-    return new MyPanelProgressIndicator(true);
+  protected PanelProgressIndicator createProgressIndicator(final boolean requestFocus) {
+    return new MyPanelProgressIndicator(true, requestFocus);
   }
 
   public void cancelCurrentProgress(){
@@ -381,19 +381,21 @@ public class ScopeEditorPanel {
   public void reset(PackageSet packageSet, Runnable runnable){
     myCurrentScope = packageSet;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
-    rebuild(false, runnable);
+    rebuild(false, runnable, false);
   }
 
-  private void setToComponent(final JComponent cmp) {
+  private void setToComponent(final JComponent cmp, final boolean requestFocus) {
     myMatchingCountPanel.removeAll();
     myMatchingCountPanel.add(cmp, BorderLayout.CENTER);
     myMatchingCountPanel.revalidate();
     myMatchingCountPanel.repaint();
-    SwingUtilities.invokeLater(new Runnable(){
-      public void run() {
-        myPatternField.requestFocusInWindow();        
-      }
-    });
+    if (requestFocus) {
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          myPatternField.requestFocusInWindow();
+        }
+      });
+    }
   }
 
   public void restoreCanceledProgress() {
@@ -494,14 +496,16 @@ public class ScopeEditorPanel {
 
   protected class MyPanelProgressIndicator extends PanelProgressIndicator {
     private final boolean myCheckVisible;
+    private final boolean myRequestFocus;
 
-    public MyPanelProgressIndicator(final boolean checkVisible) {
+    public MyPanelProgressIndicator(final boolean checkVisible, final boolean requestFocus) {
       super(new Consumer<JComponent>() {
         public void consume(final JComponent component) {
-          setToComponent(component);
+          setToComponent(component, requestFocus);
         }
       });
       myCheckVisible = checkVisible;
+      myRequestFocus = requestFocus;
     }
 
     public void start() {
@@ -515,7 +519,7 @@ public class ScopeEditorPanel {
 
     public void stop() {
       super.stop();
-      setToComponent(myMatchingCountLabel);
+      setToComponent(myMatchingCountLabel, myRequestFocus);
     }
 
     public String getText() { //just show non-blocking progress

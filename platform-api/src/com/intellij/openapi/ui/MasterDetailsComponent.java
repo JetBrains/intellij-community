@@ -325,7 +325,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   public void reset() {
     myHasDeletedItems = false;
     ((DefaultTreeModel)myTree.getModel()).reload();
-    myTree.requestFocus();
+    //myTree.requestFocus();
     myState.proportions.restoreSplitterProportions(myWholePanel);
 
     final Enumeration enumeration = myRoot.breadthFirstEnumeration();
@@ -335,13 +335,14 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       if (node instanceof MyRootNode) continue;
       final String path = getNodePathString(node);
       if (!selected && Comparing.strEqual(path, myState.lastEditedConfigurable)) {
-        TreeUtil.selectInTree(node, true, myTree);
+        TreeUtil.selectInTree(node, false, myTree);
         selected = true;
       }
     }
     if (!selected) {
       TreeUtil.selectFirstNode(myTree);
     }
+    updateSelectionFromTree();
   }
 
   private static String getNodePathString(final MyNode node) {
@@ -500,13 +501,19 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect) {
-    return selectNodeInTree(nodeToSelect, true);
+    return selectNodeInTree(nodeToSelect, true, false);
   }
 
-  public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect, boolean center) {
-    myTree.requestFocus();
+  public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect, boolean requestFocus) {
+    return selectNodeInTree(nodeToSelect, true, requestFocus);
+  }
+
+  public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect, boolean center, final boolean requestFocus) {
+    if (requestFocus) {
+      myTree.requestFocus();
+    }
     if (nodeToSelect != null) {
-      return TreeUtil.selectInTree(nodeToSelect, true, myTree, center);
+      return TreeUtil.selectInTree(nodeToSelect, requestFocus, myTree, center);
     }
     else {
       return TreeUtil.selectFirstNode(myTree);
@@ -539,11 +546,11 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
   public void selectNodeInTree(String displayName) {
     final MyNode nodeByName = findNodeByName(myRoot, displayName);
-    selectNodeInTree(nodeByName);
+    selectNodeInTree(nodeByName, true);
   }
 
   public void selectNodeInTree(final Object object) {
-    selectNodeInTree(findNodeByObject(myRoot, object));
+    selectNodeInTree(findNodeByObject(myRoot, object), true);
   }
 
   @Nullable
