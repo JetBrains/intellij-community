@@ -4,9 +4,11 @@
  */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
@@ -14,10 +16,10 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
   private String myConflict;
   private static final String CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND = "Constructor matching super not found";
 
-  public ReplaceConstructorUsageInfo(PsiNewExpression element, final PsiClass targetClass, PsiType newType) {
+  public ReplaceConstructorUsageInfo(PsiNewExpression element, PsiType newType, final PsiClass[] targetClasses) {
     super(element);
     myNewType = newType;
-    final PsiMethod[] constructors = targetClass.getConstructors();
+    final PsiMethod[] constructors = targetClasses[0].getConstructors();
     final PsiMethod constructor = element.resolveConstructor();
     if (constructor == null) {
       if (constructors.length == 1 && constructors[0].getParameterList().getParametersCount() > 0 || constructors.length > 1) {
@@ -48,11 +50,24 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     if (!TypeConversionUtil.isAssignable(element.getType(), newType)) {
       final String conflict = "Type parameters do not agree in " + element.getText() + ". " +
                               "Expected " + newType.getPresentableText() + " but found " + element.getType().getPresentableText();
-      if (myConflict == null) {
-        myConflict = conflict;
-      } else {
-        myConflict += "\n" + conflict;
-      }
+      appendConflict(conflict);
+    }
+
+    if (targetClasses.length > 1) {
+      final String conflict = "Constructor " + element.getText() + " can be replaced with any of " + StringUtil.join(targetClasses, new Function<PsiClass, String>() {
+        public String fun(final PsiClass psiClass) {
+          return psiClass.getQualifiedName();
+        }
+      }, ", ");
+      appendConflict(conflict);
+    }
+  }
+
+  private void appendConflict(final String conflict) {
+    if (myConflict == null) {
+      myConflict = conflict;
+    } else {
+      myConflict += "\n" + conflict;
     }
   }
 

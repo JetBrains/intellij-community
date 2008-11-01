@@ -5,22 +5,30 @@
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
   public static final Logger LOG = Logger.getInstance("#" + ReplaceReferenceUsageInfo.class.getName());
   private final PsiElement myReferenceExpression;
   private final PsiClass myTargetClass;
+  private final String myConflict;
 
-  public ReplaceReferenceUsageInfo(PsiElement referenceExpression, PsiClass targetClass) {
+  public ReplaceReferenceUsageInfo(PsiElement referenceExpression, PsiClass[] targetClasses) {
     super(referenceExpression);
     myReferenceExpression = referenceExpression;
-    myTargetClass = targetClass;
+    myTargetClass = targetClasses[0];
+    myConflict = targetClasses.length > 1 ? referenceExpression.getText() + "can be replaced with any of " + StringUtil.join(targetClasses, new Function<PsiClass, String>() {
+      public String fun(final PsiClass psiClass) {
+        return psiClass.getQualifiedName();
+      }
+    }, ", ") : null;
   }
 
   public void fixUsage() throws IncorrectOperationException {
@@ -30,5 +38,8 @@ public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
     }
   }
 
-
+  @Override
+  public String getConflictMessage() {
+    return myConflict;
+  }
 }

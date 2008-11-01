@@ -113,4 +113,15 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testStaticImport() throws Exception {
     doTest();
   }
+
+  public void testMultipleSubclasses() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+        PsiClass superClass = myJavaFacade.findClass("Super");
+        if (superClass == null) superClass = myJavaFacade.findClass("p1.Super");
+        assertNotNull("Class Super not found", superClass);
+        new InlineSuperClassRefactoringProcessor(getProject(), superClass, myJavaFacade.findClass("Test"), myJavaFacade.findClass("Test1")).run();
+      }
+    });
+  }
 }

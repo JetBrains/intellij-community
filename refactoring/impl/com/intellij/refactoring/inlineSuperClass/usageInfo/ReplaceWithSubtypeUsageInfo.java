@@ -5,9 +5,11 @@
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
@@ -15,12 +17,20 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   private final PsiTypeElement myTypeElement;
   private final PsiClassType myTargetClassType;
   private PsiType myOriginalType;
+  private String myConflict;
 
-  public ReplaceWithSubtypeUsageInfo(PsiTypeElement typeElement, PsiClassType classType) {
+  public ReplaceWithSubtypeUsageInfo(PsiTypeElement typeElement, PsiClassType classType, final PsiClass[] targetClasses) {
     super(typeElement);
     myTypeElement = typeElement;
     myTargetClassType = classType;
     myOriginalType = myTypeElement.getType();
+    if (targetClasses.length > 1) {
+      myConflict = typeElement.getText() + " can be replaced with any of " + StringUtil.join(targetClasses, new Function<PsiClass, String>() {
+        public String fun(final PsiClass psiClass) {
+          return psiClass.getQualifiedName();
+        }
+      }, ", ") ;
+    }
   }
 
   public void fixUsage() throws IncorrectOperationException {
@@ -33,8 +43,19 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   @Override
   public String getConflictMessage() {
     if (!TypeConversionUtil.isAssignable(myOriginalType, myTargetClassType)) {
-      return "No consistent substitution found for " + getElement().getText() +". Expected \'" + myOriginalType.getPresentableText() + "\' but found \'" + myTargetClassType.getPresentableText() + "\'.";
+      final String conflict = "No consistent substitution found for " +
+                              getElement().getText() +
+                              ". Expected \'" +
+                              myOriginalType.getPresentableText() +
+                              "\' but found \'" +
+                              myTargetClassType.getPresentableText() +
+                              "\'.";
+      if (myConflict == null) {
+        myConflict = conflict;
+      } else {
+        myConflict += "\n" + conflict;
+      }
     }
-    return super.getConflictMessage();
+    return myConflict;
   }
 }
