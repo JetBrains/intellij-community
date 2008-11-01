@@ -1,7 +1,5 @@
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -14,7 +12,6 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Profile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.*;
@@ -22,7 +19,6 @@ import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.FileFinder;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -91,25 +87,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     manager.setActiveProfiles(getParameters().mySelectedProfiles);
     manager.setImportedMavenProjectModelManager(getParameters().myMavenProjectTree);
 
-    List<Module> moduleList = manager.commit(model, modulesProvider);
-    enusreRepositoryPathMacro();
-    return moduleList;
-  }
-
-  private void enusreRepositoryPathMacro() {
-    final File repo = getGeneralSettings().getEffectiveLocalRepository();
-    final PathMacros macros = PathMacros.getInstance();
-
-    for (String each : macros.getAllMacroNames()) {
-      String path = macros.getValue(each);
-      if (path == null) continue;
-      if (new File(path).equals(repo)) return;
-    }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        macros.setMacro("MAVEN_REPOSITORY", repo.getPath(), null);
-      }
-    });
+    return manager.commit(model, modulesProvider);
   }
 
   public VirtualFile getRootDirectory() {

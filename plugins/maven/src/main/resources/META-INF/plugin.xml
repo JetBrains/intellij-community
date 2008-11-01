@@ -61,6 +61,9 @@
     <component>
       <implementation-class>org.jetbrains.idea.maven.indices.MavenIndicesManager</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenPathVariablesRegistrar</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

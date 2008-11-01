@@ -82,7 +82,7 @@ public class MavenEmbedderFactory {
   }
 
   @Nullable
-  public static File resolveGlobalSettingsFile(final String override) {
+  public static File resolveGlobalSettingsFile(@Nullable String override) {
     final File directory = resolveMavenHomeDirectory(override);
     if (directory != null) {
       final File file = new File(new File(directory, CONF_DIR), SETTINGS_FILE);
@@ -94,7 +94,7 @@ public class MavenEmbedderFactory {
   }
 
   @Nullable
-  public static File resolveUserSettingsFile(final String override) {
+  public static File resolveUserSettingsFile(@Nullable String override) {
     if (!StringUtil.isEmptyOrSpaces(override)) {
       return new File(override);
     }
@@ -109,7 +109,7 @@ public class MavenEmbedderFactory {
   }
 
   @Nullable
-  public static File resolveLocalRepository(final String mavenHome, final String userSettings, final String override) {
+  public static File resolveLocalRepository(@Nullable String mavenHome, @Nullable String userSettings, @Nullable String override) {
     if (!StringUtil.isEmpty(override)) {
       return new File(override);
     }
