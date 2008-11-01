@@ -310,7 +310,9 @@ public class CommitHelper {
             // after vcs refresh is completed, outdated notifiers should be removed if some exists...
             ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
               public void run() {
-                CommittedChangesCache.getInstance(myProject).refreshIncomingChanges();
+                final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+                cache.refreshAllCachesAsync(false);
+                cache.refreshIncomingChangesAsync();
               }
             }, InvokeAfterUpdateMode.SILENT, null, new Consumer<VcsDirtyScopeManager>() {
               public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
