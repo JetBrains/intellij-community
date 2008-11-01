@@ -92,7 +92,9 @@ public class ExistingModuleLoader extends ModuleBuilder {
         usedMacros.removeAll(definedMacros);
 
         final HashMap<String, String> map = new HashMap<String, String>();
-        map.keySet().addAll(usedMacros);
+        for (String v : usedMacros) {
+          map.put(v, null);
+        }
 
         if (usedMacros.size() > 0) {
           final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(current, map);
