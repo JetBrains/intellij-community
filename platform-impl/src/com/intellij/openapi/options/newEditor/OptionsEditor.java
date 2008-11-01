@@ -52,6 +52,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   @NonNls static final String DETAILS_SPLITTER_PROPORTION = "options.splitter.details.proportions";
   @NonNls static final String LAST_SELECTED_CONFIGURABLE = "options.lastSelected";
 
+  @NonNls static final String SEARCH_VISIBLE = "options.searchVisible";
+
   Project myProject;
 
   OptionsEditorContext myContext;
@@ -195,6 +197,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     mySpotlightUpdate = new MergingUpdateQueue("OptionsSplotlight", 500, false, this, this, this);
 
     IdeGlassPaneUtil.installPainter(myOwnDetails.getContentGutter(), mySpotlightPainter, this);
+
+    String visible = PropertiesComponent.getInstance(myProject).getValue(SEARCH_VISIBLE);
+    if (visible == null) {
+      visible = "true";
+    }
+
+    setFilterFieldVisible(Boolean.valueOf(visible).booleanValue(), false, false);
 
     new UiNotifyConnector.Once(this, new Activatable() {
       public void showNotify() {
@@ -771,6 +780,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     final PropertiesComponent props = PropertiesComponent.getInstance(myProject);
     props.setValue(MAIN_SPLITTER_PROPORTION, String.valueOf(myMainSplitter.getProportion()));
     props.setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(myContentWrapper.myLastSplitterProproprtion));
+    props.setValue(SEARCH_VISIBLE, Boolean.valueOf(isFilterFieldVisible()).toString());
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
 
