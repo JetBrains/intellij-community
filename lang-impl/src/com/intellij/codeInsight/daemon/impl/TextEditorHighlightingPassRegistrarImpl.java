@@ -92,9 +92,13 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
   @NotNull
   public List<TextEditorHighlightingPass> instantiatePasses(@NotNull final PsiFile psiFile, @NotNull final Editor editor, @NotNull final int[] passesToIgnore) {
-    if (!checkedForCycles) {
-      checkedForCycles = true;
-      checkForCycles();
+    final int[] nextId = new int[1];
+    synchronized (this) {
+      nextId[0] = nextAvailableId;
+      if (!checkedForCycles) {
+        checkedForCycles = true;
+        checkForCycles();
+      }
     }
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     PsiFile fileFromDoc = documentManager.getPsiFile(editor.getDocument());
@@ -131,7 +135,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
             Project project = psiFile.getProject();
             ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId);
             intentionsPass.setCompletionPredecessorIds(new int[]{passId});
-            int id = nextAvailableId++;
+            int id = nextId[0]++;
             intentionsPass.setId(id);
             id2Pass.put(id, intentionsPass);
           }
