@@ -1,6 +1,8 @@
 package com.intellij.testIntegration;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -41,6 +43,12 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
   @Override
   protected void handleNoVariansCase(Project project, Editor editor, PsiFile file) {
+    PsiElement selectedElement = getSelectedElement(editor, file);
+    if (TestFinderHelper.isTest(selectedElement)) {
+      HintManager.getInstance().showErrorHint(editor, ActionsBundle.message("action.GotoTestSubject.nothing.found"));
+      return;
+    }
+
     TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
     if (creator != null) creator.createTest(project, editor, file);
   }
