@@ -4,6 +4,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -11,7 +12,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -29,6 +29,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
@@ -39,6 +40,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.messages.MessageBusConnection;
@@ -54,23 +56,15 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class DaemonListeners {
+public class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
-  private final CommandListener myCommandListener = new MyCommandListener();
   private final ApplicationListener myApplicationListener = new MyApplicationListener();
   private final EditorColorsListener myEditorColorsListener = new MyEditorColorsListener();
-  private final AnActionListener myAnActionListener = new MyAnActionListener();
   private final PropertyChangeListener myTodoListener = new MyTodoListener();
-  private final EditorMouseMotionListener myEditorMouseMotionListener = new MyEditorMouseMotionListener();
-  private final EditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
-  private final ProfileChangeAdapter myProfileChangeListener = new MyProfileChangeListener();
 
-  private final DocumentListener myDocumentListener;
-  private final VirtualFileListener myVirtualFileListener;
   private final EditorFactoryListener myEditorFactoryListener;
 
-  private final CaretListener myCaretListener;
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final ModalityStateListener myModalityStateListener;
@@ -90,20 +84,18 @@ public class DaemonListeners {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
-    myDocumentListener = new DocumentAdapter() {
+    eventMulticaster.addDocumentListener(new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       public void beforeDocumentChange(final DocumentEvent e) {
         if (!worthBothering(e.getDocument())) {
           return; //no need to stop daemon if something happened in the console
         }
-
         stopDaemon(true);
         UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
       }
-    };
-    eventMulticaster.addDocumentListener(myDocumentListener);
+    }, this);
 
-    myCaretListener = new CaretListener() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
         Editor editor = e.getEditor();
         if (!worthBothering(editor.getDocument())) {
@@ -113,11 +105,10 @@ public class DaemonListeners {
         stopDaemon(true);
         myDaemonCodeAnalyzer.setLastIntentionHint(null);
       }
-    };
-    eventMulticaster.addCaretListener(myCaretListener);
+    }, this);
 
-    eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener);
-    eventMulticaster.addEditorMouseListener(myEditorMouseListener);
+    eventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), this);
+    eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(), this);
 
     myEditorTracker = editorTracker;
     myEditorTrackerListener = new EditorTrackerListener() {
@@ -141,7 +132,10 @@ public class DaemonListeners {
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
 
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, daemonCodeAnalyzer, connection));
+    PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, daemonCodeAnalyzer, documentManager, EditorFactory.getInstance(),connection);
+    Disposer.register(this, changeHandler);
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(changeHandler, changeHandler);
 
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
@@ -163,13 +157,13 @@ public class DaemonListeners {
       }
     });
 
-    CommandProcessor.getInstance().addCommandListener(myCommandListener);
+    CommandProcessor.getInstance().addCommandListener(new MyCommandListener(), this);
     ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
     EditorColorsManager.getInstance().addEditorColorsListener(myEditorColorsListener);
-    InspectionProfileManager.getInstance().addProfileChangeListener(myProfileChangeListener);
+    InspectionProfileManager.getInstance().addProfileChangeListener(new MyProfileChangeListener(), this);
     TodoConfiguration.getInstance().addPropertyChangeListener(myTodoListener);
-    ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
-    myVirtualFileListener = new VirtualFileAdapter() {
+    ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), this);
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       public void propertyChanged(VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
           myDaemonCodeAnalyzer.restart();
@@ -179,14 +173,14 @@ public class DaemonListeners {
             if (document != null) {
               // highlight markers no more
               //todo clear all highlights regardless the pass id
-              UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
-                                                             Collections.<HighlightInfo>emptyList(), Pass.UPDATE_ALL);
+              UpdateHighlightersUtil
+                .setHighlightersToEditor(myProject, document, 0, document.getTextLength(), Collections.<HighlightInfo>emptyList(),
+                                         Pass.UPDATE_ALL);
             }
           }
         }
       }
-    };
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
+    }, this);
 
     myErrorStripeHandler = new ErrorStripeHandler(myProject);
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(myErrorStripeHandler);
@@ -218,19 +212,11 @@ public class DaemonListeners {
 
   public void dispose() {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.removeDocumentListener(myDocumentListener);
-    eventMulticaster.removeCaretListener(myCaretListener);
-    eventMulticaster.removeEditorMouseMotionListener(myEditorMouseMotionListener);
-    eventMulticaster.removeEditorMouseListener(myEditorMouseListener);
 
     EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-    CommandProcessor.getInstance().removeCommandListener(myCommandListener);
     ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
     EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
-    InspectionProfileManager.getInstance().removeProfileChangeListener(myProfileChangeListener);
     TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
-    ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
 
     ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
     myEditorTracker.removeEditorTrackerListener(myEditorTrackerListener);

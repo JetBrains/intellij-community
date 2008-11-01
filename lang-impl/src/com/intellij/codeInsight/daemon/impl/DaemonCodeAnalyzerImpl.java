@@ -47,6 +47,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -87,6 +88,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private DaemonListeners myDaemonListeners;
   private StatusBarUpdater myStatusBarUpdater;
   private final PassExecutorService myPassExecutorService;
+  private static final Key<List<HighlightInfo>> HIGHLIGHTS_TO_REMOVE_KEY = Key.create("HIGHLIGHTS_TO_REMOVE");
 
   public DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
     myProject = project;
@@ -145,7 +147,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     // clear dangling references to PsiFiles/Documents. SCR#10358
     myFileStatusMap.markAllFilesDirty();
 
-    myDaemonListeners.dispose();
+    Disposer.dispose(myDaemonListeners);
     stopProcess(false);
     myPassExecutorService.dispose();
     myStatusBarUpdater.dispose();
@@ -153,6 +155,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myDisposed = true;
     myLastSettings = null;
     myInitialized = false;
+  }
+
+  @TestOnly
+  public boolean isInitialized() {
+    return myInitialized;
   }
 
   void repaintErrorStripeRenderer(Editor editor) {
@@ -336,15 +343,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public static List<HighlightInfo> getHighlights(Document document, Project project) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     MarkupModel markup = document.getMarkupModel(project);
+    return getHighlights(markup);
+  }
+
+  static List<HighlightInfo> getHighlights(MarkupModel markup) {
     List<HighlightInfo> infos = markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
-
-    if (infos != null) {
-      final Set<RangeHighlighter> allHighlighters = new THashSet<RangeHighlighter>(Arrays.asList(markup.getAllHighlighters()));
-
-      for (HighlightInfo info : infos) {
-        assert allHighlighters.contains(info.highlighter);
-      }
-    }
     return infos;
   }
 
@@ -360,7 +363,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
     Collection<HighlightInfo> array = new ArrayList<HighlightInfo>();
     final SeverityRegistrar instance = SeverityRegistrar.getInstance(project);
-    
+
     for (HighlightInfo info : highlights) {
       if (instance.compare(info.getSeverity(), minSeverity) >= 0 &&
           info.startOffset >= startOffset &&
@@ -434,18 +437,34 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return true;
   }
 
-  public static void setHighlights(Document document, List<HighlightInfo> highlights, Project project) {
+  static void setHighlights(MarkupModel markup, Project project, List<HighlightInfo> highlightsToSet, List<HighlightInfo> highlightsToRemove) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    MarkupModel markup = document.getMarkupModel(project);
-    stripWarningsCoveredByErrors(project, highlights, markup);
-    markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, highlights);
-    for (HighlightInfo info : highlights) {
-      assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
-    }
+    stripWarningsCoveredByErrors(project, highlightsToSet, markup);
+    markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, Collections.unmodifiableList(highlightsToSet));
 
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project); 
+    markup.putUserData(HIGHLIGHTS_TO_REMOVE_KEY, Collections.unmodifiableList(highlightsToRemove));
+
+    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl && ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater != null) {
       ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
+    }
+  }
+
+  static void assertMarkupConsistent(MarkupModel markup, List<HighlightInfo> highlightsToSet, List<HighlightInfo> highlightsToRemove) {
+    if (LOG.isDebugEnabled()) {
+      if (highlightsToSet != null) {
+        for (HighlightInfo info : highlightsToSet) {
+          assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
+        }
+      }
+      RangeHighlighter[] allHighlighters = markup.getAllHighlighters();
+      for (RangeHighlighter highlighter : allHighlighters) {
+        Object tooltip = highlighter.getErrorStripeTooltip();
+        if (tooltip instanceof HighlightInfo) {
+          HighlightInfo info = (HighlightInfo)tooltip;
+          assert highlightsToSet != null && highlightsToSet.contains(info) || highlightsToRemove != null && highlightsToRemove.contains(info);
+        }
+      }
     }
   }
 
@@ -465,7 +484,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           if (isCoveredBy(highlight, errorInfo)) {
             it.remove();
             RangeHighlighter highlighter = highlight.highlighter;
-            if (highlighter != null && highlighter.isValid()) {
+            if (highlighter != null) {
               markup.removeHighlighter(highlighter);
             }
             break;
@@ -544,9 +563,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private Runnable createUpdateRunnable() {
     return new Runnable() {
       public void run() {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("update runnable (myUpdateByTimerEnabled = " + myUpdateByTimerEnabled + ")");
-        }
         if (!myUpdateByTimerEnabled) return;
         if (myDisposed || myProject.isDisposed()) return;
         final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();
@@ -576,5 +592,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     for(ReferenceImporter importer: Extensions.getExtensions(ReferenceImporter.EP_NAME)) {
       if (importer.autoImportReferenceAtCursor(editor, file)) break;
     }
+  }
+
+  @NotNull
+  static List<HighlightInfo> getHighlightsToRemove(MarkupModel markup) {
+    List<HighlightInfo> infos = markup.getUserData(HIGHLIGHTS_TO_REMOVE_KEY);
+    return infos == null ? Collections.<HighlightInfo>emptyList() : infos;
   }
 }

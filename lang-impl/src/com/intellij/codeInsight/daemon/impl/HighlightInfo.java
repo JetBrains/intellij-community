@@ -21,8 +21,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -189,7 +189,7 @@ public class HighlightInfo {
   public boolean isFileLevelAnnotation = false; 
   public int navigationShift = 0;
 
-  public RangeHighlighter highlighter;
+  public RangeHighlighterEx highlighter;
   public String text;
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
@@ -330,10 +330,10 @@ public class HighlightInfo {
   }
 
   public int getActualStartOffset() {
-    return highlighter == null || !highlighter.isValid() ? startOffset : highlighter.getStartOffset();
+    return highlighter == null ? startOffset : highlighter.getStartOffset();
   }
   public int getActualEndOffset() {
-    return highlighter == null || !highlighter.isValid() ? endOffset : highlighter.getEndOffset();
+    return highlighter == null ? endOffset : highlighter.getEndOffset();
   }
 
   public static class IntentionActionDescriptor {

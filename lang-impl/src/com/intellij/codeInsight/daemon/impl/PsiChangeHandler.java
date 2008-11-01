@@ -1,10 +1,14 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -13,46 +17,82 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
+import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class PsiChangeHandler extends PsiTreeChangeAdapter {
+public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   private static final ExtensionPointName<ChangeLocalityDetector> EP_NAME = ExtensionPointName.create("com.intellij.daemon.changeLocalityDetector");
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
-  private final List<Pair<PsiElement, Boolean>> changedElements = new ArrayList<Pair<PsiElement, Boolean>>();
+  private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new THashMap<Document, List<Pair<PsiElement, Boolean>>>();
+  private final Set<Document> myCommittingDocuments = new THashSet<Document>();
+  private final FileStatusMap myFileStatusMap;
 
-  public PsiChangeHandler(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, MessageBusConnection connection) {
+  public PsiChangeHandler(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, final PsiDocumentManagerImpl documentManager, EditorFactory editorFactory, MessageBusConnection connection) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
-
+    myFileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
+    editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent e) {
+        final Document document = e.getDocument();
+        if (documentManager.getSynchronizer().isInSynchronization(document)) return;
+        if (myCommittingDocuments.add(document)) {
+          documentManager.addRunOnCommit(document, new Runnable() {
+            public void run() {
+              updateChangesForDocument(document);
+              myCommittingDocuments.remove(document);
+            }
+          });
+        }
+      }
+    }, this);
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       public void transactionStarted(final Document doc, final PsiFile file) {
       }
 
       public void transactionCompleted(final Document doc, final PsiFile file) {
-        for (Pair<PsiElement, Boolean> changedElement : changedElements) {
-          updateByChange(changedElement.getFirst(), changedElement.getSecond());
-        }
-        changedElements.clear();
+        updateChangesForDocument(doc);
       }
     });
   }
 
+  public void dispose() {
+  }
+
+  private void updateChangesForDocument(@NotNull Document document) {
+    List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
+    if (toUpdate != null) {
+      for (Pair<PsiElement, Boolean> changedElement : toUpdate) {
+        PsiElement element = changedElement.getFirst();
+        Boolean whiteSpaceOptimizationAllowed = changedElement.getSecond();
+        updateByChange(element, whiteSpaceOptimizationAllowed);
+      }
+      changedElements.remove(document);
+    }
+  }
+
   public void childAdded(PsiTreeChangeEvent event) {
-    queueElement(event.getParent(), true);
+    queueElement(event.getParent(), true, event);
   }
 
   public void childRemoved(PsiTreeChangeEvent event) {
-    queueElement(event.getParent(), true);
+    PsiElement element = event.getParent();
+    queueElement(element, true, event);
   }
 
   public void childReplaced(PsiTreeChangeEvent event) {
-    queueElement(event.getNewChild(), typesEqual(event.getNewChild(), event.getOldChild()));
+    queueElement(event.getNewChild(), typesEqual(event.getNewChild(), event.getOldChild()), event);
   }
 
   private static boolean typesEqual(final PsiElement newChild, final PsiElement oldChild) {
@@ -60,12 +100,12 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   public void childrenChanged(PsiTreeChangeEvent event) {
-    queueElement(event.getParent(), true);
+    queueElement(event.getParent(), true, event);
   }
 
   public void beforeChildMovement(PsiTreeChangeEvent event) {
-    queueElement(event.getOldParent(), true);
-    queueElement(event.getNewParent(), true);
+    queueElement(event.getOldParent(), true, event);
+    queueElement(event.getNewParent(), true, event);
   }
 
   public void beforeChildrenChange(PsiTreeChangeEvent event) {
@@ -73,20 +113,36 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     // mark file dirty just in case
     PsiFile psiFile = event.getFile();
     if (psiFile != null) {
-      myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirtyDefensively(psiFile);
+      myFileStatusMap.markFileScopeDirtyDefensively(psiFile);
     }
   }
 
   public void propertyChanged(PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
-      myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
+      myFileStatusMap.markAllFilesDirty();
       myDaemonCodeAnalyzer.stopProcess(true);
     }
   }
 
-  private void queueElement(PsiElement child, final boolean whitespaceOptimizationAllowed) {
-    changedElements.add(Pair.create(child, whitespaceOptimizationAllowed));
+  private void queueElement(PsiElement child, final boolean whitespaceOptimizationAllowed, PsiTreeChangeEvent event) {
+    PsiFile file = event.getFile();
+    if (file == null) file = child.getContainingFile();
+    if (file == null) {
+      myFileStatusMap.markAllFilesDirty();
+      return;
+    }
+
+    if (!child.isValid()) return;
+    Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
+    if (document != null) {
+      List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
+      if (toUpdate == null) {
+        toUpdate = new SmartList<Pair<PsiElement, Boolean>>();
+        changedElements.put(document, toUpdate);
+      }
+      toUpdate.add(Pair.create(child, whitespaceOptimizationAllowed));
+    }
   }
 
   private void updateByChange(PsiElement child, final boolean whitespaceOptimizationAllowed) {
@@ -101,11 +157,9 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
       }, ModalityState.stateForComponent(editor.getComponent()));
     }
 
-    final FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
-
     PsiFile file = child.getContainingFile();
     if (file == null || file instanceof PsiCompiledElement) {
-      fileStatusMap.markAllFilesDirty();
+      myFileStatusMap.markAllFilesDirty();
       return;
     }
 
@@ -114,14 +168,14 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
 
     int fileLength = file.getTextLength();
     if (!file.getViewProvider().isPhysical()) {
-      fileStatusMap.markFileScopeDirty(document, new TextRange(0, fileLength), fileLength);
+      myFileStatusMap.markFileScopeDirty(document, new TextRange(0, fileLength), fileLength);
       return;
     }
 
     // optimization
     if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment) {
-        fileStatusMap.markFileScopeDirty(document, child.getTextRange(), fileLength);
+        myFileStatusMap.markFileScopeDirty(document, child.getTextRange(), fileLength);
         return;
       }
     }
@@ -129,13 +183,13 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     PsiElement element = child;
     while (true) {
       if (element instanceof PsiFile || element instanceof PsiDirectory) {
-        fileStatusMap.markAllFilesDirty();
+        myFileStatusMap.markAllFilesDirty();
         return;
       }
 
       final PsiElement scope = getChangeHighlightingScope(element);
       if (scope != null) {
-        fileStatusMap.markFileScopeDirty(document, scope.getTextRange(), fileLength);
+        myFileStatusMap.markFileScopeDirty(document, scope.getTextRange(), fileLength);
         return;
       }
 

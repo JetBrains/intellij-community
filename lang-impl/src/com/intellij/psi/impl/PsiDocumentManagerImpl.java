@@ -69,7 +69,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     myPsiManager = psiManager;
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
     myBlockSupport = (BlockSupportImpl)blockSupport;
-    myPsiManager.addPsiTreeChangeListener(mySynchronizer = new PsiToDocumentSynchronizer(this, bus));
+    mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
+    myPsiManager.addPsiTreeChangeListener(mySynchronizer);
     editorFactory.getEventMulticaster().addDocumentListener(this);
   }
 
@@ -184,15 +185,20 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void performForCommittedDocument(@NotNull final Document doc, @NotNull final Runnable action) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (isUncommited(document)) {
-      synchronized (ACTION_AFTER_COMMIT) {
-        List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
-        if (list == null) {
-          document.putUserData(ACTION_AFTER_COMMIT, list = new SmartList<Runnable>());
-        }
-        list.add(action);
-      }
-    } else {
+      addRunOnCommit(document, action);
+    }
+    else {
       action.run();
+    }
+  }
+
+  public void addRunOnCommit(Document document, Runnable action) {
+    synchronized (ACTION_AFTER_COMMIT) {
+      List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
+      if (list == null) {
+        document.putUserData(ACTION_AFTER_COMMIT, list = new SmartList<Runnable>());
+      }
+      list.add(action);
     }
   }
 
@@ -232,13 +238,18 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         }
       }
     });
+
+    List<Runnable> list;
     synchronized (ACTION_AFTER_COMMIT) {
-      final List<Runnable> list = document.getUserData(ACTION_AFTER_COMMIT);
+      list = document.getUserData(ACTION_AFTER_COMMIT);
       if (list != null) {
+        list = new ArrayList<Runnable>(list);
         document.putUserData(ACTION_AFTER_COMMIT, null);
-        for (final Runnable runnable : list) {
-          runnable.run();
-        }
+      }
+    }
+    if (list != null) {
+      for (final Runnable runnable : list) {
+        runnable.run();
       }
     }
   }
@@ -419,10 +430,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       myTreeElementBeingReparsedSoItWontBeCollected = null;
       myIsCommitInProgress = false;
     }
-    //checkConsistency(file, document);
-
-    //mySmartPointerManager.synchronizePointers(file);
-
     return true;
   }
 
