@@ -25,20 +25,26 @@ public class Waiter implements Runnable {
 
   public void run() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    indicator.setIndeterminate(true);
-    indicator.setText2(VcsBundle.message("commit.wait.util.synched.text"));
+    if (indicator != null) {
+      indicator.setIndeterminate(true);
+      indicator.setText2(VcsBundle.message("commit.wait.util.synched.text"));
+    }
     synchronized (myLock) {
       if (myStarted) {
         LOG.error("Waiter running under progress being started again.");
         return;
       }
       myStarted = true;
-      while ((! myDone) && (! ProgressManager.getInstance().getProgressIndicator().isCanceled())) {
+      while (! myDone) {
         try {
-          myLock.wait();
+          // every second check whether we are canceled
+          myLock.wait(500);
         }
         catch (InterruptedException e) {
           // ok
+        }
+        if (indicator != null) {
+          indicator.checkCanceled();
         }
       }
     }
