@@ -186,6 +186,12 @@ public class PredefinedConfiguration extends Configuration {
         CLASS_TYPE
       ),
 
+      createSearchTemplateInfo(
+        SSRBundle.message("predefined.configuration.static.fields.without.final"),
+        "class '_Class {\n  static '_Type 'Variable*:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;\n}",
+        CLASS_TYPE
+      ),
+
       // Generics
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.classes"),"class 'GenericClass<'_TypeParameter+> {} ", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.methods"),"class '_Class {\n  <'_TypeParameter+> '_Type+ 'Method+('_ParameterType* '_ParameterDcl*);\n}", GENERICS_TYPE),

@@ -22,7 +22,7 @@ class StringToConstraintsTransformer {
   private static Pattern p = Pattern.compile(P_STR);
   @NonNls private static final String P2_STR = "(\\w+)";
   private static Pattern p2 = Pattern.compile(P2_STR);
-  @NonNls private static final String P3_STR = "(\\w+)\\(( ?(?:[\\\"\\*<>\\.\\?\\:\\$\\\\\\(\\)\\[\\]\\w\\|\\+]+|(?:\\\"[^\\\"]*\\\")) ?)\\)";
+  @NonNls private static final String P3_STR = "(\\w+)\\(( ?(?:[\\\"\\*<>!\\.\\?\\:\\$\\\\\\(\\)\\[\\]\\w\\|\\+]+|(?:\\\"[^\\\"]*\\\")) ?)\\)";
   private static Pattern p3 = Pattern.compile(P3_STR);
   @NonNls private static final String REF = "ref";
   @NonNls private static final String READ = "read";
