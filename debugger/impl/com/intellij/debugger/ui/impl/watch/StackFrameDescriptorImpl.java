@@ -64,6 +64,13 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         }
       });
     }
+    catch(InternalException e) {
+      LOG.info(e);
+      myLocation = null;
+      myMethodOccurrence = tracker.getMethodOccurrence(null);
+      myIsSynthetic = false;
+      myIsInLibraryContent = false;
+    }
     catch (EvaluateException e) {
       myLocation = null;
       myMethodOccurrence = tracker.getMethodOccurrence(null);
