@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -190,10 +191,12 @@ public class FSRecords implements Disposable, Forceable {
         catch (IOException e1) {
           final Runnable warnAndShutdown = new Runnable() {
             public void run() {
-              JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                            "Files in " + basePath.getPath() + " are locked. IntelliJ IDEA will not be able to start up",
-                                            "Fatal Error",
-                                            JOptionPane.ERROR_MESSAGE);
+              if (!(ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment())) {
+                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                              "Files in " + basePath.getPath() + " are locked. IntelliJ IDEA will not be able to start up",
+                                              "Fatal Error",
+                                              JOptionPane.ERROR_MESSAGE);
+              }
               System.exit(1);
             }
           };
