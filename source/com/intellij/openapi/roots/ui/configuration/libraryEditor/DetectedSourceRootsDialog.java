@@ -24,6 +24,7 @@ import java.util.Map;
 
 /**
  * This dialog allows selecting source paths inside selected source archives or directories.
+ *
  * @author max
  * @author Constantine.Plotnikov
  */
@@ -70,7 +71,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
   /**
    * A constructor
    *
-   * @param component a parent component
+   * @param component     a parent component
    * @param detectedRoots a map from baseRoot to detected roots inside file
    */
   public DetectedSourceRootsDialog(Component component, Map<VirtualFile, List<VirtualFile>> detectedRoots) {
@@ -80,8 +81,8 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
   /**
    * A constructor
    *
-   * @param project       a project context
-   * @param tree a checkbox tree to use
+   * @param project a project context
+   * @param tree    a checkbox tree to use
    */
   private DetectedSourceRootsDialog(Project project, CheckedTreeNode tree) {
     super(project, true);
@@ -96,7 +97,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
    * A constructor
    *
    * @param component a parent component
-   * @param tree a checkbox tree to use
+   * @param tree      a checkbox tree to use
    */
   private DetectedSourceRootsDialog(Component component, CheckedTreeNode tree) {
     super(component, true);
@@ -110,6 +111,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
 
   /**
    * Create a checkbox tree component for this dialog
+   *
    * @return a created component
    */
   private CheckboxTree createCheckboxTree() {
@@ -126,20 +128,38 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
         String text;
         SimpleTextAttributes attributes;
         Icon icon;
+        boolean isValid = true;
         if (leaf) {
           VirtualFile ancestor = (VirtualFile)((CheckedTreeNode)node.getParent()).getUserObject();
-          text = VfsUtil.getRelativePath(file, ancestor, File.separatorChar);
+          if (ancestor != null) {
+            text = VfsUtil.getRelativePath(file, ancestor, File.separatorChar);
+          }
+          else {
+            text = file.getPresentableUrl();
+          }
+          if (text == null) {
+            isValid = false;
+            text = file.getPresentableUrl();
+          }
           attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
           icon = Icons.DIRECTORY_CLOSED_ICON;
         }
         else {
           text = file == null ? "found files" : file.getPresentableUrl();
+          if (text == null) {
+            isValid = false;
+          }
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
           icon = expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON;
         }
         final ColoredTreeCellRenderer textRenderer = getTextRenderer();
         textRenderer.setIcon(icon);
-        textRenderer.append(text, attributes);
+        if (!isValid) {
+          textRenderer.append("[INVALID] ", SimpleTextAttributes.ERROR_ATTRIBUTES);
+        }
+        if (text != null) {
+          textRenderer.append(text, attributes);
+        }
       }
     }, myRootNode);
     tree.setRootVisible(false);
@@ -155,7 +175,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
    */
   private static CheckedTreeNode createTree(Map<VirtualFile, List<VirtualFile>> detectedRoots) {
     CheckedTreeNode root = new CheckedTreeNode(null);
-    for(Map.Entry<VirtualFile, List<VirtualFile>> e : detectedRoots.entrySet()) {
+    for (Map.Entry<VirtualFile, List<VirtualFile>> e : detectedRoots.entrySet()) {
       root.add(createTreeNode(e.getKey(), e.getValue()));
     }
     return root;
