@@ -73,6 +73,7 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
     if (myMainOccurence instanceof PsiLiteralExpression && !myMainOccurence.isPhysical()) {
       final FindManager findManager = FindManager.getInstance(getScope().getProject());
       final FindModel findModel = (FindModel)findManager.getFindInFileModel().clone();
+      findModel.setCaseSensitive(true);
       findModel.setStringToFind(StringUtil.stripQuotesAroundValue(myMainOccurence.getText()));
       final List<PsiExpression> results = new ArrayList<PsiExpression>();
       final PsiFile file = getScope().getContainingFile();
