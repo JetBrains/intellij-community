@@ -12,7 +12,10 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.FilterComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -31,6 +34,8 @@ public abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;
   private FilterComponent myFilter;
+  private JPanel myToolbarPanel;
+
   protected IntentionSettingsTree() {
     initTree();
   }
@@ -71,10 +76,10 @@ public abstract class IntentionSettingsTree {
     myFilter = new MyFilterComponent();
     myComponent = new JPanel(new BorderLayout());
     JScrollPane scrollPane = new JScrollPane(myTree);
-    JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.WEST);
-    toolbarPanel.add(myFilter, BorderLayout.EAST);
-    myComponent.add(toolbarPanel, BorderLayout.NORTH);
+    myToolbarPanel = new JPanel(new BorderLayout());
+    myToolbarPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.WEST);
+    myToolbarPanel.add(myFilter, BorderLayout.EAST);
+    myComponent.add(myToolbarPanel, BorderLayout.NORTH);
     myComponent.add(scrollPane, BorderLayout.CENTER);
 
     SwingUtilities.invokeLater(new Runnable() {
@@ -322,5 +327,9 @@ public abstract class IntentionSettingsTree {
         myExpansionMonitor.restore();
       }
     }
+  }
+
+  public JPanel getToolbarPanel() {
+    return myToolbarPanel;
   }
 }

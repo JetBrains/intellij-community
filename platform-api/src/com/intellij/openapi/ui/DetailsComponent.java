@@ -49,6 +49,7 @@ public class DetailsComponent {
   private String[] myBannerText;
   private boolean myDetailsEnabled = true;
   private String[] myPrefix;
+  private String[] myText;
 
   private Wrapper myContentGutter = new Wrapper();
 
@@ -176,9 +177,13 @@ public class DetailsComponent {
 
   public void setPrefix(@Nullable String... prefix) {
     myPrefix = prefix;
+    if (myText != null) {
+      setText(myText);
+    }
   }
 
   public void setText(@NotNull String... text) {
+    myText = text;
     ArrayList<String> strings = new ArrayList<String>();
     if (myPrefix != null) {
       strings.addAll(Arrays.asList(myPrefix));
@@ -188,6 +193,7 @@ public class DetailsComponent {
     myBannerText = strings.toArray(new String[strings.size()]);
 
     updateBanner();
+
   }
 
   private void updateBanner() {
@@ -197,6 +203,9 @@ public class DetailsComponent {
     else {
       myBannerLabel.setText(myBannerText);
     }
+
+    myBannerLabel.revalidate();
+    myBannerLabel.repaint();
   }
 
   public void setPaintBorder(final boolean paintBorder) {

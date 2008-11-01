@@ -2,7 +2,9 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ResourceUtil;
@@ -12,18 +14,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
-public class IntentionSettingsPanel {
+public class IntentionSettingsPanel implements MasterDetails {
   private JPanel myPanel;
   private final IntentionSettingsTree myIntentionSettingsTree;
   private final IntentionDescriptionPanel myIntentionDescriptionPanel = new IntentionDescriptionPanel();
 
   private JPanel myTreePanel;
   private JPanel myDescriptionPanel;
+  private DetailsComponent myDetailsComponent;
 
   public IntentionSettingsPanel() {
     myIntentionSettingsTree = new IntentionSettingsTree() {
@@ -31,9 +32,18 @@ public class IntentionSettingsPanel {
         if (selected instanceof IntentionActionMetaData) {
           IntentionActionMetaData actionMetaData = (IntentionActionMetaData)selected;
           intentionSelected(actionMetaData);
+          if (myDetailsComponent != null) {
+            String[] text = new String[actionMetaData.myCategory.length + 1];
+            System.arraycopy(actionMetaData.myCategory, 0, text,0,actionMetaData.myCategory.length);
+            text[text.length - 1] = actionMetaData.getFamily();
+            myDetailsComponent.setText(text);
+          }
         }
         else {
           categorySelected((String)selected);
+          if (myDetailsComponent != null) {
+            myDetailsComponent.setText((String)selected);
+          }
         }
       }
 
@@ -82,6 +92,23 @@ public class IntentionSettingsPanel {
         myIntentionDescriptionPanel.init(myPanel.getWidth()/2);
       }
     });
+  }
+
+  public void initUi() {
+    myDetailsComponent = new DetailsComponent();
+    myDetailsComponent.setContent(myDescriptionPanel);
+  }
+
+  public JComponent getToolbar() {
+    return myIntentionSettingsTree.getToolbarPanel();
+  }
+
+  public JComponent getMaster() {
+    return myTreePanel;
+  }
+
+  public DetailsComponent getDetails() {
+    return myDetailsComponent;
   }
 
   public void apply() {

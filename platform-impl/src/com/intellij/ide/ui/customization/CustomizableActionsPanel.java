@@ -10,11 +10,13 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTree;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +46,7 @@ import java.util.List;
  * User: anna
  * Date: Mar 17, 2005
  */
-public class CustomizableActionsPanel {
+public class CustomizableActionsPanel implements MasterDetails {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizableActionsPanel");
 
   private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
@@ -70,7 +72,10 @@ public class CustomizableActionsPanel {
   private JList myList = new JList();
   private JTextField myName;
   private JPanel myListPane;
+  private JPanel myDetailsPanel;
   public static final Icon FULLISH_ICON = IconLoader.getIcon("/toolbar/unknown.png");
+  private ActionToolbar myToolbar;
+  private DetailsComponent myDetailsComponent;
 
   public CustomizableActionsPanel() {
     myList.setModel(myCustomizationSchemas);
@@ -293,8 +298,8 @@ public class CustomizableActionsPanel {
         }
       }, Conditions.<CustomActionsSchema>alwaysTrue());
     myListPane.setLayout(new BorderLayout());
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    myListPane.add(toolbar.getComponent(), BorderLayout.NORTH);
+    myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    myListPane.add(myToolbar.getComponent(), BorderLayout.NORTH);
     myListPane.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -342,6 +347,9 @@ public class CustomizableActionsPanel {
       protected void textChanged(DocumentEvent e) {
         if (mySelectedSchema != null) {
           mySelectedSchema.setName(myName.getText());
+          if (myDetailsComponent != null) {
+            myDetailsComponent.setText(myName.getText());
+          }
           myList.repaint();
         }
       }
@@ -351,6 +359,23 @@ public class CustomizableActionsPanel {
     patchActionsTreeCorrespondingToSchema(root);
 
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree);
+  }
+
+  public void initUi() {
+    myDetailsComponent = new DetailsComponent();
+    myDetailsComponent.setContent(myDetailsPanel);
+  }
+
+  public JComponent getToolbar() {
+    return myToolbar.getComponent();
+  }
+
+  public JComponent getMaster() {
+    return myListPane;
+  }
+
+  public DetailsComponent getDetails() {
+    return myDetailsComponent;
   }
 
   private void editToolbarIcon(String actionId, DefaultMutableTreeNode node, CustomizableActionsSchemas schemas) {
@@ -450,6 +475,11 @@ public class CustomizableActionsPanel {
     myDescription.setEnabled(enabled);
     myName.setText(name);
     myDescription.setText(description);
+
+    if (myDetailsComponent != null) {
+      myDetailsComponent.setText(name);
+    }
+
   }
 
   public String getDescription() {

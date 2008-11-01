@@ -913,9 +913,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   class SpotlightPainter extends AbstractPainter {
-
-    Configurable myLastConfigurable;
-    String myLastText;
+    Map<Configurable, String> myConfigurableToLastOption = new HashMap<Configurable, String>();
 
     GlassPanel myGP = new GlassPanel(myOwnDetails.getContentGutter());
     boolean myVisible;
@@ -934,8 +932,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       String text = getFilterText();
 
       try {
-        if (myLastConfigurable == current && myLastText != null && myLastText.equals(text)) return true;
-        myLastText = text;
+        if (myConfigurableToLastOption.containsKey(current) && text.equals(myConfigurableToLastOption.get(current))) return true;
 
         if (current == null) {
           myVisible = false;
@@ -972,8 +969,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         }
       }
       finally {
-        myLastConfigurable = current;
-        myOwnDetails.getComponent().repaint();
+        myConfigurableToLastOption.put(current, text);
       }
 
       return true;

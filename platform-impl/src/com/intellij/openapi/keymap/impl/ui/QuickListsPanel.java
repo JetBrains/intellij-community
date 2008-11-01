@@ -15,10 +15,12 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
@@ -41,7 +43,7 @@ import java.util.List;
  * User: anna
  * Date: 13-Apr-2006
  */
-public class QuickListsPanel extends JPanel implements Configurable {
+public class QuickListsPanel extends JPanel implements Configurable, MasterDetails {
   private DefaultListModel myQuickListsModel = new DefaultListModel();
   private JList myQuickListsList = new JList(myQuickListsModel);
   private JPanel myRightPanel = new JPanel(new BorderLayout());
@@ -50,12 +52,32 @@ public class QuickListsPanel extends JPanel implements Configurable {
 
 
   private KeymapPanel myKeymapPanel;
+  private JComponent myToolbar;
+  private DetailsComponent myDetailsComponent;
+  private JScrollPane myListScrollPane;
 
   public QuickListsPanel(KeymapPanel panel) {
     super(new BorderLayout());
     myKeymapPanel = panel;
     add(createQuickListsPanel(), BorderLayout.WEST);
     add(myRightPanel, BorderLayout.CENTER);
+  }
+
+  public void initUi() {
+    myDetailsComponent = new DetailsComponent();
+    myDetailsComponent.setContent(myRightPanel);
+  }
+
+  public JComponent getToolbar() {
+    return myToolbar;
+  }
+
+  public JComponent getMaster() {
+    return myListScrollPane;
+  }
+
+  public DetailsComponent getDetails() {
+    return myDetailsComponent;
   }
 
   public void reset() {
@@ -109,12 +131,12 @@ public class QuickListsPanel extends JPanel implements Configurable {
 
     addDescriptionLabel();
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myQuickListsList);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myListScrollPane = ScrollPaneFactory.createScrollPane(myQuickListsList);
+    myListScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     final Dimension dimension = new Dimension(120, -1);
-    scrollPane.setPreferredSize(dimension);
-    scrollPane.setMinimumSize(dimension);
-    panel.add(scrollPane, BorderLayout.CENTER);
+    myListScrollPane.setPreferredSize(dimension);
+    myListScrollPane.setMinimumSize(dimension);
+    panel.add(myListScrollPane, BorderLayout.CENTER);
 
     DefaultActionGroup group = new DefaultActionGroup();
     ReorderableListController<QuickList> controller = ReorderableListController.create(myQuickListsList, group);
@@ -166,7 +188,8 @@ public class QuickListsPanel extends JPanel implements Configurable {
       });
     }
 
-    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
+    myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    panel.add(myToolbar, BorderLayout.NORTH);
     return panel;
   }
 
@@ -217,6 +240,10 @@ public class QuickListsPanel extends JPanel implements Configurable {
     myQuickListPanel.addDescriptionListener(documentAdapter);
     myRightPanel.add(myQuickListPanel.getPanel(), BorderLayout.CENTER);
     myCurrentIndex = index;
+
+    if (myDetailsComponent != null) {
+      myDetailsComponent.setText(quickList.getDisplayName());
+    }
   }
 
   private void updateList(int index)  {
@@ -233,6 +260,9 @@ public class QuickListsPanel extends JPanel implements Configurable {
 
     if (oldQuickList != null && !newQuickList.getName().equals(oldQuickList.getName())) {
       myKeymapPanel.quickListRenamed(oldQuickList, newQuickList);
+      if (myDetailsComponent != null) {
+        myDetailsComponent.setText(newQuickList.getDisplayName());
+      }
     }
   }
 

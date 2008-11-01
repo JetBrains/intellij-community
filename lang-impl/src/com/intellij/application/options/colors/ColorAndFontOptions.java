@@ -86,6 +86,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
 
+    for (MyColorScheme scheme : mySchemes.values()) {
+      if (scheme.isNew()) return true;
+    }
+
     return false;
   }
 
@@ -156,6 +160,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     MyColorScheme newScheme = new MyColorScheme(clone);
     initScheme(newScheme);
 
+    newScheme.setIsNew();
+
     mySchemes.put(name, newScheme);
     selectScheme(newScheme.getName());    
     resetSchemesCombo(null);
@@ -176,9 +182,17 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       selectScheme("Default");
     }
 
+    boolean deletedNewlyCreated = false;
+
+    MyColorScheme toDelete = mySchemes.get(name);
+
+    if (toDelete != null) {
+      deletedNewlyCreated = toDelete.isNew();
+    }
+
     mySchemes.remove(name);
     resetSchemesCombo(null);
-    mySomeSchemesDeleted = true;
+    mySomeSchemesDeleted = mySomeSchemesDeleted || !deletedNewlyCreated;
   }
 
   public void apply() throws ConfigurationException {
@@ -856,6 +870,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private String myFontName;
     private EditorSchemeAttributeDescriptor[] myDescriptors;
     private String myName;
+    private boolean myIsNew = false;
 
     public MyColorScheme(EditorColorsScheme parenScheme) {
       super(parenScheme, DefaultColorSchemesManager.getInstance());
@@ -954,6 +969,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     public EditorColorsScheme getOriginalScheme() {
       return myParentScheme;
+    }
+
+    public void setIsNew() {
+      myIsNew = true;
+    }
+
+    public boolean isNew() {
+      return myIsNew;
     }
   }
 
