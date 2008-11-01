@@ -54,7 +54,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
                      "  </plugins>" +
                      "</build>");
 
-    assertKeymapContains(myProjectPom, "surefire:test");
+    assertKeymapContains(myProjectPom, "org.apache.maven.plugins:maven-surefire-plugin:2.4.2:test");
   }
 
   public void testRefreshingOnProjectAddition() throws Exception {
@@ -126,7 +126,7 @@ public class MavenEventsManagerTest extends MavenImportingTestCase {
 
   private void assertKeymapContains(VirtualFile pomFile, String goal) {
     String id = myEventsManager.getActionId(pomFile.getPath(), goal);
-    assertTrue(getProjectActions().contains(id));
+    assertTrue(getProjectActions().toString(), getProjectActions().contains(id));
   }
 
   private void assertKeymapDoesNotContain(VirtualFile pomFile, String goal) {
