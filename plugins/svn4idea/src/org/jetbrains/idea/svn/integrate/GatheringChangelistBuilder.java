@@ -107,6 +107,10 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
     return false;
   }
 
+  public void reportWarningMessage(final String message) {
+    // todo maybe, use further
+  }
+
   public List<Change> getChanges() {
     return myChanges;
   }
