@@ -69,6 +69,7 @@ public class TemplateState implements Disposable {
   private final Map myProperties = new HashMap();
   private boolean myTemplateIndented = false;
   private Document myDocument;
+  private boolean myFinished;
 
   public TemplateState(@NotNull Project project, final Editor editor) {
     myProject = project;
@@ -249,6 +250,8 @@ public class TemplateState implements Disposable {
   }
 
   private void fireTemplateCancelled() {
+    if (myFinished) return;
+    myFinished = true;
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
       listener.templateCancelled(myTemplate);
@@ -908,6 +911,8 @@ public class TemplateState implements Disposable {
   }
 
   private void fireTemplateFinished() {
+    if (myFinished) return;
+    myFinished = true;
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
       listener.templateFinished(myTemplate);
