@@ -271,7 +271,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myLoadingDecorator.startLoading(false);
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
-          initConfigurable(configurable, result);
+          initConfigurable(configurable).notifyWhenDone(result);
         }
       });
 
@@ -282,7 +282,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return result;
   }
 
-  private void initConfigurable(final Configurable configurable, final ActionCallback result) {
+  private ActionCallback initConfigurable(final Configurable configurable) {
+    final ActionCallback result = new ActionCallback();
+
     final Ref<ConfigurableContent> content = new Ref<ConfigurableContent>();
 
     if (configurable instanceof MasterDetails) {
@@ -305,6 +307,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         result.setDone();
       }
     });
+
+    return result;
   }
 
 
@@ -376,9 +380,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            initConfigurable(configurable, new ActionCallback(){
-              @Override
-              public void setDone() {
+            initConfigurable(configurable).doWhenDone(new Runnable() {
+              public void run() {
                 fireModifiationInt(configurable);
               }
             });
