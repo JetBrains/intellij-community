@@ -78,7 +78,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     map.addPair("float", "v");
     map.addPair("java.lang.Object", "o");
     map.addPair("java.lang.String", "s");
-    map.addPair("*Event", "event");
   }
 
   public void setParentSettings(CodeStyleSettings parent) {
