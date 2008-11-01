@@ -278,7 +278,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public void insertString(int offset, CharSequence s) {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong offset: " + offset + "; " + s.subSequence(Math.max(0, getTextLength() - 20), getTextLength()));
+      throw new IndexOutOfBoundsException("Wrong offset: " + offset +"; documentLength: "+getTextLength()+ "; " + s.subSequence(Math.max(0, getTextLength() - 20), getTextLength()));
     }
     assertWriteAccess();
     assertValidSeparators(s);
@@ -357,13 +357,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void assertBounds(final int startOffset, final int endOffset) {
     if (startOffset < 0 || startOffset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset);
+      throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset+"; documentLength: "+getTextLength());
     }
     if (endOffset < 0 || endOffset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset);
+      throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset+"; documentLength: "+getTextLength());
     }
     if (endOffset < startOffset) {
-      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset);
+      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset+"; documentLength: "+getTextLength());
     }
   }
 
