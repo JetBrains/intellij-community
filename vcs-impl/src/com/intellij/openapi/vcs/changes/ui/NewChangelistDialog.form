@@ -7,7 +7,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <nested-form id="41c97" form-file="com/intellij/openapi/vcs/changes/ui/EditChangelistPanel.form" binding="myPanel">
+      <nested-form id="41c97" form-file="com/intellij/openapi/vcs/changes/ui/EditChangelistPanel.form" binding="myPanel" custom-create="true">
         <constraints border-constraint="Center"/>
       </nested-form>
       <grid id="4554b" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

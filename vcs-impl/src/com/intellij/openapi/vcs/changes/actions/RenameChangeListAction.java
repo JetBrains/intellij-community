@@ -40,8 +40,5 @@ public class RenameChangeListAction extends AnAction {
     if (list != null) {
       new EditChangelistDialog(project, list).show();
     }
-    else {
-      LOG.assertTrue(false, "Cannot find changelist " + lists [0].getName());
-    }
   }
 }

@@ -54,4 +54,7 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   public boolean isUpdatingUnversionedFiles() {
     return true;
   }
+
+  public void reportWarningMessage(final String message) {
+  }
 }

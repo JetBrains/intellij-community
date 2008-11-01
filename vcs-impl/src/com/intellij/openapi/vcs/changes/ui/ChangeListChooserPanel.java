@@ -6,9 +6,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,9 +28,13 @@ public class ChangeListChooserPanel extends JPanel {
   private JRadioButton myRbNew;
   private JComboBox myExisitingsCombo;
   private EditChangelistPanel myNewListPanel;
+  @Nullable private final ChangeListEditHandler myHandler;
+  private final Consumer<Boolean> myOkEnabledListener;
 
-  public ChangeListChooserPanel() {
+  public ChangeListChooserPanel(@Nullable final ChangeListEditHandler handler, @NotNull final Consumer<Boolean> okEnabledListener) {
     super(new BorderLayout());
+    myHandler = handler;
+    myOkEnabledListener = okEnabledListener;
     add(myPanel, BorderLayout.CENTER);
 
     myExisitingsCombo.setRenderer(new ColoredListCellRenderer() {
@@ -112,5 +119,15 @@ public class ChangeListChooserPanel extends JPanel {
 
   public JComponent getPreferredFocusedComponent() {
     return myRbExisting.isSelected() ? myExisitingsCombo : myNewListPanel.getPrefferedFocusedComponent();
+  }
+
+  private void createUIComponents() {
+    myNewListPanel = new EditChangelistPanel(myHandler, new Consumer<Boolean>() {
+      public void consume(final Boolean aBoolean) {
+        final boolean enabled = myRbExisting.isSelected() ||
+                                ((! myRbExisting.isSelected()) && aBoolean);
+        myOkEnabledListener.consume(enabled);
+      }
+    });
   }
 }

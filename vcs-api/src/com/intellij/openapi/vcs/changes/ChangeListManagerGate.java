@@ -12,4 +12,6 @@ public interface ChangeListManagerGate {
   LocalChangeList findChangeList(final String name);
   LocalChangeList addChangeList(final String name, final String comment);
   LocalChangeList findOrCreateList(final String name, final String comment);
+  void setChangeListEditHandler(final String listName, final ChangeListEditHandler handler);
+  void editComment(final String name, final String comment);
 }

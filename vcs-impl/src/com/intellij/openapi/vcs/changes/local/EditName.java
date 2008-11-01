@@ -20,12 +20,17 @@ public class EditName implements ChangeListCommand {
   }
 
   public void apply(final ChangeListWorker worker) {
-    myResult = worker.editName(myFromName, myToName);
-    myListCopy = worker.getCopyByName(myToName);
+    final LocalChangeList fromList = worker.getCopyByName(myFromName);
+    if (fromList != null && (! fromList.isReadOnly())) {
+      myResult = worker.editName(myFromName, myToName);
+      myListCopy = worker.getCopyByName(myToName);
+    }
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    dispatcher.getMulticaster().changeListRenamed(myListCopy, myFromName);
+    if (myListCopy != null && (! myListCopy.isReadOnly())) {
+      dispatcher.getMulticaster().changeListRenamed(myListCopy, myFromName);
+    }
   }
 
   public boolean isResult() {

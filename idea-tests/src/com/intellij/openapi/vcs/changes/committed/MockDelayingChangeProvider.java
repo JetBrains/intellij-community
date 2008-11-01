@@ -47,14 +47,18 @@ public class MockDelayingChangeProvider implements ChangeProvider {
   public void setTest(final Runnable runnable) {
     System.out.println("MockDelayingChangeProvider: setTest " + (runnable == null ? "(null)" : "(not null)"));
     synchronized (myLock) {
-      myExecuteInsideUpdate = new Thread(new Runnable() {
-        public void run() {
-          // wait until starter sleeps
-          synchronized (myLock) {
-            runnable.run();
+      if (runnable == null) {
+        myExecuteInsideUpdate = null;
+      } else {
+        myExecuteInsideUpdate = new Thread(new Runnable() {
+          public void run() {
+            // wait until starter sleeps
+            synchronized (myLock) {
+              runnable.run();
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 

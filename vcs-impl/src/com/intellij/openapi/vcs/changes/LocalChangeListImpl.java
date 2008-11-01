@@ -33,6 +33,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private Collection<Change> myOutdatedChanges;
   private boolean myIsInUpdate = false;
   private ChangeHashSet myChangesBeforeUpdate;
+  private ChangeListEditHandler myEditHandler;
 
   public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
     return new LocalChangeListImpl(project, name);
@@ -273,6 +274,15 @@ public class LocalChangeListImpl extends LocalChangeList {
     }
 
     return copy;
+  }
+
+  @Nullable
+  public ChangeListEditHandler getEditHandler() {
+    return myEditHandler;
+  }
+
+  public void setEditHandler(final ChangeListEditHandler editHandler) {
+    myEditHandler = editHandler;
   }
 
   private static class ChangeHashSet extends THashSet<Change> {

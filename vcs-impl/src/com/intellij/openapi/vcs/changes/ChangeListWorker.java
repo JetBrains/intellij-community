@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -84,6 +85,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     String previousName = null;
     if (myDefault != null) {
       ((LocalChangeListImpl) myDefault).setDefault(false);
+      correctChangeListEditHandler(myDefault);
       previousName = myDefault.getName();
     }
 
@@ -112,7 +114,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final LocalChangeListImpl newList = (LocalChangeListImpl) LocalChangeList.createEmptyChangeList(myProject, name);
 
       if (description != null) {
-        newList.setComment(description);
+        newList.setCommentImpl(description);
       }
       myMap.put(name, newList);
       if (inUpdate) {
@@ -129,6 +131,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     if (changeList != null) {
       ((LocalChangeListImpl) changeList).addChange(change);
       myIdx.changeAdded(change);
+      correctChangeListEditHandler(changeList);
     }
     return changeList != null;
   }
@@ -139,11 +142,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       if (list.isDefault()) continue;
       if (((LocalChangeListImpl) list).processChange(change)) {
         myIdx.changeAdded(change);
+        correctChangeListEditHandler(list);
         return;
       }
     }
     ((LocalChangeListImpl) myDefault).processChange(change);
     myIdx.changeAdded(change);
+    correctChangeListEditHandler(myDefault);
   }
 
   public boolean removeChangeList(@NotNull String name) {
@@ -164,20 +169,52 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return true;
   }
 
+  void initialized() {
+    for (LocalChangeList list : myMap.values()) {
+      correctChangeListEditHandler(list);
+    }
+  }
+
+  // since currently it is only for P4, "composite" edit handler is not created - it does not make sence
+  private void correctChangeListEditHandler(final LocalChangeList list) {
+    final LocalChangeListImpl listImpl = (LocalChangeListImpl)list;
+    final Collection<Change> changes = list.getChanges();
+    ChangeListEditHandler handler = null;
+    for (Change change : changes) {
+      final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
+      if (vcs != null) {
+        handler = vcs.getEditHandler();
+        if (handler != null) {
+          break;
+        }
+      }
+    }
+    if (! Comparing.equal(listImpl.getEditHandler(), handler)) {
+      if (handler != null && (! listImpl.isReadOnly())) {
+        listImpl.setCommentImpl(handler.correctCommentWhenInstalled(listImpl.getName(), listImpl.getComment()));
+      }
+      listImpl.setEditHandler(handler);
+    }
+  }
+
   @Nullable
   public MultiMap<LocalChangeList, Change> moveChangesTo(final String name, final Change[] changes) {
     final LocalChangeListImpl changeList = (LocalChangeListImpl) myMap.get(name);
     if (changeList != null) {
       final MultiMap<LocalChangeList, Change> result = new MultiMap<LocalChangeList, Change>();
       for (LocalChangeList list : myMap.values()) {
+        if (list.equals(changeList)) continue;
         for (Change change : changes) {
           final Change removedChange = ((LocalChangeListImpl)list).removeChange(change);
           if (removedChange != null) {
+            correctChangeListEditHandler(list);
+
             changeList.addChange(removedChange);
             result.putValue(list, removedChange);
           }
         }
       }
+      correctChangeListEditHandler(changeList);
       return result;
     }
     return null;
@@ -186,21 +223,32 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
     if (fromName.equals(toName)) return false;
     final LocalChangeList list = myMap.get(fromName);
-    if (list != null) {
-      ((LocalChangeListImpl) list).setNameImpl(toName);
+    final boolean canEdit = list != null && (!list.isReadOnly());
+    if (canEdit) {
+      final LocalChangeListImpl listImpl = (LocalChangeListImpl) list;
+      listImpl.setNameImpl(toName);
       myMap.remove(fromName);
       myMap.put(toName, list);
+      final ChangeListEditHandler editHandler = listImpl.getEditHandler();
+      if (editHandler != null) {
+        listImpl.setCommentImpl(editHandler.changeCommentOnChangeName(toName, listImpl.getComment()));
+      }
     }
-    return list != null;
+    return canEdit;
   }
 
   @Nullable
   public String editComment(@NotNull final String fromName, final String newComment) {
     final LocalChangeList list = myMap.get(fromName);
-    if (list != null) {
+    if (list != null && (! list.isReadOnly())) {
       final String oldComment = list.getComment();
       if (! Comparing.equal(oldComment, newComment)) {
-        ((LocalChangeListImpl) list).setCommentImpl(newComment);
+        final LocalChangeListImpl listImpl = (LocalChangeListImpl) list;
+        listImpl.setCommentImpl(newComment);
+        final ChangeListEditHandler editHandler = listImpl.getEditHandler();
+        if (editHandler != null) {
+          listImpl.setNameImpl(editHandler.changeNameOnChangeComment(listImpl.getName(), listImpl.getComment()));
+        }
       }
       return oldComment;
     }
@@ -398,15 +446,20 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       }
       return list;
     }
+
+    public void setChangeListEditHandler(final String listName, final ChangeListEditHandler handler) {
+      myWorker.setChangeListEditHandlerImpl(listName, handler);
+    }
+
+    public void editComment(final String name, final String comment) {
+      myWorker.editComment(name, comment);
+    }
   }
 
-  // used by methods related to user modifications
-  interface UserAccess {
-
-  }
-
-  // used only by UpdatingListBuilder to fill lists
-  interface BuilderAccess {
-
+  public void setChangeListEditHandlerImpl(final String listName, final ChangeListEditHandler handler) {
+    final LocalChangeListImpl list = (LocalChangeListImpl) myMap.get(listName);
+    if (list != null && (! list.isReadOnly())) {
+      list.setEditHandler(handler);
+    }
   }
 }

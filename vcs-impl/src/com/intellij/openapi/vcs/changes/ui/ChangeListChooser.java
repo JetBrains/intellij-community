@@ -4,6 +4,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +29,18 @@ public class ChangeListChooser extends DialogWrapper {
     super(project, false);
     myProject = project;
 
-    myPanel = new ChangeListChooserPanel();
+    ChangeListEditHandler handler = null;
+    for (ChangeList changelist : changelists) {
+      handler = ((LocalChangeListImpl)changelist).getEditHandler();
+      if (handler != null) {
+        break;
+      }
+    }
+    myPanel = new ChangeListChooserPanel(null, new Consumer<Boolean>() {
+      public void consume(final Boolean aBoolean) {
+        setOKActionEnabled(aBoolean);
+      }
+    });
     myPanel.setChangeLists(changelists);
     myPanel.setDefaultSelection(defaultSelection);
 

@@ -40,6 +40,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -625,6 +626,14 @@ public class ApplyPatchDialog extends DialogWrapper {
   
   protected Action[] createActions() {
     return new Action[]{ getOKAction(), getCancelAction(), getHelpAction() };
+  }
+
+  private void createUIComponents() {
+    myChangeListChooser = new ChangeListChooserPanel(null, new Consumer<Boolean>() {
+      public void consume(final Boolean aBoolean) {
+        setOKActionEnabled(aBoolean);
+      }
+    });
   }
 
   private class PatchCellRendererPanel extends JPanel implements ListCellRenderer {

@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -64,5 +65,13 @@ public class NewChangelistDialog extends DialogWrapper {
 
   public boolean isNewChangelistActive() {
     return myMakeActiveCheckBox.isSelected();
+  }
+
+  private void createUIComponents() {
+    myPanel = new EditChangelistPanel(null, new Consumer<Boolean>() {
+      public void consume(final Boolean aBoolean) {
+        setOKActionEnabled(aBoolean);
+      }
+    });
   }
 }

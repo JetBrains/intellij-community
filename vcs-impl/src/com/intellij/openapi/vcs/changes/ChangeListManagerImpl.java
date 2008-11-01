@@ -97,12 +97,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     initializeForNewProject();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myWorker.initialized();
       myUpdater.initialized();
       ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
     }
     else {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
         public void run() {
+          myWorker.initialized();
           myUpdater.initialized();
           broadcastStateAfterLoad();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);

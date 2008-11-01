@@ -21,6 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -327,6 +328,11 @@ public abstract class AbstractVcs {
    */
   @Nullable
   public List<AnAction> getAdditionalActionsForLocalChange() {
+    return null;
+  }
+
+  @Nullable
+  public ChangeListEditHandler getEditHandler() {
     return null;
   }
 }

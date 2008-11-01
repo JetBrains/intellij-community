@@ -66,6 +66,9 @@ public class MockChangelistBuilder implements ChangelistBuilder {
     return true;
   }
 
+  public void reportWarningMessage(final String message) {
+  }
+
   public List<Change> getChanges() {
     return myChanges;
   }

@@ -1,9 +1,17 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
+import java.awt.event.InputMethodEvent;
+import java.awt.event.InputMethodListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 /**
  * @author max
@@ -12,6 +20,65 @@ public class EditChangelistPanel {
   private JTextField myNameTextField;
   private JTextArea myDescriptionTextArea;
   private JPanel myContent;
+  @Nullable
+  private final ChangeListEditHandler myHandler;
+  @NotNull
+  private final Consumer<Boolean> myOkEnabledListener;
+
+  public EditChangelistPanel(@Nullable final ChangeListEditHandler handler, @NotNull Consumer<Boolean> okEnabledListener) {
+    myHandler = handler;
+    myOkEnabledListener = okEnabledListener;
+
+    if (myHandler != null) {
+      myNameTextField.addKeyListener(new KeyListener() {
+        public void keyTyped(final KeyEvent e) {
+          onEditName();
+        }
+        public void keyPressed(final KeyEvent e) {
+        }
+        public void keyReleased(final KeyEvent e) {
+          onEditName();
+        }
+      });
+      myNameTextField.addInputMethodListener(new InputMethodListener() {
+        public void inputMethodTextChanged(final InputMethodEvent event) {
+          onEditName();
+        }
+        public void caretPositionChanged(final InputMethodEvent event) {
+        }
+      });
+      myDescriptionTextArea.addKeyListener(new KeyListener() {
+        public void keyTyped(final KeyEvent e) {
+        }
+        public void keyPressed(final KeyEvent e) {
+        }
+        public void keyReleased(final KeyEvent e) {
+          onEditComment();
+        }
+      });
+      myDescriptionTextArea.addInputMethodListener(new InputMethodListener() {
+        public void inputMethodTextChanged(final InputMethodEvent event) {
+          onEditComment();
+        }
+        public void caretPositionChanged(final InputMethodEvent event) {
+        }
+      });
+    }
+  }
+
+  private void onEditComment() {
+    myNameTextField.setText(myHandler.changeNameOnChangeComment(myNameTextField.getText(), myDescriptionTextArea.getText()));
+    enableOk();
+  }
+
+  private void onEditName() {
+    myDescriptionTextArea.setText(myHandler.changeCommentOnChangeName(myNameTextField.getText(), myDescriptionTextArea.getText()));
+    enableOk();
+  }
+
+  private void enableOk() {
+    myOkEnabledListener.consume(myNameTextField.getText().trim().length() > 0);
+  }
 
   public void setName(String s) {
     myNameTextField.setText(s);

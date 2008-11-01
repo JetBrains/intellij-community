@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.pending;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 
 public class MockChangeListManagerGate implements ChangeListManagerGate {
   private final ChangeListManager myManager;
@@ -25,5 +26,13 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
       changeList = myManager.addChangeList(name, comment);
     }
     return changeList;
+  }
+
+  public void setChangeListEditHandler(final String listName, final ChangeListEditHandler handler) {
+    // won't be used
+  }
+
+  public void editComment(final String name, final String comment) {
+    myManager.editComment(name, comment);
   }
 }

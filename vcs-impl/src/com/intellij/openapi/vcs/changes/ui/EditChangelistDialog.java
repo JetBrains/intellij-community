@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +25,12 @@ public class EditChangelistDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myList = list;
-    myPanel = new EditChangelistPanel();
+    myPanel = new EditChangelistPanel(((LocalChangeListImpl) list).getEditHandler(),
+                                      new Consumer<Boolean>() {
+                                        public void consume(final Boolean aBoolean) {
+                                          setOKActionEnabled(Boolean.TRUE.equals(aBoolean));
+                                        }
+                                      });
     myPanel.setName(list.getName());
     myPanel.setDescription(list.getComment());
 
@@ -47,8 +54,16 @@ public class EditChangelistDialog extends DialogWrapper {
     }
 
     if (!Comparing.equal(oldName, myPanel.getName(), true) || !Comparing.equal(oldComment, myPanel.getDescription(), true)) {
-      myList.setName(myPanel.getName());
-      myList.setComment(myPanel.getDescription());
+      final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+
+      final String newName = myPanel.getName();
+      if (! myList.getName().equals(newName)) {
+        clManager.editName(myList.getName(), newName);
+      }
+      final String newDescription = myPanel.getDescription();
+      if (! myList.getComment().equals(newDescription)) {
+        clManager.editComment(myList.getName(), newDescription);
+      }
     }
     super.doOKAction();
   }

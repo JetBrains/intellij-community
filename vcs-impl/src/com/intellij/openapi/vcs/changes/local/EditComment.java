@@ -17,12 +17,16 @@ public class EditComment implements ChangeListCommand {
   }
 
   public void apply(final ChangeListWorker worker) {
-    myOldComment = worker.editComment(myName, myNewComment);
     myListCopy = worker.getCopyByName(myName);
+    if (myListCopy != null && (! myListCopy.isReadOnly())) {
+      myOldComment = worker.editComment(myName, myNewComment);
+    }
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    dispatcher.getMulticaster().changeListCommentChanged(myListCopy, myOldComment);
+    if (myListCopy != null && (! myListCopy.isReadOnly())) {
+      dispatcher.getMulticaster().changeListCommentChanged(myListCopy, myOldComment);
+    }
   }
 
   public String getOldComment() {
