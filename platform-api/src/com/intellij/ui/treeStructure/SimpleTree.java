@@ -22,9 +22,10 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.TreeUIHelper;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -585,6 +586,9 @@ public class SimpleTree extends JTree implements CellEditorListener {
 
     if (AbstractTreeBuilder.getBuilderFor(this) == null) return;
 
+    GraphicsConfig config = new GraphicsConfig(g);
+    config.setAntialiasing(true);
+
     BasicTreeUI ui = (BasicTreeUI)getUI();
 
     for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
@@ -665,6 +669,8 @@ public class SimpleTree extends JTree implements CellEditorListener {
       g.setColor(new Color(180, 180, 180));
       g.drawRoundRect(toPaint.x, toPaint.y, toPaint.width, toPaint.height, 4, 4);
     }
+
+    config.restore();
   }
 
   @Nullable

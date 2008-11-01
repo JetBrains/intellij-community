@@ -78,7 +78,7 @@ public class GlassPanel extends JComponent {
 
       Graphics2D g2 = (Graphics2D)g;
 
-      Color shieldColor = new Color(0.0f, 0.0f, 0.0f, 0.2f);
+      Color shieldColor = new Color(0.0f, 0.0f, 0.0f, 0.15f);
       Color boundsColor = Color.gray;
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setColor(shieldColor);

@@ -633,10 +633,28 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       if (myFiltered == null) return true;
 
       if (value instanceof OptionsTree.EditorNode) {
-        return myFiltered.contains(((OptionsTree.EditorNode)value).getConfigurable());
+        final OptionsTree.EditorNode node = (OptionsTree.EditorNode)value;
+        return myFiltered.contains(node.getConfigurable()) || isChildOfNameHit(node);
       }
 
       return true;
+    }
+
+    private boolean isChildOfNameHit(OptionsTree.EditorNode node) {
+      if (myHits != null) {
+        OptionsTree.Base eachParent = node;
+        while (eachParent != null) {
+          if (eachParent instanceof OptionsTree.EditorNode) {
+            final OptionsTree.EditorNode eachEditorNode = (OptionsTree.EditorNode)eachParent;
+            if (myHits.getNameFullHits().contains(eachEditorNode.myConfigurable)) return true;
+          }
+          eachParent = (OptionsTree.Base)eachParent.getParent();
+        }
+
+        return false;
+      }
+
+      return false;
     }
 
     public ActionCallback refilterFor(String text, boolean adjustSelection, final boolean now) {
@@ -680,7 +698,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         shouldMoveSelection = false;
       }
 
-      if (shouldMoveSelection && myFiltered != null && myFiltered.contains(current)) {
+      if (shouldMoveSelection && (myFiltered == null || myFiltered.contains(current))) {
         shouldMoveSelection = false;
       }
 
