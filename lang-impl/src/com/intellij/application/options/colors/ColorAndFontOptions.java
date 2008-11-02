@@ -616,6 +616,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       myInitResetInvoked = true;
     }
     else {
+      if (isSchemeListModified() || isSomeSchemeModified()) {
+        myRevertChangesCompleted = false;
+      }
       revertChanges();
     }
 
