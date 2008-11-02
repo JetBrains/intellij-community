@@ -12,10 +12,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -80,7 +77,7 @@ public abstract class IntentionSettingsTree {
     JScrollPane scrollPane = new JScrollPane(myTree);
     myToolbarPanel = new JPanel(new BorderLayout());
     myToolbarPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.WEST);
-    myToolbarPanel.add(myFilter, BorderLayout.EAST);
+    myToolbarPanel.add(myFilter, BorderLayout.CENTER);
     myComponent.add(myToolbarPanel, BorderLayout.NORTH);
     myComponent.add(scrollPane, BorderLayout.CENTER);
 
