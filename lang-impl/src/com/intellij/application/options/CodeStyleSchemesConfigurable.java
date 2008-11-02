@@ -105,10 +105,21 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   public void revert() {
+    if (myModel.isSchemeListModified() || isSomeSchemeModified()) {
+      myRevertCompleted = false;
+    }
     if (!myRevertCompleted) {
       resetImpl();
       myRevertCompleted = true;
     }
+  }
+
+  private boolean isSomeSchemeModified() {
+    for (CodeStyleMainPanel panel : myPanels) {
+      if (panel.isModified()) return true;
+    }
+
+    return false;
   }
 
   @Override

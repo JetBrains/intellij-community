@@ -579,6 +579,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private void revertChanges(){
+    if (isSchemeListModified() || isSomeSchemeModified()) {
+      myRevertChangesCompleted = false;
+    }
+    
     if (!myRevertChangesCompleted) {
       ensureSchemesPanel();
 
@@ -616,9 +620,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       myInitResetInvoked = true;
     }
     else {
-      if (isSchemeListModified() || isSomeSchemeModified()) {
-        myRevertChangesCompleted = false;
-      }
       revertChanges();
     }
 
