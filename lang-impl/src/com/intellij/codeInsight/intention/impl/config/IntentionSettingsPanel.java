@@ -85,8 +85,7 @@ public class IntentionSettingsPanel implements MasterDetails {
   }
 
   public void reset() {
-    List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
-    myIntentionSettingsTree.reset(list);
+    myIntentionSettingsTree.reset();
     SwingUtilities.invokeLater(new Runnable(){
       public void run() {
         myIntentionDescriptionPanel.init(myPanel.getWidth()/2);
@@ -181,7 +180,7 @@ public class IntentionSettingsPanel implements MasterDetails {
   public Runnable showOption(final SearchableConfigurable configurable, final String option) {
     return new Runnable() {
       public void run() {
-        myIntentionSettingsTree.reset(myIntentionSettingsTree.filterModel(option, true));
+        myIntentionSettingsTree.filter(myIntentionSettingsTree.filterModel(option, true));
         myIntentionSettingsTree.setFilter(option);
       }
     };

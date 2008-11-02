@@ -36,6 +36,8 @@ public abstract class IntentionSettingsTree {
   private FilterComponent myFilter;
   private JPanel myToolbarPanel;
 
+  private final Map<IntentionActionMetaData, Boolean> myIntentionToCheckStatus = new HashMap<IntentionActionMetaData, Boolean>();
+
   protected IntentionSettingsTree() {
     initTree();
   }
@@ -121,7 +123,25 @@ public abstract class IntentionSettingsTree {
   protected abstract void selectionChanged(Object selected);
   protected abstract List<IntentionActionMetaData> filterModel(String filter, final boolean force);
 
-  public void reset(List<IntentionActionMetaData> intentionsToShow) {
+  public void filter(List<IntentionActionMetaData> intentionsToShow) {
+    refreshCheckStatus((CheckedTreeNode)myTree.getModel().getRoot());
+    reset(intentionsToShow);
+  }
+
+  public void reset(){
+    resetCheckStatus();    
+    reset(IntentionManagerSettings.getInstance().getMetaData());
+  }
+
+  private void resetCheckStatus() {
+    myIntentionToCheckStatus.clear();
+    IntentionManagerSettings manager = IntentionManagerSettings.getInstance();
+    for (IntentionActionMetaData metaData : manager.getMetaData()) {
+      myIntentionToCheckStatus.put(metaData, manager.isEnabled(metaData));
+    }
+  }
+
+  private void reset(List<IntentionActionMetaData> intentionsToShow) {
     CheckedTreeNode root = new CheckedTreeNode(null);
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     intentionsToShow = sort(intentionsToShow);
@@ -166,11 +186,12 @@ public abstract class IntentionSettingsTree {
     return (CheckedTreeNode)myTree.getModel().getRoot();
   }
 
-  private static boolean resetCheckMark(final CheckedTreeNode root) {
+  private boolean resetCheckMark(final CheckedTreeNode root) {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
-      boolean enabled = IntentionManagerSettings.getInstance().isEnabled(metaData);
+      Boolean b = myIntentionToCheckStatus.get(metaData);
+      boolean enabled = b == null ? false : b.booleanValue();
       root.setChecked(enabled);
       return enabled;
     }
@@ -218,6 +239,22 @@ public abstract class IntentionSettingsTree {
   public void apply() {
     CheckedTreeNode root = getRoot();
     apply(root);
+  }
+
+  private void refreshCheckStatus(final CheckedTreeNode root) {
+    Object userObject = root.getUserObject();
+    if (userObject instanceof IntentionActionMetaData) {
+      IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
+      myIntentionToCheckStatus.put(actionMetaData, root.isChecked());
+    }
+    else {
+      visitChildren(root, new CheckedNodeVisitor() {
+        public void visit(CheckedTreeNode node) {
+          refreshCheckStatus(node);
+        }
+      });
+    }
+
   }
 
   private static void apply(CheckedTreeNode root) {
@@ -294,7 +331,7 @@ public abstract class IntentionSettingsTree {
           myExpansionMonitor.freeze();
         }
       }
-      IntentionSettingsTree.this.reset(filterModel(filter, true));
+      IntentionSettingsTree.this.filter(filterModel(filter, true));
       if (myTree != null) {
         List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
         ((DefaultTreeModel)myTree.getModel()).reload();
@@ -320,7 +357,7 @@ public abstract class IntentionSettingsTree {
           myExpansionMonitor.freeze();
         }
       }
-      IntentionSettingsTree.this.reset(filterModel(filter, true));
+      IntentionSettingsTree.this.filter(filterModel(filter, true));
       TreeUtil.expandAll(myTree);
       if (filter == null || filter.length() == 0) {
         TreeUtil.collapseAll(myTree, 0);
