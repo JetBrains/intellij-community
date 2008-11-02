@@ -20,6 +20,10 @@ public class InlineSuperClassRefactoringHandler {
   }
 
   public static void invoke(final Project project, final Editor editor, final PsiClass superClass, Collection<PsiClass> inheritors) {
+    if (!superClass.getManager().isInProject(superClass)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline non-project class", REFACTORING_NAME, null);
+      return;
+    }
 
     for (PsiClass inheritor : inheritors) {
       if (PsiTreeUtil.isAncestor(superClass, inheritor, false)) {
