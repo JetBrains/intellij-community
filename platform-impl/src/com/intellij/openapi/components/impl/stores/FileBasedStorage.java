@@ -54,7 +54,11 @@ public class FileBasedStorage extends XmlElementStorage {
     myFilePath = filePath;
     myFile = FILE_SYSTEM.createFile(myFilePath);
 
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
+
+    if (vFile != null) {
+      vFile.refresh(false, false);
+    }
 
     VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
