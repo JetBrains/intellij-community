@@ -35,7 +35,6 @@ public class StartupWizard extends WizardDialog<StartupWizardModel> {
     catch (IOException e) {
       // ignore?
     }
-    PluginManager.invalidatePlugins();
   }
 
   public static void run() {
