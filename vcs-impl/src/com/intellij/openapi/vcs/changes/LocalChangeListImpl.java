@@ -83,8 +83,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   // same as for setName()
   public void setComment(final String comment) {
     if (! Comparing.equal(comment, myComment)) {
-      String oldComment = myComment;
-      ChangeListManagerImpl.getInstanceImpl(myProject).editComment(oldComment, comment);
+      ChangeListManagerImpl.getInstanceImpl(myProject).editComment(myName, comment);
       myComment = comment != null ? comment : "";
     }
   }

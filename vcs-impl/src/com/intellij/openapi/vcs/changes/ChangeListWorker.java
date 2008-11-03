@@ -248,6 +248,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         final ChangeListEditHandler editHandler = listImpl.getEditHandler();
         if (editHandler != null) {
           listImpl.setNameImpl(editHandler.changeNameOnChangeComment(listImpl.getName(), listImpl.getComment()));
+          if (! fromName.equals(listImpl.getName())) {
+            myMap.remove(fromName);
+            myMap.put(listImpl.getName(), list);
+          }
         }
       }
       return oldComment;
