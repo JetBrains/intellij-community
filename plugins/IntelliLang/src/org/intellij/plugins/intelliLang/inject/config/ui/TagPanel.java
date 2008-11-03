@@ -16,11 +16,13 @@
 package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.ui.EditorTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
@@ -64,8 +66,12 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
     if (jspManager != null) {
       final List<String> tlds = new ArrayList<String>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();
-      for (Module module : modules) {
-        final String[] tldUris = jspManager.getPossibleTldUris(module);
+      for (final Module module : modules) {
+        final String[] tldUris = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+          public String[] compute() {
+            return jspManager.getPossibleTldUris(module);
+          }
+        });
         for (String uri : tldUris) {
           if (!tlds.contains(uri)) {
             tlds.add(uri);
