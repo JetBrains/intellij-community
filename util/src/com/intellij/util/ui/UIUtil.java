@@ -33,10 +33,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
@@ -825,7 +825,7 @@ public class UIUtil {
       method.invoke(dialog, value);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      // ignore - no JDK 6
     }
   }
 
