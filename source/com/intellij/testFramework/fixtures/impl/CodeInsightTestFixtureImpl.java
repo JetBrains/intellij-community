@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -513,32 +514,44 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public Collection<GutterIconRenderer> findAllGutters(final String filePath) throws Throwable {
     assertInitialized();
     final Project project = myProjectFixture.getProject();
-    final SortedMap<HighlightInfo, List<GutterIconRenderer>> result = new TreeMap<HighlightInfo, List<GutterIconRenderer>>(new Comparator<HighlightInfo>() {
-      public int compare(final HighlightInfo o1, final HighlightInfo o2) {
-        return o1.startOffset - o2.startOffset;
-      }
-    });
+    final SortedMap<Integer, List<GutterIconRenderer>> result = new TreeMap<Integer, List<GutterIconRenderer>>();
     new WriteCommandAction.Simple(project) {
 
       protected void run() throws Throwable {
         configureByFilesInner(filePath);
 
-        final Collection<HighlightInfo> infos = doHighlighting();
-        for (HighlightInfo info :infos) {
-          final GutterIconRenderer renderer = info.getGutterIconRenderer();
-          if (renderer != null) {
-            List<GutterIconRenderer> renderers = result.get(info);
-            if (renderers == null) {
-              result.put(info, renderers = new SmartList<GutterIconRenderer>());
-            }
-            renderers.add(renderer);
-          }
+        for (HighlightInfo info : doHighlighting()) {
+          addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset);
+        }
+
+        LineMarkersPass markersPass = new LineMarkersPass(project, myFile, myEditor.getDocument(), 0, myFile.getTextLength(), true);
+        markersPass.doCollectInformation(new MockProgressIndicator());
+        markersPass.doApplyInformationToEditor();
+
+        SlowLineMarkersPass slowMarkers = new SlowLineMarkersPass(project, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
+        slowMarkers.doCollectInformation(new MockProgressIndicator());
+        slowMarkers.doApplyInformationToEditor();
+
+        for (final RangeHighlighter highlighter : myEditor.getDocument().getMarkupModel(project).getAllHighlighters()) {
+          addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset());
         }
 
       }
+
+      private void addGutterIconRenderer(final GutterIconRenderer renderer, final int offset) {
+        if (renderer == null) return;
+
+        List<GutterIconRenderer> renderers = result.get(offset);
+        if (renderers == null) {
+          result.put(offset, renderers = new SmartList<GutterIconRenderer>());
+        }
+        renderers.add(renderer);
+      }
+
     }.execute().throwException();
     return ContainerUtil.concat(result.values());
   }
+
 
   public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
     assertInitialized();

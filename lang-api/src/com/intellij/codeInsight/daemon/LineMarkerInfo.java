@@ -61,28 +61,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   @Nullable
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
-    return new GutterIconRenderer() {
-      @NotNull
-      public Icon getIcon() {
-        return myIcon;
-      }
-
-      public AnAction getClickAction() {
-        return new NavigateAction();
-      }
-
-      public boolean isNavigateAction() {
-        return myNavigationHandler != null;
-      }
-
-      public String getTooltipText() {
-        return getLineMarkerTooltip();
-      }
-
-      public Alignment getAlignment() {
-        return myIconAlignment;
-      }
-    };
+    return new LineMarkerGutterIconRenderer(this);
   }
 
   @Nullable
@@ -113,5 +92,38 @@ public class LineMarkerInfo<T extends PsiElement> {
   @Nullable
   public GutterIconNavigationHandler<T> getNavigationHandler() {
     return myNavigationHandler;
+  }
+
+  public static class LineMarkerGutterIconRenderer<T extends PsiElement> extends GutterIconRenderer {
+    private LineMarkerInfo<T> myInfo;
+
+    public LineMarkerGutterIconRenderer(final LineMarkerInfo<T> info) {
+      myInfo = info;
+    }
+
+    public LineMarkerInfo<T> getLineMarkerInfo() {
+      return myInfo;
+    }
+
+    @NotNull
+    public Icon getIcon() {
+      return myInfo.myIcon;
+    }
+
+    public AnAction getClickAction() {
+      return myInfo.new NavigateAction();
+    }
+
+    public boolean isNavigateAction() {
+      return myInfo.myNavigationHandler != null;
+    }
+
+    public String getTooltipText() {
+      return myInfo.getLineMarkerTooltip();
+    }
+
+    public Alignment getAlignment() {
+      return myInfo.myIconAlignment;
+    }
   }
 }
