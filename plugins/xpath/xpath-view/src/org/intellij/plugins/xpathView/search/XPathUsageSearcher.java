@@ -98,7 +98,7 @@ class XPathUsageSearcher implements UsageSearcher {
             myIndicator.setText(findBundleMessage("find.searching.for.string.in.file.progress", myExpression.expression, t.getPresentableUrl()));
 
             final PsiFile psiFile = myManager.findFile(t);
-            if (psiFile != null) {
+            if (psiFile instanceof XmlFile) {
                 final XmlFile t1 = (XmlFile)psiFile;
                 final XmlDocument document;
                 if (t1 instanceof JspFile) {
