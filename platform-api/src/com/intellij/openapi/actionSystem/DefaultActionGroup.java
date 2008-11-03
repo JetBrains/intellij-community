@@ -92,11 +92,11 @@ public class DefaultActionGroup extends ActionGroup {
     // Check that action isn't already registered
     if (!(action instanceof Separator)) {
       if (mySortedChildren.contains(action)) {
-        throw new IllegalArgumentException("cannot add an action twice");
+        throw new IllegalArgumentException("cannot add an action twice: " + action);
       }
       for (Pair<AnAction, Constraints> pair : myPairs) {
         if (action.equals(pair.first)) {
-          throw new IllegalArgumentException("cannot add an action twice");
+          throw new IllegalArgumentException("cannot add an action twice: " + action);
         }
       }
     }
