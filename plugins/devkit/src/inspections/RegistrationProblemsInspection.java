@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateConstructorFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.ImplementOrExtendFix;
-import org.jetbrains.idea.devkit.inspections.quickfix.MakePublicFix;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -147,13 +146,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
           }
         }
         if (ActionType.ACTION.isOfType(checkedClass)) {
-          if (!isPublic(checkedClass)) {
-            problems = addProblem(problems, manager.createProblemDescriptor(nameIdentifier,
-                    DevKitBundle.message("inspections.registration.problems.not.public"),
-                    new MakePublicFix(checkedClass, isOnTheFly),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-          }
-
           if (ConstructorType.getNoArgCtor(checkedClass) == null) {
             problems = addProblem(problems, manager.createProblemDescriptor(nameIdentifier,
                     DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
@@ -173,25 +165,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (CHECK_ACTIONS && CHECK_JAVA_CODE &&
-            method.isConstructor() &&
-            method.getNameIdentifier() != null &&
-            method.getContainingFile().getVirtualFile() != null)
-    {
-      if (method.getParameterList().getParametersCount() == 0 && !isPublic(method)) {
-        final PsiClass checkedClass = method.getContainingClass();
-        if (ActionType.ACTION.isOfType(checkedClass)) {
-          if (isActionRegistered(checkedClass)) {
-            return new ProblemDescriptor[]{
-                    manager.createProblemDescriptor(method.getNameIdentifier(),
-                            DevKitBundle.message("inspections.registration.problems.ctor.not.public"),
-                            new MakePublicFix(method, isOnTheFly),
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-            };
-          }
-        }
-      }
-    }
     return null;
   }
 
@@ -361,23 +334,12 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                         ImplementOrExtendFix.createFix(psiClass, actionClass, myOnTheFly));
               }
             }
-            if (!isPublic(actionClass)) {
-              addProblem(token,
-                      DevKitBundle.message("inspections.registration.problems.not.public"),
-                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                      new MakePublicFix(actionClass, myOnTheFly));
-            }
             final ConstructorType noArgCtor = ConstructorType.getNoArgCtor(actionClass);
             if (noArgCtor == null) {
               addProblem(token,
                       DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                       new CreateConstructorFix(actionClass, myOnTheFly));
-            } else if (noArgCtor != ConstructorType.DEFAULT && !isPublic(noArgCtor.myCtor)) {
-              addProblem(token,
-                      DevKitBundle.message("inspections.registration.problems.ctor.not.public"),
-                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                      new MakePublicFix(noArgCtor.myCtor, myOnTheFly));
             }
             if (isAbstract(actionClass)) {
               addProblem(token,
