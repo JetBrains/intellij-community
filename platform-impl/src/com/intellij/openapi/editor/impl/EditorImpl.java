@@ -370,7 +370,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
 
-    ((MyColorSchemeDelegate)myScheme).updateGlobalScheme();
+    if (myScheme instanceof MyColorSchemeDelegate) {
+      ((MyColorSchemeDelegate)myScheme).updateGlobalScheme();
+    }
     myHighlighter.setColorScheme(myScheme);
 
     myGutterComponent.reinitSettings();
