@@ -33,7 +33,7 @@ public abstract class XmlExtension {
 
   public static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
 
-  public static XmlExtension getExtension(XmlFile file) {
+  public static XmlExtension getExtension(PsiFile file) {
     for (XmlExtension extension : Extensions.getExtensions(EP_NAME)) {
       if (extension.isAvailable(file)) {
         return extension;
@@ -45,13 +45,13 @@ public abstract class XmlExtension {
   @Nullable
   public static XmlExtension getExtensionByElement(PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
-    if (psiFile instanceof XmlFile) {
-      return getExtension((XmlFile)psiFile);
+    if (psiFile != null) {
+      return getExtension(psiFile);
     }
     return null;
   }
 
-  public abstract boolean isAvailable(XmlFile file);
+  public abstract boolean isAvailable(PsiFile file);
 
   @NotNull
   public abstract List<Pair<String,String>> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context);

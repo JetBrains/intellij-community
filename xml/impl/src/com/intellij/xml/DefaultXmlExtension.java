@@ -26,7 +26,7 @@ import java.util.*;
  */
 public class DefaultXmlExtension extends XmlExtension {
   
-  public boolean isAvailable(final XmlFile file) {
+  public boolean isAvailable(final PsiFile file) {
     return true;
   }
 

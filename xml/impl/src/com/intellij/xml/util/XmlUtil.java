@@ -1362,7 +1362,8 @@ public class XmlUtil {
   public static XmlFile getContainingFile(PsiElement element) {
     while (!(element instanceof XmlFile) && element != null) {
       final PsiElement context = element.getContext();
-      if (context == null) { 
+      if (context == null) {
+        //todo Dmitry Avdeev: either XmlExtension should work on any PsiFile (not just XmlFile), or you need to handle elements from JspJavaFile in some other way
         final XmlExtension extension = XmlExtension.getExtensionByElement(element);
         if (extension != null) {
           element = extension.getContainingFile(element);
