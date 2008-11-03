@@ -181,7 +181,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                     BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(file.getFileType());
                     assert builder != null;
                     try {
-                      stubTree = StubTree.getTreeFromTopLevelStub((PsiFileStub)builder.buildStubTree(file, file.contentsToByteArray()));
+                      stubTree = StubTree.getTreeFromTopLevelStub((PsiFileStub)builder.buildStubTree(file, file.contentsToByteArray(), project));
                     } catch (IOException ex) {
                       LOG.error(ex);
                     }

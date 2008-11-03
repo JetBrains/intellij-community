@@ -4,6 +4,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.StubElement;
@@ -18,7 +19,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     return name.indexOf('$') >= 0;
   }
 
-  public StubElement buildStubTree(final VirtualFile file, final byte[] content) {
+  public StubElement buildStubTree(final VirtualFile file, final byte[] content, final Project project) {
     try {
       return ClsStubBuilder.build(file, content);
     }
