@@ -47,8 +47,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 
@@ -209,7 +207,8 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), charset)) {
         params.getProgramParametersList().add("--encoding=" + charset.displayName());
       }
-    } else {
+    }
+    else {
       params.getProgramParametersList().add("--encoding=" + charset.displayName());
     }
   }
@@ -238,11 +237,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
                                ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
                                                        "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
 
-      int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text", module.getName()),
-                                               GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
-      if (result == 0) {
-        ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
-      }
+      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       return null;
     }
 

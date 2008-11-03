@@ -217,7 +217,8 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
       if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), charset)) {
         params.getProgramParametersList().add("--encoding=" + charset.displayName());
       }
-    } else {
+    }
+    else {
       params.getProgramParametersList().add("--encoding=" + charset.displayName());
     }
   }
@@ -255,11 +256,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
                                ExecutionBundle.message("error.running.configuration.with.error.error.message", getName(),
                                                        "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
 
-      int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text", module.getName()),
-                                               GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
-      if (result == 0) {
-        ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
-      }
+      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       return null;
     }
 

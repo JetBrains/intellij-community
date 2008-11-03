@@ -52,7 +52,6 @@ import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.grails.module.GrailsModuleType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.*;
@@ -309,7 +308,8 @@ public class GroovyCompiler implements TranslatingCompiler {
     for (VirtualFile item : virtualFiles) {
       if (!moduleRootManager.getFileIndex().isInTestSourceContent(item)) {
         printer.println(GroovycRunner.SRC_FILE);
-      } else {
+      }
+      else {
         printer.println(GroovycRunner.TEST_FILE);
       }
       printer.println(item.getPath());
@@ -367,11 +367,7 @@ public class GroovyCompiler implements TranslatingCompiler {
         if (!GroovyConfigUtils.getInstance().tryToSetUpGroovyFacetOntheFly(module)) {
           Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet", module.getName()),
                                    GroovyBundle.message("cannot.compile"));
-          int result = Messages.showOkCancelDialog(GroovyBundle.message("groovy.configure.facet.question.text", module.getName()),
-                                                   GroovyBundle.message("groovy.configure.facet.question"), GroovyIcons.GROOVY_ICON_32x32);
-          if (result == 0) {
-            ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
-          }
+          ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
         }
         return false;
       }
@@ -388,7 +384,8 @@ public class GroovyCompiler implements TranslatingCompiler {
       if (noJdkArray.length == 1) {
         Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk", noJdkArray[0].getName()),
                                  GroovyBundle.message("cannot.compile"));
-      } else {
+      }
+      else {
         StringBuffer modulesList = new StringBuffer();
         for (int i = 0; i < noJdkArray.length; i++) {
           if (i > 0) modulesList.append(", ");
