@@ -53,10 +53,12 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   protected ApplicationProfileManager myApplicationProfileManager;
   public boolean USE_PROJECT_LEVEL_SETTINGS = false;
   protected Map<String, Profile> myProfiles = new HashMap<String, Profile>();
+  private DependencyValidationManager myHolder;
 
-  public DefaultProjectProfileManager(final Project project, final String profileType) {
+  public DefaultProjectProfileManager(final Project project, final String profileType, final DependencyValidationManager holder) {
     myProject = project;
     myProfileType = profileType;
+    myHolder = holder;
     myApplicationProfileManager = ApplicationProfileManager.getProfileManager(profileType);
     LOG.assertTrue(myApplicationProfileManager != null);
   }
@@ -126,12 +128,11 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     if (scopes != null) {
       final List children = scopes.getChildren(SCOPE);
       if (children != null) {
-        final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
         for (Object s : children) {
           Element scopeElement = (Element)s;
           final String profile = scopeElement.getAttributeValue(PROFILE);
           if (profile != null && myProfiles.containsKey(profile)) {
-            final NamedScope scope = holder.getScope(scopeElement.getAttributeValue(NAME));
+            final NamedScope scope = myHolder.getScope(scopeElement.getAttributeValue(NAME));
             if (scope != null) {
               myScopeToProfileMap.put(scope, profile);
             }

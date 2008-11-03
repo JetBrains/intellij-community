@@ -29,6 +29,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiDirectory;
@@ -65,8 +66,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public InspectionProjectProfileManager(final Project project, EditorColorsManager manager) {
-    super(project, Profile.INSPECTION);
+  public InspectionProjectProfileManager(final Project project, EditorColorsManager manager, DependencyValidationManager holder) {
+    super(project, Profile.INSPECTION, holder);
     myProject = project;
     mySeverityRegistrar = new SeverityRegistrar();
   }
