@@ -4,8 +4,8 @@ import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.ApplicationLoadListener;
-import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -855,6 +855,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void assertIsDispatchThread(@Nullable final JComponent component) {
     if (component == null) return;
+
+    Thread curThread = Thread.currentThread();
+    if (ourDispatchThread == curThread) {
+      return;
+    }
 
     if (Boolean.TRUE.equals(component.getClientProperty(WAS_EVER_SHOWN))) {
       assertIsDispatchThread();
