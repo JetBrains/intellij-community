@@ -5,7 +5,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
@@ -21,7 +21,8 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.navigation.*;
+import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.UIUtil;
@@ -63,7 +64,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   OptionsTree myTree;
   MySearchField mySearch;
   Splitter myMainSplitter;
-  JComponent myToolbarComponent;
+  //[back/forward] JComponent myToolbarComponent;
 
   DetailsComponent myOwnDetails = new DetailsComponent().setEmptyContentText("Select configuration element in the tree to edit its settings");
   ContentWrapper myContentWrapper = new ContentWrapper();
@@ -86,7 +87,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   JPanel myLeftSide;
 
   boolean myFilterFocumentWasChanged;
-  private ActionToolbar myToolbar;
+  //[back/forward] private ActionToolbar myToolbar;
   private Window myWindow;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
@@ -134,6 +135,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     });
 
 
+    /* [back/forward]
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(new BackAction(myTree));
     toolbarActions.add(new ForwardAction(myTree));
@@ -155,15 +157,19 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         });
       }
     }, this);
+    */
 
 
     myLeftSide = new JPanel(new BorderLayout());
 
-    final NonOpaquePanel toolbarPanel = new NonOpaquePanel(new BorderLayout());
-    toolbarPanel.add(myToolbarComponent, BorderLayout.NORTH);
-    toolbarPanel.add(mySearchWrapper, BorderLayout.CENTER);
+    /* [back/forward]
 
-    myLeftSide.add(toolbarPanel, BorderLayout.NORTH);
+    final NonOpaquePanel toolbarPanel = new NonOpaquePanel(new BorderLayout());
+    toolbarPanel.add(myToolbarComponent, BorderLayout.WEST);
+    toolbarPanel.add(mySearchWrapper, BorderLayout.CENTER);
+    */
+
+    myLeftSide.add(mySearchWrapper, BorderLayout.NORTH);
 
     myLeftSide.add(myTree, BorderLayout.CENTER);
 
@@ -198,12 +204,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     IdeGlassPaneUtil.installPainter(myOwnDetails.getContentGutter(), mySpotlightPainter, this);
 
+    /*
     String visible = PropertiesComponent.getInstance(myProject).getValue(SEARCH_VISIBLE);
     if (visible == null) {
       visible = "true";
     }
+    */
 
-    setFilterFieldVisible(Boolean.valueOf(visible).booleanValue(), false, false);
+    setFilterFieldVisible(true, false, false);
 
     new UiNotifyConnector.Once(this, new Activatable() {
       public void showNotify() {
@@ -256,7 +264,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           updateDetails();
 
           myOwnDetails.setContent(myContentWrapper);
-          myOwnDetails.setBannerMinHeight(myToolbarComponent.getHeight());
+          myOwnDetails.setBannerMinHeight(mySearchWrapper.getHeight());
           myOwnDetails.setText(getBannerText(configurable));
 
 
