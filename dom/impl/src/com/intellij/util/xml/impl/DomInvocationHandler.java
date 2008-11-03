@@ -131,7 +131,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   protected final void checkIsValid() {
     if (!isValid()) {
-      LOG.assertTrue(false, this + "\nclass=" + getClass() + "\nxml=" + getXmlElement());
+      LOG.assertTrue(false, myType.toString() + " @" + hashCode() + "\nclass=" + getClass() + "\nxml=" + getXmlElement());
     }
   }
 
