@@ -2,6 +2,7 @@ package com.intellij.html.preview;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -30,6 +31,7 @@ import java.awt.event.KeyListener;
  * @author spleaner
  */
 public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionListener, KeyListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.html.preview.ImageOrColorPreviewManager");
   private MergingUpdateQueue myQueue;
   private Editor myEditor;
   private PsiFile myFile;
@@ -160,12 +162,19 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
   @Nullable
   private static LightweightHint getHint(@NotNull PsiElement element) {
-    JComponent preview = ColorPreviewComponent.getPreviewComponent(element);
-    if (preview == null) {
-      preview = ImagePreviewComponent.getPreviewComponent(element);
+    try {
+      JComponent preview = ColorPreviewComponent.getPreviewComponent(element);
+      if (preview == null) {
+        preview = ImagePreviewComponent.getPreviewComponent(element);
+      }
+
+      return preview == null ? null : new LightweightHint(preview);
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
 
-    return preview == null ? null : new LightweightHint(preview);
+    return null;
   }
 
   private static final class PreviewUpdate extends Update {

@@ -70,18 +70,19 @@ public class ColorPreviewComponent extends JComponent {
               float[] values2 = new float[expressions.length];
               int i = 0;
               int j = 0;
-              
+
+              final PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(element.getProject()).getConstantEvaluationHelper();
               for (final PsiExpression each : expressions) {
-                if (each instanceof PsiLiteralExpression) {
-                  final Object o = ((PsiLiteralExpression)each).getValue();
-                  if (o instanceof Integer) {
-                    values[i] = ((Integer)o).intValue();
-                    i++;
-                  }
-                  else if (o instanceof Float) {
-                    values2[j] = ((Float)o).floatValue();
-                    j++;
-                  }
+                final Object o = helper.computeConstantExpression(each);
+                if (o instanceof Integer) {
+                  values[i] = ((Integer)o).intValue();
+                  values[i] = values[i] > 255 ? 255 : values[i] < 0 ? 0 : values[i];
+                  i++;
+                }
+                else if (o instanceof Float) {
+                  values2[j] = ((Float)o).floatValue();
+                  values2[j] = values2[j] > 1 ? 1 : values2[j] < 0 ? 0 : values2[j];
+                  j++;
                 }
               }
 
