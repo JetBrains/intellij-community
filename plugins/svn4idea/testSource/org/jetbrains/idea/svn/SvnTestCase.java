@@ -105,7 +105,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     return getChangesInScope(getDirtyScopeForFile(file));
   }
 
-  private List<Change> getChangesInScope(final VcsDirtyScope dirtyScope) throws VcsException {
+  protected List<Change> getChangesInScope(final VcsDirtyScope dirtyScope) throws VcsException {
     ChangeProvider changeProvider = SvnVcs.getInstance(myProject).getChangeProvider();
     assert changeProvider != null;
     MockChangelistBuilder builder = new MockChangelistBuilder();
