@@ -132,11 +132,12 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   private static StubElement buildStubTree(final FileContent inputData) {
     final VirtualFile file = inputData.getFile();
     final FileType fileType = file.getFileType();
+
     if (fileType.isBinary()) {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       assert builder != null;
 
-      return builder.buildStubTree(file, inputData.getContent());
+      return builder.buildStubTree(file, inputData.getContent(), getProject(inputData));
     }
 
     final LanguageFileType filetype = (LanguageFileType)fileType;
@@ -144,16 +145,27 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
     PsiFile psi = inputData.getUserData(FileBasedIndex.PSI_FILE);
-    if (psi == null) {
-      Project project = inputData.getUserData(FileBasedIndex.PROJECT);
-      if (project == null) {
-        project = ProjectManager.getInstance().getDefaultProject();
-      }
 
-      psi = PsiFileFactory.getInstance(project).createFileFromText(inputData.getFileName(), filetype, inputData.getContentAsText(), 1, false, false);
+    if (psi == null) {
+      psi = PsiFileFactory.getInstance(getProject(inputData)).createFileFromText(
+        inputData.getFileName(),
+        filetype,
+        inputData.getContentAsText(),
+        1,
+        false,
+        false
+      );
     }
 
     return ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+  }
+
+  private static Project getProject(final FileContent inputData) {
+    Project project = inputData.getUserData(FileBasedIndex.PROJECT);
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {
