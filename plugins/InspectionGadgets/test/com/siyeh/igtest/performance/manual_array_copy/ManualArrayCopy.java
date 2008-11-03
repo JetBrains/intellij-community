@@ -1,6 +1,6 @@
 package com.siyeh.igtest.performance.manual_array_copy;
 
-public class ManualArrayCopyInspection
+public class ManualArrayCopy
 {
 
     public void fooBar()

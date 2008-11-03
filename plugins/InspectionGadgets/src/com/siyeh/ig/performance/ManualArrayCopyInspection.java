@@ -185,7 +185,14 @@ public class ManualArrayCopyInspection extends BaseInspection {
             if (ExpressionUtils.isZero(initializer)) {
                 return expressionText;
             }
-            return expressionText + '-' + initializer.getText();
+            final int precedence = ParenthesesUtils.getPrecedence(initializer);
+            final String initializerText;
+            if (precedence >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+                initializerText = '(' + initializer.getText() + ')';
+            } else {
+                initializerText = initializer.getText();
+            }
+            return expressionText + '-' + initializerText;
         }
 
         @NonNls @Nullable
