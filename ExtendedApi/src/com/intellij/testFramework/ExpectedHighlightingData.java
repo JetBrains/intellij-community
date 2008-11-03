@@ -45,6 +45,7 @@ public class ExpectedHighlightingData {
   @NonNls private static final String LINE_MARKER = "lineMarker";
 
   private final PsiFile myFile;
+  @NonNls private static final String ANY_TEXT = "*";
 
   protected static class ExpectedHighlightingSet {
     private final boolean endOfLine;
@@ -114,18 +115,19 @@ public class ExpectedHighlightingData {
   private void extractExpectedLineMarkerSet(Document document) {
     String text = document.getText();
 
-    @NonNls String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")>)(.*)";
-    Pattern p = Pattern.compile(pat, Pattern.DOTALL);
+    @NonNls String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
+    final Pattern p = Pattern.compile(pat, Pattern.DOTALL);
+    final Pattern pat2 = Pattern.compile("(.*?)(</" + LINE_MARKER + ">)(.*)", Pattern.DOTALL);
+
     for (; ;) {
       Matcher m = p.matcher(text);
       if (!m.matches()) break;
       int startOffset = m.start(1);
-      final String descr = m.group(3);
+      final String descr = m.group(3) != null ? m.group(3): ANY_TEXT;
       String rest = m.group(4);
 
       document.replaceString(startOffset, m.end(1), "");
 
-      Pattern pat2 = Pattern.compile("(.*?)(</" + LINE_MARKER + ">)(.*)", Pattern.DOTALL);
       final Matcher matcher2 = pat2.matcher(rest);
       LOG.assertTrue(matcher2.matches(), "Cannot find closing </" + LINE_MARKER + ">");
       String content = matcher2.group(1);
@@ -188,7 +190,7 @@ public class ExpectedHighlightingData {
       @NonNls String descr = m.group(pos++);
       if (descr == null) {
         // no descr means any string by default
-        descr = "*";
+        descr = ANY_TEXT;
       }
       else if (descr.equals("null")) {
         // explicit "null" descr
@@ -313,10 +315,19 @@ public class ExpectedHighlightingData {
   }
 
   private static boolean containsLineMarker(LineMarkerInfo info, Collection<LineMarkerInfo> where) {
+    final String infoTooltip = info.getLineMarkerTooltip();
+
     for (LineMarkerInfo markerInfo : where) {
-      if (markerInfo.startOffset == info.startOffset
-          && markerInfo.endOffset == info.endOffset
-          && Comparing.equal(info.getLineMarkerTooltip(), markerInfo.getLineMarkerTooltip())) return true;
+      String markerInfoTooltip;
+      if (markerInfo.startOffset == info.startOffset &&
+          markerInfo.endOffset == info.endOffset &&
+          ( Comparing.equal(infoTooltip, markerInfoTooltip = markerInfo.getLineMarkerTooltip())  ||
+            ANY_TEXT.equals(markerInfoTooltip) ||
+            ANY_TEXT.equals(infoTooltip)
+          )
+        ) {
+        return true;
+      }
     }
     return false;
   }
@@ -410,7 +421,7 @@ public class ExpectedHighlightingData {
       info.endOffset == expectedInfo.endOffset &&
       info.isAfterEndOfLine == expectedInfo.isAfterEndOfLine &&
       (expectedInfo.type == null || expectedInfo.type.equals(info.type)) &&
-      (Comparing.strEqual("*", expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
+      (Comparing.strEqual(ANY_TEXT, expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
       && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes(null).equals(info.getTextAttributes(null)))
       ;
   }
