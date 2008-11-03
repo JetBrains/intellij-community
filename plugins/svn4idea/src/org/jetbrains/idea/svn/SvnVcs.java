@@ -104,9 +104,9 @@ import java.util.logging.Level;
 public class SvnVcs extends AbstractVcs {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
-  private final Map<VirtualFile, SVNStatusHolder> myStatuses = new SoftHashMap<VirtualFile, SVNStatusHolder>();
-  private final Map<VirtualFile, SVNInfoHolder> myInfos = new SoftHashMap<VirtualFile, SVNInfoHolder>();
-  private final Map<VirtualFile, Map<String, Pair<SVNPropertyValue, Long>>> myPropertyCache = new SoftHashMap<VirtualFile, Map<String, Pair<SVNPropertyValue, Long>>>();
+  private final Map<String, SVNStatusHolder> myStatuses = new SoftHashMap<String, SVNStatusHolder>();
+  private final Map<String, SVNInfoHolder> myInfos = new SoftHashMap<String, SVNInfoHolder>();
+  private final Map<String, Map<String, Pair<SVNPropertyValue, Long>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Long>>>();
 
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
@@ -520,7 +520,7 @@ public class SvnVcs extends AbstractVcs {
     if (vFile == null) {
       return null;
     }
-    SVNStatusHolder value = myStatuses.get(vFile);
+    SVNStatusHolder value = myStatuses.get(keyForVf(vFile));
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     File lockFile = new File(entriesFile.getParentFile(), SvnUtil.LOCK_FILE_NAME);
@@ -538,7 +538,7 @@ public class SvnVcs extends AbstractVcs {
     }
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
-    myStatuses.put(vFile, new SVNStatusHolder(entriesFile.lastModified(), vFile.getTimeStamp(), status));
+    myStatuses.put(keyForVf(vFile), new SVNStatusHolder(entriesFile.lastModified(), vFile.getTimeStamp(), status));
   }
 
   @Nullable
@@ -547,7 +547,7 @@ public class SvnVcs extends AbstractVcs {
       return null;
     }
 
-    SVNInfoHolder value = myInfos.get(vFile);
+    SVNInfoHolder value = myInfos.get(keyForVf(vFile));
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
@@ -563,12 +563,12 @@ public class SvnVcs extends AbstractVcs {
     }
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
-    myInfos.put(vFile, new SVNInfoHolder(entriesFile.lastModified(), vFile.getTimeStamp(), info));
+    myInfos.put(keyForVf(vFile), new SVNInfoHolder(entriesFile.lastModified(), vFile.getTimeStamp(), info));
   }
 
   @Nullable
   public SVNPropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws SVNException {
-    Map<String, Pair<SVNPropertyValue, Long>> cachedMap = myPropertyCache.get(file);
+    Map<String, Pair<SVNPropertyValue, Long>> cachedMap = myPropertyCache.get(keyForVf(file));
     final Pair<SVNPropertyValue, Long> cachedValue = (cachedMap == null) ? null : cachedMap.get(propName);
 
     final File ioFile = new File(file.getPath());
@@ -586,7 +586,7 @@ public class SvnVcs extends AbstractVcs {
 
     if (cachedMap == null) {
       cachedMap = new HashMap<String, Pair<SVNPropertyValue, Long>>();
-      myPropertyCache.put(file, cachedMap);
+      myPropertyCache.put(keyForVf(file), cachedMap);
     }
 
     cachedMap.put(propName, new Pair<SVNPropertyValue, Long>(propValue, dirPropsModified));
@@ -888,5 +888,9 @@ public class SvnVcs extends AbstractVcs {
 
   public void pathChanged(final File from, final File to) throws SVNException {
     myChangeListListener.pathChanged(from, to);
+  }
+
+  private String keyForVf(final VirtualFile vf) {
+    return vf.getUrl();
   }
 }
