@@ -4,12 +4,14 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.ArrayUtil;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
@@ -40,6 +42,8 @@ public class FileBasedStorage extends XmlElementStorage {
   protected final String myRootElementName;
   private static final byte[] BUFFER = new byte[10];
 
+  private static boolean myConfigDirectoryRefreshed = false;
+
   public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
                           StreamProvider streamProvider,
                           final String filePath,
@@ -50,15 +54,30 @@ public class FileBasedStorage extends XmlElementStorage {
                           ComponentRoamingManager componentRoamingManager) {
     super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager);
 
+    if (!myConfigDirectoryRefreshed) {
+      try {
+        String optionsPath = PathManager.getOptionsPath();
+        File optionsFile = new File(optionsPath);
+        if (!optionsFile.exists()) {
+          optionsFile.mkdirs();
+        }
+        VirtualFile voptionsFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(optionsFile);
+        if (voptionsFile != null) {
+          voptionsFile.getChildren();
+          if (voptionsFile instanceof NewVirtualFile) {
+            ((NewVirtualFile)voptionsFile).markDirtyRecursively();
+          }
+          voptionsFile.refresh(false, true);
+        }
+      }
+      finally {
+        myConfigDirectoryRefreshed = true;
+      }
+    }
+
     myRootElementName = rootElementName;
     myFilePath = filePath;
     myFile = FILE_SYSTEM.createFile(myFilePath);
-
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
-
-    if (vFile != null) {
-      vFile.refresh(false, false);
-    }
 
     VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
