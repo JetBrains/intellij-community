@@ -195,15 +195,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private MouseEvent myInitialMouseEvent;
   private boolean myIgnoreMouseEventsConsequitiveToInitial;
 
-
-  private EditorColorsListener myColorsListener = new EditorColorsListener() {
-    public void globalSchemeChange(final EditorColorsScheme scheme) {
-      if (myScheme instanceof MyColorSchemeDelegate) {
-        ((MyColorSchemeDelegate) myScheme).setGlobalScheme(scheme);
-      }
-    }
-  };
-
   private String myReleasedAt = null;
 
   static {
@@ -262,7 +253,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(myCaretModel);
     myDocument.addDocumentListener(mySelectionModel);
     myDocument.addDocumentListener(myEditorDocumentAdapter);
-    EditorColorsManager.getInstance().addEditorColorsListener(myColorsListener);
+
     myCaretCursor = new CaretCursor();
 
     myFoldingModel.flushCaretShift();
@@ -379,6 +370,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
 
+    ((MyColorSchemeDelegate)myScheme).updateGlobalScheme();
     myHighlighter.setColorScheme(myScheme);
 
     myGutterComponent.reinitSettings();
@@ -416,7 +408,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myMarkupModel.dispose();
-    EditorColorsManager.getInstance().removeEditorColorsListener(myColorsListener);
 
     myLineHeight = -1;
     myCharHeight = -1;
@@ -3732,8 +3723,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private Map<EditorFontType, Font> myFontsMap = null;
     private int myFontSize = -1;
     private String myFaceName = null;
-    private final EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
-    private EditorColorsScheme myGlobalScheme = myColorsManager.getGlobalScheme();
+    private EditorColorsScheme myGlobalScheme;
+
+    private MyColorSchemeDelegate() {
+      updateGlobalScheme();
+    }
 
     private EditorColorsScheme getGlobal() {
       return myGlobalScheme;
@@ -3858,8 +3852,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void writeExternal(Element element) throws WriteExternalException {
     }
 
-    public void setGlobalScheme(final EditorColorsScheme globalScheme) {
-      myGlobalScheme = globalScheme;
+    public void updateGlobalScheme() {
+      myGlobalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     }
   }
 
