@@ -1036,7 +1036,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
       for (VcsFileRevision revision : revisions) {
         if (! myHistorySession.isContentAvailable(revision)) {
-          return loadChanges(revisions);
+          return null;
         }
       }
 
