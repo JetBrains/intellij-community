@@ -1180,8 +1180,9 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
           final FileEditor editor = (FileEditor)e.getSource();
           LOG.assertTrue(editor != null);
           final EditorComposite composite = getEditorComposite(editor);
-          LOG.assertTrue(composite != null);
-          closeFile(composite.getFile());
+          if (composite != null) {
+            closeFile(composite.getFile());
+          }
         }
       }
 
