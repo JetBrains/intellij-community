@@ -140,7 +140,8 @@ public class TemplateState implements Disposable {
   @Nullable
   public TextResult getVariableValue(@NotNull String variableName) {
     if (variableName.equals(TemplateImpl.SELECTION)) {
-      return new TextResult((String)getProperties().get(ExpressionContext.SELECTION));
+      final String selection = (String)getProperties().get(ExpressionContext.SELECTION);
+      return new TextResult(selection == null ? "" : selection);
     }
     if (variableName.equals(TemplateImpl.END)) {
       return new TextResult("");
