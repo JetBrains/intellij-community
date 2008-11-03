@@ -57,7 +57,7 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
   }
 
   public void setLinks(final List<IssueNavigationLink> links) {
-    myLinks = links;
+    myLinks = new ArrayList<IssueNavigationLink>(links);
   }
 
   public IssueNavigationConfiguration getState() {
