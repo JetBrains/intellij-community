@@ -77,6 +77,9 @@ public class CvsContentRevision implements ContentRevision {
     if (!result.hasNoErrors()) {
       throw result.composeError();
     }
+    if (!operation.isLoaded()) {
+      throw new VcsException("Network problem");
+    }
 
     final byte[] fileBytes = operation.getFileBytes();
     if (operation.isDeleted()) {
