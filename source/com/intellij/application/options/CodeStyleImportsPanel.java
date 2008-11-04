@@ -1,8 +1,8 @@
 package com.intellij.application.options;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.*;
 import com.intellij.util.ui.Table;
@@ -40,31 +40,22 @@ public class CodeStyleImportsPanel extends JPanel {
   private JRadioButton myJspImportCommaSeparated;
   private JRadioButton myJspOneImportPerDirective;
 
+  private JPanel myGeneralPanel;
+  private JPanel myJSPPanel;
+  private JPanel myPackagesPanel;
+  private JPanel myImportsLayoutPanel;
+  private JPanel myWholePanel;
+
   public CodeStyleImportsPanel(CodeStyleSettings settings){
     mySettings = settings;
-    setLayout(new GridBagLayout());
-
+    setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 4));
+    add(myWholePanel, BorderLayout.CENTER);
 
-    add(createGeneralOptionsPanel(),
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.VERTICAL,
-                               new Insets(0, 0, 0, 0), 0, 0));
-
-    add(createPackagesPanel(),
-        new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 0), 0, 0));
-
-    add(createImportLayoutPanel(),
-        new GridBagConstraints(0, 1, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 0), 0, 0));
-
-    add(createJspImportLayoutPanel(),
-        new GridBagConstraints(0, 2, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 0), 0, 0));
-
-    add(new MyTailPanel(),
-        new GridBagConstraints(0, 3, 2, 1, 0, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 0), 0, 0));
+    myGeneralPanel.add(createGeneralOptionsPanel(), BorderLayout.CENTER);
+    myJSPPanel.add(createJspImportLayoutPanel(), BorderLayout.CENTER);
+    myPackagesPanel.add(createPackagesPanel(), BorderLayout.NORTH);
+    myImportsLayoutPanel.add(createImportLayoutPanel(), BorderLayout.NORTH);
   }
 
   private JPanel createJspImportLayoutPanel() {
@@ -144,6 +135,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
     panel.add(createPackagesTable(), BorderLayout.CENTER);
     panel.add(createPackagesButtonsPanel(), BorderLayout.EAST);
+    panel.setPreferredSize(new Dimension(-1, 200));
     return panel;
   }
 
@@ -152,6 +144,7 @@ public class CodeStyleImportsPanel extends JPanel {
     panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout")));
     panel.add(createImportLayoutTable(), BorderLayout.CENTER);
     panel.add(createImportLayoutButtonsPanel(), BorderLayout.EAST);
+    panel.setPreferredSize(new Dimension(-1, 200));
     return panel;
   }
 
@@ -736,14 +729,5 @@ public class CodeStyleImportsPanel extends JPanel {
     }
 
     return false;
-  }
-
-  private static class MyTailPanel extends JPanel {
-    public Dimension getMinimumSize() {
-      return new Dimension(0,0);
-    }
-    public Dimension getPreferredSize() {
-      return new Dimension(0,0);
-    }
   }
 }
