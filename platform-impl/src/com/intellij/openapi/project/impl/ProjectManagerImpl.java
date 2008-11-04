@@ -363,6 +363,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
       final IOException[] io = new IOException[]{null};
       final StateStorage.StateStorageException[] stateStorage = new StateStorage.StateStorageException[]{null};
+
+      if (filePath != null) {
+        refreshProjectFiles(filePath);
+      }
+
       boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -412,6 +417,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
+    }
+  }
+
+  private void refreshProjectFiles(final String filePath) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isDispatchThread()) {
+      String ipr = ".ipr";
+      if (filePath.endsWith(ipr)) {
+        VirtualFile projectFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+        if (projectFile != null) {
+          projectFile.refresh(false, false);
+        }
+
+        String iwsPath = filePath.substring(0, filePath.length() - ipr.length()) + ".iws";
+        VirtualFile wsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(iwsPath);
+        if (wsFile != null) {
+          wsFile.refresh(false, false);
+        }
+
+      }
     }
   }
 

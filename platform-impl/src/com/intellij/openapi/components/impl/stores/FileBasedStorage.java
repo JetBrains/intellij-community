@@ -11,6 +11,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
@@ -54,28 +55,41 @@ public class FileBasedStorage extends XmlElementStorage {
                           PicoContainer picoContainer,
                           ComponentRoamingManager componentRoamingManager) {
     super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager);
-
     Application app = ApplicationManager.getApplication();
-    if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
-      try {
-        String optionsPath = PathManager.getOptionsPath();
-        File optionsFile = new File(optionsPath);
-        if (!optionsFile.exists()) {
-          optionsFile.mkdirs();
-        }
-        VirtualFile voptionsFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(optionsFile);
-        if (voptionsFile != null) {
-          voptionsFile.getChildren();
-          if (voptionsFile instanceof NewVirtualFile) {
-            ((NewVirtualFile)voptionsFile).markDirtyRecursively();
+
+    if (isOptionsFile(filePath)) {
+      if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
+        try {
+          String optionsPath = PathManager.getOptionsPath();
+          File optionsFile = new File(optionsPath);
+          if (!optionsFile.exists()) {
+            optionsFile.mkdirs();
           }
-          voptionsFile.refresh(false, true);
+          VirtualFile voptionsFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(optionsFile);
+          if (voptionsFile != null) {
+            voptionsFile.getChildren();
+            if (voptionsFile instanceof NewVirtualFile) {
+              ((NewVirtualFile)voptionsFile).markDirtyRecursively();
+            }
+            voptionsFile.refresh(false, true);
+          }
+        }
+        finally {
+          myConfigDirectoryRefreshed = true;
         }
       }
-      finally {
-        myConfigDirectoryRefreshed = true;
-      }
+
     }
+    else {
+      if (app.isUnitTestMode() || app.isDispatchThread()) {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+        if (virtualFile != null) {
+          virtualFile.refresh(false, false);
+        }
+      }
+
+    }
+
 
     myRootElementName = rootElementName;
     myFilePath = filePath;
@@ -96,6 +110,15 @@ public class FileBasedStorage extends XmlElementStorage {
           listener.storageFileChanged(event, FileBasedStorage.this);
         }
       }, false, this);
+    }
+  }
+
+  private static boolean isOptionsFile(final String filePath) {
+    try {
+      return FileUtil.isAncestor(new File(PathManager.getOptionsPath()), new File(filePath), false);
+    }
+    catch (IOException e) {
+      return false;
     }
   }
 
