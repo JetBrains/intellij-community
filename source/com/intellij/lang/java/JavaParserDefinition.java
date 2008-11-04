@@ -76,12 +76,16 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
-    if (!viewProvider.isPhysical() || isInSource(viewProvider)) {
+    if (shouldCreateJavaFile(viewProvider)) {
       return new PsiJavaFileImpl(viewProvider);
     }
     else {
       return new PsiPlainTextFileImpl(viewProvider);
     }
+  }
+
+  public static boolean shouldCreateJavaFile(final FileViewProvider viewProvider) {
+    return !viewProvider.isPhysical() || isInSource(viewProvider);
   }
 
   private static boolean isInSource(final FileViewProvider viewProvider) {
