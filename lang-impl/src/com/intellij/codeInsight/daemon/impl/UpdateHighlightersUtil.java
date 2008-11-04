@@ -152,10 +152,12 @@ public class UpdateHighlightersUtil {
     }
 
     for (HighlightInfo info : highlightsToRemove) {
-      HighlightInfo previous = infosToRemove.put(info, info);
-      assert previous == null : "Previous:" + previous + "; "+previous.highlighter+"; Info:" + info+"; "+info.highlighter;
+      infosToRemove.put(info, info);
     }
-    result.removeAll(infosToRemove.keySet());
+    changed |= !highlightsToRemove.isEmpty();
+
+    boolean removed = result.removeAll(infosToRemove.keySet());
+    changed |= removed;
 
     Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>(oldHighlights == null ? 10 : oldHighlights.size());
     for (TextRange range : ranges) {
