@@ -40,8 +40,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -208,7 +210,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   private class SearchForUsagesRunnable implements Runnable {
-    private final AtomicInteger myUsageCount = new AtomicInteger(0);
+    private final AtomicInteger myUsageCountWithoutDefinition = new AtomicInteger(0);
     private final AtomicReference<Usage> myFirstUsage = new AtomicReference<Usage>();
     private final AtomicReference<UsageViewImpl> myUsageViewRef;
     private final UsageViewPresentation myPresentation;
@@ -235,7 +237,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     private UsageViewImpl getUsageView() {
       UsageViewImpl usageView = myUsageViewRef.get();
       if (usageView != null) return usageView;
-      int usageCount = myUsageCount.get();
+      int usageCount = myUsageCountWithoutDefinition.get();
       if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
         usageView = new UsageViewImpl(myProject, myPresentation, mySearchFor, mySearcherFactory);
         if (myUsageViewRef.compareAndSet(null, usageView)) {
@@ -275,7 +277,20 @@ public class UsageViewManagerImpl extends UsageViewManager {
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
           checkSearchCanceled();
-          int usageCount = myUsageCount.incrementAndGet();
+
+          boolean incrementCounter = true;
+          final int i = myUsageCountWithoutDefinition.get();
+
+          // Handle self reference (under definition we are invoked on) just to skip it
+          if (mySearchFor.length == 1 && usage instanceof PsiElementUsage &&  mySearchFor[0] instanceof PsiElementUsageTarget) {
+            final PsiElement element = ((PsiElementUsage)usage).getElement();
+            // TODO: self usage might be configurable
+            if (element != null && element.getParent() == ((PsiElementUsageTarget)mySearchFor[0]).getElement()) {
+              incrementCounter = false;
+            }
+          }
+
+          int usageCount = incrementCounter ? myUsageCountWithoutDefinition.incrementAndGet():i;
           if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
             myFirstUsage.compareAndSet(null, usage);
           }
@@ -297,7 +312,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
 
     private void endSearchForUsages() {
-      int usageCount = myUsageCount.get();
+      int usageCount = myUsageCountWithoutDefinition.get();
       if (usageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {

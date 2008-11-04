@@ -19,7 +19,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.UsageTarget;
+import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataProvider {
+public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, TypeSafeDataProvider {
   private final SmartPsiElementPointer myPointer;
   private final MyItemPresentation myPresentation;
 
