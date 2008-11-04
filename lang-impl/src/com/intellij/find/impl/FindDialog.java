@@ -312,7 +312,7 @@ final class FindDialog extends DialogWrapper {
       optionsPanel.add(createGlobalScopePanel(), gbConstraints);
       gbConstraints.weightx = 1;
       gbConstraints.weighty = 1;
-      gbConstraints.fill = GridBagConstraints.BOTH;
+      gbConstraints.fill = GridBagConstraints.HORIZONTAL;
 
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       optionsPanel.add(createFilterPanel(),gbConstraints);
