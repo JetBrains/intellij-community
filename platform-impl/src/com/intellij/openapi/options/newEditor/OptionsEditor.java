@@ -548,7 +548,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       removeAll();
 
       if (c != null) {
-        add(c, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(c);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.setBorder(null);
+        add(scroll, BorderLayout.CENTER);
       }
 
       if (e != null) {

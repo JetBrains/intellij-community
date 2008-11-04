@@ -59,7 +59,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       }
     });
     myPatterns.attachActions(this);
-    myFileTypePanel.myIgnoreFilesField.setText("##### ##############");
+    myFileTypePanel.myIgnoreFilesField.setColumns(30);
     return myFileTypePanel.getComponent();
   }
 
