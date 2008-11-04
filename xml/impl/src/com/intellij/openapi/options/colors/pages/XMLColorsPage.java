@@ -73,7 +73,7 @@ public class XMLColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return ColorDescriptor.EMPTY_ARRAY;
+    return ColorDescriptor.EMPTY_ARRAY;                       
   }
 
   @NotNull

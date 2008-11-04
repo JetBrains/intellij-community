@@ -12,5 +12,5 @@ public abstract class JavaPatchableProgramRunner<Settings extends JDOMExternaliz
 
   public abstract void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException;
 
-
+                                      
 }
