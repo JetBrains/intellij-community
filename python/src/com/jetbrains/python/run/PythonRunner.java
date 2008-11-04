@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class PythonRunner extends DefaultProgramRunner {
 
   @NotNull
-  public String getRunnerId() {
+  public String getRunnerId() {                                                   
     return "PythonRunner";
   }
 
