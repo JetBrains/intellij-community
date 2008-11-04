@@ -176,10 +176,10 @@ public class PsiSuperMethodImplUtil {
     return result;
   }
 
-  private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature existing, @NotNull HierarchicalMethodSignature hierarchicalMethodSignature) {
-    PsiType existingRet = existing.getMethod().getReturnType();
-    PsiType hierRet = hierarchicalMethodSignature.getMethod().getReturnType();
-    return hierRet != null && existingRet != null && !hierRet.equals(existingRet) && TypeConversionUtil.isAssignable(hierRet, existingRet);
+  private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature thisSig, @NotNull HierarchicalMethodSignature thatSig) {
+    PsiType thisRet = thisSig.getMethod().getReturnType();
+    PsiType thatRet = thatSig.getMethod().getReturnType();
+    return thatRet != null && thisRet != null && !thatRet.equals(thisRet) && TypeConversionUtil.isAssignable(thatRet, thisRet);
   }
 
   private static void mergeSupers(final HierarchicalMethodSignatureImpl existing, final HierarchicalMethodSignature superSignature) {
@@ -203,14 +203,19 @@ public class PsiSuperMethodImplUtil {
     }
   }
 
-  private static boolean isSuperMethod(PsiClass aClass, HierarchicalMethodSignature hierarchicalMethodSignature,
+  private static boolean isSuperMethod(PsiClass aClass,
+                                       HierarchicalMethodSignature hierarchicalMethodSignature,
                                        HierarchicalMethodSignature superSignatureHierarchical) {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
     PsiClass superClass = superMethod.getContainingClass();
+    PsiClass containingClass = hierarchicalMethodSignature.getMethod().getContainingClass();
     return !superMethod.isConstructor()
            && !aClass.equals(superClass)
            && PsiUtil.isAccessible(superMethod, aClass, aClass)
-           && MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature);
+           && MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature)
+           && superClass != null
+           && (containingClass != null && containingClass.isInterface() == superClass.isInterface() || superClass.isInterface() || "java.lang.Object".equals(superClass.getQualifiedName()))
+      ;
   }
 
   private static HierarchicalMethodSignatureImpl copy(HierarchicalMethodSignature hi) {
