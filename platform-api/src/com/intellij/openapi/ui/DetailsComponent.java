@@ -184,16 +184,22 @@ public class DetailsComponent {
 
   public void setText(@NotNull String... text) {
     myText = text;
+    update();
+  }
+
+  public void update() {
     ArrayList<String> strings = new ArrayList<String>();
     if (myPrefix != null) {
       strings.addAll(Arrays.asList(myPrefix));
     }
-    strings.addAll(Arrays.asList(text));
+
+    if (myText != null) {
+      strings.addAll(Arrays.asList(myText));
+    }
 
     myBannerText = strings.toArray(new String[strings.size()]);
 
     updateBanner();
-
   }
 
   private void updateBanner() {

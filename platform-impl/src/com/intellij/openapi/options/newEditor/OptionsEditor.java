@@ -267,9 +267,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           myOwnDetails.setBannerMinHeight(mySearchWrapper.getHeight());
           myOwnDetails.setText(getBannerText(configurable));
 
+          final ConfigurableContent content = myConfigurable2Content.get(current);
 
-          myOwnDetails.setBannerActions(new Action[] {new ResetAction(configurable)});
-          myOwnDetails.updateBannerActions();
+          content.setText(getBannerText(configurable));
+          content.setBannerActions(new Action[] {new ResetAction(configurable)});
+
+          content.updateBannerActions();
 
           myLoadingDecorator.stopLoading();
 
@@ -828,7 +831,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     private ActionCallback updateIfCurrent(final Configurable configurable) {
       if (getContext().getCurrentConfigurable() == configurable) {
         updateDetails();
-        myOwnDetails.updateBannerActions();
+        final ConfigurableContent content = myConfigurable2Content.get(configurable);
+        content.updateBannerActions();
         return ActionCallback.DONE;
       } else {
         return ActionCallback.REJECTED;
@@ -1048,6 +1052,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     abstract void set(ContentWrapper wrapper);
 
     abstract boolean isShowing();
+
+    abstract void setBannerActions(Action[] actions);
+
+    abstract void updateBannerActions();
+
+    abstract void setText(final String[] bannerText);
   }
 
   class Simple extends ConfigurableContent {
@@ -1067,6 +1077,18 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     boolean isShowing() {
       return myComponent != null && myComponent.isShowing();
+    }
+
+    void setBannerActions(final Action[] actions) {
+      myOwnDetails.setBannerActions(actions);
+    }
+
+    void updateBannerActions() {
+      myOwnDetails.updateBannerActions();
+    }
+
+    void setText(final String[] bannerText) {
+      myOwnDetails.setText(bannerText);
     }
   }
 
@@ -1091,8 +1113,20 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       wrapper.setContent(myMaster, myToolbar, myDetails, getContext().getErrors().get(myConfigurable));
     }
 
+    void setBannerActions(final Action[] actions) {
+      myDetails.setBannerActions(actions);
+    }
+
     boolean isShowing() {
       return myDetails.getComponent().isShowing();
+    }
+
+    void updateBannerActions() {
+      myDetails.updateBannerActions();
+    }
+
+    void setText(final String[] bannerText) {
+      myDetails.update();
     }
   }
 
