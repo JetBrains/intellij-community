@@ -20,11 +20,15 @@ import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
+import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
@@ -416,12 +420,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     panel.add(new JPanel(), gc);
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ScopeChooserConfigurable configurable = ScopeChooserConfigurable.getInstance(project);
-        final boolean isOk = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-        if (isOk) {
-          myInitResetCompleted = false;
-          myInitResetInvoked = false;
-          reset();
+        final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
+        if (optionsEditor != null) {
+          optionsEditor.select(ScopeChooserConfigurable.getInstance(project));
         }
       }
     });
