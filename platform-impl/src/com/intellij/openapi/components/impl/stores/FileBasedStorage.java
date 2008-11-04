@@ -5,6 +5,7 @@ import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +55,8 @@ public class FileBasedStorage extends XmlElementStorage {
                           ComponentRoamingManager componentRoamingManager) {
     super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager);
 
-    if (!myConfigDirectoryRefreshed) {
+    Application app = ApplicationManager.getApplication();
+    if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
       try {
         String optionsPath = PathManager.getOptionsPath();
         File optionsFile = new File(optionsPath);
