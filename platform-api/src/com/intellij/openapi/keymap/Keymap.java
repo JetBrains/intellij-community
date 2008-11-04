@@ -36,8 +36,6 @@ public interface Keymap extends Scheme {
 
   boolean canModify();
 
-  boolean areMnemonicsEnabled();
-
   /**
    * @return Action ids including ids of parent keymap
    */

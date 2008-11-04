@@ -89,7 +89,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   private String myName;
   private KeymapImpl myParent;
   private boolean myCanModify = true;
-  private boolean myDisableMnemonics = false;
+
 
   private THashMap<String, ArrayList<Shortcut>> myActionId2ListOfShortcuts = new THashMap<String, ArrayList<Shortcut>>();
 
@@ -152,7 +152,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
 
       newKeymap.myParent = this;
       newKeymap.myName = null;
-      newKeymap.myDisableMnemonics = myDisableMnemonics;
       newKeymap.myCanModify = canModify();
       return newKeymap;
     }
@@ -165,7 +164,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     KeymapImpl newKeymap = new KeymapImpl();
     newKeymap.myParent = myParent;
     newKeymap.myName = myName;
-    newKeymap.myDisableMnemonics = myDisableMnemonics;
     newKeymap.myCanModify = canModify();
 
     newKeymap.myKeystroke2ListOfIds = null;
@@ -190,7 +188,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     if (!(object instanceof Keymap)) return false;
     KeymapImpl secondKeymap = (KeymapImpl)object;
     if (!Comparing.equal(myName, secondKeymap.myName)) return false;
-    if (myDisableMnemonics != secondKeymap.myDisableMnemonics) return false;
     if (myCanModify != secondKeymap.myCanModify) return false;
     if (!Comparing.equal(myParent, secondKeymap.myParent)) return false;
     if (!Comparing.equal(myActionId2ListOfShortcuts, secondKeymap.myActionId2ListOfShortcuts)) return false;
@@ -526,7 +523,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     }
     myName = keymapElement.getAttributeValue(NAME_ATTRIBUTE);
 
-    myDisableMnemonics = TRUE_WORD.equals(keymapElement.getAttributeValue(DISABLE_MNEMONICS_ATTRIBUTE));
     HashMap<String,ArrayList<Shortcut>> id2shortcuts=new HashMap<String, ArrayList<Shortcut>>();
     for (final Object o : keymapElement.getChildren()) {
       Element actionElement = (Element)o;
@@ -610,7 +606,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     Element keymapElement = new Element(KEY_MAP);
     keymapElement.setAttribute(VERSION_ATTRIBUTE,Integer.toString(1));
     keymapElement.setAttribute(NAME_ATTRIBUTE, myName);
-    keymapElement.setAttribute(DISABLE_MNEMONICS_ATTRIBUTE, myDisableMnemonics ? TRUE_WORD : FALSE_WORD);
+
     if(myParent != null) {
       keymapElement.setAttribute(PARENT_ATTRIBUTE, myParent.getName());
     }
@@ -788,13 +784,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return myParent.getActionIds();
   }
 
-  public boolean areMnemonicsEnabled() {
-    return !myDisableMnemonics;
-  }
-
-  public void setDisableMnemonics(boolean disableMnemonics) {
-    myDisableMnemonics = disableMnemonics;
-  }
 
   public HashMap<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut) {
     HashMap<String, ArrayList<KeyboardShortcut>> result = new HashMap<String, ArrayList<KeyboardShortcut>>();

@@ -36,7 +36,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -63,7 +65,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   @NonNls private JEditorPane myDescription;
   private JLabel myBaseKeymapLabel;
 
-  private JCheckBox myDisableMnemonicsCheckbox;
   private ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
   private JBPopup myPopup = null;
@@ -173,8 +174,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
         myResetToDefault.setEnabled(true);
       }
     }
-    myDisableMnemonicsCheckbox.setSelected(!mySelectedKeymap.areMnemonicsEnabled());
-    myDisableMnemonicsCheckbox.setEnabled(mySelectedKeymap.canModify());
     if(mySelectedKeymap.canModify()) {
       myDeleteButton.setEnabled(true);
       myAddKeyboardShortcutButton.setEnabled(true);
@@ -458,15 +457,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     myBaseKeymapLabel.setMinimumSize(new Dimension(preferredSize.width * 2, preferredSize.height));
     panel.add(myBaseKeymapLabel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,new Insets(0, 16, 0, 0),0,0));
 
-    myDisableMnemonicsCheckbox = new JCheckBox(KeyMapBundle.message("disable.mnemonic.in.menu.check.box"));
-    myDisableMnemonicsCheckbox.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        if (mySelectedKeymap != null) {
-          mySelectedKeymap.setDisableMnemonics(myDisableMnemonicsCheckbox.isSelected());
-        }
-      }
-    });
-    panel.add(myDisableMnemonicsCheckbox, new GridBagConstraints(1, 0, 1, 1, 0, 0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0, 0, 0, 0),0,0));
     return panel;
   }
 

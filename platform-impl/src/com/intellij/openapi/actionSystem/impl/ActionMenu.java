@@ -13,9 +13,9 @@ import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.plaf.MenuItemUI;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import javax.swing.plaf.MenuItemUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;

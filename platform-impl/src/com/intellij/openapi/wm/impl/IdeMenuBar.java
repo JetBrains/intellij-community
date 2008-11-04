@@ -2,18 +2,16 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.TimerListener;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.KeymapManagerListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,24 +25,21 @@ import java.util.ArrayList;
 // Made non-final public for Fabrique
 public class IdeMenuBar extends JMenuBar{
   private final MyTimerListener myTimerListener;
-  private final MyKeymapManagerListener myKeymapManagerListener;
   private ArrayList<AnAction> myVisibleActions;
   private ArrayList<AnAction> myNewVisibleActions;
   private final PresentationFactory myPresentationFactory;
   private DataManager myDataManager;
   private ActionManager myActionManager;
-  private KeymapManager myKeymapManager;
+  private UISettingsListener myUISettingsListener;
 
   public IdeMenuBar(ActionManager actionManager, DataManager dataManager, KeymapManager keymapManager){
     myActionManager = actionManager;
     myTimerListener=new MyTimerListener();
-    myKeymapManagerListener=new MyKeymapManagerListener();
     //(DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_MAIN_MENU);
     myVisibleActions = new ArrayList<AnAction>();
     myNewVisibleActions = new ArrayList<AnAction>();
     myPresentationFactory = new PresentationFactory();
     myDataManager = dataManager;
-    myKeymapManager = keymapManager;
   }
 
   /**
@@ -56,14 +51,19 @@ public class IdeMenuBar extends JMenuBar{
     // Add updater for menus
     final ActionManagerEx actionManager=(ActionManagerEx)myActionManager;
     actionManager.addTimerListener(1000,new WeakTimerListener(actionManager,myTimerListener));
-    ((KeymapManagerEx)myKeymapManager).addKeymapManagerListener(myKeymapManagerListener);
+    myUISettingsListener = new UISettingsListener() {
+      public void uiSettingsChanged(final UISettings source) {
+        updateMnemonicsVisibility();
+      }
+    };
+    UISettings.getInstance().addUISettingsListener(myUISettingsListener);
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public void removeNotify(){
-    KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(myKeymapManagerListener);
+    UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
     super.removeNotify();
   }
 
@@ -144,8 +144,7 @@ public class IdeMenuBar extends JMenuBar{
   }
 
   private void updateMnemonicsVisibility(){
-    final Keymap keyMap=myKeymapManager.getActiveKeymap();
-    final boolean enabled=keyMap.areMnemonicsEnabled();
+    final boolean enabled= !UISettings.getInstance().DISABLE_MNEMONICS;
     for(int i=0;i<getMenuCount();i++){
       ((ActionMenu)getMenu(i)).setMnemonicEnabled(enabled);
     }
@@ -185,9 +184,4 @@ public class IdeMenuBar extends JMenuBar{
     }
   }
 
-  private final class MyKeymapManagerListener implements KeymapManagerListener{
-    public final void activeKeymapChanged(final Keymap keymap){
-      updateMnemonicsVisibility();
-    }
-  }
 }

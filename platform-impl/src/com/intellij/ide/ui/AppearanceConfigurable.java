@@ -125,6 +125,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();
 
+    update |= settings.DISABLE_MNEMONICS = myComponent.myDisableMnemonics.isSelected();
 
     update |= settings.SHOW_ICONS_IN_QUICK_NAVIGATION != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
@@ -179,6 +180,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
+    myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
     if (alphaModeEnabled) {
@@ -214,6 +216,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.OVERRIDE_NONIDEA_LAF_FONTS;
 
+    isModified |= myComponent.myDisableMnemonics.isSelected() != settings.DISABLE_MNEMONICS;
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
@@ -292,6 +295,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     private JCheckBox myHideIconsInQuickNavigation;
     private JCheckBox myCbDisplayIconsInMenu;
+    private JCheckBox myDisableMnemonics;
 
 
     public MyComponent() {
