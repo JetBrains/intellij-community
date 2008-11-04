@@ -3,18 +3,17 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
 import java.io.File;
+import java.util.*;
 
 /** should work under _external_ lock
 * just logic here: do modifications to group of change lists
@@ -177,24 +176,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   // since currently it is only for P4, "composite" edit handler is not created - it does not make sence
   private void correctChangeListEditHandler(final LocalChangeList list) {
-    final LocalChangeListImpl listImpl = (LocalChangeListImpl)list;
-    final Collection<Change> changes = list.getChanges();
-    ChangeListEditHandler handler = null;
-    for (Change change : changes) {
-      final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
-      if (vcs != null) {
-        handler = vcs.getEditHandler();
-        if (handler != null) {
-          break;
-        }
-      }
-    }
-    if (! Comparing.equal(listImpl.getEditHandler(), handler)) {
-      if (handler != null && (! listImpl.isReadOnly())) {
-        listImpl.setCommentImpl(handler.correctCommentWhenInstalled(listImpl.getName(), listImpl.getComment()));
-      }
-      listImpl.setEditHandler(handler);
-    }
   }
 
   @Nullable
@@ -451,19 +432,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       return list;
     }
 
-    public void setChangeListEditHandler(final String listName, final ChangeListEditHandler handler) {
-      myWorker.setChangeListEditHandlerImpl(listName, handler);
-    }
-
     public void editComment(final String name, final String comment) {
       myWorker.editComment(name, comment);
-    }
-  }
-
-  public void setChangeListEditHandlerImpl(final String listName, final ChangeListEditHandler handler) {
-    final LocalChangeListImpl list = (LocalChangeListImpl) myMap.get(listName);
-    if (list != null && (! list.isReadOnly())) {
-      list.setEditHandler(handler);
     }
   }
 }
