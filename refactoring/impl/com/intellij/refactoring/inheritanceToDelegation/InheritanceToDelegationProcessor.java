@@ -228,7 +228,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               reportedNonDelegatedUsages.put(nonDelegatedMember, reportedContainers);
             }
             final PsiElement container = ConflictsUtil.getContainer(element);
-            if (!reportedContainers.contains(container)) {
+            if (container != null && !reportedContainers.contains(container)) {
               String message = RefactoringBundle.message("0.uses.1.of.an.instance.of.a.2", RefactoringUIUtil.getDescription(container, true),
                                                          RefactoringUIUtil.getDescription(nonDelegatedMember, true), classDescription);
               conflicts.add(ConflictsUtil.capitalize(message));
