@@ -23,35 +23,39 @@ import org.jetbrains.annotations.NotNull;
  * Date: Sep 8, 2008
  */
 public class PyKeywordCompletionContributor extends CompletionContributor {
-  protected static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIED_REFERENCE =
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIED_REFERENCE =
     psiElement().afterLeaf(psiElement().andOr(psiElement().withText(".")))
   ;
 
-  protected static final PsiElementPattern.Capture<PsiElement> AFTER_DEF_OR_CLASS =
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_DEF_OR_CLASS =
     psiElement().afterLeaf(psiElement().andOr(
         psiElement().withElementType(PyTokenTypes.DEF_KEYWORD), psiElement().withElementType(PyTokenTypes.CLASS_KEYWORD)
     ))
   ;
 
-  protected static final PsiElementPattern.Capture<PsiElement> IN_IMPORT_AFTER_REF =
+  private static final PsiElementPattern.Capture<PsiElement> IN_IMPORT_AFTER_REF =
     psiElement().afterLeaf(psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class).inside(PyImportElement.class))
   ;
 
-  protected static final PsiElementPattern.Capture<PsiElement> IN_FROM_IMPORT_AFTER_REF =
+  private static final PsiElementPattern.Capture<PsiElement> IN_FROM_IMPORT_AFTER_REF =
     psiElement().afterLeaf(psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class).inside(PyFromImportStatement.class))
   ;
 
-  protected static final PsiElementPattern.Capture<PsiElement> IN_LOOP_1 =
-    psiElement().andOr(
-      psiElement().inside(PyWhileStatement.class), psiElement().inside(PyForStatement.class)
-    ).andNot(psiElement().afterLeaf("for", "while")) // not working as expected: matches between "for" and ":" too.
+  private static final PsiElementPattern.Capture<PsiElement> IN_LOOP =
+    psiElement().insideSequence(true,
+      psiElement(PyStatementList.class), psiElement(PyForStatement.class)
+    )
   ;
 
-  protected static final PsiElementPattern.Capture<PsiElement> IN_IF_COND =
+  private static final PsiElementPattern.Capture<PsiElement> IN_STATEMENT =
+      psiElement().inside(psiElement(PyExpressionStatement.class))
+  ;
+
+  private static final PsiElementPattern.Capture<PsiElement> IN_IF_COND =
     psiElement().afterLeaf("if")
   ;
 
-  protected static final PsiElementPattern.Capture<PsiElement> IN_EXPR_1 =
+  private static final PsiElementPattern.Capture<PsiElement> IN_EXPR_1 =
     psiElement().inside(PyExpression.class)
   ;
 
@@ -59,7 +63,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   /**
    * Allows element if it has a parent of given class(es).
    */
-  protected static class ParentClassFilter implements ElementFilter {
+  private static class ParentClassFilter implements ElementFilter {
     protected Class<? extends PsiElement>[] my_accepted_parents;
     protected boolean my_inverted;
 
@@ -135,7 +139,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     }
   }
 
-  protected void addBasic() {
+  protected void addStatements() {
     extend(
       CompletionType.BASIC,
       psiElement().withLanguage(PythonLanguage.getInstance()).andNot(AFTER_QUALIFIED_REFERENCE).andNot(IN_IMPORT_STMT).andNot(IN_PARAM_LIST).andNot(AFTER_DEF_OR_CLASS),
@@ -158,7 +162,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
 
   protected void addWithinLoops() {
     extend(
-      CompletionType.BASIC, psiElement().withLanguage(PythonLanguage.getInstance()).andNot(AFTER_QUALIFIED_REFERENCE).andNot(IN_PARAM_LIST).andOr(IN_LOOP_1, AFTER_LOOP),
+      CompletionType.BASIC, psiElement().withLanguage(PythonLanguage.getInstance()).andNot(AFTER_QUALIFIED_REFERENCE).andNot(IN_PARAM_LIST).andOr(
+        IN_LOOP, AFTER_LOOP),
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
@@ -217,7 +222,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   protected void addElse() {
     extend(
       CompletionType.BASIC, psiElement().withLanguage(PythonLanguage.getInstance())
-        .andNot(AFTER_QUALIFIED_REFERENCE).andOr(IN_LOOP_1, IN_IF, IN_TRY, AFTER_LOOP, AFTER_IF, AFTER_TRY),
+        .andNot(AFTER_QUALIFIED_REFERENCE).andOr(IN_LOOP, IN_IF, IN_TRY, AFTER_LOOP, AFTER_IF, AFTER_TRY),
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
@@ -274,7 +279,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   }
 
   public PyKeywordCompletionContributor() {
-    addBasic();
+    addStatements();
     addWithinLoops();
     addWithinFuncs();
     addWithinIf();
