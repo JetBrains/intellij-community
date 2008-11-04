@@ -30,6 +30,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
+import com.intellij.injected.editor.VirtualFileWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public class FileGroupingRule implements UsageGroupingRule {
 
     public FileUsageGroup(Project project, VirtualFile file) {
       myProject = project;
-      myFile = file;
+      myFile = file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
       myPresentableName = myFile.getName();
       update();
     }
