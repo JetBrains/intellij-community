@@ -19,8 +19,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorAction extends AnAction {
@@ -77,7 +77,7 @@ public abstract class EditorAction extends AnAction {
       }
     };
 
-    if (!handler.executeInCommand()) {
+    if (!handler.executeInCommand(editor, dataContext)) {
       command.run();
       return;
     }

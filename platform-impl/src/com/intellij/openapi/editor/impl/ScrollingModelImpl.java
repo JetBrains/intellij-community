@@ -8,8 +8,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,11 +18,14 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -34,8 +35,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   private final EditorImpl myEditor;
   private final CopyOnWriteArrayList<VisibleAreaListener> myVisibleAreaListeners = new CopyOnWriteArrayList<VisibleAreaListener>();
 
-  private AnimatedScrollingRunnable myCurrentAnimatedRunnable = null;
-  private final Object myAnimatedLock = new Object();
+  private AnimatedScrollingRunnable myCurrentAnimationRequest = null;
   private boolean myAnimationDisabled = false;
   private final DocumentAdapter myDocumentListener;
 
@@ -73,8 +73,8 @@ public class ScrollingModelImpl implements ScrollingModel {
 
   public Rectangle getVisibleAreaOnScrollingFinished() {
     assertIsDispatchThread();
-    if (myCurrentAnimatedRunnable != null) {
-      return myCurrentAnimatedRunnable.getTargetVisibleArea();
+    if (myCurrentAnimationRequest != null) {
+      return myCurrentAnimationRequest.getTargetVisibleArea();
     }
     else {
       return getVisibleArea();
@@ -106,11 +106,9 @@ public class ScrollingModelImpl implements ScrollingModel {
   public void runActionOnScrollingFinished(Runnable action) {
     assertIsDispatchThread();
 
-    synchronized (myAnimatedLock) {
-      if (myCurrentAnimatedRunnable != null) {
-        myCurrentAnimatedRunnable.addPostRunnable(action);
-        return;
-      }
+    if (myCurrentAnimationRequest != null) {
+      myCurrentAnimationRequest.addPostRunnable(action);
+      return;
     }
 
     action.run();
@@ -259,6 +257,8 @@ public class ScrollingModelImpl implements ScrollingModel {
       useAnimation = editorsTracker.wasEditorVisibleOnCommandStart(myEditor);
     }
 
+    cancelAnimatedScrolling(false);
+
     if (useAnimation) {
       //System.out.println("scrollToAnimated: " + endVOffset);
 
@@ -272,8 +272,7 @@ public class ScrollingModelImpl implements ScrollingModel {
       //System.out.println("startVOffset = " + startVOffset);
 
       try {
-        myCurrentAnimatedRunnable = new AnimatedScrollingRunnable(startHOffset, startVOffset, hOffset, vOffset);
-        ApplicationManager.getApplication().executeOnPooledThread(myCurrentAnimatedRunnable);
+        myCurrentAnimationRequest = new AnimatedScrollingRunnable(startHOffset, startVOffset, hOffset, vOffset);
       }
       catch (NoAnimationRequiredException e) {
         _scrollHorizontally(hOffset);
@@ -299,15 +298,14 @@ public class ScrollingModelImpl implements ScrollingModel {
     cancelAnimatedScrolling(true);
   }
 
+  @Nullable
   private AnimatedScrollingRunnable cancelAnimatedScrolling(boolean scrollToTarget) {
-    synchronized (myAnimatedLock) {
-      AnimatedScrollingRunnable thread = myCurrentAnimatedRunnable;
-      myCurrentAnimatedRunnable = null;
-      if (thread != null) {
-        thread.cancel(scrollToTarget);
-      }
-      return thread;
+    AnimatedScrollingRunnable request = myCurrentAnimationRequest;
+    myCurrentAnimationRequest = null;
+    if (request != null) {
+      request.cancel(scrollToTarget);
     }
+    return request;
   }
 
   public void dispose() {
@@ -318,9 +316,12 @@ public class ScrollingModelImpl implements ScrollingModel {
     cancelAnimatedScrolling(true);
   }
 
-  private class AnimatedScrollingRunnable implements Runnable {
+  private class AnimatedScrollingRunnable {
     private static final int SCROLL_DURATION = 150;
     private static final int SCROLL_INTERVAL = 10;
+
+    private final Timer myTimer;
+    private int myTicksCount = 0;
 
     private final int myStartHOffset;
     private final int myStartVOffset;
@@ -337,10 +338,8 @@ public class ScrollingModelImpl implements ScrollingModel {
     private final double myTotalDist;
     private final double myScrollDist;
 
-    private boolean myCanceled = false;
     private final int myStepCount;
     private final double myPow;
-    private final ModalityState myModalityState;
 
     public AnimatedScrollingRunnable(int startHOffset,
                                      int startVOffset,
@@ -371,7 +370,14 @@ public class ScrollingModelImpl implements ScrollingModel {
       myPow = myScrollDist > 0 ? setupPow(firstStepTime, firstScrollDist / myScrollDist) : 1;
 
       myStartCommand = CommandProcessor.getInstance().getCurrentCommand();
-      myModalityState = ModalityState.current();
+
+      myTimer = new Timer(SCROLL_INTERVAL, new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          tick();
+        }
+      });
+      myTimer.setRepeats(true);
+      myTimer.start();
     }
 
     public Rectangle getTargetVisibleArea() {
@@ -383,86 +389,46 @@ public class ScrollingModelImpl implements ScrollingModel {
       return myStartCommand;
     }
 
-    public void run() {
-      long startTime = System.currentTimeMillis();
-      ScrollLoop:
-        for (int i = 0; i < myStepCount; i++) {
-          synchronized (myAnimatedLock) {
-            if (myCanceled) return;
+    private void tick() {
+      double time = (myTicksCount + 1) / (double)myStepCount;
+      double fraction = timeToFraction(time);
 
-            double time = (i + 1) / (double)myStepCount;
-            double fraction = timeToFraction(time);
-            final int hOffset = (int)(myStartHOffset + (myEndHOffset - myStartHOffset) * fraction + 0.5);
-            final int vOffset = (int)(myStartVOffset + (myEndVOffset - myStartVOffset) * fraction + 0.5);
+      final int hOffset = (int)(myStartHOffset + (myEndHOffset - myStartHOffset) * fraction + 0.5);
+      final int vOffset = (int)(myStartVOffset + (myEndVOffset - myStartVOffset) * fraction + 0.5);
 
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-                      public void run() {
-                        if (myCanceled) return;
-                        _scrollHorizontally(hOffset);
-                        _scrollVertically(vOffset);
-                      }
-                    }, myModalityState);
-          }
+      _scrollHorizontally(hOffset);
+      _scrollVertically(vOffset);
 
-          long delay;
-          while (true) {
-            long nextStopTime = startTime + i * SCROLL_INTERVAL;
-            long currentTime = System.currentTimeMillis();
-            delay = nextStopTime - currentTime;
-            //System.out.println("delay = " + delay);
-            if (delay >= 0) break;
-            if (++i == myStepCount) break ScrollLoop;
-          }
-
-          try {
-            Thread.sleep(delay);
-          }
-          catch (InterruptedException e) {
-          }
-        }
-
-      synchronized (myAnimatedLock) {
-        if (myCanceled) return;
-        finish(true, true);
+      if (myTicksCount++ == myStepCount) {
+        finish(true);
       }
     }
 
     public void cancel(boolean scrollToTarget) {
       assertIsDispatchThread();
-      synchronized (myAnimatedLock) {
-        myCanceled = true;
-        finish(false, scrollToTarget);
-      }
+      finish(scrollToTarget);
     }
 
     public void addPostRunnable(Runnable runnable) {
       myPostRunnables.add(runnable);
     }
 
-    private void finish(boolean needInvokeLater, boolean scrollToTarget) {
+    private void finish(boolean scrollToTarget) {
       if (scrollToTarget || !myPostRunnables.isEmpty()) {
-        Runnable runnable = new Runnable() {
-          public void run() {
-            _scrollHorizontally(myEndHOffset);
-            _scrollVertically(myEndVOffset);
-
-            for (Runnable runnable : myPostRunnables) {
-              runnable.run();
-            }
-          }
-        };
-
-        if (needInvokeLater) {
-          ApplicationManager.getApplication().invokeLater(runnable, myModalityState);
-        }
-        else {
-          runnable.run();
-        }
+        _scrollHorizontally(myEndHOffset);
+        _scrollVertically(myEndVOffset);
+        executePostRunnables();
       }
 
+      myTimer.stop();
+      if (myCurrentAnimationRequest == this) {
+        myCurrentAnimationRequest = null;
+      }
+    }
 
-      if (myCurrentAnimatedRunnable == this) {
-        myCurrentAnimatedRunnable = null;
+    private void executePostRunnables() {
+      for (Runnable runnable : myPostRunnables) {
+        runnable.run();
       }
     }
 

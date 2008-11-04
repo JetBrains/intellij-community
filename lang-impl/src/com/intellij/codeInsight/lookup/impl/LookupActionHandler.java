@@ -16,8 +16,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public boolean executeInCommand() {
-    return false;
+  public boolean executeInCommand(Editor editor, DataContext dataContext) {
+    return LookupManager.getActiveLookup(editor) == null;
   }
 
   public void execute(Editor editor, DataContext dataContext){

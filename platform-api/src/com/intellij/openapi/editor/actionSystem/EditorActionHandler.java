@@ -43,7 +43,7 @@ public abstract class EditorActionHandler {
    */
   public abstract void execute(Editor editor, DataContext dataContext);
 
-  public boolean executeInCommand() {
+  public boolean executeInCommand(Editor editor, DataContext dataContext) {
     return true;
   }
 }
