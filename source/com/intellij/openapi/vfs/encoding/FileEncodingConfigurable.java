@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
@@ -85,7 +86,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
       }
     };
     Presentation templatePresentation = myAction.getTemplatePresentation();
-    myPropertiesFilesEncodingCombo.add(myAction.createCustomComponent(templatePresentation));
+    myPropertiesFilesEncodingCombo.add(myAction.createCustomComponent(templatePresentation), BorderLayout.CENTER);
     myTreeView = new FileTreeTable(myProject);
     myTreePanel.setViewportView(myTreeView);
     return myPanel;
