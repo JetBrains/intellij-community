@@ -446,7 +446,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           myLineToGutterRenderers.put(line, renderers);
         }
 
-        renderers.add(renderer);
+        if (renderers.size() < 5) { // Don't allow more than 5 icons per line
+          renderers.add(renderer);
+        }
       }
     }, 0, myEditor.getDocument().getTextLength());
 
