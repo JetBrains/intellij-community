@@ -72,6 +72,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     if (myPanel != null) {
       myPanel.dispose();
     }
+    myPanel = null;
   }
 
   public String getHelpTopic() {
