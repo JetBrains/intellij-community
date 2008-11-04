@@ -12,6 +12,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
@@ -22,7 +23,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -103,6 +105,9 @@ public class SeverityEditorDialog extends DialogWrapper {
     final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
     button.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
+        final String toConfigure = getSelectedType().getSeverity(null).myName;
+        doOKAction();
+        myOptionsList.clearSelection();
         ColorAndFontOptions colorAndFontOptions = null;
         for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
           if (provider.getClass().isAssignableFrom(ColorAndFontOptions.class)) {
@@ -111,13 +116,16 @@ public class SeverityEditorDialog extends DialogWrapper {
           }
         }
         assert colorAndFontOptions != null;
-        final ColorAndFontOptions colorAndFontOptionsConfigurable = colorAndFontOptions;
-        final Runnable preselect = new Runnable() {
-          public void run() {
-            SwingUtilities.invokeLater(colorAndFontOptionsConfigurable.selectOption(getSelectedType().getSeverity(null).myName));
-          }
-        };
-        ShowSettingsUtil.getInstance().editConfigurable(myPanel, colorAndFontOptions, preselect);
+        final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(colorAndFontOptions.getId() + ".Java");
+        LOG.assertTrue(javaPage != null);
+        final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
+        if (optionsEditor != null) {
+          optionsEditor.select(javaPage).doWhenDone(new Runnable(){
+            public void run() {
+              SwingUtilities.invokeLater(javaPage.enableSearch(toConfigure));
+            }
+          });
+        }
       }
     });
     disabled.add(button, new GridBagConstraints(0,0,1,1,0,0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
@@ -277,8 +285,11 @@ public class SeverityEditorDialog extends DialogWrapper {
     return myPanel;
   }
 
+  @Nullable
   public HighlightInfoType getSelectedType() {
-    return ((SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue()).getType();
+    final SeverityRegistrar.SeverityBasedTextAttributes selection =
+      (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
+    return selection != null ? selection.getType() : null;
   }
 
   private static class MyTextAttributesDescription extends TextAttributesDescription {

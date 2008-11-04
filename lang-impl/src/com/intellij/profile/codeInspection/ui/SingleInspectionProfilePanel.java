@@ -987,10 +987,13 @@ public class SingleInspectionProfilePanel extends JPanel {
           final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, (HighlightSeverity)getComboBox().getSelectedItem(), severityRegistrar);
           dlg.show();
           if (dlg.isOK()) {
+            final Object item = getComboBox().getSelectedItem();
             fillModel(model, severityRegistrar);
             final HighlightInfoType type = dlg.getSelectedType();
             if (type != null) {
               getComboBox().setSelectedItem(type.getSeverity(null));
+            } else {
+              getComboBox().setSelectedItem(item);
             }
           }
         }

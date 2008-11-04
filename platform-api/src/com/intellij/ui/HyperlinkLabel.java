@@ -37,6 +37,10 @@ public class HyperlinkLabel extends HighlightableComponent {
   private final Color myTextBackgroundColor;
   private final Color myTextEffectColor;
 
+  public HyperlinkLabel() {
+    this("");
+  }
+
   public HyperlinkLabel(String text) {
     this(text, Color.BLUE, UIUtil.getLabelBackground(), Color.BLUE);
   }

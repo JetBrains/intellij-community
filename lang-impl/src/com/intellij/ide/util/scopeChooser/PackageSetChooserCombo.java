@@ -25,46 +25,55 @@ public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
   private static final Logger LOG = Logger.getInstance("#" + PackageSetChooserCombo.class.getName());
 
   public PackageSetChooserCombo(final Project project, String preselect) {
+    this(project, preselect, true);
+  }
+
+  public PackageSetChooserCombo(final Project project, String preselect, final boolean enableBrowseButton) {
     final JComboBox combo = getComboBox();
     combo.setBorder(null);
     myProject = project;
-    addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final NamedScope scope = (NamedScope)combo.getSelectedItem();
-        if (scope instanceof NamedScope.UnnamedScope) {
-          final Map<String,PackageSet> unnamedScoopes = DependencyValidationManager.getInstance(myProject).getUnnamedScopes();
-          final EditUnnamedScopesDialog dlg = new EditUnnamedScopesDialog(scope);
-          dlg.show();
-          if (dlg.isOK()) {
-            final PackageSet packageSet = scope.getValue();
-            LOG.assertTrue(packageSet != null);
-            unnamedScoopes.remove(packageSet.getText());
-            final PackageSet editedScope = dlg.getScope();
-            if (editedScope != null) {
-              unnamedScoopes.put(editedScope.getText(), editedScope);
+    if (enableBrowseButton) {
+
+      addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          final NamedScope scope = (NamedScope)combo.getSelectedItem();
+          if (scope instanceof NamedScope.UnnamedScope) {
+            final Map<String,PackageSet> unnamedScoopes = DependencyValidationManager.getInstance(myProject).getUnnamedScopes();
+            final EditUnnamedScopesDialog dlg = new EditUnnamedScopesDialog(scope);
+            dlg.show();
+            if (dlg.isOK()) {
+              final PackageSet packageSet = scope.getValue();
+              LOG.assertTrue(packageSet != null);
+              unnamedScoopes.remove(packageSet.getText());
+              final PackageSet editedScope = dlg.getScope();
+              if (editedScope != null) {
+                unnamedScoopes.put(editedScope.getText(), editedScope);
+              }
+              rebuild();
+              if (editedScope != null) {
+                selectScope(editedScope.getText());
+              }
             }
-            rebuild();
-            if (editedScope != null) {
-              selectScope(editedScope.getText());
-            }
-          }
-        } else {
-          final ScopeChooserConfigurable configurable = ScopeChooserConfigurable.getInstance(myProject);
-          final EditScopesDialog dlg = EditScopesDialog.editConfigurable(myProject, new Runnable() {
-            public void run() {
-              configurable.selectNodeInTree(scope.getName());
-            }
-          }, true);
-          if (dlg.isOK()){
-            rebuild();
-            final NamedScope namedScope = dlg.getSelectedScope();
-            if (namedScope != null) {
-              selectScope(namedScope.getName());
+          } else {
+            final ScopeChooserConfigurable configurable = ScopeChooserConfigurable.getInstance(myProject);
+            final EditScopesDialog dlg = EditScopesDialog.editConfigurable(myProject, new Runnable() {
+              public void run() {
+                configurable.selectNodeInTree(scope.getName());
+              }
+            }, true);
+            if (dlg.isOK()){
+              rebuild();
+              final NamedScope namedScope = dlg.getSelectedScope();
+              if (namedScope != null) {
+                selectScope(namedScope.getName());
+              }
             }
           }
         }
-      }
-    });
+      });
+    } else {
+      getButton().setVisible(false);
+    }
 
     combo.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

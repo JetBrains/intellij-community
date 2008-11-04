@@ -1,7 +1,7 @@
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.OptionsContainingConfigurable;
+import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.DataManager;
@@ -993,24 +993,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return null;
   }
 
-  private Runnable showOption(final String option, final boolean highlight) {
-    return new Runnable(){
-      public void run() {
-        if (mySubPanels != null) {
-          for (NewColorAndFontPanel subPartialConfigurable : getPanels()) {
-            Runnable runnable = subPartialConfigurable.showOption(option);
-            if (runnable != null) {
-              runnable.run();
-            }
-          }
-        }
-      }
-    };
-  }
-
   @Nullable
-  public Runnable selectOption(String option) {
-    return showOption(option, false);
+  public SearchableConfigurable findSubConfigurable(String id) {
+    for (SearchableConfigurable configurable : mySubPanels.values()) {
+      if (Comparing.strEqual(configurable.getId(), id)){
+        return configurable;
+      }
+    }
+    return null;
   }
 
   private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable {

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,6 +47,7 @@ import java.util.*;
 import java.util.List;
 
 public class OptionsEditor extends JPanel implements DataProvider, Place.Navigator, Disposable, AWTEventListener {
+  public static DataKey<OptionsEditor> KEY = DataKey.create("options.editor");
 
   static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.newEditor.OptionsEditor");
 
@@ -223,6 +225,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     });
   }
 
+  public ActionCallback select(Configurable configurable) {
+    return myTree.select(configurable);
+  }
+
   private float readPropertion(final float defaultValue, final String propertyName) {
     float proportion = defaultValue;
     try {
@@ -241,7 +247,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     if (isShowing(configurable)) return ActionCallback.DONE;
 
     final ActionCallback result = new ActionCallback();
-    
+
     if (configurable == null) {
       myOwnDetails.setContent(null);
 
@@ -501,7 +507,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     @Override
     public boolean isEnabled() {
-      return myContext.isModified(myConfigurable) || getContext().getErrors().containsKey(myConfigurable); 
+      return myContext.isModified(myConfigurable) || getContext().getErrors().containsKey(myConfigurable);
     }
   }
 
@@ -633,6 +639,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
 
   public Object getData(@NonNls final String dataId) {
+    if (dataId.equals(KEY.getName())) {
+      return this;
+    }
     return History.KEY.getName().equals(dataId) ? myHistory : null;
   }
 
