@@ -286,7 +286,7 @@ public class PsiSuperMethodImplUtil {
       assert result != null;
 
 
-      return new Result<Map<MethodSignature, HierarchicalMethodSignature>>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return new Result<Map<MethodSignature, HierarchicalMethodSignature>>(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     }
   }
 }
