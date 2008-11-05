@@ -68,7 +68,8 @@
 
   <project-components>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent</implementation-class>
+      <option name="workspace" value="true"/>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
@@ -77,11 +78,7 @@
       <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectsNavigator</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.events.MavenEventsManager</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.runner.MavenRunner</implementation-class>
@@ -89,6 +86,12 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.indices.MavenProjectIndicesManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.events.MavenEventsManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder</implementation-class>
     </component>
   </project-components>
 
