@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.navigator.action;
 
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 
-public class GroupStructurallyAction extends MavenTreeViewAction {
+public class GroupStructurallyAction extends MavenProjectsNavigatorAction {
   public boolean isSelected(PomTreeViewSettings settings) {
     return settings.groupStructurally;
   }

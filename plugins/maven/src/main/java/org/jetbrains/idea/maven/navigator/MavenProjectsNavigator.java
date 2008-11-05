@@ -38,12 +38,12 @@ import java.util.List;
 import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenProjectNavigator extends MavenTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
-  public static final String MAVEN_NAVIGATOR_TOOLWINDOW_ID = "Maven Projects";
+public class MavenProjectsNavigator extends MavenTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
+  public static final String TOOL_WINDOW_ID = "Maven Projects";
   private static final Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
-  private static final URL ADD_ICON_URL = MavenProjectNavigator.class.getResource("/general/add.png");
-  private static final URL SYNC_ICON_URL = MavenProjectNavigator.class.getResource("/actions/sync.png");
+  private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
+  private static final URL SYNC_ICON_URL = MavenProjectsNavigator.class.getResource("/actions/sync.png");
 
   private PomTreeViewSettings mySettings = new PomTreeViewSettings();
 
@@ -54,11 +54,11 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
   private MavenProjectsManager.Listener myMavenProjectsListener;
   private MavenEventsManager.Listener myMavenEventsListener;
 
-  public static MavenProjectNavigator getInstance(Project project) {
-    return project.getComponent(MavenProjectNavigator.class);
+  public static MavenProjectsNavigator getInstance(Project project) {
+    return project.getComponent(MavenProjectsNavigator.class);
   }
 
-  public MavenProjectNavigator(Project project,
+  public MavenProjectsNavigator(Project project,
                                MavenProjectsManager projectsManager,
                                MavenEventsManager eventsHandler) {
     super(project, projectsManager, eventsHandler);
@@ -274,7 +274,7 @@ public class MavenProjectNavigator extends MavenTreeStructure implements Project
     final JPanel navigatorPanel = new MavenNavigatorPanel(myProject, myProjectsManager, myTree);
 
     ToolWindow pomToolWindow = ToolWindowManager.getInstance(myProject)
-        .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, myProject);
+        .registerToolWindow(TOOL_WINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, myProject);
     pomToolWindow.setIcon(ICON);
   }
 

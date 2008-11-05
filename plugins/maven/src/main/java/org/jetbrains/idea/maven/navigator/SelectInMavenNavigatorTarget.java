@@ -20,7 +20,7 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
   public void selectIn(final SelectInContext context, boolean requestFocus) {
     Runnable r = new Runnable() {
       public void run() {
-        MavenProjectNavigator.getInstance(context.getProject()).selectInTree(context.getVirtualFile());
+        MavenProjectsNavigator.getInstance(context.getProject()).selectInTree(context.getVirtualFile());
       }
     };
     if (requestFocus) {
@@ -31,12 +31,12 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
   }
 
   public String getToolWindowId() {
-    return MavenProjectNavigator.MAVEN_NAVIGATOR_TOOLWINDOW_ID;
+    return MavenProjectsNavigator.TOOL_WINDOW_ID;
   }
 
   @Override
   public String toString() {
-    return MavenProjectNavigator.MAVEN_NAVIGATOR_TOOLWINDOW_ID;
+    return MavenProjectsNavigator.TOOL_WINDOW_ID;
   }
 
   public String getMinorViewId() {

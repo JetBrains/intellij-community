@@ -77,7 +77,7 @@ public class SelectFromMavenTreeDialog extends DialogWrapper {
       super(project,
             MavenProjectsManager.getInstance(project),
             MavenEventsManager.getInstance(project));
-      myTreeViewSettings = MavenProjectNavigator.getInstance(project).getTreeViewSettings();
+      myTreeViewSettings = MavenProjectsNavigator.getInstance(project).getTreeViewSettings();
     }
 
     protected PomTreeViewSettings getTreeViewSettings() {
