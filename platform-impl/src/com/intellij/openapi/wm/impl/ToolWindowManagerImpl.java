@@ -10,9 +10,9 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -1356,7 +1356,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     @Nullable
-  public Condition getExpired() {
+  public Condition getExpireCondition() {
       return Condition.FALSE;
     }
   }

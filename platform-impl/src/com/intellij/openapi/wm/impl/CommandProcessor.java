@@ -5,19 +5,16 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public final class CommandProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.CommandProcessor");
   private final Object myLock = new Object();
 
-  private final List<Bulk> myCommandList = new ArrayList<Bulk>();
-  private final Map<Bulk, Condition> myCommandToExpire = new HashMap<Bulk, Condition>();
+  private final List<CommandGroup> myCommandGroupList = new ArrayList<CommandGroup>();
   private int myCommandCount;
 
   public final int getCommandCount() {
@@ -35,9 +32,8 @@ public final class CommandProcessor implements Runnable {
     synchronized (myLock) {
       final boolean isBusy = myCommandCount > 0;
 
-      final Bulk bulk = new Bulk(commandList);
-      myCommandList.add(bulk);
-      myCommandToExpire.put(bulk, expired);
+      final CommandGroup commandGroup = new CommandGroup(commandList, expired);
+      myCommandGroupList.add(commandGroup);
       myCommandCount += commandList.size();
 
       if (!isBusy) {
@@ -48,16 +44,18 @@ public final class CommandProcessor implements Runnable {
 
   public final void run() {
     synchronized (myLock) {
-      final Bulk bulk = getNextCommandBulk();
-      if (bulk == null) return;
+      final CommandGroup commandGroup = getNextCommandGroup();
+      if (commandGroup == null) {
+        return;
+      }
 
-      final Condition bulkExpire = myCommandToExpire.get(bulk);
+      final Condition conditionForGroup = commandGroup.getExpireCondition();
 
-      if (!bulk.myList.isEmpty()) {
-        final FinalizableCommand command = bulk.myList.remove(0);
+      if (!commandGroup.isEmpty()) {
+        final FinalizableCommand command = commandGroup.takeNextCommand();
         myCommandCount--;
 
-        final Condition expire = command.getExpired() != null ? command.getExpired() : bulkExpire;
+        final Condition expire = command.getExpireCondition() != null ? command.getExpireCondition() : conditionForGroup;
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("CommandProcessor.run " + command);
@@ -78,28 +76,37 @@ public final class CommandProcessor implements Runnable {
   }
 
   @Nullable
-  private Bulk getNextCommandBulk() {
-    while (!myCommandList.isEmpty()) {
-      final Bulk candidate = myCommandList.get(0);
-      if (!candidate.myList.isEmpty()) {
+  private CommandGroup getNextCommandGroup() {
+    while (!myCommandGroupList.isEmpty()) {
+      final CommandGroup candidate = myCommandGroupList.get(0);
+      if (!candidate.isEmpty()) {
         return candidate;
       }
-      else {
-        myCommandList.remove(0);
-        if (!myCommandList.contains(candidate)) {
-          myCommandToExpire.remove(candidate);
-        }
-      }
+      myCommandGroupList.remove(candidate);
     }
 
     return null;
   }
 
-  private static class Bulk {
-    List<FinalizableCommand> myList;
+  private static class CommandGroup {
+    private List<FinalizableCommand> myList;
+    private Condition myExpireCondition;
 
-    private Bulk(final List<FinalizableCommand> list) {
+    private CommandGroup(final List<FinalizableCommand> list, final Condition expireCondition) {
       myList = list;
+      myExpireCondition = expireCondition;
+    }
+
+    public Condition getExpireCondition() {
+      return myExpireCondition;
+    }
+
+    public boolean isEmpty() {
+      return myList.isEmpty();
+    }
+
+    public FinalizableCommand takeNextCommand() {
+      return myList.remove(0);
     }
   }
 }

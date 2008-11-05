@@ -25,7 +25,7 @@ public abstract class FinalizableCommand implements Runnable{
   }
 
   @Nullable
-  public Condition getExpired() {
+  public Condition getExpireCondition() {
     return null;
   }
 
