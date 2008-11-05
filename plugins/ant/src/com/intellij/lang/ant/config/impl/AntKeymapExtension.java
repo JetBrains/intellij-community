@@ -4,6 +4,7 @@ import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapExtension;
@@ -27,34 +28,39 @@ class AntKeymapExtension implements KeymapExtension {
   private static final Icon ANT_ICON = IconLoader.getIcon("/nodes/keymapAnt.png");
   private static final Icon ANT_OPEN_ICON = IconLoader.getIcon("/nodes/keymapAntOpen.png");
 
-  public KeymapGroup createGroup(Condition<AnAction> filtered, Project project) {
+  public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {
     final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<AntBuildFile, KeymapGroup>();
     final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("ant.targets.group.title"),
                                                                             ANT_ICON, ANT_OPEN_ICON);
 
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX);
+    final String[] ids = actionManager.getActionIds(project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX);
     Arrays.sort(ids);
 
     if (project != null) {
       final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-      if (antConfiguration != null) {
-        for (final String id : ids) {
-          if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;
-          final AntBuildFile buildFile = antConfiguration.findBuildFileByActionId(id);
-          if (buildFile == null) {
-            LOG.info("no buildfile found for actionId=" + id);
-            continue;
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (final String id : ids) {
+            if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) {
+              continue;
+            }
+            final AntBuildFile buildFile = antConfiguration.findBuildFileByActionId(id);
+            if (buildFile != null) {
+              KeymapGroup subGroup = buildFileToGroup.get(buildFile);
+              if (subGroup == null) {
+                subGroup = KeymapGroupFactory.getInstance().createGroup(buildFile.getPresentableName());
+                buildFileToGroup.put(buildFile, subGroup);
+                result.addGroup(subGroup);
+              }
+              subGroup.addActionId(id);
+            }
+            else {
+              LOG.info("no buildfile found for actionId=" + id);
+            }
           }
-          KeymapGroup subGroup = buildFileToGroup.get(buildFile);
-          if (subGroup == null) {
-            subGroup = KeymapGroupFactory.getInstance().createGroup(buildFile.getPresentableName());
-            buildFileToGroup.put(buildFile, subGroup);
-            result.addGroup(subGroup);
-          }
-          subGroup.addActionId(id);
         }
-      }
+      });
     }
 
     return result;

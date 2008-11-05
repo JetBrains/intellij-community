@@ -18,9 +18,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
@@ -229,7 +229,7 @@ public class QuickListsPanel extends JPanel implements Configurable, MasterDetai
       updateList(myCurrentIndex);
       myKeymapPanel.processCurrentKeymapChanged();
     }
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     myQuickListPanel = new QuickListPanel(quickList, getCurrentQuickListIds(), project);
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
