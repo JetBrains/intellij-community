@@ -199,6 +199,24 @@ public class NavBarModel {
         traverseToRoot(parentDirectory, roots);
       }
     }
+    else if (psiElement instanceof PsiFileSystemItem) {
+      final VirtualFile virtualFile = ((PsiFileSystemItem)psiElement).getVirtualFile();
+      if (virtualFile == null) return;
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      if (virtualFile.isDirectory()) {
+        resultElement = psiManager.findDirectory(virtualFile);
+      } else {
+        resultElement = psiManager.findFile(virtualFile);
+      }
+      if (resultElement == null) return;
+      final VirtualFile parentVFile = virtualFile.getParent();
+      if (parentVFile != null && !roots.contains(parentVFile)) {
+        final PsiDirectory parentDirectory = psiManager.findDirectory(parentVFile);
+        if (parentDirectory != null) {
+          traverseToRoot(parentDirectory, roots);
+        }
+      }
+    }
     else {
       for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
         final PsiElement parent = modelExtension.getParent(psiElement);
