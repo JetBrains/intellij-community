@@ -117,36 +117,55 @@ public final class EditorsSplitters extends JPanel {
     else if (comp instanceof JBTabs) {
       final Element res = new Element("leaf");
       final EditorWindow window = findWindowWith(comp);
-      if (window != null) {
-        final EditorWithProviderComposite[] composites = window.getEditors();
-        for (int i = 0; i < composites.length; i++) {
-          final Element fileElement = new Element("file");
-          final VirtualFile file = window.getFileAt(i);
-          fileElement.setAttribute("leaf-file-name", file.getName()); // TODO: all files
-          final EditorWithProviderComposite composite = composites[i];
-          final FileEditor[] editors = composite.getEditors();
-          final FileEditorState[] states = new FileEditorState[editors.length];
-          for (int j = 0; j < states.length; j++) {
-            states[j] = editors[j].getState(FileEditorStateLevel.FULL);
-            LOG.assertTrue(states[j] != null);
-          }
-          final int selectedProviderIndex = ArrayUtil.find(editors, composite.getSelectedEditor());
-          LOG.assertTrue(selectedProviderIndex != -1);
-          final FileEditorProvider[] providers = composite.getProviders();
-          final HistoryEntry entry = new HistoryEntry(file, providers, states, providers[selectedProviderIndex]); // TODO
-          entry.writeExternal(fileElement, getManager().getProject());
-          fileElement.setAttribute("pinned",         Boolean.toString(window.isFilePinned(file)));
-          fileElement.setAttribute("current",        Boolean.toString(composite.equals (getManager ().getLastSelected ())));
-          fileElement.setAttribute("current-in-tab", Boolean.toString(composite.equals (window.getSelectedEditor())));
-          res.addContent(fileElement);
-        }
-      }
+      writeWindow(res, window);
+      return res;
+    }
+    else if (comp instanceof EditorWindow.TCompForTablessMode) {
+      final EditorWithProviderComposite composite = ((EditorWindow.TCompForTablessMode)comp).myEditor;
+      final Element res = new Element("leaf");
+      writeComposite(res, composite.getFile(), composite, false, composite);
       return res;
     }
     else {
       LOG.assertTrue(false, comp != null ? comp.getClass().getName() : null);
       return null;
     }
+  }
+
+  private void writeWindow(final Element res, final EditorWindow window) {
+    if (window != null) {
+      final EditorWithProviderComposite[] composites = window.getEditors();
+      for (int i = 0; i < composites.length; i++) {
+        final VirtualFile file = window.getFileAt(i);
+        final boolean isPinned = window.isFilePinned(file);
+        final EditorWithProviderComposite composite = composites[i];
+        final EditorWithProviderComposite selectedEditor = window.getSelectedEditor();
+
+        writeComposite(res, file, composite, isPinned, selectedEditor);
+      }
+    }
+  }
+
+  private void writeComposite(final Element res, final VirtualFile file, final EditorWithProviderComposite composite,
+                              final boolean pinned,
+                              final EditorWithProviderComposite selectedEditor) {
+    final FileEditor[] editors = composite.getEditors();
+    final Element fileElement = new Element("file");
+    fileElement.setAttribute("leaf-file-name", file.getName()); // TODO: all files
+    final FileEditorState[] states = new FileEditorState[editors.length];
+    for (int j = 0; j < states.length; j++) {
+      states[j] = editors[j].getState(FileEditorStateLevel.FULL);
+      LOG.assertTrue(states[j] != null);
+    }
+    final int selectedProviderIndex = ArrayUtil.find(editors, composite.getSelectedEditor());
+    LOG.assertTrue(selectedProviderIndex != -1);
+    final FileEditorProvider[] providers = composite.getProviders();
+    final HistoryEntry entry = new HistoryEntry(file, providers, states, providers[selectedProviderIndex]); // TODO
+    entry.writeExternal(fileElement, getManager().getProject());
+    fileElement.setAttribute("pinned",         Boolean.toString(pinned));
+    fileElement.setAttribute("current",        Boolean.toString(composite.equals (getManager ().getLastSelected ())));
+    fileElement.setAttribute("current-in-tab", Boolean.toString(composite.equals (selectedEditor)));
+    res.addContent(fileElement);
   }
 
   public void openFiles() {
