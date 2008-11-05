@@ -229,7 +229,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     @Override
     public void propertyChanged(VirtualFilePropertyEvent event) {
       if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
-        dirtyFileOrDir(event.getFile());
+        VirtualFile renamed = event.getFile();
+        if (renamed.getParent() != null) {
+          renamed = renamed.getParent();
+        }
+        dirtyFileOrDir(renamed);
       }
       else {
         fileDirty(event.getFile());
