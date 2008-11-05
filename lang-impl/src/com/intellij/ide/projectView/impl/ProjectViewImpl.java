@@ -1486,7 +1486,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       myEditorManagerListener = new FileEditorManagerAdapter() {
         public void selectionChanged(final FileEditorManagerEvent event) {
           final FileEditor newEditor = event.getNewEditor();
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(new Runnable() {
             public void run() {
