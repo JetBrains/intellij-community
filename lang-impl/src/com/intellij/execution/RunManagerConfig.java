@@ -11,9 +11,7 @@ import java.util.Map;
 
 public class RunManagerConfig {
   public static final String MAKE = ExecutionBundle.message("before.run.property.make");
-
   private static final BooleanProperty SHOW_SETTINGS = new BooleanProperty("showSettingsBeforeRunnig", true);
-  private static final BooleanProperty COMPILE_BERFORE_RUNNING = new BooleanProperty("compileBeforeRunning", true);
   private StoringPropertyContainer myProperties;
   private RunManagerImpl myManager;
 
@@ -31,21 +29,13 @@ public class RunManagerConfig {
     SHOW_SETTINGS.primSet(myProperties, value);
   }
 
-  public boolean isCompileBeforeRunning() {
-    return COMPILE_BERFORE_RUNNING.value(myProperties);
-  }
-
-  public void setCompileBeforeRunning(final boolean value) {
-    COMPILE_BERFORE_RUNNING.primSet(myProperties, value);
-  }
-
   public boolean isCompileBeforeRunning(RunProfile runProfile){
     if (runProfile instanceof RunConfiguration){
       final Map<String,Boolean> beforeRun = myManager.getStepsBeforeLaunch((RunConfiguration)runProfile);
       final Boolean makeBeforeRun = beforeRun.get(MAKE);
-      if (makeBeforeRun == null || !makeBeforeRun.booleanValue()) return false;
+      return Boolean.TRUE.equals(makeBeforeRun);
     }
-    return isCompileBeforeRunning();
+    return false;
   }
 
 }
