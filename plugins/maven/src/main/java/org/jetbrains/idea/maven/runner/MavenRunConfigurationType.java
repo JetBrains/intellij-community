@@ -41,7 +41,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         MavenRunConfiguration result = new MavenRunConfiguration(project, this, "");
-        RunManagerImpl.getInstanceImpl(project).setCompileMethodBeforeRun(result, new HashMap<String, Boolean>());
+        resetBeforeRunTasks(project, result);
         return result;
       }
     };
@@ -119,7 +119,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   public RunnerAndConfigurationSettings createConfigurationByLocation(Location l) {
     final MavenRunnerParameters params = createBuildParameters(l);
     if (params == null) return null;
-    return createRunnerAndConfigurationSettings(null, null, params, l.getProject());
+    return createRunnerAndConfigurationSettings(null, null, params, l.getProject(), false);
   }
 
   public boolean isConfigurationByLocation(RunConfiguration configuration, Location location) {
@@ -140,7 +140,9 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   public static void runConfiguration(Project project, MavenRunnerParameters params, DataContext dataContext) throws ExecutionException {
     doRunConfiguration(dataContext, createRunnerAndConfigurationSettings(MavenProjectsManager.getInstance(project).getGeneralSettings(),
                                                                          MavenRunner.getInstance(project).getState(),
-                                                                         params, project));
+                                                                         params,
+                                                                         project,
+                                                                         true));
   }
 
   private static void doRunConfiguration(DataContext dataContext, RunnerAndConfigurationSettings settings) throws ExecutionException {
@@ -151,7 +153,8 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   private static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(MavenGeneralSettings generalSettings,
                                                                                      MavenRunnerSettings runnerSettings,
                                                                                      MavenRunnerParameters params,
-                                                                                     Project project) {
+                                                                                     Project project,
+                                                                                     boolean resetBeforeRunTasks) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
     final RunnerAndConfigurationSettingsImpl settings = RunManagerEx.getInstanceEx(project)
@@ -161,6 +164,12 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     if (generalSettings != null) runConfiguration.setGeneralSettings(generalSettings);
     if (runnerSettings != null) runConfiguration.setRunnerSettings(runnerSettings);
 
+    if (resetBeforeRunTasks) resetBeforeRunTasks(project, runConfiguration);
+
     return settings;
+  }
+
+  private static void resetBeforeRunTasks(Project project, MavenRunConfiguration runConfiguration) {
+    RunManagerImpl.getInstanceImpl(project).setCompileMethodBeforeRun(runConfiguration, new HashMap<String, Boolean>());
   }
 }
