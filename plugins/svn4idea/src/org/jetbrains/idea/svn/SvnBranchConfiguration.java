@@ -196,7 +196,7 @@ public class SvnBranchConfiguration {
 
       for (String branchUrl : myBranchUrls) {
         // use more exact comparison first (paths longer)
-        final List<SvnBranchItem> children = getBranches(branchUrl, myProject, false);
+        final List<SvnBranchItem> children = getBranches(branchUrl, myProject, false, false);
         for (SvnBranchItem child : children) {
           if (listener.accept(child.getUrl())) {
             return;
@@ -289,7 +289,7 @@ public class SvnBranchConfiguration {
   public void loadBranches(final Project project, final boolean underProgress) {
     for (String branchUrl : myBranchUrls) {
       try {
-        getBranches(branchUrl, project, underProgress);
+        getBranches(branchUrl, project, underProgress, true);
       }
       catch (SVNException e) {
         // clear current (may be incomplete; better to detect it and reload on demand)
@@ -307,10 +307,13 @@ public class SvnBranchConfiguration {
     return result;
   }
 
-  public List<SvnBranchItem> getBranches(final String url, final Project project, final boolean underProgress) throws SVNException {
+  public List<SvnBranchItem> getBranches(final String url, final Project project, final boolean underProgress, final boolean load) throws SVNException {
     List<SvnBranchItem> result = myBranchMap.get(url);
     if ((result != null) && (result.isEmpty() || (result.get(0).getCreationDateMillis() > 0))) {
       return result;
+    }
+    if (! load) {
+      return Collections.emptyList();
     }
     result = underProgress ? getBranchesUnderProgress(url, project) : getBranchesWithoutProgress(url, project);
     myBranchMap.put(url, result);

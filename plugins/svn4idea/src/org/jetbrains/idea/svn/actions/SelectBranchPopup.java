@@ -156,7 +156,7 @@ public class SelectBranchPopup {
     @Nullable
     private List<SvnBranchItem> loadBranches(final String selectedBranchesHolder, final boolean cached) {
       try {
-        return cached ? myConfiguration.getBranches(selectedBranchesHolder, myProject, true) :
+        return cached ? myConfiguration.getBranches(selectedBranchesHolder, myProject, true, false) :
             myConfiguration.reloadBranches(selectedBranchesHolder, myProject, myVcsRoot);
       }
       catch (SVNException e) {
