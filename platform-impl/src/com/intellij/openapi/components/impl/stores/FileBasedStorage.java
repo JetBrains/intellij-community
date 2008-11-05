@@ -3,9 +3,9 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.psi.PsiLock;
 import com.intellij.util.ArrayUtil;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
@@ -81,13 +82,12 @@ public class FileBasedStorage extends XmlElementStorage {
 
     }
     else {
-      if (app.isUnitTestMode() || app.isDispatchThread()) {
+      if (!Thread.holdsLock(PsiLock.LOCK) && (app.isUnitTestMode() || app.isDispatchThread())) {
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
         if (virtualFile != null) {
           virtualFile.refresh(false, false);
         }
       }
-
     }
 
 
