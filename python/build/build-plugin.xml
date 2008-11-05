@@ -1,0 +1,209 @@
+<!--
+  ~ Copyright 2000-2008 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project name="build Python plugin jar" default="dist">
+    <!--
+    You can set idea.home property here
+    <property name="idea.home" value="c:\Program Files\JetBrains\IntelliJ IDEA 6951"/>
+    -->
+    <!--<property file="build-plugin.properties"/>-->
+
+    <property name="plugin.home" value="${basedir}/.."/>
+    <property name="plugin.revision" value="${build.vcs.number}"/>
+    <!--<property name="plugin.version" value="${ruby.plugin.version}.${plugin.revision}"/>-->
+
+    <property name="idea.lib" value="${idea.home}/lib"/>
+    <property name="idea.plugins" value="${idea.home}/plugins"/>
+
+    <property name="build.number" value="snapshot"/>
+    <property name="build.vcs.number" value="unknown"/>
+
+    <dirname property="basedir" file="${ant.file}"/>
+    <property name="output" value="${basedir}/../dist"/>
+    <property name="test.output.dir" value="${output}/testClasses"/>
+    <property name="reports.dir" location="${output}/report"/>
+    <!--<property name="ruby.mock.sdk" value="${output}/mockSdk"/>-->
+    <!--<property name="rubystubs" value="${plugin.home}/rubystubs/rubystubs"/>-->
+
+    <property name="zipdir" value="${output}/zip"/>
+    <property name="plugindir" value="${zipdir}/ruby"/>
+    <property name="zipname" value="python-${plugin.revision}.zip"/>
+
+    <property name="src.dir" location="${plugin.home}/src"/>
+    <property name="resources.dir" location="${plugin.home}/resources"/>
+    <property name="plugin.resources.dir" location="${plugin.home}/pluginResources"/>
+    <property name="test.src.dir" location="${plugin.home}/testSrc"/>
+    <property name="artifacts.dir" location="${output}/artifacts"/>
+
+    <property name="classes.dir" value="${basedir}/dist/classes"/>
+    <property name="test.classes.dir" value="${basedir}/dist/test-classes"/>
+
+    <path id="classpath.lib">
+        <fileset dir="${idea.lib}">
+            <include name="?*.jar"/>
+        </fileset>
+        <fileset dir="${plugin.home}/lib">
+            <include name = "**/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="sourcepath">
+        <dirset dir="${plugin.home}">
+            <include name="resources"/>
+            <include name="src"/>
+            <include name="pluginSrc"/>
+        </dirset>
+    </path>
+
+    <!-- The task requires the following libraries from IntelliJ IDEA distribution: -->
+    <!--   javac2.jar; jdom.jar; asm.jar; asm-commons.jar -->
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2">
+        <classpath refid="classpath.lib"/>
+    </taskdef>
+
+    <!-- Compiler options -->
+    <property name="compiler.debug" value="on"/>
+    <property name="compiler.generate.no.warnings" value="off"/>
+    <property name="compiler.args" value=""/>
+    <property name="compiler.max.memory" value="256m"/>
+
+    <patternset id="sources.pt">
+        <exclude name="**/.svn/**"/>
+    </patternset>
+    <patternset id="testsources.pt">
+        <exclude name="**/data/**"/>
+        <exclude name="**/.svn/**"/>
+    </patternset>
+    <patternset id="resources.pt">
+        <include name="**/?*.properties"/>
+        <include name="**/?*.template"/>
+        <include name="**/?*.xml"/>
+        <include name="**/?*.gif"/>
+        <include name="**/?*.png"/>
+        <include name="**/?*.txt"/>
+        <include name="**/?*.jpeg"/>
+        <include name="**/?*.jpg"/>
+        <include name="**/?*.html"/>
+        <include name="**/?*.dtd"/>
+        <include name="**/?*.tld"/>
+        <include name="**/?*.py"/>
+    </patternset>
+
+
+    <target name="clean" description="Cleanup output">
+        <delete dir="${output}"/>
+    </target>
+
+    <target name="compile" description="Compile module python">
+        <mkdir dir="${classes.dir}"/>
+        <!-- compile -->
+        <javac2 destdir="${classes.dir}"
+                debug="${compiler.debug}"
+                nowarn="${compiler.generate.no.warnings}"
+                memorymaximumsize="${compiler.max.memory}"
+                fork="true">
+            <compilerarg line="${compiler.args}"/>
+            <classpath refid="classpath.lib"/>
+            <src refid="sourcepath"/>
+            <patternset refid="sources.pt"/>
+        </javac2>
+
+        <!-- copy resources -->
+        <copy todir="${classes.dir}">
+            <fileset dir="${resources.dir}">
+                <patternset refid="resources.pt"/>
+                <type type="file"/>
+            </fileset>
+            <fileset dir="${plugin.resources.dir}">
+                <patternset refid="resources.pt"/>
+                <type type="file"/>
+            </fileset>
+            <fileset dir="${plugin.home}/src">
+                <patternset refid="resources.pt"/>
+                <type type="file"/>
+            </fileset>
+            <fileset dir="${plugin.home}/pySrc">
+                <patternset refid="resources.pt"/>
+                <type type="file"/>
+            </fileset>
+        </copy>
+
+        <!-- copy plugin.xml -->
+        <mkdir dir="${classes.dir}/META-INF"/>
+        <copy todir="${classes.dir}/META-INF">
+            <fileset dir="${plugin.home}/pluginSrc/META-INF"/>
+        </copy>
+        <!-- adding revision version number to plugin version -->
+        <!--<replace file="${classes.dir}/META-INF/plugin.xml" token="VERSION" value="${plugin.version}"/>-->
+    </target>
+
+    <target name="jar" description="Generate jar file" depends="compile">
+        <mkdir dir="${output}"/>
+        <jar destfile="${output}/python.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Revision" value="${plugin.revision}"/>
+                <!--<attribute name="Build" value="${plugin.version}"/>-->
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="zip" description="Generate zip plugin file" depends="jar">
+        <mkdir dir="${zipdir}"/>
+
+       <!--copy plugin jar-->
+        <mkdir dir="${plugindir}/lib"/>
+        <move todir="${plugindir}/lib" file="${output}/python.jar"/>
+
+        <!--copy common libraries jars-->
+        <!--
+        <copy todir="${plugindir}/lib">
+            <fileset dir="${plugin.home}/lib/common" includes="*.jar"/>
+        </copy>
+        -->
+
+        <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>
+    </target>
+
+    <!--
+
+    <target name="jflex" description="Builds lexers from ruby.flex, output.flex, rhtml.flex">
+        <ant antfile="${rubylexer.build.file}">
+            <property name="jflex.dir" location="${plugin.home}/lib"/>
+            <property name="lexer.dir" location="${rubylexer.dir}"/>
+        </ant>
+        <ant antfile="${outputlexer.build.file}">
+            <property name="jflex.dir" location="${plugin.home}/lib"/>
+            <property name="lexer.dir" location="${outputlexer.dir}"/>
+        </ant>
+        <ant antfile="${rhtmllexer.build.file}">
+            <property name="jflex.dir" location="${plugin.home}/lib"/>
+            <property name="lexer.dir" location="${rhtmllexer.dir}"/>
+        </ant>
+    </target>
+    -->
+
+    <target name="build" depends="clean, compile"/>
+
+    <target name="dist" depends="build, zip" description="main target"/>
+
+    <target name="artifacts" depends="dist">
+        <mkdir dir="${artifacts.dir}"/>
+        <move file="${output}/${zipname}" todir="${artifacts.dir}"/>
+    </target>
+
+    <target name="build.artifacts" depends="dist, artifacts"/>
+
+</project>

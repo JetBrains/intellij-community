@@ -1,0 +1,46 @@
+<project name="Python Plugin Build Bootstrap" default="main">
+  <property name="project.home" value="${basedir}/../../.."/>
+  <property name="out.dir" value="${project.home}/out/python"/>
+  <property name="idea.dir" value="${out.dir}/idea"/>
+
+  <target name="clean">
+    <delete dir="${out.dir}/classes" failonerror="false"/>
+    <delete dir="${out.dir}/dist" failonerror="false"/>
+    <delete dir="${out.dir}/artifacts" failonerror="false"/>
+    <delete dir="${out.dir}/jar" failonerror="false"/>
+    <delete dir="${out.dir}/deploy" failonerror="false"/>
+    <delete dir="${idea.dir}/jdk15" failonerror="false"/>
+  </target>
+
+  <target name="unzip">
+    <mkdir dir="${idea.dir}"/>
+    <unzip dest="${idea.dir}/jdk15">
+      <fileset dir="${idea.dir}" includes="idea*-jdk15.zip"/>
+    </unzip>
+  </target>
+
+  <target name="main" depends="clean,unzip">
+    <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
+
+      <jvmarg line="-Xms64m -Xmx512m"/>
+      <jvmarg line="-Dbuild.number=${build.number}"/>
+      <jvmarg line="-Dbuild.vcs.number=${build.vcs.number}"/>
+
+      <classpath>
+        <fileset dir="${project.home}/build/lib">
+          <include name="antlayout.jar"/>
+          <include name="commons-net-1.4.1.jar"/>
+          <include name="jsch-0.1.28.jar"/>
+        </fileset>
+        <fileset dir="${project.home}/lib/ant/lib">
+          <include name="*.jar"/>
+        </fileset>
+      </classpath>
+
+      <arg value="-f"/>
+      <arg value="build-plugin.xml"/>
+      <arg value="-Didea.home=${idea.dir}/jdk15"/>
+      <arg value="-verbose"/>
+    </java>
+  </target>
+</project>
