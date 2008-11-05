@@ -244,6 +244,7 @@ public class SvnChangeProvider implements ChangeProvider {
     String commonPathAncestor = SVNPathUtil.getCommonPathAncestor(copiedPath, copyFromPath);
     int pathSegmentCount = SVNPathUtil.getSegmentsCount(copiedPath);
     int ancestorSegmentCount = SVNPathUtil.getSegmentsCount(commonPathAncestor);
+    boolean startsWithSlash = file.getAbsolutePath().startsWith("/");
     List<String> segments = StringUtil.split(file.getPath(), File.separator);
     List<String> copyFromPathSegments = StringUtil.split(copyFromPath, "/");
     List<String> resultSegments = new ArrayList<String>();
@@ -254,7 +255,12 @@ public class SvnChangeProvider implements ChangeProvider {
     for(int i=ancestorSegmentCount; i<copyFromPathSegments.size(); i++) {
       resultSegments.add(copyFromPathSegments.get(i));
     }
-    return new File(StringUtil.join(resultSegments, "/"));
+
+    String result = StringUtil.join(resultSegments, "/");
+    if (startsWithSlash) {
+      result = "/" + result;
+    }
+    return new File(result);
   }
 
   public boolean isModifiedDocumentTrackingRequired() {
