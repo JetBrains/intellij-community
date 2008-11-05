@@ -39,7 +39,7 @@
     <!--<property name="rubystubs" value="${plugin.home}/rubystubs/rubystubs"/>-->
 
     <property name="zipdir" value="${output}/zip"/>
-    <property name="plugindir" value="${zipdir}/ruby"/>
+    <property name="plugindir" value="${zipdir}/python"/>
     <property name="zipname" value="python-${plugin.revision}.zip"/>
 
     <property name="src.dir" location="${plugin.home}/src"/>
