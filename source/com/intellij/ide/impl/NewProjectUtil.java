@@ -167,6 +167,9 @@ public class NewProjectUtil {
   }
 
   public static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
+    if (isOfVersionOrHigher(versionString, "1.6") || isOfVersionOrHigher(versionString, "6.0")) {
+      return LanguageLevel.JDK_1_6;
+    }
     if (isOfVersionOrHigher(versionString, "1.5") || isOfVersionOrHigher(versionString, "5.0")) {
       return LanguageLevel.JDK_1_5;
     }
