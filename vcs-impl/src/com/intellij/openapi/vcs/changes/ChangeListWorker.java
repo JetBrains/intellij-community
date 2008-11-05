@@ -48,7 +48,19 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         defaultList = copy;
       }
     }
-    assert defaultList != null;
+    if (defaultList == null) {
+      LOG.info("default list not found when copy");
+      defaultList = myMap.get(worker.getDefaultListName());
+    }
+
+    if (defaultList == null) {
+      LOG.info("default list not found when copy in original object too");
+      if (! myMap.isEmpty()) {
+        defaultList = myMap.values().iterator().next();
+      } else {
+        LOG.info("no changelists at all");
+      }
+    }
     myDefault = defaultList;
   }
 
