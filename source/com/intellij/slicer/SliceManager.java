@@ -4,6 +4,7 @@ import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -15,6 +16,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,15 +66,16 @@ public class SliceManager implements ProjectComponent {
 
   public void slice(PsiElement element) {
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
-    SliceUsage usage;              
+    SliceUsage usage;
+    UsageInfo usageInfo = new UsageInfo(element);
     if (element instanceof PsiField) {
-      usage = new SliceFieldUsage(new UsageInfo(element), null, (PsiField)element);
+      usage = new SliceFieldUsage(usageInfo, null, (PsiField)element);
     }
     else if (element instanceof PsiParameter) {
-      usage = new SliceParameterUsage(new UsageInfo(element), (PsiParameter)element, null);
+      usage = new SliceParameterUsage(usageInfo, (PsiParameter)element, null);
     }
     else {
-      usage = new SliceUsage(new UsageInfo(element), null);
+      usage = new SliceUsage(usageInfo, null);
     }
     final Content[] myContent = new Content[1];
     final SlicePanel slicePanel = new SlicePanel(myProject, usage) {
@@ -96,7 +99,10 @@ public class SliceManager implements ProjectComponent {
         sliceToolwindowSettings.setPreview(preview);
       }
     };
-    myContent[0] = myContentManager.getFactory().createContent(slicePanel, null, true);
+    String title = UsageViewUtil.getDescriptiveName(element);
+    if (StringUtil.isEmpty(title)) title = element.getText();
+    title = StringUtil.first(title, 20, true);
+    myContent[0] = myContentManager.getFactory().createContent(slicePanel, title, true);
     myContentManager.addContent(myContent[0]);
     myContentManager.setSelectedContent(myContent[0]);
 
