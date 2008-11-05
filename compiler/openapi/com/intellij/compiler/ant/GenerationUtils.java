@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +35,16 @@ public class GenerationUtils {
   private GenerationUtils() {
   }
 
+  /**
+   * Get relative file
+   *
+   * @param file       a valid file (must be either belong to {@link com.intellij.openapi.vfs.LocalFileSystem}  or to point to the root entry on
+   *                   {@link com.intellij.openapi.vfs.JarFileSystem}.
+   * @param chunk      a module chunk.
+   * @param genOptions generation options
+   * @return a relative path
+   */
+  @Nullable
   public static String toRelativePath(final VirtualFile file, final ModuleChunk chunk, final GenerationOptions genOptions) {
     final Module module = chunk.getModules()[0];
     final File moduleBaseDir = chunk.getBaseDir();
@@ -45,17 +56,32 @@ public class GenerationUtils {
   }
 
   public static String toRelativePath(final String path, final ModuleChunk chunk, final GenerationOptions genOptions) {
-    return GenerationUtils.toRelativePath(path, chunk.getBaseDir(),
-                                          BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions,
+    return GenerationUtils.toRelativePath(path, chunk.getBaseDir(), BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions,
                                           !chunk.isSavePathsRelative());
   }
 
+  /**
+   * Get relative file
+   *
+   * @param file                          a valid file (must be either belong to {@link com.intellij.openapi.vfs.LocalFileSystem}  or to point to the root entry on
+   *                                      {@link com.intellij.openapi.vfs.JarFileSystem}.
+   * @param baseDir                       base director for relative path calculation
+   * @param baseDirPropertyName           property name for the base directory
+   * @param genOptions                    generation options
+   * @param useAbsolutePathsForOuterPaths if true absolute paths will be used for outer paths.
+   * @return a relative path
+   */
+  @Nullable
   public static String toRelativePath(final VirtualFile file,
                                       final File baseDir,
                                       final String baseDirPropertyName,
                                       final GenerationOptions genOptions,
                                       final boolean useAbsolutePathsForOuterPaths) {
-    return toRelativePath(PathUtil.getLocalPath(file), baseDir, baseDirPropertyName, genOptions, useAbsolutePathsForOuterPaths);
+    final String localPath = PathUtil.getLocalPath(file);
+    if (localPath == null) {
+      return null;
+    }
+    return toRelativePath(localPath, baseDir, baseDirPropertyName, genOptions, useAbsolutePathsForOuterPaths);
   }
 
   public static String toRelativePath(String path,

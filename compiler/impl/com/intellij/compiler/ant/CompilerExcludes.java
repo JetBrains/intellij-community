@@ -28,6 +28,10 @@ public class CompilerExcludes extends Generator {
       final String path = GenerationUtils
         .toRelativePath(entry.getVirtualFile(), BuildProperties.getProjectBaseDir(project), BuildProperties.getProjectBaseDirProperty(),
                         genOptions, !relative);
+      if (path == null) {
+        // entry is invalid, skip it
+        continue;
+      }
       if (entry.isFile()) {
         myPatternSet.add(new Exclude(path));
       }
