@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -22,20 +23,19 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   private static final ExtensionPointName<ChangeLocalityDetector> EP_NAME = ExtensionPointName.create("com.intellij.daemon.changeLocalityDetector");
+  private /*NOT STATIC!!!*/ final Key<Boolean> UPDATE_ON_COMMIT_ENGAGED = Key.create("UPDATE_ON_COMMIT_ENGAGED");
+
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new THashMap<Document, List<Pair<PsiElement, Boolean>>>();
-  private final Set<Document> myCommittingDocuments = new THashSet<Document>();
   private final FileStatusMap myFileStatusMap;
 
   public PsiChangeHandler(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, final PsiDocumentManagerImpl documentManager, EditorFactory editorFactory, MessageBusConnection connection) {
@@ -47,16 +47,19 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
       public void beforeDocumentChange(DocumentEvent e) {
         final Document document = e.getDocument();
         if (documentManager.getSynchronizer().isInSynchronization(document)) return;
-        if (myCommittingDocuments.add(document)) {
+        if (documentManager.getCachedPsiFile(document) == null) return;
+        if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) == null) {
+          document.putUserData(UPDATE_ON_COMMIT_ENGAGED, Boolean.TRUE);
           documentManager.addRunOnCommit(document, new Runnable() {
             public void run() {
               updateChangesForDocument(document);
-              myCommittingDocuments.remove(document);
+              document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
             }
           });
         }
       }
     }, this);
+
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       public void transactionStarted(final Document doc, final PsiFile file) {
       }
