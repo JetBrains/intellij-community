@@ -1,7 +1,6 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -95,16 +94,15 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
     if (text == null) return;
 
     for (int i = 0; i < text.length; i++) {
-      final JLabel eachLabel = new JLabel(text[i]);
-      if (SystemInfo.isMac) {
-        eachLabel.setBorder(new EmptyBorder(0, 0, 0, 4));
-      }
+      final JLabel eachLabel = new JLabel(text[i], JLabel.CENTER);
+      final int gap = eachLabel.getIconTextGap();
+      eachLabel.setBorder(new EmptyBorder(0, 0, 0, gap));
       eachLabel.setVerticalTextPosition(JLabel.TOP);
       eachLabel.setFont(eachLabel.getFont().deriveFont(Font.BOLD, eachLabel.getFont().getSize()));
       myText.add(eachLabel);
       if (i < text.length - 1) {
-        final JLabel eachIcon = new JLabel(IconLoader.getIcon("/general/comboArrowRight.png"));
-        eachIcon.setBorder(new EmptyBorder(0, 0, 0, 4));
+        final JLabel eachIcon = new JLabel(IconLoader.getIcon("/general/comboArrowRight.png"), JLabel.CENTER);
+        eachIcon.setBorder(new EmptyBorder(0, 0, 0, gap));
         myText.add(eachIcon);
       }
     }
