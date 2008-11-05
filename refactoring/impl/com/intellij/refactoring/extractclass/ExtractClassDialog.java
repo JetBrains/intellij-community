@@ -61,7 +61,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final MemberInfo.Filter filter = new MemberInfo.Filter() {
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
-          return !((PsiMethod)element).isConstructor();
+          return !((PsiMethod)element).isConstructor() && ((PsiMethod)element).getBody() != null;
         }
         else if (element instanceof PsiField) {
           //don't include static fields with non-constant initializers

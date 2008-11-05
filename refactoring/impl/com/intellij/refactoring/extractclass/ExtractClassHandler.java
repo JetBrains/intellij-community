@@ -97,6 +97,14 @@ public class ExtractClassHandler implements RefactoringActionHandler {
   }
 
   private static boolean classIsTrivial(PsiClass containingClass) {
-    return containingClass.getFields().length == 0 && containingClass.getMethods().length == 0;
+    if (containingClass.getFields().length == 0) {
+      final PsiMethod[] methods = containingClass.getMethods();
+      if (methods.length == 0) return true;
+      for (PsiMethod method : methods) {
+        if (method.getBody() != null) return false;
+      }
+      return true;
+    }
+    return false;
   }
 }
