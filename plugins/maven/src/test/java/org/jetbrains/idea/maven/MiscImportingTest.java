@@ -43,6 +43,27 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertEquals(2, count);
   }
 
+  public void testImportingWithLibrariesFiresRootChangesOnlyOnce() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>jmock</groupId>" +
+                  "    <artifactId>jmock</artifactId>" +
+                  "    <version>1.0.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertEquals(1, count);
+  }
+
   public void testFacetsDoNotFireRootsChanges() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
