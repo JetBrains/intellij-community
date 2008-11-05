@@ -66,6 +66,11 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     myStatusBar.setText(text);
   }
 
+  @Override
+  public Dimension getPreferredSize() {
+    return new Dimension(600, 400);
+  }
+
   public Object getData(String dataId) {
     if (DataConstantsEx.SOURCE_NAVIGATION_LOCKED.equals(dataId)) return Boolean.TRUE;
     if (myDataProvider == null) return null;
