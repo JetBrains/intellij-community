@@ -59,7 +59,7 @@ public final class EditorsSplitters extends JPanel {
   private void clear() {
     removeAll();
     myWindows.clear();
-    myCurrentWindow = null;
+    setCurrentWindow(null);
     myCurrentFile = null;
     repaint (); // revalidate doesn't repaint correctly after "Close All"
   }
@@ -344,6 +344,10 @@ public final class EditorsSplitters extends JPanel {
     return myInsideChange > 0;
   }
 
+  private void setCurrentWindow(final EditorWindow currentWindow) {
+    myCurrentWindow = currentWindow;
+  }
+
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       if (myCurrentWindow != null) {
@@ -383,7 +387,7 @@ public final class EditorsSplitters extends JPanel {
 
   private void createCurrentWindow() {
     LOG.assertTrue(myCurrentWindow == null);
-    myCurrentWindow = new EditorWindow(this);
+    setCurrentWindow(new EditorWindow(this));
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);
   }
 
@@ -400,7 +404,7 @@ public final class EditorsSplitters extends JPanel {
       getManager().fireSelectionChanged(oldEditor, newEditor);
     }
     finally {
-      myCurrentWindow = window;
+      setCurrentWindow(window);
       myCurrentSelectedEditor = newEditor;
     }
 
@@ -531,7 +535,7 @@ public final class EditorsSplitters extends JPanel {
       boolean changed = !ObjectUtils.equals(newWindow, myCurrentWindow) || !ObjectUtils.equals(newFile, myCurrentFile);
 
       myCurrentFile = newFile;
-      myCurrentWindow = newWindow;
+      setCurrentWindow(newWindow);
 
       if (changed) {
         setCurrentWindow(newWindow, false);
