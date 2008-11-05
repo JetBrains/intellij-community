@@ -29,7 +29,7 @@ public class LibraryDownloadInfo {
   private final String myRelativeDownloadUrl;
   private final String myFileNamePrefix;
   private final String myFileNameSuffix;
-  private final String myPresentableUrl;
+  @Nullable private final String myPresentableUrl;
 
   public LibraryDownloadInfo(final @NotNull RemoteRepositoryInfo remoteRepository,
                              final @NotNull @NonNls String relativeDownloadUrl,
@@ -105,7 +105,7 @@ public class LibraryDownloadInfo {
 
     if (!myFileNamePrefix.equals(that.myFileNamePrefix)) return false;
     if (!myFileNameSuffix.equals(that.myFileNameSuffix)) return false;
-    if (!myPresentableUrl.equals(that.myPresentableUrl)) return false;
+    if (!Comparing.equal(myPresentableUrl, that.myPresentableUrl)) return false;
     if (!myRelativeDownloadUrl.equals(that.myRelativeDownloadUrl)) return false;
     if (!Comparing.equal(myRemoteRepository, that.myRemoteRepository)) return false;
 
@@ -118,7 +118,9 @@ public class LibraryDownloadInfo {
     result = 31 * result + myRelativeDownloadUrl.hashCode();
     result = 31 * result + myFileNamePrefix.hashCode();
     result = 31 * result + myFileNameSuffix.hashCode();
-    result = 31 * result + myPresentableUrl.hashCode();
+    if (myPresentableUrl != null) {
+      result = 31 * result + myPresentableUrl.hashCode();
+    }
     return result;
   }
 }
