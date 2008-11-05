@@ -196,6 +196,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     Runnable disposer = new Runnable() {
       public void run() {
         myDialog.dispose();
+        myProject = null;
         /*
         if (myWindowManager == null) {
           myDialog.dispose();
