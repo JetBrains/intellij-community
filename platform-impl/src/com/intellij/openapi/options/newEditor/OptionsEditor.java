@@ -957,7 +957,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       String text = getFilterText();
 
       try {
-        if (myConfigurableToLastOption.containsKey(current) && text.equals(myConfigurableToLastOption.get(current))) return true;
+        final boolean sameText =
+          myConfigurableToLastOption.containsKey(current) && text.equals(myConfigurableToLastOption.get(current));
+
 
         if (current == null) {
           myVisible = false;
@@ -980,8 +982,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           runnable.run();
 
           boolean pushFilteringFurther = true;
-          if (myFilter.myHits != null) {
-            pushFilteringFurther = !myFilter.myHits.getNameHits().contains(current);
+          if (sameText) {
+            pushFilteringFurther = false;
+          } else {
+            if (myFilter.myHits != null) {
+              pushFilteringFurther = !myFilter.myHits.getNameHits().contains(current);
+            }
           }
           
           final Runnable ownSearch = searchable.enableSearch(text);
