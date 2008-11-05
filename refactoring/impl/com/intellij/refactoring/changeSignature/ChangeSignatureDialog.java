@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,6 +15,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -78,6 +80,11 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     setTitle(ChangeSignatureHandler.REFACTORING_NAME);
     init();
     doUpdateSignature();
+    Disposer.register(myDisposable, new Disposable() {
+      public void dispose() {
+        myUpdateSignatureAlarm.cancelAllRequests();
+      }
+    });
   }
 
   public void setParameterInfos(List<ParameterInfo> parameterInfos) {
