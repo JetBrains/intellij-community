@@ -3,7 +3,8 @@
        Anything related to Python/Java integration must go in this file. -->
 
   <id>Pythonid</id>
-  <name>Pythonid</name>
+  <name>Python</name>
+  <idea-version since-build="8895" until-build="9200"/>
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="Pythonid">

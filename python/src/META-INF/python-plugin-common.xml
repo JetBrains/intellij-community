@@ -1,10 +1,8 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
-<idea-plugin version="2" url="http://pythonid.dev.java.net">
+<idea-plugin version="2">
   <description>Smart editing for Python scripts</description>
   <version>2.0</version>
-  <vendor url="http://pythonid.dev.java.net" logo="/ru/yole/pythonid/python.png">Dmitry
-    Jemerov, Keith Lea</vendor>
-  <change-notes>Updated for IntelliJ IDEA 7.0</change-notes>
+  <vendor url="http://www.jetbrains.com/idea/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
 
   <application-components>
     <component>
