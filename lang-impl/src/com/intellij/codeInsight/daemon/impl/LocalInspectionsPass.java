@@ -294,6 +294,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     else if (highlightType == ProblemHighlightType.ERROR) {
       type = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.ERROR, HighlightInfoType.WRONG_REF.getAttributesKey());
+    } else if (highlightType == ProblemHighlightType.GENERIC_ERROR) {
+      type = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.ERROR, HighlightInfoType.ERROR.getAttributesKey());
     }
     return type;
   }
