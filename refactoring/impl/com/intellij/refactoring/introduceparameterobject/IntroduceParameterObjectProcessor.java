@@ -34,7 +34,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringProcessor {
@@ -253,20 +252,15 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       final boolean setterRequired = paramsNeedingSetters.contains(parameter.variable);
       beanClassBuilder.addField((PsiParameter)parameter.variable,  parameter.name, parameter.type, setterRequired);
     }
-    final String classString;
-    try {
-      classString = beanClassBuilder.buildBeanClass();
-    }
-    catch (IOException e) {
-      logger.error(e);
-      return false;
-    }
+    final String classString = beanClassBuilder.buildBeanClass();
 
     try {
       final PsiJavaFile newFile = (PsiJavaFile)PsiFileFactory.getInstance(method.getProject()).createFileFromText(className + ".java", classString);
       if (myCreateInnerClass) {
         final PsiClass containingClass = method.getContainingClass();
-        final PsiClass innerClass = (PsiClass)containingClass.add(newFile.getClasses()[0]);
+        final PsiClass[] classes = newFile.getClasses();
+        assert classes.length > 0 : classString;
+        final PsiClass innerClass = (PsiClass)containingClass.add(classes[0]);
         innerClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
         JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(innerClass);
       } else {

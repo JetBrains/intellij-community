@@ -9,7 +9,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +44,7 @@ class ParameterObjectBuilder {
     myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
   }
 
-  public String buildBeanClass() throws IOException {
+  public String buildBeanClass() {
         @NonNls final StringBuffer out = new StringBuffer(1024);
         if (packageName.length() > 0) out.append("package " + packageName + ';');
         out.append('\n');
