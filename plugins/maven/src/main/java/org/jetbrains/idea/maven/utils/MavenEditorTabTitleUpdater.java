@@ -38,7 +38,7 @@ public class MavenEditorTabTitleUpdater extends DummyProjectComponent {
 
     MavenProjectsManager.getInstance(myProject).addListener(new MavenProjectsManager.ListenerAdapter() {
       public void projectUpdated(final MavenProjectModel project) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        MavenUtil.invokeLater(myProject, new Runnable() {
           public void run() {
             FileEditorManagerEx.getInstanceEx(myProject).updateFilePresentation(project.getFile());
           }

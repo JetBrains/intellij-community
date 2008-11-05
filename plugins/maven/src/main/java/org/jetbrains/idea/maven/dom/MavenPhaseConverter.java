@@ -9,6 +9,7 @@ public class MavenPhaseConverter extends MavenConstantListConverter {
                                                            "post-clean",
 
                                                            "validate",
+                                                           "initialize",
                                                            "generate-sources",
                                                            "process-sources",
                                                            "generate-resources",

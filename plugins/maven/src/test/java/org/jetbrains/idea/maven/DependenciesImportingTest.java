@@ -133,7 +133,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-
   public void testInterModuleDependenciesWithoutModuleVersions() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -251,6 +250,22 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
 
     assertModuleModuleDeps("m1", "m2");
+  }
+
+  public void testDependencyOnSelf() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>project</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+    
+    assertModuleModuleDeps("project");
   }
 
   public void testOptionalLibraryDependencyIsNotExportable() throws Exception {
