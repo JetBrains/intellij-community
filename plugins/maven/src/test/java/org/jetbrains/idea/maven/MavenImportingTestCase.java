@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
@@ -335,7 +334,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     MavenRunnerSettings rs = new MavenRunnerSettings();
     MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenGeneralSettings(), rs, new NullMavenConsole());
 
-    e.execute(new ArrayList<MavenProject>(), new EmptyProgressIndicator());
+    e.execute(new EmptyProgressIndicator());
   }
 
   protected void removeFromLocalRepository(String relativePath) throws IOException {

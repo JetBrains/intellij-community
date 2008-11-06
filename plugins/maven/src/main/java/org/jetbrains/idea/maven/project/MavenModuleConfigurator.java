@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -12,7 +11,6 @@ import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facets.FacetImporter;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -77,13 +75,7 @@ public class MavenModuleConfigurator {
   }
 
   private List<FacetImporter> getSuitableFacetImporters() {
-    List<FacetImporter> result = new ArrayList<FacetImporter>();
-    for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
-      if (importer.isApplicable(myMavenProject)) {
-        result.add(importer);
-      }
-    }
-    return result;
+    return FacetImporter.getSuitableFacetImporters(myMavenProject);
   }
 
   private void configFolders() {

@@ -20,12 +20,10 @@ package org.jetbrains.idea.maven.runner;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import org.apache.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 
 import java.text.MessageFormat;
-import java.util.List;
 
 public abstract class MavenExecutor  {
   final MavenRunnerParameters myParameters;
@@ -113,5 +111,5 @@ public abstract class MavenExecutor  {
     }
   }
 
-  public abstract boolean execute(List<MavenProject> processedProjects, ProgressIndicator indicator);
+  public abstract boolean execute(ProgressIndicator indicator);
 }

@@ -6,33 +6,21 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.model.Resource;
-import org.apache.maven.project.MavenProject;
+import org.jetbrains.idea.maven.facets.FacetImporter;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MavenFoldersConfigurator {
   private MavenProjectModel myMavenProject;
   private MavenImportingSettings myImportingSettings;
   private RootModelAdapter myModel;
 
-  public static void updateProjectFolders(final Project project, final List<MavenProject> updatedProjects) {
+  public static void updateProjectFolders(final Project project, final boolean updateTargetFoldersOnly) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     final MavenImportingSettings settings = manager.getImportingSettings();
-
-    final Map<VirtualFile, MavenProject> fileToProjectMapping = new HashMap<VirtualFile, MavenProject>();
-
-    for (MavenProject each : updatedProjects) {
-      VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(each.getFile());
-      if (f != null) fileToProjectMapping.put(f, each);
-    }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -41,13 +29,8 @@ public class MavenFoldersConfigurator {
           MavenProjectModel project = manager.findProject(each);
           if (project == null) continue;
 
-          MavenProject mavenProject = fileToProjectMapping.get(project.getFile());
-          if (mavenProject != null)  {
-            project.updateFolders(mavenProject);
-          }
-
           RootModelAdapter a = new RootModelAdapter(each, null);
-          new MavenFoldersConfigurator(project, settings, a).config(false);
+          new MavenFoldersConfigurator(project, settings, a).config(updateTargetFoldersOnly);
 
           ModifiableRootModel model = a.getRootModel();
           if (model.isChanged()) {
@@ -73,28 +56,41 @@ public class MavenFoldersConfigurator {
   }
 
   public void config() {
-    config(true);
+    config(false);
   }
 
-  private void config(boolean configOutputFolders) {
-    configSourceFolders();
-    if (configOutputFolders) configOutputFolders();
-    configFoldersUnderTargetDir();
+  private void config(boolean updateTargetFoldersOnly) {
+    if (!updateTargetFoldersOnly) {
+      configSourceFolders();
+      configOutputFolders();
+    }
+    configExcludedFolders();
   }
 
   private void configSourceFolders() {
-    for (String o : myMavenProject.getCompileSourceRoots()) {
-      myModel.addSourceFolder(o, false);
-    }
-    for (String o : myMavenProject.getTestCompileSourceRoots()) {
-      myModel.addSourceFolder(o, true);
-    }
+    List<String> sourceFolders = new ArrayList<String>();
+    List<String> testFolders = new ArrayList<String>();
 
-    for (Resource o : myMavenProject.getResources()) {
-      myModel.addSourceFolder(o.getDirectory(), false);
+    sourceFolders.addAll(myMavenProject.getCompileSourceRoots());
+    testFolders.addAll(myMavenProject.getTestCompileSourceRoots());
+
+    for (Resource each : myMavenProject.getResources()) {
+      sourceFolders.add(each.getDirectory());
     }
     for (Resource each : myMavenProject.getTestResources()) {
-      myModel.addSourceFolder(each.getDirectory(), true);
+      testFolders.add(each.getDirectory());
+    }
+
+    for (FacetImporter each : FacetImporter.getSuitableFacetImporters(myMavenProject)) {
+      sourceFolders.addAll(each.getSourceFolders(myMavenProject));
+      testFolders.addAll(each.getTestFolders(myMavenProject));
+    }
+
+    for (String each : sourceFolders) {
+      myModel.addSourceFolder(each, false);
+    }
+    for (String each : testFolders) {
+      myModel.addSourceFolder(each, true);
     }
   }
 
@@ -109,21 +105,29 @@ public class MavenFoldersConfigurator {
     }
   }
 
-  private void configFoldersUnderTargetDir() {
+  private void configExcludedFolders() {
     File targetDir = new File(myMavenProject.getBuildDirectory());
+    File generatedDir = new File(myMavenProject.getGeneratedSourcesDirectory());
 
-    myModel.unexcludeAllUnder(targetDir.getPath());
+    myModel.unregisterAll(targetDir.getPath(), true, false);
 
     for (File f : getChildren(targetDir)) {
       if (!f.isDirectory()) continue;
 
-      if (FileUtil.pathsEqual(f.getName(), "generated-sources")) {
+      if (f.equals(generatedDir)) {
         addAllSubDirsAsSources(f);
       }
       else {
         if (myModel.hasRegisteredSourceSubfolder(f)) continue;
         if (myModel.isAlreadyExcluded(f)) continue;
         myModel.addExcludedFolder(f.getPath());
+      }
+    }
+
+    for (FacetImporter<?, ?, ?> each : FacetImporter.getSuitableFacetImporters(myMavenProject)) {
+      for (String eachFolder : each.getExcludedFolders(myMavenProject)) {
+        myModel.unregisterAll(eachFolder, true, true);
+        myModel.addExcludedFolder(eachFolder);
       }
     }
 

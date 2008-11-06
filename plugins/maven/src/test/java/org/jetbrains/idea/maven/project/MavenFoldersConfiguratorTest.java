@@ -6,12 +6,9 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
   public void testUpdatingExternallyCreatedFolders() throws Exception {
@@ -114,7 +111,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     updateFolders(); // shouldn't throw exceptions
   }
 
-  public void testDoNotUpdateOutputFolders() throws Exception {
+  public void testDoNotUpdateOutputFoldersWhenUpdatingExcludedFolders() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -123,8 +120,8 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                             new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
     adapter.getRootModel().commit();
-    
-    updateFolders();
+
+    MavenFoldersConfigurator.updateProjectFolders(myProject, true);
 
     ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule("project"));
     CompilerModuleExtension compiler = rootManager.getModuleExtension(CompilerModuleExtension.class);
@@ -195,10 +192,6 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
   }
 
   private void updateFolders() throws MavenException {
-    List<MavenProject> mavenProjects = new ArrayList<MavenProject>();
-    for (MavenProjectModel each : myMavenTree.getProjects()) {
-      mavenProjects.add(each.getMavenProject());
-    }
-    MavenFoldersConfigurator.updateProjectFolders(myProject, mavenProjects);
+    MavenFoldersConfigurator.updateProjectFolders(myProject, false);
   }
 }

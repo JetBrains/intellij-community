@@ -24,12 +24,9 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
-
-import java.util.List;
 
 public class MavenExternalExecutor extends MavenExecutor {
 
@@ -45,7 +42,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     super(parameters, coreSettings, runnerSettings, RunnerBundle.message("external.executor.caption"), console);
   }
 
-  public boolean execute(List<MavenProject> processedProjects, final ProgressIndicator indicator) {
+  public boolean execute(final ProgressIndicator indicator) {
     displayProgress();
 
     try {

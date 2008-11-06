@@ -11,18 +11,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenConsoleHelper;
 import org.jetbrains.idea.maven.embedder.MavenConsoleImpl;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.DummyProjectComponent;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
@@ -48,10 +46,6 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     mySettings = settings;
   }
 
-  public void run(MavenRunnerParameters parameters) {
-    run(parameters, mySettings);
-  }
-
   public void run(MavenRunnerParameters parameters, MavenRunnerSettings settings) {
     run(parameters, settings, null);
   }
@@ -67,10 +61,8 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor[0].getCaption(), true) {
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            List<MavenProject> processedProjects = new ArrayList<MavenProject>();
-
             try {
-              if (executor[0].execute(processedProjects, indicator)) {
+              if (executor[0].execute(indicator)) {
                 if (onComplete != null) onComplete.run();
               }
             }
@@ -78,7 +70,7 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
             }
 
             executor[0] = null;
-            updateProjectFolders(processedProjects);
+            updateTargetFolders();
           }
           finally {
             console.finish();
@@ -125,7 +117,6 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     MavenConsole console = createConsole(effectiveCoreSettings, null);
     try {
       int count = 0;
-      ArrayList<MavenProject> processedProjects = new ArrayList<MavenProject>();
       for (MavenRunnerParameters command : commands) {
         if (indicator != null) {
           indicator.setFraction(((double)count++) / commands.size());
@@ -133,13 +124,13 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
 
         MavenExecutor executor = createExecutor(command, effectiveCoreSettings, effectiveRunnerSettings, console);
         executor.setAction(action);
-        if (!executor.execute(processedProjects, indicator)) {
-          updateProjectFolders(processedProjects);
+        if (!executor.execute(indicator)) {
+          updateTargetFolders();
           return false;
         }
       }
 
-      updateProjectFolders(processedProjects);
+      updateTargetFolders();
     }
     finally {
       console.finish();
@@ -148,9 +139,9 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
     return true;
   }
 
-  private void updateProjectFolders(List<MavenProject> processedProjects) {
+  private void updateTargetFolders() {
     if (myProject.isDisposed()) return; // project was closed before task finished.
-    MavenProjectsManager.getInstance(myProject).updateProjectFolders(processedProjects);
+    MavenProjectsManager.getInstance(myProject).updateProjectFolders(true);
   }
 
   private MavenConsole createConsole(MavenGeneralSettings coreSettings,

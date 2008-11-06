@@ -33,7 +33,8 @@ public class RootModelAdapter {
       final ModuleRootModel rootModel = modulesProvider.getRootModel(module);
       if (rootModel instanceof ModifiableRootModel) {
         myRootModel = (ModifiableRootModel)rootModel;
-      } else {
+      }
+      else {
         myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       }
     }
@@ -90,35 +91,15 @@ public class RootModelAdapter {
     if (!exists(path)) return;
 
     Url url = toUrl(path);
-    removeRegisteredAncestorFolders(url.getUrl());
+    unregisterAll(path, false, true);
     findOrCreateContentRoot(url).addSourceFolder(url.getUrl(), testSource);
-  }
-
-  private void removeRegisteredAncestorFolders(String url) {
-    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
-      for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
-        if (isAncestor(eachFolder.getUrl(), url)) {
-          eachEntry.removeSourceFolder(eachFolder);
-        }
-      }
-      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        if (isAncestor(eachFolder.getUrl(), url)) {
-          if (eachFolder.isSynthetic()) {
-            getCompilerExtension().setExcludeOutput(false);
-          }
-          else {
-            eachEntry.removeExcludeFolder(eachFolder);
-          }
-        }
-      }
-    }
   }
 
   public boolean hasRegisteredSourceSubfolder(File f) {
     String url = toUrl(f.getPath()).getUrl();
     for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
       for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
-        if (isAncestor(url, eachFolder.getUrl())) return true;
+        if (isEqualOrAncestor(url, eachFolder.getUrl())) return true;
       }
     }
     return false;
@@ -128,13 +109,13 @@ public class RootModelAdapter {
     String url = toUrl(f.getPath()).getUrl();
     for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
       for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        if (isAncestor(eachFolder.getUrl(), url)) return true;
+        if (isEqualOrAncestor(eachFolder.getUrl(), url)) return true;
       }
     }
     return false;
   }
 
-  private boolean isAncestor(String ancestor, String child) {
+  private boolean isEqualOrAncestor(String ancestor, String child) {
     return ancestor.equals(child) || child.startsWith(ancestor + "/");
   }
 
@@ -143,16 +124,30 @@ public class RootModelAdapter {
   }
 
   public void addExcludedFolder(String path) {
-    unexcludeAllUnder(path);
+    unregisterAll(path, true, false);
     Url url = toUrl(path);
     findOrCreateContentRoot(url).addExcludeFolder(url.getUrl());
   }
 
-  public void unexcludeAllUnder(String path) {
+  public void unregisterAll(String path, boolean under, boolean unregisterSources) {
     Url url = toUrl(path);
+
     for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
+      if (unregisterSources) {
+        for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
+          String ancestor = under ? url.getUrl() : eachFolder.getUrl();
+          String child = under ? eachFolder.getUrl() : url.getUrl();
+          if (isEqualOrAncestor(ancestor, child)) {
+            eachEntry.removeSourceFolder(eachFolder);
+          }
+        }
+      }
+
       for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        if (isAncestor(url.getUrl(), eachFolder.getUrl())) {
+        String ancestor = under ? url.getUrl() : eachFolder.getUrl();
+        String child = under ? eachFolder.getUrl() : url.getUrl();
+
+        if (isEqualOrAncestor(ancestor, child)) {
           if (eachFolder.isSynthetic()) {
             getCompilerExtension().setExcludeOutput(false);
           }
@@ -217,11 +212,15 @@ public class RootModelAdapter {
       modifiableModel = (LibrariesModifiableModel)table.getModifiableModel();
     }
 
-    Library library = modifiableModel != null ? modifiableModel.getLibraryByName(libraryName) : getLibraryTable().getLibraryByName(libraryName);
+    Library library = modifiableModel != null
+                      ? modifiableModel.getLibraryByName(libraryName)
+                      : getLibraryTable().getLibraryByName(libraryName);
     if (library == null) {
       library = modifiableModel != null ? modifiableModel.createLibrary(libraryName) : getLibraryTable().createLibrary(libraryName);
 
-      Library.ModifiableModel libraryModel = modifiableModel != null ? modifiableModel.getLibraryModifiableModel(library): library.getModifiableModel();
+      Library.ModifiableModel libraryModel = modifiableModel != null
+                                             ? modifiableModel.getLibraryModifiableModel(library)
+                                             : library.getModifiableModel();
 
       String artifactPath = artifact.getFile().getPath();
 

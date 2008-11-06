@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.runner.*;
 
 import java.io.File;
@@ -40,7 +39,7 @@ public class ArchetypesTest extends MavenTestCase {
       settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
       exec = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, new NullMavenConsole());
     }
-    exec.execute(new ArrayList<MavenProject>(), new EmptyProgressIndicator());
+    exec.execute(new EmptyProgressIndicator());
 
     assertTrue(new File(dir, "bar/pom.xml").exists());
   }
