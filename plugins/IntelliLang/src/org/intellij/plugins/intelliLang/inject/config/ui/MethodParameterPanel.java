@@ -26,7 +26,9 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -152,10 +154,14 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   }
 
   @Nullable
-  private PsiClass findClass(PsiType type) {
+  private PsiClass findClass(final PsiType type) {
     if (type instanceof PsiClassType) {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
-      return facade.findClass(type.getCanonicalText(), GlobalSearchScope.allScope(myProject));
+      return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+        public PsiClass compute() {
+          return facade.findClass(type.getCanonicalText(), GlobalSearchScope.allScope(myProject));
+        }
+      });
     }
     return null;
   }

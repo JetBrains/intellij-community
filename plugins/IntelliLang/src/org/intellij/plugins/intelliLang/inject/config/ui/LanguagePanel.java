@@ -146,7 +146,9 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
   }
 
   public void setPrefix(String s) {
-    myPrefix.setText(s);
+    if (!myPrefix.getText().equals(s)) {
+      myPrefix.setText(s);
+    }
   }
 
   public String getSuffix() {
@@ -154,7 +156,9 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
   }
 
   public void setSuffix(String s) {
-    mySuffix.setText(s);
+    if (!mySuffix.getText().equals(s)) {
+      mySuffix.setText(s);
+    }
   }
 
   protected void resetImpl() {
