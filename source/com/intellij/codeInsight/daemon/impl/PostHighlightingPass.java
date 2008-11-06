@@ -86,7 +86,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
   }
 
-  public PostHighlightingPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, int startOffset, int endOffset) {
+  PostHighlightingPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, int startOffset, int endOffset) {
     this(project, file, editor, editor.getDocument(), startOffset, endOffset);
   }
 

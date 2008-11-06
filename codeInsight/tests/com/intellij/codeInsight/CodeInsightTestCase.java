@@ -1,9 +1,11 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -20,6 +22,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -57,7 +62,14 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
   }
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    UpdateHighlightersUtil.DEBUG = true;
+  }
+
   protected void tearDown() throws Exception {
+    UpdateHighlightersUtil.DEBUG = false;
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     VirtualFile[] openFiles = editorManager.getOpenFiles();
     for (VirtualFile openFile : openFiles) {
@@ -102,6 +114,28 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     return configureByFile(vFile, projectFile);
   }
+
+  protected PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {
+    final String extension = fileType.getDefaultExtension();
+
+    final File tempFile = File.createTempFile("aaa", "." + extension);
+    myFilesToDelete.add(tempFile);
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
+      new WriteCommandAction(getProject()) {
+        protected void run(Result result) throws Throwable {
+          fileTypeManager.associateExtension(fileType, extension);
+        }
+      }.execute();
+    }
+    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+    VfsUtil.saveText(vFile, text);
+    assert vFile != null;
+
+    configureByExistingFile(vFile);
+    return myFile;
+  }
+
 
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();

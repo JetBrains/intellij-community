@@ -196,58 +196,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected Collection<HighlightInfo> highlightErrors() {
-    Collection<HighlightInfo> infos = new ArrayList<HighlightInfo>(doHighlighting());
-    Iterator<HighlightInfo> iterator = infos.iterator();
-    while (iterator.hasNext()) {
-      HighlightInfo info = iterator.next();
-      if (info.getSeverity() != HighlightSeverity.ERROR) iterator.remove();
-    }
-    return infos;
+    return filter(doHighlighting(), HighlightSeverity.ERROR);
   }
 
-  protected Collection<HighlightInfo> doHighlighting() {
+  protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-    /*
-    final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
-
-    if (doTestLineMarkers()) {
-      collectLineMarkersForFile(getFile(), getEditor(), result);
-    }
-
-    result.addAll(collectHighlighInfos(getFile(), getEditor()));
-    //
-    boolean isToLaunchExternal = true;
-    for (HighlightInfo info : result) {
-      if (info.getSeverity() == HighlightSeverity.ERROR) {
-        isToLaunchExternal = false;
-        break;
-      }
-    }
-
-    if (doTestCustomPass()) {
-      TextEditorHighlightingPass pass = getCustomPass(getFile(), getEditor());
-      if (pass != null) {
-        pass.collectInformation(new MockProgressIndicator());
-        pass.applyInformationToEditor();
-        result.addAll(pass.getHighlights());
-      }
-    }
-
-    if (forceExternalValidation()) {
-      result.clear();
-    }
-
-    if (isToLaunchExternal && doExternalValidation() || forceExternalValidation()) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().setErrorFoundFlag(getDocument(getFile()), false);
-      ExternalToolPass pass = new ExternalToolPass(getFile(), getEditor(), 0, getEditor().getDocument().getTextLength());
-      pass.collectInformation(new MockProgressIndicator());
-      pass.applyInformationToEditor();
-      result.addAll(pass.getHighlights());
-    }
-
-    return result;
-    */
 
     TIntArrayList toIgnore = new TIntArrayList();
     if (!doTestLineMarkers()) {
@@ -268,6 +221,15 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
     return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
   }
+
+  public static List<HighlightInfo> filter(final List<HighlightInfo> infos, HighlightSeverity minSeverity) {
+    ArrayList<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    for (final HighlightInfo info : infos) {
+      if (info.getSeverity().compareTo(minSeverity) >= 0) result.add(info);
+    }
+    return result;
+  }
+
 
   protected TextEditorHighlightingPass getCustomPass(final PsiFile file, final Editor editor) {
     return null;
@@ -300,9 +262,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   protected static IntentionAction findIntentionAction(final Collection<HighlightInfo> infos, final String intentionActionName, final Editor editor,
                                               final PsiFile file) {
-    IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(LightQuickFixTestCase.getAvailableActions(editor, file),
-      intentionActionName
-    );
+    List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(editor, file);
+    IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
     if (intentionAction == null) {
       final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
@@ -334,15 +295,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected PsiClass createClass(final Module module, final String text) throws IOException {
-    final String qname =
-      ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
+    final String qname = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", text)).getClasses()[0].getQualifiedName();
     final VirtualFile[] files = ModuleRootManager.getInstance(module).getSourceRoots();
     File dir;
     if (files.length > 0) {
       dir = VfsUtil.virtualToIoFile(files[0]);
-    } else {
+    }
+    else {
       dir = createTempDir("unitTest");
-      addSourceContentToRoots(module, LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/')));
+      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+      addSourceContentToRoots(module, vDir);
     }
 
     File file = new File(dir, qname.replace('.', '/') + ".java");
