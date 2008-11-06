@@ -749,7 +749,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     protected String getSelectedBranchUrl() {
       final SvnMergeInfoRootPanelManual data = getPanelData(myChecker.getSelectedLists());
-      if (data != null) {
+      if (data != null && data.getBranch() != null) {
         return data.getBranch().getUrl();
       }
       return null;
