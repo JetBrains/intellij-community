@@ -168,11 +168,9 @@
         <move todir="${plugindir}/lib" file="${output}/python.jar"/>
 
         <!--copy common libraries jars-->
-        <!--
         <copy todir="${plugindir}/lib">
-            <fileset dir="${plugin.home}/lib/common" includes="*.jar"/>
+            <fileset dir="${plugin.home}/lib" includes="*.jar"/>
         </copy>
-        -->
 
         <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>
     </target>
