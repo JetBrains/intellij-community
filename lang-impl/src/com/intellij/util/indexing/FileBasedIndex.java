@@ -798,6 +798,8 @@ public class FileBasedIndex implements ApplicationComponent {
             psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
             fc.putUserData(PSI_FILE, psiFile);
           }
+          Project project = content.getUserData(PROJECT);
+          fc.putUserData(PROJECT, project);
           oldContent = oldBytes != null? new FileContent(file, oldBytes) : null;
         }
 
