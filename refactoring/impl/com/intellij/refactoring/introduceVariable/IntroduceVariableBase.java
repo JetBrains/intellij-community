@@ -223,6 +223,23 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
       tempExpr = elementFactory.createExpressionFromText(text, file);
 
+      final boolean [] hasErrors = new boolean[1];
+      tempExpr.accept(new JavaRecursiveElementVisitor() {
+        @Override
+        public void visitElement(final PsiElement element) {
+          if (hasErrors[0]) {
+            return;
+          }
+          super.visitElement(element);
+        }
+
+        @Override
+        public void visitErrorElement(final PsiErrorElement element) {
+          hasErrors[0] = true;
+        }
+      });
+      if (hasErrors[0]) return null;
+
       tempExpr.putUserData(ElementToWorkOn.PREFIX, prefix);
       tempExpr.putUserData(ElementToWorkOn.SUFFIX, suffix);
 
