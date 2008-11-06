@@ -114,7 +114,9 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   private void touch() {
     myModCount++;
     final ProjectView view = ProjectView.getInstance(myProject);
-    view.refresh();
+    if (view != null) {
+      view.refresh();
+    }
   }
 
   private static HashMap<VirtualFilePointer, VirtualFilePointerContainer> copy(FileAssociationsManagerImpl other) {
