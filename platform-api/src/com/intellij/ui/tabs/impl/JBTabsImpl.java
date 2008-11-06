@@ -617,11 +617,6 @@ public class JBTabsImpl extends JComponent
     return callback;
   }
 
-  @Override
-  public boolean isOptimizedDrawingEnabled() {
-    return false;
-  }
-
   private void queueForRemove(Component c) {
     if (c instanceof JComponent) {
       addToDeferredRemove(c);
