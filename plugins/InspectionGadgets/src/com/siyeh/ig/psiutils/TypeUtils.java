@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +43,13 @@ public class TypeUtils {
             return false;
         }
         return targetType.equalsToText(typeName);
+    }
+
+    public static PsiType getJavaLangObjectType(@NotNull PsiElement context) {
+        final Project project = context.getProject();
+        final PsiElementFactory factory =
+                JavaPsiFacade.getInstance(project).getElementFactory();
+        return factory.createTypeFromText("java.lang.Object", context);
     }
 
     public static boolean isJavaLangObject(@Nullable PsiType targetType) {

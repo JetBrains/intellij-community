@@ -15,41 +15,35 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.IteratorUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.StringUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
 
+    @Override
     @NotNull @Nls
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "key.set.iteration.may.use.entry.set.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -70,6 +64,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                     "key.set.iteration.may.use.entry.set.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -86,12 +81,12 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                     return;
                 }
                 final PsiVariable variable = (PsiVariable) target;
-                final PsiExpression expression = variable.getInitializer();
-                if (!(expression instanceof PsiMethodCallExpression)) {
+                final PsiExpression initializer = variable.getInitializer();
+                if (!(initializer instanceof PsiMethodCallExpression)) {
                     return;
                 }
                 final PsiMethodCallExpression methodCallExpression =
-                        (PsiMethodCallExpression) expression;
+                        (PsiMethodCallExpression) initializer;
                 final PsiReferenceExpression methodExpression =
                         methodCallExpression.getMethodExpression();
                 final PsiExpression qualifier =
@@ -140,13 +135,25 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
             if (parameterTypes.length != 1) {
                 return;
             }
-            final PsiType parameterType = parameterTypes[0];
+            PsiType parameterType = parameterTypes[0];
+            boolean insertCast = false;
+            if (parameterType == null) {
+                parameterType =
+                        TypeUtils.getJavaLangObjectType(foreachStatement);
+                insertCast = true;
+            }
             final PsiParameter parameter =
                     foreachStatement.getIterationParameter();
             final String variableName =
                     createNewVariableName(foreachStatement, parameterType);
-            replaceParameterAccess(parameter, variableName, map,
-                    foreachStatement);
+            if (insertCast) {
+                replaceParameterAccess(parameter,
+                        "((Map.Entry)" + variableName + ')', map, 
+                        foreachStatement);
+            } else {
+                replaceParameterAccess(parameter, variableName, map,
+                        foreachStatement);
+            }
             final PsiElementFactory factory =
                     JavaPsiFacade.getInstance(project).getElementFactory();
             final PsiParameter newParameter = factory.createParameter(
@@ -163,7 +170,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         }
 
         private static String createNewVariableName(
-                @NotNull PsiElement scope, PsiType type){
+                @NotNull PsiElement scope, @NotNull PsiType type){
             final Project project = scope.getProject();
             final JavaCodeStyleManager codeStyleManager =
                     JavaCodeStyleManager.getInstance(project);
@@ -265,6 +272,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new KeySetIterationMayUseEntrySetVisitor();
     }
@@ -272,6 +280,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     private static class KeySetIterationMayUseEntrySetVisitor
             extends BaseInspectionVisitor {
 
+        @Override
         public void visitForeachStatement(PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             final PsiExpression iteratedValue = statement.getIteratedValue();
@@ -369,6 +378,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
             this.key = key;
         }
 
+        @Override
         public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             if (assigned) {
