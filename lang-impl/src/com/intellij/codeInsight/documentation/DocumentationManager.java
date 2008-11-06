@@ -500,8 +500,8 @@ public class DocumentationManager {
     DocumentationProvider elementProvider =
       element == null || elementLanguage.is(containingFileLanguage) ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
 
-    ContainerUtil.addIfNotNull(elementProvider, result);
     ContainerUtil.addIfNotNull(originalProvider, result);
+    ContainerUtil.addIfNotNull(elementProvider, result);
     if (containingFile != null) {
       final Language baseLanguage = containingFile.getViewProvider().getBaseLanguage();
       if (!baseLanguage.is(containingFileLanguage)) {
