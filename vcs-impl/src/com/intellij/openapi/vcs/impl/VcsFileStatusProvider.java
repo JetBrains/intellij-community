@@ -78,10 +78,11 @@ public class VcsFileStatusProvider implements FileStatusProvider {
 
   private static boolean isDocumentModified(VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return false;
-    final Document editorDocument = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    final FileDocumentManager fdm = FileDocumentManager.getInstance();
+    final Document editorDocument = fdm.getCachedDocument(virtualFile);
 
     if (editorDocument != null && editorDocument.getModificationStamp() != virtualFile.getModificationStamp()) {
-      return true;
+      return fdm.isDocumentUnsaved(editorDocument);
     }
 
     return false;
