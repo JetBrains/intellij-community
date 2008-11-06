@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PrattParser implements PsiParser {
   @NotNull
   public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
-    builder.setDebugMode(true);
+    //builder.setDebugMode(true);
 
     final PrattBuilderImpl prattBuilder = PrattBuilderImpl.createBuilder(builder);
     final MutableMarker marker = prattBuilder.mark();
