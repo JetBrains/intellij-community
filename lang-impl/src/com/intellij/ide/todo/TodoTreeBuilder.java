@@ -159,7 +159,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
           getTodoTreeStructure().validateCache();
         }
 
-        return ActionCallback.DONE;
+        return new ActionCallback.Done();
       }
     };
   }

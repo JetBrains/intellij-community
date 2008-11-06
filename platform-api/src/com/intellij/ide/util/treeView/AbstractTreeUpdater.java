@@ -171,7 +171,7 @@ public class AbstractTreeUpdater implements Disposable {
   }
 
   protected ActionCallback beforeUpdate(TreeUpdatePass pass) {
-    return ActionCallback.DONE;
+    return new ActionCallback.Done();
   }
 
   public boolean addSubtreeToUpdateByElement(Object element) {

@@ -64,19 +64,19 @@ public class OptionsEditorDialog extends DialogWrapper {
       @Override
       public ActionCallback onModifiedAdded(final Configurable configurable) {
         updateStatus();
-        return ActionCallback.DONE;
+        return new ActionCallback.Done();
       }
 
       @Override
       public ActionCallback onModifiedRemoved(final Configurable configurable) {
         updateStatus();
-        return ActionCallback.DONE;
+        return new ActionCallback.Done();
       }
 
       @Override
       public ActionCallback onErrorsChanged() {
         updateStatus();
-        return ActionCallback.DONE;
+        return new ActionCallback.Done();
       }
     });
     Disposer.register(myDisposable, myEditor);

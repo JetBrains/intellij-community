@@ -244,7 +244,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private ActionCallback processSelected(final Configurable configurable, final Configurable oldConfigurable) {
-    if (isShowing(configurable)) return ActionCallback.DONE;
+    if (isShowing(configurable)) return new ActionCallback.Done();
 
     final ActionCallback result = new ActionCallback();
 
@@ -703,7 +703,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     }
 
     public ActionCallback update(DocumentEvent.EventType type, boolean adjustSeection, boolean now) {
-      if (!myUpdateEnabled) return ActionCallback.REJECTED;
+      if (!myUpdateEnabled) return new ActionCallback.Rejected();
 
       final String text = mySearch.getText();
       if (getFilterText().length() == 0) {
@@ -846,9 +846,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         updateDetails();
         final ConfigurableContent content = myConfigurable2Content.get(configurable);
         content.updateBannerActions();
-        return ActionCallback.DONE;
+        return new ActionCallback.Done();
       } else {
-        return ActionCallback.REJECTED;
+        return new ActionCallback.Rejected();
       }
     }
   }

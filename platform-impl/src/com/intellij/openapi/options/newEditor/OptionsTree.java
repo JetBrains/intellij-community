@@ -549,16 +549,16 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
   public ActionCallback onModifiedAdded(final Configurable colleague) {
     myTree.repaint();
-    return ActionCallback.DONE;
+    return new ActionCallback.Done();
   }
 
   public ActionCallback onModifiedRemoved(final Configurable configurable) {
     myTree.repaint();
-    return ActionCallback.DONE;
+    return new ActionCallback.Done();
   }
 
   public ActionCallback onErrorsChanged() {
-    return ActionCallback.DONE;
+    return new ActionCallback.Done();
   }
 
   public void processTextEvent(KeyEvent e) {

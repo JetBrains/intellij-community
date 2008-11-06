@@ -30,7 +30,7 @@ public class OptionsEditorContext {
   }
 
   ActionCallback fireSelected(@Nullable final Configurable configurable, @NotNull OptionsEditorColleague requestor) {
-    if (myCurrentConfigurable == configurable) return ActionCallback.REJECTED;
+    if (myCurrentConfigurable == configurable) return new ActionCallback.Rejected();
 
     final Configurable old = myCurrentConfigurable;
     myCurrentConfigurable = configurable;
@@ -44,7 +44,7 @@ public class OptionsEditorContext {
   }
 
   ActionCallback fireModifiedAdded(@NotNull final Configurable configurable, OptionsEditorColleague requestor) {
-    if (myModified.contains(configurable)) return ActionCallback.REJECTED;
+    if (myModified.contains(configurable)) return new ActionCallback.Rejected();
 
     myModified.add(configurable);
 
@@ -57,7 +57,7 @@ public class OptionsEditorContext {
   }
 
   ActionCallback fireModifiedRemoved(@NotNull final Configurable configurable, OptionsEditorColleague requestor) {
-    if (!myModified.contains(configurable)) return ActionCallback.REJECTED;
+    if (!myModified.contains(configurable)) return new ActionCallback.Rejected();
 
     myModified.remove(configurable);
 
@@ -69,7 +69,7 @@ public class OptionsEditorContext {
   }
 
   ActionCallback fireErrorsChanged(final Map<Configurable, ConfigurationException> errors, OptionsEditorColleague requestor) {
-    if (myErrors.equals(errors)) return ActionCallback.REJECTED;
+    if (myErrors.equals(errors)) return new ActionCallback.Rejected();
 
     myErrors = errors != null ? errors : new HashMap<Configurable, ConfigurationException>();
 

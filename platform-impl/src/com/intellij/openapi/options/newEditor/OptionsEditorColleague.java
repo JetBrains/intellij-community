@@ -15,19 +15,19 @@ interface OptionsEditorColleague {
 
   class Adapter implements OptionsEditorColleague {
     public ActionCallback onSelected(@Nullable final Configurable configurable, final Configurable oldConfigurable) {
-      return ActionCallback.DONE;
+      return new ActionCallback.Done();
     }
 
     public ActionCallback onModifiedAdded(final Configurable configurable) {
-      return ActionCallback.DONE;
+      return new ActionCallback.Done();
     }
 
     public ActionCallback onModifiedRemoved(final Configurable configurable) {
-      return ActionCallback.DONE;
+      return new ActionCallback.Done();
     }
 
     public ActionCallback onErrorsChanged() {
-      return ActionCallback.DONE;
+      return new ActionCallback.Done();
     }
   }
 
