@@ -835,10 +835,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     public void actionPerformed(AnActionEvent e) {
-      doCheckout(ProjectLevelVcsManager.getInstance(myProject).getCompositeCheckoutListener(), getSelectedNode());
+      final RepositoryTreeNode selectedNode = getSelectedNode();
       if (! ModalityState.NON_MODAL.equals(ModalityState.current())) {
-        doOKAction();
+        doCancelAction();
       }
+      doCheckout(ProjectLevelVcsManager.getInstance(myProject).getCompositeCheckoutListener(), selectedNode);
     }
   }
 
