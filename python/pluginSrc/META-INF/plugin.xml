@@ -7,6 +7,11 @@
   <idea-version since-build="8895" until-build="9200"/>
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
+    <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="Pythonid">
     <importResolver implementation="com.jetbrains.python.psi.impl.PyJavaImportResolver"/>
     <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
