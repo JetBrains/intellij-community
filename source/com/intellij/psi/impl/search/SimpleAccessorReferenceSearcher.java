@@ -21,8 +21,12 @@ public class SimpleAccessorReferenceSearcher implements QueryExecutor<PsiReferen
   public boolean execute(final ReferencesSearch.SearchParameters queryParameters, final Processor<PsiReference> consumer) {
     final PsiElement refElement = queryParameters.getElementToSearch();
     if (!(refElement instanceof PsiMethod)) return true;
-    PsiMethod method = (PsiMethod)refElement;
-    final String propertyName = PropertyUtil.getPropertyName(method);
+    final PsiMethod method = (PsiMethod)refElement;
+    final String propertyName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return PropertyUtil.getPropertyName(method);
+      }
+    });
     if (StringUtil.isEmptyOrSpaces(propertyName)) {
       return true;
     }
