@@ -21,7 +21,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DiffOptionsPanel implements OptionsPanel {
   private final ColorAndFontOptions myOptions;
@@ -144,15 +145,15 @@ public class DiffOptionsPanel implements OptionsPanel {
 
   }
 
-  public Map<String, String> processListOptions() {
-    java.util.HashMap<String, String> result = new java.util.HashMap<String, String>();
+  public Set<String> processListOptions() {
+    HashSet<String> result = new HashSet<String>();
     HashMap<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.assignKeys(TextDiffType.MERGE_TYPES.iterator(), TextDiffType.ATTRIBUTES_KEY);
     for (int i = 0; i < myOptions.getCurrentDescriptions().length; i++) {
       EditorSchemeAttributeDescriptor description = myOptions.getCurrentDescriptions()[i];
       TextAttributesKey type = TextAttributesKey.find(description.getType());
       if (description.getGroup() == ColorAndFontOptions.DIFF_GROUP &&
           typesByKey.keySet().contains(type)) {
-        result.put(type.getExternalName(), "");
+        result.add(type.getExternalName());
       }
     }
 

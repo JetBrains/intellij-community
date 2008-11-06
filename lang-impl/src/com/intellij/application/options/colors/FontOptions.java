@@ -19,7 +19,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
   private ColorAndFontOptions myOptions;
@@ -304,7 +305,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     return this;
   }
 
-  public Map<String, String> processListOptions() {
-    return new HashMap<String, String>();
+  public Set<String> processListOptions() {
+    return new HashSet<String>();
   }
 }

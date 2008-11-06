@@ -9,8 +9,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   private JList myOptionsList;
@@ -159,13 +159,13 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
   }
 
-  public Map<String, String> processListOptions() {
-    HashMap<String, String> result = new HashMap<String, String>();
+  public Set<String> processListOptions() {
+    HashSet<String> result = new HashSet<String>();
     EditorSchemeAttributeDescriptor[] descriptions = myOptions.getCurrentDescriptions();
 
     for (EditorSchemeAttributeDescriptor description : descriptions) {
       if (description.getGroup().equals(myCategoryName)) {
-        result.put(description.getType(), "");
+        result.add(description.toString());
       }
     }
 

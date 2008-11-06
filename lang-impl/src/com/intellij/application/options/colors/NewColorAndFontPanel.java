@@ -5,8 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class NewColorAndFontPanel extends JPanel {
   private SchemesPanel mySchemesPanel;
@@ -88,14 +88,14 @@ public class NewColorAndFontPanel extends JPanel {
   }
 
   @NotNull
-  public Map<String, String> processListOptions() {
+  public Set<String> processListOptions() {
     if (myOptionList == null) {
       return myOptionsPanel.processListOptions();
     }
     else {
-      HashMap<String, String> result = new HashMap<String, String>();
+      final HashSet<String> result = new HashSet<String>();
       for (String s : myOptionList) {
-        result.put(s, "");
+        result.add(s);
       }
       return result;
     }

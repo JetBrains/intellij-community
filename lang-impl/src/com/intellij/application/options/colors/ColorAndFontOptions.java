@@ -1080,7 +1080,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return mySubPanel.showOption(option);
     }
 
-    public Map<String, String> processListOptions() {
+    public Set<String> processListOptions() {
       return mySubPanel.processListOptions();
     }
   }

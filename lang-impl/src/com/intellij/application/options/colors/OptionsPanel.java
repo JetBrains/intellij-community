@@ -1,7 +1,7 @@
 package com.intellij.application.options.colors;
 
 import javax.swing.*;
-import java.util.Map;
+import java.util.Set;
 
 
 public interface OptionsPanel {
@@ -17,5 +17,5 @@ public interface OptionsPanel {
 
   void selectOption(String typeToSelect);
 
-  Map<String, String> processListOptions();
+  Set<String> processListOptions();
 }

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -105,14 +104,13 @@ public class TraverseUIStarter implements ApplicationStarter {
 
   private static void processColorAndFontsSettings(final OptionsContainingConfigurable configurable, final Element configurableElement) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Map<String, String> optionsPath = configurable.processListOptions();
+    final Set<String> optionsPath = configurable.processListOptions();
     final TreeSet<OptionDescription> result = new TreeSet<OptionDescription>();
-    for (String opt : optionsPath.keySet()) {
-      final String path = optionsPath.get(opt);
+    for (String opt : optionsPath) {
       final Set<String> words = searchableOptionsRegistrar.getProcessedWordsWithoutStemming(opt);
       for (String word : words) {
         if (word != null){
-          result.add(new OptionDescription(word, opt, path));
+          result.add(new OptionDescription(word, opt, null));
         }
       }
     }
