@@ -80,6 +80,7 @@ public class PredefinedConfiguration extends Configuration {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.instanceof"),"'_Expr instanceof '_Type",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.literals"),"\"'_String\"",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.expressions.of.some.type"),"'_Expression:[exprtype( SomeType )]",EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.sample.method.invokation.with.constant.argument"),"Integer.parseInt('_a:[script( \"com.intellij.psi.util.PsiUtil.isConstantExpression(__context__)\" )])",EXPRESSION_TYPE),
 
       // Operators
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.block.dcls"),"{\n  '_Type+ 'Var+ = '_Init*;\n  '_BlockStatements*;\n}",OPERATOR_TYPE),
@@ -189,6 +190,12 @@ public class PredefinedConfiguration extends Configuration {
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.static.fields.without.final"),
         "class '_Class {\n  static '_Type 'Variable*:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;\n}",
+        CLASS_TYPE
+      ),
+
+      createSearchTemplateInfo(
+        SSRBundle.message("predefined.configuration.interfaces.having.no.descendants"),
+        "interface 'A:[script( \"com.intellij.psi.search.searches.ClassInheritorsSearch.search(__context__).findFirst() == null\" )] {}",
         CLASS_TYPE
       ),
 
