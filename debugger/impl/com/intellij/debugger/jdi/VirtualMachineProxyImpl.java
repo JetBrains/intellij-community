@@ -143,7 +143,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     if (LOG.isDebugEnabled()) {
       LOG.debug("before resume VM");
     }
-    myVirtualMachine.resume();
+    try {
+      myVirtualMachine.resume();
+    }
+    catch (InternalException e) {
+      // ok to ignore. Although documentation says it is safe to invoke resume() on running VM,
+      // sometimes this leads to com.sun.jdi.InternalException: Unexpected JDWP Error: 13 (THREAD_NOT_SUSPENDED)
+      LOG.info(e);
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("VM resumed");
     }
