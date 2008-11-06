@@ -2,32 +2,35 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 public class KeyProcessorContext {
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
-  private JComponent myFoundComponent;
+  private WeakReference<JComponent> myFoundComponent;
   private boolean myHasSecondStroke;
 
   private DataContext myDataContext;
   private boolean isModalContext;
-  Component myFocusOwner;
+  private WeakReference<Component> myFocusOwner;
   private KeyEvent myInputEvent;
 
   public ArrayList<AnAction> getActions() {
     return myActions;
   }
 
+  @Nullable
   public JComponent getFoundComponent() {
-    return myFoundComponent;
+    return myFoundComponent != null ? myFoundComponent.get() : null;
   }
 
   public void setFoundComponent(final JComponent foundComponent) {
-    myFoundComponent = foundComponent;
+    myFoundComponent = new WeakReference<JComponent>(foundComponent);
   }
 
   public void setHasSecondStroke(final boolean hasSecondStroke) {
@@ -54,12 +57,13 @@ public class KeyProcessorContext {
     isModalContext = modalContext;
   }
 
+  @Nullable
   public Component getFocusOwner() {
-    return myFocusOwner;
+    return myFocusOwner != null ? myFocusOwner.get() : null;
   }
 
   public void setFocusOwner(final Component focusOwner) {
-    myFocusOwner = focusOwner;
+    myFocusOwner = new WeakReference<Component>(focusOwner);
   }
 
   public void setInputEvent(final KeyEvent e) {
