@@ -177,10 +177,6 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return null;
   }
 
-  public boolean isValid() {
-    return getSelectedURL() != null;
-  }
-
   public void addChangeListener(TreeSelectionListener l) {
     myRepositoryTree.addTreeSelectionListener(l);
   }
