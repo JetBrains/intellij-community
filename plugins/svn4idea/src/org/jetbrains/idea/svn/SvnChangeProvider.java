@@ -416,7 +416,7 @@ public class SvnChangeProvider implements ChangeProvider {
       }
       else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
-        if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
+        if (file != null && FileDocumentManager.getInstance().isFileModifiedAndDocumentUnsaved(file)) {
           builder.processChangeInList(new Change(SvnContentRevision.create(myVcs, filePath, status.getRevision()),
                                            CurrentContentRevision.create(filePath), FileStatus.MODIFIED), changeListNameFromStatus(status));
         }
