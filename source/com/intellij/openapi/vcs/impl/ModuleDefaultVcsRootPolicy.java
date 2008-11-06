@@ -93,7 +93,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     final VcsRoot[] vcsRoots = plVcsManager.getAllVcsRoots();
 
     for (VcsRoot root : vcsRoots) {
-      if (root.equals(baseDir)) {
+      if (root.path.equals(baseDir)) {
         builder.addDirtyFile(root);
       }
       else {
