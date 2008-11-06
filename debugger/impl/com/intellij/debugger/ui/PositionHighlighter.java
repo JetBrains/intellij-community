@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
@@ -318,10 +319,11 @@ public class PositionHighlighter {
     }
 
     public void threadAction() {
-      SourcePosition position = myContext.getSourcePosition();
-      if (position == null) {
+      final SourcePosition contextPosition = myContext.getSourcePosition();
+      if (contextPosition == null) {
         return;
       }
+      
       boolean isExecutionPoint = false;
       try {
         StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
@@ -334,18 +336,22 @@ public class PositionHighlighter {
 
       final List<Pair<Breakpoint, Event>> events = DebuggerUtilsEx.getEventDescriptors(getSuspendContext());
 
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(position.getFile());
-      if(document != null) {
-        if(position.getLine() < 0 || position.getLine() >= document.getLineCount()) {
-          position = SourcePosition.createFromLine(position.getFile(), 0);
+      final SourcePosition position = ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
+        public SourcePosition compute() {
+          Document document = PsiDocumentManager.getInstance(myProject).getDocument(contextPosition.getFile());
+          if(document != null) {
+            if(contextPosition.getLine() < 0 || contextPosition.getLine() >= document.getLineCount()) {
+              return SourcePosition.createFromLine(contextPosition.getFile(), 0);
+            }
+          }
+          return contextPosition;
         }
-      }
+      });
 
-      final SourcePosition position1 = position;
       if(isExecutionPoint) {
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
           public void run() {
-            final SourcePosition highlightPosition = getHighlightPosition(events, position1);
+            final SourcePosition highlightPosition = getHighlightPosition(events, position);
             showExecutionPoint(highlightPosition, events);
           }
         });
@@ -353,7 +359,7 @@ public class PositionHighlighter {
       else {
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
           public void run() {
-            showSelection(position1);
+            showSelection(position);
           }
         });
       }
