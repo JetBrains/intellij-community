@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
@@ -158,7 +159,9 @@ public class SvnChangelistListener implements ChangeListListener {
       }
       catch (SVNException e) {
         LOG.info(e);
-        throw e;
+        if ((! SVNErrorCode.WC_NOT_DIRECTORY.equals(e.getErrorMessage().getErrorCode()) && (! SVNErrorCode.WC_NOT_FILE.equals(e.getErrorMessage().getErrorCode())))) {
+          throw e;
+        }
       }
 
       final String relativePath = file.getAbsolutePath().substring(from.getAbsolutePath().length());
@@ -169,7 +172,9 @@ public class SvnChangelistListener implements ChangeListListener {
       }
       catch (SVNException e) {
         LOG.info(e);
-        throw e;
+        if ((! SVNErrorCode.WC_NOT_DIRECTORY.equals(e.getErrorMessage().getErrorCode()) && (! SVNErrorCode.WC_NOT_FILE.equals(e.getErrorMessage().getErrorCode())))) {
+          throw e;
+        }
       }
     }
   }
