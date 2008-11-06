@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
@@ -449,6 +450,24 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
+  static void assertMarkupConsistent(MarkupModel markup, List<HighlightInfo> highlightsToSet, List<HighlightInfo> highlightsToRemove) {
+    if (LOG.isDebugEnabled()) {
+      if (highlightsToSet != null) {
+        for (HighlightInfo info : highlightsToSet) {
+          assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
+        }
+      }
+      RangeHighlighter[] allHighlighters = markup.getAllHighlighters();
+      for (RangeHighlighter highlighter : allHighlighters) {
+        Object tooltip = highlighter.getErrorStripeTooltip();
+        if (tooltip instanceof HighlightInfo) {
+          HighlightInfo info = (HighlightInfo)tooltip;
+          assert highlightsToSet != null && highlightsToSet.contains(info) || highlightsToRemove != null && highlightsToRemove.contains(info);
+        }
+      }
+    }
+  }
+
   private static void stripWarningsCoveredByErrors(final Project project, List<HighlightInfo> highlights, MarkupModel markup) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
     Collection<HighlightInfo> errors = new ArrayList<HighlightInfo>();
@@ -579,11 +598,5 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   static List<HighlightInfo> getHighlightsToRemove(MarkupModel markup) {
     List<HighlightInfo> infos = markup.getUserData(HIGHLIGHTS_TO_REMOVE_KEY);
     return infos == null ? Collections.<HighlightInfo>emptyList() : infos;
-  }
-
-  @NotNull
-  @TestOnly
-  public static List<HighlightInfo> getFileLeveleHighlights(Project project,PsiFile file ) {
-    return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
   }
 }

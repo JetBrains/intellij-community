@@ -75,7 +75,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, myPassIdToShowIntentionsFor);
+    getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow,
+                     IntentionManager.getInstance().getIntentionActions(), myPassIdToShowIntentionsFor);
     if (myFile instanceof IntentionFilterOwner) {
       final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)myFile).getIntentionActionsFilter();
       if (actionsFilter == null) return;
@@ -128,17 +129,18 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
   }
 
-  public static void getActionsToShow(final Editor editor, final PsiFile psiFile, final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow,
-                                      final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow,
-                                      final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow,
-                                      int passIdToShowIntentionsFor) {
+  public static void getActionsToShow(final Editor editor, final PsiFile psiFile,
+                                final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow,
+                                final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow,
+                                final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow,
+                                IntentionAction[] allIntentionActions, int passIdToShowIntentionsFor) {
     final PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
     final boolean isInProject = psiFile.getManager().isInProject(psiFile);
 
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
-    for (IntentionAction action : IntentionManager.getInstance().getIntentionActions()) {
+    for (IntentionAction action : allIntentionActions) {
       if (action instanceof PsiElementBaseIntentionAction) {
         if (!isInProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) continue;
       }

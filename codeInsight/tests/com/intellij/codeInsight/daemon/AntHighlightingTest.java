@@ -16,8 +16,8 @@ import com.intellij.idea.IdeaTestUtil;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @by Maxim.Mossienko
@@ -95,8 +95,8 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
 
-  protected List<HighlightInfo> doHighlighting() {
-    final List<HighlightInfo> infos = super.doHighlighting();
+  protected Collection<HighlightInfo> doHighlighting() {
+    final Collection<HighlightInfo> infos = super.doHighlighting();
     if (!myIgnoreInfos) {
       return infos;
     }

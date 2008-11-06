@@ -9,13 +9,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.injected.editor.EditorWindow;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,20 +59,13 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   }
 
   @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected Collection<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     MockProgressIndicator progress = new MockProgressIndicator();
 
     int[] toIgnore = doFolding() ? new int[0] : new int[]{Pass.UPDATE_FOLDING};
-    Editor editor = getEditor();
-    PsiFile file = getFile();
-    if (editor instanceof EditorWindow) {
-      editor = ((EditorWindow)editor).getDelegate();
-      file = InjectedLanguageUtil.getTopLevelFile(file);
-    }
-    TextEditorHighlightingPassRegistrarEx registrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject());
-    List<TextEditorHighlightingPass> passes = registrar.instantiatePasses(file, editor, toIgnore);
+    List<TextEditorHighlightingPass> passes = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), toIgnore);
 
     for (TextEditorHighlightingPass pass : passes) {
       pass.collectInformation(progress);
@@ -85,7 +74,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
       pass.applyInformationToEditor();
     }
 
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), getProject());
+    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
     return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
   }
 

@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
@@ -12,10 +13,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 
@@ -178,7 +179,21 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static List<IntentionAction> getAvailableActions(final Editor editor, final PsiFile file) {
-    return CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file);
+    List<HighlightInfo.IntentionActionDescriptor> descriptors = QuickFixAction.getAvailableActions(editor, file, -1);
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
+      result.add(descriptor.getAction());
+      List<IntentionAction> options = descriptor.getOptions(element);
+      if (options != null) {
+        for (IntentionAction option : options) {
+          if (option.isAvailable(file.getProject(), editor, file)) {
+            result.add(option);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   @NonNls protected String getBasePath() {return null;}
