@@ -186,14 +186,16 @@ class AbstractTreeUi {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          cleanUpNow();
+          if (!isReleased()) {
+            cleanUpNow();
+          }
         }
       });
     }
   }
 
-  private void disposeClearanceServiceIfNeeded() {
-    if (ourClearanceService != null && ourUi2Countdown.size() == 0) {
+  private void disposeClearanceService() {
+    if (ourClearanceService != null) {
       ourClearanceService.shutdown();
       ourClearanceService = null;
     }
@@ -229,12 +231,13 @@ class AbstractTreeUi {
     if (myProgress != null) {
       myProgress.cancel();
     }
-    disposeClearanceServiceIfNeeded();
+    disposeClearanceService();
 
     myTree = null;
     setUpdater(null);
     myWorker = null;
-
+//todo [kirillk] afraid to do so just in release day, to uncomment
+//    myTreeStructure = null;
     myBuilder = null;
   }
 
