@@ -282,17 +282,19 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
    * for: convertions of roots in direct root search; update of roots in indirect root search
    */
   public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
-    myNotFilteredRoots = result.toArray(new VirtualFile[result.size()]);
-    final Collection<Pair<String, VirtualFile>> pairCollection = myUrl2FileMap.values();
+    synchronized (myMonitor) {
+      myNotFilteredRoots = result.toArray(new VirtualFile[result.size()]);
+      final Collection<Pair<String, VirtualFile>> pairCollection = myUrl2FileMap.values();
 
-    if (pairCollection.isEmpty()) {
-      return result;
+      if (pairCollection.isEmpty()) {
+        return result;
+      }
+      final List<VirtualFile> converted = new ArrayList<VirtualFile>();
+      for (Pair<String, VirtualFile> pair : pairCollection) {
+        converted.add(pair.getSecond());
+      }
+      return converted;
     }
-    final List<VirtualFile> converted = new ArrayList<VirtualFile>();
-    for (Pair<String, VirtualFile> pair : pairCollection) {
-      converted.add(pair.getSecond());
-    }
-    return converted;
   }
 
   public void realRefresh() {
