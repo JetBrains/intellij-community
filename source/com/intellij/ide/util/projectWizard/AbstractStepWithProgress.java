@@ -159,13 +159,26 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected class MyProgressIndicator extends ProgressIndicatorBase {
     public void setText(String text) {
-      myProgressLabel.setText(text);
+      updateLabel(myProgressLabel, text);
       super.setText(text);
     }
 
     public void setText2(String text) {
-      myProgressLabel2.setText(text);
+      updateLabel(myProgressLabel2, text);
       super.setText2(text);
+    }
+
+    private void updateLabel(final JLabel label, final String text) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        label.setText(text);
+      }
+      else {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            label.setText(text);
+          }
+        });
+      }
     }
   }
 }
