@@ -211,6 +211,4 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddAntBuildFile" />
     </group>
   </actions>
-
-  <helpset file="help.jar" path="/Help.hs" />
 </idea-plugin>

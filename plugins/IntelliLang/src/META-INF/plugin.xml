@@ -67,6 +67,4 @@
       <implementation-class>org.intellij.plugins.intelliLang.inject.CustomLanguageInjector</implementation-class>
     </component>
   </project-components>
-  
-  <helpset file="help.jar" path="/Help.hs" />
 </idea-plugin>
