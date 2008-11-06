@@ -112,8 +112,10 @@ public class PositionHighlighter {
     public void remove() {
       if(!myIsActive) return;
       myIsActive = false;
-      myEditor.getMarkupModel().removeHighlighter(myHighlighter);
-      myHighlighter = null;
+      if (myHighlighter != null) {
+        myEditor.getMarkupModel().removeHighlighter(myHighlighter);
+        myHighlighter = null;
+      }
     }
 
     public RangeHighlighter getHighlighter() {
