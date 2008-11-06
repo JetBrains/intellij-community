@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="python" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="idea" />
   </component>
 </module>
 
