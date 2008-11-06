@@ -23,9 +23,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 
@@ -42,30 +40,19 @@ public class AllInPackageConfigurationProducer extends JUnitConfigurationProduce
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.PACKAGE_NAME = myPackage.getQualifiedName();
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
-    if (data.getScope() != TestSearchScope.WHOLE_PROJECT) {
-      final Module predefinedModule = configuration.getConfigurationModule().getModule();
-      if (predefinedModule == null) {
-        Module module = null;
-        if (element instanceof PsiDirectory) {
-          module = ModuleUtil.findModuleForFile(((PsiDirectory)element).getVirtualFile(), project);
-        }
-        if (module != null) {
-          configuration.setModule(module);
-        }
-        else {
-          data.setScope(TestSearchScope.WHOLE_PROJECT);
-        }
-      }
-    } else {
-      final RunnerAndConfigurationSettingsImpl template =
+    final RunnerAndConfigurationSettingsImpl template =
         ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
-      final Module selectedModule = context.getModule();
-      if (selectedModule != null) {
-        final ModuleBasedConfiguration templateConfiguration = (ModuleBasedConfiguration)template.getConfiguration();
-        if (templateConfiguration.getConfigurationModule().getModule() == null) {
-          configuration.setModule(selectedModule);
-          data.setScope(TestSearchScope.SINGLE_MODULE);
-        }
+    if (data.getScope() != TestSearchScope.WHOLE_PROJECT) {
+      final Module contextModule = context.getModule();
+      final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+      if (predefinedModule != null) {
+        configuration.setModule(predefinedModule);
+      }
+      else if (contextModule != null) {
+        configuration.setModule(contextModule);
+      }
+      else {
+        data.setScope(TestSearchScope.WHOLE_PROJECT);
       }
     }
     configuration.setGeneratedName();
