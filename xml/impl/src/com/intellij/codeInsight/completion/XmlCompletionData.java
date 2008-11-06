@@ -123,12 +123,12 @@ public class XmlCompletionData extends CompletionData {
 
   private static class XmlAttributeValueInsertHandler extends BasicInsertHandler {
     public void handleInsert(InsertionContext context, LookupElement item) {
-      super.handleInsert(context, item);
-      context.setAddCompletionChar(false);
-      eatClosingQuote(context.getCompletionChar(), context.getEditor());
-
+      final char c = context.getCompletionChar();
+      if (c == '\'' || c == '\"') {
+        context.setAddCompletionChar(false);
+        eatClosingQuote(c, context.getEditor());
+      }
     }
-
   }
 
   public static int eatClosingQuote(char completionChar, final Editor editor) {
