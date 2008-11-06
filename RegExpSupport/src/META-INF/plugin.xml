@@ -7,7 +7,7 @@
     detailed on-the-fly error highlighting, completion, some intention actions and more.
   </description>
 
-  <version>1.0</version>
+  <version>8.0</version>
   <vendor>Sascha Weinreuter</vendor>
   <idea-version since-build="6656"/>
   

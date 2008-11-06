@@ -12,7 +12,7 @@
     </p>
    ]]></description>
 
-  <version>2.3-Diana</version>
+  <version>8.0</version>
 
   <depends>RegExpLanguage</depends>
   <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
