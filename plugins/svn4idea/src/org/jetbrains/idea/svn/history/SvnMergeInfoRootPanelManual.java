@@ -137,7 +137,7 @@ public class SvnMergeInfoRootPanelManual {
 
     myUrlText = new JTextArea();
     myUrlText.setLineWrap(true);
-    myUrlText.setBackground(new Color(236,233,216));
+    myUrlText.setBackground(UIUtil.getLabelBackground());
     myUrlText.setWrapStyleWord(true);
     gb.weightx = 1;
     ++ gb.gridx;
@@ -166,7 +166,7 @@ public class SvnMergeInfoRootPanelManual {
     ++ gb.gridy;
     gb.gridwidth = 1;
     myLocalArea = new JTextArea();
-    myLocalArea.setBackground(new Color(236,233,216));
+    myLocalArea.setBackground(UIUtil.getLabelBackground());
     myLocalArea.setLineWrap(true);
     myLocalArea.setWrapStyleWord(true);
     myContentPanel.add(myLocalArea, gb);
