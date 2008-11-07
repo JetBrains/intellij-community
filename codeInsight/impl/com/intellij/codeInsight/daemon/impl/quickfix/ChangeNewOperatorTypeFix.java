@@ -36,7 +36,12 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myType.isValid() && myExpression.isValid() && myExpression.getManager().isInProject(myExpression) && !TypeConversionUtil.isPrimitiveAndNotNull(myType);
+    return myType.isValid()
+           && myExpression.isValid()
+           && myExpression.getManager().isInProject(myExpression)
+           && !TypeConversionUtil.isPrimitiveAndNotNull(myType)
+           && myExpression.getArgumentList() != null
+      ;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -62,7 +67,9 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     }
     else {
       newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()", originalExpression);
-      newExpression.getArgumentList().replace(originalExpression.getArgumentList());
+      PsiExpressionList argumentList = originalExpression.getArgumentList();
+      if (argumentList == null) return;
+      newExpression.getArgumentList().replace(argumentList);
       selection = null;
       caretOffset = -1;
     }
