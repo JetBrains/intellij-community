@@ -80,7 +80,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
             for (CommittedChangeList committedChangeList : cachedList) {
               if ((committedChangeList instanceof SvnChangeList) &&
                   ((vcsRoot == null) || (vcsRoot.equals(((SvnChangeList)committedChangeList).getVcsRoot())))) {
-                ((SvnChangeList) committedChangeList).forceReloadCachedInfo(vcsRoot == null);
+                ((SvnChangeList) committedChangeList).forceReloadCachedInfo(true);
               }
             }
           }

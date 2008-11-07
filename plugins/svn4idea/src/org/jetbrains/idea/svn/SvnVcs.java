@@ -40,6 +40,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -61,6 +62,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,6 +138,8 @@ public class SvnVcs extends AbstractVcs {
   private final SvnChangelistListener myChangeListListener;
   private MessageBusConnection myMessageBusConnection;
 
+  public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
+
   static {
     //noinspection UseOfArchaicSystemPropertyAccessors
     final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG);
@@ -200,7 +204,11 @@ public class SvnVcs extends AbstractVcs {
       });
 
       // do one time after project loaded
-      invokeRefreshSvnRoots(true);
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+        public void run() {
+          invokeRefreshSvnRoots(true);
+        }
+      });
     }
   }
 
@@ -209,6 +217,7 @@ public class SvnVcs extends AbstractVcs {
       public void run() {
         myRootsInfo.ensureInitialized();
         myRootsInfo.realRefresh();
+        myProject.getMessageBus().syncPublisher(ROOTS_RELOADED).run();
       }
     };
     if (hidden) {

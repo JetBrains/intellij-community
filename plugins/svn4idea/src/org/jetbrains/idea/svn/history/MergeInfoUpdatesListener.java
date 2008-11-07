@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 
@@ -19,10 +20,12 @@ public class MergeInfoUpdatesListener {
   private final Project myProject;
   private final MessageBusConnection myConnection;
   private List<RootsAndBranches> myMergeInfoRefreshActions;
+  private final ZipperUpdater myUpdater;
 
   public MergeInfoUpdatesListener(final Project project, final MessageBusConnection connection) {
     myConnection = connection;
     myProject = project;
+    myUpdater = new ZipperUpdater();
   }
 
   public void addPanel(final RootsAndBranches action) {
@@ -41,6 +44,8 @@ public class MergeInfoUpdatesListener {
         }
       };
       myConnection.subscribe(SvnMapDialog.WC_CONVERTED, reloadRunnable);
+
+      myConnection.subscribe(SvnVcs.ROOTS_RELOADED, reloadRunnable);
 
       ProjectLevelVcsManager.getInstance(myProject).addVcsListener(new VcsListener() {
         public void directoryMappingChanged() {
@@ -65,19 +70,23 @@ public class MergeInfoUpdatesListener {
   }
 
   private void doForEachInitialized(final Consumer<RootsAndBranches> consumer) {
-    for (final RootsAndBranches action : myMergeInfoRefreshActions) {
-      if (action.strategyInitialized()) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          consumer.consume(action);
-        } else {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
+    myUpdater.queue(new Runnable() {
+      public void run() {
+        for (final RootsAndBranches action : myMergeInfoRefreshActions) {
+          if (action.strategyInitialized()) {
+            if (ApplicationManager.getApplication().isDispatchThread()) {
               consumer.consume(action);
+            } else {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  consumer.consume(action);
+                }
+              });
             }
-          });
+          }
         }
       }
-    }
+    });
   }
   
   private void callReloadMergeInfo() {

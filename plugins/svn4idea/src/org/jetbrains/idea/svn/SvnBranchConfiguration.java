@@ -302,7 +302,7 @@ public class SvnBranchConfiguration {
     final List<SvnBranchItem> result = getBranchesUnderProgress(url, project);
     myBranchMap.put(url, result);
 
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(project, vcsRoot);
+    ApplicationManager.getApplication().getMessageBus().asyncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(project, vcsRoot);
 
     return result;
   }

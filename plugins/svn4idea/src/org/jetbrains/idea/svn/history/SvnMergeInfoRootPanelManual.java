@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -78,9 +80,7 @@ public class SvnMergeInfoRootPanelManual {
                                                               null);
           if (info != null) {
             final String local = info.getFirst().getLocalPath();
-            myBranchToLocal.put(mySelectedBranch.getUrl(), local);
-            myLocalArea.setText(local);
-            myLocalArea.setForeground(UIUtil.getInactiveTextColor());
+            calculateBranchPathByBranch(mySelectedBranch.getUrl(), local);
           }
           myListener.run();
         }
@@ -94,9 +94,8 @@ public class SvnMergeInfoRootPanelManual {
         if (vf != null) {
           SelectBranchPopup.show(myProject, vf, new SelectBranchPopup.BranchSelectedCallback() {
             public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
-              final String branch = SVNPathUtil.tail(url);
-              myBranchField.setText(branch);
-              calculateBranchPathByBranch(url);
+              refreshSelectedBranch(url);
+              calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
               myListener.run();
             }
           }, SvnBundle.message("select.branch.popup.general.title"));
@@ -105,12 +104,11 @@ public class SvnMergeInfoRootPanelManual {
     });
 
     if (myInfo.getBranches().isEmpty()) {
-      calculateBranchPathByBranch(null);
+      calculateBranchPathByBranch(null, null);
     } else {
       final WCInfoWithBranches.Branch branch = myInfo.getBranches().get(0);
-      final String branchName = SVNPathUtil.tail(branch.getUrl());
-      myBranchField.setText(branchName);
-      calculateBranchPathByBranch(branch.getUrl());
+      refreshSelectedBranch(branch.getUrl());
+      calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
     }
   }
 
@@ -194,32 +192,44 @@ public class SvnMergeInfoRootPanelManual {
     myMixedRevisions.setVisible(value);
   }
 
-  private void calculateBranchPathByBranch(final String url) {
-    final String cached = myBranchToLocal.get(url);
-    if (cached != null) {
-      myLocalArea.setText(cached);
-      myLocalArea.setForeground(UIUtil.getInactiveTextColor());
-      refreshSelectedBranch(url);
-      return;
+  @Nullable
+  private String getLocal(@NotNull final String url, @Nullable final String localPath) {
+    final Set<String> paths = SvnBranchMapperManager.getInstance().get(url);
+    if (paths != null && (! paths.isEmpty())) {
+      if (localPath != null) {
+        // check whether it is still actual
+        for (String path : paths) {
+          if (path.equals(localPath)) {
+            return path;
+          }
+        }
+      } else {
+        final java.util.List<String> list = new ArrayList<String>(paths);
+        Collections.sort(list);
+        return list.get(0);
+      }
     }
-    final Set<String> paths = url == null ? null : SvnBranchMapperManager.getInstance().get(url);
-    if ((paths == null) || (paths.isEmpty())) {
+    return null;
+  }
+
+  // always assign to local area here
+  private void calculateBranchPathByBranch(final String url, final String localPath) {
+    final String local = url == null ? null : getLocal(url, localPath == null ? myBranchToLocal.get(url) : localPath);
+    if (local == null) {
       myLocalArea.setForeground(Color.red);
       myLocalArea.setText(SvnBundle.message("tab.repository.merge.panel.root.panel.select.local"));
     } else {
-      final java.util.List<String> list = new ArrayList<String>(paths);
-      Collections.sort(list);
       myLocalArea.setForeground(UIUtil.getInactiveTextColor());
-      myLocalArea.setText(list.get(0));
-      myBranchToLocal.put(url, list.get(0));
+      myLocalArea.setText(local);
+      myBranchToLocal.put(url, local);
     }
-    refreshSelectedBranch(url);
   }
 
+  // always assign to selected branch here
   private void refreshSelectedBranch(final String url) {
-    if ((mySelectedBranch != null) && (mySelectedBranch.getUrl().equals(url))) {
-      return;
-    }
+    final String branch = SVNPathUtil.tail(url);
+    myBranchField.setText(branch);
+
     if (initSelectedBranch(url)) return;
     myInfo = myRefresher.fun(myInfo);
     initSelectedBranch(url);
@@ -255,38 +265,6 @@ public class SvnMergeInfoRootPanelManual {
     myInclude.setSelected(select);
   }
 
-  private static final int CUT_SIZE = 20;
-  private static String cutString(final String s, final char separator) {
-    /*final String trimmed = s.trim();
-    if (trimmed.length() <= CUT_SIZE) {
-      return trimmed;
-    }
-    return "..." + trimmed.substring(trimmed.length() - CUT_SIZE + 3);*/
-    final String[] parts = s.trim().replace(separator, '/').split("/");
-    final StringBuilder sb = new StringBuilder();
-    int curLength = 0;
-    for (int i = 0; i < parts.length; i++) {
-      final String part = parts[i];
-      final int len = part.length();
-      if ((curLength + len + 1) <= CUT_SIZE) {
-        // this line
-        if (i > 0) {
-          sb.append(separator);
-        }
-        sb.append(part);
-        curLength += len + 1;
-      } else {
-        if (i > 0) {
-          sb.append(separator);
-        }
-        sb.append('\n');
-        sb.append(part);
-        curLength = len + 1;
-      }
-    }
-    return sb.toString();
-  }
-
   public JPanel getContentPanel() {
     return myContentPanel;
   }
@@ -301,12 +279,9 @@ public class SvnMergeInfoRootPanelManual {
 
   public void initSelection(final InfoHolder holder) {
     myInclude.setSelected(holder.isEnabled());
-    mySelectedBranch = holder.getBranch();
-    if (mySelectedBranch != null) {
-      myBranchField.setText(SVNPathUtil.tail(mySelectedBranch.getUrl()));
-      if (holder.getLocal() != null)
-      myBranchToLocal.put(mySelectedBranch.getUrl(), holder.getLocal());
-      calculateBranchPathByBranch(mySelectedBranch.getUrl());
+    if (holder.getBranch() != null) {
+      refreshSelectedBranch(holder.getBranch().getUrl());
+      calculateBranchPathByBranch(mySelectedBranch.getUrl(), holder.getLocal());
     }
   }
 
