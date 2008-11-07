@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorSettings;
 
 public abstract class MavenProjectsNavigatorAction extends ToggleAction {
   public void update(final AnActionEvent e) {
@@ -33,7 +33,7 @@ public abstract class MavenProjectsNavigatorAction extends ToggleAction {
     }
   }
 
-  protected abstract boolean isSelected(PomTreeViewSettings settings);
+  protected abstract boolean isSelected(MavenProjectsNavigatorSettings settings);
 
-  protected abstract void setSelected(PomTreeViewSettings settings, boolean state);
+  protected abstract void setSelected(MavenProjectsNavigatorSettings settings, boolean state);
 }

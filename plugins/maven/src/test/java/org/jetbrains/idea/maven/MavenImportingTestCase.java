@@ -16,8 +16,8 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsManager;
-import org.jetbrains.idea.maven.navigator.MavenTreeStructure;
-import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
+import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorSettings;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.runner.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
@@ -52,24 +52,24 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return myMavenProjectsManager.getImportingSettings();
   }
 
-  protected MavenTreeStructure.RootNode createMavenTree() {
-    MavenTreeStructure s = new MavenTreeStructure(myProject,
+  protected MavenProjectsStructure.RootNode createMavenTree() {
+    MavenProjectsStructure s = new MavenProjectsStructure(myProject,
                                               myMavenProjectsManager,
                                               myProject.getComponent(MavenEventsManager.class)) {
       {
         for (MavenProjectModel each : myMavenProjectsManager.getProjects()) {
-          this.myRoot.addUnder(new MavenTreeStructure.PomNode(each));
+          this.myRoot.addUnder(new MavenProjectsStructure.PomNode(each));
         }
       }
 
-      protected PomTreeViewSettings getTreeViewSettings() {
-        return new PomTreeViewSettings();
+      protected MavenProjectsNavigatorSettings getTreeViewSettings() {
+        return new MavenProjectsNavigatorSettings();
       }
 
       protected void updateTreeFrom(@Nullable SimpleNode node) {
       }
     };
-    return (MavenTreeStructure.RootNode)s.getRootElement();
+    return (MavenProjectsStructure.RootNode)s.getRootElement();
   }
 
   protected void assertModules(String... expectedNames) {

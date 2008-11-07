@@ -8,12 +8,12 @@ import org.jetbrains.idea.maven.project.MavenProjectModel;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-public class SelectMavenProjectDialog extends SelectFromMavenTreeDialog {
+public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
   private MavenProjectModel myResult;
 
   public SelectMavenProjectDialog(Project project, final MavenProjectModel current) {
-    super(project, "Select Maven Project", MavenTreeStructure.PomNode.class, new NodeSelector() {
-      public SimpleNode findNode(MavenTreeStructure.PomNode pomNode) {
+    super(project, "Select Maven Project", MavenProjectsStructure.PomNode.class, new NodeSelector() {
+      public SimpleNode findNode(MavenProjectsStructure.PomNode pomNode) {
         return pomNode.getProjectModel() == current ? pomNode : null;
       }
     });
@@ -38,11 +38,11 @@ public class SelectMavenProjectDialog extends SelectFromMavenTreeDialog {
     if (node instanceof NullNode) node = null;
 
     if (node != null) {
-      if (!(node instanceof MavenTreeStructure.PomNode)) {
-        ((MavenTreeStructure.CustomNode)node).getParent(MavenTreeStructure.PomNode.class);
+      if (!(node instanceof MavenProjectsStructure.PomNode)) {
+        ((MavenProjectsStructure.CustomNode)node).getParent(MavenProjectsStructure.PomNode.class);
       }
     }
-    myResult = node != null ? ((MavenTreeStructure.PomNode)node).getProjectModel() : null;
+    myResult = node != null ? ((MavenProjectsStructure.PomNode)node).getProjectModel() : null;
 
     super.doOKAction();
   }

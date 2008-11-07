@@ -17,14 +17,14 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 
-public class SelectFromMavenTreeDialog extends DialogWrapper {
+public class SelectFromMavenProjectsDialog extends DialogWrapper {
   private Project myProject;
   private SimpleTree myTree;
   private NodeSelector mySelector;
 
-  public SelectFromMavenTreeDialog(Project project,
+  public SelectFromMavenProjectsDialog(Project project,
                                    String title,
-                                   final Class<? extends MavenTreeStructure.CustomNode> nodeClass,
+                                   final Class<? extends MavenProjectsStructure.CustomNode> nodeClass,
                                    NodeSelector selector) {
     super(project, false);
     myProject = project;
@@ -36,7 +36,7 @@ public class SelectFromMavenTreeDialog extends DialogWrapper {
     myTree.setShowsRootHandles(true);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-    PopupMavenTreeStructure treeStructure = new PopupMavenTreeStructure(myProject) {
+    PopupMavenProjectsStructure treeStructure = new PopupMavenProjectsStructure(myProject) {
       @Override
       protected Class<? extends CustomNode>[] getVisibleNodesClasses() {
         return new Class[]{nodeClass};
@@ -70,17 +70,17 @@ public class SelectFromMavenTreeDialog extends DialogWrapper {
     return pane;
   }
 
-  private class PopupMavenTreeStructure extends MavenTreeStructure {
-    private PomTreeViewSettings myTreeViewSettings;
+  private class PopupMavenProjectsStructure extends MavenProjectsStructure {
+    private MavenProjectsNavigatorSettings myTreeViewSettings;
 
-    public PopupMavenTreeStructure(final Project project) {
+    public PopupMavenProjectsStructure(final Project project) {
       super(project,
             MavenProjectsManager.getInstance(project),
             MavenEventsManager.getInstance(project));
       myTreeViewSettings = MavenProjectsNavigator.getInstance(project).getTreeViewSettings();
     }
 
-    protected PomTreeViewSettings getTreeViewSettings() {
+    protected MavenProjectsNavigatorSettings getTreeViewSettings() {
       return myTreeViewSettings;
     }
 
@@ -106,6 +106,6 @@ public class SelectFromMavenTreeDialog extends DialogWrapper {
   }
 
   protected interface NodeSelector {
-    SimpleNode findNode(MavenTreeStructure.PomNode pomNode);
+    SimpleNode findNode(MavenProjectsStructure.PomNode pomNode);
   }
 }

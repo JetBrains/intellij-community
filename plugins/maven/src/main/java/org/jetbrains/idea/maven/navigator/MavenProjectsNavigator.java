@@ -38,14 +38,14 @@ import java.util.List;
 import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenProjectsNavigator extends MavenTreeStructure implements ProjectComponent, PersistentStateComponent<PomTreeViewSettings> {
+public class MavenProjectsNavigator extends MavenProjectsStructure implements ProjectComponent, PersistentStateComponent<MavenProjectsNavigatorSettings> {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
   private static final Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
   private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
   private static final URL SYNC_ICON_URL = MavenProjectsNavigator.class.getResource("/actions/sync.png");
 
-  private PomTreeViewSettings mySettings = new PomTreeViewSettings();
+  private MavenProjectsNavigatorSettings mySettings = new MavenProjectsNavigatorSettings();
 
   private SimpleTreeBuilder myTreeBuilder;
   private SimpleTree myTree;
@@ -271,22 +271,22 @@ public class MavenProjectsNavigator extends MavenTreeStructure implements Projec
   }
 
   private void initToolWindow() {
-    final JPanel navigatorPanel = new MavenNavigatorPanel(myProject, myProjectsManager, myTree);
+    final JPanel navigatorPanel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     ToolWindow pomToolWindow = ToolWindowManager.getInstance(myProject)
         .registerToolWindow(TOOL_WINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, myProject);
     pomToolWindow.setIcon(ICON);
   }
 
-  public PomTreeViewSettings getTreeViewSettings() {
+  public MavenProjectsNavigatorSettings getTreeViewSettings() {
     return mySettings;
   }
 
-  public PomTreeViewSettings getState() {
+  public MavenProjectsNavigatorSettings getState() {
     return mySettings;
   }
 
-  public void loadState(PomTreeViewSettings state) {
+  public void loadState(MavenProjectsNavigatorSettings state) {
     mySettings = state;
   }
 

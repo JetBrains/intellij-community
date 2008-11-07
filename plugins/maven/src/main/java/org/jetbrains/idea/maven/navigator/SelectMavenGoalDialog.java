@@ -3,13 +3,13 @@ package org.jetbrains.idea.maven.navigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.SimpleNode;
 
-public class SelectMavenGoalDialog extends SelectFromMavenTreeDialog {
+public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
   private String myPomPath;
   private String myGoal;
 
   public SelectMavenGoalDialog(Project project, final String pomPath, final String goal, String title) {
-    super(project, title, MavenTreeStructure.GoalNode.class, new NodeSelector() {
-      public SimpleNode findNode(MavenTreeStructure.PomNode pomNode) {
+    super(project, title, MavenProjectsStructure.GoalNode.class, new NodeSelector() {
+      public SimpleNode findNode(MavenProjectsStructure.PomNode pomNode) {
         if (pomNode.getProjectModel().getPath().equals(pomPath)) {
           return pomNode.findGoalNode(goal);
         }
@@ -27,9 +27,9 @@ public class SelectMavenGoalDialog extends SelectFromMavenTreeDialog {
     super.doOKAction();
 
     SimpleNode node = getSelectedNode();
-    if (node instanceof MavenTreeStructure.GoalNode) {
-      MavenTreeStructure.GoalNode goalNode = (MavenTreeStructure.GoalNode)node;
-      myPomPath = goalNode.getParent(MavenTreeStructure.PomNode.class).getProjectModel().getPath();
+    if (node instanceof MavenProjectsStructure.GoalNode) {
+      MavenProjectsStructure.GoalNode goalNode = (MavenProjectsStructure.GoalNode)node;
+      myPomPath = goalNode.getParent(MavenProjectsStructure.PomNode.class).getProjectModel().getPath();
       myGoal = goalNode.getGoal();
     }
   }

@@ -6,30 +6,26 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.runner.MavenGoalLocation;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-
-public class MavenNavigatorPanel extends JPanel implements DataProvider {
-
+public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implements DataProvider {
   private final Project myProject;
   private final SimpleTree myTree;
 
@@ -41,26 +37,21 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     }
   };
 
-  public MavenNavigatorPanel(Project project, MavenProjectsManager projectsManager, SimpleTree tree) {
+  public MavenProjectsNavigatorPanel(Project project, SimpleTree tree) {
+    super(true, true);
     myProject = project;
     myTree = tree;
 
-    setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+    JComponent toolbar = ActionManager.getInstance().createActionToolbar("New Maven Toolbar", (ActionGroup)ActionManager.getInstance()
+      .getAction("Maven.PomTreeToolbar"), true).getComponent();
+    JScrollPane pane = new JScrollPane(myTree);
 
-    add(ActionManager.getInstance().createActionToolbar("New Maven Toolbar", (ActionGroup)ActionManager.getInstance()
-      .getAction("Maven.PomTreeToolbar"), true).getComponent(),
-        new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints
-          .SIZEPOLICY_CAN_SHRINK | GridConstraints
-          .SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 20), null));
-
-    add(new JScrollPane(myTree), new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_BOTH,
-                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
-                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null,
-                                                     null, null));
+    setToolbar(toolbar);
+    setContent(pane);
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        final String id = getMenuId(getSelectedNodes(MavenTreeStructure.CustomNode.class));
+        final String id = getMenuId(getSelectedNodes(MavenProjectsStructure.CustomNode.class));
         if (id != null) {
           final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
           if (actionGroup != null) {
@@ -70,9 +61,9 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
       }
 
       @Nullable
-      private String getMenuId(Collection<? extends MavenTreeStructure.CustomNode> nodes) {
+      private String getMenuId(Collection<? extends MavenProjectsStructure.CustomNode> nodes) {
         String id = null;
-        for (MavenTreeStructure.CustomNode node : nodes) {
+        for (MavenProjectsStructure.CustomNode node : nodes) {
           String menuId = node.getMenuId();
           if (menuId == null) {
             return null;
@@ -110,14 +101,14 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private List<MavenProjectModel> extractPomNodes() {
     List<MavenProjectModel> result = new ArrayList<MavenProjectModel>();
-    for (MavenTreeStructure.PomNode each : getSelectedPomNodes()) {
+    for (MavenProjectsStructure.PomNode each : getSelectedPomNodes()) {
       result.add(each.getProjectModel());
     }
     return result.isEmpty() ? null : result;
   }
 
   private VirtualFile extractVirtualFile() {
-    final MavenTreeStructure.PomNode pomNode = getContextPomNode();
+    final MavenProjectsStructure.PomNode pomNode = getContextPomNode();
     if (pomNode == null) return null;
     VirtualFile file = pomNode.getFile();
     if (file == null || !file.isValid()) return null;
@@ -126,7 +117,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private Object extractVirtualFiles() {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (MavenTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
+    for (MavenProjectsStructure.PomNode pomNode : getSelectedPomNodes()) {
       VirtualFile file = pomNode.getFile();
       if (file.isValid()) {
         files.add(file);
@@ -145,7 +136,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private Object extractNavigatables() {
     final List<Navigatable> navigatables = new ArrayList<Navigatable>();
-    for (MavenTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
+    for (MavenProjectsStructure.PomNode pomNode : getSelectedPomNodes()) {
       final Navigatable navigatable = pomNode.getNavigatable();
       if (navigatable != null) {
         navigatables.add(navigatable);
@@ -155,7 +146,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
   }
 
   private List<String> extractGoals() {
-    final MavenTreeStructure.PomNode pomNode = getSelectedPomNode();
+    final MavenProjectsStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
       MavenProjectModel project = pomNode.getProjectModel();
       String goal = project.getDefaultGoal();
@@ -164,12 +155,12 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
       }
     }
     else {
-      final List<MavenTreeStructure.GoalNode> nodes = getSelectedNodes(MavenTreeStructure.GoalNode.class);
-      if (MavenTreeStructure.getCommonParent(nodes) == null) {
+      final List<MavenProjectsStructure.GoalNode> nodes = getSelectedNodes(MavenProjectsStructure.GoalNode.class);
+      if (MavenProjectsStructure.getCommonParent(nodes) == null) {
         return null;
       }
       final List<String> goals = new ArrayList<String>();
-      for (MavenTreeStructure.GoalNode node : nodes) {
+      for (MavenProjectsStructure.GoalNode node : nodes) {
         goals.add(node.getGoal());
       }
       Collections.sort(goals, myGoalOrderComparator);
@@ -179,36 +170,36 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
   }
 
   private Object extractProfiles() {
-    final List<MavenTreeStructure.ProfileNode> nodes = getSelectedNodes(MavenTreeStructure.ProfileNode.class);
+    final List<MavenProjectsStructure.ProfileNode> nodes = getSelectedNodes(MavenProjectsStructure.ProfileNode.class);
     final List<String> profiles = new ArrayList<String>();
-    for (MavenTreeStructure.ProfileNode node : nodes) {
+    for (MavenProjectsStructure.ProfileNode node : nodes) {
       profiles.add(node.getProfile());
     }
     return profiles;
   }
 
   private <T extends SimpleNode> List<T> getSelectedNodes(final Class<T> aClass) {
-    return MavenTreeStructure.getSelectedNodes(myTree, aClass);
+    return MavenProjectsStructure.getSelectedNodes(myTree, aClass);
   }
 
-  private List<MavenTreeStructure.PomNode> getSelectedPomNodes() {
-    return getSelectedNodes(MavenTreeStructure.PomNode.class);
+  private List<MavenProjectsStructure.PomNode> getSelectedPomNodes() {
+    return getSelectedNodes(MavenProjectsStructure.PomNode.class);
   }
 
   @Nullable
-  private MavenTreeStructure.PomNode getSelectedPomNode() {
-    final List<MavenTreeStructure.PomNode> pomNodes = getSelectedPomNodes();
+  private MavenProjectsStructure.PomNode getSelectedPomNode() {
+    final List<MavenProjectsStructure.PomNode> pomNodes = getSelectedPomNodes();
     return pomNodes.size() == 1 ? pomNodes.get(0) : null;
   }
 
   @Nullable
-  private MavenTreeStructure.PomNode getContextPomNode() {
-    final MavenTreeStructure.PomNode pomNode = getSelectedPomNode();
+  private MavenProjectsStructure.PomNode getContextPomNode() {
+    final MavenProjectsStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
       return pomNode;
     }
     else {
-      return MavenTreeStructure.getCommonParent(getSelectedNodes(MavenTreeStructure.CustomNode.class));
+      return MavenProjectsStructure.getCommonParent(getSelectedNodes(MavenProjectsStructure.CustomNode.class));
     }
   }
 
@@ -223,5 +214,4 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     Integer order = standardGoalOrder.get(goal);
     return order != null ? order.intValue() : standardGoalOrder.size();
   }
-
 }

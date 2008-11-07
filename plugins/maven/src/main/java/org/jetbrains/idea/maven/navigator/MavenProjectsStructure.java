@@ -34,7 +34,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
-public abstract class MavenTreeStructure extends SimpleTreeStructure {
+public abstract class MavenProjectsStructure extends SimpleTreeStructure {
   private static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
 
   private static final Icon OPEN_PROFILES_ICON = IconLoader.getIcon("/images/profilesOpen.png");
@@ -52,8 +52,8 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
   private static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
   private static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
 
-  private static final URL ERROR_ICON_URL = MavenTreeStructure.class.getResource("/images/error.png");
-  private static final URL WARNING_ICON_URL = MavenTreeStructure.class.getResource("/images/warning.png");
+  private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/images/error.png");
+  private static final URL WARNING_ICON_URL = MavenProjectsStructure.class.getResource("/images/warning.png");
 
   private static final CustomNode[] EMPTY_NODES_ARRAY = new CustomNode[0];
   protected final Project myProject;
@@ -65,7 +65,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
   protected final Collection<String> myStandardPhases = MavenEmbedderFactory.getStandardPhasesList();
   protected final Collection<String> myStandardGoals = MavenEmbedderFactory.getStandardGoalsList();
 
-  public MavenTreeStructure(Project project,
+  public MavenProjectsStructure(Project project,
                             MavenProjectsManager projectsManager,
                             MavenEventsManager eventsHandler) {
     myProject = project;
@@ -77,7 +77,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     return myRoot;
   }
 
-  protected abstract PomTreeViewSettings getTreeViewSettings();
+  protected abstract MavenProjectsNavigatorSettings getTreeViewSettings();
 
   protected abstract void updateTreeFrom(@Nullable SimpleNode node);
 
@@ -164,7 +164,6 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
   }
 
   public abstract class CustomNode extends SimpleNode {
-
     private CustomNode myStructuralParent;
     private ErrorLevel myNodeErrorLevel = ErrorLevel.NONE;
     private ErrorLevel myOverallErrorLevelCache = null;
@@ -574,7 +573,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
 
     @Nullable
     public Navigatable getNavigatable() {
-      return PsiManager.getInstance(MavenTreeStructure.this.myProject).findFile(myProjectModel.getFile());
+      return PsiManager.getInstance(MavenProjectsStructure.this.myProject).findFile(myProjectModel.getFile());
     }
 
     private void updateNode() {
@@ -775,7 +774,7 @@ public abstract class MavenTreeStructure extends SimpleTreeStructure {
     }
 
     public boolean containsAsModule(PomNode node) {
-      MavenProjectsManager m = MavenProjectsManager.getInstance(MavenTreeStructure.this.myProject);
+      MavenProjectsManager m = MavenProjectsManager.getInstance(MavenProjectsStructure.this.myProject);
       return m.isModuleOf(myProjectModel, node.myProjectModel);
     }
 
