@@ -581,8 +581,12 @@ public class GenericsHighlightUtil {
       return isUncheckedTypeArgumentConversion(((PsiArrayType)rTypeArg).getComponentType(), ((PsiArrayType)lTypeArg).getComponentType());
     }
     if (lTypeArg instanceof PsiArrayType || rTypeArg instanceof PsiArrayType) return false;
-    LOG.assertTrue(lTypeArg instanceof PsiClassType, lTypeArg);
-    LOG.assertTrue(rTypeArg instanceof PsiClassType, rTypeArg);
+    if (!(lTypeArg instanceof PsiClassType)) {
+      LOG.error(lTypeArg + "; "+lTypeArg.getClass());
+    }
+    if (!(rTypeArg instanceof PsiClassType)) {
+      LOG.error("right :"+rTypeArg + "; "+rTypeArg.getClass());
+    }
     return ((PsiClassType)lTypeArg).resolve() instanceof PsiTypeParameter ||
            ((PsiClassType)rTypeArg).resolve() instanceof PsiTypeParameter;
   }
@@ -1028,12 +1032,9 @@ public class GenericsHighlightUtil {
       PsiClass containingClass = ((PsiMember)element).getContainingClass();
       if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
         final String message;
-        if (element instanceof PsiClass) {
-          message = JavaErrorMessages.message("generics.type.arguments.on.raw.type");
-        }
-        else {
-          message = JavaErrorMessages.message("generics.type.arguments.on.raw.method");
-        }
+        message = element instanceof PsiClass
+                  ? JavaErrorMessages.message("generics.type.arguments.on.raw.type")
+                  : JavaErrorMessages.message("generics.type.arguments.on.raw.method");
 
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, refParamList, message);
       }
