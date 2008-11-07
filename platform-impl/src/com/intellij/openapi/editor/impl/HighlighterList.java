@@ -15,6 +15,19 @@ public class HighlighterList {
   private final DocumentAdapter myDocumentListener;
   private final Document myDoc;
   private int myLongestHighlighterLength = 0;
+  private static final Comparator<RangeHighlighterImpl> MY_RANGE_COMPARATOR = new Comparator<RangeHighlighterImpl>() {
+    public int compare(RangeHighlighterImpl r1, RangeHighlighterImpl r2) {
+      if (r1.getAffectedAreaStartOffset() != r2.getAffectedAreaStartOffset()) {
+        return r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
+      }
+
+      if (r1.getLayer() != r2.getLayer()) {
+        return r2.getLayer() - r1.getLayer();
+      }
+
+      return (int) (r2.getId() - r1.getId());
+    }
+  };
 
   public HighlighterList(Document doc) {
     myDocumentListener = new DocumentAdapter() {
@@ -48,19 +61,7 @@ public class HighlighterList {
         iterator.remove();
       }
     }
-    Collections.sort(mySegmentHighlighters, new Comparator<RangeHighlighterImpl>() {
-      public int compare(RangeHighlighterImpl r1, RangeHighlighterImpl r2) {
-        if (r1.getAffectedAreaStartOffset() != r2.getAffectedAreaStartOffset()) {
-          return r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
-        }
-
-        if (r1.getLayer() != r2.getLayer()) {
-          return r2.getLayer() - r1.getLayer();
-        }
-
-        return (int) (r2.getId() - r1.getId());
-      }
-    });
+    Collections.sort(mySegmentHighlighters, MY_RANGE_COMPARATOR);
 
     myIsDirtied = false;
   }
@@ -75,12 +76,12 @@ public class HighlighterList {
     return mySegmentHighlighters;
   }
 
-  public void addSegmentHighlighter(RangeHighlighter segmentHighlighter) {
+  void addSegmentHighlighter(RangeHighlighter segmentHighlighter) {
     myIsDirtied = true;
     myHighlightersSet.add(segmentHighlighter);
   }
 
-  public void removeSegmentHighlighter(RangeHighlighter segmentHighlighter) {
+  void removeSegmentHighlighter(RangeHighlighter segmentHighlighter) {
     myIsDirtied = true;
     myHighlightersSet.remove(segmentHighlighter);
   }

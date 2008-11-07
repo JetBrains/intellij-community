@@ -1,5 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
@@ -60,6 +61,7 @@ public final class IterationState {
   private final Color myReadOnlyColor;
 
   public IterationState(EditorEx editor, int start, boolean useCaretAndSelection) {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
     myDocument = (DocumentImpl)editor.getDocument();
     myStartOffset = start;
     myEnd = editor.getDocument().getTextLength();
