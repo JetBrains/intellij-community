@@ -1,24 +1,24 @@
-
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2000-2007 JetBrains s.r.o.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 package com.intellij.ui;
 
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -27,6 +27,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Enumeration;
 
 
@@ -38,6 +40,7 @@ public class CheckboxTreeBase extends Tree {
   public CheckboxTreeBase(final CheckboxTreeCellRendererBase cellRenderer, CheckedTreeNode root) {
     this(cellRenderer, root, DEFAULT_POLICY);
   }
+
   public CheckboxTreeBase(final CheckboxTreeCellRendererBase cellRenderer, CheckedTreeNode root, CheckPolicy checkPolicy) {
 
     myCheckPolicy = checkPolicy;
@@ -57,7 +60,7 @@ public class CheckboxTreeBase extends Tree {
           Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
           checkBounds.setLocation(rowBounds.getLocation());
 
-          final CheckedTreeNode node = (CheckedTreeNode) getPathForRow(row).getLastPathComponent();
+          final CheckedTreeNode node = (CheckedTreeNode)getPathForRow(row).getLastPathComponent();
           if (checkBounds.contains(e.getPoint())) {
             if (node.isEnabled()) {
               toggleNode(node);
@@ -72,28 +75,26 @@ public class CheckboxTreeBase extends Tree {
       }
     });
 
-    addKeyListener(
-      new KeyAdapter() {
-        public void keyPressed(KeyEvent e) {
-          if(isToggleEvent(e)) {
-            TreePath treePath = getLeadSelectionPath();
-            if (treePath == null) return;
-            CheckedTreeNode firstNode = (CheckedTreeNode)treePath.getLastPathComponent();
-            boolean checked = toggleNode(firstNode);
+    addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (isToggleEvent(e)) {
+          TreePath treePath = getLeadSelectionPath();
+          if (treePath == null) return;
+          CheckedTreeNode firstNode = (CheckedTreeNode)treePath.getLastPathComponent();
+          boolean checked = toggleNode(firstNode);
 
-            TreePath[] selectionPaths = getSelectionPaths();
-            for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
-              final TreePath selectionPath = selectionPaths[i];
-              CheckedTreeNode node = (CheckedTreeNode)selectionPath.getLastPathComponent();
-              checkNode(node,checked);
-              ((DefaultTreeModel) getModel()).nodeChanged(node);
-            }
-
-            e.consume();
+          TreePath[] selectionPaths = getSelectionPaths();
+          for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
+            final TreePath selectionPath = selectionPaths[i];
+            CheckedTreeNode node = (CheckedTreeNode)selectionPath.getLastPathComponent();
+            checkNode(node, checked);
+            ((DefaultTreeModel)getModel()).nodeChanged(node);
           }
+
+          e.consume();
         }
       }
-    );
+    });
 
     setSelectionRow(0);
     setModel(new DefaultTreeModel(root));
@@ -116,6 +117,50 @@ public class CheckboxTreeBase extends Tree {
 
     return checked;
   }
+
+  /**
+   * Collect checked leaf nodes of the type {@code nodeType} and that are accepted by
+   * {@code filter}
+   *
+   * @param nodeType the type of userobject to consider
+   * @param filter   the filter (if null all nodes are accepted)
+   * @param <T>      the type of the node
+   * @return an array of collected nodes
+   */
+  @SuppressWarnings("unchecked")
+  public <T> T[] getCheckedNodes(final Class<T> nodeType, @Nullable final NodeFilter<T> filter) {
+    final ArrayList<T> nodes = new ArrayList<T>();
+    final Object root = getModel().getRoot();
+    if (!(root instanceof CheckedTreeNode)) {
+      throw new IllegalStateException(
+        "The root must be instance of the " + CheckedTreeNode.class.getName() + ": " + root.getClass().getName());
+    }
+    new Object() {
+      @SuppressWarnings("unchecked")
+      public void collect(CheckedTreeNode node) {
+        if (node.isLeaf()) {
+          Object userObject = node.getUserObject();
+          if (node.isChecked() && userObject != null && nodeType.isAssignableFrom(userObject.getClass())) {
+            final T value = (T)userObject;
+            if (filter != null && !filter.accept(value)) return;
+            nodes.add(value);
+          }
+        }
+        else {
+          for (int i = 0; i < node.getChildCount(); i++) {
+            final TreeNode child = node.getChildAt(i);
+            if (child instanceof CheckedTreeNode) {
+              collect((CheckedTreeNode)child);
+            }
+          }
+        }
+      }
+    }.collect((CheckedTreeNode)root);
+    T[] result = (T[])Array.newInstance(nodeType, nodes.size());
+    nodes.toArray(result);
+    return result;
+  }
+
 
   public int getToggleClickCount() {
     // to prevent node expanding/collapsing on checkbox toggling
@@ -248,12 +293,12 @@ public class CheckboxTreeBase extends Tree {
     }
 
     public final Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean selected,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
+                                                        Object value,
+                                                        boolean selected,
+                                                        boolean expanded,
+                                                        boolean leaf,
+                                                        int row,
+                                                        boolean hasFocus) {
       invalidate();
       if (value instanceof CheckedTreeNode) {
         CheckedTreeNode node = (CheckedTreeNode)value;
@@ -274,8 +319,7 @@ public class CheckboxTreeBase extends Tree {
     }
 
     private NodeState getNodeStatus(final CheckedTreeNode node) {
-      if (node.getChildCount() == 0)
-        return node.isChecked() ? NodeState.FULL : NodeState.CLEAR;
+      if (node.getChildCount() == 0) return node.isChecked() ? NodeState.FULL : NodeState.CLEAR;
 
       NodeState result = null;
 
@@ -301,15 +345,13 @@ public class CheckboxTreeBase extends Tree {
      * This method is invoked only for customization of component.
      * All component attributes are cleared when this method is being invoked.
      */
-    public abstract void customizeCellRenderer(
-      JTree tree,
-      Object value,
-      boolean selected,
-      boolean expanded,
-      boolean leaf,
-      int row,
-      boolean hasFocus
-    );
+    public abstract void customizeCellRenderer(JTree tree,
+                                               Object value,
+                                               boolean selected,
+                                               boolean expanded,
+                                               boolean leaf,
+                                               int row,
+                                               boolean hasFocus);
 
     public ColoredTreeCellRenderer getTextRenderer() {
       return myTextRenderer;
