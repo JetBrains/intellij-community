@@ -39,12 +39,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     IElementType opCode = SourceTreeToPsiMap.psiElementToTree(getOperationSign()).getElementType();
     if (opCode == JavaTokenType.PLUS || opCode == JavaTokenType.MINUS || opCode == JavaTokenType.TILDE) {
       if (type == null) return null;
-      if (type == PsiType.BYTE || type == PsiType.CHAR || type == PsiType.SHORT) {
-        return PsiType.INT;
-      }
-      else {
-        return type;
-      }
+      return type == PsiType.BYTE || type == PsiType.CHAR || type == PsiType.SHORT ? PsiType.INT : type;
     }
     else if (opCode == JavaTokenType.PLUSPLUS || opCode == JavaTokenType.MINUSMINUS) {
       return type;

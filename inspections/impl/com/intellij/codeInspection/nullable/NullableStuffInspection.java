@@ -7,7 +7,6 @@ import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -107,7 +106,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     private final boolean isDeclaredNotNull;
     private final boolean isDeclaredNullable;
 
-    public Annotated(final boolean isDeclaredNotNull, final boolean isDeclaredNullable) {
+    private Annotated(final boolean isDeclaredNotNull, final boolean isDeclaredNullable) {
       this.isDeclaredNotNull = isDeclaredNotNull;
       this.isDeclaredNullable = isDeclaredNullable;
     }
@@ -231,6 +230,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           if (!methodQuickFixSuggested
               && annotated.isDeclaredNotNull
               && !AnnotationUtil.isAnnotated(overriding, AnnotationUtil.NOT_NULL, false)) {
+            method.getNameIdentifier(); //load tree
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, AnnotationUtil.NOT_NULL);
             holder.registerProblem(annotation, InspectionsBundle.message("nullable.stuff.problems.overridden.methods.are.not.annotated"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, ANNOTATE_OVERRIDDEN_METHODS_FIX);
