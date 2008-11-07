@@ -25,7 +25,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -56,21 +55,20 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        checkAccessStaticMemberViaInstanceReference(expression, expression.advancedResolve(false), holder);
+        checkAccessStaticMemberViaInstanceReference(expression, holder);
       }
     };
   }
 
-  @Nullable
-  static void checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, JavaResolveResult result, ProblemsHolder holder) {
+  private static void checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, ProblemsHolder holder) {
+    JavaResolveResult result = expr.advancedResolve(false);
     PsiElement resolved = result.getElement();
 
     if (!(resolved instanceof PsiMember)) return;
     PsiExpression qualifierExpression = expr.getQualifierExpression();
     if (qualifierExpression == null) return;
 
-    if (qualifierExpression instanceof PsiReferenceExpression &&
-        ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) {
+    if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) {
       return;
     }
     if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return;

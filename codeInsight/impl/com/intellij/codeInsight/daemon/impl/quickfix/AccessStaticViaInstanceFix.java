@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class AccessStaticViaInstanceFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix");
-
   private final PsiReferenceExpression myExpression;
   private final PsiMember myMember;
   private final JavaResolveResult myResult;
@@ -49,23 +48,13 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
     try {
       PsiExpression qualifierExpression = myExpression.getQualifierExpression();
       PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      if (qualifierExpression instanceof PsiThisExpression &&
-          ((PsiThisExpression) qualifierExpression).getQualifier() == null) {
-        // this.field -> field
-        qualifierExpression.delete();
+      if (qualifierExpression != null) {
+        PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
+        PsiElement qualifiedWithClassName = myExpression.copy();
+        newQualifier.delete();
         if (myExpression.resolve() != myMember) {
-          PsiReferenceExpression expr = (PsiReferenceExpression) factory.createExpressionFromText("A.foo", myExpression);
-          final PsiExpression qualifierReplacement = expr.getQualifierExpression();
-          LOG.assertTrue(qualifierReplacement != null);
-          qualifierReplacement.replace(factory.createReferenceExpression(containingClass));
-          final PsiElement referenceReplacement = expr.getReferenceNameElement();
-          LOG.assertTrue(referenceReplacement != null);
-          referenceReplacement.replace(myExpression);
-          myExpression.replace(expr);
+          myExpression.replace(qualifiedWithClassName);
         }
-      }
-      else if (qualifierExpression != null) {
-        qualifierExpression.replace(factory.createReferenceExpression(containingClass));
       }
 
       PsiFile containingFile = myMember.getContainingFile();
