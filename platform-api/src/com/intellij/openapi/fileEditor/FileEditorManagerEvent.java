@@ -25,13 +25,11 @@ public final class FileEditorManagerEvent extends EventObject {
   private final VirtualFile myNewFile;
   private final FileEditor myNewEditor;
 
-  public FileEditorManagerEvent(
-    FileEditorManager source,
-    VirtualFile oldFile,
-    FileEditor oldEditor,
-    VirtualFile newFile,
-    FileEditor newEditor
-  ){
+  public FileEditorManagerEvent(FileEditorManager source,
+                                VirtualFile oldFile,
+                                FileEditor oldEditor,
+                                VirtualFile newFile,
+                                FileEditor newEditor) {
     super(source);
     myOldFile = oldFile;
     myOldEditor = oldEditor;

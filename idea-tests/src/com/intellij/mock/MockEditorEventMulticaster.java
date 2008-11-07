@@ -55,7 +55,4 @@ public class MockEditorEventMulticaster implements EditorEventMulticaster {
   public void removeVisibleAreaListener(VisibleAreaListener listener) {
   }
 
-  public DocumentListener getDocumentMulticaster() {
-    return null;
-  }
 }
