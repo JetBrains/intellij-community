@@ -4,7 +4,6 @@ public class Extracted {
     public Extracted() {
     }
 
-
     public int getMyT() {
         return myT;
     }

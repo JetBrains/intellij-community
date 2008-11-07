@@ -87,7 +87,6 @@ class ExtractedClassBuilder {
     @NonNls final StringBuffer out = new StringBuffer(1024);
     if (packageName.length() > 0) out.append("package " + packageName + ';');
 
-    out.append('\n');
     out.append("public ");
     if (hasAbstractMethod()) {
       out.append("abstract ");
@@ -106,7 +105,6 @@ class ExtractedClassBuilder {
       }
       out.append('>');
     }
-    out.append('\n');
     if (!interfaces.isEmpty()) {
       out.append("implements ");
       boolean first = true;
@@ -134,17 +132,15 @@ class ExtractedClassBuilder {
         }
         out.append('>');
       }
-      out.append(' ' + backPointerName + ";\n");
+      out.append(' ' + backPointerName + ";");
     }
     outputFieldsAndInitializers(out);
-    out.append('\n');
     if (hasNonStatic() || requiresBackPointer) {
       outputConstructor(out);
-      out.append('\n');
     }
     outputMethods(out);
     outputInnerClasses(out);
-    out.append("}\n");
+    out.append("}");
     return out.toString();
   }
 
@@ -209,14 +205,12 @@ class ExtractedClassBuilder {
   private void outputMethods(StringBuffer out) {
     for (PsiMethod method : methods) {
       outputMutatedMethod(out, method);
-      out.append('\n');
     }
   }
 
   private void outputInnerClasses(StringBuffer out) {
     for (PsiClass innerClass : innerClasses) {
       outputMutatedInnerClass(out, innerClass, innerClassesToMakePublic.contains(innerClass));
-      out.append('\n');
     }
   }
 
@@ -253,7 +247,6 @@ class ExtractedClassBuilder {
         final PsiClassInitializer initializer = initializersIterator.next();
         if (initializer.getTextRange().getStartOffset() < fieldOffset) {
           outputMutatedInitializer(out, initializer);
-          out.append('\n');
           initializersIterator.remove();
         }
       }
@@ -262,7 +255,6 @@ class ExtractedClassBuilder {
     }
     for (PsiClassInitializer initializer : remainingInitializers) {
       outputMutatedInitializer(out, initializer);
-      out.append('\n');
     }
   }
 
@@ -324,15 +316,15 @@ class ExtractedClassBuilder {
       out.append(typeText + ' ' + parameterName);
     }
 
-    out.append(")\n");
-    out.append("\t{\n");
+    out.append(")");
+    out.append("\t{");
     if (requiresBackPointer) {
       final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(backPointerName, VariableKind.PARAMETER);
       if (backPointerName.equals(parameterName)) {
-        out.append("\t\tthis." + backPointerName + " = " + parameterName + ";\n");
+        out.append("\t\tthis." + backPointerName + " = " + parameterName + ";");
       }
       else {
-        out.append("\t\t" + backPointerName + " = " + parameterName + ";\n");
+        out.append("\t\t" + backPointerName + " = " + parameterName + ";");
       }
 
     }
@@ -352,21 +344,19 @@ class ExtractedClassBuilder {
       .propertyNameToVariableName(name, field.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
       final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
       if (fieldName.equals(parameterName)) {
-        out.append("\t\tthis." + fieldName + " = " + parameterName + ";\n");
+        out.append("\t\tthis." + fieldName + " = " + parameterName + ";");
       }
       else {
-        out.append("\t\t" + fieldName + " = " + parameterName + ";\n");
+        out.append("\t\t" + fieldName + " = " + parameterName + ";");
       }
     }
-    out.append("\t}\n");
-    out.append('\n');
+    out.append("\t}");
   }
 
   private void outputField(PsiField field, @NonNls StringBuffer out) {
     final PsiDocComment docComment = getJavadocForVariable(field);
     if (docComment != null) {
       out.append(docComment.getText());
-      out.append('\n');
     }
     final PsiType type = field.getType();
     final String typeText = type.getCanonicalText();
@@ -408,7 +398,7 @@ class ExtractedClassBuilder {
         out.append(initializer.getText());
       }
     }
-    out.append(";\n");
+    out.append(";");
   }
 
   private static PsiDocComment getJavadocForVariable(PsiVariable variable) {

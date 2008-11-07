@@ -3,6 +3,4 @@ public class Extracted<T> {
 
     public Extracted() {
     }
-
-
 }

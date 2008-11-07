@@ -6,7 +6,6 @@ public class Extracted<T> {
         this.test = test;
     }
 
-
     void bar() {
         test.foo(myT);
     }
