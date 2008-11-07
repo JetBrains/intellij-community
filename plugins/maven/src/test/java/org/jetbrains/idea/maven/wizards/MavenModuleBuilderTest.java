@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -193,6 +194,18 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                  "    <version>1.0</version>\n" +
                  "</project>",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")));
+  }
+
+  public void testFindingPotentialParentInNotMavenizedProject() throws Exception {
+    Module module = createModule("project");
+    VirtualFile dir = module.getModuleFile().getParent();
+    dir.createChildData(this, "pom.xml");
+
+    setModuleNameAndRoot("module", dir.getPath() + "/module");
+    
+     // should not throw
+    MavenProjectModel project = myBuilder.findPotentialParentProject(myProject);
+    assertNull(project);
   }
 
   private void setModuleNameAndRoot(String name, String root) {

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import javax.swing.*;
@@ -161,7 +162,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public void updateStep() {
-    if (myProjectOrNull != null) {
+    if (isMavenizedProject()) {
       MavenProjectModel parent = myBuilder.findPotentialParentProject(myProjectOrNull);
       myAggregator = parent;
       myParent = parent;
@@ -202,8 +203,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     updateComponents();
   }
 
+  private boolean isMavenizedProject() {
+    return myProjectOrNull != null
+           && MavenProjectsManager.getInstance(myProjectOrNull).isInitialized()
+           && MavenProjectsManager.getInstance(myProjectOrNull).isMavenizedProject();
+  }
+
   private void updateComponents() {
-    if (myProjectOrNull == null) {
+    if (!isMavenizedProject()) {
       myAggregatorLabel.setEnabled(false);
       myAggregatorNameLabel.setEnabled(false);
       mySelectAggregator.setEnabled(false);
@@ -214,7 +221,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     }
     myAggregatorNameLabel.setText(formatProjectString(myAggregator));
     myParentNameLabel.setText(formatProjectString(myParent));
-
 
     if (myParent == null) {
       myGroupIdField.setEnabled(true);
