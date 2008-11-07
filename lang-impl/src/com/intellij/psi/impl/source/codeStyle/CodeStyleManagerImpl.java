@@ -338,9 +338,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   @Nullable
   public String getLineIndent(@NotNull PsiFile file, int offset) {
+    if (file instanceof PsiCompiledElement) {
+      file = (PsiFile)((PsiCompiledElement)file).getMirror();
+    }
     final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
-    if( element == null )
-    {
+    if (element == null) {
       return null;
     }
     if (element instanceof PsiComment && insideElement(element, offset)) {
@@ -354,12 +356,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       final TextRange significantRange = getSignificantRange(file, offset);
       final FormattingModel model = builder.createModel(file, settings);
 
-      return FormatterEx.getInstanceEx().getLineIndent(model,
-                                                       settings,
-                                                       indentOptions,
-                                                       offset,
-                                                       significantRange);
-    } else {
+      return FormatterEx.getInstanceEx().getLineIndent(model, settings, indentOptions, offset, significantRange);
+    }
+    else {
       return null;
     }
   }
