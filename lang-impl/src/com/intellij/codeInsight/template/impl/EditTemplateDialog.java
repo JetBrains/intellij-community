@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -51,9 +50,14 @@ public class EditTemplateDialog extends DialogWrapper {
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
+  private final Map<TemplateOptionalProcessor, Boolean> myOptions;
+  private final Map<TemplateContextType, Boolean> myContext;
 
-  public EditTemplateDialog(Component parent, String title, TemplateImpl template, List<TemplateGroup> groups, String defaultShortcut) {
+  public EditTemplateDialog(Component parent, String title, TemplateImpl template, List<TemplateGroup> groups, String defaultShortcut,
+                            Map<TemplateOptionalProcessor, Boolean> options, Map<TemplateContextType, Boolean> context) {
     super(parent, true);
+    myOptions = options;
+    myContext = context;
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
 
@@ -225,7 +229,7 @@ public class EditTemplateDialog extends DialogWrapper {
     myCbReformat = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.reformat.according.to.style"));
     panel.add(myCbReformat, gbConstraints);
 
-    for(TemplateOptionalProcessor processor: Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+    for(TemplateOptionalProcessor processor: myOptions.keySet()) {
       gbConstraints.gridy++;
       JCheckBox cb = new JCheckBox(processor.getOptionName());
       panel.add(cb, gbConstraints);
@@ -255,10 +259,9 @@ public class EditTemplateDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
 
-    final Collection<TemplateContextType> contextTypes = TemplateManagerImpl.getAllContextTypes();
     int row = 0;
     int col = 0;
-    for (TemplateContextType contextType : contextTypes) {
+    for (TemplateContextType contextType : myContext.keySet()) {
       gbConstraints.gridy = row;
       gbConstraints.gridx = col;
       JCheckBox cb = new JCheckBox(contextType.getName());
@@ -266,7 +269,7 @@ public class EditTemplateDialog extends DialogWrapper {
       panel.add(cb, gbConstraints);
       myCbContextMap.put(contextType, cb);
 
-      if (row == (contextTypes.size() + 1) / 2 - 1) {
+      if (row == (myContext.size() + 1) / 2 - 1) {
         row = 0;
         col = 1;
       }
@@ -307,7 +310,7 @@ public class EditTemplateDialog extends DialogWrapper {
 
   private void updateHighlighter() {
     TemplateContext templateContext = new TemplateContext();
-    updateTemplateContext(templateContext);
+    updateTemplateContext();
     TemplateEditorUtil.setHighlighter(myTemplateEditor, templateContext);
     ((EditorEx) myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
   }
@@ -395,14 +398,14 @@ public class EditTemplateDialog extends DialogWrapper {
 
     for(TemplateContextType type: myCbContextMap.keySet()) {
       JCheckBox cb = myCbContextMap.get(type);
-      cb.setSelected(type.isEnabled(myTemplate.getTemplateContext()));
+      cb.setSelected(myContext.get(type).booleanValue());
     }
 
     myCbReformat.setSelected(myTemplate.isToReformat());
 
     for(TemplateOptionalProcessor processor: myCbOptionalProcessorMap.keySet()) {
       JCheckBox cb = myCbOptionalProcessorMap.get(processor);
-      cb.setSelected(processor.isEnabled(myTemplate));
+      cb.setSelected(myOptions.get(processor).booleanValue());
 
     }
     myExpandByCombo.setEnabled(!isEnabledInStaticContextOnly());
@@ -442,22 +445,22 @@ public class EditTemplateDialog extends DialogWrapper {
                              variable.isAlwaysStopAt());
     }
 
-    updateTemplateContext(myTemplate.getTemplateContext());
+    updateTemplateContext();
 
     myTemplate.setToReformat(myCbReformat.isSelected());
-    for(TemplateOptionalProcessor processor: myCbOptionalProcessorMap.keySet()) {
-      JCheckBox cb = myCbOptionalProcessorMap.get(processor);
-      processor.setEnabled(myTemplate, cb.isSelected());
+    for(TemplateOptionalProcessor option: myCbOptionalProcessorMap.keySet()) {
+      JCheckBox cb = myCbOptionalProcessorMap.get(option);
+      myOptions.put(option, cb.isSelected());
     }
 
     myTemplate.setString(myTemplateEditor.getDocument().getText());
     myTemplate.parseSegments();
   }
 
-  private void updateTemplateContext(TemplateContext templateContext) {
+  private void updateTemplateContext() {
     for(TemplateContextType type: myCbContextMap.keySet()) {
       JCheckBox cb = myCbContextMap.get(type);
-      type.setEnabled(templateContext, cb.isSelected());
+      myContext.put(type, cb.isSelected());
     }
   }
 

@@ -14,6 +14,7 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.EditTemplateDialog;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -125,17 +126,22 @@ public class SaveAsTemplateAction extends AnAction {
       defaultShortcut = CodeInsightBundle.message("template.shortcut.space");
     }
 
+    Map<TemplateOptionalProcessor, Boolean> options = template.createOptions();
+    Map<TemplateContextType, Boolean> context = template.createContext();
+
     EditTemplateDialog dialog = new EditTemplateDialog(
       editor.getComponent(),
       CodeInsightBundle.message("dialog.edit.live.template.title"),
       template,
       templateSettings.getTemplateGroups(),
-      defaultShortcut);
+      defaultShortcut, options, context);
     dialog.show();
     if (!dialog.isOK()) {
       return;
     }
     dialog.apply();
+    template.applyOptions(options);
+    template.applyContext(context);
     templateSettings.addTemplate(template);
     templateSettings.setLastSelectedTemplateKey(template.getKey());
   }

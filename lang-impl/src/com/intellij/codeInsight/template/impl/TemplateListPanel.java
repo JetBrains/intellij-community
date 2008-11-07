@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -10,7 +11,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
@@ -25,9 +25,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 class TemplateListPanel extends JPanel {
@@ -52,8 +50,9 @@ class TemplateListPanel extends JPanel {
   private boolean myUpdateNeeded = false;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateListPanel");
-  private static final Icon TEMPLATE_ICON = IconLoader.getIcon("/general/template.png");
-  private static final Icon TEMPLATE_GROUP_ICON = IconLoader.getIcon("/general/templateGroup.png");
+
+  private final Map<TemplateImpl, Map<TemplateOptionalProcessor, Boolean>> myTemplateOptions = new LinkedHashMap<TemplateImpl, Map<TemplateOptionalProcessor, Boolean>>();
+  private final Map<TemplateImpl, Map<TemplateContextType, Boolean>> myTemplateContext = new LinkedHashMap<TemplateImpl, Map<TemplateContextType, Boolean>>();
 
   public TemplateListPanel() {
     setLayout(new BorderLayout());
@@ -65,6 +64,9 @@ class TemplateListPanel extends JPanel {
   }
 
   public void reset() {
+    myTemplateOptions.clear();
+    myTemplateContext.clear();
+
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     List<TemplateGroup> groups = new ArrayList<TemplateGroup>(templateSettings.getTemplateGroups());
 
@@ -102,7 +104,14 @@ class TemplateListPanel extends JPanel {
 
   public void apply() {
     TemplateSettings templateSettings = TemplateSettings.getInstance();
-    templateSettings.setTemplates(getTemplateGroups());
+    List<TemplateGroup> templateGroups = getTemplateGroups();
+    for (TemplateGroup templateGroup : templateGroups) {
+      for (TemplateImpl template : templateGroup.getElements()) {
+        template.applyOptions(myTemplateOptions.get(template));
+        template.applyContext(myTemplateContext.get(template));
+      }
+    }
+    templateSettings.setTemplates(templateGroups);
     templateSettings.setDefaultShortcutChar(getDefaultShortcutChar());
     isModified = false;
   }
@@ -350,7 +359,8 @@ class TemplateListPanel extends JPanel {
     String oldGroupName = template.getGroupName();
 
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem());
+                                                       (String)myExpandByCombo.getSelectedItem(), myTemplateOptions.get(template),
+                                                       myTemplateContext.get(template));
     dialog.show();
     if (!dialog.isOK()) return;
 
@@ -421,8 +431,10 @@ class TemplateListPanel extends JPanel {
 
   private void addRow() {
     TemplateImpl template = new TemplateImpl("", "", TemplateSettings.USER_GROUP_NAME);
+    myTemplateOptions.put(template, template.createOptions());
+    myTemplateContext.put(template, template.createContext());
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem());
+                                                       (String)myExpandByCombo.getSelectedItem(), myTemplateOptions.get(template), myTemplateContext.get(template));
     dialog.show();
     if (!dialog.isOK()) return;
     dialog.apply();
@@ -438,8 +450,10 @@ class TemplateListPanel extends JPanel {
     TemplateImpl orTemplate = getTemplate(selected);
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
+    myTemplateOptions.put(template, template.createOptions());
+    myTemplateContext.put(template, template.createContext());
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplateGroups(),
-                                                       (String)myExpandByCombo.getSelectedItem());
+                                                       (String)myExpandByCombo.getSelectedItem(), myTemplateOptions.get(template), myTemplateContext.get(template));
     dialog.show();
     if (!dialog.isOK()) return;
 
@@ -781,6 +795,8 @@ class TemplateListPanel extends JPanel {
       });
       for (final Object groupTemplate : templates) {
         TemplateImpl template = (TemplateImpl)groupTemplate;
+        myTemplateOptions.put(template, template.createOptions());
+        myTemplateContext.put(template, template.createContext());
         CheckedTreeNode node = new CheckedTreeNode(template);
         node.setChecked(!template.isDeactivated());
         groupNode.add(node);

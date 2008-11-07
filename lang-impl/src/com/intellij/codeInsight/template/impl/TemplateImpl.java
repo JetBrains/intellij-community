@@ -2,15 +2,14 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  *
@@ -365,6 +364,37 @@ public class TemplateImpl implements Template, SchemeElement {
 
   public void setId(final String id) {
     myId = id;
+  }
+
+  public Map<TemplateOptionalProcessor, Boolean> createOptions() {
+    Map<TemplateOptionalProcessor, Boolean> context = new LinkedHashMap<TemplateOptionalProcessor, Boolean>();
+    for (TemplateOptionalProcessor processor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+      context.put(processor, processor.isEnabled(this));
+    }
+    return context;
+  }
+
+  public Map<TemplateContextType, Boolean> createContext(){
+    final Collection<TemplateContextType> contextTypes = TemplateManagerImpl.getAllContextTypes();
+
+    Map<TemplateContextType, Boolean> context = new LinkedHashMap<TemplateContextType, Boolean>();
+    for (TemplateContextType processor : contextTypes) {
+      context.put(processor, processor.isEnabled(getTemplateContext()));
+    }
+    return context;
+
+  }
+
+  public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {
+    for (TemplateOptionalProcessor processor : context.keySet()) {
+      processor.setEnabled(this,  context.get(processor).booleanValue());
+    }
+  }
+
+  public void applyContext(final Map<TemplateContextType, Boolean> context) {
+    for (TemplateContextType processor : context.keySet()) {
+      processor.setEnabled(getTemplateContext(), context.get(processor).booleanValue());
+    }
   }
 
   private static class Segment {
