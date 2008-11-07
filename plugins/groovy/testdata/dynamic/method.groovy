@@ -1,1 +1,1 @@
-def s = doo()
+def s = <caret>doo()

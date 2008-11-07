@@ -1,7 +1,7 @@
 public class Testt {
     /**
       * @testng.before-suite
-      * <caret>@testng.after-test
+      * @<caret>testng.after-test
      */
     public void afterBefore(){
     }

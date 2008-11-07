@@ -14,8 +14,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
@@ -46,6 +46,31 @@ public class DynamicTest extends GroovyFileSetTestCase {
 
   public String getSearchPattern() {
     return "(.*)\\.groovy";
+  }
+
+  @Override
+  protected void setUp() {
+    super.setUp();
+    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
+    myCodeInsightFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
+    myCodeInsightFixture.setTestDataPath(TestUtils.getTestDataPath());
+    try {
+      myCodeInsightFixture.setUp();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected void tearDown() {
+    try {
+      myCodeInsightFixture.tearDown();
+      myCodeInsightFixture = null;
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    super.tearDown();
   }
 
   protected void runTest(final File file) throws Throwable {
@@ -92,11 +117,6 @@ public class DynamicTest extends GroovyFileSetTestCase {
     final PsiFile myFile = PsiManager.getInstance(project).findFile(virtualFile);
     assert myFile != null;
 
-    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
-    myCodeInsightFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    myCodeInsightFixture.setTestDataPath(TestUtils.getTestDataPath());
-    myCodeInsightFixture.setUp();
-
     final List<IntentionAction> actions = myCodeInsightFixture.getAvailableIntentions("/dynamic/" + relPath);
 
     DynamicFix dynamicFix = null;
@@ -134,17 +154,6 @@ public class DynamicTest extends GroovyFileSetTestCase {
     }
 
     return new Pair<String, DItemElement>(classDefinition.getQualifiedName(), itemElement);
-  }
-
-  protected void tearDown() {
-    try {
-      myCodeInsightFixture.tearDown();
-      myCodeInsightFixture = null;
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-    super.tearDown();
   }
 
   public static Test suite() {

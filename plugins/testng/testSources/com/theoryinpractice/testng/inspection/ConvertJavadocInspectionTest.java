@@ -19,8 +19,7 @@ public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest{
 
   @DataProvider
   public Object[][] data() {
-    return new String[][] {new String[]{"1"},
-      new String[]{"2"}};
+    return new String[][]{new String[]{"1"}, new String[]{"2"},};
   }
 
   @Test (dataProvider = "data")

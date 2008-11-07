@@ -1,6 +1,6 @@
 public class Testt {
     /**
-     * @testng.test groups = "group1"
+     * @<caret>testng.test groups = "group1"
      */
     public void testGroups(){
     }
