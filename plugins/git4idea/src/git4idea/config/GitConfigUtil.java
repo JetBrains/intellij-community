@@ -16,12 +16,15 @@
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,6 +65,33 @@ public class GitConfigUtil {
       result.put(key, value);
     }
   }
+
+  /**
+   * Get configuration values for the repository. Note that the method executes a git command.
+   *
+   * @param project the context project
+   * @param root    the git root
+   * @param key     the keys to be queried
+   * @return list of pairs ({@link Pair#first} is the key, {@link Pair#second} is the value)
+   * @throws VcsException an exception
+   */
+  public static List<Pair<String, String>> getAllValues(Project project, VirtualFile root, @NonNls String key) throws VcsException {
+    List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
+    GitSimpleHandler h = new GitSimpleHandler(project, root, "config");
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--null", "--get-all", key);
+    String output = h.run();
+    int start = 0;
+    int pos;
+    while ((pos = output.indexOf('\u0000', start)) != -1) {
+      String value = output.substring(start, pos);
+      start = pos + 1;
+      result.add(new Pair<String, String>(key, value));
+    }
+    return result;
+  }
+
 
   /**
    * Get configuration value for the repository. Note that the method executes a git command.

@@ -26,7 +26,6 @@ import git4idea.GitVcs;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -259,29 +258,7 @@ public class GitPullDialog extends DialogWrapper {
    * Update remotes for the git root
    */
   private void updateRemotes() {
-    try {
-      List<GitRemote> remotes = GitRemote.list(myProject, gitRoot());
-      String branch = currentBranch();
-      String remote = null;
-      if (branch != null) {
-        remote = GitConfigUtil.getValue(myProject, gitRoot(), "branch." + branch + ".remote");
-      }
-      myRemote.setRenderer(GitUIUtil.getGitRemoteListCellRenderer(remote));
-      GitRemote toSelect = null;
-      myRemote.removeAllItems();
-      for (GitRemote r : remotes) {
-        myRemote.addItem(r);
-        if (r.name().equals(remote)) {
-          toSelect = r;
-        }
-      }
-      if (toSelect != null) {
-        myRemote.setSelectedItem(toSelect);
-      }
-    }
-    catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retriving.remotes"));
-    }
+    GitUIUtil.setupRemotes(myProject, gitRoot(), currentBranch(), myRemote);
   }
 
   /**

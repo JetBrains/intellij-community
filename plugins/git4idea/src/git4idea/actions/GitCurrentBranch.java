@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.CurrentBranchDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

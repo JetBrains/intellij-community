@@ -81,10 +81,31 @@ public class StringScanner {
    * @return a token
    */
   public String spaceToken() {
+    return boundedToken(' ');
+  }
+
+  /**
+   * Gets next token that is ended by tab or new line. Consumes tab but not a new line.
+   * Start position is the current. So if the string starts with space a empty token is returned.
+   *
+   * @return a token
+   */
+  public String tabToken() {
+    return boundedToken('\t');
+  }
+
+  /**
+   * Gets next token that is ended by {@code bondaryChar} or new line. Consumes {@code bondaryChar} but not a new line.
+   * Start position is the current. So if the string starts with {@code bondaryChar} a empty token is returned.
+   *
+   * @param bondaryChar a boundary character
+   * @return a token
+   */
+  public String boundedToken(final char bondaryChar) {
     int start = myPosition;
     for (; myPosition < myText.length(); myPosition++) {
       final char ch = myText.charAt(myPosition);
-      if (ch == ' ') {
+      if (ch == bondaryChar) {
         final String rc = myText.substring(start, myPosition);
         myPosition++;
         return rc;
@@ -151,5 +172,19 @@ public class StringScanner {
       throw new IllegalArgumentException("Skipping beyond end of the text (" + myPosition + " + " + n + " >= " + myText.length() + ")");
     }
     myPosition += n;
+  }
+
+  /**
+   * Try string and consume it if it matches
+   *
+   * @param c a character to try
+   * @return true if the string was consumed.
+   */
+  public boolean tryConsume(final char c) {
+    if (startsWith(c)) {
+      skipChars(1);
+      return true;
+    }
+    return false;
   }
 }

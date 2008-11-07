@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.actions;
+package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
-import git4idea.ui.GitUIUtil;
 
 import javax.swing.*;
 import java.util.List;
@@ -48,7 +47,7 @@ public class CurrentBranchDialog extends DialogWrapper {
    * @param roots       the git roots for the project
    * @param defaultRoot the default root
    */
-  protected CurrentBranchDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
+  public CurrentBranchDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("current.branch.title"));
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRoot, myCurrentBranch);

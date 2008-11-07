@@ -39,7 +39,7 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
   /**
    * encoding to be used for binary output
    */
-  @SuppressWarnings({"HardCodedStringLiteral"}) final static Charset BIN_ENCODING = Charset.forName("ISO-8859-1");
+  @SuppressWarnings({"HardCodedStringLiteral"}) private final static Charset BIN_ENCODING = Charset.forName("ISO-8859-1");
   private final FilePath path;
   private final GitRevisionNumber revision;
   private final String author;

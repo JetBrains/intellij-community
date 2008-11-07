@@ -137,14 +137,6 @@ public class GitCloneDialog extends DialogWrapper {
     return myOriginName.getText();
   }
 
-
-  /**
-   * Custom component creation code
-   */
-  private void createUIComponents() {
-
-  }
-
   /**
    * Init components
    */

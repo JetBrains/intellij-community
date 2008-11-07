@@ -16,13 +16,21 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
+import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -49,6 +57,10 @@ public final class GitRemote {
    * line that starts branches section in "git remote show -n {branch}"
    */
   @NonNls private static final String SHOW_BRANCHES_LINE = "  Tracked remote branches";
+  /**
+   * US-ASCII encoding name
+   */
+  @NonNls private static final String US_ASCII_ENCODING = "US-ASCII";
 
   /**
    * A constructor
@@ -161,6 +173,45 @@ public final class GitRemote {
       branches.addAll(Arrays.asList(lines[i].substring(4).split(" ")));
     }
     return new Info(Collections.unmodifiableSortedMap(mapping), Collections.unmodifiableSortedSet(branches));
+  }
+
+  /**
+   * Get list of fetch specifications for the configured remote
+   *
+   * @param project    the project name
+   * @param root       the git root
+   * @param remoteName the name of the remote
+   * @return the configured fetch specifications for remote
+   */
+  public static List<String> getFetchSpecs(Project project, VirtualFile root, String remoteName) throws VcsException {
+    ArrayList<String> rc = new ArrayList<String>();
+    final File rootFile = GitUtil.getIOFile(root);
+    @NonNls final File remotesFile = new File(rootFile, ".git" + File.separator + "remotes" + File.separator + remoteName);
+    // TODO try branches file?
+    if (remotesFile.exists() && !remotesFile.isDirectory()) {
+      // try remotes file
+      try {
+        //noinspection IOResourceOpenedButNotSafelyClosed
+        String text = FileUtil.loadTextAndClose(new InputStreamReader(new FileInputStream(remotesFile), US_ASCII_ENCODING));
+        @NonNls String pullPrefix = "Pull:";
+        for (StringScanner s = new StringScanner(text); s.hasMoreData();) {
+          String line = s.line();
+          if (line.startsWith(pullPrefix)) {
+            rc.add(line.substring(pullPrefix.length()).trim());
+          }
+        }
+      }
+      catch (IOException e) {
+        throw new VcsException("Unable to read remotes file: " + remotesFile, e);
+      }
+    }
+    else {
+      // try config file
+      for (Pair<String, String> pair : GitConfigUtil.getAllValues(project, root, "remote." + remoteName + ".fetch")) {
+        rc.add(pair.second);
+      }
+    }
+    return rc;
   }
 
   /**

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2008 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
@@ -7,9 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitVcs;
+import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -91,37 +108,40 @@ public class GitUIUtil {
    * @param roots              git roots for the project
    * @param defaultRoot        a default root
    * @param gitRootChooser     git root selector
-   * @param currentBranchLabel current branch label
+   * @param currentBranchLabel current branch label (might be null)
    */
   public static void setupRootChooser(final Project project,
                                       final List<VirtualFile> roots,
                                       final VirtualFile defaultRoot,
                                       final JComboBox gitRootChooser,
-                                      final JLabel currentBranchLabel) {
+                                      @Nullable final JLabel currentBranchLabel) {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
     gitRootChooser.setRenderer(getVirtualFileListCellRenderer());
     gitRootChooser.setSelectedItem(defaultRoot);
-    final ActionListener listener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        try {
-          VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
-          GitBranch current = GitBranch.current(project, root);
-          if (current == null) {
-            currentBranchLabel.setText(NO_CURRENT_BRANCH);
+    if (currentBranchLabel != null) {
+      final ActionListener listener = new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          try {
+            VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
+            GitBranch current = GitBranch.current(project, root);
+            assert currentBranchLabel != null;
+            if (current == null) {
+              currentBranchLabel.setText(NO_CURRENT_BRANCH);
+            }
+            else {
+              currentBranchLabel.setText(current.getName());
+            }
           }
-          else {
-            currentBranchLabel.setText(current.getName());
+          catch (VcsException ex) {
+            GitVcs.getInstance(project).showErrors(Collections.singletonList(ex), GitBundle.getString("merge.retriving.branches"));
           }
         }
-        catch (VcsException ex) {
-          GitVcs.getInstance(project).showErrors(Collections.singletonList(ex), GitBundle.getString("merge.retriving.branches"));
-        }
-      }
-    };
-    listener.actionPerformed(null);
-    gitRootChooser.addActionListener(listener);
+      };
+      listener.actionPerformed(null);
+      gitRootChooser.addActionListener(listener);
+    }
   }
 
   /**
@@ -144,5 +164,41 @@ public class GitUIUtil {
    */
   public static void showOperationError(final Project project, final String operation, final String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
+  }
+
+  /**
+   * Setup remotes combobox. The default remote for the current branch is selected by default.
+   *
+   * @param project        the project
+   * @param root           the git root
+   * @param currentBranch  the current branch
+   * @param remoteCombobox the combobox to update
+   */
+  public static void setupRemotes(final Project project,
+                                  final VirtualFile root,
+                                  final String currentBranch,
+                                  final JComboBox remoteCombobox) {
+    try {
+      List<GitRemote> remotes = GitRemote.list(project, root);
+      String remote = null;
+      if (currentBranch != null) {
+        remote = GitConfigUtil.getValue(project, root, "branch." + currentBranch + ".remote");
+      }
+      remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote));
+      GitRemote toSelect = null;
+      remoteCombobox.removeAllItems();
+      for (GitRemote r : remotes) {
+        remoteCombobox.addItem(r);
+        if (r.name().equals(remote)) {
+          toSelect = r;
+        }
+      }
+      if (toSelect != null) {
+        remoteCombobox.setSelectedItem(toSelect);
+      }
+    }
+    catch (VcsException e) {
+      GitVcs.getInstance(project).showErrors(Collections.singletonList(e), GitBundle.getString("pull.retriving.remotes"));
+    }
   }
 }
