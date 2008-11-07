@@ -2,12 +2,14 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -89,14 +91,22 @@ public class InlineParameterExpressionProcessor {
 
     String question = RefactoringBundle.message("inline.parameter.confirmation", myParameter.getName(),
                                                 initializerInMethod.getText());
-    InlineParameterDialog dlg = new InlineParameterDialog(InlineParameterHandler.REFACTORING_NAME, question, HelpID.INLINE_VARIABLE,
-                                                          "OptionPane.questionIcon", true, myMethod.getProject());
-    if (!dlg.showDialog()) {
-      return;
+    boolean createLocal;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      createLocal = myMethod.getProject().getUserData(CREATE_LOCAL_FOR_TESTS);
     }
-
-    performRefactoring(initializerInMethod, parameterRefs, dlg.isCreateLocal());
+    else {
+      InlineParameterDialog dlg =
+        new InlineParameterDialog(InlineParameterHandler.REFACTORING_NAME, question, HelpID.INLINE_VARIABLE, "OptionPane.questionIcon",
+                                  true, myMethod.getProject());
+      if (!dlg.showDialog()) {
+        return;
+      }
+      createLocal = dlg.isCreateLocal();
+    }
+    performRefactoring(initializerInMethod, parameterRefs, createLocal);
   }
+  public static final Key<Boolean> CREATE_LOCAL_FOR_TESTS = Key.create("CREATE_INLINE_PARAMETER_LOCAL_FOR_TESTS");
 
   private void processParameterInitializer() {
     myInitializer.accept(new JavaRecursiveElementVisitor() {

@@ -87,8 +87,10 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+
   private void doTest(final boolean createLocal) throws Exception {
-    InlineParameterDialog.setCreateLocalInTests(createLocal);
+    getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS,createLocal);
+
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineParameter/" + name + ".java";
     configureByFile(fileName);
