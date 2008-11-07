@@ -249,7 +249,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   public void apply() {
     myVcsManager.setDirectoryMappings(myModel.getItems());
-    myVcsManager.updateActiveVcss();
     initializeModel();
   }
 

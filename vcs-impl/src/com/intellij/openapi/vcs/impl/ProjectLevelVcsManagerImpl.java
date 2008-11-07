@@ -560,16 +560,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void setAutoDirectoryMapping(String path, String activeVcsName) {
     myDirectoryMappingList.setDirectoryMapping(path, activeVcsName);
+    updateActiveVcss();
     fireDirectoryMappingsChanged();
   }
 
   public void removeDirectoryMapping(VcsDirectoryMapping mapping) {
     myDirectoryMappingList.removeDirectoryMapping(mapping);
+    updateActiveVcss();
     fireDirectoryMappingsChanged();
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
     myDirectoryMappingList.setDirectoryMappings(items);
+    updateActiveVcss();
     fireDirectoryMappingsChanged();
   }
 
@@ -885,7 +888,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void fireDirectoryMappingsChanged() {
     if (myIsInitialized && (! myIsDisposed)) {
-      myProject.getMessageBus().asyncPublisher(VCS_MAPPING_CHANGED).run();
+      myProject.getMessageBus().syncPublisher(VCS_MAPPING_CHANGED).run();
     }
   }
 }

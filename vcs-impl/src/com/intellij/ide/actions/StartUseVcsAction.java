@@ -43,7 +43,6 @@ public class StartUseVcsAction extends AnAction {
       if (vcsName.length() > 0) {
         final ProjectLevelVcsManager manager = data.getManager();
         manager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", vcsName)));
-        manager.updateActiveVcss();
       }
     }
   }
