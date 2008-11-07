@@ -904,6 +904,9 @@
     <action id="FileChooser.NewFolder">
       <keyboard-shortcut first-keystroke="control N"/>
     </action>
+    <action id="PopupHector">
+      <keyboard-shortcut first-keystroke="ctrl alt shift H"/>
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->

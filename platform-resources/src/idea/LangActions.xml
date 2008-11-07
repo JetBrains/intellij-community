@@ -125,6 +125,7 @@
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
         <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
         <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
+        <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       </group>
       <separator/>
 
