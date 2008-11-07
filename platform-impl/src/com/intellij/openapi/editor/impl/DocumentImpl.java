@@ -82,14 +82,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public DocumentImpl(String text) {
     this();
-    LOG.assertTrue(!text.contains("\r"), "Wrong line separators in Document");
-
+    assertValidSeparators(text);
     setChars(text);
     setModificationStamp(LocalTimeCounter.currentTime());
   }
 
   public DocumentImpl(CharSequence chars) {
     this();
+    assertValidSeparators(chars);
     setChars(chars);
   }
 
@@ -379,7 +379,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static void assertValidSeparators(final CharSequence s) {
     for (int i = 0; i < s.length(); i++) {
       if (s.charAt(i) == '\r') {
-        LOG.error("Wrong line separators inserted into Document");
+        LOG.error("Wrong line separators in Document");
       }
     }
   }
