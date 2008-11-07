@@ -1,11 +1,12 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.apache.maven.artifact.Artifact;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.utils.MavenId;
-import org.apache.maven.artifact.Artifact;
 
-import java.util.List;
 import java.io.File;
+import java.util.List;
 
 public class AddingDependencyTest extends MavenImportingTestCase {
   @Override
@@ -47,5 +48,16 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     myMavenProjectsManager.addDependency(myMavenTree.findProject(myProjectPom),
                                          new MavenId("junit", "junit", "4.0"));
     assertTrue(jarFile.exists());
+  }
+
+  public void testClearingROStatus() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+    ReadOnlyAttributeUtil.setReadOnlyAttribute(myProjectPom, true);
+
+    // shouldn't throw 'File is read-only' exception.
+    myMavenProjectsManager.addDependency(myMavenTree.findProject(myProjectPom),
+                                         new MavenId("junit", "junit", "4.0"));
   }
 }
