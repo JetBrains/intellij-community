@@ -57,7 +57,7 @@ public class MavenProcess {
   public static MavenTaskHandler runInBackground(Project project,
                                                  String title,
                                                  final boolean canBeCancelled,
-                                                 final MavenTask task) {
+                                                 MavenTask task) {
     final Semaphore startSemaphore = new Semaphore();
     final Semaphore finishSemaphore = new Semaphore();
     final ProgressIndicator[] indicator = new ProgressIndicator[1];
@@ -65,28 +65,33 @@ public class MavenProcess {
     startSemaphore.down();
     finishSemaphore.down();
 
+    final MavenTask[] taskHolder = new MavenTask[]{task};
+
     ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
       public void run(@NotNull ProgressIndicator i) {
         try {
           indicator[0] = i;
           startSemaphore.up();
-          task.run(new MavenProcess(i));
+          taskHolder[0].run(new MavenProcess(i));
         }
         catch (MavenProcessCanceledException ignore) {
         }
         finally {
           finishSemaphore.up();
+          taskHolder[0] = null; // memory leaks prevention
         }
       }
 
       @Override
       public boolean shouldStartInBackground() {
-        return task.shouldStartInBackground();
+        MavenTask task = taskHolder[0];
+        return task != null ? task.shouldStartInBackground() : true;
       }
 
       @Override
       public void processSentToBackground() {
-        task.setStartInBackground();
+        MavenTask task = taskHolder[0];
+        if (task != null) task.setStartInBackground();
       }
     });
 
