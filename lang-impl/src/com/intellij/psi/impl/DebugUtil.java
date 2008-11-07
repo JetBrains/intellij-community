@@ -240,13 +240,13 @@ public class DebugUtil {
     LOG.assertTrue(fromCharTab == toCharTab);
   }
 
-  public static String psiToString(final PsiElement file, final boolean skipWhitespaces) {
-    final StringBuilder stringBuffer = new StringBuilder(file.getTextLength() * 5);
-    if (file.getNode() == null) {
-      psiToBuffer(stringBuffer, file, 0, skipWhitespaces, false, false);
+  public static String psiToString(final PsiElement element, final boolean skipWhitespaces) {
+    final StringBuilder stringBuffer = new StringBuilder(element.getTextLength() * 5);
+    if (element.getNode() == null) {
+      psiToBuffer(stringBuffer, element, 0, skipWhitespaces, false, false);
     }
     else {
-      treeToBuffer(stringBuffer, file.getNode(), 0, skipWhitespaces, false, false);
+      treeToBuffer(stringBuffer, element.getNode(), 0, skipWhitespaces, false, false);
     }
     return stringBuffer.toString();
   }

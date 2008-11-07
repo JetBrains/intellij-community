@@ -72,7 +72,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   private InspectionProfile myExternalProfile = null;
 
-  private Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<Key, GlobalInspectionContextExtension>();
+  private final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<Key, GlobalInspectionContextExtension>();
   public boolean RUN_WITH_EDITOR_PROFILE = false;
   private boolean RUN_GLOBAL_TOOLS_ONLY = false;
 
@@ -529,12 +529,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         @Override
         public void visitFile(PsiFile file) {
           InspectionProfile profile;
-          if (RUN_WITH_EDITOR_PROFILE) {
-            profile = profileManager.getInspectionProfile(file);
-          }
-          else {
-            profile = getCurrentProfile();
-          }
+          profile = RUN_WITH_EDITOR_PROFILE ? profileManager.getInspectionProfile(file) : getCurrentProfile();
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile != null) {
             incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
