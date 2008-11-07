@@ -78,8 +78,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), getHighlights(), getId());
   }
 
-  @Override
-  public Collection<HighlightInfo> getHighlights() {
+  private Collection<HighlightInfo> getHighlights() {
     if (myTarget == null) {
       return Collections.emptyList();
     }

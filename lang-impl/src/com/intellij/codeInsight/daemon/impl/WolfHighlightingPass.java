@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
 */
 class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass {
-  public WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
+  WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
     super(project, document, null, DaemonBundle.message("pass.wolf"), file);
   }
 

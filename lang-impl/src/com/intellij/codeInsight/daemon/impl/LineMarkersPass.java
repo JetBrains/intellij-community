@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,9 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
-import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -136,11 +135,5 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
   public double getProgress() {
     // do not show progress of visible highlighters update
     return myUpdateAll ? super.getProgress() : -1;
-  }
-
-  @TestOnly
-  public Collection<LineMarkerInfo> getMarkers() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    return myMarkers;
   }
 }

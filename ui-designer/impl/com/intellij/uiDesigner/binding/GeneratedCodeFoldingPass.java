@@ -86,7 +86,7 @@ public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
     private final ProgressIndicator myProgress;
     private PsiElement myLastElement;
 
-    public MyFoldingVisitor(final ProgressIndicator progress) {
+    private MyFoldingVisitor(final ProgressIndicator progress) {
       myProgress = progress;
     }
 

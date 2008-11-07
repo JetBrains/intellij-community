@@ -63,7 +63,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, myFile, getId());
   }
 
-  public List<HighlightInfo> getHighlights() {
+  private List<HighlightInfo> getHighlights() {
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
     for (Annotation annotation : myAnnotationHolder) {
       infos.add(HighlightInfo.fromAnnotation(annotation));

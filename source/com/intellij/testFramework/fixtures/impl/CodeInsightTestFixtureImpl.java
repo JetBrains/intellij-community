@@ -5,6 +5,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
@@ -12,9 +13,11 @@ import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -300,15 +303,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return new WriteCommandAction<List<IntentionAction>>(project) {
       protected void run(final Result<List<IntentionAction>> result) throws Throwable {
         configureByFilesInner(filePaths);
-        result.setResult(CodeInsightTestFixtureImpl.this.getAvailableIntentions());
+        result.setResult(getAvailableIntentions());
       }
     }.execute().getResultObject();
   }
 
   @NotNull
   public List<IntentionAction> getAvailableIntentions() {
-    int offset = myEditor.getCaretModel().getOffset();
-    return getAvailableIntentions(myProjectFixture.getProject(), doHighlighting(), offset, myEditor, myFile);
+    doHighlighting();
+    return getAvailableIntentions(myEditor, myFile);
   }
 
   public List<IntentionAction> filterAvailableIntentions(@NotNull final String hint) throws Throwable {
@@ -524,18 +527,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset);
         }
 
-        LineMarkersPass markersPass = new LineMarkersPass(project, myFile, myEditor.getDocument(), 0, myFile.getTextLength(), true);
-        markersPass.doCollectInformation(new MockProgressIndicator());
-        markersPass.doApplyInformationToEditor();
-
-        SlowLineMarkersPass slowMarkers = new SlowLineMarkersPass(project, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
-        slowMarkers.doCollectInformation(new MockProgressIndicator());
-        slowMarkers.doApplyInformationToEditor();
+        doHighlighting();
 
         for (final RangeHighlighter highlighter : myEditor.getDocument().getMarkupModel(project).getAllHighlighters()) {
           addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset());
         }
-
       }
 
       private void addGutterIconRenderer(final GutterIconRenderer renderer, final int offset) {
@@ -936,39 +932,25 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   private Collection<HighlightInfo> doHighlighting() {
-
     final Project project = myProjectFixture.getProject();
-
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    Document document = myEditor.getDocument();
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(project, myFile, document, 0, myFile.getTextLength(), true);
-    action1.doCollectInformation(new MockProgressIndicator());
-    Collection<HighlightInfo> highlights1 = action1.getHighlights();
-
-    PostHighlightingPass action2 = new PostHighlightingPass(project, myFile, myEditor, 0, myFile.getTextLength());
-    action2.doCollectInformation(new MockProgressIndicator());
-    Collection<HighlightInfo> highlights2 = action2.getHighlights();
-
-    Collection<HighlightInfo> highlights3 = null;
-    if (!myAvailableTools.isEmpty()) {
-      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myFile, myEditor.getDocument(), 0, myFile.getTextLength());
-      inspectionsPass.doCollectInformation(new MockProgressIndicator());
-      highlights3 = inspectionsPass.getHighlights();
-    }
-
-    ExternalToolPass action4 = new ExternalToolPass(myFile, myEditor, 0, myFile.getTextLength());
-    action4.doCollectInformation(new MockProgressIndicator());
-    Collection<HighlightInfo> highlights4 = action4.getHighlights();
-
-    ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
-    list.addAll(highlights1);
-    list.addAll(highlights2);
-    if (highlights3 != null) {
-      list.addAll(highlights3);
-    }
-    list.addAll(highlights4);
-    return list;
+    return
+    ApplicationManager.getApplication().runReadAction(new Computable<Collection<HighlightInfo>>() {
+      public Collection<HighlightInfo> compute() {
+        List<TextEditorHighlightingPass > passes =
+          TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), new int[0]);
+        MockProgressIndicator progress = new MockProgressIndicator();
+        for (TextEditorHighlightingPass pass : passes) {
+          pass.collectInformation(progress);
+        }
+        for (TextEditorHighlightingPass pass : passes) {
+          pass.applyInformationToEditor();
+        }
+        List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
+        return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
+      }
+    });
   }
 
   public String getTestDataPath() {
@@ -991,41 +973,60 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myFile;
   }
 
-  public static List<IntentionAction> getAvailableIntentions(final Project project, final Collection<HighlightInfo> infos, final int offset,
-                                                             final Editor editor, final PsiFile file) {
-    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
+  public static List<IntentionAction> getAvailableIntentions(final Editor editor, final PsiFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<IntentionAction>>() {
+      public List<IntentionAction> compute() {
+        return doGetAvailableIntentions(editor, file);
+      }
+    });
+  }
 
+  private static List<IntentionAction> doGetAvailableIntentions(Editor editor, PsiFile file) {
+    List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    ShowIntentionsPass.getActionsToShow(editor, file, descriptors, descriptors, descriptors, -1);
+
+    /*
+    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
     for (HighlightInfo info :infos) {
       if (info.quickFixActionRanges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          if (offset > 0 && !pair.getSecond().contains(offset)) {
-            continue;
-          }
-          final HighlightInfo.IntentionActionDescriptor actionDescriptor = pair.first;
-          final IntentionAction action = actionDescriptor.getAction();
-          if (action.isAvailable(project, editor, file)) {
-            availableActions.add(action);
-            final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-            assert element != null;
-            final List<IntentionAction> actions = actionDescriptor.getOptions(element);
-            if (actions != null) {
-              for (IntentionAction intentionAction : actions) {
-                if (intentionAction.isAvailable(project, editor, file)) {
-                  availableActions.add(intentionAction);
-                }
-              }
-            }
-          }
+          IntentionAction action = pair.first.getAction();
+          if (action.isAvailable(file.getProject(), editor, file)) availableActions.add(action);
         }
       }
     }
 
-    for (IntentionAction intentionAction : IntentionManager.getInstance().getIntentionActions()) {
-      if (intentionAction.isAvailable(project, editor, file)) {
-        availableActions.add(intentionAction);
+    intentionAction = LightQuickFixTestCase.findActionWithText(
+      availableActions,
+      intentionActionName
+    );
+    */
+
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    List<IntentionAction> result = new ArrayList<IntentionAction>();
+
+    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getFileLeveleHighlights(file.getProject(), file);
+    for (HighlightInfo info : infos) {
+      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+        HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
+        if (actionInGroup.getAction().isAvailable(file.getProject(), editor, file)) {
+          descriptors.add(actionInGroup);
+        }
       }
     }
-    return availableActions;
+
+    for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
+      result.add(descriptor.getAction());
+      List<IntentionAction> options = descriptor.getOptions(element);
+      if (options != null) {
+        for (IntentionAction option : options) {
+          if (option.isAvailable(file.getProject(), editor, file)) {
+            result.add(option);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   static class SelectionAndCaretMarkupLoader {

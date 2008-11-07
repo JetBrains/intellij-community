@@ -225,7 +225,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }, "Inspect injected fragments");
   }
 
-  //for tests only
   public Collection<HighlightInfo> getHighlights() {
     ArrayList<HighlightInfo> highlights = new ArrayList<HighlightInfo>(myDescriptors.size());
     addHighlightsFromDescriptors(highlights);

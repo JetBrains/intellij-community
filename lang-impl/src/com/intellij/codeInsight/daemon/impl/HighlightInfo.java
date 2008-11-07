@@ -250,11 +250,13 @@ public class HighlightInfo {
 
   @NonNls
   public String toString() {
-    return "HighlightInfo(" +
-           "text='" + text + "'" +
-           ", description='" + description + "'" +
-           ", toolTip='" + toolTip + "'" +
-           ")";
+    String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
+    if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
+      s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
+    }
+    s += " text='" + text + "'" + ", description='" + description + "'" + ", toolTip='" + toolTip + "'";
+
+    return s;
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull ASTNode childByRole, String localizedMessage) {
