@@ -336,7 +336,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
 
   private void fireOnTestIgnored(final SMTestProxy test) {
     for (SMTRunnerEventsListener listener : myEventsListeners) {
-      listener.onTestFailed(test);
+      listener.onTestIgnored(test);
     }
   }
 
