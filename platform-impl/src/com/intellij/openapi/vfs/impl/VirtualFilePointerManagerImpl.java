@@ -300,13 +300,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return registerContainer(parent, new VirtualFilePointerContainerImpl(this, parent, listener));
   }
 
-  private VirtualFilePointerContainer registerContainer(Disposable parent, @NotNull final VirtualFilePointerContainerImpl virtualFilePointerContainer) {
+  private VirtualFilePointerContainer registerContainer(@NotNull Disposable parent, @NotNull final VirtualFilePointerContainerImpl virtualFilePointerContainer) {
     synchronized (myContainers) {
       myContainers.add(virtualFilePointerContainer);
     }
     Disposer.register(parent, new Disposable() {
       public void dispose() {
-        virtualFilePointerContainer.dispose();
+        Disposer.dispose(virtualFilePointerContainer);
         boolean removed = false;
         // compare by identity since VirtualFilePointerContainer has too smart equals
         synchronized (myContainers) {

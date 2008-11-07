@@ -254,6 +254,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   public void dispose() {
+    assert !myDisposed;
     myDisposed = true;
   }
 }
