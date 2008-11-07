@@ -91,6 +91,8 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
   private void highlight(final List<UsageInfo> infos, final Editor editor) {
     if (editor != myEditor) return; //already disposed
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
     MarkupModel markupModel = myEditor.getMarkupModel();
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       if (highlighter.getUserData(IN_PREVIEW_USAGE_FLAG) != null) {
