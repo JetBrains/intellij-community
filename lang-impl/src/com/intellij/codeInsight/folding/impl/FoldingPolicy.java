@@ -60,10 +60,7 @@ class FoldingPolicy {
   public static boolean isCollapseByDefault(PsiElement element) {
     final Language lang = element.getLanguage();
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
-    if (foldingBuilder != null) {
-      return foldingBuilder.isCollapsedByDefault(element.getNode());
-    }
-    return false;
+    return foldingBuilder != null && foldingBuilder.isCollapsedByDefault(element.getNode());
   }
 
   @Nullable

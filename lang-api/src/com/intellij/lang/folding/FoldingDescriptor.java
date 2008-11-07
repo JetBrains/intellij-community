@@ -17,6 +17,7 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ProperTextRange;
 
 /**
  * Defines a single folding region in the code.
@@ -40,6 +41,7 @@ public class FoldingDescriptor {
    */
   public FoldingDescriptor(final ASTNode node, final TextRange range) {
     myElement = node;
+    ProperTextRange.assertProperRange(range);
     myRange = range;
   }
 

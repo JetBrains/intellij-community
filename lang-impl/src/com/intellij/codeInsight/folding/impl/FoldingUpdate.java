@@ -68,7 +68,7 @@ class FoldingUpdate {
     private final boolean myApplyDefaultState;
     private final TreeMap<PsiElement, TextRange> myElementsToFoldMap;
 
-    public UpdateFoldRegionsOperation(Editor editor, TreeMap<PsiElement, TextRange> elementsToFoldMap, boolean applyDefaultState) {
+    private UpdateFoldRegionsOperation(Editor editor, TreeMap<PsiElement, TextRange> elementsToFoldMap, boolean applyDefaultState) {
       myEditor = editor;
       myApplyDefaultState = applyDefaultState;
       myElementsToFoldMap = elementsToFoldMap;
