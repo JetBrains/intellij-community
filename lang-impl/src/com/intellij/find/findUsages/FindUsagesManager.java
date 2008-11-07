@@ -2,6 +2,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.FindBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
@@ -52,7 +53,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class FindUsagesManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
 
-  private static enum FileSearchScope {
+  private enum FileSearchScope {
     FROM_START,
     FROM_END,
     AFTER_CARET,
@@ -263,8 +264,8 @@ public class FindUsagesManager implements JDOMExternalizable {
 
     UsageViewPresentation presentation = createPresentation(element, findUsagesOptions, myToOpenInNewTab);
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, null);
-    final boolean[] canceled = new boolean[]{false};
-    final int[] usageCount = new int[]{0};
+    final boolean[] canceled = {false};
+    final int[] usageCount = {0};
     Task task = new Task.Modal(myProject, UsageViewManagerImpl.getProgressTitle(presentation), true) {
       public void run(@NotNull final ProgressIndicator indicator) {
         usageSearcher.generate(new Processor<Usage>() {
@@ -397,7 +398,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     final FileEditorLocation currentLocation = fileEditor.getCurrentLocation();
 
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, scopeFile);
-    final boolean[] usagesWereFound = new boolean[]{false};
+    final boolean[] usagesWereFound = {false};
 
     Usage fUsage = findSiblingUsage(myProject, usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
 
@@ -468,19 +469,14 @@ public class FindUsagesManager implements JDOMExternalizable {
                                  final boolean[] usagesWereFound,
                                  FileEditor fileEditor) {
     if (fileEditor.getUserData(KEY_START_USAGE_AGAIN) != null) {
-      if (dir == FileSearchScope.AFTER_CARET) {
-        dir = FileSearchScope.FROM_START;
-      }
-      else {
-        dir = FileSearchScope.FROM_END;
-      }
+      dir = dir == FileSearchScope.AFTER_CARET ? FileSearchScope.FROM_START : FileSearchScope.FROM_END;
     }
 
     final FileSearchScope direction = dir;
 
     final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(project);
     usageViewManager.setCurrentSearchCancelled(false);
-    final Usage[] foundUsage = new Usage[]{null};
+    final Usage[] foundUsage = {null};
     usageSearcher.generate(new Processor<Usage>() {
       public boolean process(Usage usage) {
         if (usageViewManager.searchHasBeenCancelled()) return false;
@@ -575,8 +571,8 @@ public class FindUsagesManager implements JDOMExternalizable {
   private static void showEditorHint(String message, final Editor editor) {
     JComponent component = HintUtil.createInformationLabel(message);
     final LightweightHint hint = new LightweightHint(component);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManagerImpl.UNDER,
-                               HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, 0, false);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
+                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false);
   }
 
   public static String getHelpID(PsiElement element) {

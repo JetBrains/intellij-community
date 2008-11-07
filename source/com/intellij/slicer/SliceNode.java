@@ -6,16 +6,13 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.SmartList;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import javax.swing.tree.DefaultMutableTreeNode;
+import java.util.*;
 
 /**
  * @author cdr
@@ -38,7 +35,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   public Collection<? extends AbstractTreeNode> getChildren() {
     long count = PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
     if (myCachedChildren == null || storedModificationCount != count) {
-      myCachedChildren = new ArrayList<SliceNode>();
+      myCachedChildren = Collections.synchronizedList(new ArrayList<SliceNode>());
       storedModificationCount = count;
       if (isValid()) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
