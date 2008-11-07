@@ -197,7 +197,7 @@ public class FSRecords implements Disposable, Forceable {
                                               "Fatal Error",
                                               JOptionPane.ERROR_MESSAGE);
               }
-              System.exit(1);
+              Runtime.getRuntime().halt(1);
             }
           };
 
