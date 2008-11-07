@@ -48,10 +48,13 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     final Editor injectedEditor = TypedHandler.injectedEditorIfCharTypedIsSignificant(c, editor, file);
     if (injectedEditor != editor) {
-      file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
-      editor = injectedEditor;
-      offset = editor.getCaretModel().getOffset() - 1;
-      chars = editor.getDocument().getCharsSequence();
+      int injectedOffset = injectedEditor.getCaretModel().getOffset();
+      if (injectedOffset != 0 && injectedOffset < injectedEditor.getDocument().getTextLength()) {
+        file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+        editor = injectedEditor;
+        offset = injectedOffset - 1;
+        chars = editor.getDocument().getCharsSequence();
+      }
     }
 
     final BackspaceHandlerDelegate[] delegates = Extensions.getExtensions(BackspaceHandlerDelegate.EP_NAME);
