@@ -26,9 +26,9 @@ import java.util.Map;
  * @author max
  */
 public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
-  private Map<IElementType, LayerDescriptor> myTokensToLayer = new HashMap<IElementType, LayerDescriptor>();
-  private Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<LayerDescriptor, Mapper>();
-  private MappingSegments mySegments = new MappingSegments();
+  private final Map<IElementType, LayerDescriptor> myTokensToLayer = new HashMap<IElementType, LayerDescriptor>();
+  private final Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<LayerDescriptor, Mapper>();
+  private final MappingSegments mySegments = new MappingSegments();
   private CharSequence myText;
 
   public LayeredLexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
@@ -171,7 +171,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private final TextAttributesKey myBackground;
 
 
-    public Mapper(LayerDescriptor descriptor) {
+    private Mapper(LayerDescriptor descriptor) {
       doc = new DocumentImpl("");
       doc.dontAssertWriteAccess();
       
@@ -247,8 +247,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     private CharSequence getTokenText(final int tokenIndex) {
-      return myText.subSequence(mySegments.getSegmentStart(tokenIndex),
-                                mySegments.getSegmentEnd(tokenIndex));
+      return myText.subSequence(mySegments.getSegmentStart(tokenIndex), mySegments.getSegmentEnd(tokenIndex));
     }
 
     @Nullable
@@ -264,12 +263,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     public void removeMapping(MappedRange mapping) {
-      final int start = mapping.range.getStartOffset();
-      final int end = mapping.range.getEndOffset();
-
-      doc.deleteString(start - mySeparator.length(), end);
+      RangeMarker rangeMarker = mapping.range;
+      if (rangeMarker.isValid()) {
+        final int start = rangeMarker.getStartOffset();
+        final int end = rangeMarker.getEndOffset();
+        doc.deleteString(start - mySeparator.length(), end);
+      }
     }
-
   }
 
   private static class MappedRange {
@@ -296,9 +296,9 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private final HighlighterIterator myBaseIterator;
     private HighlighterIterator myLayerIterator;
     private int myLayerStartOffset = 0;
-    private LayeredLexerEditorHighlighter.Mapper myCurrentMapper;
+    private Mapper myCurrentMapper;
 
-    public LayeredHighlighterIterator(int offset) {
+    private LayeredHighlighterIterator(int offset) {
       myBaseIterator = LayeredLexerEditorHighlighter.super.createIterator(offset);
       if (!myBaseIterator.atEnd()) {
         int shift = offset - myBaseIterator.getStart();

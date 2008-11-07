@@ -23,8 +23,8 @@ package com.intellij.util.text;
  * To change this template use File | Settings | File Templates.
  */
 public class MergingCharSequence implements CharSequence {
-  private CharSequence s1;
-  private CharSequence s2;
+  private final CharSequence s1;
+  private final CharSequence s2;
 
   public MergingCharSequence(final CharSequence s1, final CharSequence s2) {
     this.s1 = s1;
