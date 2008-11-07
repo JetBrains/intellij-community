@@ -66,35 +66,34 @@ public class NameSuggestionsField extends JPanel {
 
   public NameSuggestionsField(final String[] suggestedNames, final Project project, final FileType fileType, @Nullable final Editor editor) {
     this(suggestedNames, project, fileType);
-    if (editor != null) {
-      // later here because EditorTextField creates Editor during addNotify()
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          final int offset = editor.getCaretModel().getOffset();
-          List<TextRange> ranges = new ArrayList<TextRange>();
-          SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editor.getDocument().getCharsSequence(), offset, ranges);
-          Editor myEditor = getEditor();
-          if (myEditor == null) return;
-          for (TextRange wordRange : ranges) {
-            String word = editor.getDocument().getText().substring(wordRange.getStartOffset(), wordRange.getEndOffset());
-            if (word.equals(getEnteredName())) {
-              final SelectionModel selectionModel = editor.getSelectionModel();
-              final TextRange selected = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()).shiftRight(-wordRange.getStartOffset());
-              myEditor.getSelectionModel().removeSelection();
-              int myOffset = offset - wordRange.getStartOffset();
-              myEditor.getCaretModel().moveToOffset(myOffset);
-              if (selectionModel.hasSelection()) {
-                myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
-              }
-              else {
-                myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
-              }
-              break;
-            }
+    if (editor == null) return;
+    // later here because EditorTextField creates Editor during addNotify()
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        final int offset = editor.getCaretModel().getOffset();
+        List<TextRange> ranges = new ArrayList<TextRange>();
+        SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editor.getDocument().getCharsSequence(), offset, ranges);
+        Editor myEditor = getEditor();
+        if (myEditor == null) return;
+        for (TextRange wordRange : ranges) {
+          String word = editor.getDocument().getText().substring(wordRange.getStartOffset(), wordRange.getEndOffset());
+          if (!word.equals(getEnteredName())) continue;
+          final SelectionModel selectionModel = editor.getSelectionModel();
+          myEditor.getSelectionModel().removeSelection();
+          int myOffset = offset - wordRange.getStartOffset();
+          myEditor.getCaretModel().moveToOffset(myOffset);
+          TextRange selected = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()).shiftRight(-wordRange.getStartOffset());
+          selected = selected.intersection(new TextRange(0, myEditor.getDocument().getTextLength()));
+          if (selectionModel.hasSelection() && selected != null && !selected.isEmpty()) {
+            myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
           }
+          else {
+            myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
+          }
+          break;
         }
-      });
-    }
+      }
+    });
   }
 
   public void selectNameWithoutExtension() {
@@ -208,7 +207,7 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
-  public static interface DataChanged extends EventListener {
+  public interface DataChanged extends EventListener {
     void dataChanged();
   }
 
