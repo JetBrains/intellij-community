@@ -103,16 +103,14 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    return myElement.isValid();
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-
-    String[] namespaces;
+    if (!myElement.isValid() || !CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     final Set<String> set = XmlExtension.getExtension((XmlFile)file).guessUnboundNamespaces(myElement, (XmlFile)file);
-    namespaces = set.toArray(new String[set.size()]);
+    final String[] namespaces = set.toArray(new String[set.size()]);
     Arrays.sort(namespaces);
 
     runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
