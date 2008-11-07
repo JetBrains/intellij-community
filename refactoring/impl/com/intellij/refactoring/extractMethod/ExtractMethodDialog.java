@@ -255,7 +255,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   private void update() {
     myNameField.setEnabled(!isChainedConstructor());
     if (myCbMakeStatic != null) {
-      myCbMakeStatic.setEnabled(myCanBeStatic && !isChainedConstructor());
+      myCbMakeStatic.setEnabled(!myStaticFlag && myCanBeStatic && !isChainedConstructor());
     }
     updateSignature();
     setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()) ||
