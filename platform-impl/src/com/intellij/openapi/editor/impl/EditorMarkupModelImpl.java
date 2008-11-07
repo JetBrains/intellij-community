@@ -78,7 +78,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     // sorted by layers from bottom to top
     private RangeHighlighter[] highlighters = RangeHighlighter.EMPTY_ARRAY;
 
-    public MarkSpot(final int yStart, final int yEnd) {
+    private MarkSpot(final int yStart, final int yEnd) {
       this.yStart = yStart;
       this.yEnd = yEnd;
     }
@@ -136,7 +136,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       private final int yStart;
       private final int yEnd;
 
-      public PositionedRangeHighlighter(final RangeHighlighter highlighter, final int yStart, final int yEnd) {
+      private PositionedRangeHighlighter(final RangeHighlighter highlighter, final int yStart, final int yEnd) {
         this.highlighter = highlighter;
         this.yStart = yStart;
         this.yEnd = yEnd;
