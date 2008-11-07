@@ -75,6 +75,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
   }
 
+  public PsiType[] getTypesForAll() {
+    return myTypesForAll;
+  }
+
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {
     final Set<PsiClass> occurrenceClasses = new HashSet<PsiClass>();
     for (final PsiExpression occurence : myOccurrences) {
