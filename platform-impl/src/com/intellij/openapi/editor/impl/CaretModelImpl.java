@@ -44,15 +44,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myOffset = 0;
     myVisualLineStart = 0;
     Document doc = editor.getDocument();
-    if (doc.getLineCount() > 1) {
-      myVisualLineEnd = doc.getLineStartOffset(1);
-    }
-    else {
-      myVisualLineEnd = doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
-    }
+    myVisualLineEnd = doc.getLineCount() > 1 ? doc.getLineStartOffset(1) : doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
   }
 
   public void moveToVisualPosition(VisualPosition pos) {
+    assertIsDispatchThread();
     validateCallContext();
     int column = pos.column;
     int line = pos.line;
@@ -114,7 +110,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     }
   }
 
+  private void assertIsDispatchThread() {
+    myEditor.assertIsDispatchThread();
+  }
+
   public void moveToOffset(int offset) {
+    assertIsDispatchThread();
     validateCallContext();
     moveToLogicalPosition(myEditor.offsetToLogicalPosition(offset));
     if (!myEditor.offsetToLogicalPosition(myOffset).equals(myEditor.offsetToLogicalPosition(offset))) {
@@ -127,6 +128,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
                                   boolean withSelection,
                                   boolean blockSelection,
                                   boolean scrollToCaret) {
+    assertIsDispatchThread();
     SelectionModel selectionModel = myEditor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
@@ -204,6 +206,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   }
 
   public void moveToLogicalPosition(LogicalPosition pos) {
+    assertIsDispatchThread();
     validateCallContext();
     int column = pos.column;
     int line = pos.line;
@@ -262,10 +265,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myOffset = myEditor.logicalPositionToOffset(myLogicalCaret);
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
-    myVisualLineStart =
-    myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd =
-    myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
 
     myEditor.updateCaretCursor();
     requestRepaint(oldY);
@@ -285,9 +286,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     final EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
     final EditorComponentImpl content = (EditorComponentImpl)myEditor.getContentComponent();
 
-    int updateWidth = myEditor.getScrollPane()
-      .getHorizontalScrollBar()
-      .getValue() + visibleRect.width;
+    int updateWidth = myEditor.getScrollPane().getHorizontalScrollBar().getValue() + visibleRect.width;
     if (Math.abs(newY - oldY) <= 2 * lineHeight) {
       int minY = Math.min(oldY, newY);
       int maxY = Math.max(oldY + lineHeight, newY + lineHeight);
@@ -393,10 +392,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
       //}
     }
 
-    myVisualLineStart =
-    myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd =
-    myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
   }
 
   private boolean needToShiftWhitespaces(final DocumentEvent e) {

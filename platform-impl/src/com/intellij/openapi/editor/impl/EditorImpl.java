@@ -1036,8 +1036,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myGutterSizeUpdater != null) return;
     myGutterSizeUpdater = new Runnable() {
       public void run() {
-        if (isDisposed()) return;
-        myGutterComponent.updateSize();
+        if (!isDisposed() && isShowing()) {
+          myGutterComponent.updateSize();
+        }
         myGutterSizeUpdater = null;
       }
     };
@@ -3235,7 +3236,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myScheme;
   }
 
-  private void assertIsDispatchThread() {
+  void assertIsDispatchThread() {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditorComponent);
   }
 
