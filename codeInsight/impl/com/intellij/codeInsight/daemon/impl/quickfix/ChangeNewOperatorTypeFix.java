@@ -40,7 +40,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
            && myExpression.isValid()
            && myExpression.getManager().isInProject(myExpression)
            && !TypeConversionUtil.isPrimitiveAndNotNull(myType)
-           && myExpression.getArgumentList() != null
+           && (myType instanceof PsiArrayType || myExpression.getArgumentList() != null)
       ;
   }
 
