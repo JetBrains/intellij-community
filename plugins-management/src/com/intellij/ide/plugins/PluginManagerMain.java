@@ -176,6 +176,8 @@ public class PluginManagerMain {
   public void reset() {
     UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
       public void run() {
+        requireShutdown = false;
+        pluginsList = null;
         TableUtil.ensureSelectionExists(getPluginTable());
         loadAvailablePlugins();
       }
@@ -637,8 +639,7 @@ public class PluginManagerMain {
         }
         filtered.add(descriptor);
       }
-      model.clearData();
-      model.addData(current);
+      model.filter(current);
     }
 
     private boolean isAccepted(final Set<String> search,

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,7 +45,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     sortByColumn(getNameColumn());
   }
 
-  public void addData(ArrayList<IdeaPluginDescriptor> list) {
+  public void addData(List<IdeaPluginDescriptor> list) {
     //  For each downloadable plugin we need to know whether its counterpart
     //  is already installed, and if yes compare the difference in versions:
     //  availability of newer versions will be indicated separately.
@@ -66,7 +67,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     }
   }
 
-  public void modifyData(ArrayList<IdeaPluginDescriptor> list) {
+  public void modifyData(List<IdeaPluginDescriptor> list) {
     //  For each downloadable plugin we need to know whether its counterpart
     //  is already installed, and if yes compare the difference in versions:
     //  availability of newer versions will be indicated separately.
@@ -91,9 +92,13 @@ public class AvailablePluginsTableModel extends PluginTableModel {
     safeSort();
   }
 
-  public void clearData() {
+  @Override
+  public void filter(final ArrayList<IdeaPluginDescriptor> filtered) {
     view.clear();
-    UpdateVersions.clear();
+    for (IdeaPluginDescriptor descriptor : filtered) {
+      view.add(descriptor);
+    }
+    super.filter(filtered);
   }
 
   public int getNameColumn() {

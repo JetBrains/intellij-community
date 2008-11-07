@@ -22,6 +22,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,11 +40,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     super.sortableProvider = sortableProvider;
     super.columns = new ColumnInfo[]{new EnabledPluginInfo(), new NameColumnInfo(), new BundledColumnInfo()};
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
-
-    myEnabled.clear();
-    for (IdeaPluginDescriptor ideaPluginDescriptor : view) {
-      myEnabled.put(ideaPluginDescriptor.getPluginId(), ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isEnabled());
-    }
+    reset(view);
 
     for (Iterator<IdeaPluginDescriptor> iterator = view.iterator(); iterator.hasNext();) {
       @NonNls final String s = iterator.next().getPluginId().getIdString();
@@ -60,11 +57,20 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return 1;
   }
 
-  public void addData(ArrayList<IdeaPluginDescriptor> list) {
+  public void addData(List<IdeaPluginDescriptor> list) {
     modifyData(list);
+    reset(Arrays.asList(PluginManager.getPlugins()));
   }
 
-  public void modifyData(ArrayList<IdeaPluginDescriptor> list) {
+  private void reset(final List<IdeaPluginDescriptor> list) {
+    for (IdeaPluginDescriptor ideaPluginDescriptor : list) {
+      if (ideaPluginDescriptor instanceof IdeaPluginDescriptorImpl) {
+        myEnabled.put(ideaPluginDescriptor.getPluginId(), ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isEnabled());
+      }
+    }
+  }
+
+  public void modifyData(List<IdeaPluginDescriptor> list) {
     //  For each downloadable plugin we need to know whether its counterpart
     //  is already installed, and if yes compare the difference in versions:
     //  availability of newer versions will be indicated separately.
@@ -83,10 +89,15 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     safeSort();
   }
 
-  public void clearData() {
+  @Override
+  public void filter(final ArrayList<IdeaPluginDescriptor> filtered) {
     view.clear();
-    NewVersions2Plugins.clear();
-    updatedPlugins.clear();
+    for (IdeaPluginDescriptor descriptor : filtered) {
+      if (PluginManager.getPlugin(descriptor.getPluginId()) != null) {
+        view.add(descriptor);
+      }
+    }
+    super.filter(filtered);
   }
 
   private static void updateExistingPluginInfo(IdeaPluginDescriptor descr, IdeaPluginDescriptor existing) {

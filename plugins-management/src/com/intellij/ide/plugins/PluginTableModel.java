@@ -103,11 +103,13 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     return list;
   }
 
-  public abstract void addData(ArrayList<IdeaPluginDescriptor> list);
+  public abstract void addData(List<IdeaPluginDescriptor> list);
 
-  public abstract void modifyData(ArrayList<IdeaPluginDescriptor> list);
+  public abstract void modifyData(List<IdeaPluginDescriptor> list);
 
-  public abstract void clearData();
+  public void filter(ArrayList<IdeaPluginDescriptor> filtered){
+    safeSort();
+  }
 
   protected void safeSort() {
     final int sortColumn = sortableProvider.getSortColumn();
