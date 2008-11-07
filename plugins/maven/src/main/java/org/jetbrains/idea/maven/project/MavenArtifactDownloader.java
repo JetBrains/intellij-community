@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.model.Plugin;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
@@ -50,10 +49,6 @@ public class MavenArtifactDownloader {
 
       if (shouldDownload(mySettings.getDownloadJavadoc(), demand)) {
         download(MavenConstants.JAVADOC_CLASSIFIER, artifacts, downloadedFiles);
-      }
-
-      if (shouldDownload(mySettings.getDownloadPlugins(), demand)) {
-        downloadPlugins();
       }
     }
     finally {
@@ -123,27 +118,6 @@ public class MavenArtifactDownloader {
                                              classifier);
       myEmbedder.resolve(a, new ArrayList<ArtifactRepository>(eachEntry.getValue()));
       if (a.isResolved()) downloadedFiles.add(a.getFile());
-    }
-  }
-
-  private void downloadPlugins() throws MavenProcessCanceledException {
-    myProgress.setText(ProjectBundle.message("maven.downloading.artifact", "plugins"));
-
-    int pluginsCount = 0;
-    for (MavenProjectModel each : myMavenProjects) {
-      pluginsCount += each.getPlugins().size();
-    }
-
-    int step = 0;
-    for (MavenProjectModel eachProject : myMavenProjects) {
-      for (Plugin eachPlugin : eachProject.getPlugins()) {
-        myProgress.checkCanceled();
-        myProgress.setFraction(((double)step++) / pluginsCount);
-        myProgress.setText2(eachPlugin.getKey());
-
-        myEmbedder.resolvePlugin(eachPlugin, eachProject.getMavenProject());
-        myProjectsTree.fireUpdated(eachProject);
-      }
     }
   }
 }

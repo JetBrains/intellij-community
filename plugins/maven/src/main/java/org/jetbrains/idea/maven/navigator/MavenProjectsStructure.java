@@ -550,7 +550,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
         return name;
       }
 
-      final String artifactId = myProjectModel.getMavenProject().getArtifactId();
+      final String artifactId = myProjectModel.getMavenId().artifactId;
       if (!StringUtil.isEmptyOrSpaces(artifactId)) {
         return artifactId;
       }

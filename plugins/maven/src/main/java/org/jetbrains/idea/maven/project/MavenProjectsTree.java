@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Parent;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
@@ -288,17 +287,10 @@ public class MavenProjectsTree {
     visit(new SimpleVisitor() {
       public void visit(MavenProjectModel each) {
         if (each == project) return;
-        MavenId parentId = getParentId(each);
-        if (id.equals(parentId)) result.add(each);
+        if (id.equals(each.getParentId())) result.add(each);
       }
     });
     return result;
-  }
-
-  private MavenId getParentId(MavenProjectModel project) {
-    Parent parent = project.getMavenProject().getModel().getParent();
-    if (parent == null) return null;
-    return new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
   }
 
   private MavenProjectModel findAggregator(final MavenProjectModel project) {

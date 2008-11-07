@@ -108,7 +108,7 @@ public class MavenKeymapExtension implements KeymapExtension {
                                                       MavenProjectsManager projectsManager,
                                                       MavenEventsManager eventsHandler) {
     List<MavenGoalAction> result = new ArrayList<MavenGoalAction>();
-    String projectName = eachProject.getMavenProject().getName();
+    String projectName = eachProject.getProjectName();
     String pomPath = eachProject.getPath();
     String actionIdPrefix = eventsHandler.getActionId(pomPath, null);
 
@@ -139,7 +139,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   private static String getMavenProjectName(MavenProjectsManager projectsManager, VirtualFile file) {
     MavenProjectModel n = projectsManager.findProject(file);
     if (n != null) {
-      return n.getMavenProject().getName();
+      return n.getProjectName();
     }
     return EventsBundle.message("maven.event.unknown.project");
   }
