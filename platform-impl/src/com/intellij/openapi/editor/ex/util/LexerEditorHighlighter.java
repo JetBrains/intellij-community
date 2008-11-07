@@ -27,12 +27,12 @@ import java.util.Map;
 public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
   private HighlighterClient myEditor;
-  private Lexer myLexer;
-  private Map<IElementType, TextAttributes> myAttributesMap;
+  private final Lexer myLexer;
+  private final Map<IElementType, TextAttributes> myAttributesMap;
   private SegmentArrayWithData mySegments;
-  private SyntaxHighlighter myHighlighter;
+  private final SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
-  private int myInitialState;
+  private final int myInitialState;
   public static final Key<Integer> CHANGED_TOKEN_START_OFFSET = Key.create("CHANGED_TOKEN_START_OFFSET");
 
   public LexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
@@ -217,27 +217,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     if (oldEndIndex < 0){
       oldEndIndex = mySegments.getSegmentCount();
     }
-    int changedIndex = changedOffsetIndex(startIndex, oldEndIndex, insertSegments);
     mySegments.shiftSegments(oldEndIndex, shift);
     mySegments.replace(startIndex, oldEndIndex, insertSegments);
-
-    synchronized (document) {
-      int tokenStartOffset;
-      if (changedIndex == -1) {
-        tokenStartOffset = -1;
-      }
-      else {
-        tokenStartOffset = mySegments.getSegmentStart(changedIndex);
-        Integer oldTokenStartOffset = document.getUserData(CHANGED_TOKEN_START_OFFSET);
-        if (oldTokenStartOffset != null && oldTokenStartOffset.intValue() != tokenStartOffset) {
-          tokenStartOffset = -1;
-        }
-      }
-      document.putUserData(CHANGED_TOKEN_START_OFFSET, Integer.valueOf(tokenStartOffset));
-    }
-
-    int lastDocOffset = document.getTextLength();
-    checkUpdateCorrect(lastDocOffset);
 
     if (insertSegmentCount == 0 ||
         oldEndIndex == startIndex + 1 && insertSegmentCount == 1 && data == mySegments.getSegmentData(startIndex)) {
@@ -245,23 +226,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     myEditor.repaint(startOffset, repaintEnd);
-  }
-
-  // -1 means data has been changed
-  private int changedOffsetIndex(final int startIndex, final int endIndex, final SegmentArrayWithData insertSegments) {
-    if (endIndex - startIndex != insertSegments.getSegmentCount()) return -1;
-    int changedIndex = -1;
-    for (int i = startIndex; i < endIndex; i++) {
-      short oldData = mySegments.getSegmentData(i);
-      int insertIndex = i - startIndex;
-      short newData = insertSegments.getSegmentData(insertIndex);
-      if (oldData != newData) return -1;
-      if (mySegments.getSegmentStart(i) != insertSegments.getSegmentStart(insertIndex)
-          || mySegments.getSegmentEnd(i) != insertSegments.getSegmentEnd(insertIndex)) {
-        changedIndex = i;
-      }
-    }
-    return changedIndex;
   }
 
   public void beforeDocumentChange(DocumentEvent event) {
@@ -276,16 +240,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
            a1.getSegmentEnd(idx1) + offsetShift == a2.getSegmentEnd(idx2) &&
            a1.getSegmentData(idx1) == a2.getSegmentData(idx2);
   }
-
-  private void checkUpdateCorrect(int lastDocOffset) {
-    /*
-    int lastLexerOffset = mySegments.getSegmentEnd(mySegments.getSegmentCount() - 1);
-    if (lastDocOffset != lastLexerOffset) {
-      LOG.error("Lexer update failed: lastDocOffset = " + lastDocOffset + ", lastLexerOffset = " + lastLexerOffset);
-    }
-    */
-  }
-
 
   public HighlighterClient getClient() {
     return myEditor;
@@ -305,8 +259,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       i++;
       myLexer.advance();
     }
-
-    checkUpdateCorrect(text.length());
 
     if(myEditor != null) {
       myEditor.repaint(0, text.length());
