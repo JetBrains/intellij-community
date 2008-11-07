@@ -59,8 +59,10 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     PsiElement element = symbolType.getNavigationElement();
     assert element != null;
     VirtualFile file = element.getContainingFile().getVirtualFile();
-    OpenFileDescriptor descriptor=new OpenFileDescriptor(project, file, element.getTextOffset());
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    if (file != null) {
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, element.getTextOffset());
+      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    }
   }
 
   public boolean startInWriteAction() {
