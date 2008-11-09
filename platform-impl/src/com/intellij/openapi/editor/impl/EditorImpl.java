@@ -629,14 +629,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void setHighlighter(EditorHighlighter highlighter) {
     assertIsDispatchThread();
+    final Document document = getDocument();
     if (myHighlighter != null) {
-      getDocument().removeDocumentListener(myHighlighter);
+      document.removeDocumentListener(myHighlighter);
     }
 
-    getDocument().addDocumentListener(highlighter);
+    document.addDocumentListener(highlighter);
     highlighter.setEditor(this);
-    highlighter.setText(getDocument().getCharsSequence());
+    highlighter.setText(document.getCharsSequence());
     myHighlighter = highlighter;
+    if (document instanceof DocumentImpl) {
+      ((DocumentImpl)document).rememberEditorHighlighterForCachesOptimization(highlighter);
+    }
 
     if (myPanel != null) {
       reinitSettings();

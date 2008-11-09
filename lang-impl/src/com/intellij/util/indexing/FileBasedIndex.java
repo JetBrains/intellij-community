@@ -10,6 +10,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -689,6 +691,11 @@ public class FileBasedIndex implements ApplicationComponent {
         newFc.putUserData(PSI_FILE, dominantContentFile);
       }
 
+      if (content instanceof AuthenticContent) {
+        newFc.putUserData(EDITOR_HIGHLIGHTER, document instanceof DocumentImpl
+                                              ? ((DocumentImpl)document).getEditorHighlighterForCachesBuilding() : null);
+      }
+
       for (ID<?, ?> indexId : myIndices.keySet()) {
         if (getInputFilter(indexId).acceptInput(vFile)) {
           final int inputId = Math.abs(getFileId(vFile));
@@ -705,6 +712,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
+  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
   public static final Key<Project> PROJECT = new Key<Project>("Context project");
 
   @Nullable

@@ -36,12 +36,12 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     setSegmentStorage(mySegments);
   }
 
-  public void registerLayer(IElementType tokenType, LayerDescriptor layerHighlighter) {
+  public synchronized void registerLayer(IElementType tokenType, LayerDescriptor layerHighlighter) {
     myTokensToLayer.put(tokenType, layerHighlighter);
     mySegments.removeAll();
   }
 
-  public void unregisterLayer(IElementType tokenType) {
+  public synchronized void unregisterLayer(IElementType tokenType) {
     final LayerDescriptor layer = myTokensToLayer.remove(tokenType);
     if (layer != null) {
       myLayerBuffers.remove(layer);
@@ -49,7 +49,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
-  public void setText(final CharSequence text) {
+  public synchronized void setText(final CharSequence text) {
     myText = text;
     updateLayers();
 

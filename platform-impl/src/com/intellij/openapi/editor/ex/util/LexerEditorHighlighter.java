@@ -49,6 +49,12 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myEditor != null ? myEditor.getDocument() : null;
   }
 
+  public final boolean checkContentIsEqualTo(CharSequence sequence) {
+    final Document document = getDocument();
+    if (document != null) return document.getText().equals(sequence.toString());
+    return false;
+  }
+
   public EditorColorsScheme getScheme() {
     return myScheme;
   }
@@ -71,7 +77,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myAttributesMap.clear();
   }
 
-  public HighlighterIterator createIterator(int startOffset) {
+  public synchronized HighlighterIterator createIterator(int startOffset) {
     final Document document = getDocument();
     if(document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
       ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
@@ -245,7 +251,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myEditor;
   }
 
-  public void setText(CharSequence text) {
+  public synchronized void setText(CharSequence text) {
     doSetText(text);
   }
 

@@ -10,12 +10,14 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
@@ -27,9 +29,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.idea.LoggerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -245,8 +249,15 @@ public class IdTableBuilding {
       final CharSequence chars = inputData.getContentAsText();
       if (CacheUtil.getIndexPatternCount() > 0) {
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
-        final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(null, myFile);
-        highlighter.setText(chars);
+        EditorHighlighter highlighter = null;
+
+        final EditorHighlighter editorHighlighter = inputData.getUserData(FileBasedIndex.EDITOR_HIGHLIGHTER);
+        if (editorHighlighter != null && checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
+          highlighter = editorHighlighter;
+        } else {
+          highlighter = HighlighterFactory.createHighlighter(null, myFile);
+          highlighter.setText(chars);
+        }
         final HighlighterIterator iterator = highlighter.createIterator(0);
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
@@ -266,6 +277,16 @@ public class IdTableBuilding {
       }
       return Collections.emptyMap();
     }
+  }
+
+  public static boolean checkCanUseCachedEditorHighlighter(final CharSequence chars, final EditorHighlighter editorHighlighter) {
+    assert editorHighlighter instanceof LexerEditorHighlighter;
+    final boolean b = ((LexerEditorHighlighter)editorHighlighter).checkContentIsEqualTo(chars);
+    if (!b) {
+      final Logger logger = LoggerFactory.getInstance().getLoggerInstance(IdTableBuilding.class.getName());
+      logger.warn("Unexpected mismatch of editor highlighter content with indexing content");
+    }
+    return b;
   }
 
   public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {

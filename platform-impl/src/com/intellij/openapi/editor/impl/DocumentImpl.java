@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -73,7 +76,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myEventsHandling = false;
   private boolean myAssertWriteAccess = true;
   private static final Key<Boolean> DOING_BULK_UPDATE = Key.create("DoingBulkRefromat");
-
+  private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
 
   private DocumentImpl() {
     setCyclicBufferSize(0);
@@ -427,7 +430,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
     try{
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
-      
+
       myLineSet.changedUpdate(event);
       setModificationStamp(newModificationStamp);
 
@@ -691,6 +694,20 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       putUserData(DOING_BULK_UPDATE, null);
       getPublisher().updateFinished(this);
     }
+  }
+
+  public @Nullable EditorHighlighter getEditorHighlighterForCachesBuilding() {
+    final WeakReference<EditorHighlighter> editorHighlighterWeakReference = getUserData(ourSomeEditorSyntaxHighlighter);
+    final EditorHighlighter someEditorHighlighter = editorHighlighterWeakReference != null ? editorHighlighterWeakReference.get():null;
+
+    if (someEditorHighlighter instanceof LexerEditorHighlighter) {
+      return someEditorHighlighter;
+    }
+    return null;
+  }
+
+  public void rememberEditorHighlighterForCachesOptimization(@NotNull final EditorHighlighter highlighter) {
+    putUserData(ourSomeEditorSyntaxHighlighter, new WeakReference<EditorHighlighter>(highlighter));
   }
 
   private static class DocumentBulkUpdateListenerHolder {
