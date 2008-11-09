@@ -40,6 +40,8 @@ import java.util.Map;
  */
 public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
+  private volatile XmlProlog myProlog;
+  private volatile XmlTag myRootTag;
 
   public XmlDocumentImpl() {
     this(XmlElementType.XML_DOCUMENT);
@@ -73,11 +75,35 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   public XmlProlog getProlog() {
-    return (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
+    XmlProlog prolog = myProlog;
+
+    if (prolog == null) {
+      synchronized (this) {
+        prolog = myProlog;
+        if (prolog == null) {
+          prolog = (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
+          myProlog = prolog;
+        }
+      }
+    }
+
+    return myProlog;
   }
 
   public XmlTag getRootTag() {
-    return (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);
+    XmlTag rootTag = myRootTag;
+
+    if (rootTag == null) {
+      synchronized (this) {
+        rootTag = myRootTag;
+        if (rootTag == null) {
+          rootTag = (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);
+          myRootTag = rootTag;
+        }
+      }
+    }
+
+    return myRootTag;
   }
 
   public XmlNSDescriptor getRootTagNSDescriptor() {
@@ -91,6 +117,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
     myDefaultDescriptorsCacheNotStrict.clear();
+    myProlog = null;
+    myRootTag = null;
     super.clearCaches();
   }
 
