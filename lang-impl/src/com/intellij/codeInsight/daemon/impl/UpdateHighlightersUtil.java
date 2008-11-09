@@ -39,7 +39,7 @@ import java.util.List;
 
 public class UpdateHighlightersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil");
-  public static boolean DEBUG = LOG.isDebugEnabled();
+  private static final boolean DEBUG = LOG.isDebugEnabled();
 
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
   private static final Comparator<TextRange> BY_START_OFFSET = new Comparator<TextRange>() {
@@ -463,7 +463,7 @@ public class UpdateHighlightersUtil {
   }
 
   private static void assertMarkupConsistent(MarkupModel markup, List<HighlightInfo> highlightsToSet, List<HighlightInfo> highlightsToRemove) {
-    if (DEBUG) {
+    if (DEBUG) { // TODO: [cdr] the checks are quadratic to number of highlights, PLEASE make them more efficient if there is a need to switch them on, there are many problematic tests FAILING for this reason! 
       if (highlightsToSet != null) {
         for (HighlightInfo info : highlightsToSet) {
           assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
