@@ -40,12 +40,28 @@ public abstract class PrattBuilder {
   protected abstract PrattBuilderFacade createChildBuilder();
 
   public boolean assertToken(final PrattTokenType type) {
-    return assertToken(type, type.getExpectedText(this));
+    if (checkToken(type)) {
+      return true;
+    }
+    error(type.getExpectedText(this));
+    return false;
   }
 
-  public abstract boolean assertToken(IElementType type, @NotNull String errorMessage);
+  public boolean assertToken(IElementType type, @NotNull String errorMessage) {
+    if (checkToken(type)) {
+      return true;
+    }
+    error(errorMessage);
+    return false;
+  }
 
-  public abstract boolean checkToken(IElementType type);
+  public boolean checkToken(IElementType type) {
+    if (isToken(type)) {
+      advance();
+      return true;
+    }
+    return false;
+  }
 
   public abstract void advance();
 

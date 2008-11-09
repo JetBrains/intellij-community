@@ -112,25 +112,6 @@ public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade
     return null;
   }
 
-  public boolean assertToken(final IElementType type, @NotNull final String errorMessage) {
-    return _checkToken(type, errorMessage);
-  }
-
-  public boolean checkToken(final IElementType type) {
-    return _checkToken(type, null);
-  }
-
-  private boolean _checkToken(final IElementType type, @Nullable String errorMessage) {
-    if (isToken(type)) {
-      advance();
-      return true;
-    }
-    if (errorMessage != null) {
-      error(errorMessage);
-    }
-    return false;
-  }
-
   public void advance() {
     myLeftSiblings.addLast(getTokenType());
     myBuilder.advanceLexer();

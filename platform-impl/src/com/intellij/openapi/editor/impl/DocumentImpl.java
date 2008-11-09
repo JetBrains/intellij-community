@@ -456,9 +456,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
             final RangeMarkerEx rangeMarker = rangeMarkerIterator.next();
 
             if (rangeMarker != null && rangeMarker.isValid()) {
-              rangeMarker.documentChanged(event);
-              if (!rangeMarker.isValid() && myGuardedBlocks.remove(rangeMarker)) {
-                LOG.error("Guarded blocks should stay valid");
+              if (event.getOffset() <= rangeMarker.getEndOffset()) {
+                rangeMarker.documentChanged(event);
+                if (!rangeMarker.isValid() && myGuardedBlocks.remove(rangeMarker)) {
+                  LOG.error("Guarded blocks should stay valid");
+                }
               }
             }
             else {
