@@ -234,7 +234,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         return result;
       }
 
-      if(model.isForward()) offset = result.getStartOffset() + 1; else offset = result.getEndOffset() - 1;
+      offset = model.isForward() ? result.getStartOffset() + 1 : result.getEndOffset() - 1;
     }
   }
 
@@ -274,22 +274,15 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (index < 0){
       return NOT_FOUND_RESULT;
     }
-    else{
-      return new FindResultImpl(index, index + toFind.length());
-    }
+    return new FindResultImpl(index, index + toFind.length());
   }
 
   private static FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model) {
     String toFind = model.getStringToFind();
 
     Pattern pattern;
-    try{
-      if (model.isCaseSensitive()){
-        pattern = Pattern.compile(toFind, Pattern.MULTILINE);
-      }
-      else{
-        pattern = Pattern.compile(toFind, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-      }
+    try {
+      pattern = Pattern.compile(toFind, model.isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
     }
     catch(PatternSyntaxException e){
       LOG.error(e);
@@ -316,9 +309,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       if (start < 0){
         return NOT_FOUND_RESULT;
       }
-      else{
-        return new FindResultImpl(start, end);
-      }
+      return new FindResultImpl(start, end);
     }
   }
 

@@ -395,14 +395,7 @@ final class FindDialog extends DialogWrapper {
     if (validateModel.isRegularExpressions()) {
       String toFind = validateModel.getStringToFind();
       try {
-        Pattern pattern;
-        if (validateModel.isCaseSensitive()){
-          pattern = Pattern.compile(toFind, Pattern.MULTILINE);
-        }
-        else{
-          pattern = Pattern.compile(toFind, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-        }
-
+        Pattern pattern = Pattern.compile(toFind, validateModel.isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
         if (pattern.matcher("").matches() && !toFind.endsWith("$") && !toFind.startsWith("^")) {
           throw new PatternSyntaxException(FindBundle.message("find.empty.match.regular.expression.error"),toFind, -1);
         }

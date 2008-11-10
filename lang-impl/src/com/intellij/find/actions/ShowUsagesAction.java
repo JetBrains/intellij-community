@@ -1,7 +1,6 @@
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindBundle;
@@ -90,7 +89,8 @@ public class ShowUsagesAction extends AnAction {
       }
       else {
         JLabel label = HintUtil.createInformationLabel(text);
-        HintManager.getInstance().showHint(label, popupPosition, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, 0);
+        HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY |
+                                                                 HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0);
       }
     }
     else {
