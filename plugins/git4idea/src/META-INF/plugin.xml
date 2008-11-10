@@ -9,6 +9,16 @@
   <depends>com.intellij.modules.vcs</depends>
 
   <actions>
+
+    <group id="GitFileGroup">
+      <separator/>
+      <action id="Git.Init" class="git4idea.actions.GitInit" text="Git Init ..."/>
+      />
+      <separator/>
+      <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
+    </group>
+
+
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="Git">
       <reference ref="CheckinFiles"/>
       <!-- <reference id="CheckinProject"/>
