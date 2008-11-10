@@ -62,13 +62,18 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   protected boolean updateLayers() { return false; }
 
-  public synchronized void documentChanged(DocumentEvent e) {
-    myText = e.getDocument().getCharsSequence();
-    if (updateLayers()) {
-      setText(myText);
-    }
-    else {
-      super.documentChanged(e);
+  public void documentChanged(DocumentEvent e) {
+    // do NOT synchronize before updateLayers due to deadlock with PsiLock
+    final boolean b = updateLayers();
+
+    synchronized (this) {
+      myText = e.getDocument().getCharsSequence();
+      if (b) {
+        setText(myText);
+      }
+      else {
+        super.documentChanged(e);
+      }
     }
   }
 
