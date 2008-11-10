@@ -115,8 +115,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {
     final String extension = fileType.getDefaultExtension();
 
-    final File tempFile = File.createTempFile("aaa", "." + extension);
-    myFilesToDelete.add(tempFile);
+    File dir = createTempDirectory();
+    final File tempFile = File.createTempFile("aaa", "." + extension, dir);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
       new WriteCommandAction(getProject()) {
@@ -129,7 +129,17 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     VfsUtil.saveText(vFile, text);
     assert vFile != null;
 
+    VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+    final ContentEntry contentEntry = rootModel.addContentEntry(vdir);
+    contentEntry.addSourceFolder(vdir, false);
+    rootModel.commit();
+
     configureByExistingFile(vFile);
+
+    assertEquals(fileType, myFile.getVirtualFile().getFileType());
     return myFile;
   }
 

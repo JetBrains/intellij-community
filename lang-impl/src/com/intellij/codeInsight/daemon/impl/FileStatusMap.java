@@ -35,7 +35,7 @@ public class FileStatusMap {
   }
 
   @Nullable
-  static TextRange getDirtyTextRange(@NotNull Editor editor, int part) {
+  public static TextRange getDirtyTextRange(@NotNull Editor editor, int part) {
     Document document = editor.getDocument();
     TextRange documentRange = TextRange.from(0, document.getTextLength());
 
