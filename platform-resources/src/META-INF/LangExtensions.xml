@@ -379,4 +379,23 @@
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.highlighting.EscapeHandler"/>
 
   <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
+
+  <!-- Graph API -->
+  <applicationService serviceInterface="com.intellij.openapi.graph.GraphManager"
+                      serviceImplementation="com.intellij.openapi.graph.impl.GraphManagerImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.graph.builder.util.NodeFactory"
+                      serviceImplementation="com.intellij.openapi.graph.impl.builder.NodeFactoryImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.graph.builder.util.CustomGraphActionsFactory"
+                      serviceImplementation="com.intellij.openapi.graph.impl.builder.util.CustomGraphActionsFactoryImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.graph.GraphPeerFactory"
+                      serviceImplementation="com.intellij.openapi.graph.impl.GraphPeerFactoryImpl"/>
+
+  <projectService serviceInterface="com.intellij.openapi.graph.builder.GraphBuilderFactory"
+                  serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphBuilderFactoryImpl"/>
+  <projectService serviceInterface="com.intellij.openapi.graph.builder.dnd.ProjectViewDnDHelper"
+                  serviceImplementation="com.intellij.openapi.graph.impl.builder.dnd.ProjectViewDnDHelperImpl"/>
+  <projectService serviceInterface="com.intellij.openapi.graph.settings.GraphSettingsProvider"
+                  serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphSettingsProviderImpl"/>
+  <projectService serviceInterface="com.intellij.openapi.graph.impl.builder.GraphEditModeFactory"
+                  serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphEditModeFactoryImpl"/>
 </extensions>
