@@ -244,7 +244,7 @@
     </component>
   </application-components>
   <actions>
-    <group id="NewXml">
+    <group id="NewXml" text="XML">
       <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="Html"/>
       <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="Xhtml"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
