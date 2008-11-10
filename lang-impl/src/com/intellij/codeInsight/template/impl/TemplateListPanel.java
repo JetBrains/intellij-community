@@ -18,6 +18,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -39,7 +40,6 @@ class TemplateListPanel extends JPanel {
   private Editor myEditor;
   private List<TemplateGroup> myTemplateGroups = new ArrayList<TemplateGroup>();
   private JComboBox myExpandByCombo;
-  private boolean isModified = false;
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
@@ -96,7 +96,6 @@ class TemplateListPanel extends JPanel {
       }
     });
 
-    isModified = false;
     myUpdateNeeded = true;
 
 
@@ -113,7 +112,6 @@ class TemplateListPanel extends JPanel {
     }
     templateSettings.setTemplates(templateGroups);
     templateSettings.setDefaultShortcutChar(getDefaultShortcutChar());
-    isModified = false;
   }
 
   public boolean isModified() {
@@ -121,7 +119,40 @@ class TemplateListPanel extends JPanel {
     if (templateSettings.getDefaultShortcutChar() != getDefaultShortcutChar()) {
       return true;
     }
-    return isModified;
+
+    List<TemplateGroup> originalGroups = templateSettings.getTemplateGroups();
+    List<TemplateGroup> newGroups = getTemplateGroups();
+
+    return !checkAreEqual(collectTemplates(originalGroups), collectTemplates(newGroups));
+  }
+
+  private static List<TemplateImpl> collectTemplates(final List<TemplateGroup> groups) {
+    ArrayList<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    for (TemplateGroup group : groups) {
+      result.addAll(group.getElements());
+    }
+    Collections.sort(result, new Comparator<TemplateImpl>(){
+      public int compare(final TemplateImpl o1, final TemplateImpl o2) {
+        return o1.getKey().compareTo(o2.getKey());
+      }
+    });
+    return result;
+  }
+
+  private static boolean checkAreEqual(final List<TemplateImpl> originalGroup, final List<TemplateImpl> newGroup) {
+    if (originalGroup.size() != newGroup.size()) return false;
+
+    for (int i = 0; i < newGroup.size(); i++) {
+      TemplateImpl newTemplate = newGroup.get(i);
+      newTemplate.parseSegments();
+      TemplateImpl originalTemplate = originalGroup.get(i);
+      originalTemplate.parseSegments();
+      if (!originalTemplate.equals(newTemplate)) return false;
+      if (originalTemplate.isDeactivated() != newTemplate.isDeactivated()) return false;
+
+    }
+
+    return true;
   }
 
   private char getDefaultShortcutChar() {
@@ -200,7 +231,6 @@ class TemplateListPanel extends JPanel {
               insertNewGroup(scheme);
               for (TemplateImpl template : scheme.getElements()) {
                 addTemplate(template);
-                isModified =  true;
               }
             }
           }.show(getSchemesManager(), myTemplateGroups);
@@ -309,6 +339,7 @@ class TemplateListPanel extends JPanel {
     return panel;
   }
 
+  @Nullable
   private TemplateKey getTemplateKey(int row) {
     JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
@@ -322,6 +353,7 @@ class TemplateListPanel extends JPanel {
     return null;
   }
 
+  @Nullable
   private TemplateImpl getTemplate(int row) {
     JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
@@ -335,6 +367,7 @@ class TemplateListPanel extends JPanel {
     return null;
   }
 
+  @Nullable
   private TemplateGroup getGroup(int row) {
     JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
@@ -369,25 +402,29 @@ class TemplateListPanel extends JPanel {
 
     dialog.apply();
 
-    DefaultTreeModel model = (DefaultTreeModel)myTree.getModel();
-
     if (!oldGroupName.equals(template.getGroupName())) {
       TemplateGroup oldGroup = getTemplateGroup(oldGroupName);
-      oldGroup.removeElement(template);
+      if (oldGroup != null) {
+        oldGroup.removeElement(template);
+      }
 
       template.setId(null);//To make it not equal with default template with the same name
 
       JTree tree = myTree;
-      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldTemplateNode.getParent();
-      removeNodeFromParent(oldTemplateNode);
-      if (parent.getChildCount() == 0) removeNodeFromParent(parent);
+      if (oldTemplateNode != null) {
+        DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldTemplateNode.getParent();
+        removeNodeFromParent(oldTemplateNode);
+        if (parent.getChildCount() == 0) removeNodeFromParent(parent);
+      }
 
       DefaultMutableTreeNode templateNode = addTemplate(template);
 
-      TreePath newTemplatePath = new TreePath(templateNode.getPath());
-      tree.expandPath(newTemplatePath);
+      if (templateNode != null) {
+        TreePath newTemplatePath = new TreePath(templateNode.getPath());
+        tree.expandPath(newTemplatePath);
 
-      selected = tree.getRowForPath(newTemplatePath);
+        selected = tree.getRowForPath(newTemplatePath);
+      }
 
       ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(myTreeRoot);
     }
@@ -395,13 +432,13 @@ class TemplateListPanel extends JPanel {
     myTree.setSelectionInterval(selected, selected);
 
     updateTemplateTextArea();
-    isModified = true;
   }
 
   private Map<TemplateOptionalProcessor, Boolean> getOptions(final TemplateImpl template) {
     return myTemplateOptions.get(System.identityHashCode(template));
   }
 
+  @Nullable
   private DefaultMutableTreeNode getNode(final int row) {
     JTree tree = myTree;
     TreePath path = tree.getPathForRow(row);
@@ -413,6 +450,7 @@ class TemplateListPanel extends JPanel {
 
   }
 
+  @Nullable
   private TemplateGroup getTemplateGroup(final String groupName) {
     for (TemplateGroup group : myTemplateGroups) {
       if (group.getName().equals(groupName)) return group;
@@ -432,7 +470,6 @@ class TemplateListPanel extends JPanel {
     dialog.apply();
 
     addTemplate(template);
-    isModified = true;
   }
 
   private void copyRow() {
@@ -451,7 +488,6 @@ class TemplateListPanel extends JPanel {
 
     dialog.apply();
     addTemplate(template);
-    isModified = true;
   }
 
   private Map<TemplateContextType, Boolean> getContext(final TemplateImpl template) {
@@ -480,7 +516,6 @@ class TemplateListPanel extends JPanel {
       if (result != DialogWrapper.OK_EXIT_CODE) return;
 
       removeTemplateAt(selected);
-      isModified = true;
     }
     else {
       TemplateGroup group = getGroup(selected);
@@ -497,8 +532,6 @@ class TemplateListPanel extends JPanel {
 
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
         removeNodeFromParent(node);
-
-        isModified = true;
       }
 
     }
@@ -540,7 +573,6 @@ class TemplateListPanel extends JPanel {
         Object obj = node.getUserObject();
         if (obj instanceof TemplateImpl) {
           ((TemplateImpl)obj).setDeactivated(!node.isChecked());
-          isModified = true;
         }
       }
 
@@ -574,10 +606,12 @@ class TemplateListPanel extends JPanel {
           enableCopyButton = false;
           if (node.getUserObject() instanceof TemplateImpl) {
             enableCopyButton = true;
-            TemplateGroup group = getTemplateGroup(template.getGroupName());
-            if (group != null && !getSchemesManager().isShared(group)) {
-              enableEditButton = true;
-              enableRemoveButton = true;
+            if (template != null) {
+              TemplateGroup group = getTemplateGroup(template.getGroupName());
+              if (group != null && !getSchemesManager().isShared(group)) {
+                enableEditButton = true;
+                enableRemoveButton = true;
+              }
             }
           }
           if (node.getUserObject() instanceof TemplateGroup) {
@@ -679,6 +713,7 @@ class TemplateListPanel extends JPanel {
     });
   }
 
+  @Nullable
   private DefaultMutableTreeNode addTemplate(TemplateImpl template) {
     TemplateGroup newGroup = getTemplateGroup(template.getGroupName());
     if (newGroup == null) {
@@ -690,7 +725,7 @@ class TemplateListPanel extends JPanel {
     }
 
     CheckedTreeNode node = new CheckedTreeNode(template);
-    node.setChecked(template.isDeactivated());
+    node.setChecked(!template.isDeactivated());
     if (myTreeRoot.getChildCount() > 0) {
       for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)myTreeRoot.getFirstChild();
            child != null;
@@ -717,7 +752,7 @@ class TemplateListPanel extends JPanel {
     ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(myTreeRoot, new int[]{index});
   }
 
-  private int getIndexToInsert(DefaultMutableTreeNode parent, String key) {
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, String key) {
     if (parent.getChildCount() == 0) return 0;
 
     int res = 0;
@@ -748,7 +783,10 @@ class TemplateListPanel extends JPanel {
     LOG.assertTrue(node.getUserObject() instanceof TemplateImpl);
 
     TemplateImpl template = (TemplateImpl)node.getUserObject();
-    getTemplateGroup(template.getGroupName()).removeElement(template);
+    TemplateGroup templateGroup = getTemplateGroup(template.getGroupName());
+    if (templateGroup != null) {
+      templateGroup.removeElement(template);
+    }
 
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
     TreePath treePathToSelect = (parent.getChildAfter(node) != null || parent.getChildCount() == 1 ?
@@ -874,7 +912,6 @@ class TemplateListPanel extends JPanel {
         boolean state = !((Boolean)aValue).booleanValue();
         if (state != template.isDeactivated()) {
           template.setDeactivated(!((Boolean)aValue).booleanValue());
-          isModified = true;
         }
       }
     }
