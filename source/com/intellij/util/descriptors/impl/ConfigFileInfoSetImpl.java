@@ -5,6 +5,7 @@
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.WriteExternalException;
@@ -22,7 +23,7 @@ import java.util.*;
 public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.descriptors.impl.ConfigFileInfoSetImpl");
   @NonNls private static final String ELEMENT_NAME = "deploymentDescriptor";
-  @NonNls private static final String ID_AATRIBUTE = "name";
+  @NonNls private static final String ID_ATTRIBUTE = "name";
   @NonNls private static final String URL_ATTRIBUTE = "url";
   private MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFileInfo>();
   private @Nullable ConfigFileContainerImpl myContainer;
@@ -114,7 +115,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     myConfigFiles.clear();
     List<Element> children = element.getChildren(ELEMENT_NAME);
     for (Element child : children) {
-      final String id = child.getAttributeValue(ID_AATRIBUTE);
+      final String id = child.getAttributeValue(ID_ATTRIBUTE);
       if (id != null) {
         final ConfigFileMetaData metaData = myMetaDataProvider.findMetaData(id);
         if (metaData != null) {
@@ -128,21 +129,22 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
-    TreeMap<String, Collection<ConfigFileInfo>> sortedConfigFiles = new TreeMap<String, Collection<ConfigFileInfo>>();
-    for (Map.Entry<ConfigFileMetaData,Collection<ConfigFileInfo>> entry : myConfigFiles.entrySet()) {
-      String id = entry.getKey().getId();
-      sortedConfigFiles.put(id, entry.getValue());
-    }
-    for (Map.Entry<String, Collection<ConfigFileInfo>> entry : sortedConfigFiles.entrySet()) {
-      for (ConfigFileInfo configuration : entry.getValue()) {
-        final Element child = new Element(ELEMENT_NAME);
-        child.setAttribute(ID_AATRIBUTE, entry.getKey());
-        child.setAttribute(URL_ATTRIBUTE, configuration.getUrl());
-        //for backward compatibility
-        child.setAttribute("optional", "false");
-        child.setAttribute("version", configuration.getMetaData().getDefaultVersion().getName());
-        element.addContent(child);
+    final TreeSet<ConfigFileInfo> sortedConfigFiles = new TreeSet<ConfigFileInfo>(new Comparator<ConfigFileInfo>() {
+      public int compare(final ConfigFileInfo o1, final ConfigFileInfo o2) {
+        final int id = Comparing.compare(o1.getMetaData().getId(), o2.getMetaData().getId());
+        return id != 0? id : Comparing.compare(o1.getUrl(), o2.getUrl());
       }
+    });
+    sortedConfigFiles.addAll(myConfigFiles.collectValues());
+    for (ConfigFileInfo configuration : sortedConfigFiles) {
+      final Element child = new Element(ELEMENT_NAME);
+      final ConfigFileMetaData metaData = configuration.getMetaData();
+      child.setAttribute(ID_ATTRIBUTE, metaData.getId());
+      child.setAttribute(URL_ATTRIBUTE, configuration.getUrl());
+      //for backward compatibility
+      child.setAttribute("optional", "false");
+      child.setAttribute("version", metaData.getDefaultVersion().getName());
+      element.addContent(child);
     }
   }
 
