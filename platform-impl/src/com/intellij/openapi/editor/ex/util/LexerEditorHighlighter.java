@@ -18,6 +18,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +47,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     mySegments = new SegmentArrayWithData();
   }
 
+  @Nullable
   protected final Document getDocument() {
     return myEditor != null ? myEditor.getDocument() : null;
   }
@@ -78,19 +80,21 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myAttributesMap.clear();
   }
 
-  public synchronized HighlighterIterator createIterator(int startOffset) {
-    final Document document = getDocument();
-    if(document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
-      ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
-    }
+  public HighlighterIterator createIterator(int startOffset) {
+    synchronized (this) {
+      final Document document = getDocument();
+      if(document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
+        ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
+      }
 
-    if (mySegments.getSegmentCount() == 0 && document != null && document.getTextLength() > 0) {
-      // bulk mode was reset
-      doSetText(document.getCharsSequence());
-    }
+      if (mySegments.getSegmentCount() == 0 && document != null && document.getTextLength() > 0) {
+        // bulk mode was reset
+        doSetText(document.getCharsSequence());
+      }
 
-    final int latestValidOffset = mySegments.getLastValidOffset();
-    return new HighlighterIteratorImpl(startOffset <= latestValidOffset ? startOffset : latestValidOffset);
+      final int latestValidOffset = mySegments.getLastValidOffset();
+      return new HighlighterIteratorImpl(startOffset <= latestValidOffset ? startOffset : latestValidOffset);
+    }
   }
 
   private int packData(IElementType tokenType, int state) {
@@ -252,20 +256,36 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myEditor;
   }
 
-  public synchronized void setText(CharSequence text) {
-    doSetText(text);
+  public void setText(CharSequence text) {
+    synchronized (this) {
+      doSetText(text);
+    }
+  }
+
+  protected class TokenProcessor {
+    public void addToken(final int i, final int startOffset, final int endOffset, final int data, final IElementType tokenType) {
+      mySegments.setElementAt(i, startOffset, endOffset, data);
+    }
+
+    public void finish() {
+    }
   }
 
   private void doSetText(final CharSequence text) {
+    final TokenProcessor processor = createTokenProcessor(0);
     myLexer.start(text, 0, text.length(),myInitialState);
     mySegments.removeAll();
     int i = 0;
-    while(myLexer.getTokenType() != null) {
-      int data = packData(myLexer.getTokenType(), myLexer.getState());
-      mySegments.setElementAt(i, myLexer.getTokenStart(), myLexer.getTokenEnd(), data);
+    while (true) {
+      final IElementType tokenType = myLexer.getTokenType();
+      if (tokenType == null) break;
+
+      int data = packData(tokenType, myLexer.getState());
+      processor.addToken(i, myLexer.getTokenStart(), myLexer.getTokenEnd(), data, tokenType);
       i++;
       myLexer.advance();
     }
+    processor.finish();
 
     if(myEditor != null) {
       Runnable repaint = new Runnable() {
@@ -277,6 +297,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       if (ApplicationManager.getApplication().isDispatchThread()) repaint.run();
       else ApplicationManager.getApplication().invokeLater(repaint);
     }
+  }
+
+  protected TokenProcessor createTokenProcessor(final int startIndex) {
+    return new TokenProcessor();
   }
 
   private TextAttributes getAttributes(IElementType tokenType) {

@@ -15,12 +15,13 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.MergingCharSequence;
+import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author max
@@ -49,15 +50,79 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  private class LightMapper {
+    final Mapper mapper;
+    final StringBuilder text = new StringBuilder();
+    final IntArrayList lengths = new IntArrayList();
+    final List<IElementType> tokenTypes = new ArrayList<IElementType>();
+    final TIntIntHashMap index2Global = new TIntIntHashMap();
+    private final String mySeparator;
+    final int insertOffset;
+
+    LightMapper(final Mapper mapper, int insertOffset) {
+      this.mapper = mapper;
+      mySeparator = mapper.mySeparator;
+      this.insertOffset = insertOffset;
+    }
+
+    void addToken(CharSequence tokenText, IElementType tokenType, int globalIndex) {
+      index2Global.put(tokenTypes.size(), globalIndex);
+      text.append(mySeparator).append(tokenText);
+      lengths.add(tokenText.length());
+      tokenTypes.add(tokenType);
+    }
+
+    void finish() {
+      assert insertOffset >= 0;
+      final DocumentImpl document = mapper.doc;
+      document.insertString(insertOffset, text);
+      int start = 0;
+      for (int i = 0; i < tokenTypes.size(); i++) {
+        IElementType type = tokenTypes.get(i);
+        final int len = lengths.get(i);
+        start += mySeparator.length();
+        final int globalIndex = index2Global.get(i);
+        assert mySegments.myRanges[globalIndex] == null;
+        mySegments.myRanges[globalIndex] = new MappedRange(mapper, document.createRangeMarker(start, start + len), type);
+        start += len;
+      }
+    }
+  }
+
   public void setText(final CharSequence text) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
     updateLayers();
 
-    synchronized (this) {
-      myText = text;
+    myText = text;
+    super.setText(text);
+  }
 
-      super.setText(text);
-    }
+  @Override
+  protected TokenProcessor createTokenProcessor(final int startIndex) {
+    return new TokenProcessor() {
+      final Map<Mapper, LightMapper> docTexts = new FactoryMap<Mapper, LightMapper>() {
+        @Override
+        protected LightMapper create(final Mapper key) {
+          final MappedRange predecessor = key.findPredecessor(startIndex);
+          return new LightMapper(key, predecessor != null ? predecessor.range.getEndOffset() : 0);
+        }
+      };
+
+      public void addToken(final int i, final int startOffset, final int endOffset, final int data, final IElementType tokenType) {
+        mySegments.setElementLight(i, startOffset, endOffset, data);
+        final Mapper mapper = getMappingDocument(tokenType);
+        if (mapper != null) {
+          docTexts.get(mapper).addToken(myText.subSequence(startOffset, endOffset), tokenType, i);
+        }
+      }
+
+      @Override
+      public void finish() {
+        for (final LightMapper mapper : docTexts.values()) {
+          mapper.finish();
+        }
+      }
+    };
   }
 
   protected boolean updateLayers() { return false; }
@@ -97,12 +162,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         Arrays.fill(myRanges, null);
       }
 
+      myLayerBuffers.clear();
+
       super.removeAll();
     }
 
     public void setElementAt(int i, int startOffset, int endOffset, int data) {
-      super.setElementAt(i, startOffset, endOffset, data);
-      myRanges = reallocateArray(myRanges, i+1);
+      setElementLight(i, startOffset, endOffset, (short)data);
       final MappedRange range = myRanges[i];
       if (range != null) {
         range.mapper.removeMapping(range);
@@ -112,14 +178,36 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       updateMappingForToken(i);
     }
 
+    private void setElementLight(final int i, final int startOffset, final int endOffset, final int data) {
+      super.setElementAt(i, startOffset, endOffset, data);
+      myRanges = reallocateArray(myRanges, i+1);
+    }
+
     public void remove(int startIndex, int endIndex) {
+      Map<Mapper, Integer> mins = new FactoryMap<Mapper, Integer>() {
+        @Override
+        protected Integer create(final Mapper key) {
+          return Integer.MAX_VALUE;
+        }
+      };
+      Map<Mapper, Integer> maxs = new FactoryMap<Mapper, Integer>() {
+        @Override
+        protected Integer create(final Mapper key) {
+          return 0;
+        }
+      };
+
       for (int i = startIndex; i < endIndex; i++) {
         final MappedRange range = myRanges[i];
-        if (range != null) {
-          range.mapper.removeMapping(range);
+        if (range != null && range.range.isValid()) {
+          mins.put(range.mapper, Math.min(mins.get(range.mapper).intValue(), range.range.getStartOffset()));
+          maxs.put(range.mapper, Math.max(maxs.get(range.mapper).intValue(), range.range.getEndOffset()));
         }
 
         myRanges[i] = null;
+      }
+      for (final Mapper mapper : maxs.keySet()) {
+        mapper.doc.deleteString(mins.get(mapper).intValue(), maxs.get(mapper).intValue());
       }
 
       myRanges = remove(myRanges, startIndex, endIndex);
@@ -133,7 +221,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
     }
 
-    public void insert(SegmentArrayWithData segmentArray, int startIndex) {
+    public void insert(SegmentArrayWithData segmentArray, final int startIndex) {
       super.insert(segmentArray, startIndex);
 
       final int newCount = segmentArray.getSegmentCount();
@@ -143,9 +231,14 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
       int endIndex = startIndex + segmentArray.getSegmentCount();
 
+      TokenProcessor processor = createTokenProcessor(startIndex);
       for (int i = startIndex; i < endIndex; i++) {
-        updateMappingForToken(i);
+        final short data = getSegmentData(i);
+        final IElementType token = unpackToken(data);
+        processor.addToken(i, mySegments.getSegmentStart(i), mySegments.getSegmentEnd(i), data, token);
       }
+
+      processor.finish();
     }
 
     private void updateMappingForToken(final int i) {
@@ -188,7 +281,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private Mapper(LayerDescriptor descriptor) {
       doc = new DocumentImpl("");
       doc.dontAssertWriteAccess();
-      
+
       mySyntaxHighlighter = descriptor.getLayerHighlighter();
       myBackground = descriptor.getBackgroundKey();
       highlighter = new LexerEditorHighlighter(mySyntaxHighlighter, getScheme());
@@ -252,12 +345,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       doc.insertString(insertOffset, new MergingCharSequence(mySeparator, tokenText));
       insertOffset += mySeparator.length();
 
-      MappedRange newRange = new MappedRange();
-      newRange.mapper = this;
-      newRange.range = doc.createRangeMarker(insertOffset, insertOffset + length);
-      newRange.outerToken = outerToken;
-
-      return newRange;
+      return new MappedRange(this, doc.createRangeMarker(insertOffset, insertOffset + length), outerToken);
     }
 
     private CharSequence getTokenText(final int tokenIndex) {
@@ -287,9 +375,15 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   private static class MappedRange {
-    public RangeMarker range;
-    public Mapper mapper;
-    public IElementType outerToken;
+    RangeMarker range;
+    final Mapper mapper;
+    final IElementType outerToken;
+
+    MappedRange(final Mapper mapper, final RangeMarker range, final IElementType outerToken) {
+      this.mapper = mapper;
+      this.range = range;
+      this.outerToken = outerToken;
+    }
   }
 
   @Nullable
