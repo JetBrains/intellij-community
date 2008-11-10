@@ -15,6 +15,7 @@
  */
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -35,7 +36,6 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
-import com.intellij.codeInsight.CodeInsightUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +137,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
 
   private void precompileConfigurations(final Project project) {
     if (compiledConfigurations == null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      final Runnable precompile = new Runnable() {
         public void run() {
           if (!project.isDisposed()) {
             Matcher matcher = new Matcher(project);
@@ -145,7 +145,12 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
             InspectionProfileManager.getInstance().fireProfileChanged(null);
           }
         }
-      }, ModalityState.NON_MODAL);
+      };
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        precompile.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(precompile, ModalityState.NON_MODAL);
+      }
     }
   }
 
