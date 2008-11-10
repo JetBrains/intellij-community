@@ -77,4 +77,6 @@
   <extensionPoint name="contentBasedClassFileProcessor" interface="com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor"/>
 
   <extensionPoint name="browserSettingsProvider" interface="com.intellij.ide.BrowserSettingsProvider"/>
+
+  <extensionPoint name="bundledColorSchemesProvider" interface="com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider"/>
 </extensionPoints>

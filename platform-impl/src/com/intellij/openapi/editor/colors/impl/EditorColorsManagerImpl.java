@@ -3,7 +3,9 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,10 +14,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.options.*;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.*;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,15 +55,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager
         new SchemeProcessor<EditorColorsSchemeImpl>() {
           public EditorColorsSchemeImpl readScheme(final Document document)
               throws InvalidDataException, IOException, JDOMException {
-            Element root = document.getRootElement();
 
-            if (root == null || !SCHEME_NODE_NAME.equals(root.getName())) {
-              throw new InvalidDataException();
-            }
-
-            EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance());
-            scheme.readExternal(root);
-            return scheme;
+            return loadSchemeFromDocument(document, true);
           }
 
           public Document writeScheme(final EditorColorsSchemeImpl scheme) throws WriteExternalException {
@@ -83,7 +77,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager
           }
 
           public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
-            return true;
+            return !(scheme instanceof ReadOnlyColorsScheme);
           }
 
           public void initScheme(final EditorColorsSchemeImpl scheme) {
@@ -104,8 +98,72 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
 
     addDefaultSchemes();
+    // Load default schemes from providers
+    loadAdditionalDefaultSchemes();
     loadAllSchemes();
+
     setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
+  }
+
+  private void loadAdditionalDefaultSchemes() {
+    //Get color schemes from EPs
+    for (BundledColorSchemesProvider provider : BundledColorSchemesProvider.EP_NAME.getExtensions()) {
+      final String[] schemesPaths = provider.getBundledSchemesRelativePaths();
+
+      for (final String schemePath : schemesPaths) {
+        try {
+          final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, schemePath);
+          if (inputStream == null) {
+            final String msg = OptionsBundle.message("options.color.schemes.load.read.error", schemePath);
+            LOG.info(msg);
+            Messages.showErrorDialog(msg, OptionsBundle.message("options.color.schemes.load.settings.title"));
+            continue;
+          }
+
+          final Document document;
+          try {
+            document = JDOMUtil.loadDocument(inputStream);
+          }
+          catch (JDOMException e) {
+            LOG.info("Error reading scheme from  " + schemePath + ": " + e.getLocalizedMessage());
+            throw e;
+          }
+          final EditorColorsSchemeImpl scheme = loadSchemeFromDocument(document, false);
+          mySchemesManager.addNewScheme(scheme, false);
+        }
+        catch (final Exception e) {
+          ApplicationManager.getApplication().invokeLater(
+            new Runnable(){
+              public void run() {
+                final String msg = OptionsBundle.message("options.color.schemes.load.read.error", schemePath + ": " + e.getLocalizedMessage());
+                LOG.info(msg, e);
+                Messages.showErrorDialog(msg, OptionsBundle.message("options.color.schemes.load.settings.title"));
+              }
+            }
+          );
+
+        }
+      }
+    }
+  }
+
+  private EditorColorsSchemeImpl loadSchemeFromDocument(final Document document,
+                                                        final boolean isEditable)
+    throws InvalidDataException {
+
+    final Element root = document.getRootElement();
+
+    if (root == null || !SCHEME_NODE_NAME.equals(root.getName())) {
+      throw new InvalidDataException();
+    }
+
+    final EditorColorsSchemeImpl scheme = isEditable
+       // editable scheme
+       ? new EditorColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance())
+       //not editable scheme
+       : new ReadOnlyColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance());
+    scheme.readExternal(root);
+    return scheme;
   }
 
   // -------------------------------------------------------------------------

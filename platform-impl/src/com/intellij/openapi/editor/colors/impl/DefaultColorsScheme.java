@@ -13,7 +13,7 @@ import org.jdom.Element;
 
 import java.awt.*;
 
-public class DefaultColorsScheme extends AbstractColorsScheme {
+public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnlyColorsScheme {
   private String myName;
 
   public DefaultColorsScheme(DefaultColorSchemesManager defaultColorSchemesManager) {
