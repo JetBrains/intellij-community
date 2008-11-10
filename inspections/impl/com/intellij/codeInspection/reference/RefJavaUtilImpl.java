@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.VisibilityUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class RefJavaUtilImpl extends RefJavaUtil{
@@ -281,6 +282,13 @@ public class RefJavaUtilImpl extends RefJavaUtil{
        }
      }
 
+     if (hasStatements) {
+       final PsiMethod[] superMethods = method.findSuperMethods();
+       for (PsiMethod superMethod : superMethods) {
+         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(superMethod.getModifierList()),
+                                    VisibilityUtil.getVisibilityModifier(method.getModifierList())) > 0) return false;
+       }
+     }
      return hasStatements;
    }
 
