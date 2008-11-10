@@ -432,11 +432,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
       if (HighlightLevelUtil.shouldInspect(psiRoot)) {
-        ApplicationManager.getApplication().runReadAction(new Runnable(){
-          public void run() {
-            result.addAll(CollectHighlightsUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
-          }
-        });
+        result.addAll(CollectHighlightsUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
       }
     }
     return result.toArray(new PsiElement[result.size()]);

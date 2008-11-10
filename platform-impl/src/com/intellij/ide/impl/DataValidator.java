@@ -29,7 +29,7 @@ public abstract class DataValidator <T> {
   private static final DataValidator<Project> PROJECT_VALIDATOR = new DataValidator<Project>() {
     @Override
     public Project findInvalid(final String dataId, final Project project, final Object dataSource) {
-      return !project.isDisposed() ? null : project;
+      return project.isDisposed() ? project : null;
     }
   };
 
