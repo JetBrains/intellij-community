@@ -268,7 +268,7 @@ public abstract class ElementPresentationManager {
   public static <T> T findByName(Collection<T> collection, final String name) {
     return ContainerUtil.find(collection, new Condition<T>() {
       public boolean value(final T object) {
-        return Comparing.equal(name, getElementName(object));
+        return Comparing.equal(name, getElementName(object), true);
       }
     });
   }
