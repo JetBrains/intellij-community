@@ -34,50 +34,51 @@ import java.awt.event.ActionListener;
  * Git VCS configuration panel
  */
 public class GitVcsPanel {
-  private JButton testButton;
-  private JComponent panel;
-  private TextFieldWithBrowseButton gitField;
-  private final Project project;
+  private JButton myTestButton;
+  private JComponent myPanel;
+  private TextFieldWithBrowseButton myGitField;
+  private final Project myProject;
+  private final GitVcsSettings mySettings;
 
   public GitVcsPanel(@NotNull Project project) {
-    this.project = project;
-    testButton.addActionListener(new ActionListener() {
+    mySettings = GitVcsSettings.getInstance(project);
+    this.myProject = project;
+    myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         testConnection();
       }
     });
 
-    gitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
-                                     new FileChooserDescriptor(true, false, false, false, false, false));
+    myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
+                                       new FileChooserDescriptor(true, false, false, false, false, false));
   }
 
   private void testConnection() {
-    final GitVcsSettings settings = new GitVcsSettings();
-    settings.GIT_EXECUTABLE = gitField.getText();
+    mySettings.GIT_EXECUTABLE = myGitField.getText();
     final String s;
     try {
-      s = GitVcs.version(project);
+      s = GitVcs.version(myProject);
     }
     catch (VcsException e) {
-      Messages.showErrorDialog(project, e.getMessage(), GitBundle.getString("find.git.error.title"));
+      Messages.showErrorDialog(myProject, e.getMessage(), GitBundle.getString("find.git.error.title"));
       return;
     }
-    Messages.showInfoMessage(project, s, GitBundle.getString("find.git.success.title"));
+    Messages.showInfoMessage(myProject, s, GitBundle.getString("find.git.success.title"));
   }
 
   public JComponent getPanel() {
-    return panel;
+    return myPanel;
   }
 
   public void load(@NotNull GitVcsSettings settings) {
-    gitField.setText(settings.GIT_EXECUTABLE);
+    myGitField.setText(settings.GIT_EXECUTABLE);
   }
 
   public boolean isModified(@NotNull GitVcsSettings settings) {
-    return !settings.GIT_EXECUTABLE.equals(gitField.getText());
+    return !settings.GIT_EXECUTABLE.equals(myGitField.getText());
   }
 
   public void save(@NotNull GitVcsSettings settings) {
-    settings.GIT_EXECUTABLE = gitField.getText();
+    settings.GIT_EXECUTABLE = myGitField.getText();
   }
 }

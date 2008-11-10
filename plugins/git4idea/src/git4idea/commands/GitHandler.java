@@ -366,7 +366,6 @@ public abstract class GitHandler {
       myHandler.startNotify();
     }
     catch (Throwable t) {
-      log.error("Creation of git process failed", t);
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
