@@ -69,30 +69,39 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
 
           final PsiElement element = psiFile.findElementAt(probableCommaOffset);
           final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-          final CharSequence text2insert = getClosingQuote(xmlAttribute) + ">";
+          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
 
           if (tag != null && tag.getTextRange().getStartOffset() == probableCommaOffset) {
             doc.insertString(caretAt, text2insert);
-            doc.insertString(tag.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+            if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+              doc.insertString(tag.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+            }
+            
             caretTo = tag.getTextRange().getEndOffset() + text2insert.length();
           }
           else {
             doc.insertString(caretAt, text2insert);
-            doc.insertString(probableCommaOffset + text2insert.length(), "</" + tagNameText + ">");
+            if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+              doc.insertString(probableCommaOffset + text2insert.length(), "</" + tagNameText + ">");
+            }
+
             caretTo = probableCommaOffset + text2insert.length();
           }
         }
         else if (siebling instanceof XmlTag && siebling.getTextRange().getStartOffset() == caretAt) {
           final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
-          final CharSequence text2insert = getClosingQuote(xmlAttribute) + ">";
+          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
 
           doc.insertString(caretAt, text2insert);
-          doc.insertString(siebling.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+          if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+            doc.insertString(siebling.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+          }
+
           caretTo = siebling.getTextRange().getEndOffset() + text2insert.length();
         }
         else if (probableCommaOffset >= text.length() || ((ch = text.charAt(probableCommaOffset)) != '/' && ch != '>')) {
           final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
-          final CharSequence text2insert = getClosingQuote(xmlAttribute) + "/>";
+          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, true);
 
           doc.insertString(insertionOffset, text2insert);
           caretTo = insertionOffset + text2insert.length();
@@ -114,8 +123,16 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
     return true;
   }
 
+  protected boolean shouldInsertClosingTag(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret) {
+    return true;
+  }
+
+  protected String getClosingPart(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret, final boolean emptyTag) {
+    return getClosingQuote(xmlAttribute) + (emptyTag ? "/>" : ">");
+  }
+
   @NotNull
-  private static CharSequence getClosingQuote(@Nullable final XmlAttribute attribute) {
+  protected static CharSequence getClosingQuote(@Nullable final XmlAttribute attribute) {
     if (attribute == null) {
       return "";
     }
