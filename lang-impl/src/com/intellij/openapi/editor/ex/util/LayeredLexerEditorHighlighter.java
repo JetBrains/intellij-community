@@ -49,11 +49,15 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
-  public synchronized void setText(final CharSequence text) {
-    myText = text;
+  public void setText(final CharSequence text) {
+    // do NOT synchronize before updateLayers due to deadlock with PsiLock
     updateLayers();
 
-    super.setText(text);
+    synchronized (this) {
+      myText = text;
+
+      super.setText(text);
+    }
   }
 
   protected boolean updateLayers() { return false; }
@@ -69,10 +73,15 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   public HighlighterIterator createIterator(int startOffset) {
-    if (updateLayers()) {
-      setText(myText);
+    // do NOT synchronize before updateLayers due to deadlock with PsiLock
+    final boolean b = updateLayers();
+
+    synchronized (this) {
+      if (b) {
+        setText(myText);
+      }
+      return new LayeredHighlighterIterator(startOffset);
     }
-    return new LayeredHighlighterIterator(startOffset);
   }
 
   private class MappingSegments extends SegmentArrayWithData {
