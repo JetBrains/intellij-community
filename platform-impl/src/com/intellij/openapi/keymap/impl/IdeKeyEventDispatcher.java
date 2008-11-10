@@ -319,7 +319,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    //if (myKeyGestureProcessor.processInitState()) return true;
+    if (myKeyGestureProcessor.processInitState()) return true;
 
     updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
 

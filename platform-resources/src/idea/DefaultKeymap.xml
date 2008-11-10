@@ -1244,6 +1244,9 @@
     <action id="DebugClass">
       <keyboard-shortcut first-keystroke="control shift F9"/>
     </action>
+    <action id="TestGestureAction">
+      <keyboard-gesture-shortcut keystroke="meta 1" modifier="dblClick"/>
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->

@@ -22,6 +22,11 @@ public class TestGestureAction extends AnAction implements KeyboardGestureAction
       public void visitGestureFinishEvent(final AnActionEvent e) {
         System.out.println("TestGestureAction.visitGestureFinishEvent");
       }
+
+      @Override
+      public void visitEvent(final AnActionEvent e) {
+        System.out.println("TestGestureAction.visitEvent");
+      }
     });
   }
 }
