@@ -46,6 +46,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   }
 
   public void addData(List<IdeaPluginDescriptor> list) {
+    view.clear();
     //  For each downloadable plugin we need to know whether its counterpart
     //  is already installed, and if yes compare the difference in versions:
     //  availability of newer versions will be indicated separately.
