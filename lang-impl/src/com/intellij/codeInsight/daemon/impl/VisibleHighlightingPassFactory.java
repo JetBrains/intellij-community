@@ -20,10 +20,10 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent {
 
   @Nullable
   protected static TextRange calculateRangeToProcess(Editor editor) {
-    TextRange range = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
-    if (range == null) return null;
-    int startOffset = range.getStartOffset();
-    int endOffset = range.getEndOffset();
+    TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
+    if (dirtyTextRange == null) return null;
+    int startOffset = dirtyTextRange.getStartOffset();
+    int endOffset = dirtyTextRange.getEndOffset();
     Rectangle rect = editor.getScrollingModel().getVisibleArea();
     LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
 
@@ -38,6 +38,13 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent {
       endOffset = visibleEnd;
     }
 
-    return startOffset < endOffset ? new TextRange(startOffset, endOffset) : null;
+    if (startOffset >= endOffset) {
+      return null;
+    }
+    TextRange textRange = new TextRange(startOffset, endOffset);
+    if (textRange.equals(dirtyTextRange)) {
+      return null; // no sense in highlighting the same region twice
+    }
+    return textRange;
   }
 }
