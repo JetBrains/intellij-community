@@ -64,7 +64,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
   @NotNull
   public PsiExpressionList getArgumentList() {
-    return (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
+    PsiExpressionList list = (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
+    if (list != null) return list;
+    LOG.error("Invalid PSI. Children:" + DebugUtil.psiToString(this, false));
+    return list;
   }
 
   public ASTNode findChildByRole(int role) {

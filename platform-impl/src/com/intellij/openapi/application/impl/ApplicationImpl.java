@@ -82,7 +82,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private int myInEditorPaintCounter = 0;
   private long myStartTime = 0;
   private boolean myDoNotSave = false;
-  private volatile boolean myIsWaitingForWriteAction = false;
   private volatile boolean myDisposeInProgress = false;
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
@@ -116,7 +115,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   );
   private boolean myIsFiringLoadingEvent = false;
-  private static final String WAS_EVER_SHOWN = "was.ever.shown";
+  @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
 
   protected void boostrapPicoContainer() {
@@ -398,7 +397,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void dispose() {
     myDisposeInProgress = true;
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
-    final boolean[] canClose = new boolean[]{true};
+    final boolean[] canClose = {true};
     for (final Project project : openProjects) {
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.executeCommand(project, new Runnable() {
@@ -448,18 +447,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return true;
     }
 
-    final ProgressWindow progress;
-    if (parentComponent != null) {
-      progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, null);
-    }
-    else {
-      progress = new ProgressWindow(canBeCanceled, project);
-    }
+    final ProgressWindow progress = parentComponent == null
+                                    ? new ProgressWindow(canBeCanceled, project)
+                                    : new ProgressWindow(canBeCanceled, false, project, parentComponent, null);
     progress.setTitle(progressTitle);
 
     try {
       myExceptionalThreadWithReadAccessRunnable = process;
-      final boolean[] threadStarted = new boolean[]{false};
+      final boolean[] threadStarted = {false};
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (myExceptionalThreadWithReadAccessRunnable != process) {
@@ -723,15 +718,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     fireBeforeWriteActionStart(action);
 
     LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread()) || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
-    myIsWaitingForWriteAction = true;
     try {
       myActionsLock.writeLock().acquire();
     }
     catch (InterruptedException e) {
       throw new RuntimeInterruptedException(e);
-    }
-    finally {
-      myIsWaitingForWriteAction = false;
     }
 
     fireWriteActionStarted(action);
@@ -863,7 +854,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (Boolean.TRUE.equals(component.getClientProperty(WAS_EVER_SHOWN))) {
       assertIsDispatchThread();
-    } else {
+    }
+    else {
       final JRootPane root = component.getRootPane();
       if (root != null) {
         component.putClientProperty(WAS_EVER_SHOWN, Boolean.TRUE);
