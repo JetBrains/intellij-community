@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.EventDispatcher;
@@ -54,7 +55,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myEditorFontSizeField.setText(Integer.toString(getCurrentScheme().getEditorFontSize()));
     myFontNameField.setText(getCurrentScheme().getEditorFontName());
 
-    if (ColorAndFontOptions.isReadOnly(myOptions.getSelectedScheme())) {
+    if (ColorAndFontOptions.isDefault(myOptions.getSelectedScheme())) {
       myLineSpacingField.setEnabled(false);
       myEditorFontSizeField.setEditable(false);
       myFontNameField.setEnabled(false);
@@ -135,8 +136,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myFontNameButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         EditorColorsScheme current = getCurrentScheme();
-        if (ColorAndFontOptions.isReadOnly(current) || ColorSettingsUtil.isSharedScheme(current)) {
-          ColorAndFontPanel.showReadOnlyMessage(FontOptions.this, ColorSettingsUtil.isSharedScheme(current));
+        if (ColorAndFontOptions.isDefault(current) || ColorSettingsUtil.isSharedScheme(current)) {
+          showReadOnlyMessage(FontOptions.this, ColorSettingsUtil.isSharedScheme(current));
           return;
         }
 
@@ -188,6 +189,17 @@ public class FontOptions extends JPanel implements OptionsPanel{
     return editorFontPanel;
   }
 
+  public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
+    if (!sharedScheme) {
+      Messages.showMessageDialog(parent, ApplicationBundle.message("error.default.scheme.cannot.be.modified"),
+                                 ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getInformationIcon());
+    }
+    else {
+      Messages.showMessageDialog(parent, ApplicationBundle.message("error.shared.scheme.cannot.be.modified"),
+                                 ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getInformationIcon());
+    }
+  }
+
   private void selectFont() {
     initFontTables();
 
@@ -227,8 +239,8 @@ public class FontOptions extends JPanel implements OptionsPanel{
   public boolean updateDescription(boolean modified) {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
-    if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
-      ColorAndFontPanel.showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
+    if (modified && (ColorAndFontOptions.isDefault(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
+      showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
       return false;
     }
 

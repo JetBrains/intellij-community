@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public class SchemesPanel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           EditorColorsScheme selected = myOptions.selectScheme((String)mySchemeComboBox.getSelectedItem());
-          if (ColorAndFontOptions.isReadOnly(selected)) {
+          if (ColorAndFontOptions.isDefault(selected)) {
             myDeleteButton.setEnabled(false);
             if (myExportButton != null) {
               myExportButton.setEnabled(false);
@@ -85,6 +86,17 @@ public class SchemesPanel extends JPanel {
   public static <T> T safeCast(final Object obj, final Class<T> expectedClass) {
     if (expectedClass.isInstance(obj)) return (T)obj;
     return null;
+  }
+
+  public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
+    if (!sharedScheme) {
+      Messages.showMessageDialog(parent, ApplicationBundle.message("error.default.scheme.cannot.be.modified"),
+                                 ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getInformationIcon());
+    }
+    else {
+      Messages.showMessageDialog(parent, ApplicationBundle.message("error.shared.scheme.cannot.be.modified"),
+                                 ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getInformationIcon());
+    }
   }
 
   private JPanel createSchemePanel() {
@@ -188,8 +200,8 @@ public class SchemesPanel extends JPanel {
   public boolean updateDescription(boolean modified) {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
-    if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
-      ColorAndFontPanel.showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
+    if (modified && (ColorAndFontOptions.isDefault(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
+      showReadOnlyMessage(this, ColorSettingsUtil.isSharedScheme(scheme));
       return false;
     }
 

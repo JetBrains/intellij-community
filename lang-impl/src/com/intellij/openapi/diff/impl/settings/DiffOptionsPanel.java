@@ -197,11 +197,9 @@ public class DiffOptionsPanel implements OptionsPanel {
   }
 
   private boolean checkModifiableScheme() {
-    boolean isReadOnly = myOptions.currentSchemeIsReadOnly();
-    if (isReadOnly) {
-      ColorAndFontPanel.showReadOnlyMessage(myWholePanel, myOptions.currentSchemeIsShared());
-    }
-    return !isReadOnly;
+    boolean isDefault = myOptions.currentSchemeIsDefault();
+    if (isDefault) ColorAndFontPanel.showReadOnlyMessage(myWholePanel, myOptions.currentSchemeIsShared());
+    return !isDefault;
   }
 
   private MyColorAndFontDescription getSelectedDescription() {
