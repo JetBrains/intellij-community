@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
@@ -125,16 +126,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return mySelectedScheme.getDescriptors();
   }
 
-  public static boolean isDefault(EditorColorsScheme scheme) {
-    return ((MyColorScheme)scheme).isDefault();
+  public static boolean isReadOnly(final EditorColorsScheme scheme) {
+    return ((MyColorScheme)scheme).isReadOnly();
   }
 
   public String[] getSchemeNames() {
     ArrayList<MyColorScheme> schemes = new ArrayList<MyColorScheme>(mySchemes.values());
     Collections.sort(schemes, new Comparator<MyColorScheme>() {
       public int compare(MyColorScheme o1, MyColorScheme o2) {
-        if (isDefault(o1) && !isDefault(o2)) return -1;
-        if (!isDefault(o1) && isDefault(o2)) return 1;
+        if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
+        if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
 
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
@@ -684,8 +685,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     myRootSchemesPanel = null;
   }
 
-  public boolean currentSchemeIsDefault() {
-    return mySelectedScheme.isDefault();
+  public boolean currentSchemeIsReadOnly() {
+    return isReadOnly(mySelectedScheme);
   }
 
   public boolean currentSchemeIsShared() {
@@ -907,6 +908,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     public boolean isDefault() {
       return myParentScheme instanceof DefaultColorsScheme;
+    }
+
+    public boolean isReadOnly() {
+      return myParentScheme instanceof ReadOnlyColorsScheme;
     }
 
     public boolean isModified() {
