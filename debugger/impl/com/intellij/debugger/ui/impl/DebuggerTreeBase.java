@@ -15,8 +15,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.StringTokenizer;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -93,16 +93,16 @@ public class DebuggerTreeBase extends DnDAwareTree {
         while(tokenizer.hasMoreElements()) {
           String line = tokenizer.nextToken();
           while (line.length() > 0) {
-            if(getMaximumChars(line, metrics, rootSize.width) == line.length()) {
+            final int maxChars = Math.max(1, getMaximumChars(line, metrics, rootSize.width));
+            if(maxChars == line.length()) {
               tipBuilder.append(line).append('\n');
               break;
             }
             else { // maxChars < line.length()
               final String delimiterString = "\\\n";
-              final int chars = getMaximumChars(line, metrics, rootSize.width - metrics.stringWidth(delimiterString));
-              tipBuilder.append(line.substring(0, chars));
+              tipBuilder.append(line.substring(0, maxChars));
               tipBuilder.append(delimiterString);
-              line = line.substring(chars);
+              line = line.substring(maxChars);
             }
           }
         }
