@@ -9,9 +9,10 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 
 public class MethodUpDownUtil {
   private MethodUpDownUtil() {
@@ -25,23 +26,22 @@ public class MethodUpDownUtil {
       }
     }
 
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    Collection<PsiElement> array = new THashSet<PsiElement>();
     addNavigationElements(array, file);
     return offsetsFromElements(array);
   }
 
-  public static int[] offsetsFromElements(final ArrayList<PsiElement> array) {
-    int[] offsets = new int[array.size()];
-    for(int i = 0; i < array.size(); i++){
-      PsiElement e = array.get(i);
-      offsets[i] = e.getTextOffset();
+  public static int[] offsetsFromElements(final Collection<PsiElement> array) {
+    TIntArrayList offsets = new TIntArrayList(array.size());
+    for (PsiElement element : array) {
+      offsets.add(element.getTextOffset());
     }
-    Arrays.sort(offsets);
-    return offsets;
+    offsets.sort();
+    return offsets.toNativeArray();
   }
 
-  private static void addNavigationElements(ArrayList<PsiElement> array, PsiFile element) {
-    StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder((PsiFile) element);
+  private static void addNavigationElements(Collection<PsiElement> array, PsiFile element) {
+    StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(element);
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
       TreeBasedStructureViewBuilder builder = (TreeBasedStructureViewBuilder) structureViewBuilder;
       StructureViewModel model = builder.createStructureViewModel();
@@ -49,11 +49,13 @@ public class MethodUpDownUtil {
     }
   }
 
-  private static void addStructureViewElements(final TreeElement parent, final ArrayList<PsiElement> array) {
+  private static void addStructureViewElements(final TreeElement parent, final Collection<PsiElement> array) {
     for(TreeElement treeElement: parent.getChildren()) {
       Object value = ((StructureViewTreeElement)treeElement).getValue();
       if (value instanceof PsiElement) {
-        array.add((PsiElement) value);
+        PsiElement element = (PsiElement)value;
+        if (array.contains(element)) return;
+        array.add(element);
       }
       addStructureViewElements(treeElement, array);
     }
