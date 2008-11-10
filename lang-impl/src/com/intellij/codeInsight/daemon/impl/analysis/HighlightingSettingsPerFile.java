@@ -27,9 +27,9 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     return progect.getComponent(HighlightingSettingsPerFile.class);
   }
 
-  private Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
+  private final Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
 
-  private Map<PsiFile, InspectionProfile> myProfileSettings = new WeakHashMap<PsiFile, InspectionProfile>();
+  private final Map<PsiFile, InspectionProfile> myProfileSettings = new WeakHashMap<PsiFile, InspectionProfile>();
 
   public FileHighlighingSetting getHighlightingSettingForRoot(PsiElement root){
     final PsiFile containingFile = root.getContainingFile();
@@ -57,8 +57,10 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return;
     FileHighlighingSetting[] defaults = myHighlightSettings.get(virtualFile);
+    int rootIndex = PsiUtilBase.getRootIndex(root);
+    if (defaults != null && rootIndex >= defaults.length) defaults = null;
     if (defaults == null) defaults = getDefaults(containingFile);
-    defaults[PsiUtilBase.getRootIndex(root)] = setting;
+    defaults[rootIndex] = setting;
     boolean toRemove = true;
     for (FileHighlighingSetting aDefault : defaults) {
       if (aDefault != FileHighlighingSetting.NONE) toRemove = false;
