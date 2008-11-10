@@ -184,7 +184,7 @@ public class ActionUrl implements JDOMExternalizable {
     if (treePath == null) return;
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
     final int absolutePosition = url.getAbsolutePosition();
-    if (node.getChildCount() > absolutePosition && absolutePosition >= 0) {
+    if (node.getChildCount() >= absolutePosition && absolutePosition >= 0) {
       if (url.getComponent() instanceof Group){
         node.insert(ActionsTreeUtil.createNode((Group)url.getComponent()), absolutePosition);
       } else {
