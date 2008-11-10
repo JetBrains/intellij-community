@@ -1005,7 +1005,7 @@ public class HighlightMethodUtil {
   }
 
 
-  static void checkNewExpression(PsiNewExpression expression, final HighlightInfoHolder holder) {
+  static void checkNewExpression(@NotNull PsiNewExpression expression, @NotNull HighlightInfoHolder holder) {
     PsiType type = expression.getType();
     if (!(type instanceof PsiClassType)) return;
     PsiClassType.ClassResolveResult typeResult = ((PsiClassType)type).resolveGenerics();

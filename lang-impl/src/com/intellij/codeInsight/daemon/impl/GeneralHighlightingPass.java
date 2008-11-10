@@ -100,11 +100,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     int oldCount = incVisitorUsageCount(1);
     HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
     if (oldCount != 0) {
-      highlightVisitors = highlightVisitors.clone();
+      HighlightVisitor[] clones = new HighlightVisitor[highlightVisitors.length];
       for (int i = 0; i < highlightVisitors.length; i++) {
         HighlightVisitor highlightVisitor = highlightVisitors[i];
-        highlightVisitors[i] = highlightVisitor.clone();
+        clones[i] = highlightVisitor.clone();
       }
+      highlightVisitors = clones;
     }
     return highlightVisitors;
   }

@@ -116,4 +116,8 @@ public class TextRange {
   public TextRange union(TextRange textRange) {
     return new TextRange(Math.min(myStartOffset, textRange.getStartOffset()), Math.max(myEndOffset, textRange.getEndOffset()));
   }
+
+  public boolean equalsToRange(int startOffset, int endOffset) {
+    return startOffset == myStartOffset && endOffset == myEndOffset;
+  }
 }
