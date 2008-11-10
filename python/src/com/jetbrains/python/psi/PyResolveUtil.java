@@ -453,7 +453,7 @@ public class PyResolveUtil {
       }
     }
 
-    protected void setItemNotice(final LookupItem item, String notice) {
+    protected static void setItemNotice(final LookupItem item, String notice) {
       item.setAttribute(item.TAIL_TEXT_ATTR, notice);
       item.setAttribute(item.TAIL_TEXT_SMALL_ATTR, "");
     }

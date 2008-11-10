@@ -136,6 +136,8 @@ public class ResolveImportUtil {
 
       final Module module = ModuleUtil.findModuleForPsiElement(importRef);
       if (module != null) {
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        /*
         // maybe it's an import that expects the project dir to be on PYTHONPATH, e.g. we're editing a python module source.
         // usual "dir or file" logic applies.
         // TODO: implement a proper module-like approach for "project's dirs on pythonpath", minding proper search order
@@ -150,6 +152,21 @@ public class ResolveImportUtil {
             }
           }
         }
+        */
+        // look in module sources
+        for (ContentEntry entry: rootManager.getContentEntries()) {
+          VirtualFile root_file = entry.getFile();
+          if (the_name.equals(root_file.getName())) {
+            VirtualFile initpy = root_file.findChild(INIT_PY);
+            if (initpy != null) {
+              PsiFile initfile = importRef.getManager().findFile(initpy);
+              if (initfile != null) {
+                initfile.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE); // we really resolved to the dir
+                return initfile;
+              }
+            }
+          }
+        }
         // else look in SDK roots
         RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
           @Nullable
@@ -160,7 +177,7 @@ public class ResolveImportUtil {
             return visitor.getResult();
           }
         };
-        PsiElement ret = ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+        PsiElement ret = rootManager.processOrder(resolvePolicy, null);
         if (ret != null) return ret;
       }
       else {
@@ -184,8 +201,6 @@ public class ResolveImportUtil {
     }
     return null; // not resolved by any means
   }
-
-
 
   @Nullable
   private static PsiElement resolveForeignImport(final PyReferenceExpression importRef, final PsiElement importFrom) {
