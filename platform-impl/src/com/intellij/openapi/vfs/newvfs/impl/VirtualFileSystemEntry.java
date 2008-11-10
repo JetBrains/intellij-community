@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -20,7 +21,7 @@ import java.nio.charset.Charset;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
-  private static byte DIRTY_FLAG = 0x01;
+  private static final byte DIRTY_FLAG = 0x01;
 
   private volatile String myName;
   private volatile VirtualDirectoryImpl myParent;
@@ -252,6 +253,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
           return super.getCharset();
         }
         LoadTextUtil.detectCharset(this, content);
+      }
+      catch (FileTooBigException e) {
+        return super.getCharset();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
