@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference, Constants {
+public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
 
   private volatile String myCachedQName = null;
@@ -43,7 +43,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public static final int CLASS_IN_QUALIFIED_NEW_KIND = 6;
 
   public PsiJavaCodeReferenceElementImpl() {
-    super(JAVA_CODE_REFERENCE);
+    super(JavaElementType.JAVA_CODE_REFERENCE);
   }
 
   public int getTextOffset() {
@@ -52,38 +52,39 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public void setKindWhenDummy(final int kind) {
-    LOG.assertTrue(getTreeParent().getElementType() == DUMMY_HOLDER);
+    LOG.assertTrue(getTreeParent().getElementType() == TokenType.DUMMY_HOLDER);
     myKindWhenDummy = kind;
   }
 
   public int getKind() {
     IElementType i = getTreeParent().getElementType();
-    if (i == DUMMY_HOLDER) {
+    if (i == TokenType.DUMMY_HOLDER) {
       return myKindWhenDummy;
     }
-    else if (i == TYPE) {
+    else if (i == JavaElementType.TYPE) {
       return getTreeParent().getTreeParent().getPsi() instanceof PsiTypeCodeFragment ? CLASS_OR_PACKAGE_NAME_KIND : CLASS_NAME_KIND;
     }
-    else if (i == EXTENDS_LIST || i == IMPLEMENTS_LIST || i == EXTENDS_BOUND_LIST || i == THROWS_LIST ||
-             i == THIS_EXPRESSION ||
-             i == SUPER_EXPRESSION ||
-             i == DOC_METHOD_OR_FIELD_REF ||
-             i == DOC_TAG_VALUE_TOKEN ||
-             i == REFERENCE_PARAMETER_LIST ||
-             i == ANNOTATION) {
+    else if (i == JavaElementType.EXTENDS_LIST || i == JavaElementType.IMPLEMENTS_LIST || i == JavaElementType.EXTENDS_BOUND_LIST || i ==
+                                                                                                                                     JavaElementType.THROWS_LIST ||
+             i == JavaElementType.THIS_EXPRESSION ||
+             i == JavaElementType.SUPER_EXPRESSION ||
+             i == JavaDocElementType.DOC_METHOD_OR_FIELD_REF ||
+             i == JavaDocTokenType.DOC_TAG_VALUE_TOKEN ||
+             i == JavaElementType.REFERENCE_PARAMETER_LIST ||
+             i == JavaElementType.ANNOTATION) {
       if (isQualified()) {
         return CLASS_OR_PACKAGE_NAME_KIND;
       }
 
       return CLASS_NAME_KIND;
     }
-    else if (i == NEW_EXPRESSION) {
+    else if (i == JavaElementType.NEW_EXPRESSION) {
       final ASTNode qualifier = getTreeParent().findChildByRole(ChildRole.QUALIFIER);
       return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
     }
-    else if (i == ANONYMOUS_CLASS) {
+    else if (i == JavaElementType.ANONYMOUS_CLASS) {
       if (getTreeParent().getChildRole(this) == ChildRole.BASE_CLASS_REFERENCE) {
-        LOG.assertTrue(getTreeParent().getTreeParent().getElementType() == NEW_EXPRESSION);
+        LOG.assertTrue(getTreeParent().getTreeParent().getElementType() == JavaElementType.NEW_EXPRESSION);
         final ASTNode qualifier = getTreeParent().getTreeParent().findChildByRole(ChildRole.QUALIFIER);
         return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
       }
@@ -91,17 +92,17 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return CLASS_OR_PACKAGE_NAME_KIND; // uncomplete code
       }
     }
-    else if (i == PACKAGE_STATEMENT) {
+    else if (i == JavaElementType.PACKAGE_STATEMENT) {
       return PACKAGE_NAME_KIND;
     }
-    else if (i == IMPORT_STATEMENT) {
+    else if (i == JavaElementType.IMPORT_STATEMENT) {
       final boolean isOnDemand = ((PsiImportStatement)SourceTreeToPsiMap.treeElementToPsi(getTreeParent())).isOnDemand();
       return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
     }
-    else if (i == IMPORT_STATIC_STATEMENT) {
+    else if (i == JavaElementType.IMPORT_STATIC_STATEMENT) {
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == JAVA_CODE_REFERENCE) {
+    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       final int parentKind = ((PsiJavaCodeReferenceElementImpl)getTreeParent()).getKind();
       switch (parentKind) {
       case CLASS_NAME_KIND:
@@ -127,16 +128,17 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              return -1;
       }
     }
-    else if (i == CLASS || i == PARAMETER_LIST || i == ERROR_ELEMENT) {
+    else if (i == JavaElementType.CLASS || i == JavaElementType.PARAMETER_LIST || i == TokenType.ERROR_ELEMENT) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == IMPORT_STATIC_REFERENCE) {
+    else if (i == JavaElementType.IMPORT_STATIC_REFERENCE) {
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == DOC_TAG || i == DOC_INLINE_TAG || i == DOC_REFERENCE_HOLDER || i == DOC_TYPE_HOLDER) {
+    else if (i == JavaDocElementType.DOC_TAG || i == JavaDocElementType.DOC_INLINE_TAG || i == JavaDocElementType.DOC_REFERENCE_HOLDER || i ==
+                                                                                                                                          JavaDocElementType.DOC_TYPE_HOLDER) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == CODE_FRAGMENT) {
+    else if (i == TokenType.CODE_FRAGMENT) {
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)getTreeParent().getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
@@ -164,16 +166,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            return null;
 
     case ChildRole.REFERENCE_NAME:
-           if (getLastChildNode().getElementType() == IDENTIFIER) {
+           if (getLastChildNode().getElementType() == JavaTokenType.IDENTIFIER) {
              return getLastChildNode();
            }
            else {
-             if (getLastChildNode().getElementType() == REFERENCE_PARAMETER_LIST) {
+             if (getLastChildNode().getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
                ASTNode current = getLastChildNode().getTreePrev();
                while (current != null && StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(current.getElementType())) {
                  current = current.getTreePrev();
                }
-               if (current != null && current.getElementType() == IDENTIFIER) {
+               if (current != null && current.getElementType() == JavaTokenType.IDENTIFIER) {
                  return current;
                }
              }
@@ -181,7 +183,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            }
 
     case ChildRole.REFERENCE_PARAMETER_LIST:
-           if (getLastChildNode().getElementType() == REFERENCE_PARAMETER_LIST) {
+           if (getLastChildNode().getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
              return getLastChildNode();
            }
            else {
@@ -189,7 +191,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            }
 
     case ChildRole.QUALIFIER:
-           if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE) {
+           if (getFirstChildNode().getElementType() == JavaElementType.JAVA_CODE_REFERENCE) {
              return getFirstChildNode();
            }
            else {
@@ -197,23 +199,23 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            }
 
     case ChildRole.DOT:
-           return TreeUtil.findChild(this, DOT);
+           return TreeUtil.findChild(this, JavaTokenType.DOT);
     }
   }
 
   public final int getChildRole(final ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType i = child.getElementType();
-    if (i == REFERENCE_PARAMETER_LIST) {
+    if (i == JavaElementType.REFERENCE_PARAMETER_LIST) {
       return ChildRole.REFERENCE_PARAMETER_LIST;
     }
-    else if (i == JAVA_CODE_REFERENCE) {
+    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       return ChildRole.QUALIFIER;
     }
-    else if (i == DOT) {
+    else if (i == JavaTokenType.DOT) {
       return ChildRole.DOT;
     }
-    else if (i == IDENTIFIER) {
+    else if (i == JavaTokenType.IDENTIFIER) {
       return ChildRole.REFERENCE_NAME;
     }
     else {
@@ -526,7 +528,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
     final PsiManager manager = aClass.getManager();
-    ASTNode ref = Parsing.parseJavaCodeReferenceText(manager, qName + getParameterList().getText(), SharedImplUtil.findCharTableByTree(this));
+    String text = qName + getParameterList().getText();
+    ASTNode ref = Parsing.parseJavaCodeReferenceText(manager, text, SharedImplUtil.findCharTableByTree(this));
+    LOG.assertTrue(ref != null, "Failed to parse reference from text '" + text + "'");
     getTreeParent().replaceChildInternal(this, (TreeElement)ref);
     if (!preserveQualification /*&& (TreeUtil.findParent(ref, ElementType.DOC_COMMENT) == null)*/) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(aClass.getProject());
@@ -557,7 +561,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     final ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
     if (qualifier == null) return false;
 
-    LOG.assertTrue(qualifier.getElementType() == JAVA_CODE_REFERENCE);
+    LOG.assertTrue(qualifier.getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
     final PsiElement refElement = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(qualifier)).resolve();
     if (refElement instanceof PsiPackage) return true;
 
@@ -622,14 +626,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         else {
           return false;
         }
-
       default:
         LOG.assertTrue(false);
         return true;
     }
 
     final ASTNode referenceNameElement = getReferenceNameNode();
-    if (referenceNameElement == null || referenceNameElement.getElementType() != IDENTIFIER) return false;
+    if (referenceNameElement == null || referenceNameElement.getElementType() != JavaTokenType.IDENTIFIER) return false;
     final String name = ((PsiClass)element).getName();
     return name != null && referenceNameElement.getText().equals(name) && element.getManager().areElementsEquivalent(element, resolve());
   }
@@ -726,7 +729,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         superParent = superParent.getParent();
       }
     }
-    if (!smartCompletion && getTreeParent().getElementType() != CODE_FRAGMENT && !(getParent() instanceof PsiAnnotation)) {
+    if (!smartCompletion && getTreeParent().getElementType() != TokenType.CODE_FRAGMENT && !(getParent() instanceof PsiAnnotation)) {
       /*filter.addFilter(new ClassFilter(PsiClass.class));
       filter.addFilter(new ClassFilter(PsiPackage.class));*/
       filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));
