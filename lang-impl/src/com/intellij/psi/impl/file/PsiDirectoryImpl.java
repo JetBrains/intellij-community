@@ -37,7 +37,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiDirectoryImpl");
 
   private final PsiManagerImpl myManager;
-  private VirtualFile myFile;
+  private final VirtualFile myFile;
 
   public PsiDirectoryImpl(PsiManagerImpl manager, VirtualFile file) {
     myManager = manager;
@@ -276,7 +276,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
     try {
       VirtualFile file = getVirtualFile().createChildDirectory(myManager, name);
-      return myManager.findDirectory(file);
+      PsiDirectory directory = myManager.findDirectory(file);
+      if (directory == null) throw new IncorrectOperationException("Cannot find directory in '"+file.getPresentableUrl()+"'");
+      return directory;
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e.toString());
@@ -337,7 +339,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   }
 
-  private void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
+  private static void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
     final UpdateAddedFileProcessor processor = UpdateAddedFileProcessor.forElement(copyPsi);
     if (processor != null) {
       processor.update(copyPsi);
