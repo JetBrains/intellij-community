@@ -540,6 +540,7 @@ class TemplateListPanel extends JPanel {
         Object obj = node.getUserObject();
         if (obj instanceof TemplateImpl) {
           ((TemplateImpl)obj).setDeactivated(!node.isChecked());
+          isModified = true;
         }
       }
 
