@@ -36,6 +36,14 @@ public abstract class PropertiesComponent {
 
   public abstract String getValue(@NonNls String name);
 
+  public String getOrInit(@NonNls String name, String defaultValue) {
+    if (!isValueSet(name)) {
+      setValue(name, defaultValue);
+      return defaultValue;
+    }
+    return getValue(name);
+  }
+
   public abstract void setValue(@NonNls String name, String value);
 
 }

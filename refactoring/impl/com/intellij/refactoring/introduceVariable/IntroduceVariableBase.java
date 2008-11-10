@@ -10,6 +10,7 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -37,6 +38,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,13 +51,15 @@ import java.util.List;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
+  private static final @NonNls String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
+
   protected static String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
       final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
-      if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
+      if (statementsInRange.length == 1 && (PsiUtil.hasErrorElementChild(statementsInRange[0]) || isPreferStatements())) {
         editor.getSelectionModel().selectLineAtCaret();
       } else {
         final List<PsiExpression> expressions = collectExpressions(file, offset, statementsInRange);
@@ -78,6 +82,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
       editor.getSelectionModel().removeSelection();
     }
+  }
+
+  public static boolean isPreferStatements() {
+    return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit(PREFER_STATEMENTS_OPTION, "false")).booleanValue();
   }
 
   public static List<PsiExpression> collectExpressions(final PsiFile file, final int offset, final PsiElement... statementsInRange) {
