@@ -357,13 +357,16 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
       }
     }
 
-    if (object instanceof String && element != null) {
-      return findEntityDeclWithName((String)object, element);
+    if (object instanceof String && originalElement != null) {
+      return findDeclWithName((String)object, originalElement);
+    }
+    if (object instanceof XmlElementDescriptor) {
+      return ((XmlElementDescriptor)object).getDeclaration();
     }
     return super.getDocumentationElementForLookupItem(psiManager, object, element);
   }
 
-  public static PsiElement findEntityDeclWithName(final String name, final @NotNull PsiElement element) {
+  public static PsiElement findDeclWithName(final String name, final @NotNull PsiElement element) {
     final XmlFile containingXmlFile = XmlUtil.getContainingFile(element);
     final XmlTag nearestTag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
     final XmlFile xmlFile = nearestTag != null? XmlCompletionData.findDescriptorFile(nearestTag, containingXmlFile):containingXmlFile;
@@ -378,6 +381,12 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
             if (element instanceof XmlEntityDecl) {
               final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
               if (entityDecl.isInternalReference() && name.equals(entityDecl.getName())) {
+                result[0] = entityDecl;
+                return false;
+              }
+            } else if (element instanceof XmlElementDecl) {
+              final XmlElementDecl entityDecl = (XmlElementDecl)element;
+              if (name.equals(entityDecl.getName())) {
                 result[0] = entityDecl;
                 return false;
               }

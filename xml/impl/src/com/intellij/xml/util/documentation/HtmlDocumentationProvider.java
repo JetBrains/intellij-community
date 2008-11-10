@@ -227,7 +227,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       result = ourScriptProvider.getDocumentationElementForLookupItem(psiManager, object, element);
     }
     if (result == null && object instanceof String && element != null) {
-      result = XmlDocumentationProvider.findEntityDeclWithName((String)object, element);
+      result = XmlDocumentationProvider.findDeclWithName((String)object, element);
     }
     return result;
   }
