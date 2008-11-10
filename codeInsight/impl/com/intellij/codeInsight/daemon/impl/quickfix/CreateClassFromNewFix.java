@@ -154,8 +154,9 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       }
       else {
         PsiReferenceList extendsList = targetClass.getExtendsList();
-        if (extendsList.getReferencedTypes().length > 0) continue;
-        extendsList.add(factory.createReferenceElementByType(classType));
+        if (extendsList.getReferencedTypes().length == 0 && !"java.lang.Object".equals(classType.getCanonicalText())) {
+          extendsList.add(factory.createReferenceElementByType(classType));
+        }
       }
     }
   }
