@@ -815,6 +815,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     for (Configurable each : configurables) {
       each.disposeUIResources();
     }
+
+    Disposer.clearOwnFields(this);
   }
 
   public OptionsEditorContext getContext() {

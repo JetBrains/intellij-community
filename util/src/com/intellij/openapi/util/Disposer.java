@@ -18,12 +18,15 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 
 @SuppressWarnings({"SSBasedInspection"})
@@ -111,5 +114,13 @@ public class Disposer {
 
   public static boolean isDebugMode() {
     return ourDebugMode;
+  }
+
+  public static void clearOwnFields(Object object) {
+    final Field[] all = object.getClass().getDeclaredFields();
+    for (Field each : all) {
+      if ((each.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) continue;
+      ReflectionUtil.resetField(object, each.getType(), each.getName());
+    }
   }
 }
