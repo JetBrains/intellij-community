@@ -34,7 +34,8 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   @NonNls private static final Set<String> PLATFORM_MODULES = CollectionFactory.newTroveSet("com.intellij.modules.platform",
                                                                                             "com.intellij.modules.lang",
                                                                                             "com.intellij.modules.vcs",
-                                                                                            "com.intellij.modules.xdebugger");
+                                                                                            "com.intellij.modules.xdebugger",
+                                                                                            "com.intellij.modules.xml");
 
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
