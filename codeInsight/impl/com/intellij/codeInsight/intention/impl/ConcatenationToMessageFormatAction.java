@@ -180,7 +180,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     return PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) >= 0 && getEnclosingLiteralConcatenation(file, editor) != null;
   }
 
-  public static PsiBinaryExpression getEnclosingLiteralConcatenation(PsiFile file, Editor editor) {
+  public static PsiBinaryExpression getEnclosingLiteralConcatenation(@NotNull PsiFile file, @NotNull Editor editor) {
     final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
     return getEnclosingLiteralConcatenation(elementAt);
   }

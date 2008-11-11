@@ -28,6 +28,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,7 +45,7 @@ public class CommonRefactoringUtil {
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
   }
-  public static void showErrorHint(Project project, Editor editor, String message, String title, String helpId) {
+  public static void showErrorHint(Project project, @Nullable Editor editor, String message, String title, String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
 
     if (editor == null) {

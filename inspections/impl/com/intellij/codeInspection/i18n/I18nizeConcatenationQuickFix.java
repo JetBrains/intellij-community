@@ -22,11 +22,14 @@ import java.util.List;
 import java.util.Map;
 
 public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeConcatenationQuickFix");
   @NonNls private static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
+    PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile,editor);
+    if (concatenation != null) return;
+    String message = CodeInsightBundle.message("quickfix.i18n.concatentation.error");
+    throw new IncorrectOperationException(message);
   }
 
   public I18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
@@ -42,13 +45,11 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   }
 
   protected PsiElement doReplacementInJava(@NotNull final PsiFile psiFile,
-                                           final Editor editor,
+                                           @NotNull final Editor editor,
                                            @Nullable PsiLiteralExpression literalExpression,
                                            String i18nizedText) throws IncorrectOperationException {
-    PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile,editor);
-
-    PsiExpression expression =
-      JavaPsiFacade.getInstance(psiFile.getProject()).getElementFactory().createExpressionFromText(i18nizedText, concatenation);
+    PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile, editor);
+    PsiExpression expression = JavaPsiFacade.getInstance(psiFile.getProject()).getElementFactory().createExpressionFromText(i18nizedText, concatenation);
     return concatenation.replace(expression);
   }
 

@@ -20,10 +20,10 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 
 public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
@@ -144,7 +144,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
       handler.checkApplicability(psiFile, editor);
     }
     catch (IncorrectOperationException ex) {
-      JOptionPane.showMessageDialog(null, ex.getMessage(), CodeInsightBundle.message("i18nize.error.title"), JOptionPane.ERROR_MESSAGE);
+      CommonRefactoringUtil.showErrorHint(project, editor, ex.getMessage(), CodeInsightBundle.message("i18nize.error.title"), null);
       return;
     }
 
