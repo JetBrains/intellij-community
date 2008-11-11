@@ -5,6 +5,7 @@ package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
@@ -22,6 +23,17 @@ public class UndoUtil {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
     final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
+    markDocumentReferenceForUndo(project, ref, "markDocumentForUndo: " + file);
+  }
+
+  public static void markVirtualFileForUndo(@NotNull Project project, @NotNull VirtualFile file) {
+    final DocumentReference ref = new DocumentReferenceByVirtualFile(file);
+    markDocumentReferenceForUndo(project, ref, "markVirtualFileForUndo: " + file.getPath());
+  }
+
+  private static void markDocumentReferenceForUndo(final Project project,
+                                                   final DocumentReference ref,
+                                                   @NonNls final String debugName) {
     UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
       public void undo() {
       }
@@ -39,7 +51,7 @@ public class UndoUtil {
 
       @NonNls
       public String toString() {
-        return "markDocumentForUndo: " + file;
+        return debugName;
       }
     });
   }
