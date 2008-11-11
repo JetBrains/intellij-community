@@ -113,7 +113,12 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
 
     if (type instanceof PsiArrayType) {
       generateType(buffer, ((PsiArrayType)type).getComponentType(), context);
-      buffer.append("[]");
+      if (type instanceof PsiEllipsisType) {
+        buffer.append("...");
+      }
+      else {
+        buffer.append("[]");
+      }
 
       return;
     }
