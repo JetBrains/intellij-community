@@ -27,8 +27,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -105,8 +105,13 @@ public class CompilerTask extends Task.Backgroundable {
     return new NotificationInfo("Compiler", "Compilation Finished", myErrorCount + " Errors, " + myWarningCount + " Warnings", true);
   }
 
+  private CloseListener myCloseListener;
+
   public void run(@NotNull final ProgressIndicator indicator) {
     myIndicator = indicator;
+
+    final ProjectManager projectManager = ProjectManager.getInstance();
+    projectManager.addProjectManagerListener(myProject, myCloseListener = new CloseListener());
 
     final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
     semaphore.acquireUninterruptibly();
@@ -118,6 +123,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
     finally {
       indicator.stop();
+      projectManager.removeProjectManagerListener(myProject, myCloseListener);
       semaphore.release();
     }
   }
@@ -382,7 +388,7 @@ public class CompilerTask extends Task.Backgroundable {
     final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, myContentName, true);
     content.putUserData(CONTENT_ID_KEY, myContentId);
     messageView.getContentManager().addContent(content);
-    new CloseListener(content, messageView.getContentManager());
+    myCloseListener.setContent(content, messageView.getContentManager());
     removeAllContents(myProject, content);
     messageView.getContentManager().setSelectedContent(content);
     updateProgressText();
@@ -546,11 +552,10 @@ public class CompilerTask extends Task.Backgroundable {
       return !myIndicator.isRunning();
     }
 
-    public CloseListener(Content content, ContentManager contentManager) {
+    public void setContent(Content content, ContentManager contentManager) {
       myContent = content;
       myContentManager = contentManager;
       contentManager.addContentManagerListener(this);
-      ProjectManagerEx.getInstanceEx().addProjectManagerListener(myProject, this);
     }
 
     public void contentRemoved(ContentManagerEvent event) {
@@ -565,7 +570,6 @@ public class CompilerTask extends Task.Backgroundable {
           }
         }
         myContentManager.removeContentManagerListener(this);
-        ProjectManagerEx.getInstanceEx().removeProjectManagerListener(myProject, this);
         myContent.release();
         myContent = null;
       }
