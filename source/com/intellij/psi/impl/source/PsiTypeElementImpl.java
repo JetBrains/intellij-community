@@ -46,10 +46,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiType cachedType = myCachedType;
     if (cachedType == null) {
       TreeElement element = getFirstChildNode();
+      assert element != null;
       while (element != null) {
         IElementType elementType = element.getElementType();
         if (element.getTreeNext() == null && ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
           cachedType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(element.getText());
+          assert cachedType != null;
         }
         else if (elementType == JavaElementType.TYPE) {
           PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(element)).getType();
@@ -65,10 +67,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         else {
           LOG.error("Unknown element type: " + elementType);
         }
-        myCachedType = cachedType;
         if (element.getTextLength() != 0) break;
         element = element.getTreeNext();
       }
+      myCachedType = cachedType;
     }
     return cachedType;
   }
@@ -86,6 +88,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return type;
   }
 
+  @NotNull
   private PsiType createWildcardType() {
     final PsiType temp;
     if (getFirstChildNode().getTreeNext() == null) {
@@ -122,9 +125,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
-    if (getFirstChildNode().getElementType() == JavaElementType.TYPE) {
-      return ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode())).getInnermostComponentReferenceElement();
-    } else {
+    TreeElement firstChildNode = getFirstChildNode();
+    if (firstChildNode.getElementType() == JavaElementType.TYPE) {
+      return ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(firstChildNode)).getInnermostComponentReferenceElement();
+    }
+    else {
       return getReferenceElement();
     }
   }

@@ -43,6 +43,7 @@ public class PsiWildcardType extends PsiType {
     myBound = bound;
   }
 
+  @NotNull
   public static PsiWildcardType createUnbounded(PsiManager manager) {
     PsiWildcardType unboundedWildcard = manager.getUserData(UNBOUNDED_WILDCARD);
     if (unboundedWildcard == null) {
@@ -52,11 +53,13 @@ public class PsiWildcardType extends PsiType {
     return unboundedWildcard;
   }
 
+  @NotNull
   public static PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
     LOG.assertTrue(!(bound instanceof PsiWildcardType));
     return new PsiWildcardType(manager, true, bound);
   }
 
+  @NotNull
   public static PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
     return new PsiWildcardType(manager, false, bound);
   }

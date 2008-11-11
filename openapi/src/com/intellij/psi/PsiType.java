@@ -40,6 +40,7 @@ public abstract class PsiType {
   /**
    * Creates array type with this type as a component.
    */
+  @NotNull
   public PsiArrayType createArrayType() {
     return new PsiArrayType(this);
   }
