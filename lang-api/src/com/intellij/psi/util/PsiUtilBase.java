@@ -525,4 +525,11 @@ public class PsiUtilBase {
     copyVisitor.visitElement(fileCopy);
     return (T) fileCopy;
   }
+
+  public static boolean hasErrorElementChild(PsiElement element) {
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiErrorElement) return true;
+    }
+    return false;
+  }
 }

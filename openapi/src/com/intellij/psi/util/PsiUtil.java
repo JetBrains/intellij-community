@@ -790,13 +790,6 @@ public final class PsiUtil extends PsiUtilBase {
     return result;
   }
 
-  public static boolean hasErrorElementChild(PsiElement element) {
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiErrorElement) return true;
-    }
-    return false;
-  }
-
   @Nullable
   public static PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
     PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiMethod.class);
