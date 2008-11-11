@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
@@ -435,6 +436,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           wsFile.refresh(false, false);
         }
 
+      }
+      else {
+        VirtualFile projectConfigDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath, Project.DIRECTORY_STORE_FOLDER));
+        if (projectConfigDir != null && projectConfigDir.isDirectory()) {
+          projectConfigDir.getChildren();
+          if (projectConfigDir instanceof NewVirtualFile) {
+            ((NewVirtualFile)projectConfigDir).markDirtyRecursively();
+          }
+          projectConfigDir.refresh(false, true);
+
+        }
       }
     }
   }
