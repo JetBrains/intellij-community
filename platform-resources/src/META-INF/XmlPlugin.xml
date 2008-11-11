@@ -244,16 +244,20 @@
 
     </component>
   </application-components>
+
   <actions>
+
     <group id="NewXml" text="XML">
-      <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="Html"/>
-      <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="Xhtml"/>
-      <add-to-group group-id="NewGroup" anchor="last"/>
+      <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="HTML File"/>
+      <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
+
     <action id="WebOpenInAction" class="com.intellij.ide.browsers.actions.WebOpenInAction" text="Web preview...">
       <keyboard-shortcut keymap="$default" first-keystroke="alt F2"/>
       <add-to-group group-id="CodeEditorViewGroup" anchor="after" relative-to-action="SelectIn"/>
     </action>
+
     <group id="WebOpenInActionGroup" description="Open In...">
       <action id="WebBrowser.FIREFOX" text="_Firefox" class="com.intellij.ide.browsers.actions.OpenInFirefoxAction"/>
       <action id="WebBrowser.CHROME" text="_Chrome" class="com.intellij.ide.browsers.actions.OpenInChromeAction"/>
