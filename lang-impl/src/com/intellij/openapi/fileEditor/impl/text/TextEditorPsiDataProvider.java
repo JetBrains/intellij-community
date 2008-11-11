@@ -80,6 +80,10 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   }
 
   private static PsiFile getPsiFile(Editor e, VirtualFile file) {
-    return file.isValid()? PsiManager.getInstance(e.getProject()).findFile(file) : null; // fix for SCR 40329
+    if (!file.isValid()) {
+      return null; // fix for SCR 40329
+    }
+    PsiFile psiFile = PsiManager.getInstance(e.getProject()).findFile(file);
+    return psiFile != null && psiFile.isValid() ? psiFile : null;
   }
 }
