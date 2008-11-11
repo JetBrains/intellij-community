@@ -76,7 +76,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       assert insertOffset >= 0;
       final DocumentImpl document = mapper.doc;
       document.insertString(insertOffset, text);
-      int start = 0;
+      int start = insertOffset;
       for (int i = 0; i < tokenTypes.size(); i++) {
         IElementType type = tokenTypes.get(i);
         final int len = lengths.get(i);
