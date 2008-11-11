@@ -59,7 +59,7 @@ public class ChangeFormatDialog extends UpgradeFormatDialog {
 
   @Override
   protected String getTopMessage(final String label) {
-    return SvnBundle.message("label.configure.change.strategy", myPath.getAbsolutePath());
+    return SvnBundle.message("label.configure.change.label", myPath.getAbsolutePath());
   }
 
   @Override
