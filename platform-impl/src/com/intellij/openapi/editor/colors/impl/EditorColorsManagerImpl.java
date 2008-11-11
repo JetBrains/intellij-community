@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.options.*;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -114,9 +113,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager
         try {
           final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, schemePath);
           if (inputStream == null) {
-            final String msg = OptionsBundle.message("options.color.schemes.load.read.error", schemePath);
-            LOG.info(msg);
-            Messages.showErrorDialog(msg, OptionsBundle.message("options.color.schemes.load.settings.title"));
+            // Error shouldn't occur during this operation
+            // thus we report error instead of info
+            LOG.error("Cannot read scheme from " +  schemePath);
             continue;
           }
 
@@ -135,13 +134,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager
           ApplicationManager.getApplication().invokeLater(
             new Runnable(){
               public void run() {
-                final String msg = OptionsBundle.message("options.color.schemes.load.read.error", schemePath + ": " + e.getLocalizedMessage());
-                LOG.info(msg, e);
-                Messages.showErrorDialog(msg, OptionsBundle.message("options.color.schemes.load.settings.title"));
+                // Error shouldn't occur during this operation
+                // thus we report error instead of info
+                LOG.error("Cannot read scheme from " + schemePath + ": " + e.getLocalizedMessage(), e);
               }
             }
           );
-
         }
       }
     }
