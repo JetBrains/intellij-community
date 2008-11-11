@@ -133,7 +133,8 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
     final PsiElement element;
     if (myModifierListOwner != null) {
       element = myModifierListOwner;
-    } else {
+    }
+    else {
       final CaretModel caretModel = editor.getCaretModel();
       final int position = caretModel.getOffset();
       element = file.findElementAt(position);
@@ -179,10 +180,6 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
       final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
       annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false), myAnnotation, file);
     }
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 
   public String[] getAnnotationsToRemove() {

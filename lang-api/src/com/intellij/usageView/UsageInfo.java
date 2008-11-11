@@ -51,7 +51,7 @@ public class UsageInfo {
 
     TextRange range = element.getTextRange();
     if (range == null) {
-      LOG.assertTrue(false, "text range null for " + element);
+      LOG.error("text range null for " + element+"; "+element.getClass());
     }
     startOffset = element.getTextOffset() - range.getStartOffset();
     endOffset = range.getEndOffset() - range.getStartOffset();

@@ -73,7 +73,7 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
     private final Project myProject;
     private final PsiFile myHostPsiFile;
 
-    public MyInjProcessor(InjectedLanguageManagerImpl injectedManager, Project project, PsiFile hostPsiFile) {
+    private MyInjProcessor(InjectedLanguageManagerImpl injectedManager, Project project, PsiFile hostPsiFile) {
       myInjectedManager = injectedManager;
       myProject = project;
       myHostPsiFile = hostPsiFile;
@@ -105,7 +105,7 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
     private final PsiElement myContextElement;
     private final PsiFile myHostPsiFile;
 
-    public MyMultiHostRegistrar(@NotNull Project project, @NotNull InjectedLanguageManagerImpl injectedManager, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
+    private MyMultiHostRegistrar(@NotNull Project project, @NotNull InjectedLanguageManagerImpl injectedManager, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
       myProject = project;
       myInjectedManager = injectedManager;
       myContextElement = contextElement;
