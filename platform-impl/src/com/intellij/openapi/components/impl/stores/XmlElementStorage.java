@@ -132,6 +132,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   protected void loadState(final StorageData result, final Element element) throws StateStorageException {
 
+    try {
+      result.checkPathMacros(element);
+    }
+    catch (IOException e) {
+      throw new StateStorageException(e);
+    }
+
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);
     }
@@ -612,6 +619,9 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         return myComponentStates.containsKey(componentName);
     }
 
+    public void checkPathMacros(final Element element) throws IOException {
+
+    }
   }
 
   public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {

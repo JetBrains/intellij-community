@@ -12,20 +12,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.OrderedSet;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Element;
@@ -40,7 +40,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.util.*;
-import java.util.HashMap;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ProjectStoreImpl");
@@ -407,14 +406,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       myUsedMacros = new TreeSet<String>(storageData.myUsedMacros);
     }
 
-    protected void load(@NotNull final Element root) throws IOException {
-      final String v = root.getAttributeValue(VERSION_OPTION);
-      originalVersion = v != null ? Integer.parseInt(v) : 0;
-
-      if (originalVersion != ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-        convert(root, originalVersion);
-      }
-
+    @Override
+    public void checkPathMacros(final Element root) throws IOException {
       final Map<String, String> usedMacros1 = readUsedMacros(root);
       final boolean macrosOk = ProjectMacrosUtil.checkMacros(myProject, usedMacros1);
       if (!macrosOk) {
@@ -426,6 +419,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         for (Element e : JDOMUtil.getElements(usedMacros)) {
           myUsedMacros.add(e.getAttributeValue(NAME_ATTR));
         }
+      }
+    }
+
+    protected void load(@NotNull final Element root) throws IOException {
+      final String v = root.getAttributeValue(VERSION_OPTION);
+      originalVersion = v != null ? Integer.parseInt(v) : 0;
+
+      if (originalVersion != ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
+        convert(root, originalVersion);
       }
 
       super.load(root);

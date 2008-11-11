@@ -134,6 +134,9 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
 
           if (document != null) {
             Element element = document.getRootElement();
+
+            storageData.checkPathMacros(element);
+
             if (myPathMacroSubstitutor != null) {
               myPathMacroSubstitutor.expandPaths(element);
             }
