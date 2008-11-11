@@ -51,7 +51,7 @@ public class ExpectedTypesProvider {
     return ServiceManager.getService(project, ExpectedTypesProvider.class);
   }
 
-  private static ExpectedClassProvider ourGlobalScopeClassProvider = new ExpectedClassProvider() {
+  private static final ExpectedClassProvider ourGlobalScopeClassProvider = new ExpectedClassProvider() {
     public PsiField[] findDeclaredFields(final PsiManager manager, String name) {
       final PsiShortNamesCache cache = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache();
       GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
@@ -64,8 +64,7 @@ public class ExpectedTypesProvider {
       return cache.getMethodsByName(name, scope);
     }
   };
-  private static PsiType[] PRIMITIVE_TYPES = new PsiType [] {PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG,
-    PsiType.FLOAT, PsiType.DOUBLE};
+  private static final PsiType[] PRIMITIVE_TYPES = {PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE};
 
   public static ExpectedTypeInfo createInfo(@NotNull  PsiType type, int kind, PsiType defaultType, TailType tailType) {
     return createInfoImpl(type, kind, defaultType, tailType);
@@ -189,7 +188,7 @@ public class ExpectedTypesProvider {
     private ExpectedTypeInfo[] myResult = ExpectedTypeInfo.EMPTY_ARRAY;
     @NonNls private static final String LENGTH_SYNTHETIC_ARRAY_FIELD = "length";
 
-    public MyParentVisitor(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider) {
+    private MyParentVisitor(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider) {
       myExpr = expr;
       myForCompletion = forCompletion;
       myClassProvider = classProvider;
@@ -1069,16 +1068,11 @@ public class ExpectedTypesProvider {
       Set<ExpectedTypeInfo> types = new THashSet<ExpectedTypeInfo>();
       for (PsiMethod method : methods) {
         final PsiClass aClass = method.getContainingClass();
-        if (!facade.getResolveHelper().isAccessible(method, reference, aClass)) continue;
+        if (aClass == null || !facade.getResolveHelper().isAccessible(method, reference, aClass)) continue;
 
         final PsiSubstitutor substitutor = ExpectedTypeUtil.inferSubstitutor(method, methodCallExpr, forCompletion);
-        final PsiClassType type;
-        if (substitutor != null) {
-          type = facade.getElementFactory().createType(aClass, substitutor);
-        }
-        else {
-          type = facade.getElementFactory().createType(aClass);
-        }
+        final PsiClassType type =
+          substitutor == null ? facade.getElementFactory().createType(aClass) : facade.getElementFactory().createType(aClass, substitutor);
 
         if (method.hasModifierProperty(PsiModifier.STATIC) ||
             method.hasModifierProperty(PsiModifier.FINAL) ||
@@ -1099,7 +1093,7 @@ public class ExpectedTypesProvider {
       List<ExpectedTypeInfo> types = new ArrayList<ExpectedTypeInfo>();
       for (PsiField field : fields) {
         final PsiClass aClass = field.getContainingClass();
-        if (!facade.getResolveHelper().isAccessible(field, expression, aClass)) continue;
+        if (aClass == null || !facade.getResolveHelper().isAccessible(field, expression, aClass)) continue;
 
         final PsiType type = facade.getElementFactory().createType(aClass);
 
