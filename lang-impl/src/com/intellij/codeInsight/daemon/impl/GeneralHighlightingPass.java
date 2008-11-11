@@ -395,8 +395,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return list;
   }
 
-  private Collection<HighlightInfo> collectHighlights(final List<PsiElement> elements, final HighlightVisitor[] highlightVisitors,
-                                                      final ProgressIndicator progress) {
+  private Collection<HighlightInfo> collectHighlights(@NotNull final List<PsiElement> elements, @NotNull final HighlightVisitor[] highlightVisitors,
+                                                      @NotNull final ProgressIndicator progress) {
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
 
