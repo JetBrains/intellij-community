@@ -479,7 +479,7 @@ public class PluginManager {
     return pluginDescriptors;
   }
 
-  public static synchronized void reportPluginError() {
+  public static void reportPluginError() {
     if (myPluginError != null) {
       JOptionPane.showMessageDialog(null, myPluginError, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
       myPluginError = null;
