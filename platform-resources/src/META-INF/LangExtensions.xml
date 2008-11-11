@@ -303,8 +303,6 @@
 
   <projectService serviceInterface="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings" serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"/>
 
-  <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
-
   <!-- execution -->
   <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
 
