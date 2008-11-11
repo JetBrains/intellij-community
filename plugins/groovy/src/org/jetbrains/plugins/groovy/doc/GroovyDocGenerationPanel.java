@@ -1,28 +1,33 @@
 package org.jetbrains.plugins.groovy.doc;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.plugins.grails.GrailsBundle;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocAddPackageAction;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocReducePackageAction;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
+import java.io.File;
 
-final class GroovyDocGenerationPanel extends JPanel {
+public final class GroovyDocGenerationPanel extends JPanel {
   JPanel myPanel;
   TextFieldWithBrowseButton myOutputDir;
-  JCheckBox myIsUse;
-  JCheckBox myIsPrivate;
-  JCheckBox myOpenInBrowserCheckBox;
+  NonFocusableCheckBox myIsUse;
+  NonFocusableCheckBox myIsPrivate;
+  NonFocusableCheckBox myOpenInBrowserCheckBox;
   TextFieldWithBrowseButton myInputDir;
   private JTextField myWindowTitle;
-  JList myPackageNames;
+  JList myPackagesList;
   private JPanel myPackagesPanel;
 
   private DefaultActionGroup myActionGroup;
@@ -30,19 +35,27 @@ final class GroovyDocGenerationPanel extends JPanel {
 
   private GroovyDocAddPackageAction myAddPackageAction;
   private GroovyDocReducePackageAction myReducePackageAction;
+  private DefaultListModel myDataModel;
 
-  GroovyDocGenerationPanel(DataContext dataContext) {
+  GroovyDocGenerationPanel() {
     myInputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.input.directory.browse"), null, null,
                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myOutputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.output.directory.browse"), null, null,
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-    myPackageNames.setModel(new DefaultListModel());
+    myDataModel = new DefaultListModel();
 
+    myPackagesList = new JList(myDataModel);
+    myPackagesList.setMinimumSize(new Dimension(100, 150));
+
+    JScrollPane packagesScrollPane = ScrollPaneFactory.createScrollPane(myPackagesList);
     myPackagesPanel.setLayout(new BorderLayout());
+    myPackagesPanel.setBorder(IdeBorderFactory.createTitledBorder(GrailsBundle.message("groovydoc.packages.title")));
+
     myActionToolbar = ActionManager.getInstance().createActionToolbar("GroovyDoc", getActionGroup(), true);
-    myPackagesPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
+    myPackagesPanel.add(myActionToolbar.getComponent(), BorderLayout.NORTH);
+    myPackagesPanel.add(packagesScrollPane, BorderLayout.SOUTH);
 
     myActionToolbar.updateActionsImmediately();
   }
@@ -58,12 +71,93 @@ final class GroovyDocGenerationPanel extends JPanel {
   }
 
   private void initActions() {
-    myAddPackageAction = new GroovyDocAddPackageAction(myPackageNames);
-    myReducePackageAction = new GroovyDocReducePackageAction(myPackageNames);
+    myAddPackageAction = new GroovyDocAddPackageAction(myPackagesList, myDataModel);
+    myReducePackageAction = new GroovyDocReducePackageAction(myPackagesList, myDataModel);
   }
 
-  public void setPackagesList(String[] packages){
-    myPackageNames.removeAll();
-    myPackageNames.setListData(packages);
+  public void setPackagesList(String packagesName) {
+    myDataModel.removeAllElements();
+    myDataModel.add(0, packagesName);
+  }
+
+  public static class MyPackagesModel extends DefaultListModel {
+    List<String> packagesNames = new ArrayList<String>();
+
+    public int getSize() {
+      return packagesNames.size();
+    }
+
+    public Object getElementAt(final int index) {
+      return packagesNames.get(index);
+    }
+
+    public void add(String packageName) {
+      final int index = getSize();
+      packagesNames.add(packageName);
+      fireContentsChanged(this, 0, index);
+    }
+
+    public Object remove(int index) {
+      return packagesNames.remove(index);
+    }
+  }
+
+  public DefaultListModel getDataModel() {
+    return myDataModel;
+  }
+
+  public void apply(GroovyDocConfiguration configuration) {
+    configuration.OUTPUT_DIRECTORY = toSystemIndependentFormat(myOutputDir.getText());
+    configuration.INPUT_DIRECTORY = toSystemIndependentFormat(myInputDir.getText());
+    configuration.PACKAGES = toStringArray(getDataModel());
+
+    configuration.OPEN_IN_BROWSER = myOpenInBrowserCheckBox.isSelected();
+    configuration.OPTION_IS_USE = myIsUse.isSelected();
+    configuration.OPTION_IS_PRIVATE = myIsPrivate.isSelected();
+
+    configuration.WINDOW_TITLE = myWindowTitle.getText();
+  }
+
+  public void reset(GroovyDocConfiguration configuration){
+    myOutputDir.setText(toUserSystemFormat(configuration.OUTPUT_DIRECTORY));
+    myInputDir.setText(toUserSystemFormat(configuration.INPUT_DIRECTORY));
+
+    setPackagesList(configuration.PACKAGES[0]);
+
+    myOpenInBrowserCheckBox.setSelected(configuration.OPEN_IN_BROWSER);
+    myIsUse.setSelected(configuration.OPTION_IS_USE);
+    myIsPrivate.setSelected(configuration.OPTION_IS_PRIVATE);
+  }
+
+  @Nullable
+  private static String toSystemIndependentFormat(String directory) {
+    if (directory.length() == 0) {
+      return null;
+    }
+    return directory.replace(File.separatorChar, '/');
+  }
+
+  private static String toUserSystemFormat(String directory) {
+    if (directory == null) {
+      return "";
+    }
+    return directory.replace('/', File.separatorChar);
+  }
+
+private static String[] toStringArray(final DefaultListModel model) {
+    final int count = model.getSize();
+    Set<String> result = new HashSet<String>();
+    for (int i = 0; i < count; i++) {
+      final Object o = model.getElementAt(i);
+      assert o instanceof String;
+
+      result.add((String)o);
+    }
+
+    return result.toArray(new String[result.size()]);
+  }
+
+  public JPanel getPanel() {
+    return myPanel;
   }
 }

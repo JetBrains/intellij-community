@@ -153,6 +153,8 @@
                     serviceImplementation="org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactoryImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"
                     serviceImplementation="org.jetbrains.plugins.grails.references.domain.DomainClassMembersProvider"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"
+                    serviceImplementation="org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager"/>
 
     <moduleType id="GRAILS_MODULE" implementationClass="org.jetbrains.plugins.grails.module.GrailsModuleType"/>
 
@@ -374,9 +376,6 @@
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyAddImportsPassFactory
       </implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.doc.GroovyDocGenerationManager</implementation-class>
-    </component>
   </project-components>
 
   <module-components>
@@ -497,8 +496,9 @@
 
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
-            text="Generate GroovyDoc" description="Generating Groovy Documentation">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
+            text="Generate GroovyDoc" description="Generating Groovy Documentation" icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
+      <add-to-group group-id="ToolsMenu" anchor="last" />
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt D"/>
     </action>
 
     <action id="Grails.WAR" class="org.jetbrains.plugins.grails.actions.GrailsWarAction"
