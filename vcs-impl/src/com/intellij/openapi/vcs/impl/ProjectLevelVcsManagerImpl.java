@@ -572,7 +572,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
     myDirectoryMappingList.setDirectoryMappings(items);
-    updateActiveVcss();
+    if (!myProject.isDefault()) {
+      updateActiveVcss();
+    }
     fireDirectoryMappingsChanged();
   }
 
