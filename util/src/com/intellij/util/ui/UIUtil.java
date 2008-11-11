@@ -714,7 +714,7 @@ public class UIUtil {
   public static boolean isWinLafOnVista() {
     return SystemInfo.isWindowsVista && "Windows".equals(UIManager.getLookAndFeel().getName());
   }
-  
+
   public static boolean isStandardMenuLAF() {
     return isWinLafOnVista() || "Nimbus".equals(UIManager.getLookAndFeel().getName());
   }
@@ -904,7 +904,7 @@ public class UIUtil {
   }
 
   public static String toHtml(String html) {
-    return toHtml(html, 0); 
+    return toHtml(html, 0);
   }
 
   public static String toHtml(String html, final int hPadding) {
@@ -927,6 +927,24 @@ public class UIUtil {
       runnable.run();
     } else {
       SwingUtilities.invokeLater(runnable);
+    }
+  }
+
+  /**
+   * Invoke and wait in the event dispatch thread on in the current thread
+   *
+   * @param runnable a runnable to invoke
+   */
+  public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
+    if (SwingUtilities.isEventDispatchThread()) {
+      runnable.run();
+    } else {
+      try {
+        SwingUtilities.invokeAndWait(runnable);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 }
