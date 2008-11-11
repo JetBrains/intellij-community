@@ -233,14 +233,15 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private Object[] processPackage(final PsiPackage aPackage) {
     final ArrayList<Object> list = new ArrayList<Object>();
     final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
-    for (final PsiPackage subPackage : aPackage.getSubPackages()) {
+    final GlobalSearchScope scope = getScope();
+    for (final PsiPackage subPackage : aPackage.getSubPackages(scope)) {
       final String shortName = subPackage.getQualifiedName().substring(startOffset);
       if (JavaPsiFacade.getInstance(subPackage.getProject()).getNameHelper().isIdentifier(shortName)) {
         list.add(subPackage);
       }
     }
 
-    final PsiClass[] classes = aPackage.getClasses();
+    final PsiClass[] classes = aPackage.getClasses(scope);
     final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
     if (options != null) {
       final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(options);
@@ -326,8 +327,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private JavaResolveResult advancedResolveInner(final PsiElement psiElement, final String qName) {
-    PsiManager manager = psiElement.getManager();
-    GlobalSearchScope scope = getScope();
+    final PsiManager manager = psiElement.getManager();
+    final GlobalSearchScope scope = getScope();
     if (myIndex == myJavaClassReferenceSet.getReferences().length - 1) {
       final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, scope);
       if (aClass != null) {

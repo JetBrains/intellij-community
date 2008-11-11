@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
   @NonNls private static final Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*([\\.\\$]\\s*[A-Za-z]\\w*\\s*)+)");
 
   public JavaClassListReferenceProvider(final Project project) {
-    super(project);
+    super(GlobalSearchScope.allScope(project), project);
     setOption(ADVANCED_RESOLVE, Boolean.TRUE);
   }
 
