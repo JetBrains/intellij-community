@@ -7,6 +7,7 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
+import com.intellij.codeInsight.daemon.impl.ExternalToolPass;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -18,8 +19,8 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -212,6 +213,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     MockProgressIndicator progress = new MockProgressIndicator();
     List<TextEditorHighlightingPass> passes = TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), toIgnore.toNativeArray());
 
+    for(Iterator<TextEditorHighlightingPass> i = passes.iterator();i.hasNext();) {
+      final TextEditorHighlightingPass pass = i.next();
+
+      if ((!(pass instanceof ExternalToolPass) && forceExternalValidation()) ||
+          (pass instanceof ExternalToolPass && !forceExternalValidation() && !doExternalValidation())
+         ) {
+        i.remove();
+      }
+    }
+
     for (TextEditorHighlightingPass pass : passes) {
       pass.collectInformation(progress);
     }
@@ -248,7 +259,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected boolean doTestLineMarkers() {
     return false;
   }
-
 
   protected boolean doExternalValidation() {
     return true;
