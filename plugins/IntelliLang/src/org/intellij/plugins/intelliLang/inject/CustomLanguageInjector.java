@@ -106,7 +106,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
     }
 
     if (place instanceof PsiExpression) {
-      processLiteralExpressionInjections((PsiExpression)place, processor);
+      processLiteralExpressionInjections(findFirstLiteralExpression((PsiExpression)place), processor);
     }
     else if (place instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)place;
@@ -215,18 +215,19 @@ public final class CustomLanguageInjector implements ProjectComponent {
     return null;
   }
 
-  private void processLiteralExpressionInjections(final PsiExpression place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(place, null);
-    final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock? topBlock : place.getContainingFile()}, "", true);
+  private void processLiteralExpressionInjections(@Nullable final PsiLiteralExpression firstLiteral, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+    if (firstLiteral == null) return;
+    final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstLiteral, null);
+    final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock? topBlock : firstLiteral.getContainingFile()}, "", true);
     final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
     final LinkedList<PsiExpression> places = new LinkedList<PsiExpression>();
     boolean unparsable = false;
-    places.add(place);
+    places.add(firstLiteral);
     while (!places.isEmpty()) {
       final PsiExpression curPlace = places.removeFirst();
       final PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(curPlace, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
       if (owner == null) continue;
-      if (processAnnotationInjections(place, owner, processor)) return; // annotated element
+      if (processAnnotationInjections(firstLiteral, owner, processor)) return; // annotated element
 
       final PsiMethod psiMethod;
       final Trinity<String, Integer, Integer> trin;
@@ -264,7 +265,8 @@ public final class CustomLanguageInjector implements ProjectComponent {
       if (injections == null) return;
       for (MethodParameterInjection injection : injections) {
         if (injection.isApplicable(psiMethod)) {
-          processInjection(place, unparsable, injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), processor);
+          processInjectionWithContext(firstLiteral, unparsable, injection.getInjectedLanguageId(), injection.getPrefix(),
+                                      injection.getSuffix(), processor);
           return;
         }
       }
@@ -309,24 +311,17 @@ public final class CustomLanguageInjector implements ProjectComponent {
     return tmpMap;
   }
 
-  private boolean processAnnotationInjections(final PsiExpression psiExpression, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+  private boolean processAnnotationInjections(final PsiLiteralExpression firstLiteral, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     final PsiAnnotation[] annotations =
       AnnotationUtilEx.getAnnotationFrom(annoElement, myInjectionConfiguration.getLanguageAnnotationPair(), true);
     if (annotations.length > 0) {
       final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
       final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
       final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
-      processInjection(psiExpression, false, id, prefix, suffix, processor);
+      processInjectionWithContext(firstLiteral, false, id, prefix, suffix, processor);
       return true;
     }
     return false;
-  }
-
-  private void processInjection(final PsiExpression psiExpression, final boolean unparsable, final String id,
-                                final String prefix,
-                                final String suffix,
-                                final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    processInjectionWithContext(findFirstLiteralExpression(psiExpression), unparsable, id, prefix, suffix, processor);
   }
 
   private static void processInjectionWithContext(@Nullable final PsiLiteralExpression place, final boolean unparsable, final String langId,
@@ -406,7 +401,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
       for (CustomLanguageInjectorExtension o : Extensions.getExtensions(CustomLanguageInjectorExtension.EP_NAME)) {
         o.elementsToInjectIn(elements);
       }
-      elements.addAll(Arrays.asList(PsiLiteralExpression.class, XmlTag.class, XmlAttributeValue.class));
+      elements.addAll(Arrays.asList(PsiLiteralExpression.class, XmlTag.class, XmlAttributeValue.class, PsiBinaryExpression.class));
       return Arrays.<Class<? extends PsiElement>>asList(elements.toArray(new Class[elements.size()]));
     }
 
