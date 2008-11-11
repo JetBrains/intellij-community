@@ -112,6 +112,8 @@ class TemplateListPanel extends JPanel {
     }
     templateSettings.setTemplates(templateGroups);
     templateSettings.setDefaultShortcutChar(getDefaultShortcutChar());
+
+    reset();
   }
 
   public boolean isModified() {
