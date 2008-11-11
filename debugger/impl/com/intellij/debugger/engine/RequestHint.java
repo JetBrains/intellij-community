@@ -136,19 +136,18 @@ public class RequestHint {
 
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
-      if (myPosition != null) {
-        final SourcePosition locationPosition = ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
-          public SourcePosition compute() {
-            return ContextUtil.getSourcePosition(context);          
-          }
-        });
-
-        if (locationPosition != null) {
-          if (myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) {
+      if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
+        final Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+          public Integer compute() {
+            final SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
+            if (locationPosition == null) {
+              return null;
+            }
             int frameCount = -1;
-            if (context.getFrameProxy() != null) {
+            final ThreadReferenceProxyImpl contextThread = context.getThread();
+            if (contextThread != null) {
               try {
-                frameCount = context.getFrameProxy().threadProxy().frameCount();
+                frameCount = contextThread.frameCount();
               }
               catch (EvaluateException e) {
               }
@@ -163,7 +162,11 @@ public class RequestHint {
                 return STOP;
               }
             }
+            return null;
           }
+        });
+        if (resultDepth != null) {
+          return resultDepth.intValue();
         }
       }
       // the rest of the code makes sence for depth == STEP_INTO only
