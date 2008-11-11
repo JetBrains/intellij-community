@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * @author Eugene Belyaev & Eugene Zhuravlev
  */
-public class DebuggerConfigurable implements SearchableConfigurable.Parent {
+public class DebuggerConfigurable implements SearchableConfigurable.Parent, OptionalConfigurable {
   private Configurable myRootConfigurable;
   private Configurable[] myChildren;
   private WeakReference<Project> myContextProject;
@@ -136,5 +137,15 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   @NonNls
   public String getId() {
     return "project.propDebugger";
+  }
+
+  public boolean needDisplay() {
+    DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
+    for (DebuggerSupport support : supports) {
+      if (support.getSettingsPanelProvider().hasAnySettingsPanels()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

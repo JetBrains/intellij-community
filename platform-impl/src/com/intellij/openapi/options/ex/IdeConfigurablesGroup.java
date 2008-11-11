@@ -2,9 +2,9 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.OptionsBundle;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class IdeConfigurablesGroup implements ConfigurableGroup {
     List<Configurable> result = ProjectConfigurablesGroup.buildConfigurablesList(extensions, components, new ConfigurableFilter() {
       public boolean isIncluded(final Configurable configurable) {
         if (configurable instanceof Configurable.Assistant) return false;
-        if (configurable instanceof CompositeConfigurable && !((CompositeConfigurable) configurable).hasAnyConfigurables()) return false;
+        if (configurable instanceof OptionalConfigurable && !((OptionalConfigurable) configurable).needDisplay()) return false;
         return true;
       }
     });
