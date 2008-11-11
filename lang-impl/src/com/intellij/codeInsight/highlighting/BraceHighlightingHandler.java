@@ -102,7 +102,7 @@ public class BraceHighlightingHandler {
     // when document is committed, try to highlight braces in injected lang - it's fast
     if (!PsiDocumentManager.getInstance(project).isUncommited(document)) {
       final PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
-      if (injectedElement != null && !(injectedElement instanceof PsiWhiteSpace)) {
+      if (injectedElement != null /*&& !(injectedElement instanceof PsiWhiteSpace)*/) {
         final PsiFile injected = injectedElement.getContainingFile();
         if (injected != null) {
           return injected;
