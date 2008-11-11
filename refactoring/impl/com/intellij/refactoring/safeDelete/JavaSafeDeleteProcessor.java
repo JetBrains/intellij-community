@@ -237,15 +237,16 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
       if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
         if (method.isConstructor()) { //skip non-private constructors with call to super only
           final PsiCodeBlock body = method.getBody();
-          assert body != null;
-          final PsiStatement[] statements = body.getStatements();
-          if (statements.length == 0) continue;
-          if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-            final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-            if (expression instanceof PsiMethodCallExpression) {
-              PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-              if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
-                continue;
+          if (body != null) {
+            final PsiStatement[] statements = body.getStatements();
+            if (statements.length == 0) continue;
+            if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+              final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+              if (expression instanceof PsiMethodCallExpression) {
+                PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+                if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
+                  continue;
+                }
               }
             }
           }
