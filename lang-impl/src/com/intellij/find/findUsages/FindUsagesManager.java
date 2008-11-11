@@ -253,7 +253,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   // return null on failure or cancel
   @Nullable
-  public UsageViewPresentation processUsages(@NotNull PsiElement element, final Processor<Usage> processor, FindUsagesHandler handler) {
+  public UsageViewPresentation processUsages(@NotNull PsiElement element, @NotNull final Processor<Usage> processor, FindUsagesHandler handler) {
     if (handler == null) return null;
 
     FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
@@ -312,7 +312,7 @@ public class FindUsagesManager implements JDOMExternalizable {
                                                    final PsiFile scopeFile) {
 
     return new UsageSearcher() {
-      public void generate(final Processor<Usage> processor) {
+      public void generate(@NotNull final Processor<Usage> processor) {
         if (scopeFile != null) {
           options.searchScope = new LocalSearchScope(scopeFile);
         }
@@ -463,11 +463,12 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  private static Usage findSiblingUsage(final Project project, final UsageSearcher usageSearcher,
+  private static Usage findSiblingUsage(@NotNull final Project project,
+                                        @NotNull final UsageSearcher usageSearcher,
                                  FileSearchScope dir,
                                  final FileEditorLocation currentLocation,
-                                 final boolean[] usagesWereFound,
-                                 FileEditor fileEditor) {
+                                 @NotNull final boolean[] usagesWereFound,
+                                 @NotNull FileEditor fileEditor) {
     if (fileEditor.getUserData(KEY_START_USAGE_AGAIN) != null) {
       dir = dir == FileSearchScope.AFTER_CARET ? FileSearchScope.FROM_START : FileSearchScope.FROM_END;
     }
@@ -491,13 +492,13 @@ public class FindUsagesManager implements JDOMExternalizable {
           foundUsage[0] = usage;
         }
         else if (direction == FileSearchScope.AFTER_CARET) {
-          if (usage.getLocation().compareTo(currentLocation) > 0) {
+          if (Comparing.compare(usage.getLocation(), currentLocation) > 0) {
             foundUsage[0] = usage;
             return false;
           }
         }
         else if (direction == FileSearchScope.BEFORE_CARET) {
-          if (usage.getLocation().compareTo(currentLocation) < 0) {
+          if (Comparing.compare(usage.getLocation(), currentLocation) < 0) {
             if (foundUsage[0] != null) {
               if (foundUsage[0].getLocation().compareTo(usage.getLocation()) < 0) {
                 foundUsage[0] = usage;
