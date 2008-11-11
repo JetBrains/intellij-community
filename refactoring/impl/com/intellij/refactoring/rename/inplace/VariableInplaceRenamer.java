@@ -31,12 +31,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,13 +60,24 @@ public class VariableInplaceRenamer {
     myProject = myElementToRename.getProject();
   }
 
-  public void performInplaceRename() {
+  public boolean performInplaceRename() {
+    final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
+    final FileViewProvider fileViewProvider = myElementToRename.getContainingFile().getViewProvider();
+
+    for (PsiReference ref : refs) {
+      final FileViewProvider usageViewProvider = ref.getElement().getContainingFile().getViewProvider();
+
+      if (usageViewProvider != fileViewProvider) {
+        return false;
+      }
+    }
+
     while (!ourRenamersStack.isEmpty()) {
       ourRenamersStack.peek().finish();
     }
+
     ourRenamersStack.push(this);
 
-    final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
     final Map<TextRange, TextAttributes> rangesToHighlight = new HashMap<TextRange, TextAttributes>();
     //it is crucial to highlight AFTER the template is started, so we collect ranges first
     collectRangesToHighlight(rangesToHighlight, refs);
@@ -99,11 +107,11 @@ public class VariableInplaceRenamer {
 
     final PsiElement nameIdentifier = myElementToRename.getNameIdentifier();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, myEditor.getCaretModel().getOffset());
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
 
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder);
     for (PsiReference ref : refs) {
-      addVariable(ref.getElement(), selectedElement, builder);
+      addVariable(ref, selectedElement, builder);
     }
     
     final PsiElement scope1 = scope;
@@ -159,6 +167,8 @@ public class VariableInplaceRenamer {
       }
 
     }, RefactoringBundle.message("rename.title"), null);
+
+    return true;
   }
 
   private void finish() {
@@ -224,6 +234,16 @@ public class VariableInplaceRenamer {
     return range.getStartOffset() <= offset && offset <= range.getEndOffset();
   }
 
+  private void addVariable(final PsiReference reference, final PsiElement selectedElement, final TemplateBuilder builder) {
+    if (reference.getElement() == selectedElement) {
+      Expression expression = new MyExpression(myElementToRename.getName());
+      builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, expression, true);
+    }
+    else {
+      builder.replaceElement(reference, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
+    }
+  }
+
   private void addVariable(final PsiElement element, final PsiElement selectedElement, final TemplateBuilder builder) {
     if (element == selectedElement) {
       Expression expression = new MyExpression(myElementToRename.getName());
@@ -245,17 +265,7 @@ public class VariableInplaceRenamer {
     PsiFile containingFile = elementToRename.getContainingFile();
     if (!PsiTreeUtil.isAncestor(containingFile, scopeElements[0], false)) return false;
 
-    String stringToSearch = ((PsiVariable) elementToRename).getName();
-    List<UsageInfo> usages = new ArrayList<UsageInfo>();
-    if (stringToSearch != null) {
-      TextOccurrencesUtil.addUsagesInStringsAndComments(elementToRename, stringToSearch, usages, new TextOccurrencesUtil.UsageInfoFactory() {
-        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-          return new UsageInfo(usage); //will not need usage
-        }
-      }, true);
-    }
-
-    return usages.isEmpty();
+    return true;
   }
 
   private class MyExpression extends Expression {

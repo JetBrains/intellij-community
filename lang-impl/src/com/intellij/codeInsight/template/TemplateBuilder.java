@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -45,8 +46,19 @@ public class TemplateBuilder {
     return myDocument.createRangeMarker(element.getTextRange());
   }
 
+  private RangeMarker wrapReference(final PsiReference ref) {
+    return myDocument.createRangeMarker(ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset()));
+  }
+
   public void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt) {
     final RangeMarker key = wrapElement(element);
+    myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
+    myVariableNamesMap.put(key, varName);
+    replaceElement(key, expression);
+  }
+
+  public void replaceElement(PsiReference ref, String varName, Expression expression, boolean alwaysStopAt) {
+    final RangeMarker key = wrapReference(ref);
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
     myVariableNamesMap.put(key, varName);
     replaceElement(key, expression);
@@ -59,6 +71,14 @@ public class TemplateBuilder {
 
   public void replaceElement (PsiElement element, String varName, String dependantVariableName, boolean alwaysStopAt) {
     final RangeMarker key = wrapElement(element);
+    myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
+    myVariableNamesMap.put(key, varName);
+    myVariableExpressions.put(key, dependantVariableName);
+    myElements.add(key);
+  }
+
+  public void replaceElement (PsiReference ref, String varName, String dependantVariableName, boolean alwaysStopAt) {
+    final RangeMarker key = wrapReference(ref);
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
     myVariableNamesMap.put(key, varName);
     myVariableExpressions.put(key, dependantVariableName);
