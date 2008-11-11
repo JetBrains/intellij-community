@@ -639,7 +639,6 @@
     </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
-      <reference ref="Help.KeymapReference"/>
       <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
         icon="/general/pluginManager.png"/>
 

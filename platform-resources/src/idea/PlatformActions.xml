@@ -321,6 +321,7 @@
         icon="/general/readHelp.png"/>
       <action id="WelcomeScreen.ShowTips" class="com.intellij.ide.actions.ShowTipsAction"
         icon="/general/tipsOfTheDay.png"/>
+      <reference ref="Help.KeymapReference"/>
     </group>
 
     <group id="FileChooser">
