@@ -67,10 +67,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static void registerExtensionPoint(final DomExtensionsRegistrar registrar, final ExtensionPoint extensionPoint, final PsiManager manager, String prefix, @Nullable String pluginId) {
     String epName = extensionPoint.getName().getStringValue();
+    if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
     if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
     if (epName == null) return;
-
-    if (StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
     if (!epName.startsWith(prefix)) return;
 
     final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(prefix.length())), Extension.class);

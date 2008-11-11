@@ -64,6 +64,11 @@ public class PluginXmlFunctionalTest extends CodeInsightFixtureTestCase {
     myFixture.checkHighlighting(false, false, false);
   }
 
+  public void testExtensionQualifiedName() throws Throwable {
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml"));
+    myFixture.checkHighlighting(false, false, false);
+  }
+
   private void addPluginXml(final String root, final String text) throws IOException {
     myTempDirFixture.createFile(root +
                                 "/META-INF/plugin.xml", text);
