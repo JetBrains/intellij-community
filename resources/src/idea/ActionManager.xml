@@ -222,7 +222,7 @@
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </action>
 
-    <group text="Internal Actions" internal="true" popup="true">
+    <group text="IDEA Internal Actions" internal="true">
       <separator/>
       <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction"/>
       <action id="DebugListen" internal="true" class="com.intellij.debugger.actions.ThrowDebugExceptionAction"/>
@@ -232,6 +232,7 @@
       <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <separator/>
+      <reference ref="PlatformInternalActions"/>
       <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
       <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
       <action id="DropAnOutOfPermGenMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfPermGenMemoryErrorAction"/>
@@ -251,8 +252,9 @@
       <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction" text="Generate Hierarchy Visitor"/>
       <separator/>
       <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction" text="Start Focus Debugger"/>
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
       <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction" text="Check VFS sanity"/>
+
+      <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
     <!-- Help -->

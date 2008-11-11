@@ -1,5 +1,6 @@
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -28,8 +29,6 @@ public class VMOptions {
   @NonNls private static final Pattern MAC_OS_VM_OPTIONS_PATTERN = Pattern.compile("(<key>VMOptions</key>(?:(?:\\s*)(?:<!--(?:.*)-->(?:\\s*))*)<string>)(.*)(</string>)");
 
   @NonNls private static final String INFO_PLIST = "/Contents/Info.plist";
-  @NonNls private static final String IDEA_EXE_VMOPTIONS = "\\idea.exe.vmoptions";
-  @NonNls private static final String IDEA_VMOPTIONS = "/idea.vmoptions";
 
   private static String ourTestPath;
   private static boolean ourTestMacOs;
@@ -161,14 +160,16 @@ public class VMOptions {
     return new File(getSettingsFilePath());
   }
 
+  @NonNls
   public static String getSettingsFilePath() {
+    final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
     if (SystemInfo.isMac) {
       return PathManager.getHomePath() + INFO_PLIST;
     }
     else if (SystemInfo.isWindows) {
-      return PathManager.getBinPath() + IDEA_EXE_VMOPTIONS;
+      return PathManager.getBinPath() + File.separatorChar + productName + ".exe.vmoptions";
     }
-    return PathManager.getBinPath() + IDEA_VMOPTIONS.replace('/', File.separatorChar);
+    return PathManager.getBinPath() + File.separatorChar + productName + ".vmoptions";
   }
 
   private static boolean isMacOs() {

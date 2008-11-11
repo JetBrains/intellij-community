@@ -369,6 +369,14 @@
       <action id="ChangeCustomizationSchema" class="com.intellij.ide.ui.customization.QuickChangeCustomizationSchemaAction"/>
     </group>
 
+    <group id="Internal" text="Internal Actions" internal="true" popup="true">
+      <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
+      <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
+      <action id="DropAnOutOfPermGenMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfPermGenMemoryErrorAction"/>
+
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
   </actions>
 </component>
 
