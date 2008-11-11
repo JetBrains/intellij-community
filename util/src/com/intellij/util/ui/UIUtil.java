@@ -931,7 +931,9 @@ public class UIUtil {
   }
 
   /**
-   * Invoke and wait in the event dispatch thread on in the current thread
+   * Invoke and wait in the event dispatch thread
+   * or in the current thread if the current thread
+   * is event queue thread.
    *
    * @param runnable a runnable to invoke
    */
