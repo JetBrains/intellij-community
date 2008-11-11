@@ -132,7 +132,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
                                             PsiVariable variable,
                                             Editor editor,
                                             boolean canCopeWithSideEffects) {
-    String text = !sideEffects.isEmpty() ? sideEffects.get(0).getText() : "";
+    String text = sideEffects.isEmpty() ? "" : sideEffects.get(0).getText();
     return showSideEffectsWarning(sideEffects, variable, editor, canCopeWithSideEffects, text, text);
   }
 
@@ -153,10 +153,10 @@ public class RemoveUnusedVariableFix implements IntentionAction {
         PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
         PsiExpression lExpression = expression.getLExpression();
         // there should not be read access to the variable, otherwise it is not unused
-        LOG.assertTrue(
-          lExpression instanceof PsiReferenceExpression &&
-          variable == ((PsiReferenceExpression)lExpression).resolve(),
-          expression.getText());
+        if (!(lExpression instanceof PsiReferenceExpression) || variable != ((PsiReferenceExpression)lExpression).resolve()) {
+          PsiElement resolved = lExpression instanceof PsiReferenceExpression ? ((PsiReferenceExpression)lExpression).resolve() : null;
+          LOG.error("'" + expression.getText() + "'; variable=" + variable+"; resolved="+resolved);
+        }
         PsiExpression rExpression = expression.getRExpression();
         rExpression = PsiUtil.deparenthesizeExpression(rExpression);
         if (rExpression == null) return true;
