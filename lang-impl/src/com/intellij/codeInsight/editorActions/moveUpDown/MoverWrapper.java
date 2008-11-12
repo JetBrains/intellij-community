@@ -8,7 +8,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +94,7 @@ class MoverWrapper {
     int line1 = editor.offsetToLogicalPosition(range.getStartOffset()).line;
     int line2 = editor.offsetToLogicalPosition(range.getEndOffset()).line;
 
-    if (PsiUtil.isInJspFile(file)) {
+/*    if (PsiUtil.isInJspFile(file)) {
       // This version is slow because of each moved line cause commit
       // and right now we unable to fix JSP formatter quickly
       // TODO: remove this code
@@ -106,19 +105,20 @@ class MoverWrapper {
         }
       }
     }
-    else {
-      while (!lineContainsNonSpaces(document, line1) && line1 <= line2) line1++;
-      while (!lineContainsNonSpaces(document, line2) && line2 > line1) line2--;
+    else {*/
 
-      try {
-        final FileViewProvider provider = file.getViewProvider();
-        PsiFile rootToAdjustIndentIn = provider.getPsi(provider.getBaseLanguage());
-        codeStyleManager.adjustLineIndent(rootToAdjustIndentIn, new TextRange(document.getLineStartOffset(line1), document.getLineStartOffset(line2)));
-      }
-      catch (IncorrectOperationException ex) {
-        throw new RuntimeException(ex);
-      }
+    while (!lineContainsNonSpaces(document, line1) && line1 <= line2) line1++;
+    while (!lineContainsNonSpaces(document, line2) && line2 > line1) line2--;
+
+    try {
+      final FileViewProvider provider = file.getViewProvider();
+      PsiFile rootToAdjustIndentIn = provider.getPsi(provider.getBaseLanguage());
+      codeStyleManager.adjustLineIndent(rootToAdjustIndentIn, new TextRange(document.getLineStartOffset(line1), document.getLineStartOffset(line2)));
     }
+    catch (IncorrectOperationException ex) {
+      throw new RuntimeException(ex);
+    }
+    /* } */
   }
 
   private static boolean lineContainsNonSpaces(final Document document, final int line) {

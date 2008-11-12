@@ -4,7 +4,7 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.DependentLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -62,8 +62,8 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     if (offset<0) return null;
     PsiElement leafElement = file.findElementAt(offset);
     if (leafElement == null) return null;
-    if (leafElement.getLanguage() == StdLanguages.ANT) {
-      leafElement = file.getViewProvider().findElementAt(offset, StdLanguages.XML);
+    if (leafElement.getLanguage() instanceof DependentLanguage) {
+      leafElement = file.getViewProvider().findElementAt(offset, file.getViewProvider().getBaseLanguage());
       if (leafElement == null) return null;
     }
     ASTNode node = leafElement.getNode();

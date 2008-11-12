@@ -351,4 +351,6 @@
                   interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 
   <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
+  <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover"/>
 </extensionPoints>
