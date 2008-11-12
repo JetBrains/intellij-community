@@ -143,12 +143,12 @@ public class CommitHelper {
       });
 
       processor.doBeforeRefresh();
-      VirtualFileManager.getInstance().refresh(true, processor.postRefresh());
 
       AbstractVcsHelper.getInstanceChecked(myProject).showErrors(processor.getVcsExceptions(), myActionName);
     }
     finally {
       commitCompleted(processor.getVcsExceptions(), processor);
+      VirtualFileManager.getInstance().refresh(true, processor.postRefresh());
     }
   }
 
@@ -235,9 +235,32 @@ public class CommitHelper {
     Runnable postRefresh();
   }
 
+  private static enum ChangeListsModificationAfterCommit {
+    DELETE_LIST,
+    MOVE_OTHERS,
+    NOTHING
+  }
+
   private class CommitProcessor extends GeneralCommitProcessor {
     private boolean myKeepChangeListAfterCommit;
     private LocalHistoryAction myAction;
+    private ChangeListsModificationAfterCommit myAfterVcsRefreshModification;
+    private boolean myCommitSuccess;
+
+    private CommitProcessor() {
+      myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.NOTHING;
+      if (myChangeList instanceof LocalChangeList) {
+        final LocalChangeList localList = (LocalChangeList) myChangeList;
+        final boolean containsAll = myIncludedChanges.containsAll(myChangeList.getChanges());
+        if (containsAll && !localList.isDefault() && !localList.isReadOnly()) {
+          myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.DELETE_LIST;
+        }
+        else if (myConfiguration.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && (! containsAll) &&
+                 localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
+          myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.MOVE_OTHERS;
+        }
+      }
+    }
 
     public void callSelf() {
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, this);
@@ -260,30 +283,7 @@ public class CommitHelper {
     }
 
     public void afterSuccessfulCheckIn() {
-      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      final ChangeList list = myChangeList;
-      final List<Change> includedChanges = myIncludedChanges;
-      if (list instanceof LocalChangeList) {
-        final LocalChangeList localList = (LocalChangeList)list;
-        if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault() && !localList.isReadOnly()) {
-          if (! myKeepChangeListAfterCommit) {
-            changeListManager.removeChangeList(localList);
-          }
-        }
-        else if (myConfiguration.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !includedChanges.containsAll(list.getChanges()) &&
-                 localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
-              dialog.show();
-              if (dialog.isOK()) {
-                final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-                MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]), null);
-              }
-            }
-          }, ModalityState.NON_MODAL);
-        }
-      }
+      myCommitSuccess = true;
     }
 
     public void afterFailedCheckIn() {
@@ -308,8 +308,24 @@ public class CommitHelper {
           myAction.finish();
           if (!myProject.isDisposed()) {
             // after vcs refresh is completed, outdated notifiers should be removed if some exists...
-            ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
+            final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+            clManager.invokeAfterUpdate(new Runnable() {
               public void run() {
+                if (myCommitSuccess) {
+                  // do delete/ move of change list if needed
+                  if (ChangeListsModificationAfterCommit.DELETE_LIST.equals(myAfterVcsRefreshModification)) {
+                    if (! myKeepChangeListAfterCommit) {
+                      clManager.removeChangeList((LocalChangeList) myChangeList);
+                    }
+                  } else if (ChangeListsModificationAfterCommit.MOVE_OTHERS.equals(myAfterVcsRefreshModification)) {
+                    ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
+                    dialog.show();
+                    if (dialog.isOK()) {
+                      final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
+                      MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]), null);
+                    }
+                  }
+                }
                 final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
                 cache.refreshAllCachesAsync(false);
                 cache.refreshIncomingChangesAsync();
