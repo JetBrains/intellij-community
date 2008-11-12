@@ -290,7 +290,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
           vcsDirtyScopeManager.filePathsDirty(files, null);
         }
-      });
+      }, null);
   }
 
   private void showAlienCommit() {
