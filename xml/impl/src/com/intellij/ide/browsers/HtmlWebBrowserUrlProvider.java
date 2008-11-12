@@ -1,6 +1,5 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -19,7 +18,7 @@ public class HtmlWebBrowserUrlProvider extends WebBrowserUrlProvider {
   public String getUrl(@NotNull final PsiFile file, final boolean shiftDown) throws Exception {
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
-    return BrowserUtil.getURL(virtualFile.getUrl()).toString();
+    return virtualFile.getUrl();
   }
 
   @Override
