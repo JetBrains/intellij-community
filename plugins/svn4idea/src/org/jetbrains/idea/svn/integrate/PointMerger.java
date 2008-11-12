@@ -2,11 +2,13 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
+import org.jetbrains.idea.svn.history.RootsAndBranches;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -29,7 +31,11 @@ public class PointMerger extends Merger {
   public PointMerger(final SvnVcs vcs, CommittedChangeList selectedChangeList, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl,
                      final List<Change> selectedChanges) {
     super(vcs, new ArrayList<CommittedChangeList>(Arrays.<CommittedChangeList>asList(selectedChangeList)),
-          target, handler, currentBranchUrl, null);
+          target, handler, currentBranchUrl, new Consumer<List<CommittedChangeList>>() {
+        public void consume(final List<CommittedChangeList> committedChangeLists) {
+          vcs.getProject().getMessageBus().syncPublisher(RootsAndBranches.REFRESH_REQUEST).run();
+        }
+      });
     myHandler = handler;
     myVcs = vcs;
     mySelectedChanges = selectedChanges;

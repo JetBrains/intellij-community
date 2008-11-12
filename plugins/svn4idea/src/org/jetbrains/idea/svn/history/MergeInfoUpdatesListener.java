@@ -44,6 +44,7 @@ public class MergeInfoUpdatesListener {
         }
       };
       myConnection.subscribe(SvnMapDialog.WC_CONVERTED, reloadRunnable);
+      myConnection.subscribe(RootsAndBranches.REFRESH_REQUEST, reloadRunnable);
 
       myConnection.subscribe(SvnVcs.ROOTS_RELOADED, reloadRunnable);
 

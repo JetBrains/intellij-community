@@ -338,7 +338,9 @@ public class BranchInfo {
           }
         }
         myPathMergedMap.put(pathWithRevisionNumber, revisions);
-        myNonInheritablePathMergedMap.put(pathWithRevisionNumber, nonInheritableRevisions);
+        if (! nonInheritableRevisions.isEmpty()) {
+          myNonInheritablePathMergedMap.put(pathWithRevisionNumber, nonInheritableRevisions);
+        }
 
         return SvnMergeInfoCache.MergeCheckResult.getInstance(result);
       }

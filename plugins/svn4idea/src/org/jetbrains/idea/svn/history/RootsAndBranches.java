@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -28,9 +29,9 @@ import org.jetbrains.idea.svn.actions.AbstractIntegrateChangesAction;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.actions.RecordOnlyMergerFactory;
 import org.jetbrains.idea.svn.actions.ShowSvnMapAction;
+import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
-import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SelectedChangeListsChecker;
@@ -73,6 +74,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private boolean myDisposed;
 
   private final WcInfoLoader myDataLoader;
+
+  public static final Topic<Runnable> REFRESH_REQUEST = new Topic<Runnable>("REFRESH_REQUEST", Runnable.class);
 
   private MergeInfoHolder getHolder(final String key) {
     final MergeInfoHolder holder = myHolders.get(key);
