@@ -26,7 +26,12 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     super(canBeParent);
     myEnableLink = enableLink;
     myUploadedPlugins = updatePlugins;
+  }
+
+  @Override
+  protected void init() {
     setButtonsText();
+    super.init();
   }
 
   protected void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, final JPanel wholePluginsPanel, JEditorPane updateLinkPane) {

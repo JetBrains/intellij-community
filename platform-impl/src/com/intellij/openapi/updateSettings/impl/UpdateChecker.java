@@ -179,7 +179,6 @@ public final class UpdateChecker {
     return success;
   }
 
-
   @Nullable
   public static NewVersion checkForUpdates() throws ConnectionException {
     if (LOG.isDebugEnabled()) {
@@ -206,15 +205,13 @@ public final class UpdateChecker {
       LOG.debug("build available:'" + availBuild + "' ourBuild='" + ourBuild + "' ");
     }
 
-
     Element patchElements = root.getChild("patches");
     List<PatchInfo> patches = new ArrayList<PatchInfo>();
     if (patchElements != null) {
       for (Element each : (List<Element>)patchElements.getChildren()) {
         String fromBuild = each.getAttributeValue("from").trim();
-        String toBuild = each.getAttributeValue("to").trim();
         String size = each.getAttributeValue("size").trim();
-        patches.add(new PatchInfo(fromBuild, toBuild, size));
+        patches.add(new PatchInfo(fromBuild, size));
       }
     }
 
@@ -323,7 +320,7 @@ public final class UpdateChecker {
   }
 
   private static boolean doDownloadAndInstallPatch(NewVersion newVersion, ProgressIndicator i) throws IOException {
-    PatchInfo patch = newVersion.findPatchFor(ApplicationInfo.getInstance().getBuildNumber().trim());
+    PatchInfo patch = newVersion.findPatchForCurrentBuild();
     if (patch == null) throw new IOException("No patch is available for current version");
 
     String osSuffix = "";
@@ -331,7 +328,7 @@ public final class UpdateChecker {
     if (SystemInfo.isMac) osSuffix = "-mac";
     if (SystemInfo.isUnix) osSuffix = "-unix";
 
-    String fileName = "idea-" + patch.getFromBuild() + "-" + patch.getToBuild() + "-patch" + osSuffix + ".jar";
+    String fileName = "idea-" + patch.getFromBuild() + "-" + newVersion.getLatestBuild() + "-patch" + osSuffix + ".jar";
     URLConnection connection = null;
     InputStream in = null;
     OutputStream out = null;
@@ -380,11 +377,10 @@ public final class UpdateChecker {
       return myLatestVersion;
     }
 
-    public PatchInfo findPatchFor(String build) {
+    public PatchInfo findPatchForCurrentBuild() {
+      String currentBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
       for (PatchInfo each : myPatches) {
-        if (each.myFromBuild.equals(build) && each.myToBuild.equals(String.valueOf(myLatestBuild))) {
-          return each;
-        }
+        if (each.myFromBuild.equals(currentBuild)) return each;
       }
       return null;
     }
@@ -392,21 +388,15 @@ public final class UpdateChecker {
 
   public static class PatchInfo {
     private String myFromBuild;
-    private String myToBuild;
     private String mySize;
 
-    public PatchInfo(String fromBuild, String toBuild, String size) {
+    public PatchInfo(String fromBuild, String size) {
       myFromBuild = fromBuild;
-      myToBuild = toBuild;
       mySize = size;
     }
 
     public String getFromBuild() {
       return myFromBuild;
-    }
-
-    public String getToBuild() {
-      return myToBuild;
     }
 
     public String getSize() {
