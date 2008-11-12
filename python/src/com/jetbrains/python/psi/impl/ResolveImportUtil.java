@@ -80,7 +80,7 @@ public class ResolveImportUtil {
     VirtualFile child_file = root_file.findChild(name);
     if (child_file != null) {
       if (name.equals(child_file.getName())) {
-        VirtualFile initpy = root_file.findChild(INIT_PY);
+        VirtualFile initpy = child_file.findChild(INIT_PY);
         if (initpy != null) {
           PsiFile initfile = importRef.getManager().findFile(initpy);
           if (initfile != null) {
@@ -158,15 +158,23 @@ public class ResolveImportUtil {
         // Current approach works only for IDEA plugin.
         ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
         // look in module sources
+        boolean source_entries_missing = true;
         for (ContentEntry entry: rootManager.getContentEntries()) {
           VirtualFile root_file = entry.getFile();
 
           PsiElement ret = matchToFile(the_name, importRef, root_file);
           if (ret != null) return ret;
           for (VirtualFile folder : entry.getSourceFolderFiles()) {
+            source_entries_missing = false;
             ret = matchToFile(the_name, importRef, folder);
             if (ret != null) return ret;
           }
+        }
+        if (source_entries_missing) {
+          // fallback for a case without any source entries: use project root
+          VirtualFile project_root = module.getProject().getBaseDir();
+          PsiElement ret = matchToFile(the_name, importRef, project_root);
+          if (ret != null) return ret;
         }
         // else look in SDK roots
         RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
@@ -340,16 +348,6 @@ public class ResolveImportUtil {
     PsiDirectory dir = null;
     PsiElement ret = null;
     PyResolveUtil.ResolveProcessor processor = null;
-    /*if (parent instanceof PsiPackage) {
-      final PsiPackage pkg = (PsiPackage)parent;
-      for (PsiPackage subpkg : pkg.getSubPackages()) {
-        if (referencedName.equals(subpkg.getName())) {
-          return subpkg.getContainingFile();
-          // XXX break;
-        }
-      }
-    }
-    else*/
     if (parent instanceof PyFile) {
       boolean is_dir = (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE);
       PyFile pfparent = (PyFile)parent; 
@@ -389,7 +387,7 @@ public class ResolveImportUtil {
     if (file != null) return file;
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     if (subdir != null) return subdir;
-    else { // XXX faulty? not a subdir, not a file; could be a name in parent/__init__.py
+    else { // not a subdir, not a file; could be a name in parent/__init__.py
       final PsiFile initPy = dir.findFile(INIT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
       if (initPy != null) {
