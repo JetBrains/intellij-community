@@ -24,7 +24,7 @@ public class StructureViewComposite implements StructureView {
     public final StructureView structureView;
     public final Icon icon;
 
-    public StructureViewDescriptor(final String title, final StructureView structureView, Icon icon) {
+    public StructureViewDescriptor(final String title, @NotNull StructureView structureView, Icon icon) {
       this.title = title;
       this.structureView = structureView;
       this.icon = icon;
