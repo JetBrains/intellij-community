@@ -119,6 +119,10 @@ public abstract class GitHandler {
   protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     myProject = project;
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    final GitVcs vcs = GitVcs.getInstance(project);
+    if (vcs != null) {
+      vcs.checkVersion();
+    }
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
     myCommandLine.setExePath(settings.GIT_EXECUTABLE);

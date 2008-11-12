@@ -42,7 +42,7 @@ public class GitVcsPanel {
 
   public GitVcsPanel(@NotNull Project project) {
     mySettings = GitVcsSettings.getInstance(project);
-    this.myProject = project;
+    myProject = project;
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         testConnection();
@@ -63,7 +63,13 @@ public class GitVcsPanel {
       Messages.showErrorDialog(myProject, e.getMessage(), GitBundle.getString("find.git.error.title"));
       return;
     }
-    Messages.showInfoMessage(myProject, s, GitBundle.getString("find.git.success.title"));
+    if (GitVersion.parse(s).isSupported()) {
+      Messages.showInfoMessage(myProject, s, GitBundle.getString("find.git.success.title"));
+    }
+    else {
+      Messages.showWarningDialog(myProject, GitBundle.message("find.git.unsupported.message", s, GitVersion.MIN),
+                                 GitBundle.getString("find.git.success.title"));
+    }
   }
 
   public JComponent getPanel() {

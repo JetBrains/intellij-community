@@ -116,5 +116,4 @@ public class GitConfigUtil {
     }
     return output.substring(0, pos);
   }
-
 }

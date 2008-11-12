@@ -44,6 +44,7 @@ import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsConfigurable;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersion;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
@@ -58,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Git VCS implementation
@@ -123,6 +125,19 @@ public class GitVcs extends AbstractVcs {
    * a vfs listener
    */
   private GitVFSListener myVFSListener;
+  /**
+   * If true, the git version has been checked
+   */
+  private boolean myVersionChecked;
+  /**
+   * Checking the version lock (used to prevent infinite recusion)
+   */
+  private AtomicBoolean myCheckingVersion = new AtomicBoolean();
+  /**
+   * The path to executable at the time of version check
+   */
+  private String myVersionCheckExcecutable = "";
+
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -377,6 +392,41 @@ public class GitVcs extends AbstractVcs {
   }
 
   /**
+   * Check version and report problem
+   */
+  public void checkVersion() {
+    if (!myCheckingVersion.compareAndSet(false, true)) {
+      return;
+    }
+    try {
+      if (myProject.isDefault()) {
+        return;
+      }
+      final String executable = mySettings.GIT_EXECUTABLE;
+      if (myVersionChecked && myVersionCheckExcecutable.equals(executable)) {
+        return;
+      }
+      myVersionChecked = true;
+      myVersionCheckExcecutable = executable;
+      final String version;
+      try {
+        version = version(myProject).trim();
+      }
+      catch (VcsException e) {
+        String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
+        showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), CodeInsightColors.ERRORS_ATTRIBUTES);
+        return;
+      }
+      if (!GitVersion.parse(version).isSupported()) {
+        showMessage(GitBundle.message("vcs.unsupported.version", version, GitVersion.MIN), CodeInsightColors.WARNINGS_ATTRIBUTES);
+      }
+    }
+    finally {
+      myCheckingVersion.set(false);
+    }
+  }
+
+  /**
    * Get the version of configured git
    *
    * @param project the project
@@ -386,10 +436,9 @@ public class GitVcs extends AbstractVcs {
    */
   public static String version(Project project) throws VcsException {
     final String s;
-    GitSimpleHandler h = new GitSimpleHandler(project, new File("."));
+    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), "version");
     h.setNoSSH(true);
     h.setSilent(true);
-    h.addParameters("--version");
     s = h.run();
     return s;
   }
