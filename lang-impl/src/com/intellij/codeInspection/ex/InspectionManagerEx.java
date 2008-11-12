@@ -27,6 +27,7 @@ import com.intellij.ui.content.TabbedPaneContentUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -130,7 +131,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement, @NotNull final String descriptionTemplate, final ProblemHighlightType highlightType,
-                                                   final HintAction hintAction,
+                                                   @Nullable final HintAction hintAction,
                                                    final LocalQuickFix... fixes) {
 
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction);

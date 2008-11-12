@@ -34,7 +34,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement,
-                               HintAction hintAction) {
+                               @Nullable HintAction hintAction) {
 
     super(fixes, descriptionTemplate);
     myHintAction = hintAction;
