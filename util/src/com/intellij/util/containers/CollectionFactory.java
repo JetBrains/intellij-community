@@ -9,7 +9,6 @@ import gnu.trove.THashSet;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,7 +30,7 @@ public class CollectionFactory {
     return elements;
   }
 
-  public static <T,V> Map<T, V> newTroveMap() {
+  public static <T,V> THashMap<T, V> newTroveMap() {
     return new THashMap<T,V>();
   }
 }
