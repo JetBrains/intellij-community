@@ -847,12 +847,13 @@ public class XmlUtil {
     return null;
   }
 
+  @Nullable
   @NonNls
   public static String[][] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = getContainingFile(document);
 
     final XmlTag tag = document.getRootTag();
-    if (tag == null) return new String[][]{new String[]{"", EMPTY_URI}};
+    if (tag == null) return null;
 
     if (file != null) {
       final @NotNull XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
@@ -901,7 +902,7 @@ public class XmlUtil {
       }
     }
 
-    return new String[][]{new String[]{"", EMPTY_URI}};
+    return null;
   }
 
 

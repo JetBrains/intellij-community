@@ -671,15 +671,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   public String[] knownNamespaces(){
-    final PsiElement parent = getParent();
-    BidirectionalMap<String, String> map = initNamespaceMaps(parent);
-    List<String> known = Collections.emptyList();
+    final PsiElement parentElement = getParent();
+    BidirectionalMap<String, String> map = initNamespaceMaps(parentElement);
+    Set<String> known = Collections.emptySet();
     if(map != null){
-      known = new ArrayList<String>(map.values());
+      known = new HashSet<String>(map.values());
     }
-    if(parent instanceof XmlTag){
-      if(known.isEmpty()) return ((XmlTag)parent).knownNamespaces();
-      known.addAll(Arrays.asList(((XmlTag)parent).knownNamespaces()));
+    if(parentElement instanceof XmlTag){
+      if(known.isEmpty()) return ((XmlTag)parentElement).knownNamespaces();
+      known.addAll(Arrays.asList(((XmlTag)parentElement).knownNamespaces()));
     }
     else {
       final XmlFile xmlFile = XmlExtension.getExtensionByElement(this).getContainingFile(this);
@@ -689,6 +689,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return known.toArray(new String[known.size()]);
   }
 
+  @Nullable
   private BidirectionalMap<String, String> initNamespaceMaps(PsiElement parent) {
     BidirectionalMap<String, String> map = myNamespaceMap;
     if (map == null && hasNamespaceDeclarations()){
@@ -715,14 +716,21 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       myNamespaceMap = map = namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
     }
 
-    if(parent instanceof XmlDocument && map == null){
-      final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
-      final String[][] defaultNamespace = XmlUtil.getDefaultNamespaces((XmlDocument)parent);
-      for (final String[] prefix2ns : defaultNamespace) {
-        namespaceMap.put(prefix2ns[0], getRealNs(prefix2ns[1]));
+    if(parent instanceof XmlDocument){
+      final XmlExtension extension = XmlExtension.getExtensionByElement(parent);
+      if (extension != null) {
+        final String[][] defaultNamespace = extension.getNamespacesFromDocument((XmlDocument)parent, map != null);
+        if (defaultNamespace != null) {
+          final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
+          if (map != null) {
+            namespaceMap.putAll(map);
+          }
+          for (final String[] prefix2ns : defaultNamespace) {
+            namespaceMap.put(prefix2ns[0], getRealNs(prefix2ns[1]));
+          }
+          myNamespaceMap = map = namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
+        }
       }
-
-      myNamespaceMap = map = namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
     }
     return map;
   }

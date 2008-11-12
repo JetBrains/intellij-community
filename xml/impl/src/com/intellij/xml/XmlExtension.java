@@ -14,9 +14,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +67,12 @@ public abstract class XmlExtension {
     return new TagNameReference(nameElement, startTagFlag);
   }
 
-  public static interface Runner<P, T extends Throwable> {
+  @Nullable
+  public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
+    return declarationsExist ? null : XmlUtil.getDefaultNamespaces(parent);
+  }
+
+  public interface Runner<P, T extends Throwable> {
     void run(P param) throws T;
   }
 
