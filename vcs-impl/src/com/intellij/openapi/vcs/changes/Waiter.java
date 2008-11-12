@@ -11,14 +11,16 @@ import com.intellij.openapi.vcs.VcsBundle;
 public class Waiter implements Runnable {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.Waiter");
   private final Project myProject;
+  private final ModalityState myState;
   private final Runnable myRunnable;
   private boolean myStarted;
   private boolean myDone;
   private final Object myLock = new Object();
 
-  public Waiter(final Project project, final Runnable runnable) {
+  public Waiter(final Project project, final Runnable runnable, final ModalityState state) {
     myRunnable = runnable;
     myProject = project;
+    myState = state;
     myDone = false;
     myStarted = false;
   }
@@ -59,7 +61,7 @@ public class Waiter implements Runnable {
         myRunnable.run();
         ChangesViewManager.getInstance(myProject).refreshView();
       }
-    }, ModalityState.NON_MODAL);
+    }, (myState == null) ? ModalityState.NON_MODAL : myState);
   }
 
   public void done() {

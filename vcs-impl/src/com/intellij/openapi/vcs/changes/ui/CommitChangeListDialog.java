@@ -552,19 +552,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   protected void doOKAction() {
     if (!saveDialogState()) return;
 
-    try {
-      runBeforeCommitHandlers(new Runnable() {
-        public void run() {
-          CommitChangeListDialog.super.doOKAction();
-          doCommit();
-        }
-      }, null);
+    ensureDataIsActual(new Runnable() {
+      public void run() {
+        try {
+          runBeforeCommitHandlers(new Runnable() {
+            public void run() {
+              CommitChangeListDialog.super.doOKAction();
+              doCommit();
+            }
+          }, null);
 
-      clearDefaulListComment();
-    }
-    catch (InputException ex) {
-      ex.show();
-    }
+          clearDefaulListComment();
+        }
+        catch (InputException ex) {
+          ex.show();
+        }
+      }
+    });
   }
 
   private boolean saveDialogState() {
@@ -739,7 +743,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           component.refresh();
         }
       }
-    }, InvokeAfterUpdateMode.SILENT, "commit dialog");   // title not shown for silently
+    }, InvokeAfterUpdateMode.SILENT, "commit dialog", ModalityState.current());   // title not shown for silently
   }
 
   public void saveState() {
@@ -803,6 +807,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
+  private void ensureDataIsActual(final Runnable runnable) {
+    ChangeListManager.getInstance(myProject).invokeAfterUpdate(runnable, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
+                                                               "Refreshing changelists...", ModalityState.current());
+  }
+
   private class CommitExecutorAction extends AbstractAction {
     private final CommitExecutor myCommitExecutor;
 
@@ -815,7 +824,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     public void actionPerformed(ActionEvent e) {
-      execute(myCommitExecutor);
+      ensureDataIsActual(new Runnable() {
+        public void run() {
+          execute(myCommitExecutor);
+        }
+      });
     }
   }
 

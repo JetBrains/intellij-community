@@ -336,7 +336,7 @@ public class CommitHelper {
                   vcsDirtyScopeManager.fileDirty(path);
                 }
               }
-            });
+            }, null);
 
             LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
           }

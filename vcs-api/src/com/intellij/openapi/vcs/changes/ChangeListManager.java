@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -50,9 +51,10 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void scheduleUpdate();
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
-  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title);
   public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
-                                final Consumer<VcsDirtyScopeManager> dirtyScopeManager);
+                                         final ModalityState state);
+  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title, final Consumer<VcsDirtyScopeManager> dirtyScopeManager,
+                                         final ModalityState state);
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   public abstract List<LocalChangeList> getChangeListsCopy();

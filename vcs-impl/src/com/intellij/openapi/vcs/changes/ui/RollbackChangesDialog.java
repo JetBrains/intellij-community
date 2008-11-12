@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -155,7 +156,7 @@ public class RollbackChangesDialog extends DialogWrapper {
               afterVcsRefreshInAwt.run();
             }
           }
-        }, InvokeAfterUpdateMode.SILENT, "Refresh change lists after update");
+        }, InvokeAfterUpdateMode.SILENT, "Refresh change lists after update", ModalityState.current());
       }
     };
 

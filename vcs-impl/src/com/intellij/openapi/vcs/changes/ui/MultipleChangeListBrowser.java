@@ -117,24 +117,35 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     myDispatcher.getMulticaster().selectedListChanged();
   }
 
+  private boolean myInRebuildList;
+
   @Override
   public void rebuildList() {
-    if (myChangesToDisplay == null) {
-      final ChangeListManager manager = ChangeListManager.getInstance(myProject);
-      myChangeListsMap = new HashMap<Change, LocalChangeList>();
-      final List<LocalChangeList> lists = manager.getChangeListsCopy();
-      Collection<Change> allChanges = new ArrayList<Change>();
-      for (LocalChangeList list : lists) {
-        final Collection<Change> changes = list.getChanges();
-        allChanges.addAll(changes);
-        for (Change change : changes) {
-          myChangeListsMap.put(change, list);
+    if (myInRebuildList) return;
+    try {
+      myInRebuildList = true;
+      if (myChangesToDisplay == null) {
+        // changes set not fixed === local changes
+        final ChangeListManager manager = ChangeListManager.getInstance(myProject);
+        myChangeListsMap = new HashMap<Change, LocalChangeList>();
+        final List<LocalChangeList> lists = manager.getChangeListsCopy();
+        Collection<Change> allChanges = new ArrayList<Change>();
+        for (LocalChangeList list : lists) {
+          final Collection<Change> changes = list.getChanges();
+          allChanges.addAll(changes);
+          for (Change change : changes) {
+            myChangeListsMap.put(change, list);
+          }
         }
+        myAllChanges = allChanges;
+        // refresh selected list also
+        updateListsInChooser();
       }
-      myAllChanges = allChanges;
-    }
 
-    super.rebuildList();
+      super.rebuildList();
+    } finally {
+      myInRebuildList = false;
+    }
   }
 
   @Override
@@ -227,25 +238,36 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     public void updateLists(List<? extends ChangeList> lists) {
       myChooser.setModel(new DefaultComboBoxModel(lists.toArray()));
       myChooser.setEnabled(lists.size() > 1);
-      myChooser.setSelectedItem(mySelectedChangeList);
+      if (lists.contains(mySelectedChangeList)) {
+        myChooser.setSelectedItem(mySelectedChangeList);
+      } else {
+        if (myChooser.getItemCount() > 0) {
+          myChooser.setSelectedIndex(0);
+        }
+      }
+      mySelectedChangeList = (ChangeList) myChooser.getSelectedItem();
     }
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
     public void changeListAdded(ChangeList list) {
-      Runnable runnable = new Runnable() {
-        public void run() {
-          if (myChangeListChooser != null && myShowingAllChangeLists) {
-            myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
-          }
+      updateListsInChooser();
+    }
+  }
+
+  private void updateListsInChooser() {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        if (myChangeListChooser != null && myShowingAllChangeLists) {
+          myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
         }
-      };
-      if (SwingUtilities.isEventDispatchThread()) {
-        runnable.run();
       }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(MultipleChangeListBrowser.this));
-      }
+    };
+    if (SwingUtilities.isEventDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(MultipleChangeListBrowser.this));
     }
   }
 

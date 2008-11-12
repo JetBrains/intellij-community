@@ -29,7 +29,7 @@ public class EnsureUpToDateFromNonAWTThread {
             lock.notifyAll();
           }
         }
-      }, InvokeAfterUpdateMode.SILENT, null);
+      }, InvokeAfterUpdateMode.SILENT, null, null);
 
       while ((! myDone) && (! myProject.isDisposed())) {
         try {

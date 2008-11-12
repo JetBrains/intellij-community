@@ -109,7 +109,7 @@ public class PatchApplier {
             public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
               vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
             }
-          });
+          }, null);
         } else {
           final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
           // will schedule update

@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -166,13 +167,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    *
    * runnable is invoked on AWT thread
    */
-  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title) {
-    myUpdater.invokeAfterUpdate(afterUpdate, mode.isCancellable(), mode.isSilently(), title, mode.isSynchronous(), null);
+  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title, final ModalityState state) {
+    myUpdater.invokeAfterUpdate(afterUpdate, mode.isCancellable(), mode.isSilently(), title, mode.isSynchronous(), null, state);
   }
 
   public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
-                                final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller) {
-    myUpdater.invokeAfterUpdate(afterUpdate, mode.isCancellable(), mode.isSilently(), title, mode.isSynchronous(), dirtyScopeManagerFiller);
+                                final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller, final ModalityState state) {
+    myUpdater.invokeAfterUpdate(afterUpdate, mode.isCancellable(), mode.isSilently(), title, mode.isSynchronous(), dirtyScopeManagerFiller,
+                                state);
   }
 
   static class DisposedException extends RuntimeException {}
@@ -650,7 +652,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
           myChangesViewManager.scheduleRefresh();
         }
-      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.add.unversioned"));
+      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.add.unversioned"), null);
     } else {
       myChangesViewManager.scheduleRefresh();
     }

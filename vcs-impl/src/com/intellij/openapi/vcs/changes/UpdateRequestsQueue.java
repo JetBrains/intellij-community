@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -106,9 +107,10 @@ public class UpdateRequestsQueue {
   }
 
   public void invokeAfterUpdate(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title,
-                                final boolean synchronously, final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller) {
+                                final boolean synchronously, final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller,
+                                final ModalityState state) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final CallbackData data = createCallbackWrapperRunnable(afterUpdate, cancellable, silently, title, synchronously);
+    final CallbackData data = createCallbackWrapperRunnable(afterUpdate, cancellable, silently, title, synchronously, state);
 
     VcsDirtyScopeManagerProxy managerProxy = null;
     if (dirtyScopeManagerFiller != null) {
@@ -144,7 +146,8 @@ public class UpdateRequestsQueue {
     LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
   }
 
-  private CallbackData createCallbackWrapperRunnable(final Runnable afterUpdate, final boolean cancellable, final boolean silently, final String title, final boolean synchronously) {
+  private CallbackData createCallbackWrapperRunnable(final Runnable afterUpdate, final boolean cancellable, final boolean silently,
+                                                     final String title, final boolean synchronously, final ModalityState state) {
     if (silently) {
       return new CallbackData(new Runnable() {
         public void run() {
@@ -160,7 +163,7 @@ public class UpdateRequestsQueue {
       }, null);
     } else {
       if (synchronously) {
-        final Waiter waiter = new Waiter(myProject, afterUpdate);
+        final Waiter waiter = new Waiter(myProject, afterUpdate, state);
         return new CallbackData(
           new Runnable() {
             public void run() {
@@ -175,7 +178,7 @@ public class UpdateRequestsQueue {
           }
         );
       } else {
-        final FictiveBackgroundable fictiveBackgroundable = new FictiveBackgroundable(myProject, afterUpdate, cancellable, title);
+        final FictiveBackgroundable fictiveBackgroundable = new FictiveBackgroundable(myProject, afterUpdate, cancellable, title, state);
         return new CallbackData(
           new Runnable() {
             public void run() {

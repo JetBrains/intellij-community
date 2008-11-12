@@ -62,6 +62,6 @@ public class CommitAction extends AnAction {
         CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), (LocalChangeList) list,
                                              ChangeListManager.getInstance(project).getRegisteredExecutors(), true, null);
       }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"));
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), null);
   }
 }
