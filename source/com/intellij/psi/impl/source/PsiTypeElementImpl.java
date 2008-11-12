@@ -76,8 +76,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   public PsiType getDetachedType(PsiElement context) {
-    PsiType type;
-    if (myCachedDetachedType != null && (type = myCachedDetachedType.get()) != null) return type;
+    PatchedSoftReference<PsiType> cached = myCachedDetachedType;
+    PsiType type = cached == null ? null : cached.get();
+    if (type != null) return type;
     try {
       type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(getText(), context);
       myCachedDetachedType = new PatchedSoftReference<PsiType>(type);
