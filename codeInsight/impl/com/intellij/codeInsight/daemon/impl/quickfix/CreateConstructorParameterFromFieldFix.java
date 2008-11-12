@@ -5,9 +5,11 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -61,7 +63,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private boolean addParameterToConstructor(final Project project, final PsiFile file, final Editor editor, PsiMethod constructor) throws IncorrectOperationException {
-    PsiParameter[] parameters = constructor.getParameterList().getParameters();
+    final PsiParameter[] parameters = constructor.getParameterList().getParameters();
     PsiExpression[] expressions = new PsiExpression[parameters.length+1];
     PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     for (int i = 0; i < parameters.length; i++) {
@@ -73,9 +75,18 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     final SmartPointerManager manager = SmartPointerManager.getInstance(getField().getProject());
     final SmartPsiElementPointer constructorPointer = manager.createSmartPsiElementPointer(constructor);
 
-    ChangeMethodSignatureFromUsageFix addParamFix = new ChangeMethodSignatureFromUsageFix(constructor, expressions, PsiSubstitutor.EMPTY, constructor, true, 1);
+    final ChangeMethodSignatureFromUsageFix addParamFix = new ChangeMethodSignatureFromUsageFix(constructor, expressions, PsiSubstitutor.EMPTY, constructor, true, 1);
     addParamFix.invoke(project, editor, file);
-    constructor = (PsiMethod)constructorPointer.getElement();
+    return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return doCreate(project, editor, parameters, constructorPointer, addParamFix);
+      }
+    });
+  }
+
+  private boolean doCreate(Project project, Editor editor, PsiParameter[] parameters, SmartPsiElementPointer constructorPointer,
+                           ChangeMethodSignatureFromUsageFix addParamFix) {
+    PsiMethod constructor = (PsiMethod)constructorPointer.getElement();
     assert constructor != null;
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();
     if (newParameters == parameters) return false; //user must have canceled dialog
@@ -101,6 +112,6 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }
