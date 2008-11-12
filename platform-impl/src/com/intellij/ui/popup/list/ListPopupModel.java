@@ -66,6 +66,9 @@ class ListPopupModel extends AbstractListModel {
   }
 
   public Object getElementAt(int index) {
+    if (index >= myFilteredList.size()) {
+      return null;
+    }
     return myFilteredList.get(index);
   }
 

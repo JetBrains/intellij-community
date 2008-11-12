@@ -391,13 +391,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   protected void onSelectByMnemonic(Object value) {
-    myList.setSelectedValue(value, true);
-    myList.repaint();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        handleSelect(true);
-      }
-    });
+    if (myListModel.isVisible(value)) {
+      myList.setSelectedValue(value, true);
+      myList.repaint();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          handleSelect(true);
+        }
+      });
+    }
   }
 
   protected JComponent getPreferredFocusableComponent() {
