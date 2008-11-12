@@ -35,7 +35,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
   private static volatile boolean ourNeedToCheckCancel = false;
   private static volatile int ourLockedCheckCounter = 0;
-  private List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
+  private final List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
 
   public ProgressManagerImpl(Application application) {
     if (!application.isUnitTestMode() && !Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled")) {
@@ -348,5 +348,18 @@ public class ProgressManagerImpl extends ProgressManager {
     }
   }
 
-
+  //for debugging
+  @SuppressWarnings({"UnusedDeclaration"})
+  private static void stopCheckCanceled() {
+    Thread[] threads = new Thread[500];
+    Thread.enumerate(threads);
+    for (Thread thread : threads) {
+      if (thread == null) continue;
+      if ("Progress Cancel Checker".equals(thread.getName())) {
+        Thread.State oldState = thread.getState();
+        thread.suspend();
+        System.out.println(thread +" suspended ("+oldState+ "->"+thread.getState()+")");
+      }
+    }
+  }
 }
