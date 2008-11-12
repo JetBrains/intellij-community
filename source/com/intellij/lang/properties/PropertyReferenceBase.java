@@ -26,11 +26,17 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   protected final String myKey;
   protected final PsiElement myElement;
   protected boolean mySoft;
+  private final TextRange myTextRange;
 
   public PropertyReferenceBase(@NotNull String key, final boolean soft, @NotNull PsiElement element) {
+    this(key, soft, element, ElementManipulators.getValueTextRange(element));
+  }
+
+  public PropertyReferenceBase(@NotNull String key, final boolean soft, @NotNull PsiElement element, TextRange range) {
     myKey = key;
     mySoft = soft;
     myElement = element;
+    myTextRange = range;
   }
 
   public PsiElement resolve() {
@@ -61,7 +67,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   public TextRange getRangeInElement() {
-    return new TextRange(1,myElement.getTextLength()-1);
+    return myTextRange;
   }
 
   @NotNull

@@ -57,6 +57,9 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
       }
     }
     else if (element instanceof XmlAttributeValue && isNonDynamicAttribute(element)) {
+      if (element.getTextLength() < 2) {
+        return PsiReference.EMPTY_ARRAY;
+      }
       value = ((XmlAttributeValue)element).getValue();
       final XmlAttribute attribute = (XmlAttribute)element.getParent();
       if ("key".equals(attribute.getName())) {

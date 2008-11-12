@@ -10,6 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,11 @@ import java.util.List;
  */
 public class PropertyReference extends PropertyReferenceBase implements QuickFixProvider, LocalQuickFixProvider {
   @Nullable private final String myBundleName;
+
+  public PropertyReference(@NotNull final String key, @NotNull final PsiElement element, final String bundleName, final boolean soft, final TextRange range) {
+    super(key, soft, element, range);
+    myBundleName = bundleName;
+  }
 
   public PropertyReference(@NotNull String key, @NotNull PsiElement element, @Nullable final String bundleName, final boolean soft) {
     super(key, soft, element);
