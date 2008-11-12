@@ -16,7 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.pom.PomModel;
@@ -430,8 +433,9 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   public final void projectClosed() {
   }
 
-  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass) {
-    myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass);
+  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
+                                           final Disposable parentDisposable) {
+    myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
   }
 
   public final void clearImplementations() {
@@ -605,7 +609,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     //noinspection unchecked
     final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
     for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
-      registerImplementation(entry.getKey(), entry.getValue());
+      registerImplementation(entry.getKey(), entry.getValue(), myProject);
     }
     myTypeChooserManager.copyFrom(description.getTypeChooserManager());
 

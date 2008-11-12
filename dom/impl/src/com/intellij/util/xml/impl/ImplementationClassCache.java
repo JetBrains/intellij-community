@@ -3,6 +3,8 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.SoftFactoryMap;
 import com.intellij.util.xml.DomElement;
@@ -56,13 +58,15 @@ class ImplementationClassCache extends SoftFactoryMap<Class<? extends DomElement
     }
   }
 
-  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass) {
+  public final void registerImplementation(final Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
+                                           final Disposable parentDisposable) {
     myImplementationClasses.put(domElementClass, implementationClass);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        myImplementationClasses.remove(domElementClass);
+      }
+    });
     super.clear();
   }
 
-  public final void clear() {
-    super.clear();
-    myImplementationClasses.clear();
-  }
 }
