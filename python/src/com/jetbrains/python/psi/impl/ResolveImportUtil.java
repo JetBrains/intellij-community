@@ -72,15 +72,21 @@ public class ResolveImportUtil {
     return resolveForeignImport(importRef, resolveImportReference(source));
   }
 
+  /*
+   * Finds a named submodule file/dir under given root.
+   */
   @Nullable
   private static PsiElement matchToFile(String name, PyReferenceExpression importRef, VirtualFile root_file) {
-    if (name.equals(root_file.getName())) {
-      VirtualFile initpy = root_file.findChild(INIT_PY);
-      if (initpy != null) {
-        PsiFile initfile = importRef.getManager().findFile(initpy);
-        if (initfile != null) {
-          initfile.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE); // we really resolved to the dir
-          return initfile;
+    VirtualFile child_file = root_file.findChild(name);
+    if (child_file != null) {
+      if (name.equals(child_file.getName())) {
+        VirtualFile initpy = root_file.findChild(INIT_PY);
+        if (initpy != null) {
+          PsiFile initfile = importRef.getManager().findFile(initpy);
+          if (initfile != null) {
+            initfile.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE); // we really resolved to the dir
+            return initfile;
+          }
         }
       }
     }
@@ -322,9 +328,9 @@ public class ResolveImportUtil {
   Tries to find referencedName under the parent element. Used to resolve any names that look imported.
   Parent might happen to be a PyFile(__init__.py), then it is treated <i>both</i> as a file and as ist base dir.
   For details of this ugly magic, see {@link com.jetbrains.python.psi.impl.PyReferenceExpressionImpl#resolve()}.
-   @param parent element under which to look for referenced name.
-    * @param referencedName which name to look for.
-   * @param containingFile
+  @param parent element under which to look for referenced name.
+  @param referencedName which name to look for.
+  @param containingFile where we're in
   @return the element the referencedName resolves to, or null.
   @todo: Honor module's __all__ value.
   @todo: Honor package's __path__ value (hard).
@@ -334,6 +340,16 @@ public class ResolveImportUtil {
     PsiDirectory dir = null;
     PsiElement ret = null;
     PyResolveUtil.ResolveProcessor processor = null;
+    /*if (parent instanceof PsiPackage) {
+      final PsiPackage pkg = (PsiPackage)parent;
+      for (PsiPackage subpkg : pkg.getSubPackages()) {
+        if (referencedName.equals(subpkg.getName())) {
+          return subpkg.getContainingFile();
+          // XXX break;
+        }
+      }
+    }
+    else*/
     if (parent instanceof PyFile) {
       boolean is_dir = (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE);
       PyFile pfparent = (PyFile)parent; 
@@ -351,21 +367,37 @@ public class ResolveImportUtil {
     else if (parent instanceof PsiDirectory) {
       dir = (PsiDirectory)parent;
     }
-    if (dir != null) {
-      final PsiFile file = dir.findFile(referencedName + PY_SUFFIX);
-      if (file != null) return file;
-      final PsiDirectory subdir = dir.findSubdirectory(referencedName);
-      if (subdir != null) return subdir;
-      else { // XXX faulty? not a subdir, not a file; could be a name in parent/__init__.py
-        final PsiFile initPy = dir.findFile(INIT_PY);
-        if (initPy == containingFile) return ret; // don't dive into the file we're in
-        if (initPy != null) {
-          if (processor == null) processor = new PyResolveUtil.ResolveProcessor(referencedName); // should not normally happen 
-          return PyResolveUtil.treeCrawlUp(processor, true, initPy);//PyResolveUtil.treeWalkUp(processor, initPy, null, importRef);
-        }
+    else if (parent instanceof PsiDirectoryContainer) {
+      final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
+      for(PsiDirectory childDir: container.getDirectories()) {
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, processor);
+        if (result != null) return result;
       }
     }
+    if (dir != null) {
+      return resolveInDirectory(referencedName, containingFile, dir, processor);
+    }
     return ret;
+  }
+
+  @Nullable
+  private static PsiElement resolveInDirectory(final String referencedName,
+                                               final PsiFile containingFile,
+                                               final PsiDirectory dir,
+                                               PyResolveUtil.ResolveProcessor processor) {
+    final PsiFile file = dir.findFile(referencedName + PY_SUFFIX);
+    if (file != null) return file;
+    final PsiDirectory subdir = dir.findSubdirectory(referencedName);
+    if (subdir != null) return subdir;
+    else { // XXX faulty? not a subdir, not a file; could be a name in parent/__init__.py
+      final PsiFile initPy = dir.findFile(INIT_PY);
+      if (initPy == containingFile) return null; // don't dive into the file we're in
+      if (initPy != null) {
+        if (processor == null) processor = new PyResolveUtil.ResolveProcessor(referencedName); // should not normally happen
+        return PyResolveUtil.treeCrawlUp(processor, true, initPy);//PyResolveUtil.treeWalkUp(processor, initPy, null, importRef);
+      }
+    }
+    return null;
   }
 
 
