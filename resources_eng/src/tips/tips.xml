@@ -93,4 +93,7 @@
     <tip file="QuickFixRightArrow.html"/>
 	<tip file="NavigateToFilePath.html"/>
 	<tip file="IssueNavigation.html"/>
+    <tip file="UmlClassDiagram.html"/>
+    <tip file="ColorEditingInCss.html"/>
+    <tip file="CreateTestIntentionAction.html"/>
 </tips>
