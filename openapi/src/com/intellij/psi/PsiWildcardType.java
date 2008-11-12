@@ -47,8 +47,7 @@ public class PsiWildcardType extends PsiType {
   public static PsiWildcardType createUnbounded(PsiManager manager) {
     PsiWildcardType unboundedWildcard = manager.getUserData(UNBOUNDED_WILDCARD);
     if (unboundedWildcard == null) {
-      unboundedWildcard = new PsiWildcardType(manager, false, null);
-      unboundedWildcard = manager.putUserDataIfAbsent(UNBOUNDED_WILDCARD, unboundedWildcard);
+      unboundedWildcard = manager.putUserDataIfAbsent(UNBOUNDED_WILDCARD, new PsiWildcardType(manager, false, null));
     }
     return unboundedWildcard;
   }
@@ -216,15 +215,6 @@ public class PsiWildcardType extends PsiType {
    * @return <code>PsiType</code> representing an upper bound. Never returns <code>null</code>.
    */
   public PsiType getSuperBound() {
-    if (myBound == null) {
-      return PsiType.NULL;
-    }
-    else if (!myIsExtending) {
-      return myBound;
-    }
-    else {
-      return NULL;
-    }
+    return myBound == null || myIsExtending ? NULL : myBound;
   }
-
 }

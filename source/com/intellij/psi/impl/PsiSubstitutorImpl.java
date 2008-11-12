@@ -88,18 +88,25 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (newBound == null) {
           return null;
         }
-        else if (newBound instanceof PsiWildcardType) {
-          if (((PsiWildcardType)newBound).isExtends() == wildcardType.isExtends()) {
-            final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
-            if (newBoundBound != null) {
-              return PsiWildcardType.changeBound(wildcardType, newBoundBound);
-            }
-          }
-          return PsiWildcardType.createUnbounded(wildcardType.getManager());
+        if (newBound instanceof PsiWildcardType) {
+          return handleBoundComposition(wildcardType, (PsiWildcardType)newBound);
+        }
+        if (newBound instanceof PsiCapturedWildcardType && wildcardType.isExtends() != ((PsiCapturedWildcardType)newBound).getWildcard().isExtends()) {
+          return handleBoundComposition(wildcardType, ((PsiCapturedWildcardType)newBound).getWildcard());
         }
 
         return PsiWildcardType.changeBound(wildcardType, newBound);
       }
+    }
+
+    private static PsiType handleBoundComposition(PsiWildcardType wildcardType, PsiWildcardType bound) {
+      if (bound.isExtends() == wildcardType.isExtends()) {
+        final PsiType newBoundBound = bound.getBound();
+        if (newBoundBound != null) {
+          return PsiWildcardType.changeBound(wildcardType, newBoundBound);
+        }
+      }
+      return PsiWildcardType.createUnbounded(wildcardType.getManager());
     }
 
     public PsiType visitPrimitiveType(PsiPrimitiveType primitiveType) {
@@ -142,7 +149,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private class SubstitutionVisitor extends SubstitutionVisitorBase {
-    public SubstitutionVisitor(final SubstituteKind kind) {
+    private SubstitutionVisitor(final SubstituteKind kind) {
       myKind = kind;
     }
 

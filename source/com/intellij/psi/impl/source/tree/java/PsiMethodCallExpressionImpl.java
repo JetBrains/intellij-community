@@ -123,29 +123,30 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
-      if (is15OrHigher) {
-        //JLS3 15.8.2
-        if (GET_CLASS_METHOD.equals(method.getName()) && "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
-          PsiExpression qualifier = methodExpression.getQualifierExpression();
-          PsiType qualifierType = null;
-          if (qualifier != null) {
-            qualifierType = TypeConversionUtil.erasure(qualifier.getType());
+      //JLS3 15.8.2
+      if (is15OrHigher &&
+          GET_CLASS_METHOD.equals(method.getName()) &&
+          "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
+        PsiExpression qualifier = methodExpression.getQualifierExpression();
+        PsiType qualifierType = null;
+        if (qualifier != null) {
+          qualifierType = TypeConversionUtil.erasure(qualifier.getType());
+        }
+        else {
+          ASTNode parent = call.getNode().getTreeParent();
+          while (parent != null && parent.getElementType() != JavaElementType.CLASS) parent = parent.getTreeParent();
+          if (parent != null) {
+            qualifierType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType((PsiClass)parent.getPsi());
           }
-          else {
-            ASTNode parent = call.getNode().getTreeParent();
-            while (parent != null && parent.getElementType() != JavaElementType.CLASS) parent = parent.getTreeParent();
-            if (parent != null) {
-              qualifierType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType((PsiClass)parent.getPsi());
-            }
-          }
-          if (qualifierType != null) {
-            PsiClass javaLangClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Class", call.getResolveScope());
-            if (javaLangClass != null && javaLangClass.getTypeParameters().length == 1) {
-              Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
-              map.put(javaLangClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, qualifierType));
-              PsiSubstitutor substitutor = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createSubstitutor(map);
-              return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(javaLangClass, substitutor, languageLevel);
-            }
+        }
+        if (qualifierType != null) {
+          PsiClass javaLangClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Class", call.getResolveScope());
+          if (javaLangClass != null && javaLangClass.getTypeParameters().length == 1) {
+            Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
+            map.put(javaLangClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, qualifierType));
+            PsiSubstitutor substitutor = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createSubstitutor(map);
+            return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
+              .createType(javaLangClass, substitutor, languageLevel);
           }
         }
       }
