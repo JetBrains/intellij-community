@@ -79,9 +79,10 @@ abstract class BaseHtmlLexer extends LexerBase {
       String name = TreeUtil.getTokenText(lexer);
       if (caseInsensitive) name = name.toLowerCase();
 
-      boolean style = name.equals(TOKEN_STYLE); //name.endsWith("style");
-      boolean script = name.equals(TOKEN_SCRIPT) || 
-                       (name.startsWith(TOKEN_ON) && name.indexOf(':') == -1);
+      final boolean style = name.equals(TOKEN_STYLE); //name.endsWith("style");
+      final int state = getState() & BASE_STATE_MASK;
+      final boolean script = name.equals(TOKEN_SCRIPT) || 
+                       ((name.startsWith(TOKEN_ON) && name.indexOf(':') == -1 && !isHtmlTagState(state)));
 
       if (style || script) {
         // encountered tag name in end of tag
@@ -92,8 +93,6 @@ abstract class BaseHtmlLexer extends LexerBase {
 
         seenStyle = style;
         seenScript = script;
-
-        int state = getState() & BASE_STATE_MASK;
 
         if (!isHtmlTagState(state)) {
           seenAttribute=true;
