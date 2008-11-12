@@ -1,9 +1,8 @@
 <idea-plugin>
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
-    <version>1.1.1</version>
+    <version>8.0</version>
     <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
-    <idea-version since-build="6791"/>
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
         <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGUnusedCodeExtension"/>
