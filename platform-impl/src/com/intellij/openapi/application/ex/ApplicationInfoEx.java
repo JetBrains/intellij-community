@@ -31,6 +31,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getOpaqueIconUrl();
 
+  public abstract String getToolWindowIconUrl();
+
   public abstract String getPackageCode();
 
   public abstract String getFullApplicationName();

@@ -36,6 +36,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private String myIconUrl = "/icon.png";
   @NonNls private String mySmallIconUrl = "/icon_small.png";
   @NonNls private String myOpaqueIconUrl = "/icon.png";
+  @NonNls private String myToolWindowIconUrl = "/general/toolWindowProject.png";
   private Calendar myBuildDate = null;
   private String myPackageCode = null;
   private boolean myShowLicensee = true;
@@ -65,6 +66,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_ICON = "icon";
   @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
   @NonNls private static final String ATTRIBUTE_SIZE16 = "size16";
+  @NonNls private static final String ATTRIBUTE_SIZE12 = "size12";
   @NonNls private static final String ATTRIBUTE_SIZE32OPAQUE = "size32opaque";
   @NonNls private static final String ELEMENT_PACKAGE = "package";
   @NonNls private static final String ATTRIBUTE_CODE = "code";
@@ -145,6 +147,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getOpaqueIconUrl() {
     return myOpaqueIconUrl;
+  }
+
+  public String getToolWindowIconUrl() {
+    return myToolWindowIconUrl;
   }
 
   public String getPackageCode() {
@@ -281,6 +287,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
       myOpaqueIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32OPAQUE);
+      final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
+      if (toolWindowIcon != null) {
+        myToolWindowIconUrl = toolWindowIcon;
+      }
     }
 
     Element packageElement = parentNode.getChild(ELEMENT_PACKAGE);

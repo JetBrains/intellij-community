@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,8 +53,8 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
@@ -504,7 +505,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           return current != null ? current.getComponentToFocus() : null;
         }
       });
-      toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowProject.png"));
+      toolWindow.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl()));
     }
 
     myCombo.addPopupMenuListener(new PopupMenuListener() {
