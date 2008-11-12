@@ -472,11 +472,12 @@ public class PsiUtilBase {
       elt = elt.getParent();
       TextRange selectionRange = new TextRange(start, end);
       TextRange range = elt.getTextRange();
-
+      assert range != null : "Range is null for " + elt + "; " + elt.getClass();
       while(!range.contains(selectionRange)) {
         elt = elt.getParent();
         if (elt == null) break;
         range = elt.getTextRange();
+        assert range != null : "Range is null for " + elt + "; " + elt.getClass();
       }
       
       if (range.contains(selectionRange) && elt != null) {
