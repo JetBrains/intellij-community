@@ -2,16 +2,19 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
+  private Icon myProjectIcon = IconLoader.getIcon(ApplicationInfoImpl.getInstanceEx().getSmallIconUrl());
+
   public OpenProjectFileChooserDescriptor(final boolean chooseFiles) {
     super(chooseFiles, true, false, false, false, false);
   }
@@ -21,7 +24,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   public Icon getOpenIcon(final VirtualFile virtualFile) {
-    if (isProjectDirectory(virtualFile)) return Icons.PROJECT_ICON;
+    if (isProjectDirectory(virtualFile)) return myProjectIcon;
     final Icon icon = getImporterIcon(virtualFile, true);
     if(icon!=null){
       return icon;
@@ -30,7 +33,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   public Icon getClosedIcon(final VirtualFile virtualFile) {
-    if (isProjectDirectory(virtualFile)) return Icons.PROJECT_ICON;
+    if (isProjectDirectory(virtualFile)) return myProjectIcon;
     final Icon icon = getImporterIcon(virtualFile, false);
     if(icon!=null){
       return icon;
