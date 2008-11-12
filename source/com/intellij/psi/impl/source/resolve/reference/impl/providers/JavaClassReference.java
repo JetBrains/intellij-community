@@ -312,8 +312,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
 
-    String qName = elementText
-        .substring(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+    final int endOffset = getRangeInElement().getEndOffset();
+    LOG.assertTrue(endOffset <= elementText.length(), elementText);
+    final int startOffset = myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset();
+    final String qName = elementText.substring(startOffset, endOffset);
     if (!qName.contains(".")) {
       final String defaultPackage = JavaClassReferenceProvider.DEFAULT_PACKAGE.getValue(getOptions());
       if (StringUtil.isNotEmpty(defaultPackage)) {
