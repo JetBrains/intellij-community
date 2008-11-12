@@ -36,6 +36,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
@@ -145,13 +146,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @SuppressWarnings({"ConstantConditions"})
   public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    try {
-      File messageFile = createMessageFile(message);
+    Map<VirtualFile, List<Change>> sortedChanges = sortChangesByVcsRoot(changes);
+    for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
+      Set<FilePath> files = new HashSet<FilePath>();
+      final VirtualFile root = entry.getKey();
       try {
-        Map<VirtualFile, List<Change>> sortedChanges = sortChangesByVcsRoot(changes);
-        for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
-          Set<FilePath> files = new HashSet<FilePath>();
-          final VirtualFile root = entry.getKey();
+        File messageFile = createMessageFile(root, message);
+        try {
           final Set<FilePath> added = new HashSet<FilePath>();
           final Set<FilePath> removed = new HashSet<FilePath>();
           for (Change change : entry.getValue()) {
@@ -190,22 +191,27 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
               // push
               Collection<VcsException> problems = GitHandlerUtil.doSynchronouslyWithExceptions(GitPushUtils.preparePush(myProject, root));
-              exceptions.addAll(problems);
+              for (VcsException e : problems) {
+                if (!isNoOrigin(e)) {
+                  // no origin exception just means that push was not applicable to the repository
+                  exceptions.add(e);
+                }
+              }
             }
           }
-          catch (VcsException e) {
-            exceptions.add(e);
+          finally {
+            if (!messageFile.delete()) {
+              log.warn("Failed to remove temporary file: " + messageFile);
+            }
           }
         }
-      }
-      finally {
-        if (!messageFile.delete()) {
-          log.warn("Failed to remove temporary file: " + messageFile);
+        catch (VcsException e) {
+          exceptions.add(e);
         }
       }
-    }
-    catch (IOException ex) {
-      exceptions.add(new VcsException("Creation of commit message file failed", ex));
+      catch (IOException ex) {
+        exceptions.add(new VcsException("Creation of commit message file failed", ex));
+      }
     }
     return exceptions;
   }
@@ -388,11 +394,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Create a file that contains the specified message
    *
+   * @param root    a git repository root
    * @param message a message to write
    * @return a file reference
    * @throws IOException
    */
-  private static File createMessageFile(final String message) throws IOException {
+  private File createMessageFile(VirtualFile root, final String message) throws IOException {
     // filter comment lines
     StringBuilder filteredMessage = new StringBuilder(message.length());
     for (StringTokenizer stk = new StringTokenizer(message, "\n"); stk.hasMoreTokens();) {
@@ -404,8 +411,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     File file = File.createTempFile(GIT_COMIT_MSG_FILE_PREFIX, GIT_COMIT_MSG_FILE_EXT);
     file.deleteOnExit();
-    // TODO use repository encoding
-    Writer out = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+    @NonNls String encoding = null;
+    try {
+      encoding = GitConfigUtil.getValue(myProject, root, "i18n.commitencoding");
+    }
+    catch (VcsException e) {
+      // ignore exception
+    }
+    if (encoding == null || encoding.length() == 0) {
+      encoding = "UTF-8";
+    }
+    Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding);
     try {
       out.write(filteredMessage.toString());
     }

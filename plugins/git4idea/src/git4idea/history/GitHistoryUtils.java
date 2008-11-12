@@ -88,7 +88,8 @@ public class GitHistoryUtils {
     final VirtualFile root = GitUtil.getGitRoot(project, path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, "log");
     h.setNoSSH(true);
-    h.addParameters("-M", "--follow", "--name-only", "--pretty=format:%H%x00%ct%x00%an%x20<%ae>%x00%cn%x20<%ce>%x00%s%n%n%b%x00");
+    h.addParameters("-M", "--follow", "--name-only", "--pretty=format:%H%x00%ct%x00%an%x20<%ae>%x00%cn%x20<%ce>%x00%s%n%n%b%x00",
+                    "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
     String output = h.run();
