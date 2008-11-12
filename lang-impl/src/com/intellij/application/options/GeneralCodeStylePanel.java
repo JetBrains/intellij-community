@@ -129,7 +129,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         final int selIndex = myIndentOptionsTabs.getSelectedIndex();
         if (selIndex != myLastSelectedTab) {
           myLastSelectedTab = selIndex;
-          //updatePreviewEditor();
+          updatePreviewEditor();
           somethingChanged();
         }
       }

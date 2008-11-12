@@ -227,11 +227,15 @@ public abstract class CodeStyleAbstractPanel {
     editor.setHighlighter(createHighlighter(scheme));
   }
 
-  /*
   protected void updatePreviewEditor() {
-    updatePreview(true);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        myEditor.getDocument().setText(getPreviewText());
+      }
+    });
+    updatePreview();
     updatePreviewHighlighter((EditorEx)myEditor);
-  } */
+  }
 
   protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
 
