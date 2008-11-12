@@ -119,14 +119,14 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
                 typeParameterList.replace(oldTypeParameterList);
               }
             }
-            catch (IncorrectOperationException e) {
+            catch (final IncorrectOperationException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
-                      public void run() {
-                        Messages.showErrorDialog(project,
-                                                 CodeInsightBundle.message( "intention.error.cannot.create.class.message", className),
-                                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-                      }
-                    });
+                public void run() {
+                  Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
+                                                    "\n"+e.getLocalizedMessage(),
+                                           CodeInsightBundle.message("intention.error.cannot.create.class.title"));
+                }
+              });
               return null;
             }
             final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();

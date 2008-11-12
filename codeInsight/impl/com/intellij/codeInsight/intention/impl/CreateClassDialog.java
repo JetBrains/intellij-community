@@ -42,7 +42,7 @@ public class CreateClassDialog extends DialogWrapper {
   private final JTextField myTfClassName = new MyTextField();
   private final Project myProject;
   private PsiDirectory myTargetDirectory;
-  private String myClassName;
+  private final String myClassName;
   private final boolean myClassNameEditable;
   private final Module myModule;
   @NonNls private static final String RECENTS_KEY = "CreateClassDialog.RecentsKey";

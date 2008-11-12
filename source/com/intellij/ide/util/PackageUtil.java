@@ -11,7 +11,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.openapi.roots.ModulePackageIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
+import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -187,10 +187,7 @@ public class PackageUtil {
       PsiDirectory foundExistingDirectory = psiDirectory.findSubdirectory(name);
       if (foundExistingDirectory == null) {
         if (!askedToCreate && askUserToCreate) {
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            askedToCreate = true;
-          }
-          else {
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
             int toCreate = Messages.showYesNoDialog(project,
                                                     IdeBundle.message("prompt.create.non.existing.package", packageName),
                                                     IdeBundle.message("title.package.not.found"),
@@ -316,7 +313,7 @@ public class PackageUtil {
           ProjectBundle.message("module.source.roots.not.configured.title")
         );
 
-      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ContentEntriesEditor.NAME, false);
+      ModulesConfigurator.showDialog(module.getProject(), module.getName(), CommonContentEntriesEditor.NAME, false);
 
       sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       if (sourceRoots.length == 0) {

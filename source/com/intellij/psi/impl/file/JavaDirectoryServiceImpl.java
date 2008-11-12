@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -142,11 +143,18 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
   /**
    * @not_implemented
    */
-  public static void checkCreateClassOrInterface(@NotNull PsiDirectory dir, String name) throws IncorrectOperationException {
-    PsiUtil.checkIsIdentifier(dir.getManager(), name);
+  public static void checkCreateClassOrInterface(@NotNull PsiDirectory directory, String name) throws IncorrectOperationException {
+    PsiUtil.checkIsIdentifier(directory.getManager(), name);
 
     String fileName = name + "." + StdFileTypes.JAVA.getDefaultExtension();
-    dir.checkCreateFile(fileName);
+    directory.checkCreateFile(fileName);
+
+    PsiNameHelper helper = JavaPsiFacade.getInstance(directory.getProject()).getNameHelper();
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    String qualifiedName = aPackage == null ? null : aPackage.getQualifiedName();
+    if (!StringUtil.isEmpty(qualifiedName) && !helper.isQualifiedName(qualifiedName)) {
+      throw new IncorrectOperationException("Cannot create class in invalid package: '"+qualifiedName+"'");
+    }
   }
 
   public boolean isSourceRoot(@NotNull PsiDirectory dir) {
