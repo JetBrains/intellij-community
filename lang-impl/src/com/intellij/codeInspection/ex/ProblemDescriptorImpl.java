@@ -44,7 +44,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
     if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
-        LOG.error("Empty PSI elements should not be passed to createDescriptor");
+        LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement);
       }
     }
 
