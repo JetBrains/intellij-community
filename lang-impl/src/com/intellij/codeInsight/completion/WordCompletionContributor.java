@@ -38,12 +38,14 @@ public class WordCompletionContributor extends CompletionContributor{
     });
     final PsiElement insertedElement = parameters.getPosition();
 
-    Set<CompletionVariant> toAdd = new HashSet<CompletionVariant>();
     final CompletionData data = CompletionUtil.getCompletionDataByElement(file);
-    data.addKeywordVariants(toAdd, insertedElement, file);
-    for (CompletionVariant completionVariant : toAdd) {
-      if (completionVariant.hasKeywordCompletions()) {
-        return true;
+    if (!(data instanceof SyntaxTableCompletionData)) {
+      Set<CompletionVariant> toAdd = new HashSet<CompletionVariant>();
+      data.addKeywordVariants(toAdd, insertedElement, file);
+      for (CompletionVariant completionVariant : toAdd) {
+        if (completionVariant.hasKeywordCompletions()) {
+          return true;
+        }
       }
     }
 
