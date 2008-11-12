@@ -228,11 +228,7 @@ public abstract class CodeStyleAbstractPanel {
   }
 
   protected void updatePreviewEditor() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myEditor.getDocument().setText(getPreviewText());
-      }
-    });
+    myTextToReformat = getPreviewText();
     updatePreview();
     updatePreviewHighlighter((EditorEx)myEditor);
   }
