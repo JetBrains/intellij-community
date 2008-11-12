@@ -663,6 +663,11 @@
       <reference ref="Find"/>
       <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
     </group>
+
+    <action id="NewInspectionsInLatestVersion" class="com.intellij.profile.codeInspection.ui.NewInLatestVersionAction"
+        icon="/actions/lightning.png">
+      <add-to-group group-id="InspectionProfilePanelToolbar" anchor="last"/>
+    </action>
   </actions>
 
   <xi:include href="XmlActions.xml" xpointer="xpointer(/component/*)"/>

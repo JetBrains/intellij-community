@@ -67,7 +67,7 @@ import java.util.List;
  * User: anna
  * Date: 31-May-2006
  */
-public class SingleInspectionProfilePanel extends JPanel {
+public class SingleInspectionProfilePanel extends JPanel implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
   private static final Icon SHOW_INSPECTION_SETTINGS = IconLoader.getIcon("/objectBrowser/showGlobalInspections.png");
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
@@ -88,6 +88,8 @@ public class SingleInspectionProfilePanel extends JPanel {
   private String myInitialProfile;
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
   private boolean myIsInRestore = false;
+
+  public static final DataKey<SingleInspectionProfilePanel> PANEL_KEY = DataKey.create(SingleInspectionProfilePanel.class.getName());
 
   public SingleInspectionProfilePanel(String inspectionProfileName) {
     this(inspectionProfileName, null);
@@ -329,16 +331,11 @@ public class SingleInspectionProfilePanel extends JPanel {
         filterTree(myProfileFilter.getFilter());
       }
     });
-    actions.add(new AnAction(InspectionsBundle.message("what.s.new.in.idea.7"),
-                             InspectionsBundle.message("what.s.new.in.idea.7.description"), IconLoader.getIcon("/actions/lightning.png")) {
-      public void actionPerformed(AnActionEvent e) {
-        setFilter("\"New in 8\"");
-        myProfileFilter.selectText();
-        myProfileFilter.requestFocusInWindow();
-      }
-    });
+    actions.add(ActionManager.getInstance().getAction("InspectionProfilePanelToolbar"));
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    actionToolbar.setTargetComponent(this);
+    return actionToolbar;
   }
 
   private void repaintTableData() {
@@ -781,6 +778,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     myProfileFilter.setFilter(filter);
   }
 
+  public void setAndSelectFilter(final String filterText) {
+    setFilter(filterText);
+    myProfileFilter.selectText();
+    myProfileFilter.requestFocusInWindow();
+  }
+
   public boolean isResetEnabled() {
     return myRoot.isProperSetting;
   }
@@ -920,6 +923,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     return false;
   }
 
+  public Object getData(@NonNls final String dataId) {
+    if (dataId.equals(PANEL_KEY.getName())) {
+      return this;
+    }
+    return null;
+  }
 
   private static class InputDialog extends DialogWrapper {
     private JCheckBox myCheckBox;
