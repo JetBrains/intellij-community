@@ -44,7 +44,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
   @Override
   public boolean isModified() {
-    return myMappings.isModified();
+    return myMappings != null && myMappings.isModified();
   }
 
   @Override
