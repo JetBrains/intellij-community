@@ -155,12 +155,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     Collections.sort(sortedProfiles);
     if (!sortedProfiles.isEmpty()) {
       final Element assignedScopes = new Element(SCOPES);
-      List<NamedScope> scopes = new ArrayList<NamedScope>(usedProfiles.keySet());
-      Collections.sort(scopes, new Comparator<NamedScope>() {
-        public int compare(@NotNull final NamedScope o1, @NotNull final NamedScope o2) {
-          return o1.getName().compareTo(o2.getName());
-        }
-      });
+      final List<NamedScope> scopes = new ArrayList<NamedScope>(usedProfiles.keySet());
       for (NamedScope scope : scopes) {
         final Element scopeElement = new Element(SCOPE);
         scopeElement.setAttribute(PROFILE, usedProfiles.get(scope));
