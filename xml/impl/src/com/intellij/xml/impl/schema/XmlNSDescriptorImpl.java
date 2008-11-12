@@ -221,9 +221,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
   private boolean checkElementNameEquivalence(String localName, String namespace, String fqn, XmlTag context){
     final String localAttrName = XmlUtil.findLocalNameByQualifiedName(fqn);
     if (!localAttrName.equals(localName)) return false;
+    final String attrNamespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(fqn));
+    if (attrNamespace.equals(namespace)) return true;
+
     if(myTargetNamespace == null){
-      final String attrNamespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(fqn));
-      if(attrNamespace.equals(namespace) || XmlUtil.EMPTY_URI.equals(attrNamespace))
+      if(XmlUtil.EMPTY_URI.equals(attrNamespace))
         return true;
     }
     else {
