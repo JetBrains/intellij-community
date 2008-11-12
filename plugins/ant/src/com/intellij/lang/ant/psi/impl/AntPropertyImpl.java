@@ -232,7 +232,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         value = sourceElement.getAttributeValue("defaultvalue");
       }
     }
-    return computeAttributeValue(value);
+    return value;/*computeAttributeValue(value);*/
   }
 
   @Nullable

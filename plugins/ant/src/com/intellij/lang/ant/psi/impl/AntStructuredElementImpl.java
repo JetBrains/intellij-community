@@ -520,6 +520,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
           startProp += 2;
         }
         else {
+          if (resolvedValue.equals(value) /*prevent tail recursion*/) {
+            return value;
+          }
           final StringBuilder builder = StringBuilderSpinAllocator.alloc();
           try {
             builder.append(value, 0, startProp);
