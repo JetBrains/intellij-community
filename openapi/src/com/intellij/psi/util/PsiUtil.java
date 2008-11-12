@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -810,17 +809,6 @@ public final class PsiUtil extends PsiUtilBase {
       if (substitutor.substitute(parameter) == null) return true;
     }
     return false;
-  }
-
-  @NotNull
-  public static ASTNode getRoot(@NotNull ASTNode node) {
-    ASTNode child = node;
-    do {
-      final ASTNode parent = child.getTreeParent();
-      if (parent == null) return child;
-      child = parent;
-    }
-    while (true);
   }
 
   public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = Key.create("FORCE_LANGUAGE_LEVEL");

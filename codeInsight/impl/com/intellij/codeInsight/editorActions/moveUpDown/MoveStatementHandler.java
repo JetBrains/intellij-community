@@ -9,12 +9,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
 
 class MoveStatementHandler extends EditorWriteActionHandler {
@@ -54,6 +54,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     return range.endLine < maxLine || !isDown;
   }
 
+  @Nullable
   private static PsiFile getRoot(final PsiFile file, final Editor editor) {
     if (file == null) return null;
     int offset = editor.getCaretModel().getOffset();
@@ -67,7 +68,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     }
     ASTNode node = leafElement.getNode();
     if (node == null) return null;
-    return (PsiFile)PsiUtil.getRoot(node).getPsi();
+    return (PsiFile)PsiUtilBase.getRoot(node).getPsi();
   }
 
   @Nullable

@@ -533,4 +533,15 @@ public class PsiUtilBase {
     }
     return false;
   }
+
+  @NotNull
+  public static ASTNode getRoot(@NotNull ASTNode node) {
+    ASTNode child = node;
+    do {
+      final ASTNode parent = child.getTreeParent();
+      if (parent == null) return child;
+      child = parent;
+    }
+    while (true);
+  }
 }
