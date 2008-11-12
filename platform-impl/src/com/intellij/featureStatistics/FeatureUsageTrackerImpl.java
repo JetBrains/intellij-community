@@ -9,12 +9,12 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressFunComponentProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,27 +29,25 @@ import java.util.Set;
         id = "other",
         file = "$APP_CONFIG$/feature.usage.statistics.xml")})
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements ApplicationComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.FeatureUsageTracker");
-
   private static final long DAY = 1000 * 60 * 60 * 24;
   private long FIRST_RUN_TIME = 0;
   private boolean HAVE_BEEN_SHOWN = false;
 
+  private final ProductivityFeaturesRegistry myRegistry;
 
-  private ProductivityFeaturesRegistry myRegistry;
-
-  private static final @NonNls String FEATURE_TAG = "feature";
-  private static final @NonNls String ATT_SHOW_IN_OTHER = "show-in-other";
-  private static final @NonNls String ATT_SHOW_IN_COMPILATION = "show-in-compilation";
-  private static final @NonNls String ATT_ID = "id";
-  private static final @NonNls String ATT_FIRST_RUN = "first-run";
-  private static final @NonNls String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
+  @NonNls private static final String FEATURE_TAG = "feature";
+  @NonNls private static final String ATT_SHOW_IN_OTHER = "show-in-other";
+  @NonNls private static final String ATT_SHOW_IN_COMPILATION = "show-in-compilation";
+  @NonNls private static final String ATT_ID = "id";
+  @NonNls private static final String ATT_FIRST_RUN = "first-run";
+  @NonNls private static final String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
 
   public FeatureUsageTrackerImpl(ProgressManager progressManager, ProductivityFeaturesRegistry productivityFeaturesRegistry) {
     myRegistry = productivityFeaturesRegistry;
     progressManager.registerFunComponentProvider(new ProgressFunProvider());
   }
 
+  @NotNull
   public String getComponentName() {
     return "FeatureUsageStatistics";
   }
@@ -104,15 +102,12 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
   public void disposeComponent() {
   }
 
-  public String getExternalFileName() {
-    return "feature.usage.statistics";
-  }
-
   public void loadState(final Element element) {
     List featuresList = element.getChildren(FEATURE_TAG);
-    for (int i = 0; i < featuresList.size(); i++) {
-      Element featureElement = (Element)featuresList.get(i);
-      FeatureDescriptor descriptor = ((ProductivityFeaturesRegistryImpl)myRegistry).getFeatureDescriptorEx(featureElement.getAttributeValue(ATT_ID));
+    for (Object aFeaturesList : featuresList) {
+      Element featureElement = (Element)aFeaturesList;
+      FeatureDescriptor descriptor =
+        ((ProductivityFeaturesRegistryImpl)myRegistry).getFeatureDescriptorEx(featureElement.getAttributeValue(ATT_ID));
       if (descriptor != null) {
         descriptor.readStatistics(featureElement);
       }
@@ -152,7 +147,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
 
   public void triggerFeatureUsed(String featureId) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    FeatureDescriptor descriptor = (FeatureDescriptor)registry.getFeatureDescriptor(featureId);
+    FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
     if (descriptor == null) {
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
@@ -162,7 +157,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
   }
 
   public void triggerFeatureShown(String featureId) {
-    FeatureDescriptor descriptor = (FeatureDescriptor)ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
+    FeatureDescriptor descriptor = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
     if (descriptor != null) {
       descriptor.triggerShown();
     }
@@ -171,7 +166,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
   private final class ProgressFunProvider implements ProgressFunComponentProvider {
     @Nullable
     public JComponent getProgressFunComponent(Project project, String processId) {
-      if (ProgressFunProvider.COMPILATION_ID.equals(processId)) {
+      if (ProgressFunComponentProvider.COMPILATION_ID.equals(processId)) {
         if (!SHOW_IN_COMPILATION_PROGRESS) return null;
       }
       else {

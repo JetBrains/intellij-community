@@ -205,7 +205,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
-    assert startOffset <= endOffset;
     TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
