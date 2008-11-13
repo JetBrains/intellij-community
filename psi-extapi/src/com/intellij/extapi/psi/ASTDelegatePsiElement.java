@@ -22,9 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ASTDelegatePsiElement extends PsiElementBase {
+  private static final List EMPTY = Collections.emptyList();
+
   public PsiManagerEx getManager() {
     final PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
@@ -138,6 +141,37 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
         return (T)s.getPsi();
       }
     });
+  }
+
+  protected <T extends PsiElement> List<T> findChildrenByType(TokenSet elementType) {
+    List<T> result = EMPTY;
+    ASTNode child = getNode().getFirstChildNode();
+    while (child != null) {
+      final IElementType tt = child.getElementType();
+      if (elementType.contains(tt)) {
+        if (result == EMPTY) {
+          result = new ArrayList<T>();
+        }
+        result.add((T)child.getPsi());
+      }
+      child = child.getTreeNext();
+    }
+    return result;
+  }
+
+  protected <T extends PsiElement> List<T> findChildrenByType(IElementType elementType) {
+    List<T> result = EMPTY;
+    ASTNode child = getNode().getFirstChildNode();
+    while (child != null) {
+      if (elementType == child.getElementType()) {
+        if (result == EMPTY) {
+          result = new ArrayList<T>();
+        }
+        result.add((T)child.getPsi());
+      }
+      child = child.getTreeNext();
+    }
+    return result;
   }
 
   protected <T extends PsiElement> T[] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
