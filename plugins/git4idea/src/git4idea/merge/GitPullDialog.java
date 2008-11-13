@@ -186,6 +186,8 @@ public class GitPullDialog extends DialogWrapper {
    */
   public GitLineHandler pullHandler() {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), "pull");
+    // ignore merge failure for the pull
+    h.ignoreErrorCode(1);
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");

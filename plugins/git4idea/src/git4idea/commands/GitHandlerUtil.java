@@ -151,8 +151,20 @@ public class GitHandlerUtil {
    * @throws VcsException if there is problem with running git operation
    */
   public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler) {
-    final ProgressManager manager = ProgressManager.getInstance();
-    handler.addLineListener(new GitLineHandlerListenerProgress(manager.getProgressIndicator(), handler, "") {
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    return doSynchronouslyWithExceptions(handler, progressIndicator);
+  }
+
+  /**
+   * Run synchrnously using progress indicator, but throw an exeption instead of showing error dialog
+   *
+   * @param handler           a handler to use
+   * @param progressIndicator a progress indicator
+   * @throws VcsException if there is problem with running git operation
+   */
+  public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler,
+                                                                       final ProgressIndicator progressIndicator) {
+    handler.addLineListener(new GitLineHandlerListenerProgress(progressIndicator, handler, "") {
       @Override
       public void processTerminted(final int exitCode) {
         if (exitCode != 0 && !handler.isIgnoredErrorCode(exitCode)) {
@@ -165,7 +177,7 @@ public class GitHandlerUtil {
         handler.addError(new VcsException("Git start failed: " + exception.toString(), exception));
       }
     });
-    runInCurrentThread(handler, manager.getProgressIndicator(), false);
+    runInCurrentThread(handler, progressIndicator, false);
     return handler.errors();
   }
 

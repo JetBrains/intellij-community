@@ -168,6 +168,8 @@ public class GitMergeDialog extends DialogWrapper {
     }
     VirtualFile root = (VirtualFile)myGitRoot.getSelectedItem();
     GitLineHandler h = new GitLineHandler(myProject, root, "merge");
+    // ignore merge failure
+    h.ignoreErrorCode(1);
     h.setNoSSH(true);
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");

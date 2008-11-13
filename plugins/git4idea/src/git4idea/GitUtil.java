@@ -282,14 +282,30 @@ public class GitUtil {
    * @throws IllegalArgumentException if the file is not under git
    */
   public static VirtualFile getGitRoot(final Project project, final FilePath filePath) {
+    VirtualFile root = getGitRootOrNull(project, filePath);
+    if (root != null) {
+      return root;
+    }
+    throw new IllegalArgumentException("The file " + filePath + " is not under git.");
+  }
+
+  /**
+   * Return a git root for the file path (the parent directory with ".git" subdirectory)
+   *
+   * @param project  a project
+   * @param filePath a file path
+   * @return git root for the file or null if the file is not under git
+   */
+  @Nullable
+  private static VirtualFile getGitRootOrNull(final Project project, final FilePath filePath) {
     VirtualFile root = VcsUtil.getVcsRootFor(project, filePath);
     while (root != null) {
       if (root.findFileByRelativePath(".git") != null) {
-        return root;
+        break;
       }
       root = root.getParent();
     }
-    throw new IllegalArgumentException("The file " + filePath + " is not under git.");
+    return root;
   }
 
   /**
@@ -429,5 +445,34 @@ public class GitUtil {
       committerName = authorName + ", via " + committerName;
     }
     return committerName;
+  }
+
+  /**
+   * Check if the file path is under git
+   *
+   * @param project the context proejct
+   * @param path    the path
+   * @return true if the file path is under git
+   */
+  public static boolean isUnderGit(final Project project, final FilePath path) {
+    return getGitRootOrNull(project, path) != null;
+  }
+
+  /**
+   * Get git roots for the selected paths
+   *
+   * @param project   the project
+   * @param filePaths the context paths
+   * @return a set of git roots
+   */
+  public static Set<VirtualFile> gitRoots(final Project project, final Collection<FilePath> filePaths) {
+    HashSet<VirtualFile> rc = new HashSet<VirtualFile>();
+    for (FilePath path : filePaths) {
+      final VirtualFile root = getGitRootOrNull(project, path);
+      if (root != null) {
+        rc.add(root);
+      }
+    }
+    return rc;
   }
 }
