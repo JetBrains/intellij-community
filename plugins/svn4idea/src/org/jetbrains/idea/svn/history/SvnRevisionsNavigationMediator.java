@@ -55,9 +55,9 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
       }
     }
 
-    final Iterator<ChangesBunch> visualIterator =
+    final Iterator<ChangesBunch> visualIterator = project.isDefault() ? null :
         CommittedChangesCache.getInstance(project).getBackBunchedIterator(vcs, vcsRoot, location, CHUNK_SIZE);
-    final Iterator<ChangesBunch> internalIterator = LoadedRevisionsCache.getInstance(project).iterator(location.getURL());
+    final Iterator<ChangesBunch> internalIterator = project.isDefault() ? null : LoadedRevisionsCache.getInstance(project).iterator(location.getURL());
 
     myInternallyCached = (internalIterator == null) ? null : new InternallyCachedProvider(internalIterator, myProject);
     myVisuallyCached = (visualIterator == null) ? null : new VisuallyCachedProvider(visualIterator, myProject, location);
