@@ -242,6 +242,17 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
           myDocumentDescriptor.getTag(),
           base);
+        if (descriptor == this) {
+          // TODO: similar code with SchemaReferencesProvider implementation
+          final XmlNSDescriptorImpl nsDescriptor = SchemaReferencesProvider.findRedefinedDescriptor(tag, base);
+
+          if (nsDescriptor != null) {
+            descriptor = nsDescriptor.findTypeDescriptor(
+              nsDescriptor.getTag(),
+              base
+            );
+          }
+        }
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;

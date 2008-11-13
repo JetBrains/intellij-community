@@ -332,16 +332,8 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
         }
 
         if (doRedefineCheck) {
-          for(XmlTag parentTag = tag.getParentTag(); parentTag != null; parentTag = parentTag.getParentTag()) {
-
-            if (text.equals(parentTag.getAttributeValue("name"))) {
-              final XmlTag grandParent = parentTag.getParentTag();
-
-              if (grandParent != null && "redefine".equals(grandParent.getLocalName())) {
-                return XmlNSDescriptorImpl.getRedefinedElementDescriptor(grandParent);
-              }
-            }
-          }
+          XmlNSDescriptorImpl redefinedDescriptor = findRedefinedDescriptor(tag, text);
+          if (redefinedDescriptor != null) return redefinedDescriptor;
         }
       }
 
@@ -641,4 +633,18 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     return new TypeOrElementOrAttributeReference(element, length >= 2 ? new TextRange(1, length - 1) : new TextRange(0,0));
   }
 
+  public static @Nullable XmlNSDescriptorImpl findRedefinedDescriptor(XmlTag tag, String text) {
+    for(XmlTag parentTag = tag.getParentTag(); parentTag != null; parentTag = parentTag.getParentTag()) {
+
+      if (text.equals(parentTag.getAttributeValue("name"))) {
+        final XmlTag grandParent = parentTag.getParentTag();
+
+        if (grandParent != null && "redefine".equals(grandParent.getLocalName())) {
+          return XmlNSDescriptorImpl.getRedefinedElementDescriptor(grandParent);
+        }
+      }
+    }
+
+    return null;
+  }
 }
