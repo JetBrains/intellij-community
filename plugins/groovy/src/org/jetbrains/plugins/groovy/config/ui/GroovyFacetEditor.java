@@ -29,13 +29,14 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -49,6 +50,7 @@ public class GroovyFacetEditor {
   private JCheckBox myAddNewGdkCb;
   private FacetEditorContext myEditorContext;
   private LibraryTable.Listener myLibraryListener;
+  @NonNls private static final String GROOVY_HOME = "GROOVY_HOME";
 
   public GroovyFacetEditor(@Nullable Project project, String defaultVersion) {
     myLibraryListener = new MyLibraryListener();
@@ -59,7 +61,8 @@ public class GroovyFacetEditor {
         defaultVersion = libraries[libraries.length - 1].getName();
       }
       adjustVersionComboBox(libraries, defaultVersion);
-    } else {
+    }
+    else {
       myComboBox.setEnabled(false);
       myComboBox.setVisible(false);
     }
@@ -130,13 +133,15 @@ public class GroovyFacetEditor {
       final MyLibraryStruct defaultStruct = ContainerUtil.find(structs, new Condition<MyLibraryStruct>() {
         public boolean value(final MyLibraryStruct struct) {
           final String name = struct.toString();
-          return name != null && name.equals(defaultGlobalLibName) &&
+          return name != null &&
+                 name.equals(defaultGlobalLibName) &&
                  LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(defaultGlobalLibName) != null;
         }
       });
       if (defaultStruct != null) {
         myComboBox.setSelectedItem(defaultStruct);
-      } else if (structs.length > 0) {
+      }
+      else if (structs.length > 0) {
         myComboBox.setSelectedItem(structs[0]);
       }
     }
@@ -149,13 +154,19 @@ public class GroovyFacetEditor {
       myAddNewGdkCb.setVisible(true);
       myPathToGroovy.setEnabled(false);
       myPathToGroovy.setVisible(false);
-    } else {
+    }
+    else {
       myAddNewGdkCb.setSelected(true);
       myAddNewGdkCb.setEnabled(true);
       myAddNewGdkCb.setVisible(false);
       myComboBox.setVisible(false);
       myPathToGroovy.setEnabled(true);
       myPathToGroovy.setVisible(true);
+    }
+
+    final String s = System.getenv(GROOVY_HOME);
+    if (s != null && s.length() > 0) {
+      myPathToGroovy.setText(s);
     }
 
     myAddNewGdkCb.addActionListener(new ActionListener() {
@@ -249,7 +260,7 @@ public class GroovyFacetEditor {
     @Nullable
     @Override
     public String toString() {
-      return library != null ? library.getName(): null;
+      return library != null ? library.getName() : null;
     }
   }
 }
