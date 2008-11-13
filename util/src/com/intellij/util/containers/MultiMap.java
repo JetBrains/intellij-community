@@ -39,6 +39,10 @@ public class MultiMap<K, V> {
     return new ArrayList<V>();
   }
 
+  protected Collection<V> createEmptyCollection() {
+    return Collections.emptyList();
+  }
+
   public void putValue(K key, V value) {
     Collection<V> list = myMap.get(key);
     if (list == null) {
@@ -69,7 +73,7 @@ public class MultiMap<K, V> {
   @NotNull
   public Collection<V> get(final K key) {
     final Collection<V> collection = myMap.get(key);
-    return collection == null ? Collections.<V>emptyList() : collection;
+    return collection == null ? createEmptyCollection() : collection;
   }
 
   public Set<K> keySet() {
