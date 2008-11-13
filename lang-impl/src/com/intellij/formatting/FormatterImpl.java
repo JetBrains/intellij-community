@@ -345,8 +345,13 @@ public class FormatterImpl extends FormatterEx
     lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, lineStartOffset, " \t\n");
     if (lineStartOffset > whiteSpace.getStartOffset()) {
       if (lineStartOffset >= text.length()) lineStartOffset = text.length() - 1;
+      final int wsStart = whiteSpace.getStartOffset();
+      int prevEnd;
+
       if (text.charAt(lineStartOffset) == '\n'
-          && whiteSpace.getStartOffset() <= documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) {
+          && wsStart <= (prevEnd = documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) &&
+          documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString().trim().length() == 0 // ws consists of space only, it is not true for <![CDATA[
+         ) {
         lineStartOffset--;
       }
       lineStartOffset = CharArrayUtil.shiftBackward(text, lineStartOffset, "\t ");
