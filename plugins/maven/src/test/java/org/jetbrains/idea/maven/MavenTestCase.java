@@ -55,7 +55,7 @@ public abstract class MavenTestCase extends TestCase {
 
     myProject = myTestFixture.getProject();
 
-    setUpRepositoryMirror();
+    restoreSettingsFile();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -67,19 +67,6 @@ public abstract class MavenTestCase extends TestCase {
         }
       }
     });
-  }
-
-  private void setUpRepositoryMirror() throws IOException {
-    //String mirrorPath = PathManager.getHomePath() + "/svnPlugins/maven/src/test/data/centralMirror";
-    //setCustomSettingsFile("<settings>\n" +
-    //                      "  <mirrors>\n" +
-    //                      "    <mirror>\n" +
-    //                      "      <id>repo1.maven.org</id> \n" +
-    //                      "      <url>file://" + FileUtil.toSystemIndependentName(mirrorPath) + "</url> \n" +
-    //                      "      <mirrorOf>*</mirrorOf> \n" +
-    //                      "    </mirror>\n" +
-    //                      "  </mirrors>\n" +
-    //                      "</settings>");
   }
 
   private void ensureTempDirCreated() {
@@ -182,6 +169,19 @@ public abstract class MavenTestCase extends TestCase {
     getMavenGeneralSettings().setMavenSettingsFile(file.getPath());
   }
 
+  protected void restoreSettingsFile() throws IOException {
+    setCustomSettingsFile("<settings>\n" +
+                          "  <mirrors>\n" +
+                          "    <mirror>\n" +
+                          "      <id>Nexus</id>\n" +
+                          "      <name>Nexus Public Mirror</name>\n" +
+                          "      <url>http://maven.labs.intellij.net:8081/nexus/content/groups/public/</url>\n" +
+                          "      <mirrorOf>*</mirrorOf>\n" +
+                          "    </mirror>\n" +
+                          "  </mirrors>\n" +
+                          "</settings>");
+  }
+
   protected Module createModule(String name) throws IOException {
     VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
     return ModuleManager.getInstance(myProject).newModule(f.getPath(), StdModuleTypes.JAVA);
@@ -235,7 +235,6 @@ public abstract class MavenTestCase extends TestCase {
            xml +
            "</profiles>";
   }
-
 
   protected void createStdProjectFolders() {
     createProjectSubDirs("src/main/java",

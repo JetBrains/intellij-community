@@ -136,8 +136,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     }
     assertFalse(jarFile.exists());
 
-    setCustomSettingsFile("<settings>" +
-                          "</settings>");
+    restoreSettingsFile();
 
     resolveProject();
     assertTrue(jarFile.exists());
