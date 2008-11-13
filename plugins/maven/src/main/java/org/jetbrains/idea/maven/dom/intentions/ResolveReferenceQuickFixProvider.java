@@ -6,6 +6,6 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 
 public class ResolveReferenceQuickFixProvider implements UnresolvedReferenceQuickFixProvider{
   public void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar) {
-    registrar.register(new DependencyQuickFix(ref));
+    registrar.register(new AddMavenDependencyQuickFix(ref));
   }
 }
