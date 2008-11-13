@@ -2,13 +2,13 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,16 +17,8 @@ import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ResoureBundleEditorProvider implements FileEditorProvider, ApplicationComponent {
+public class ResoureBundleEditorProvider extends FileTypeFactory implements FileEditorProvider, ApplicationComponent {
   private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
-
-  public ResoureBundleEditorProvider(Application application, final FileTypeManagerEx fileTypeManagerEx) {
-    application.runWriteAction(new Runnable() {
-      public void run() {
-        fileTypeManagerEx.registerFileType(RESOURCE_BUNDLE_FILE_TYPE);
-      }
-    });
-  }
 
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file){
     if (file instanceof ResourceBundleAsVirtualFile) return true;
@@ -81,5 +73,9 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
   public void initComponent() { }
 
   public void disposeComponent(){
+  }
+
+  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
+    consumer.consume(RESOURCE_BUNDLE_FILE_TYPE, "");
   }
 }
