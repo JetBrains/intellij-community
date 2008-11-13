@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -50,6 +51,7 @@ import java.util.*;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
   protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
+  private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
 
 
   /**
@@ -219,6 +221,8 @@ public class VcsUtil {
       VirtualFile vFile = findFileFor(root);
       if (vFile != null) {
         result.add(vFile);
+      } else {
+        LOG.info("Failed to find VirtualFile for one of refresh roots: " + root.getAbsolutePath());
       }
     }
     return result;
