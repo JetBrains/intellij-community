@@ -596,7 +596,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
     }
 
-    @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitMethodCallExpression " + expression);
       }
@@ -608,8 +609,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         psiExpression.accept(this);
         if (myResult == null) {
           // cannot build evaluator
-          throw new EvaluateRuntimeException(EvaluateExceptionUtil
-            .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", psiExpression.getText())));
+          throw new EvaluateRuntimeException(
+            EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", psiExpression.getText()))
+          );
         }
         argumentEvaluators.add(myResult);
       }
@@ -657,8 +659,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass) {
             // this is a call to a 'static' method
             if (contextClass == null && type == null) {
-              throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-                DebuggerBundle.message("evaluation.error.qualifier.type.unknown", qualifier.getText()))
+              throw new EvaluateRuntimeException(
+                EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.qualifier.type.unknown", qualifier.getText()))
               );
             }
             assert contextClass != null;
@@ -684,8 +686,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
 
       if (objectEvaluator == null) {
-        throw new EvaluateRuntimeException(EvaluateExceptionUtil
-          .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())));
+        throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())));
+      }
+
+      if (psiMethod != null && !psiMethod.isConstructor()) {
+        if (psiMethod.getReturnType() == null) {
+          throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.method.return.type", psiMethod.getText())));
+        }
       }
 
       myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators);
