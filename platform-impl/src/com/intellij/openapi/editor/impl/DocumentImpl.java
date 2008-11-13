@@ -77,6 +77,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myAssertWriteAccess = true;
   private static final Key<Boolean> DOING_BULK_UPDATE = Key.create("DoingBulkRefromat");
   private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
+  private boolean myAcceptSlashR = false;
 
   private DocumentImpl() {
     setCyclicBufferSize(0);
@@ -88,6 +89,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertValidSeparators(text);
     setChars(text);
     setModificationStamp(LocalTimeCounter.currentTime());
+  }
+
+  public boolean setAcceptSlashR(boolean accept) {
+    try {
+      return myAcceptSlashR;
+    }
+    finally {
+      myAcceptSlashR = accept;
+    }
   }
 
   public DocumentImpl(CharSequence chars) {
@@ -379,7 +389,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private static void assertValidSeparators(final CharSequence s) {
+  private void assertValidSeparators(final CharSequence s) {
+    if (myAcceptSlashR) return;
     for (int i = 0; i < s.length(); i++) {
       if (s.charAt(i) == '\r') {
         LOG.error("Wrong line separators in Document");
@@ -696,7 +707,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  public @Nullable EditorHighlighter getEditorHighlighterForCachesBuilding() {
+  @Nullable
+  public EditorHighlighter getEditorHighlighterForCachesBuilding() {
     final WeakReference<EditorHighlighter> editorHighlighterWeakReference = getUserData(ourSomeEditorSyntaxHighlighter);
     final EditorHighlighter someEditorHighlighter = editorHighlighterWeakReference != null ? editorHighlighterWeakReference.get():null;
 

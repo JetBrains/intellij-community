@@ -1,6 +1,9 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.injected.editor.*;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -17,6 +20,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -215,7 +219,16 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
         myLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject);
         virtualFile.setLanguage(myLanguage);
 
-        DocumentImpl decodedDocument = new DocumentImpl(outChars);
+        DocumentImpl decodedDocument;
+        if (StringUtil.indexOf(outChars, '\r') == -1) {
+          decodedDocument = new DocumentImpl(outChars);
+        }
+        else {
+          decodedDocument = new DocumentImpl("");
+          decodedDocument.setAcceptSlashR(true);
+          decodedDocument.dontAssertWriteAccess();
+          decodedDocument.replaceString(0,0,outChars);
+        }
         FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
 
         SingleRootFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, shreds);
