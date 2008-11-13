@@ -158,7 +158,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     myBreakpointManager.writeExternal(element);
   }
 
-
+                                                
   public DebuggerSession attachVirtualMachine(Executor executor,
                                               ProgramRunner runner,
                                               ModuleRunProfile profile,
@@ -451,25 +451,25 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   }
 
   private static boolean shouldAddXdebugKey(Sdk jdk) {
-    if (DebuggerSettings.getInstance().DISABLE_JIT) {
+    if (jdk == null || DebuggerSettings.getInstance().DISABLE_JIT) {
       return true;
     }
-    if (jdk != null) {
-      final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-      if (version == null           ||
-          version.startsWith("1.0") || 
-          version.startsWith("1.1") || 
-          version.startsWith("1.2") || 
-          version.startsWith("1.3") || 
-          version.startsWith("1.4") || 
-          version.startsWith("1.5")   ) {
-        return true;
-      }
-    }
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return true; // need this in unit tests to avoid false alarms when comparing actual output with expected output 
+      // need this in unit tests to avoid false alarms when comparing actual output with expected output
+      return true; 
     }
-    return false;
+
+    final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+    return (
+        version == null           ||
+        version.startsWith("1.5") ||
+        version.startsWith("1.4") ||
+        version.startsWith("1.3") ||
+        version.startsWith("1.2") ||
+        version.startsWith("1.1") ||
+        version.startsWith("1.0")
+    );
   }
 
   public static RemoteConnection createDebugParameters(final JavaParameters parameters, GenericDebuggerRunnerSettings settings, boolean checkValidity)
