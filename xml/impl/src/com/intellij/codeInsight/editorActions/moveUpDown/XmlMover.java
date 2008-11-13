@@ -72,7 +72,7 @@ class XmlMover extends LineMover {
       if (movedLineStart < valueStart && valueStart + 1 < document.getTextLength()) {
         movedLineStart = updateMovedRegionEnd(document, movedLineStart, valueStart + 1, info, down);
       }
-      if (movedLineStart < valueRange.getStartOffset()) {
+      if (movedLineStart < valueStart) {
         movedLineStart = updatedMovedRegionStart(document, movedLineStart, tag.getTextRange().getStartOffset(), info, down);
       }
     } else if (movedParent instanceof XmlAttribute) {
@@ -110,7 +110,8 @@ class XmlMover extends LineMover {
 
         if (namedParent instanceof XmlTag) {
           final XmlTag tag = (XmlTag)namedParent;
-          updatedMovedIntoEnd(document, info, tag.getValue().getTextRange().getStartOffset());
+          final int offset = tag.isEmpty() ? tag.getTextRange().getStartOffset() : tag.getValue().getTextRange().getStartOffset();
+          updatedMovedIntoEnd(document, info, offset);
         } else if (namedParent instanceof XmlAttribute) {
           updatedMovedIntoEnd(document, info, namedParent.getTextRange().getEndOffset());
         }
