@@ -39,16 +39,18 @@ public class GitSSHIdeaClient implements GitSSHHandler {
   /**
    * XML RCP client
    */
-  @NonNls private final XmlRpcClientLite myClient;
+  @Nullable private final XmlRpcClientLite myClient;
 
   /**
    * A constructor
    *
-   * @param port port number
+   * @param port      port number
+   * @param batchMode
    * @throws IOException if there is IO problem
    */
-  GitSSHIdeaClient(final int port) throws IOException {
-    myClient = new XmlRpcClientLite("localhost", port);
+  GitSSHIdeaClient(final int port, final boolean batchMode) throws IOException {
+    //noinspection HardCodedStringLiteral
+    myClient = batchMode ? null : new XmlRpcClientLite("localhost", port);
   }
 
   /**
@@ -61,6 +63,9 @@ public class GitSSHIdeaClient implements GitSSHHandler {
                                      final String serverHostKeyAlgorithm,
                                      final String serverHostKey,
                                      final boolean isNew) {
+    if (myClient == null) {
+      return false;
+    }
     Vector params = new Vector();
     params.add(handler);
     params.add(hostname);
@@ -85,6 +90,9 @@ public class GitSSHIdeaClient implements GitSSHHandler {
   @Nullable
   @SuppressWarnings("unchecked")
   public String askPassphrase(final int handler, final String username, final String keyPath, final String lastError) {
+    if (myClient == null) {
+      return null;
+    }
     Vector params = new Vector();
     params.add(handler);
     params.add(username);
@@ -114,6 +122,9 @@ public class GitSSHIdeaClient implements GitSSHHandler {
                                          final Vector<String> prompt,
                                          final Vector<Boolean> echo,
                                          final String lastError) {
+    if (myClient == null) {
+      return null;
+    }
     Vector params = new Vector();
     params.add(handlerNo);
     params.add(username);
@@ -140,6 +151,9 @@ public class GitSSHIdeaClient implements GitSSHHandler {
   @Nullable
   @SuppressWarnings("unchecked")
   public String askPassword(final int handlerNo, final String username, final String lastError) {
+    if (myClient == null) {
+      return null;
+    }
     Vector params = new Vector();
     params.add(handlerNo);
     params.add(username);

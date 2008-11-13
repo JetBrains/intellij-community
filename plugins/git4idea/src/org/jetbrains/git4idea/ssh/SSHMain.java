@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Semaphore;
 
@@ -38,25 +39,13 @@ import java.util.concurrent.Semaphore;
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class SSHMain {
   /**
-   * default SSH port number
-   */
-  private static final int DEFAULT_SSH_PORT = 22;
-  /**
    * the semaphore
    */
   private final Semaphore myForwardCompleted = new Semaphore(0);
   /**
-   * the username
-   */
-  private final String myUsername;
-  /**
    * the host
    */
-  private final String myHost;
-  /**
-   * the port
-   */
-  private final int myPort;
+  private final SSHConfig.Host myHost;
   /**
    * Handler number
    */
@@ -103,21 +92,25 @@ public class SSHMain {
    */
   private static final int BUFFER_SIZE = 16 * 1024;
   /**
-   * Maximal number of attempts
-   */
-  private static final int MAX_ATTEMPTS = 100;
-  /**
    * public key authenticatio method
    */
-  @NonNls private static final String PUBLICKEY_METHOD = "publickey";
+  @NonNls public static final String PUBLICKEY_METHOD = "publickey";
   /**
    * keboard interactve method
    */
-  @NonNls private static final String KEYBOARD_INTERACTIVE_METHOD = "keyboard-interactive";
+  @NonNls public static final String KEYBOARD_INTERACTIVE_METHOD = "keyboard-interactive";
   /**
    * password method
    */
-  @NonNls private static final String PASSWORD_METHOD = "password";
+  @NonNls public static final String PASSWORD_METHOD = "password";
+  /**
+   * RSA algorithm
+   */
+  @NonNls public static final String SSH_RSA_ALGORITHM = "ssh-rsa";
+  /**
+   * DSS algorithm
+   */
+  @NonNls public static final String SSH_DSS_ALGORITHM = "ssh-dss";
 
 
   /**
@@ -129,13 +122,12 @@ public class SSHMain {
    * @param port       a port
    * @param command    a command
    */
-  private SSHMain(final int xmlRcpPort, String host, String username, int port, String command) throws IOException {
-    myXmlRpcClient = new GitSSHIdeaClient(xmlRcpPort);
+  private SSHMain(final int xmlRcpPort, String host, String username, Integer port, String command) throws IOException {
+    SSHConfig config = SSHConfig.load();
+    myHost = config.lookup(username, host, port);
+    myXmlRpcClient = new GitSSHIdeaClient(xmlRcpPort, myHost.isBatchMode());
     myHandlerNo = Integer.parseInt(System.getenv(GitSSHService.SSH_HANDLER_ENV));
-    myUsername = username;
     myCommand = command;
-    myPort = port;
-    myHost = host;
   }
 
   /**
@@ -161,7 +153,7 @@ public class SSHMain {
    * @throws java.io.IOException if there is a problem with connection
    */
   private void start() throws IOException, InterruptedException {
-    Connection c = new Connection(myHost, myPort);
+    Connection c = new Connection(myHost.getHostName(), myHost.getPort());
     try {
       configureKnownHosts(c);
       c.connect(new HostKeyVerifier());
@@ -202,72 +194,94 @@ public class SSHMain {
    * @throws IOException in case of IO error or authentication failure
    */
   private void authenticate(final Connection c) throws IOException {
-    boolean enableKeyboardInteractive = true;
-    boolean enablePassword = true;
-    boolean enableDSA = true;
-    boolean enableRSA = true;
-    for (int i = 0; i < MAX_ATTEMPTS; i++) {
+    for (String method : myHost.getPreferredMethods()) {
       if (c.isAuthenticationComplete()) {
         return;
       }
-      if ((enableDSA || enableRSA) && c.isAuthMethodAvailable(myUsername, PUBLICKEY_METHOD)) {
-        // try RSA key
-        try {
-          if (tryPublicKey(c, idRSAPath)) {
-            return;
+      if (PUBLICKEY_METHOD.equals(method)) {
+        if (!myHost.supportsPubkeyAuthentication()) {
+          continue;
+        }
+        if (!c.isAuthMethodAvailable(myHost.getUser(), PUBLICKEY_METHOD)) {
+          continue;
+        }
+        File key = myHost.getIdentityFile();
+        if (key == null) {
+          for (String a : myHost.getHostKeyAlgorithms()) {
+            if (SSH_RSA_ALGORITHM.equals(a)) {
+              if (tryPublicKey(c, idRSAPath)) {
+                return;
+              }
+            }
+            else if (SSH_DSS_ALGORITHM.equals(a)) {
+              if (tryPublicKey(c, idDSAPath)) {
+                return;
+              }
+            }
           }
         }
-        finally {
-          enableRSA = false;
-        }
-        // try DSA key
-        try {
-          if (tryPublicKey(c, idDSAPath)) {
+        else {
+          if (tryPublicKey(c, key.getPath())) {
             return;
           }
-        }
-        finally {
-          enableDSA = false;
         }
       }
-      if (enableKeyboardInteractive && c.isAuthMethodAvailable(myUsername, KEYBOARD_INTERACTIVE_METHOD)) {
+      else if (KEYBOARD_INTERACTIVE_METHOD.equals(method)) {
+        if (!c.isAuthMethodAvailable(myHost.getUser(), KEYBOARD_INTERACTIVE_METHOD)) {
+          continue;
+        }
         InteractiveSupport ic = new InteractiveSupport();
-        if (c.authenticateWithKeyboardInteractive(myUsername, ic)) {
-          myLastError = "";
-          return;
-        }
-        else {
-          myLastError = GitBundle.getString("sshmain.keyboard.interactive.failed");
-        }
-        if (ic.myPromptCount == 0 || ic.myCancelled) {
-          // the interactive callback has never been asked or it was cancelled, disable it
-          enableKeyboardInteractive = false;
-          myLastError = "";
-        }
-        continue;
-      }
-      if (enablePassword && c.isAuthMethodAvailable(myUsername, PASSWORD_METHOD)) {
-        String password = myXmlRpcClient.askPassword(myHandlerNo, getUserHostString(), myLastError);
-        if (password == null) {
-          enablePassword = false;
-        }
-        else {
-          if (c.authenticateWithPassword(myUsername, password)) {
+        for (int i = myHost.getNumberOfPasswordPrompts(); i > 0; i--) {
+          if (c.isAuthenticationComplete()) {
+            return;
+          }
+          if (c.authenticateWithKeyboardInteractive(myHost.getUser(), ic)) {
             myLastError = "";
             return;
           }
           else {
-            myLastError = GitBundle.getString("sshmain.password.failed");
+            myLastError = GitBundle.getString("sshmain.keyboard.interactive.failed");
+          }
+          if (ic.myPromptCount == 0 || ic.myCancelled) {
+            // the interactive callback has never been asked or it was cancelled, exit the loop
+            myLastError = "";
+            break;
           }
         }
-        continue;
       }
-      throw new IOException("Authentication failed");
+      else if (PASSWORD_METHOD.equals(method)) {
+        if (!myHost.supportsPasswordAuthentication()) {
+          continue;
+        }
+        if (!c.isAuthMethodAvailable(myHost.getUser(), PASSWORD_METHOD)) {
+          continue;
+        }
+        for (int i = myHost.getNumberOfPasswordPrompts(); i > 0; i--) {
+          String password = myXmlRpcClient.askPassword(myHandlerNo, getUserHostString(), myLastError);
+          if (password == null) {
+            break;
+          }
+          else {
+            if (c.authenticateWithPassword(myHost.getUser(), password)) {
+              myLastError = "";
+              return;
+            }
+            else {
+              myLastError = GitBundle.getString("sshmain.password.failed");
+            }
+          }
+        }
+      }
     }
+    throw new IOException("Authentication failed");
   }
 
+  /**
+   * @return user and host string
+   */
   private String getUserHostString() {
-    return myUsername + "@" + myHost + (myPort == 22 ? "" : ":" + myPort);
+    int port = myHost.getPort();
+    return myHost.getUser() + "@" + myHost.getHostName() + (port == 22 ? "" : ":" + port);
   }
 
   /**
@@ -287,7 +301,7 @@ public class SSHMain {
         if (isEncryptedKey(text)) {
           // need to ask passphrase from user
           int i;
-          for (i = 0; i < MAX_ATTEMPTS; i++) {
+          for (i = myHost.getNumberOfPasswordPrompts(); i > 0; i--) {
             passphrase = myXmlRpcClient.askPassphrase(myHandlerNo, getUserHostString(), keyPath, myLastError);
             if (passphrase == null) {
               // if no passphrase was entered, just return false and try something other
@@ -306,13 +320,13 @@ public class SSHMain {
               break;
             }
           }
-          if (i == MAX_ATTEMPTS) {
-            myLastError = GitBundle.message("sshmain.too.mush.passphrase.guesses", keyPath, MAX_ATTEMPTS);
+          if (i == 0) {
+            myLastError = GitBundle.message("sshmain.too.mush.passphrase.guesses", keyPath, myHost.getNumberOfPasswordPrompts());
             return false;
           }
         }
         // try authentication
-        if (c.authenticateWithPublicKey(myUsername, text, passphrase)) {
+        if (c.authenticateWithPublicKey(myHost.getUser(), text, passphrase)) {
           myLastError = "";
           return true;
         }
@@ -422,10 +436,8 @@ public class SSHMain {
     if (knownHostFile.exists()) {
       database.addHostkeys(knownHostFile);
     }
-    String[] hostkeyAlgos = database.getPreferredServerHostkeyAlgorithmOrder(myHost);
-    if (hostkeyAlgos != null) {
-      c.setServerHostKeyAlgorithms(hostkeyAlgos);
-    }
+    final List<String> algorithms = myHost.getHostKeyAlgorithms();
+    c.setServerHostKeyAlgorithms(algorithms.toArray(new String[algorithms.size()]));
   }
 
   /**
@@ -441,7 +453,7 @@ public class SSHMain {
     }
     int i = 0;
     int xmlRcpPort = Integer.parseInt(args[i++]);
-    int port = DEFAULT_SSH_PORT;
+    Integer port = null;
     //noinspection HardCodedStringLiteral
     if ("-p".equals(args[i])) {
       i++;
@@ -451,7 +463,7 @@ public class SSHMain {
     String user;
     int atIndex = host.indexOf('@');
     if (atIndex == -1) {
-      user = System.getProperty("user.name");
+      user = null;
     }
     else {
       user = host.substring(0, atIndex);
