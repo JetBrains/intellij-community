@@ -179,17 +179,22 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       DefaultMutableTreeNode node = new DefaultMutableTreeNode(changeList);
       model.insertNodeInto(node, myRoot, myRoot.getChildCount());
 
+      final List<Object> shelvedFilesNodes = new ArrayList<Object>();
       List<ShelvedChange> changes = changeList.getChanges();
       for(ShelvedChange change: changes) {
-        DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(change);
         putMovedMessage(change.getBeforePath(), change.getAfterPath());
-        model.insertNodeInto(pathNode, node, node.getChildCount());
+        shelvedFilesNodes.add(change);
       }
       List<ShelvedBinaryFile> binaryFiles = changeList.getBinaryFiles();
       for(ShelvedBinaryFile file: binaryFiles) {
-        DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(file);
         putMovedMessage(file.BEFORE_PATH, file.AFTER_PATH);
-        model.insertNodeInto(pathNode, node, node.getChildCount());
+        shelvedFilesNodes.add(file);
+      }
+      Collections.sort(shelvedFilesNodes, ShelvedFilePatchComparator.getInstance());
+      for (int i = 0; i < shelvedFilesNodes.size(); i++) {
+        final Object filesNode = shelvedFilesNodes.get(i);
+        final DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(filesNode);
+        model.insertNodeInto(pathNode, node, i);
       }
     }
     return model;
@@ -294,6 +299,40 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
+  private final static class ShelvedFilePatchComparator implements Comparator<Object> {
+    private final static ShelvedFilePatchComparator ourInstance = new ShelvedFilePatchComparator();
+
+    public static ShelvedFilePatchComparator getInstance() {
+      return ourInstance;
+    }
+
+    public int compare(final Object o1, final Object o2) {
+      final String path1 = getPath(o1);
+      final String path2 = getPath(o2);
+      // case-insensitive; as in local changes
+      if (path1 == null) return -1;
+      if (path2 == null) return 1;
+      return path1.compareToIgnoreCase(path2);
+    }
+
+    private String getPath(final Object patch) {
+      String path = null;
+      if (patch instanceof ShelvedBinaryFile) {
+        final ShelvedBinaryFile binaryFile = (ShelvedBinaryFile) patch;
+        path = binaryFile.BEFORE_PATH;
+        path = (path == null) ? binaryFile.AFTER_PATH : path;
+      } else if (patch instanceof ShelvedChange) {
+        final ShelvedChange shelvedChange = (ShelvedChange)patch;
+        path = shelvedChange.getBeforePath().replace('/', File.separatorChar);
+      }
+      if (path == null) {
+        return null;
+      }
+      final int pos = path.lastIndexOf(File.separatorChar);
+      return (pos >= 0) ? path.substring(pos + 1) : path;
+    }
+  }
+
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
     private IssueLinkRenderer myIssueLinkRenderer;
     private final Map<Pair<String, String>, String> myMoveRenameInfo;
@@ -313,6 +352,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         } else {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
         }
+        final int count = node.getChildCount();
+        final String numFilesText = " (" + count + ((count == 1) ? " file) " : " files) ");
+        append(numFilesText, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+        
         final String date = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT).format(changeListData.DATE);
         append(" (" + date + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(StdFileTypes.PATCH.getIcon());
