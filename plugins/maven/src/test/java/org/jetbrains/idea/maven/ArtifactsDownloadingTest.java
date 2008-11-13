@@ -64,7 +64,7 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testDownloadingPlugins() throws Exception {
+  public void testDownloadingPluginsOnResolve() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -82,7 +82,7 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     File f = new File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar");
     assertFalse(f.exists());
 
-    download();
+    resolveProject();
 
     assertTrue(f.exists());
   }

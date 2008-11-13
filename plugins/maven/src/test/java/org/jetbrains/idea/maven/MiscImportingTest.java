@@ -115,10 +115,10 @@ public class MiscImportingTest extends MavenImportingTestCase {
                           "      <id>my</id>" +
                           "      <active>true</active>" +
                           "      <protocol>http</protocol>" +
-                          "      <username>coox</username>" +
-                          "      <password>invalid</password>" + // valid password is 'test'
-                          "      <host>is.intellij.net</host>" +
+                          "      <host>proxy-auth-test.labs.intellij.net</host>" +
                           "      <port>3128</port>" +
+                          "      <username>user1</username>" +
+                          "      <password>invalid</password>" + // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
                           "    </proxy>" +
                           "  </proxies>" +
                           "</settings>");

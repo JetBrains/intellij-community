@@ -111,6 +111,8 @@ public class MavenRunner extends DummyProjectComponent implements PersistentStat
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
                           ProgressIndicator indicator) {
+    if (commands.isEmpty()) return true;
+    
     final MavenGeneralSettings effectiveCoreSettings = coreSettings != null ? coreSettings : getGeneralSettings();
     final MavenRunnerSettings effectiveRunnerSettings = runnerSettings != null ? runnerSettings : getState();
 

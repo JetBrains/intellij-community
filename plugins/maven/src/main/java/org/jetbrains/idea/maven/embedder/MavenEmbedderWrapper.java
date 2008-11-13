@@ -7,8 +7,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
-import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.apache.maven.embedder.MavenEmbedderHelper;
@@ -105,54 +103,33 @@ public class MavenEmbedderWrapper {
     }, p);
   }
 
-  public void resolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws MavenProcessCanceledException {
-    try {
-      myEmbedder.resolve(artifact, remoteRepositories, myEmbedder.getLocalRepository());
-    }
-    catch (ArtifactResolutionException e) {
-    }
-    catch (ArtifactNotFoundException e) {
-    }
-    catch (ProcessCanceledException e) {
-      throw new MavenProcessCanceledException();
-    }
-    catch (Exception e) {
-    }
+  public void resolve(final Artifact artifact, final List<ArtifactRepository> remoteRepositories, MavenProcess process) throws MavenProcessCanceledException {
+    doExecute(new Executor<Object>() {
+      public Object execute() throws Exception {
+        try {
+          myEmbedder.resolve(artifact, remoteRepositories, myEmbedder.getLocalRepository());
+        }
+        catch (Exception e) {
+          MavenLog.LOG.info(e);
+        }
+        return null;
+      }
+    }, process);
   }
-  //
-  //public Set<Artifact> resolveTransitively(MavenProjectModel mavenProject, Artifact artifact) throws MavenProcessCanceledException {
-  //  try {
-  //    PlexusContainer container = myEmbedder.getPlexusContainer();
-  //
-  //    ArtifactResolver resolver = (ArtifactResolver)container.lookup(ArtifactResolver.class);
-  //    ArtifactMetadataSource metadataSource = (ArtifactMetadataSource)container.lookup(ArtifactMetadataSource.class);
-  //
-  //    ArtifactResolutionRequest request = new ArtifactResolutionRequest()
-  //        .setArtifact(mavenProject.getMavenProject().getArtifact())
-  //        .setArtifactDependencies(Collections.singleton(artifact))
-  //        .setLocalRepository(myEmbedder.getLocalRepository())
-  //        .setRemoteRepostories(mavenProject.getRepositories())
-  //        .setManagedVersionMap(mavenProject.getMavenProject().getManagedVersionMap()) // todo can be null
-  //        .setMetadataSource(metadataSource);
-  //
-  //    return resolver.resolve(request).getArtifacts();
-  //  }
-  //  catch (ComponentLookupException e) {
-  //    throw new RuntimeException(e);
-  //  }
-  //}
 
-  public boolean resolvePlugin(Plugin plugin, MavenProject project) throws MavenProcessCanceledException {
-    try {
-      MavenEmbedderHelper.verifyPlugin(plugin, project, myEmbedder);
-    }
-    catch (ProcessCanceledException e) {
-      throw new MavenProcessCanceledException();
-    }
-    catch (Exception e) {
-      return false;
-    }
-    return true;
+  public boolean resolvePlugin(final Plugin plugin, final MavenProject project, MavenProcess process) throws MavenProcessCanceledException {
+    return doExecute(new Executor<Boolean>() {
+      public Boolean execute() throws Exception {
+        try {
+          MavenEmbedderHelper.verifyPlugin(plugin, project, myEmbedder);
+        }
+        catch (Exception e) {
+          MavenLog.LOG.info(e);
+          return false;
+        }
+        return true;
+      }
+    }, process).booleanValue();
   }
 
   public Artifact createArtifact(String groupId, String artifactId, String version, String type, String classifier) {

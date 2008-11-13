@@ -463,7 +463,8 @@ public class MavenProjectsTree {
   public Artifact downloadArtifact(MavenProjectModel mavenProject,
                                    MavenId id,
                                    MavenGeneralSettings coreSettings,
-                                   MavenConsole console) throws MavenProcessCanceledException {
+                                   MavenConsole console,
+                                   MavenProcess process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, console);
     try {
       Artifact artifact = e.createArtifact(id.groupId,
@@ -472,7 +473,7 @@ public class MavenProjectsTree {
                                            MavenConstants.JAR_TYPE,
                                            null);
       artifact.setScope(Artifact.SCOPE_COMPILE);
-      e.resolve(artifact, mavenProject.getRepositories());
+      e.resolve(artifact, mavenProject.getRepositories(), process);
       return artifact;
     }
     finally {

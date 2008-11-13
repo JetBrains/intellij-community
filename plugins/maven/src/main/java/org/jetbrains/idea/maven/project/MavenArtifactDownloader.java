@@ -116,7 +116,7 @@ public class MavenArtifactDownloader {
                                              eachArtifact.getVersion(),
                                              MavenConstants.JAR_TYPE,
                                              classifier);
-      myEmbedder.resolve(a, new ArrayList<ArtifactRepository>(eachEntry.getValue()));
+      myEmbedder.resolve(a, new ArrayList<ArtifactRepository>(eachEntry.getValue()), myProgress);
       if (a.isResolved()) downloadedFiles.add(a.getFile());
     }
   }

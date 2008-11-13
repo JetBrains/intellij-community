@@ -6,20 +6,21 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenId;
 
-public class DependencyQuickFix implements IntentionAction {
+public class AddMavenDependencyQuickFix implements IntentionAction {
   private PsiJavaCodeReferenceElement myRef;
 
-  public DependencyQuickFix(PsiJavaCodeReferenceElement ref) {
+  public AddMavenDependencyQuickFix(PsiJavaCodeReferenceElement ref) {
     myRef = ref;
   }
 
@@ -47,13 +48,21 @@ public class DependencyQuickFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final MavenId dependency = MavenArtifactSearchDialog.searchForClass(project, myRef.getText());
+    MavenId dependency = MavenArtifactSearchDialog.searchForClass(project, getReferenceText());
     if (dependency == null) return;
 
     Module module = getModuleForFile(file);
     MavenProjectModel mavenProject = MavenProjectsManager.getInstance(project).findProject(module);
 
     MavenProjectsManager.getInstance(project).addDependency(mavenProject, dependency);
+  }
+
+  private String getReferenceText() {
+    PsiElement result = myRef;
+    while(result.getParent() instanceof PsiJavaCodeReferenceElement) {
+      result = result.getParent();
+    }
+    return result.getText();
   }
 
   public boolean startInWriteAction() {
