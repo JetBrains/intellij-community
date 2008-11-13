@@ -27,7 +27,6 @@ package com.intellij.psi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -66,7 +65,7 @@ public class RedundantCastUtil {
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
     private final Set<PsiTypeCastExpression> myFoundCasts = new HashSet<PsiTypeCastExpression>();
 
-    public MyCollectingVisitor() {
+    private MyCollectingVisitor() {
       super(true);
     }
 
@@ -97,7 +96,7 @@ public class RedundantCastUtil {
     private boolean isRedundant = false;
     private final boolean myRecursive;
 
-    public MyIsRedundantVisitor(final boolean recursive) {
+    private MyIsRedundantVisitor(final boolean recursive) {
       myRecursive = recursive;
     }
 
@@ -297,7 +296,9 @@ public class RedundantCastUtil {
       for (PsiExpression arg : args) {
         if (arg instanceof PsiTypeCastExpression) {
           PsiExpression castOperand = ((PsiTypeCastExpression)arg).getOperand();
-          castOperand.accept(this);
+          if (castOperand != null) {
+            castOperand.accept(this);
+          }
         }
         else {
           arg.accept(this);
