@@ -19,23 +19,17 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.psi.filters.TrueFilter;
+import org.intellij.lang.xpath.completion.XPathCompletionData;
+import org.intellij.lang.xpath.psi.XPathElement;
+import org.intellij.lang.xpath.validation.inspections.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import org.intellij.lang.xpath.completion.XPathCompletionData;
-import org.intellij.lang.xpath.psi.XPathElement;
-import org.intellij.lang.xpath.validation.inspections.CheckNodeTest;
-import org.intellij.lang.xpath.validation.inspections.HardwiredNamespacePrefix;
-import org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion;
-import org.intellij.lang.xpath.validation.inspections.IndexZeroPredicate;
-import org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion;
-import org.intellij.lang.xpath.validation.inspections.XPathInspection;
-
-public class XPathSupportLoader implements ApplicationComponent, InspectionToolProvider {
+public class XPathSupportLoader extends FileTypeFactory implements ApplicationComponent, InspectionToolProvider {
     private static final boolean DBG_MODE = Boolean.getBoolean("xpath-lang.register-file-type");
 
     @NotNull
@@ -45,18 +39,8 @@ public class XPathSupportLoader implements ApplicationComponent, InspectionToolP
     }
     
     public void initComponent() {
-        if (DBG_MODE) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                    final String[] extensions = new String[]{ XPathFileType.XPATH.getDefaultExtension() };
-                    FileTypeManager.getInstance().registerFileType(XPathFileType.XPATH, extensions);
-                }
-            });
-        }
-
         CompletionUtil.registerCompletionData(XPathFileType.XPATH, new XPathCompletionData(TrueFilter.INSTANCE, XPathElement.class));
         TypedHandler.registerQuoteHandler(XPathFileType.XPATH, new SimpleTokenSetQuoteHandler(XPathTokenTypes.STRING_LITERAL));
-//        ColorSettingsPages.getInstance().registerPage(new XPathColorSettingsPage());
     }
 
     public void disposeComponent() {
@@ -71,5 +55,9 @@ public class XPathSupportLoader implements ApplicationComponent, InspectionToolP
                 IndexZeroPredicate.class,
                 HardwiredNamespacePrefix.class,
         };
+    }
+
+    public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
+        if (DBG_MODE) consumer.consume(XPathFileType.XPATH, XPathFileType.XPATH.getDefaultExtension());
     }
 }

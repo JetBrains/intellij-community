@@ -20,6 +20,7 @@
                             serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
         <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
                         serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
+        <fileTypeFactory implementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl" />
     </extensions>
 
     <application-components>

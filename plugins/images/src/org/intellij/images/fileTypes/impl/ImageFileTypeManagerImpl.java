@@ -15,21 +15,18 @@
  */
 package org.intellij.images.fileTypes.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.UserBinaryFileType;
-import com.intellij.openapi.fileTypes.UserFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashSet;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -43,6 +40,13 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
   @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
     private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
     private UserFileType imageFileType;
+
+    public ImageFileTypeManagerImpl() {
+        imageFileType = new ImageFileType();
+        imageFileType.setIcon(IconLoader.getIcon("/org/intellij/images/icons/ImagesFileType.png"));
+        imageFileType.setName(IMAGE_FILE_TYPE_NAME);
+        imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
+    }
 
     public boolean isImage(VirtualFile file) {
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
@@ -60,26 +64,24 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
     }
 
     public void initComponent() {
-        final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        String[] readerFormatNames = ImageIO.getReaderFormatNames();
-        final Set<String> extensions = new HashSet<String>(readerFormatNames.length);
-        for (String format : readerFormatNames) {
-            extensions.add(format.toLowerCase());
-        }
-        imageFileType = new ImageFileType();
-        imageFileType.setIcon(IconLoader.getIcon("/org/intellij/images/icons/ImagesFileType.png"));
-        imageFileType.setName(IMAGE_FILE_TYPE_NAME);
-        imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            fileTypeManager.registerFileType(imageFileType, extensions.toArray(new String[extensions.size()]));
-          }
-        });
     }
 
     public void disposeComponent() {
     }
 
     public static final class ImageFileType extends UserBinaryFileType {
+    }
+
+    public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
+        final String[] readerFormatNames = ImageIO.getReaderFormatNames();
+        final Set<String> processed = new THashSet<String>();
+
+        for (String format : readerFormatNames) {
+            final String s = format.toLowerCase();
+            if (processed.contains(s)) continue;
+            processed.add(s);
+        }
+
+        consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
     }
 }

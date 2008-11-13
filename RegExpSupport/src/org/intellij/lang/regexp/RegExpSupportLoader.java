@@ -16,34 +16,15 @@
 
 package org.intellij.lang.regexp;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class RegExpSupportLoader implements ApplicationComponent {
-    // should be true unless verified fix for IDEADEV-10862 is available 
-    private static final boolean DBG_MODE = true || Boolean.getBoolean("regexp-lang.register-file-type");
-
+public class RegExpSupportLoader extends FileTypeFactory {
     public static final RegExpLanguage LANGUAGE = RegExpLanguage.INSTANCE;
     public static final RegExpFileType FILE_TYPE = RegExpFileType.INSTANCE;
 
-    public void initComponent() {
-        if (DBG_MODE) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                    final String[] extensions = new String[]{ FILE_TYPE.getDefaultExtension() };
-                    FileTypeManager.getInstance().registerFileType(FILE_TYPE, extensions);
-                }
-            });
-        }
-    }
-
-    public void disposeComponent() {
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return "RegExpSupportLoader";
+    public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
+        consumer.consume(FILE_TYPE, FILE_TYPE.getDefaultExtension());
     }
 }

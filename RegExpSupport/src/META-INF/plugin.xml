@@ -10,17 +10,12 @@
   <version>8.0</version>
   <vendor>Sascha Weinreuter</vendor>
   <idea-version since-build="6656"/>
-  
-  <application-components>
-    <component>
-      <implementation-class>org.intellij.lang.regexp.RegExpSupportLoader</implementation-class>
-    </component>
-  </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
 
     <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentionProvider"/>
     <completion.contributor implementation="org.intellij.lang.regexp.RegExpCompletionContributor"/>
+    <fileTypeFactory implementation="org.intellij.lang.regexp.RegExpSupportLoader" />
   </extensions>
 </idea-plugin>
