@@ -41,6 +41,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
   private final boolean mySoft;
   @NonNls
   private static final String ANCHOR_ELEMENT_NAME = "a";
+  private static final String MAP_ELEMENT_NAME = "map";
   private static final Key<CachedValue<Map<String,XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
 
   AnchorReference(final String anchor, @Nullable final FileReference psiReference, final PsiElement element, final int offset,
@@ -70,6 +71,11 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     if (tag != null) {
       XmlAttribute attribute = tag.getAttribute("id", null);
       if (attribute==null) attribute = tag.getAttribute("name",null);
+
+      if (attribute == null && MAP_ELEMENT_NAME.equalsIgnoreCase(tag.getName())) {
+        attribute = tag.getAttribute("usemap", null);
+      }
+
       return attribute.getValueElement();
     }
 
@@ -146,6 +152,13 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
       final String attributeValue2 = xmlTag.getAttributeValue("name");
       if (attributeValue2!=null) {
         return attributeValue2;
+      }
+    }
+
+    if (MAP_ELEMENT_NAME.equalsIgnoreCase(xmlTag.getName())) {
+      final String map_anchor = xmlTag.getAttributeValue("name");
+      if (map_anchor != null) {
+        return map_anchor;
       }
     }
 
