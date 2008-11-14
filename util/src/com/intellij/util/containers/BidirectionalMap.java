@@ -113,4 +113,9 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
   public Set<Entry<K, V>> entrySet(){
     return myKeyToValueMap.entrySet();
   }
+
+  @Override
+  public String toString() {
+    return new HashMap<K,V>(myKeyToValueMap).toString();
+  }
 }
