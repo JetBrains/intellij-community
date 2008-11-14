@@ -74,7 +74,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     params.add(serverHostKey);
     params.add(isNew);
     try {
-      return ((Boolean)myClient.execute(HANDLER_NAME + ".verifyServerHostKey", params)).booleanValue();
+      return ((Boolean)myClient.execute(methodName("verifyServerHostKey"), params)).booleanValue();
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
@@ -82,6 +82,16 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     catch (IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * Get the full method name
+   *
+   * @param method short name of the method
+   * @return full method name
+   */
+  private static String methodName(@NonNls final String method) {
+    return HANDLER_NAME + "." + method;
   }
 
   /**
@@ -99,7 +109,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     params.add(keyPath);
     params.add(lastError);
     try {
-      return adjustNull(((String)myClient.execute(HANDLER_NAME + ".askPassphrase", params)));
+      return adjustNull(((String)myClient.execute(methodName("askPassphrase"), params)));
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
@@ -135,7 +145,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     params.add(echo);
     params.add(lastError);
     try {
-      return adjustNull((Vector<String>)myClient.execute(HANDLER_NAME + ".replyToChallenge", params));
+      return adjustNull((Vector<String>)myClient.execute(methodName("replyToChallenge"), params));
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
@@ -159,7 +169,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     params.add(username);
     params.add(lastError);
     try {
-      return adjustNull(((String)myClient.execute(HANDLER_NAME + ".askPassword", params)));
+      return adjustNull(((String)myClient.execute(methodName("askPassword"), params)));
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);

@@ -21,13 +21,12 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitBranch;
-import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
-import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.GitReferenceValidator;
 import git4idea.ui.GitUIUtil;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.Nullable;
@@ -82,17 +81,13 @@ public class GitCheckoutDialog extends DialogWrapper {
    */
   private JCheckBox myTrackBranchCheckBox;
   /**
+   * The validator for branch to checkout
+   */
+  private final GitReferenceValidator myBranchToCkeckoutValidator;
+  /**
    * The validate button
    */
   private JButton myValidateButton;
-  /**
-   * The text at moment of validation
-   */
-  private String myValidationText = null;
-  /**
-   * The validation result
-   */
-  private boolean myValidationResult = false;
   /**
    * The context project
    */
@@ -121,9 +116,15 @@ public class GitCheckoutDialog extends DialogWrapper {
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranch);
     setupIncludeTags();
     setupBranches();
-    setupValidate();
+    myBranchToCkeckoutValidator =
+      new GitReferenceValidator(project, myGitRoot, getBranchToCheckoutTextField(), myValidateButton, new Runnable() {
+        public void run() {
+          checkOkButton();
+        }
+      });
     setupNewBranchName();
     init();
+    checkOkButton();
   }
 
   /**
@@ -136,7 +137,7 @@ public class GitCheckoutDialog extends DialogWrapper {
       setOKActionEnabled(false);
       return;
     }
-    if (sourceRev.equals(myValidationText) && !myValidationResult) {
+    if (myBranchToCkeckoutValidator.isInvalid()) {
       setErrorText(GitBundle.getString("checkout.validation.failed"));
       setOKActionEnabled(false);
       return;
@@ -209,38 +210,15 @@ public class GitCheckoutDialog extends DialogWrapper {
       }
     };
     myNewBranchName.getDocument().addDocumentListener(l);
-    final JTextField text = (JTextField)myBranchToCkeckout.getEditor().getEditorComponent();
+    final JTextField text = getBranchToCheckoutTextField();
     text.getDocument().addDocumentListener(l);
   }
 
   /**
-   * Setup {@link #myValidateButton}
+   * @return text field for branch to checkout
    */
-  private void setupValidate() {
-    final JTextField text = (JTextField)myBranchToCkeckout.getEditor().getEditorComponent();
-    text.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        // note that checkOkButton is called in other listener
-        myValidateButton.setEnabled(text.getText().trim().length() != 0);
-      }
-    });
-    myValidateButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final String revisionExpression = getSourceBranch();
-        myValidationText = revisionExpression;
-        myValidationResult = false;
-        try {
-          GitRevisionNumber revision = GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
-          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, mySettings, revision.asString(), gitRoot());
-          myValidationResult = true;
-        }
-        catch (VcsException ex) {
-          GitUIUtil.showOperationError(myProject, ex, "Validating revision: " + revisionExpression);
-        }
-        checkOkButton();
-      }
-    });
-    myValidateButton.setEnabled(false);
+  private JTextField getBranchToCheckoutTextField() {
+    return (JTextField)myBranchToCkeckout.getEditor().getEditorComponent();
   }
 
   /**
