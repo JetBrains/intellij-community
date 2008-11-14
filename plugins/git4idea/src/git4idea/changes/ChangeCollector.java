@@ -127,6 +127,7 @@ class ChangeCollector {
     handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD");
     handler.setNoSSH(true);
     handler.setSilent(true);
+    handler.setStdoutSuppressed(true);
     handler.endOptions();
     try {
       String output = handler.run();
@@ -143,6 +144,7 @@ class ChangeCollector {
       handler.addParameters("--cached");
       handler.setNoSSH(true);
       handler.setSilent(true);
+      handler.setStdoutSuppressed(true);
       // During init diff does not works because HEAD
       // will apppear only after the first commit.
       // In that case added files are cached in index.
@@ -169,6 +171,7 @@ class ChangeCollector {
     handler.addParameters("-v", "--others", "--unmerged", "--exclude-standard");
     handler.setSilent(true);
     handler.setNoSSH(true);
+    handler.setStdoutSuppressed(true);
     // run handler and collect changes
     String list = handler.run();
     for (String line : list.split("\n")) {

@@ -42,9 +42,17 @@ public class GitSimpleHandler extends GitHandler {
    */
   private final StringBuilder myStderr = new StringBuilder();
   /**
+   * Reminder of the last stderr line
+   */
+  private final StringBuilder myStderrLine = new StringBuilder();
+  /**
    * Stdout output
    */
   private final StringBuilder myStdout = new StringBuilder();
+  /**
+   * Reminder of the last stdout line
+   */
+  private final StringBuilder myStdoutLine = new StringBuilder();
 
   /**
    * A constructor
@@ -73,12 +81,77 @@ public class GitSimpleHandler extends GitHandler {
   /**
    * {@inheritDoc}
    */
+  protected void processTerminated(final int exitCode) {
+    if (myVcs != null) {
+      if (!isStdoutSuppressed() && myStdoutLine.length() != 0) {
+        myVcs.showMessages(myStdoutLine.toString());
+        myStdoutLine.setLength(0);
+      }
+      else if (!isStderrSuppressed() && myStderrLine.length() != 0) {
+        myVcs.showErrorMessages(myStderrLine.toString());
+        myStderrLine.setLength(0);
+      }
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   protected void onTextAvailable(final String text, final Key outputType) {
+    final StringBuilder entire;
+    final StringBuilder lineRest;
+    final boolean suppressed;
     if (ProcessOutputTypes.STDOUT == outputType) {
-      myStdout.append(text);
+      entire = myStdout;
+      lineRest = myStdoutLine;
+      suppressed = isStdoutSuppressed();
     }
     else if (ProcessOutputTypes.STDERR == outputType) {
-      myStderr.append(text);
+      entire = myStderr;
+      lineRest = myStderrLine;
+      suppressed = isStderrSuppressed();
+    }
+    else {
+      return;
+    }
+    entire.append(text);
+    if (suppressed || myVcs == null) {
+      return;
+    }
+    int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
+    int start = 0;
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (last == '\n' || last == '\r') {
+        int savedPos;
+        if ((ch == '\n' || ch == '\r') && ch != last) {
+          savedPos = i - 1;
+        }
+        else {
+          savedPos = i;
+        }
+        if (last != '\r' || savedPos != i) {
+          String line;
+          if (lineRest.length() == 0) {
+            line = lineRest.append(text.substring(start, savedPos)).toString();
+            lineRest.setLength(0);
+          }
+          else {
+            line = text.substring(start, savedPos);
+          }
+          if (ProcessOutputTypes.STDOUT == outputType) {
+            myVcs.showMessages(line);
+          }
+          else if (ProcessOutputTypes.STDERR == outputType) {
+            myVcs.showErrorMessages(line);
+          }
+        }
+        start = savedPos;
+      }
+      last = ch;
+    }
+    if (start != text.length()) {
+      lineRest.append(text.substring(start));
     }
   }
 

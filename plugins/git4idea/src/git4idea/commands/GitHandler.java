@@ -68,6 +68,14 @@ public abstract class GitHandler {
    */
   private Process myProcess;
   /**
+   * If true, the standard output is not copied to viresion control console
+   */
+  private boolean myStdoutSuppressed;
+  /**
+   * If true, the standard error is not copied to viresion control console
+   */
+  private boolean myStderrSuppressed;
+  /**
    * the contenxt project (might be a default project)
    */
   private final Project myProject;
@@ -196,6 +204,10 @@ public abstract class GitHandler {
    * The constant for git command {@value}
    */
   @NonNls public static final String VERSION = "version";
+  /**
+   * The vcs object
+   */
+  protected final GitVcs myVcs;
 
   /**
    * A constructor
@@ -207,9 +219,9 @@ public abstract class GitHandler {
   protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     myProject = project;
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    final GitVcs vcs = GitVcs.getInstance(project);
-    if (vcs != null) {
-      vcs.checkVersion();
+    myVcs = GitVcs.getInstance(project);
+    if (myVcs != null) {
+      myVcs.checkVersion();
     }
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
@@ -413,7 +425,7 @@ public abstract class GitHandler {
     try {
       // setup environment
       if (!myProject.isDefault() && !mySilent) {
-        GitVcs.getInstance(myProject).showMessages(printableCommandLine());
+        GitVcs.getInstance(myProject).showCommandLine(printableCommandLine());
       }
       if (log.isDebugEnabled()) {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
@@ -444,6 +456,7 @@ public abstract class GitHandler {
           final int exitCode = event.getExitCode();
           setExitCode(exitCode);
           cleanupEnv();
+          GitHandler.this.processTerminated(exitCode);
           myListeners.getMulticaster().processTerminted(exitCode);
         }
 
@@ -462,6 +475,13 @@ public abstract class GitHandler {
       myListeners.getMulticaster().startFailed(t);
     }
   }
+
+  /**
+   * Notification for handler to handle process exit event
+   *
+   * @param exitCode a exit code.
+   */
+  protected abstract void processTerminated(int exitCode);
 
   /**
    * @return a command line with full path to executable replace to "git"
@@ -534,13 +554,18 @@ public abstract class GitHandler {
 
   /**
    * Set silent mode. When handler is silient, it does not logs command in version control console.
+   * Note that this option also suppresses stderr and stdout copying.
    *
    * @param silent a new value of the flag
+   * @see #setStderrSuppressed(boolean)
+   * @see #setStdoutSuppressed(boolean)
    */
   @SuppressWarnings({"SameParameterValue"})
   public void setSilent(final boolean silent) {
     checkNotStarted();
     mySilent = silent;
+    setStderrSuppressed(true);
+    setStdoutSuppressed(true);
   }
 
   /**
@@ -558,5 +583,39 @@ public abstract class GitHandler {
   @SuppressWarnings({"SameParameterValue"})
   public void setCharset(final Charset charset) {
     myCharset = charset;
+  }
+
+  /**
+   * @return true if stadnard output is not copied to the console
+   */
+  public boolean isStdoutSuppressed() {
+    return myStdoutSuppressed;
+  }
+
+  /**
+   * Set flag specifing if stdout shoud be copied to the console
+   *
+   * @param stdoutSuppressed true if output is not copied to the console
+   */
+  public void setStdoutSuppressed(final boolean stdoutSuppressed) {
+    checkNotStarted();
+    myStdoutSuppressed = stdoutSuppressed;
+  }
+
+  /**
+   * @return true if stadnard output is not copied to the console
+   */
+  public boolean isStderrSuppressed() {
+    return myStderrSuppressed;
+  }
+
+  /**
+   * Set flag specifing if stderr shoud be copied to the console
+   *
+   * @param stderrSuppressed true if error output is not copied to the console
+   */
+  public void setStderrSuppressed(final boolean stderrSuppressed) {
+    checkNotStarted();
+    myStderrSuppressed = stderrSuppressed;
   }
 }

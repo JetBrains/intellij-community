@@ -17,11 +17,8 @@ package git4idea;
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
 
-import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -107,10 +104,6 @@ public class GitVcs extends AbstractVcs {
    */
   private final GitVcsSettings mySettings;
   /**
-   * cached instace of color scheme
-   */
-  private final EditorColorsScheme myEditorColorsScheme;
-  /**
    * configuration support
    */
   private final Configurable myConfigurable;
@@ -161,7 +154,6 @@ public class GitVcs extends AbstractVcs {
     myCheckinEnvironment = gitCheckinEnvironment;
     myAnnotationProvider = gitAnnotationProvider;
     myDiffProvider = gitDiffProvider;
-    myEditorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     myHistoryProvider = gitHistoryProvider;
     myRollbackEnvironment = gitRollbackEnvironment;
     myRevSelector = new GitRevisionSelector();
@@ -359,7 +351,6 @@ public class GitVcs extends AbstractVcs {
         buffer.append(exception.getMessage());
       }
       String msg = buffer.toString();
-      showMessage(msg, CodeInsightColors.ERRORS_ATTRIBUTES);
       Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title"));
     }
   }
@@ -371,7 +362,7 @@ public class GitVcs extends AbstractVcs {
    */
   public void showMessages(@NotNull String message) {
     if (message.length() == 0) return;
-    showMessage(message, HighlighterColors.TEXT);
+    showMessage(message, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
   }
 
   /**
@@ -388,8 +379,8 @@ public class GitVcs extends AbstractVcs {
    * @param message a message to show
    * @param style   a style to use
    */
-  private void showMessage(@NotNull String message, final TextAttributesKey style) {
-    myVcsManager.addMessageToConsoleWindow(message, myEditorColorsScheme.getAttributes(style));
+  private void showMessage(@NotNull String message, final TextAttributes style) {
+    myVcsManager.addMessageToConsoleWindow(message, style);
   }
 
   /**
@@ -415,11 +406,12 @@ public class GitVcs extends AbstractVcs {
       }
       catch (VcsException e) {
         String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-        showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), CodeInsightColors.ERRORS_ATTRIBUTES);
+        showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
         return;
       }
       if (!GitVersion.parse(version).isSupported()) {
-        showMessage(GitBundle.message("vcs.unsupported.version", version, GitVersion.MIN), CodeInsightColors.WARNINGS_ATTRIBUTES);
+        showMessage(GitBundle.message("vcs.unsupported.version", version, GitVersion.MIN),
+                    ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
       }
     }
     finally {
@@ -442,5 +434,23 @@ public class GitVcs extends AbstractVcs {
     h.setSilent(true);
     s = h.run();
     return s;
+  }
+
+  /**
+   * Show command line
+   *
+   * @param cmdLine a command line text
+   */
+  public void showCommandLine(final String cmdLine) {
+    showMessage(cmdLine, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+  }
+
+  /**
+   * The error line
+   *
+   * @param line a line to show
+   */
+  public void showErrorMessages(final String line) {
+    showMessage(line, ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
   }
 }

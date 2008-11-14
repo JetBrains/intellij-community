@@ -79,6 +79,7 @@ public class MergeChangeCollector {
       String root = myRoot.getPath();
       GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitHandler.LS_FILES);
       h.setNoSSH(true);
+      h.setSilent(true);
       h.addParameters("--unmerged");
       for (String line : h.run().split("\n")) {
         if (line.length() == 0) {
@@ -94,6 +95,7 @@ public class MergeChangeCollector {
       }
       // collect other changes (ignoring unmerged)
       h = new GitSimpleHandler(myProject, myRoot, GitHandler.DIFF);
+      h.setSilent(true);
       h.setNoSSH(true);
       // note that moves are not detected here
       h.addParameters("--name-status", "--diff-filter=ADMRUX", myStart.getRev());

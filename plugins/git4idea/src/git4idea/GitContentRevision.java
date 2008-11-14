@@ -76,6 +76,7 @@ public class GitContentRevision implements ContentRevision {
       h.setCharset(myCharset);
     }
     h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
     h.addParameters(myRevision.getRev() + ":" + GitUtil.relativePath(root, myFile));
     return h.run();
   }

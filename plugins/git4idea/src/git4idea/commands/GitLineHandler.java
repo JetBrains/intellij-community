@@ -68,6 +68,20 @@ public class GitLineHandler extends GitHandler {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  protected void processTerminated(final int exitCode) {
+    // force newline
+    if (!isStdoutSuppressed() && myStdoutLine.length() != 0) {
+      onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
+    }
+    else if (!isStderrSuppressed() && myStderrLine.length() != 0) {
+      onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
+    }
+  }
+
+
+  /**
    * Add listener
    *
    * @param listener a listener to add
@@ -103,14 +117,14 @@ public class GitLineHandler extends GitHandler {
       if (lines.hasNext()) {
         // line is complete
         final String line = lineBuilder.toString();
-        myLineListeners.getMulticaster().onLineAvaiable(line, outputType);
+        notifyLine(line, outputType);
         lineBuilder.setLength(0);
       }
     }
     while (true) {
       String line = lines.next();
       if (lines.hasNext()) {
-        myLineListeners.getMulticaster().onLineAvaiable(line, outputType);
+        notifyLine(line, outputType);
       }
       else {
         if (line.length() > 0) {
@@ -122,10 +136,56 @@ public class GitLineHandler extends GitHandler {
   }
 
   /**
+   * Notify single line
+   *
+   * @param line       a line to notify
+   * @param outputType output type
+   */
+  private void notifyLine(final String line, final Key outputType) {
+    String trimmed = trimLineSeparator(line);
+    // if line ends with return, then it is a progress line, ignore it
+    if (myVcs != null && !"\r".equals(line.substring(trimmed.length()))) {
+      if (outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) {
+        myVcs.showMessages(trimmed);
+      }
+      else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed()) {
+        myVcs.showErrorMessages(trimmed);
+      }
+    }
+    myLineListeners.getMulticaster().onLineAvaiable(trimmed, outputType);
+  }
+
+  /**
+   * Trim line separator from new line if it presents
+   *
+   * @param line a line to process
+   * @return a trimmed line
+   */
+  private static String trimLineSeparator(String line) {
+    int n = line.length();
+    if (n == 0) {
+      return line;
+    }
+    char ch = line.charAt(n - 1);
+    if (ch == '\n' || ch == '\r') {
+      n--;
+    }
+    else {
+      return line;
+    }
+    char ch2 = line.charAt(n - 1);
+    if ((ch2 == '\n' || ch2 == '\r') && ch2 != ch) {
+      n--;
+    }
+    return line.substring(0, n);
+
+  }
+
+  /**
    * Split text into lines. New line characters are treated as separators. So if the text starts
    * with newline, empty string will be the first element, if the text ends with new line, the
    * empty string will be the last element. The returned lines will be substrings of
-   * the text argument.
+   * the text argument. The new line characters are included into the line text.
    *
    * @param text a text to split
    * @return a list of elements (note that there are always at least one element)
@@ -138,20 +198,20 @@ public class GitLineHandler extends GitHandler {
     while (i < n) {
       switch (text.charAt(i)) {
         case '\n':
-          rc.add(text.substring(startLine, i));
           i++;
           if (i < n && text.charAt(i) == '\r') {
             i++;
           }
+          rc.add(text.substring(startLine, i));
           startLine = i;
           break;
         case '\r':
-          rc.add(text.substring(startLine, i));
           i++;
           if (i < n && text.charAt(i) == '\n') {
             i++;
           }
           startLine = i;
+          rc.add(text.substring(startLine, i));
           break;
         default:
           i++;
