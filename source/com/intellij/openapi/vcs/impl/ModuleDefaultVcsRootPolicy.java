@@ -22,10 +22,12 @@ import java.util.List;
 public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   private Project myProject;
   private final VirtualFile myBaseDir;
+  private ModuleManager myModuleManager;
 
   public ModuleDefaultVcsRootPolicy(final Project project) {
     myProject = project;
     myBaseDir = project.getBaseDir();
+    myModuleManager = ModuleManager.getInstance(myProject);
   }
 
   public void addDefaultVcsRoots(final VcsDirectoryMappingList mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
@@ -35,11 +37,11 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     // assertion for read access inside
     final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
       public Module[] compute() {
-        return ModuleManager.getInstance(myProject).getModules();
+        return myModuleManager.getModules();
       }
     });
     for(Module module: modules) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+      final VirtualFile[] files = ModuleRootManager.getInstanceChecked(module).getContentRoots();
       for(VirtualFile file: files) {
         // if we're currently processing moduleAdded notification, getModuleForFile() will return null, so we pass the module
         // explicitly (we know it anyway)
@@ -80,9 +82,9 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   public void markDefaultRootsDirty(final DirtBuilder builder) {
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    final Module[] modules = myModuleManager.getModules();
     for(Module module: modules) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+      final VirtualFile[] files = ModuleRootManager.getInstanceChecked(module).getContentRoots();
       for(VirtualFile file: files) {
         builder.addDirtyDirRecursively(new FilePathImpl(file));
       }
