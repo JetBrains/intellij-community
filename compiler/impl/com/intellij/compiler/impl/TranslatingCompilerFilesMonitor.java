@@ -163,6 +163,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       public void run() {
         try {
           final Map<VirtualFile, SourceFileInfo> compiledSources = new HashMap<VirtualFile, SourceFileInfo>();
+          final Set<VirtualFile> forceRecompile = new HashSet<VirtualFile>();
 
           for (TranslatingCompiler.OutputItem item : successfullyCompiled) {
             final VirtualFile sourceFile = item.getSourceFile();
@@ -183,17 +184,25 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             if (outputPath != null) { // can be null for packageinfo
               final VirtualFile outputFile = lfs.findFileByPath(outputPath);
 
-              assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
+              //assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
 
-              if (!sourceFile.equals(outputFile)) {
-                final String outputRoot = item.getOutputRootDirectory();
-                final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
-                if (isSourceValid) {
-                  srcInfo.addOutputPath(projectId, outputPath);
-                  saveOutputInfo(outputFile, new OutputFileInfo(sourceFile.getPath(), className));
+              if (outputFile != null) {
+                if (!sourceFile.equals(outputFile)) {
+                  final String outputRoot = item.getOutputRootDirectory();
+                  final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
+                  if (isSourceValid) {
+                    srcInfo.addOutputPath(projectId, outputPath);
+                    saveOutputInfo(outputFile, new OutputFileInfo(sourceFile.getPath(), className));
+                  }
+                  else {
+                    markOutputPathForDeletion(projectId, outputPath, className, sourceFile.getUrl());
+                  }
                 }
-                else {
-                  markOutputPathForDeletion(projectId, outputPath, className, sourceFile.getUrl());
+              }
+              else {  // output file was not found
+                LOG.warn("TranslatingCompilerFilesMonitor.update():  Virtual file was not found for \"" + outputPath + "\"");
+                if (isSourceValid) {
+                  forceRecompile.add(sourceFile);
                 }
               }
             }
@@ -208,7 +217,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             info.updateTimestamp(projectId, fileStamp);
             saveSourceInfo(file, info);
             removeSourceForRecompilation(projectId, getFileId(file));
-            if (fileStamp > compilationStartStamp) {
+            if (fileStamp > compilationStartStamp || forceRecompile.contains(file)) {
               // changes were made during compilation, need to re-schedule compilation
               // it is important to invoke removeSourceForRecompilation() before to make sure
               // the corresponding output paths will be scheduled for deletion
