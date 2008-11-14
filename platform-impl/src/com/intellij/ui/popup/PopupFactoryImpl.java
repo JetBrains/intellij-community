@@ -673,7 +673,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
-    content.add(label, BorderLayout.CENTER);
+    final NonOpaquePanel textWrapper = new NonOpaquePanel(new GridBagLayout());
+    textWrapper.add(text);
+    content.add(textWrapper, BorderLayout.CENTER);
 
     final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
     north.add(new JLabel(icon), BorderLayout.NORTH);
