@@ -46,7 +46,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   @NonNls private static final String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
   @NonNls private static final String NONNLS_SELECTED_PROPERTY = "INTRODUCE_CONSTANT_NONNLS";
 
-  private Project myProject;
+  private final Project myProject;
   private final PsiClass myParentClass;
   private final PsiExpression myInitializerExpression;
   private final PsiLocalVariable myLocalVariable;
@@ -77,9 +77,9 @@ class IntroduceConstantDialog extends DialogWrapper {
   private JLabel myNameSuggestionLabel;
   private JLabel myTargetClassNameLabel;
   private JCheckBox myCbNonNls;
-  private JCheckBox myIntroduceEnumConstantCb = new JCheckBox(RefactoringBundle.message("introduce.constant.enum.cb"), true);
+  private final JCheckBox myIntroduceEnumConstantCb = new JCheckBox(RefactoringBundle.message("introduce.constant.enum.cb"), true);
 
-  public IntroduceConstantDialog(Project project,
+  IntroduceConstantDialog(Project project,
                                  PsiClass parentClass,
                                  PsiExpression initializerExpression,
                                  PsiLocalVariable localVariable,

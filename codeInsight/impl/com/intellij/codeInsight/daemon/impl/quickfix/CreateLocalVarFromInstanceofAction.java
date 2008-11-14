@@ -94,7 +94,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   }
 
   @Nullable
-  private static PsiInstanceOfExpression getInstanceOfExpressionAtCaret(Editor editor, PsiFile file) {
+  static PsiInstanceOfExpression getInstanceOfExpressionAtCaret(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
@@ -182,12 +182,12 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     cast.getCastType().replace(factory.createTypeElement(castType));
     cast.getOperand().replace(instanceOfExpression.getOperand());
     PsiDeclarationStatement decl = factory.createVariableDeclarationStatement("xxx", castType, cast);
-    PsiDeclarationStatement element = insertAtAnchor(instanceOfExpression, decl);
+    PsiDeclarationStatement element = (PsiDeclarationStatement)insertAtAnchor(instanceOfExpression, decl);
     return CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
   }
 
   @Nullable
-  private static PsiDeclarationStatement insertAtAnchor(final PsiInstanceOfExpression instanceOfExpression, PsiDeclarationStatement toInsert) throws IncorrectOperationException {
+  static PsiElement insertAtAnchor(final PsiInstanceOfExpression instanceOfExpression, PsiElement toInsert) throws IncorrectOperationException {
     boolean negated = isNegated(instanceOfExpression);
     PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
     PsiElementFactory factory = JavaPsiFacade.getInstance(toInsert.getProject()).getElementFactory();
@@ -255,7 +255,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (anchorAfter == null) {
       return null;
     }
-    return (PsiDeclarationStatement)anchorAfter.getParent().addAfter(toInsert, anchorAfter);
+    return anchorAfter.getParent().addAfter(toInsert, anchorAfter);
   }
 
   private static void reformatNewCodeBlockBraces(final PsiElement start, final PsiBlockStatement end)
