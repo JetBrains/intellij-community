@@ -148,6 +148,7 @@ public abstract class InspectionRVContentProvider {
                   return true;
                 }
               });
+              if (nodes.isEmpty()) continue;  //FilteringInspectionTool == DeadCode
               parentNode.removeAllChildren();
               for (ProblemDescriptionNode node : nodes) {
                 parentNode.add(node);
