@@ -140,6 +140,11 @@ public class PyResolveTest extends ResolveTestCase {
     assertNotNull(PsiTreeUtil.getParentOfType(targetElement, PyAssignmentStatement.class)); // it's deep in a tuple
   }
 
+  public void testWithStatement() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyWithStatement);
+  }
 
 
   @Override

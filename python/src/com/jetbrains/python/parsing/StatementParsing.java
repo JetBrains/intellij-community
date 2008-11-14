@@ -586,7 +586,7 @@ public class StatementParsing
     getExpressionParser().parseExpression();
     if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
       myBuilder.advanceLexer();
-      getExpressionParser().parseExpression();
+      getExpressionParser().parseExpression(true, true); // 'as' is followed by a target
     }
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();

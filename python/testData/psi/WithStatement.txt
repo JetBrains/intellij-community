@@ -19,7 +19,7 @@ PyFile:WithStatement.py
     PsiWhiteSpace(' ')
     PsiElement(Py:AS_KEYWORD)('as')
     PsiWhiteSpace(' ')
-    PyReferenceExpression: y
+    PyTargetExpression: y
       PsiElement(Py:IDENTIFIER)('y')
     PsiElement(Py:COLON)(':')
     PsiWhiteSpace('\n  ')
