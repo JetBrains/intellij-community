@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,6 +141,15 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   public void setFocusedComponentImpl(Component component, @Nullable AWTEvent cause){
     if (!isFocusedComponentChangeValid(component, cause)) return;
 
+    if (UIUtil.isFocusProxy(component)) {
+      _setFocused(getFocusedComponent(), cause);
+      return;
+    }
+
+    _setFocused(component, cause);
+  }
+
+  private void _setFocused(final Component component, final AWTEvent cause) {
     setFocusedComponent(component);
     focusedComponentChanged(component, cause);
   }

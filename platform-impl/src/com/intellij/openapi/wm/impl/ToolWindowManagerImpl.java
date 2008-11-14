@@ -220,7 +220,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandList);
   }
 
-  private void activateEditorComponentImpl(final ArrayList<FinalizableCommand> commandList, boolean forced) {
+  private void activateEditorComponentImpl(final ArrayList<FinalizableCommand> commandList, final boolean forced) {
+    final String active = getActiveToolWindowId();
     // Now we have to request focus into most recent focused editor
     appendRequestFocusInEditorComponentCmd(commandList, forced).doWhenDone(new Runnable() {
       public void run() {
@@ -229,17 +230,56 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (LOG.isDebugEnabled()) {
           LOG.debug("editor activated");
         }
-        final WindowInfoImpl[] infos = myLayout.getInfos();
-        for (final WindowInfoImpl info : infos) {
-          final boolean shouldHide = (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info));
-          deactivateToolWindowImpl(info.getId(), shouldHide, postExecute);
-        }
-        myEditorComponentActive = true;
+        deactivateWindows(postExecute, null);
         myActiveStack.clear();
+        myEditorComponentActive = true;
 
         execute(postExecute);
       }
+    }).doWhenRejected(new Runnable() {
+      public void run() {
+        if (forced) {
+          requestFocus(new FocusCommand() {
+            public ActionCallback run() {
+              final ArrayList<FinalizableCommand> cmds = new ArrayList<FinalizableCommand>();
+
+              final WindowInfoImpl toReactivate = getInfo(active);
+              final boolean reactivateLastActive = toReactivate != null && !isToHide(toReactivate);
+              deactivateWindows(cmds, reactivateLastActive ? active : null);
+              execute(cmds);
+
+              if (reactivateLastActive) {
+                activateToolWindow(active, false, true);
+              } else {
+                if (active != null) {
+                  myActiveStack.remove(active, false);
+                }
+
+                if (!myActiveStack.isEmpty()) {
+                  activateToolWindow(myActiveStack.peek(), false, true);
+                }
+              }
+              return new ActionCallback.Done();
+            }
+          }, false);
+        }
+      }
     });
+  }
+
+  private void deactivateWindows(final ArrayList<FinalizableCommand> postExecute, String idToIgnore) {
+    final WindowInfoImpl[] infos = myLayout.getInfos();
+    for (final WindowInfoImpl info : infos) {
+      final boolean shouldHide = isToHide(info);
+      if (idToIgnore != null && idToIgnore.equals(info.getId())) {
+        continue;
+      }
+      deactivateToolWindowImpl(info.getId(), shouldHide, postExecute);
+    }
+  }
+
+  private boolean isToHide(final WindowInfoImpl info) {
+    return (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info));
   }
 
   /**

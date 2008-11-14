@@ -50,6 +50,10 @@ final class ActiveStack {
     return myStack.pop();
   }
 
+  String peek() {
+    return myStack.peek();
+  }
+
   void push(final String id) {
     remove(id, true);
     myStack.push(id);

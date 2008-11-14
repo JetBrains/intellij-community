@@ -58,6 +58,8 @@ public class UIUtil {
   private static Color SEPARATOR_COLOR = INACTIVE_COLOR.brighter();
   public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
+  public static final String FOCUS_PROXY_KEY = "isFocusProxy";
+
   private UIUtil() {
   }
 
@@ -948,6 +950,18 @@ public class UIUtil {
         LOG.error(e);
       }
     }
+  }
+
+  public static boolean isFocusProxy(@Nullable Component c) {
+    if (c instanceof JComponent) {
+      return Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
+    }
+
+    return false;
+  }
+
+  public static void setFocusProxy(JComponent c, boolean isProxy) {
+    c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
   }
 }
 

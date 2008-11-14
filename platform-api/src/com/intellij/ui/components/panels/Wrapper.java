@@ -16,11 +16,12 @@
 package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusListener;
 import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 public class Wrapper extends JPanel implements NullableComponent {
 
@@ -135,6 +136,7 @@ public class Wrapper extends JPanel implements NullableComponent {
     }
 
     private void init() {
+      UIUtil.setFocusProxy(this, true);
       setFocusable(true);
       addFocusListener(this);
     }
