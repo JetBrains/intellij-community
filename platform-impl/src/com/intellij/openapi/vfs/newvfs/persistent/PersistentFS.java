@@ -14,6 +14,9 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
@@ -208,7 +211,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     myRecords.setName(id, name);
 
     myRecords.setTimestamp(id, delegate.getTimeStamp(file));
-    myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) | (!delegate.isWritable(file) ? IS_READ_ONLY : 0), true);
+    myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) | (delegate.isWritable(file) ? 0 : IS_READ_ONLY), true);
 
     myRecords.setLength(id, -1L);
 
@@ -427,7 +430,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
-  private boolean mustReloadContent(final VirtualFile file) {
+  private static boolean mustReloadContent(final VirtualFile file) {
     return checkFlag(file, MUST_RELOAD_CONTENT) || FSRecords.getLength(getFileId(file)) == -1L;
   }
 
@@ -606,28 +609,52 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return roots.toArray(new VirtualFile[roots.size()]);
   }
 
+  //guarded by dirCacheReadLock/dirCacheWriteLock
   private final TIntObjectHashMap<VirtualFile> myIdToDirCache = new TIntObjectHashMap<VirtualFile>();
+  private final JBLock dirCacheReadLock;
+  private final JBLock dirCacheWriteLock;
+  {
+    JBReentrantReadWriteLock lock = LockFactory.createReadWriteLock();
+    dirCacheReadLock = lock.readLock();
+    dirCacheWriteLock = lock.writeLock();
+  }
+
 
   public void clearIdCache() {
-    synchronized (myIdToDirCache) {
+    try {
+      dirCacheWriteLock.lock();
       myIdToDirCache.clear();
+    }
+    finally {
+      dirCacheWriteLock.unlock();
     }
   }
 
   @Nullable
   public VirtualFile findFileById(final int id) {
-    synchronized (myIdToDirCache) {
+    try {
+      dirCacheReadLock.lock();
       final VirtualFile cached = myIdToDirCache.get(id);
       if (cached != null) {
         return cached;
       }
+    }
+    finally {
+      dirCacheReadLock.unlock();
+    }
 
-      final VirtualFile result = doFindFile(id);
-      if (result != null && result.isDirectory()) {
+    final VirtualFile result = doFindFile(id);
+
+    if (result != null && result.isDirectory()) {
+      try {
+        dirCacheWriteLock.lock();
         myIdToDirCache.put(id, result);
       }
-      return result;
+      finally {
+        dirCacheWriteLock.unlock();
+      }
     }
+    return result;
   }
 
   private VirtualFile doFindFile(final int id) {
@@ -798,14 +825,14 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private void setFlag(final int id, final int mask, final boolean value) {
     int oldFlags = FSRecords.getFlags(id);
-    int flags = value ? (oldFlags | mask) : (oldFlags & (~mask));
+    int flags = value ? oldFlags | mask : oldFlags & ~mask;
 
     if (oldFlags != flags) {
       myRecords.setFlags(id, flags, true);
     }
   }
 
-  private boolean checkFlag(VirtualFile file, int mask) {
+  private static boolean checkFlag(VirtualFile file, int mask) {
     return (FSRecords.getFlags(getFileId(file)) & mask) != 0;
   }
 
