@@ -71,6 +71,7 @@ public abstract class BreakpointPropertiesPanel {
   private JRadioButton mySuspendAllRadio;
   private JRadioButton myDisableAgainRadio;
   private JRadioButton myLeaveEnabledRadioButton;
+  private JLabel myEnableOrDisableLabel;
   private JButton myMakeDefaultButton;
 
   ButtonGroup mySuspendPolicyGroup;
@@ -174,6 +175,15 @@ public abstract class BreakpointPropertiesPanel {
     final JComboBox baseBreakpointCombo = new ComboBox();
     myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, baseBreakpointCombo);
     baseBreakpointCombo.setRenderer(new BreakpointComboRenderer());
+    baseBreakpointCombo.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        ComboboxItem item = (ComboboxItem)baseBreakpointCombo.getSelectedItem();
+        final boolean enabled = item != null && item.getBreakpoint() != null;
+        myLeaveEnabledRadioButton.setEnabled(enabled);
+        myDisableAgainRadio.setEnabled(enabled);
+        myEnableOrDisableLabel.setEnabled(enabled);
+      }
+    });
     myInstanceFiltersField = new FieldPanel(new MyTextField(), "", null,
      new ActionListener() {
       public void actionPerformed(ActionEvent e) {
