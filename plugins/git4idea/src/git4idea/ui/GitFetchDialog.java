@@ -224,4 +224,12 @@ public class GitFetchDialog extends DialogWrapper {
   public String getRemote() {
     return getRemoteTextField().getText();
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
+  }
 }
