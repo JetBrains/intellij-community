@@ -87,12 +87,13 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     if (commenter == null) return;
 
-    final PsiFile tempFile = PsiFileFactory.getInstance(project).createFileFromText("dummy", language, commenter.getBlockCommentPrefix() +
-                                                                                                       "@declare id=\"" +
-                                                                                                       myId +
-                                                                                                       "\"" +
-                                                                                                       commenter.getBlockCommentSuffix() +
-                                                                                                       "\n");
+    final PsiFile tempFile = PsiFileFactory.getInstance(project).createFileFromText("dummy", language.getAssociatedFileType(),
+                                                                                    commenter.getBlockCommentPrefix() +
+                                                                                    "@declare id=\"" +
+                                                                                    myId +
+                                                                                    "\"" +
+                                                                                    commenter.getBlockCommentSuffix() +
+                                                                                    "\n");
 
     final PsiElement parent = tag.getParent();
     if (parent != null) {
