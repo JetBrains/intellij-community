@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -344,10 +346,11 @@ public class UpdateHighlightersUtil {
       }
     }
 
+    final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme(); // TODO: editor color scheme
     for (LineMarkerInfo info : markers) {
       if (startOffset > info.startOffset || info.startOffset > endOffset) continue;
       RangeHighlighter marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                info.textAttributes, HighlighterTargetArea.EXACT_RANGE);
+                                                                info.textAttributesKey != null ? colorsScheme.getAttributes(info.textAttributesKey) : null, HighlighterTargetArea.EXACT_RANGE);
       marker.setGutterIconRenderer(info.createGutterRenderer());
       marker.setLineSeparatorColor(info.separatorColor);
       marker.setLineSeparatorPlacement(info.separatorPlacement);

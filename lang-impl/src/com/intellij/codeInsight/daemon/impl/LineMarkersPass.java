@@ -112,7 +112,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
                                          return injectedMarker.getLineMarkerTooltip();
                                        }
                                      }, injectedMarker.getNavigationHandler());
-              converted.textAttributes = injectedMarker.textAttributes;
+              converted.textAttributesKey = injectedMarker.textAttributesKey;
               converted.endOffset = hostRange.getEndOffset();
               result.add(converted);
             }
