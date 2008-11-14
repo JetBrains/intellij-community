@@ -20,7 +20,7 @@ import java.util.Locale;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
   private static final int VERSION = 5;
-  private final static TObjectLongHashMap<ID<?, ?>> ourIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
+  private static final TObjectLongHashMap<ID<?, ?>> ourIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   private IndexInfrastructure() {
@@ -38,7 +38,7 @@ public class IndexInfrastructure {
     final String dirName = indexName.toString().toLowerCase(Locale.US);
     // store StubIndices under StubUpdating index' root to ensure they are deleted 
     // when StubUpdatingIndex version is changed 
-    final File indexDir = (indexName instanceof StubIndexKey)? 
+    final File indexDir = indexName instanceof StubIndexKey ?
                           new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), dirName) : 
                           new File(PathManager.getIndexRoot(), dirName);
     indexDir.mkdirs();
@@ -79,7 +79,7 @@ public class IndexInfrastructure {
       try {
         final int savedIndexVersion = in.readInt();
         final int commonVersion = in.readInt();
-        return (savedIndexVersion != currentIndexVersion) || (commonVersion != VERSION);
+        return savedIndexVersion != currentIndexVersion || commonVersion != VERSION;
       }
       finally {
         in.close();
@@ -114,6 +114,6 @@ public class IndexInfrastructure {
 
   @Nullable
   private static VirtualFile findTestFile(final int id) {
-    return ourUnitTestMode ? DummyFileSystem.getInstance().findById(id) : null;
+    return DummyFileSystem.getInstance().findById(id);
   }
 }
