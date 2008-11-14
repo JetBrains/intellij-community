@@ -122,6 +122,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.psi.impl.source.PostprocessReformattingAspect</implementation-class>
+      <skipForDefaultProject/>
     </component>
 
     <component>
@@ -164,9 +165,11 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory</implementation-class>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory</implementation-class>
+      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory</implementation-class>
