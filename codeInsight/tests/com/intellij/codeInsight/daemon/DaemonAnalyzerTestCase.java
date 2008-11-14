@@ -247,15 +247,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return result;
   }
 
-
-  protected TextEditorHighlightingPass getCustomPass(final PsiFile file, final Editor editor) {
-    return null;
-  }
-
-  protected boolean doTestCustomPass() {
-    return false;
-  }
-
   protected boolean doTestLineMarkers() {
     return false;
   }

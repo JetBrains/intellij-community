@@ -218,7 +218,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         contentEntry.addSourceFolder(toDir, false);
       }
     }
-    rootModel.commit();
+    doCommitModel(rootModel);
     if (sourceRootAdded) {
       sourceRootAdded(toDir);
     }
@@ -226,6 +226,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     openEditorsAndActivateLast(editorInfos);
 
     return toDir;
+  }
+
+  protected void doCommitModel(final ModifiableRootModel rootModel) {
+    rootModel.commit();
   }
 
   protected void sourceRootAdded(final VirtualFile dir) {
