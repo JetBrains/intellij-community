@@ -11,6 +11,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.util.ui.Centerizer;
 
 import javax.swing.*;
@@ -87,18 +88,38 @@ public class TabLabel extends JPanel {
   }
 
   public void paint(final Graphics g) {
+    final JBTabsPosition pos = myTabs.getTabsPosition();
+
+    int dX = 0, dXs = 0, dY = 0, dYs = 0;
+    int selected = 1, plain = 2;
+
+    switch (pos) {
+      case bottom:
+        break;
+      case left:
+        dX = plain;
+        dXs = selected;
+        break;
+      case right:
+        break;
+      case top:
+        dY = plain;
+        dYs = selected;
+        break;
+    }
+
     if (myTabs.getSelectedInfo() != myInfo) {
-      g.translate(0, 2);
+      g.translate(dX, dY);
     } else {
-      g.translate(0, 1);
+      g.translate(dXs, dYs);
     }
 
     super.paint(g);
 
     if (myTabs.getSelectedInfo() != myInfo) {
-      g.translate(0, -2);
+      g.translate(dX, -dY);
     } else {
-      g.translate(0, 1);
+      g.translate(dX, dY);
     }
   }
 

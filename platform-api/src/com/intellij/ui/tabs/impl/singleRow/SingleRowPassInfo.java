@@ -10,22 +10,22 @@ import java.util.ArrayList;
 public class SingleRowPassInfo extends LayoutPassInfo {
   final Dimension laayoutSize;
   int contentCount;
-  int eachX;
-  int xAddin;
-  int requiredWidth;
-  int toFitWidth;
+  int position;
+  int componentFixedPosition;
+  int requiredLength;
+  int toFitLength;
   public final java.util.List<TabInfo> toLayout;
   public final java.util.List<TabInfo> toDrop;
-  int moreRectWidth;
+  int moreRectAxisSize;
   public Rectangle moreRect;
   public boolean displayedHToolbar;
-  public int yComp;
+  public int compPosition;
 
-  public Rectangle leftGhost;
-  public boolean leftGhostVisible;
+  public Rectangle firstGhost;
+  public boolean firstGhostVisible;
 
-  public Rectangle rightGhost;
-  public boolean rightGhostVisible;
+  public Rectangle lastGhost;
+  public boolean lastGhostVisible;
 
   public Insets insets;
 
@@ -37,7 +37,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     contentCount = myTabs.getTabCount();
     toLayout = new ArrayList<TabInfo>();
     toDrop = new ArrayList<TabInfo>();
-    moreRectWidth = layout.myMoreIcon.getIconWidth() + 6;
+    moreRectAxisSize = layout.getStrategy().getMoreRectAxisSize();
   }
 
   public TabInfo getPreviousFor(final TabInfo info) {

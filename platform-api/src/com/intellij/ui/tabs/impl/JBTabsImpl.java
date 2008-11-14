@@ -121,6 +121,9 @@ public class JBTabsImpl extends JComponent
   private TimedDeadzone.Length myTabActionsMouseDeadzone = TimedDeadzone.DEFAULT;
 
   private long myRemoveDefferredRequest;
+  private boolean myTestMode;
+
+  JBTabsPosition myPosition = JBTabsPosition.top;
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
@@ -246,10 +249,12 @@ public class JBTabsImpl extends JComponent
       myListenerAdded = true;
     }
 
-    final IdeGlassPane gp = IdeGlassPaneUtil.find(this);
-    if (gp != null) {
-      gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, this);
-      myGlassPane = gp;
+    if (!myTestMode) {
+      final IdeGlassPane gp = IdeGlassPaneUtil.find(this);
+      if (gp != null) {
+        gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, this);
+        myGlassPane = gp;
+      }
     }
   }
 
@@ -264,6 +269,10 @@ public class JBTabsImpl extends JComponent
       myGlassPane.removeMouseMotionPreprocessor(myTabActionsAutoHideListener);
       myGlassPane = null;
     }
+  }
+
+  void setTestMode(final boolean testMode) {
+    myTestMode = testMode;
   }
 
   class TabActionsAutoHideListener extends MouseMotionAdapter {
@@ -604,7 +613,7 @@ public class JBTabsImpl extends JComponent
 
     final long executionRequest = ++myRemoveDefferredRequest;
 
-    myFocusManager.doWhenFocusSettlesDown(new Runnable() {
+    final Runnable onDone = new Runnable() {
       public void run() {
         if (myRemoveDefferredRequest == executionRequest) {
           removeDeferredNow();
@@ -612,7 +621,13 @@ public class JBTabsImpl extends JComponent
 
         callback.setDone();
       }
-    });
+    };
+
+    if (myFocusManager != null) {
+      myFocusManager.doWhenFocusSettlesDown(onDone);
+    } else {
+      onDone.run();
+    }
 
     return callback;
   }
@@ -950,9 +965,14 @@ public class JBTabsImpl extends JComponent
   public void doLayout() {
     try {
       final Max max = computeMaxSize();
-      myHeaderFitSize =
-          new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
 
+      if (myPosition == JBTabsPosition.top || myPosition == JBTabsPosition.bottom) {
+        myHeaderFitSize =
+          new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
+      } else {
+        myHeaderFitSize =
+          new Dimension(max.myLabel.width + (myHorizontalSide ? 0 : max.myToolbar.width), getSize().height);
+      }
 
       final Collection<TabLabel> labels = myInfo2Label.values();
       for (Iterator<TabLabel> iterator = labels.iterator(); iterator.hasNext();) {
@@ -986,8 +1006,7 @@ public class JBTabsImpl extends JComponent
     applyResetComponents();
   }
 
-
-  public void layoutComp(int xAddin, int yComp, final JComponent comp) {
+  public void layoutComp(int componentX, int componentY, final JComponent comp) {
     final Insets insets = getLayoutInsets();
 
     final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : (Insets)myBorderSize.clone();
@@ -1004,9 +1023,9 @@ public class JBTabsImpl extends JComponent
     border.left += inner.left;
     border.right += inner.right;
 
-    layout(comp, insets.left + xAddin + border.left, yComp + border.top,
-           getWidth() - insets.left - insets.right - xAddin - border.left - border.right,
-           getHeight() - insets.bottom - yComp - border.top - border.bottom);
+    layout(comp, insets.left + componentX + border.left, componentY + border.top,
+           getWidth() - insets.left - insets.right - componentX - border.left - border.right,
+           getHeight() - insets.bottom - componentY - border.top - border.bottom);
   }
 
 
@@ -1076,7 +1095,7 @@ public class JBTabsImpl extends JComponent
     return 4;
   }
 
-  public int getGhostTabWidth() {
+  public int getGhostTabLength() {
     return 15;
   }
 
@@ -1112,12 +1131,22 @@ public class JBTabsImpl extends JComponent
     boolean leftGhostExists = isSingleRow();
     boolean rightGhostExists = isSingleRow();
 
+    if (myTestMode) {
+      g.setColor(Color.red);
+      for (TabInfo each : myVisibleInfos) {
+        final TabLabel label = myInfo2Label.get(each);
+        final Rectangle bounds = label.getBounds();
+        g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      }
+    }
+
+
     if (!isStealthModeEffective() && !isHideTabs()) {
-      if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.rightGhostVisible) {
-        int topX = mySingleRowLayout.myLastSingRowLayout.rightGhost.x - arc;
-        int topY = mySingleRowLayout.myLastSingRowLayout.rightGhost.y + selectionTabVShift;
-        int bottomX = (int)(mySingleRowLayout.myLastSingRowLayout.rightGhost.getMaxX() - curveArc);
-        int bottomY = (int)mySingleRowLayout.myLastSingRowLayout.rightGhost.getMaxY() + 1;
+      if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.lastGhostVisible) {
+        int topX = mySingleRowLayout.myLastSingRowLayout.lastGhost.x - arc;
+        int topY = mySingleRowLayout.myLastSingRowLayout.lastGhost.y + selectionTabVShift;
+        int bottomX = (int)(mySingleRowLayout.myLastSingRowLayout.lastGhost.getMaxX() - curveArc);
+        int bottomY = (int)mySingleRowLayout.myLastSingRowLayout.lastGhost.getMaxY() + 1;
 
         final GeneralPath path = new GeneralPath();
         path.moveTo(topX, topY);
@@ -1141,13 +1170,13 @@ public class JBTabsImpl extends JComponent
 
       paintNonSelectedTabs(g2d, leftGhostExists);
 
-      if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.leftGhostVisible) {
+      if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.firstGhostVisible) {
         final GeneralPath path = new GeneralPath();
 
-        int topX = mySingleRowLayout.myLastSingRowLayout.leftGhost.x + curveArc;
-        int topY = mySingleRowLayout.myLastSingRowLayout.leftGhost.y + selectionTabVShift;
-        int bottomX = (int)mySingleRowLayout.myLastSingRowLayout.leftGhost.getMaxX() + 1;
-        int bottomY = (int)(mySingleRowLayout.myLastSingRowLayout.leftGhost.getMaxY() + 1);
+        int topX = mySingleRowLayout.myLastSingRowLayout.firstGhost.x + curveArc;
+        int topY = mySingleRowLayout.myLastSingRowLayout.firstGhost.y + selectionTabVShift;
+        int bottomX = (int)mySingleRowLayout.myLastSingRowLayout.firstGhost.getMaxX() + 1;
+        int bottomY = (int)(mySingleRowLayout.myLastSingRowLayout.firstGhost.getMaxY() + 1);
 
         path.moveTo(topX, topY);
 
@@ -2234,6 +2263,16 @@ public class JBTabsImpl extends JComponent
       eachLabel.updateTabActions();
     }
     return this;
+  }
+
+  public JBTabsPresentation setTabsPosition(final JBTabsPosition position) {
+    myPosition = position;
+    relayout(true, false);
+    return this;
+  }
+
+  public JBTabsPosition getTabsPosition() {
+    return myPosition;
   }
 
   public TimedDeadzone.Length getTabActionsMouseDeadzone() {

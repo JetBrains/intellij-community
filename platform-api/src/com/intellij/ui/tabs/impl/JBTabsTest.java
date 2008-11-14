@@ -7,10 +7,11 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.JBTabsPosition;
 
 import javax.swing.*;
-import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,9 +31,24 @@ public class JBTabsTest {
       public void dispose() {
       }
     });
+    tabs.setTestMode(true);
+
     frame.getContentPane().add(tabs.getComponent(), BorderLayout.CENTER);
 
     JPanel south = new JPanel(new FlowLayout());
+
+
+    final JComboBox pos = new JComboBox(new Object[]{JBTabsPosition.top, JBTabsPosition.left, JBTabsPosition.right, JBTabsPosition.bottom});
+    pos.setSelectedIndex(0);
+    south.add(pos);
+    pos.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final JBTabsPosition p = (JBTabsPosition)pos.getSelectedItem();
+        if (p != null) {
+          tabs.getPresentation().setTabsPosition(p);
+        }
+      }
+    });
 
     final JCheckBox f = new JCheckBox("Focused");
     f.addItemListener(new ItemListener() {
@@ -158,6 +174,8 @@ public class JBTabsTest {
     south.add(refire);
 
 
+
+
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(new HTMLEditorKit());
     StringBuffer buffer = new StringBuffer();
@@ -194,7 +212,7 @@ public class JBTabsTest {
 
     tabs.setStealthTabMode(true);
 
-    frame.setBounds(1400, 200, 1000, 600);
+    frame.setBounds(1400, 200, 1200, 800);
     frame.show();
 
 

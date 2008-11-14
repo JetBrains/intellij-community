@@ -64,8 +64,15 @@ public interface JBTabsPresentation {
   @NotNull
   JBTabsPresentation setActiveTabFillIn(@Nullable Color color);
 
+  @NotNull
   JBTabsPresentation setTabLabelActionsAutoHide(boolean autoHide);
   
+  @NotNull
   JBTabsPresentation setTabLabelActionsMouseDeadzone(TimedDeadzone.Length length);
+
+  @NotNull
+  JBTabsPresentation setTabsPosition(JBTabsPosition position);
+
+  JBTabsPosition getTabsPosition();
 
 }
