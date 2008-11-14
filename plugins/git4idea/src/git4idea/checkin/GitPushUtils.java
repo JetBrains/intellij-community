@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
 
@@ -41,7 +42,7 @@ public class GitPushUtils {
    * @return a prepared push handler
    */
   public static GitLineHandler preparePush(Project project, VirtualFile vcsRoot) {
-    final GitLineHandler rc = new GitLineHandler(project, vcsRoot, "push");
+    final GitLineHandler rc = new GitLineHandler(project, vcsRoot, GitHandler.PUSH);
     rc.addParameters("-v", "--all");
     rc.addLineListener(new GitLineHandlerAdapter() {
       @Override

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public class GitConfigUtil {
    * @throws VcsException an exception
    */
   public static void getValues(Project project, VirtualFile root, String keyMask, Map<String, String> result) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, "config");
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.CONFIG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--null", "--get-regexp", keyMask);
@@ -77,7 +78,7 @@ public class GitConfigUtil {
    */
   public static List<Pair<String, String>> getAllValues(Project project, VirtualFile root, @NonNls String key) throws VcsException {
     List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
-    GitSimpleHandler h = new GitSimpleHandler(project, root, "config");
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.CONFIG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--null", "--get-all", key);
@@ -104,7 +105,7 @@ public class GitConfigUtil {
    */
   @Nullable
   public static String getValue(Project project, VirtualFile root, @NonNls String key) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, "config");
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.CONFIG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.ignoreErrorCode(1);

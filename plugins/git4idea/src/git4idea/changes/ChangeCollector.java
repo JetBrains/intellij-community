@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 
 import java.util.*;
@@ -122,7 +123,7 @@ class ChangeCollector {
    * @throws VcsException if there is a problem with running git
    */
   private void collectDiffChanges() throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, "diff");
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.DIFF);
     handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD");
     handler.setNoSSH(true);
     handler.setSilent(true);
@@ -138,7 +139,7 @@ class ChangeCollector {
       if (!GitChangeUtils.isHeadMissing(ex)) {
         throw ex;
       }
-      handler = new GitSimpleHandler(myProject, myVcsRoot, "ls-files");
+      handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.LS_FILES);
       handler.addParameters("--cached");
       handler.setNoSSH(true);
       handler.setSilent(true);
@@ -164,7 +165,7 @@ class ChangeCollector {
    */
   private void collectUnmergedAndUnversioned() throws VcsException {
     // prepare handler
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, "ls-files");
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.LS_FILES);
     handler.addParameters("-v", "--others", "--unmerged", "--exclude-standard");
     handler.setSilent(true);
     handler.setNoSSH(true);

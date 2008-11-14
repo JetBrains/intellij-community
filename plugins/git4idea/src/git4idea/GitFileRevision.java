@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +92,7 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
 
   public synchronized void loadContent() throws VcsException {
     final VirtualFile root = GitUtil.getGitRoot(project, path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, "show");
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.SHOW);
     h.setNoSSH(true);
     h.setCharset(BIN_ENCODING);
     h.addParameters(revision.getRev() + ":" + GitUtil.relativePath(root, path));

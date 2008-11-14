@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
@@ -92,10 +93,10 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
         // rememeber the current position
         GitRevisionNumber before = GitRevisionNumber.resolve(myProject, root, "HEAD");
         // do pull
-        GitLineHandler h = new GitLineHandler(myProject, root, "pull");
+        GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.PULL);
         // ignore merge failure for the pull
         h.ignoreErrorCode(1);
-        h.addParameters("--stat");
+        h.addParameters("--no-stat");
         h.addParameters("-v");
         try {
           GitHandlerUtil.doSynchronouslyWithExceptions(h, progressIndicator);

@@ -20,6 +20,7 @@ package git4idea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class GitBranch {
   /**
    * The name that specifies that git is on specific commit rather then on some branch
    */
-  @NonNls public static final String NO_BRANCH_NAME = "(no branch)";
+  @NonNls public static final String NO_BRANCH_NAME = "(no " + GitHandler.BRANCH + ")";
 
   public GitBranch(@NotNull Project project, @NotNull String name, boolean active, boolean remote) {
     this.project = project;
@@ -75,7 +76,7 @@ public class GitBranch {
    */
   @Nullable
   public static GitBranch current(Project project, VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, "branch");
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.BRANCH);
     h.setNoSSH(true);
     h.setSilent(true);
     for (StringTokenizer lines = new StringTokenizer(h.run(), "\n"); lines.hasMoreTokens();) {

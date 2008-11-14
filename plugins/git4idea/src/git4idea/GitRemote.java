@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
@@ -120,7 +121,7 @@ public final class GitRemote {
    */
   public static List<GitRemote> list(Project project, VirtualFile root) throws VcsException {
     ArrayList<GitRemote> remotes = new ArrayList<GitRemote>();
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, "remote");
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("-v");
@@ -142,7 +143,7 @@ public final class GitRemote {
    * @return a information about remotes
    */
   public Info localInfo(Project project, VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, "remote");
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("show", "-n", myName);

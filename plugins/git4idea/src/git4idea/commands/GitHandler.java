@@ -108,6 +108,94 @@ public abstract class GitHandler {
    * if true, the command execution is not logged in version control view
    */
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean mySilent;
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String CLONE = "clone";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String RM = "rm";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String ADD = "add";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String ANNOTATE = "annotate";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String COMMIT = "commit";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String CONFIG = "config";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String FETCH = "fetch";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String SHOW = "show";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String LOG = "log";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String INIT = "init";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String BRANCH = "branch";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String MERGE = "merge";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String PUSH = "push";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String LS_REMOTE = "ls-remote";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String REMOTE = "remote";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String REV_LIST = "rev-list";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String CHECKOUT = "checkout";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String TAG = "tag";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String PULL = "pull";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String LS_FILES = "ls-files";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String DIFF = "diff";
+  /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String VERSION = "version";
 
   /**
    * A constructor

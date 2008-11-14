@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
@@ -63,7 +64,7 @@ public class GitInit extends AnAction {
       return;
     }
     try {
-      GitSimpleHandler h = new GitSimpleHandler(project, root, "init");
+      GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.INIT);
       h.setNoSSH(true);
       h.run();
     }

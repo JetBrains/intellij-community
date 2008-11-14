@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsSettings;
@@ -237,7 +238,7 @@ public class GitCheckoutDialog extends DialogWrapper {
         try {
           List<String> branchesAndTags = new ArrayList<String>();
           // get branches
-          GitSimpleHandler branches = new GitSimpleHandler(myProject, gitRoot(), "branch");
+          GitSimpleHandler branches = new GitSimpleHandler(myProject, gitRoot(), GitHandler.BRANCH);
           branches.setNoSSH(true);
           branches.setSilent(true);
           branches.addParameters("-a");
@@ -253,7 +254,7 @@ public class GitCheckoutDialog extends DialogWrapper {
           // get tags
           if (myIncludeTagsCheckBox.isSelected()) {
             int mark = branchesAndTags.size();
-            GitSimpleHandler tags = new GitSimpleHandler(myProject, gitRoot(), "tag");
+            GitSimpleHandler tags = new GitSimpleHandler(myProject, gitRoot(), GitHandler.TAG);
             tags.setNoSSH(true);
             tags.setSilent(true);
             tags.addParameters("-l");
@@ -291,7 +292,7 @@ public class GitCheckoutDialog extends DialogWrapper {
     if (branch.length() == 0) {
       return null;
     }
-    GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), "branch");
+    GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), GitHandler.BRANCH);
     h.setNoSSH(true);
     if (myTrackBranchCheckBox.isSelected()) {
       h.addParameters("--track");
@@ -310,7 +311,7 @@ public class GitCheckoutDialog extends DialogWrapper {
    * @return a handler that checkouts branch
    */
   public GitLineHandler checkoutHandler() {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), "checkout");
+    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitHandler.CHECKOUT);
     h.setNoSSH(true);
     final String newBranch = myNewBranchName.getText();
     if (newBranch.length() == 0) {

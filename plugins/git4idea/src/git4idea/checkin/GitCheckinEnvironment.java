@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
@@ -237,7 +238,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     HashSet<FilePath> realAdded = new HashSet<FilePath>();
     HashSet<FilePath> realRemoved = new HashSet<FilePath>();
     // perform diff
-    GitSimpleHandler diff = new GitSimpleHandler(project, root, "diff");
+    GitSimpleHandler diff = new GitSimpleHandler(project, root, GitHandler.DIFF);
     diff.setNoSSH(true);
     diff.setSilent(true);
     diff.addParameters("--diff-filter=ADMRUX", "--name-status", "HEAD");
@@ -312,7 +313,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     // perform merge commit
     try {
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, "commit");
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.COMMIT);
       handler.setNoSSH(true);
       handler.addParameters("-F", messageFile.getAbsolutePath());
       if (author != null) {
@@ -377,7 +378,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitSimpleHandler handler = new GitSimpleHandler(project, root, "rm");
+        GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
         handler.addParameters("--ignore-unmatch");
         handler.addRelativePaths(removed);
         handler.setNoSSH(true);
@@ -465,7 +466,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                          Collection<FilePath> files,
                                          File message,
                                          final String nextCommitAuthor) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, "commit");
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.COMMIT);
     handler.setNoSSH(true);
     handler.addParameters("--only", "-F", message.getAbsolutePath());
     if (nextCommitAuthor != null) {

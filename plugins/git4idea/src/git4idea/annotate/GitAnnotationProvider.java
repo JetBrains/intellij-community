@@ -27,6 +27,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitVcsSettings;
@@ -142,7 +143,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
                                      final VcsFileRevision revision,
                                      final List<VcsFileRevision> revisions,
                                      final VirtualFile file) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(myProject, repositoryFilePath), "annotate");
+    GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(myProject, repositoryFilePath), GitHandler.ANNOTATE);
     h.setNoSSH(true);
     h.setCharset(file.getCharset());
     h.addParameters("-p", "-l", "-t", "-M");

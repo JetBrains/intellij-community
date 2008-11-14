@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -55,7 +54,7 @@ public class GitSimpleHandler extends GitHandler {
    * @param command   a command to execute
    */
   @SuppressWarnings({"WeakerAccess"})
-  public GitSimpleHandler(@NotNull Project project, @NotNull File directory, @NotNull @NonNls String command) {
+  public GitSimpleHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     super(project, directory, command);
   }
 
@@ -67,18 +66,8 @@ public class GitSimpleHandler extends GitHandler {
    * @param command   a command to execute
    */
   @SuppressWarnings({"WeakerAccess"})
-  public GitSimpleHandler(final Project project, final VirtualFile directory, @NonNls final String command) {
+  public GitSimpleHandler(@NotNull final Project project, @NotNull final VirtualFile directory, @NotNull final String command) {
     super(project, directory, command);
-  }
-
-  /**
-   * A constructor
-   *
-   * @param project   a project
-   * @param directory a process directory
-   */
-  public GitSimpleHandler(final Project project, final File directory) {
-    super(project, directory, "");
   }
 
   /**
@@ -162,7 +151,7 @@ public class GitSimpleHandler extends GitHandler {
    * @return a simple handler that does the task
    */
   public static GitSimpleHandler checkRepository(Project project, final String url) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, new File("."), "ls-remote");
+    GitSimpleHandler handler = new GitSimpleHandler(project, new File("."), LS_REMOTE);
     handler.addParameters(url, "master");
     return handler;
   }
@@ -176,7 +165,7 @@ public class GitSimpleHandler extends GitHandler {
    * @return a simple handler that does the task
    */
   public static GitSimpleHandler delete(Project project, VirtualFile root, List<FilePath> files) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, "rm");
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, RM);
     handler.addRelativePaths(files);
     handler.setNoSSH(true);
     return handler;
@@ -191,7 +180,7 @@ public class GitSimpleHandler extends GitHandler {
    * @return a simple handler that does the task
    */
   public static GitSimpleHandler addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, "add");
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, ADD);
     handler.addRelativeFiles(files);
     handler.setNoSSH(true);
     return handler;
@@ -218,7 +207,7 @@ public class GitSimpleHandler extends GitHandler {
    * @return a simple handler that does the task
    */
   public static GitSimpleHandler addPaths(Project project, VirtualFile root, Collection<FilePath> files) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, "add");
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, ADD);
     handler.addRelativePaths(files);
     handler.setNoSSH(true);
     return handler;

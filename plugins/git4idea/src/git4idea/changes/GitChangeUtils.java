@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 
@@ -101,7 +102,7 @@ public class GitChangeUtils {
   @SuppressWarnings({"SameParameterValue"})
   public static GitRevisionNumber loadRevision(final Project project, final VirtualFile vcsRoot, @NonNls final String revisionNumber)
     throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, "rev-list");
+    GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, GitHandler.REV_LIST);
     handler.addParameters("--timestamp", "--max-count=1", revisionNumber);
     handler.setNoSSH(true);
     handler.setSilent(true);

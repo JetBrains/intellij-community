@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitBranch;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 
@@ -201,7 +202,7 @@ public class GitFetchDialog extends DialogWrapper {
    * @return the handler for the fetch operation
    */
   public GitLineHandler fetchHandler() {
-    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), "fetch");
+    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitHandler.FETCH);
     h.addParameters("-v");
     if (myForceReferencesUpdateCheckBox.isSelected()) {
       h.addParameters("--force");

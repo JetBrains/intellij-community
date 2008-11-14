@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 
 import java.util.HashSet;
@@ -76,7 +77,7 @@ public class MergeChangeCollector {
     try {
       // collect unmerged
       String root = myRoot.getPath();
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, "ls-files");
+      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitHandler.LS_FILES);
       h.setNoSSH(true);
       h.addParameters("--unmerged");
       for (String line : h.run().split("\n")) {
@@ -92,7 +93,7 @@ public class MergeChangeCollector {
         myUpdates.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).add(path);
       }
       // collect other changes (ignoring unmerged)
-      h = new GitSimpleHandler(myProject, myRoot, "diff");
+      h = new GitSimpleHandler(myProject, myRoot, GitHandler.DIFF);
       h.setNoSSH(true);
       // note that moves are not detected here
       h.addParameters("--name-status", "--diff-filter=ADMRUX", myStart.getRev());

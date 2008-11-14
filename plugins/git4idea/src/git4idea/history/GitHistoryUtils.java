@@ -29,6 +29,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public class GitHistoryUtils {
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath) throws VcsException {
     filePath = getLastCommitName(project, filePath);
-    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(project, filePath), "log");
+    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(project, filePath), GitHandler.LOG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", "--pretty=format:%H%n%ct%n");
@@ -86,7 +87,7 @@ public class GitHistoryUtils {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(project, path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, "log");
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
     h.setNoSSH(true);
     h.addParameters("-M", "--follow", "--name-only", "--pretty=format:%H%x00%ct%x00%an%x20<%ae>%x00%cn%x20<%ce>%x00%s%n%n%b%x00",
                     "--encoding=UTF-8");

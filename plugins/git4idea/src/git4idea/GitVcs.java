@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
 import git4idea.checkin.GitCheckinEnvironment;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsConfigurable;
 import git4idea.config.GitVcsSettings;
@@ -436,7 +437,7 @@ public class GitVcs extends AbstractVcs {
    */
   public static String version(Project project) throws VcsException {
     final String s;
-    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), "version");
+    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), GitHandler.VERSION);
     h.setNoSSH(true);
     h.setSilent(true);
     s = h.run();

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -233,7 +234,7 @@ public class GitRevisionNumber implements VcsRevisionNumber {
    * @return a resolved revision number with correct time
    */
   public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, "rev-list");
+    GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, GitHandler.REV_LIST);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--timestamp", "--max-count=1", rev);

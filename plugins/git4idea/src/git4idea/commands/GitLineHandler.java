@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,7 +52,7 @@ public class GitLineHandler extends GitHandler {
    * @param command   a command to execute
    */
   @SuppressWarnings({"WeakerAccess"})
-  public GitLineHandler(@NotNull Project project, @NotNull File directory, @NonNls @NotNull String command) {
+  public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     super(project, directory, command);
   }
 
@@ -64,7 +63,7 @@ public class GitLineHandler extends GitHandler {
    * @param vcsRoot a process directory
    * @param command a command to execute
    */
-  public GitLineHandler(final Project project, final VirtualFile vcsRoot, @NonNls final String command) {
+  public GitLineHandler(@NotNull final Project project, @NotNull final VirtualFile vcsRoot, @NotNull final String command) {
     super(project, vcsRoot, command);
   }
 
@@ -174,7 +173,7 @@ public class GitLineHandler extends GitHandler {
    * @return a handler for clone operation
    */
   public static GitLineHandler clone(Project project, final String url, final File directory, final String name, final String originName) {
-    GitLineHandler handler = new GitLineHandler(project, directory, "clone");
+    GitLineHandler handler = new GitLineHandler(project, directory, CLONE);
     if (originName != null && originName.length() > 0) {
       handler.addParameters("-o", originName);
     }
