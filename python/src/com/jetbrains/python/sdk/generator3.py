@@ -168,6 +168,7 @@ doing_builtins = False
 class FakeClassObj:
   "A mock class representing the old style class base."
   __module__ = None
+  __class__ = None
 
 
 class ModuleRedeclarator(object):
@@ -228,7 +229,10 @@ class ModuleRedeclarator(object):
   REPLACE_MODULE_VALUES = {
     (BUILTIN_MOD_NAME, "None"): "object()"
   }
-  
+  if version[0] <= 2:
+    for std_file in ("stdin", "stdout", "stderr"):
+      REPLACE_MODULE_VALUES[("sys", std_file)] = "file('')" # 
+
   def isSkippedInModule(self, p_module, p_value):
     "Returns True if p_value's value must be skipped for module p_module."
     skip_list = self.SKIP_VALUE_IN_MODULE.get(p_module, [])
