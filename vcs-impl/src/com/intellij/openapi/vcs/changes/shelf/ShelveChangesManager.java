@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
@@ -158,7 +159,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         },
         patchPath);
 
-    RollbackChangesDialog.doRollback(myProject, changes, true, false, null);
+    RollbackChangesDialog.doRollback(myProject, changes, true, false, null, VcsBundle.message("shelve.changes.action"));
 
     final ShelvedChangeList changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
     myShelvedChangeLists.add(changeList);

@@ -124,7 +124,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     doRollback(myProject, myBrowser.getCurrentIncludedChanges(),
-               myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(), myRefreshSynchronously, myAfterVcsRefreshInAwt);
+               myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(), myRefreshSynchronously, myAfterVcsRefreshInAwt, null);
   }
 
   @Nullable
@@ -141,7 +141,8 @@ public class RollbackChangesDialog extends DialogWrapper {
   public static void doRollback(final Project project,
                                 final Collection<Change> changes,
                                 final boolean deleteLocallyAddedFiles,
-                                final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
+                                final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt,
+                                final String localHistoryActionName) {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
 
@@ -185,7 +186,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           }
         });
 
-        doRefresh(project, pathsToRefresh, (! refreshSynchronously), afterRefresh);
+        doRefresh(project, pathsToRefresh, (! refreshSynchronously), afterRefresh, localHistoryActionName);
 
         AbstractVcsHelper.getInstanceChecked(project).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
       }
@@ -202,11 +203,13 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous,
-                                final Runnable runAfter) {
-    final LocalHistoryAction action = LocalHistory.startAction(project, VcsBundle.message("changes.action.rollback.text"));
+                                final Runnable runAfter, final String localHistoryActionName) {
+    final String actionName = VcsBundle.message("changes.action.rollback.text");
+    final LocalHistoryAction action = LocalHistory.startAction(project, actionName);
     RefreshSession session = RefreshQueue.getInstance().createSession(asynchronous, true, new Runnable() {
       public void run() {
         action.finish();
+        LocalHistory.putSystemLabel(project, (localHistoryActionName == null) ? actionName : localHistoryActionName);
         if (!project.isDisposed()) {
           for (FilePath path : pathsToRefresh) {
             if (path.isDirectory()) {
