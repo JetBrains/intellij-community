@@ -139,7 +139,7 @@ public class PyBlock implements Block {
     return new PyBlock(_language, child, childAlignment, childIndent, wrap, _settings);
   }
 
-  private boolean hasLineBreakBefore(ASTNode child) {
+  private static boolean hasLineBreakBefore(ASTNode child) {
     ASTNode prevNode = child.getTreePrev();
     if (prevNode != null && prevNode.getElementType() == TokenType.WHITE_SPACE) {
       String prevNodeText = prevNode.getText();
@@ -186,7 +186,7 @@ public class PyBlock implements Block {
     IElementType parentType = _node.getElementType();
     IElementType type1 = childNode1.getElementType();
     IElementType type2 = childNode2.getElementType();
-    if (PyElementTypes.STATEMENTS.contains(type1) && PyElementTypes.STATEMENTS.contains(type2)) {
+    if (isStatementOrDeclaration(type1) && isStatementOrDeclaration(type2)) {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, false, 1);
     }
 /*
@@ -211,6 +211,12 @@ public class PyBlock implements Block {
     //return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
 
     return null;
+  }
+
+  private static boolean isStatementOrDeclaration(final IElementType type) {
+    return PyElementTypes.STATEMENTS.contains(type) ||
+           type == PyElementTypes.CLASS_DECLARATION || 
+           type == PyElementTypes.FUNCTION_DECLARATION;
   }
 
   @NotNull
