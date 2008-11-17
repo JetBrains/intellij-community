@@ -43,6 +43,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected final boolean myIsProjectSettings;
   protected boolean myBlockSavingTheContent = false;
   protected Integer myUpToDateHash;
+  protected Integer myProviderUpToDateHash;
   private boolean mySavingDisabled = false;
 
 
@@ -343,42 +344,58 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       if (myBlockSavingTheContent) return;
 
       Integer hash = calcHash();
+
+      try {
+        saveForProviders(hash);
+      }
+      finally {
+        saveLocally(hash);
+      }
+
+
+
+    }
+
+    private void saveLocally(final Integer hash) {
       try {
         if (!isHashUpToDate(hash)) {
-          try {
-            if (!myIsProjectSettings) {
-              for (RoamingType roamingType : RoamingType.values()) {
-                if (roamingType != RoamingType.DISABLED) {
-                  try {
-                    Document copy = (Document)getDocumentToSave().clone();
-                    filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
-
-                    if (copy.getRootElement().getChildren().size() > 0) {
-                      StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType);
-                    }
-                  }
-                  catch (IOException e) {
-                    LOG.warn(e);
-                  }
-                }
-
-              }
-            }
-
+          if (_needsSave(hash)) {
+            doSave();
           }
-          finally {
-            if (_needsSave(hash)) {
-              doSave();
-            }
-          }
-
         }
       }
       finally {
         myUpToDateHash = hash;
       }
+    }
 
+    private void saveForProviders(final Integer hash) {
+      if (myProviderUpToDateHash == null || !myProviderUpToDateHash.equals(hash)) {
+        try {
+          if (!myIsProjectSettings) {
+            for (RoamingType roamingType : RoamingType.values()) {
+              if (roamingType != RoamingType.DISABLED) {
+                try {
+                  Document copy = (Document)getDocumentToSave().clone();
+                  filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
 
+                  if (copy.getRootElement().getChildren().size() > 0) {
+                    StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType);
+                  }
+                }
+                catch (IOException e) {
+                  LOG.warn(e);
+                }
+              }
+
+            }
+          }
+        }
+        finally {
+          myProviderUpToDateHash = hash;
+        }
+
+      }
     }
 
     private boolean isHashUpToDate(final Integer hash) {

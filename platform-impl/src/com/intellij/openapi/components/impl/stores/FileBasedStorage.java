@@ -130,8 +130,8 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(externalizationSession);
   }
 
-  public void resetCache() {
-    myUpToDateHash = null;
+  public void resetProviderCache() {
+    myProviderUpToDateHash = null;
   }
 
 
