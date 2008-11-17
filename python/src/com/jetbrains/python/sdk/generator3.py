@@ -377,7 +377,7 @@ class ModuleRedeclarator(object):
       self.out("def " + p_name + "(" + ", ".join(spec) + "): # reliably restored by inspect", indent);
       self.outDocAttr(p_func, indent+1)
       self.out("pass", indent+1);
-    elif doing_builtins and classname in ('list', 'dict') and p_modname == '__builtin__' and p_name == '__init__':
+    elif doing_builtins and classname in ('list', 'dict', 'set') and p_modname == '__builtin__' and p_name == '__init__':
       if classname == 'list':
         self.out("def " + p_name + "(self, *args): # known special case of list", indent)
       else:
