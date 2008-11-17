@@ -133,6 +133,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
           if (!isWindowsRoot &&
               endOfOccurence < text.length() &&
               text.charAt(endOfOccurence) != '/' &&
+              text.charAt(endOfOccurence) != ' ' &&
               !text.substring(endOfOccurence).startsWith("!/")) {
             i = endOfOccurence;
             continue;
