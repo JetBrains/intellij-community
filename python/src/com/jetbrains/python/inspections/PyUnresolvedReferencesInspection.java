@@ -47,7 +47,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
 
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
+    return HighlightDisplayLevel.WARNING;
   }
 
   @NotNull
