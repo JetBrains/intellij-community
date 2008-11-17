@@ -1111,7 +1111,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private class MyRefreshPropertiesRequest implements Runnable {
     public void run() {
-      if (!getProject().isDisposed()) {
+      if (!myModule.isDisposed() && !getProject().isDisposed()) {
         refreshProperties();
       }
     }
