@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class PsiUtilBase {
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
@@ -543,5 +544,26 @@ public class PsiUtilBase {
       child = parent;
     }
     while (true);
+  }
+
+  public static int findInjectedElementOffsetInRealDocument(final PsiElement element) {
+    final PsiElement context = element.getContainingFile().getContext();
+    if (context == null) return 0;
+    final int[] result = new int[1];
+    ((PsiLanguageInjectionHost)context).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        if (injectedPsi != element.getContainingFile()) return;
+        final PsiLanguageInjectionHost.Shred shred = places.get(0);
+        final TextRange textRange = element.getTextRange();
+        if (shred.prefix != null && textRange.getEndOffset() < shred.prefix.length()) {
+          result[0] = -1;
+          return;
+        }
+        final int injectedStart = shred.getRangeInsideHost().getStartOffset() +
+                                  shred.host.getTextRange().getStartOffset() - (shred.prefix != null ? shred.prefix.length():0);
+        result[0] = injectedStart;
+      }
+    });
+    return result[0];
   }
 }

@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -614,18 +615,28 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
     if (message != null && message.length() > 0) {
-      if (context instanceof XmlTag && XmlExtension.getExtension((XmlFile)context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
-        final HighlightInfoType infoType = type == ErrorType.ERROR
-                                           ? HighlightInfoType.ERROR
-                                           : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO;
-        addElementsForTagWithManyQuickFixes((XmlTag)context, message, infoType, fixes);
+      final PsiFile containingFile = context.getContainingFile();
+      final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO;
+
+      if (context instanceof XmlTag && XmlExtension.getExtension(containingFile).shouldBeHighlightedAsTag((XmlTag)context)) {
+        addElementsForTagWithManyQuickFixes((XmlTag)context, message, defaultInfoType, fixes);
       }
       else {
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message);
+        final PsiElement contextOfFile = containingFile.getContext();
+        final HighlightInfo highlightInfo;
 
-        for (final IntentionAction quickFixAction : fixes) {
-          if (quickFixAction == null) continue;
-          QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction);
+        if (contextOfFile != null) {
+          final int offsetInRealDocument = PsiUtilBase.findInjectedElementOffsetInRealDocument(context);
+          highlightInfo = HighlightInfo.createHighlightInfo(defaultInfoType, context.getTextRange().shiftRight(offsetInRealDocument), message);
+        } else {
+          highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, context, message);
+        }
+
+        if (fixes != null) {
+          for (final IntentionAction quickFixAction : fixes) {
+            if (quickFixAction == null) continue;
+            QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction);
+          }
         }
         addToResults(highlightInfo);
       }
