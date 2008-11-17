@@ -220,24 +220,4 @@ public class GitLineHandler extends GitHandler {
     rc.add(text.substring(startLine, i));
     return rc;
   }
-
-
-  /**
-   * Prepare clone handler
-   *
-   * @param project    a project
-   * @param url        an url
-   * @param directory  a base directory
-   * @param name       a name to checkout
-   * @param originName origin name (ignored if null or empty string)
-   * @return a handler for clone operation
-   */
-  public static GitLineHandler clone(Project project, final String url, final File directory, final String name, final String originName) {
-    GitLineHandler handler = new GitLineHandler(project, directory, CLONE);
-    if (originName != null && originName.length() > 0) {
-      handler.addParameters("-o", originName);
-    }
-    handler.addParameters(url, name);
-    return handler;
-  }
 }

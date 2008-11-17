@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Git VCS implementation
@@ -120,13 +119,13 @@ public class GitVcs extends AbstractVcs {
    */
   private GitVFSListener myVFSListener;
   /**
-   * If true, the git version has been checked
+   * The currently detected git version or null.
    */
-  private boolean myVersionChecked;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private GitVersion myVersion;
   /**
    * Checking the version lock (used to prevent infinite recusion)
    */
-  private AtomicBoolean myCheckingVersion = new AtomicBoolean();
+  private final Object myCheckingVersion = new Object();
   /**
    * The path to executable at the time of version check
    */
@@ -387,36 +386,39 @@ public class GitVcs extends AbstractVcs {
    * Check version and report problem
    */
   public void checkVersion() {
-    if (!myCheckingVersion.compareAndSet(false, true)) {
-      return;
-    }
-    try {
-      if (myProject.isDefault()) {
+    final String executable = mySettings.GIT_EXECUTABLE;
+    synchronized (myCheckingVersion) {
+      if (myVersion != null && myVersionCheckExcecutable.equals(executable)) {
         return;
       }
-      final String executable = mySettings.GIT_EXECUTABLE;
-      if (myVersionChecked && myVersionCheckExcecutable.equals(executable)) {
-        return;
-      }
-      myVersionChecked = true;
       myVersionCheckExcecutable = executable;
+      // this assighment is done to prevent recursive version check
+      myVersion = GitVersion.INVALID;
       final String version;
       try {
         version = version(myProject).trim();
       }
       catch (VcsException e) {
         String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-        showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        if (!myProject.isDefault()) {
+          showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        }
         return;
       }
-      if (!GitVersion.parse(version).isSupported()) {
+      myVersion = GitVersion.parse(version);
+      if (!GitVersion.parse(version).isSupported() && !myProject.isDefault()) {
         showMessage(GitBundle.message("vcs.unsupported.version", version, GitVersion.MIN),
                     ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
       }
     }
-    finally {
-      myCheckingVersion.set(false);
-    }
+  }
+
+  /**
+   * @return the configured version of git
+   */
+  public GitVersion version() {
+    checkVersion();
+    return myVersion;
   }
 
   /**

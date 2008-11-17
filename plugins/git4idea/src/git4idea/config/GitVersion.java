@@ -31,9 +31,13 @@ public final class GitVersion implements Comparable<GitVersion> {
   @NonNls private static MessageFormat FORMAT =
     new MessageFormat("git version {0,number,integer}.{1,number,integer}.{2,number,integer}.{3,number,integer}", Locale.US);
   /**
+   * Invalid version number
+   */
+  public static final GitVersion INVALID = new GitVersion(0, 0, 0, 0);
+  /**
    * The minimal supported version
    */
-  public static GitVersion MIN = new GitVersion(1, 5, 4, 3);
+  public static final GitVersion MIN = new GitVersion(1, 5, 4, 3);
 
   /**
    * Major version nubmer
@@ -136,5 +140,15 @@ public final class GitVersion implements Comparable<GitVersion> {
   public String toString() {
     //noinspection ConcatenationWithEmptyString
     return "" + myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel;
+  }
+
+  /**
+   * Compare version number
+   *
+   * @param gitVersion a git revsion to compare wiht
+   * @return the comparison result
+   */
+  public boolean isLessOrEqual(final GitVersion gitVersion) {
+    return gitVersion != null && compareTo(gitVersion) <= 0;
   }
 }

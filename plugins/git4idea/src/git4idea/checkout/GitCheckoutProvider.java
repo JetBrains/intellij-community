@@ -20,9 +20,12 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
+import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +36,12 @@ import java.io.File;
  * Checkout provider fo the Git
  */
 public class GitCheckoutProvider implements CheckoutProvider {
+  /**
+   * The version number since which "-v" options is supported.
+   */
+  // TODO check if they will actially supprot the switch in the released 1.6.0.5
+  private static GitVersion VERBOSE_CLONE_SUPPORTED = new GitVersion(1, 6, 0, 5);
+
   /**
    * {@inheritDoc}
    */
@@ -45,12 +54,11 @@ public class GitCheckoutProvider implements CheckoutProvider {
     }
     final VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(dialog.getParentDirectory()));
     if (destinationParent == null) {
-      // TODO message
       return;
     }
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
-    GitLineHandler handler = GitLineHandler
-      .clone(project, sourceRepositoryURL, new File(dialog.getParentDirectory()), dialog.getDirectoryName(), dialog.getOriginName());
+    GitLineHandler handler =
+      clone(project, sourceRepositoryURL, new File(dialog.getParentDirectory()), dialog.getDirectoryName(), dialog.getOriginName());
     int code = GitHandlerUtil.doSynchronously(handler, GitBundle.message("cloning.repository", sourceRepositoryURL), "git clone");
     if (code == 0) {
       if (listener != null) {
@@ -70,5 +78,27 @@ public class GitCheckoutProvider implements CheckoutProvider {
    */
   public String getVcsName() {
     return "_Git";
+  }
+
+  /**
+   * Prepare clone handler
+   *
+   * @param project    a project
+   * @param url        an url
+   * @param directory  a base directory
+   * @param name       a name to checkout
+   * @param originName origin name (ignored if null or empty string)
+   * @return a handler for clone operation
+   */
+  public static GitLineHandler clone(Project project, final String url, final File directory, final String name, final String originName) {
+    GitLineHandler handler = new GitLineHandler(project, directory, GitHandler.CLONE);
+    if (VERBOSE_CLONE_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version())) {
+      handler.addParameters("-v");
+    }
+    if (originName != null && originName.length() > 0) {
+      handler.addParameters("-o", originName);
+    }
+    handler.addParameters(url, name);
+    return handler;
   }
 }
