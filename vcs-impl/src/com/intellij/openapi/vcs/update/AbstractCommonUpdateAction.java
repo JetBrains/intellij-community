@@ -36,6 +36,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -68,6 +69,7 @@ import java.io.File;
 import java.util.*;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.AbstractCommonUpdateAction");
 
   private final ActionInfo myActionInfo;
   private final ScopeInfo myScopeInfo;
@@ -360,21 +362,25 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
           progressIndicator.setText2("");
         }
-
-        doVfsRefresh();
       } finally {
-        myProjectLevelVcsManager.stopBackgroundVcsOperation();
+        try {
+          doVfsRefresh();
+        } finally {
+          myProjectLevelVcsManager.stopBackgroundVcsOperation();
+        }
       }
     }
 
     private void doVfsRefresh() {
-      final LocalHistoryAction action = LocalHistory.startAction(myProject, VcsBundle.message("local.history.update.from.vcs"));
+      final String actionName = VcsBundle.message("local.history.update.from.vcs");
+      final LocalHistoryAction action = LocalHistory.startAction(myProject, actionName);
       try {
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
             VcsUtil.refreshFiles(myRoots, new Runnable() {
               public void run() {
                 semaphore.up();
@@ -386,6 +392,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
       finally {
         action.finish();
+        LocalHistory.putSystemLabel(myProject, actionName);
       }
     }
 
