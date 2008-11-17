@@ -384,4 +384,9 @@ public class GitCloneDialog extends DialogWrapper {
   protected String getDimensionServiceKey() {
     return "GitCloneDialog";
   }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myRepositoryURL;
+  }
 }
