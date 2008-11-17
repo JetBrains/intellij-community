@@ -143,7 +143,7 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
     }
 
     final VirtualFile virtualFile = ((FileEditorManagerEx)FileEditorManager.getInstance(project)).getCurrentFile();
-    if (virtualFile != null){
+    if (virtualFile != null && virtualFile.isValid()){
       return PsiManager.getInstance(project).findFile(virtualFile);
     }
     return null;
