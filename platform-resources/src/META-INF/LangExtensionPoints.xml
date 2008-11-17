@@ -43,6 +43,8 @@
                   beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP"/>
   <extensionPoint name="extendWordSelectionHandler"
                   interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler"/>
+  <extensionPoint name="basicWordSelectionFilter"
+                  interface="com.intellij.openapi.util.Condition"/>
   <extensionPoint name="typedHandler"
                   interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate"/>
   <extensionPoint name="joinLinesHandler"

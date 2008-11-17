@@ -237,6 +237,7 @@
     </intentionAction>
 
     <lang.implementationTextSelectioner language="XML" implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
+    <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.XmlBasicWordSelectionFilter"/>
   </extensions>
   <application-components>
     <component>
