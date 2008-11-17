@@ -205,6 +205,10 @@ public abstract class GitHandler {
    */
   @NonNls public static final String VERSION = "version";
   /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String STASH = "stash";
+  /**
    * The vcs object
    */
   protected final GitVcs myVcs;
