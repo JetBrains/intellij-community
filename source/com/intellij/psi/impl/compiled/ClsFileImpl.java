@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.List;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx {
@@ -43,7 +43,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private final PsiManagerImpl myManager;
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
-  private volatile WeakReference<StubTree> myStub;
+  private volatile SoftReference<StubTree> myStub;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(null);
@@ -355,7 +355,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Nullable
   public StubTree getStubTree() {
-    WeakReference<StubTree> stub = myStub;
+    SoftReference<StubTree> stub = myStub;
     StubTree stubHolder = stub == null ? null : stub.get();
     if (stubHolder == null) {
       synchronized (lock) {
@@ -364,7 +364,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         if (stubHolder != null) return stubHolder;
         stubHolder = StubTree.readFromVFile(getVirtualFile());
         if (stubHolder != null) {
-          myStub = new WeakReference<StubTree>(stubHolder);
+          myStub = new SoftReference<StubTree>(stubHolder);
           ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
         }
       }
@@ -381,7 +381,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   public void onContentReload() {
-    WeakReference<StubTree> stub = myStub;
+    SoftReference<StubTree> stub = myStub;
     StubTree stubHolder = stub == null ? null : stub.get();
     if (stubHolder != null) {
       ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
