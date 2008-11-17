@@ -58,35 +58,33 @@ public class FileBasedStorage extends XmlElementStorage {
     super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager);
     Application app = ApplicationManager.getApplication();
 
-    if (isOptionsFile(filePath)) {
-      if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
-        try {
-          String optionsPath = PathManager.getOptionsPath();
-          File optionsFile = new File(optionsPath);
-          if (!optionsFile.exists()) {
-            optionsFile.mkdirs();
+    if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
+      try {
+        String configDirectoryPath = PathManager.getConfigPath(true);
+
+        VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configDirectoryPath);
+
+        if (configDir != null) {
+          requestAllChildren(configDir);
+
+          if (configDir instanceof NewVirtualFile) {
+            ((NewVirtualFile)configDir).markDirtyRecursively();
           }
-          VirtualFile voptionsFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(optionsFile);
-          if (voptionsFile != null) {
-            voptionsFile.getChildren();
-            if (voptionsFile instanceof NewVirtualFile) {
-              ((NewVirtualFile)voptionsFile).markDirtyRecursively();
-            }
-            voptionsFile.refresh(false, true);
-          }
+
+          configDir.refresh(false, true);
         }
-        finally {
-          myConfigDirectoryRefreshed = true;
-        }
+
+      }
+      finally {
+        myConfigDirectoryRefreshed = true;
       }
 
     }
-    else {
-      if (!Thread.holdsLock(PsiLock.LOCK) && (app.isUnitTestMode() || app.isDispatchThread())) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
-        if (virtualFile != null) {
-          virtualFile.refresh(false, false);
-        }
+
+    if (!isOptionsFile(filePath) && !Thread.holdsLock(PsiLock.LOCK) && (app.isUnitTestMode() || app.isDispatchThread())) {
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+      if (virtualFile != null) {
+        virtualFile.refresh(false, false);
       }
     }
 
@@ -110,6 +108,12 @@ public class FileBasedStorage extends XmlElementStorage {
           listener.storageFileChanged(event, FileBasedStorage.this);
         }
       }, false, this);
+    }
+  }
+
+  private static void requestAllChildren(final VirtualFile configDir) {
+    for (VirtualFile file : configDir.getChildren()) {
+      requestAllChildren(file);
     }
   }
 
