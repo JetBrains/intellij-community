@@ -404,6 +404,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public static PyType getTypeFromTarget(final PsiElement target) {
+    if (target instanceof PyTargetExpression && PyNames.NONE.equals(((PyTargetExpression) target).getName())) {
+      return PyNoneType.INSTANCE;
+    }
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile) target);
     }
