@@ -150,7 +150,8 @@ public abstract class XmlExtension {
     return element.getNSDescriptor(namespace, strict);  
   }
 
-  public XmlTag getParentTagForNamespace(XmlTag tag, String namespace) {
+  @Nullable
+  public XmlTag getParentTagForNamespace(XmlTag tag, XmlNSDescriptor namespace) {
     return tag.getParentTag();
   }
 

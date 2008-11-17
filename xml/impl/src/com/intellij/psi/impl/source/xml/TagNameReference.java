@@ -208,11 +208,14 @@ public class TagNameReference implements PsiReference {
     return l.toArray(new String[l.size()]);
   }
 
-  private static void processVariantsInNamespace(final String namespace, final XmlTag element, final List<XmlElementDescriptor> variants,
+  private static void processVariantsInNamespace(final String namespace,
+                                                 final XmlTag element,
+                                                 final List<XmlElementDescriptor> variants,
                                                  final XmlElementDescriptor elementDescriptor,
                                                  final String elementNamespace,
                                                  final Map<String, XmlElementDescriptor> descriptorsMap, final Set<XmlNSDescriptor> visited,
-                                                 XmlTag parent, final XmlExtension extension) {
+                                                 XmlTag parent,
+                                                 final XmlExtension extension) {
     if(descriptorsMap.containsKey(namespace)){
         final XmlElementDescriptor descriptor = descriptorsMap.get(namespace);
 
@@ -247,15 +250,20 @@ public class TagNameReference implements PsiReference {
         final XmlElementDescriptor[] rootElementsDescriptors =
           nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class));
 
-        XmlTag parentTag = extension.getParentTagForNamespace(element, namespace);
-        XmlElementDescriptor parentDescriptor = elementDescriptor;
-        if (parentTag != element.getParentTag()) {
+        final XmlTag parentTag = extension.getParentTagForNamespace(element, nsDescriptor);
+        final XmlElementDescriptor parentDescriptor;
+        if (parentTag == element.getParentTag()) {
+          parentDescriptor = elementDescriptor;
+        }
+        else {
+          assert parentTag != null;
           parentDescriptor = parentTag.getDescriptor();
         }
 
-        for(XmlElementDescriptor containedDescriptor:rootElementsDescriptors) {
-          if (containedDescriptor != null && couldContainDescriptor(parentTag, parentDescriptor, containedDescriptor, namespace)) {
-            variants.add(containedDescriptor);
+        for(XmlElementDescriptor candidateDescriptor: rootElementsDescriptors) {
+          if (candidateDescriptor != null &&
+              couldContainDescriptor(parentTag, parentDescriptor, candidateDescriptor, namespace)) {
+            variants.add(candidateDescriptor);
           }
         }
       }
@@ -267,13 +275,16 @@ public class TagNameReference implements PsiReference {
     return extension.getNSDescriptor(element, namespace, strict);
   }
 
-  private static boolean couldContainDescriptor(final XmlTag parentTag, final XmlElementDescriptor elementDescriptor,
-                                                final XmlElementDescriptor containedDescriptor, String containedDescriptorNs) {
-    if (XmlUtil.nsFromTemplateFramework(containedDescriptorNs)) return true;
+  private static boolean couldContainDescriptor(final XmlTag parentTag,
+                                                final XmlElementDescriptor parentDescriptor,
+                                                final XmlElementDescriptor childDescriptor,
+                                                String childNamespace) {
+
+    if (XmlUtil.nsFromTemplateFramework(childNamespace)) return true;
     if (parentTag == null) return true;
-    final XmlTag childTag = parentTag.createChildTag(containedDescriptor.getName(), containedDescriptorNs, "", false);
+    final XmlTag childTag = parentTag.createChildTag(childDescriptor.getName(), childNamespace, "", false);
     childTag.putUserData(XmlElement.INCLUDING_ELEMENT, parentTag);
-    return elementDescriptor != null && elementDescriptor.getElementDescriptor(childTag, parentTag) != null;
+    return parentDescriptor != null && parentDescriptor.getElementDescriptor(childTag, parentTag) != null;
   }
 
   private static boolean isAcceptableNs(final XmlTag element, final XmlElementDescriptor elementDescriptor,

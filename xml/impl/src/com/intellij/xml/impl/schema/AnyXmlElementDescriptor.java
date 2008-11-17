@@ -61,7 +61,7 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag tag, XmlTag contextTag){
-    return myParentDescriptor.getElementDescriptor(tag, contextTag);
+    return new AnyXmlElementDescriptor(this, myXmlNSDescriptor);
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {

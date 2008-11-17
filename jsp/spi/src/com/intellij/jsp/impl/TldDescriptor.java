@@ -5,13 +5,12 @@ package com.intellij.jsp.impl;
 
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public interface TldDescriptor extends XmlNSDescriptor {
+public interface TldDescriptor extends JspNsDescriptor {
   XmlElementDescriptor getElementDescriptor(String name);
 
   @Nullable
