@@ -39,9 +39,11 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  /* TODO: move to inspection test
   public void testMethodParams() throws Exception {
     doTest();
   }
+  */
 
   public void testYieldInNestedFunction() throws Exception {
     doTest();
