@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>dupes.py</file>
+    <line>2</line>
+    <description>Shadows same-named class above</description>
+  </problem>
+  <problem>
+    <file>dupes.py</file>
+    <line>5</line>
+    <description>Shadows same-named function above</description>
+  </problem>
+  <problem>
+    <file>dupes.py</file>
+    <line>8</line>
+    <description>Shadows same-named function above</description>
+  </problem>
+  <problem>
+    <file>dupes.py</file>
+    <line>9</line>
+    <description>Shadows same-named variable above</description>
+  </problem>
+</problems>

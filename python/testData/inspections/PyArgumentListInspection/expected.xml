@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>badarglist.py</file>
+    <line>14</line>
+    <description>Parameter 'two' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>21</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>22</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>29</line>
+    <description>Parameter 'a' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>31</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>33</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>33</line>
+    <description>Parameter 'a' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>34</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>41</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>43</line>
+    <description>Duplicate argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>45</line>
+    <description>Cannot appear past keyword arguments</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>45</line>
+    <description>Parameter 'b' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>55</line>
+    <description>Cannot appear past keyword arguments</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>55</line> <!-- yes, two identical problems on same line -->
+    <description>Cannot appear past keyword arguments</description>
+  </problem>
+</problems>

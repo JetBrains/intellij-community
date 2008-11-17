@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +25,7 @@ import com.jetbrains.python.psi.impl.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddImportAction implements HintAction, QuestionAction {
+public class AddImportAction implements HintAction, QuestionAction, LocalQuickFix {
   private final PsiReference myReference;
   private Project myProject;
   private static final Logger LOG = Logger.getInstance("#" + AddImportAction.class.getName());
@@ -39,8 +41,20 @@ public class AddImportAction implements HintAction, QuestionAction {
   }
 
   @NotNull
+  public String getName() {
+    return getText();
+  }
+
+  @NotNull
   public String getFamilyName() {
     return "import";
+  }
+
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    PsiFile file = descriptor.getPsiElement().getContainingFile();
+    if (file != null) {
+      execute(file);
+    }
   }
 
   @Nullable

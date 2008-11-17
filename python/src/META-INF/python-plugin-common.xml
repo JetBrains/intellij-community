@@ -61,6 +61,7 @@
     </intentionAction>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
+    <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -76,7 +77,7 @@
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
   </extensions>
-  <!--
+  <!--  
   <actions>
     <action 
       id="Devmode.DumpPsi" 

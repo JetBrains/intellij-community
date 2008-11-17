@@ -16,18 +16,22 @@
 
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -41,11 +45,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
+ * Implements reference expression PSI.
  * User: yole
  * Date: 29.05.2005
- * Time: 10:19:01
- * To change this template use File | Settings | File Templates.
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
@@ -118,7 +120,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PsiManager manager = getElement().getManager();
     if (manager instanceof PsiManagerImpl) {
       final ResolveCache cache = ((PsiManagerImpl)manager).getResolveCache();
-      return cache.resolveWithCaching(this, Resolver.INSTANCE, false, false);
+      return cache.resolveWithCaching(this, CachingResolver.INSTANCE, false, false);
     }
     else return resolveInner();
   }
@@ -206,7 +208,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       PyResolveUtil.treeCrawlUp(proc, qualifier);
       return proc.getResult();
     }
-    else return EMPTY_LIST;
+    else return EMPTY_LIST; 
   }
 
   /**
@@ -311,6 +313,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // include builtin names
     processor.setNotice(" | __builtin__");
     PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(getProject()).getBuiltinsFile()); // names from __builtin__
+    // if we're expanding a "__", include predefined __names__
+    String name = getName();
+    if (name != null && name.startsWith("__")) {
+      List<LookupElement> result = processor.getResultList();
+      LookupElementFactory factory = LookupElementFactory.getInstance();
+      for (String s : PyNames.UnderscoredNames) {
+        LookupItem item = (LookupItem)factory.createLookupElement(s);
+        item.setAttribute(item.TAIL_TEXT_ATTR, " | predefined");
+        item.setIcon(PyIcons.PREDEFINED);
+        result.add(item);
+      }
+      return result.toArray(new LookupElement[result.size()]);
+    }
     return processor.getResult();
   }
 
@@ -416,9 +431,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   // our very own caching resolver
-  private static class Resolver implements ResolveCache.Resolver {
+  private static class CachingResolver implements ResolveCache.Resolver {
 
-    public static Resolver INSTANCE = new Resolver(); 
+    public static CachingResolver INSTANCE = new CachingResolver();
 
     @Nullable
     public PsiElement resolve(final PsiReference ref, final boolean incompleteCode) {
