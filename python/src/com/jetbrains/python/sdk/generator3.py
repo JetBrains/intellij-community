@@ -378,10 +378,16 @@ class ModuleRedeclarator(object):
       self.outDocAttr(p_func, indent+1)
       self.out("pass", indent+1);
     elif doing_builtins and classname in ('list', 'dict', 'set') and p_modname == '__builtin__' and p_name == '__init__':
-      if classname == 'list':
+      if classname == 'list' or classname == 'set':
         self.out("def " + p_name + "(self, *args): # known special case of list", indent)
       else:
         self.out("def " + p_name + "(self, *args, **kwargs): # known special case of dict", indent)
+      self.outDocAttr(p_func, indent+1)
+      self.out("pass", indent+1);
+    elif doing_builtins and classname == "super" and p_modname == "__builtin__" and p_name == "__init__":
+      # this actually needs to be handled in a special way in the type inference code - super() does not return
+      # an instance of the class 'super'
+      self.out("def " + p_name + "(self, type, obj=None): # known special case of super", indent)
       self.outDocAttr(p_func, indent+1)
       self.out("pass", indent+1);
     elif doing_builtins and not p_class and p_modname == '__builtin__' and p_name in ('min', 'max'):
