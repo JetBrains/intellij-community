@@ -234,7 +234,13 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     Set<OptionDescription> result = null;
     for (String option : myStorage.keySet()) {
       final Set<OptionDescription> descriptions = myStorage.get(option);
-      if (descriptions != null && (option.startsWith(prefix) || option.startsWith(stemmedPrefix))) {
+      if (descriptions != null) {
+        if (!option.startsWith(prefix) && !option.startsWith(stemmedPrefix)) {
+          final String stemmedOption = PorterStemmerUtil.stem(option);
+          if (stemmedOption != null && !stemmedOption.startsWith(prefix) && !stemmedOption.startsWith(stemmedPrefix)) {
+            continue;
+          }
+        }
         if (result == null) {
           result = new THashSet<OptionDescription>();
         }
