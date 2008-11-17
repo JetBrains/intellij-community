@@ -232,7 +232,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       tempExpr = elementFactory.createExpressionFromText(text, file);
 
       final boolean [] hasErrors = new boolean[1];
-      tempExpr.accept(new JavaRecursiveElementVisitor() {
+      final JavaRecursiveElementVisitor errorsVisitor = new JavaRecursiveElementVisitor() {
         @Override
         public void visitElement(final PsiElement element) {
           if (hasErrors[0]) {
@@ -245,15 +245,22 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         public void visitErrorElement(final PsiErrorElement element) {
           hasErrors[0] = true;
         }
-      });
+      };
+      tempExpr.accept(errorsVisitor);
       if (hasErrors[0]) return null;
 
       tempExpr.putUserData(ElementToWorkOn.PREFIX, prefix);
       tempExpr.putUserData(ElementToWorkOn.SUFFIX, suffix);
 
-      tempExpr.putUserData(ElementToWorkOn.TEXT_RANGE, FileDocumentManager.getInstance().getDocument(file.getVirtualFile()).createRangeMarker(startOffset, endOffset));
+      final RangeMarker rangeMarker =
+        FileDocumentManager.getInstance().getDocument(file.getVirtualFile()).createRangeMarker(startOffset, endOffset);
+      tempExpr.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
 
-      tempExpr.putUserData(ElementToWorkOn.PARENT, literalExpression != null ? literalExpression : elementAt);
+      final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
+      tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
+
+      createReplacement("intellijidearulezzz", file, prefix, suffix, parent, rangeMarker).accept(errorsVisitor);
+      if (hasErrors[0]) return null;
     }
     catch (IncorrectOperationException e) {
       tempExpr = null;
@@ -521,19 +528,25 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       final PsiElement parent = expr1.getUserData(ElementToWorkOn.PARENT);
       final RangeMarker rangeMarker = expr1.getUserData(ElementToWorkOn.TEXT_RANGE);
 
-      final String allText = parent.getContainingFile().getText();
-      final TextRange parentRange = parent.getTextRange();
-
-      String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
-      if (StringUtil.stripQuotesAroundValue(beg).length() == 0) beg = "";
-
-      String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
-      if (StringUtil.stripQuotesAroundValue(end).length() == 0) end = "";
-
-      final String text = beg + (prefix != null ? prefix : "") + ref.getText() + (suffix != null ? suffix : "") + end;
-      final PsiExpression el = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createExpressionFromText(text, file);
-      return parent.replace(el);
+      return parent.replace(createReplacement(ref.getText(), file, prefix, suffix, parent, rangeMarker));
     }
+  }
+
+  private static PsiExpression createReplacement(final String refText, final PsiFile file,
+                                                 final String prefix,
+                                                 final String suffix,
+                                                 final PsiElement parent, final RangeMarker rangeMarker) {
+    final String allText = parent.getContainingFile().getText();
+    final TextRange parentRange = parent.getTextRange();
+
+    String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
+    if (StringUtil.stripQuotesAroundValue(beg).length() == 0) beg = "";
+
+    String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
+    if (StringUtil.stripQuotesAroundValue(end).length() == 0) end = "";
+
+    final String text = beg + (prefix != null ? prefix : "") + refText + (suffix != null ? suffix : "") + end;
+    return JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createExpressionFromText(text, file);
   }
 
   public static PsiStatement putStatementInLoopBody(PsiStatement declaration, PsiElement container, PsiElement finalAnchorStatement)
