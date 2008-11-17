@@ -26,7 +26,7 @@ public class PyRedeclarationInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Detect redefinitions"; // TODO: propertize
+    return "Duplicate definition"; // TODO: propertize
   }
 
   @NotNull

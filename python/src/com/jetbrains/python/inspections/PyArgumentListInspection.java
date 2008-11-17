@@ -30,7 +30,7 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Function arguments' correctness"; // TODO: propertize
+    return "Incorrect call arguments"; // TODO: propertize
   }
 
   @NotNull

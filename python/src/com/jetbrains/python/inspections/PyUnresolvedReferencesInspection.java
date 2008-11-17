@@ -32,7 +32,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Marks references that fail to resolve"; // TODO: propertize
+    return "Unresolved Python reference"; // TODO: propertize
   }
 
   @NotNull
@@ -114,7 +114,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           //final TextRange highlightRange = reference.getRangeInElement().shiftRight(reference.getElement().getTextRange().getStartOffset());
           if (severity == HighlightSeverity.WARNING) {
             //annotation = getHolder().createWarningAnnotation(highlightRange, description_buf.toString());
-            hl_type = ProblemHighlightType.INFO;
+            hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           }
           else {
             //annotation = getHolder().createErrorAnnotation(highlightRange, description_buf.toString());
