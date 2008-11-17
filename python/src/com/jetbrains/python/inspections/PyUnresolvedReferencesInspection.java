@@ -121,7 +121,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             //annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
             hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
           }
-          registerProblem(reference.getElement(), description, hl_type, null, new AddImportAction(reference));
+          registerProblem(reference.getElement(), description, hl_type, new AddImportAction(reference));
         }
       }
     }
