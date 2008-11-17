@@ -129,6 +129,11 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
     return myConsolePanel;
   }
 
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return myConsolePanel.getTreeView();
+  }
+
   private static class SystemOutput implements InputConsumer {
     private final Printer myPrinter;
 
