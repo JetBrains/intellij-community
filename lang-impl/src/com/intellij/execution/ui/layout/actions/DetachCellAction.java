@@ -16,6 +16,10 @@ public class DetachCellAction extends BaseViewAction {
     }
 
     Grid grid = context.findGridFor(content[0]);
+    if (grid == null) {
+      setEnabled(e, false);
+      return;
+    }
 
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace()) || (ViewContext.TAB_POPUP_PLACE.equals(e.getPlace()))) {
       setEnabled(e, grid.getContents().size() == 1);
