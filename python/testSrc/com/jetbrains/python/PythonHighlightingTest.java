@@ -11,18 +11,6 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
     return PathManager.getHomePath() + "/plugins/python/testData/highlighting/";
   }
 
-  public void testCallArgs() throws Exception {
-    doTest();
-  }
-
-  public void testCallArgsStars() throws Exception {
-    doTest();
-  }
-
-  public void testImportInTry() throws Exception {
-    doTest();
-  }
-
   public void testReturnOutsideOfFunction() throws Exception {
     doTest();
   }
@@ -48,10 +36,6 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testStringEscapedOK() throws Exception {
-    doTest();
-  }
-
-  public void testDuplicateClassName() throws Exception {
     doTest();
   }
 
