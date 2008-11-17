@@ -44,6 +44,7 @@
         </constraints>
         <properties>
           <text value=""/>
+          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="common.current.branch.tooltip"/>
         </properties>
       </component>
       <component id="d11aa" class="javax.swing.JLabel">

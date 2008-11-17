@@ -98,4 +98,12 @@ public class GitStashDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     return myPanel;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
+  }
 }

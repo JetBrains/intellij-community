@@ -333,7 +333,9 @@ public abstract class GitHandler {
   @SuppressWarnings({"WeakerAccess"})
   public void addParameters(@NonNls @NotNull String... parameters) {
     checkNotStarted();
-    myCommandLine.addParameters(parameters);
+    for (String s : parameters) {
+      myCommandLine.addParameter(translateParameter(s));
+    }
   }
 
   /**
@@ -356,7 +358,7 @@ public abstract class GitHandler {
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, path));
+      myCommandLine.addParameter(translateParameter(GitUtil.relativePath(myWorkingDirectory, path)));
     }
   }
 
@@ -370,7 +372,7 @@ public abstract class GitHandler {
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
     checkNotStarted();
     for (VirtualFile file : files) {
-      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, file));
+      myCommandLine.addParameter(translateParameter(GitUtil.relativePath(myWorkingDirectory, file)));
     }
   }
 
@@ -493,7 +495,7 @@ public abstract class GitHandler {
   public String printableCommandLine() {
     final GeneralCommandLine line = myCommandLine.clone();
     line.setExePath("git");
-    return line.getCommandLineString();
+    return restoreParameter(line.getCommandLineString());
   }
 
   /**
@@ -622,4 +624,26 @@ public abstract class GitHandler {
     checkNotStarted();
     myStderrSuppressed = stderrSuppressed;
   }
+
+  /**
+   * Translate parameter
+   *
+   * @param s a string to translate
+   * @return a translated string
+   */
+  public static String translateParameter(String s) {
+    return s.replaceAll("([\\{}])", "\\\\$1");
+  }
+
+  /**
+   * Restore parameter
+   *
+   * @param s a string to translate
+   * @return a translated string
+   */
+  public static String restoreParameter(String s) {
+    return s.replaceAll("\\\\([{}])", "$1");
+  }
+
+
 }

@@ -285,5 +285,4 @@ public class GitSimpleHandler extends GitHandler {
     handler.setNoSSH(true);
     return handler;
   }
-
 }

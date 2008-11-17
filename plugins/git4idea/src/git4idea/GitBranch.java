@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.StringTokenizer;
 
 /**
@@ -92,5 +93,41 @@ public class GitBranch {
       }
     }
     return null;
+  }
+
+  /**
+   * List branches for the git root
+   *
+   * @param project  the context project
+   * @param root     the git root
+   * @param remote   if true remote branches are listed
+   * @param local    if true local branches are listed
+   * @param branches the collection used to store branches
+   * @throws VcsException if there is a problem with running git
+   */
+  public static void list(final Project project,
+                          final VirtualFile root,
+                          final boolean remote,
+                          final boolean local,
+                          final Collection<String> branches) throws VcsException {
+    if (!local && !remote) {
+      // no need to run hanler
+      return;
+    }
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.BRANCH);
+    handler.setNoSSH(true);
+    handler.setSilent(true);
+    if (remote && local) {
+      handler.addParameters("-a");
+    }
+    else if (remote) {
+      handler.addParameters("-r");
+    }
+    for (String line : handler.run().split("\n")) {
+      if (line.length() == 0 || line.endsWith(NO_BRANCH_NAME)) {
+        continue;
+      }
+      branches.add(line.substring(2));
+    }
   }
 }

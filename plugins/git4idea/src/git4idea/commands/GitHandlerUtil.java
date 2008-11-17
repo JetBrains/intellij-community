@@ -285,7 +285,7 @@ public class GitHandlerUtil {
     /**
      * Error indicators for the line
      */
-    @NonNls private static final String[] ERROR_INIDCATORS = {"ERROR:", "error:", "FATAL:", "fatal:"};
+    @NonNls private static final String[] ERROR_INIDCATORS = {"ERROR:", "error:", "FATAL:", "fatal:", "Cannot apply"};
 
     /**
      * Check if the line is an error line
