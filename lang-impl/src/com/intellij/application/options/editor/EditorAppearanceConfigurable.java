@@ -79,6 +79,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     editorSettings.setLineNumbersShown(myCbShowLineNumbers.isSelected());
     editorSettings.setWhitespacesShown(myCbShowWhitespaces.isSelected());
 
+    EditorOptionsPanel.reinitAllEditors();
+
     DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = myCbShowMethodSeparators.isSelected();
 
     UISettings uiSettings = UISettings.getInstance();

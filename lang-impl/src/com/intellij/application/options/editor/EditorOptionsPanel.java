@@ -184,10 +184,7 @@ public class EditorOptionsPanel {
 
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
 
-    Editor[] editors = EditorFactory.getInstance().getAllEditors();
-    for (Editor editor : editors) {
-      ((EditorEx)editor).reinitSettings();
-    }
+    reinitAllEditors();
 
     String temp=myRecentFilesLimitField.getText();
     if(temp.trim().length() > 0){
@@ -206,6 +203,13 @@ public class EditorOptionsPanel {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
+    }
+  }
+
+  public static void reinitAllEditors() {
+    Editor[] editors = EditorFactory.getInstance().getAllEditors();
+    for (Editor editor : editors) {
+      ((EditorEx)editor).reinitSettings();
     }
   }
 
