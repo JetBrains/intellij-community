@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * @author max
@@ -242,7 +243,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       @NonNls final String template = description.getDescriptionTemplate();
       int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
       final String text = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement().getText() : "";
-      @NonNls String problemText = template.replaceAll("#ref", text.replace("$", "\\\\$")).replaceAll(" #loc ", " ");
+      @NonNls String problemText = template.replaceAll("#ref", Matcher.quoteReplacement(text)).replaceAll(" #loc ", " ");
 
       Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
