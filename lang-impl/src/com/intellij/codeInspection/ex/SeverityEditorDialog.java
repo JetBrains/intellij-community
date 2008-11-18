@@ -7,6 +7,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.TextAttributesDescription;
+import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -116,7 +117,7 @@ public class SeverityEditorDialog extends DialogWrapper {
           }
         }
         assert colorAndFontOptions != null;
-        final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(colorAndFontOptions.getId() + ".Java");
+        final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
         LOG.assertTrue(javaPage != null);
         final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
         if (optionsEditor != null) {

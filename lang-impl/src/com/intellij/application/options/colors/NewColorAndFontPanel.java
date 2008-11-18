@@ -1,5 +1,6 @@
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.options.colors.ColorSettingsPage;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -9,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class NewColorAndFontPanel extends JPanel {
+  private ColorSettingsPage mySettingsPage;
   private SchemesPanel mySchemesPanel;
   private OptionsPanel myOptionsPanel;
   private PreviewPanel myPreviewPanel;
@@ -18,13 +20,14 @@ public class NewColorAndFontPanel extends JPanel {
   public NewColorAndFontPanel(final SchemesPanel schemesPanel,
                               final OptionsPanel optionsPanel,
                               final PreviewPanel previewPanel,
-                              final String category, final Collection<String> optionList) {
+                              final String category, final Collection<String> optionList, final ColorSettingsPage page) {
     super(new BorderLayout());
     mySchemesPanel = schemesPanel;
     myOptionsPanel = optionsPanel;
     myPreviewPanel = previewPanel;
     myCategory = category;
     myOptionList = optionList;
+    mySettingsPage = page;
 
     JPanel top = new JPanel(new BorderLayout());
 
@@ -69,14 +72,15 @@ public class NewColorAndFontPanel extends JPanel {
 
   }
 
-  public static NewColorAndFontPanel create(final PreviewPanel previewPanel, String category, final ColorAndFontOptions options, Collection<String> optionList) {
+  public static NewColorAndFontPanel create(final PreviewPanel previewPanel, String category, final ColorAndFontOptions options,
+                                            Collection<String> optionList, ColorSettingsPage page) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
 
     final ColorAndFontDescriptionPanel descriptionPanel = new ColorAndFontDescriptionPanel();
     final OptionsPanel optionsPanel = new OptionsPanelImpl(descriptionPanel, options, schemesPanel, category);
 
 
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category, optionList);
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category, optionList, page);
   }
 
   public Runnable showOption(final String option) {
@@ -140,5 +144,9 @@ public class NewColorAndFontPanel extends JPanel {
 
   public boolean containsFontOptions() {
     return false;
+  }
+
+  public ColorSettingsPage getSettingsPage() {
+    return mySettingsPage;
   }
 }

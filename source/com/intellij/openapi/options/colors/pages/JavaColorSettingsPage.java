@@ -43,13 +43,14 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
 
-public class JavaColorSettingsPage implements ColorSettingsPage {
+public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColorSettingsPage {
   private static final AttributesDescriptor[] ourDescriptors = new AttributesDescriptor[] {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), SyntaxHighlighterColors.KEYWORD),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), SyntaxHighlighterColors.NUMBER),

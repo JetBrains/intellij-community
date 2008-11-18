@@ -329,7 +329,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       final SimpleEditorPreview preview = new SimpleEditorPreview(this, page);
       NewColorAndFontPanel panel = NewColorAndFontPanel.create(preview,
                                                             page.getDisplayName(),
-                                                            this, null);
+                                                            this, null, page);
 
 
       result.add(panel);
@@ -337,7 +337,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     result.add(createDiffPanel());
 
-    result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(), ColorAndFontOptions.FILE_STATUS_GROUP, this, collectFileTypes()));
+    result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(), ColorAndFontOptions.FILE_STATUS_GROUP, this, collectFileTypes(), null));
 
     final JPanel scopePanel = createChooseScopePanel();
     result.add(NewColorAndFontPanel.create(new PreviewPanel.Empty(){
@@ -346,7 +346,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         return scopePanel;
       }
 
-    }, ColorAndFontOptions.SCOPES_GROUP, this, null));
+    }, ColorAndFontOptions.SCOPES_GROUP, this, null, null));
 
 
     return result;
@@ -363,7 +363,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private NewColorAndFontPanel createFontConfigurable() {
-    return new NewColorAndFontPanel(new SchemesPanel(this), new FontOptions(this), new FontEditorPreview(this), "Font", null){
+    return new NewColorAndFontPanel(new SchemesPanel(this), new FontOptions(this), new FontEditorPreview(this), "Font", null, null){
       @Override
       public boolean containsFontOptions() {
         return true;
@@ -394,7 +394,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
     } );
 
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, diffPreviewPanel,ColorAndFontOptions.DIFF_GROUP, null);
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, diffPreviewPanel,ColorAndFontOptions.DIFF_GROUP, null, null);
 
   }
 
@@ -1000,10 +1000,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   @Nullable
-  public SearchableConfigurable findSubConfigurable(String id) {
-    for (SearchableConfigurable configurable : mySubPanels.values()) {
-      if (Comparing.strEqual(configurable.getId(), id)){
-        return configurable;
+  public SearchableConfigurable findSubConfigurable(Class pageClass) {
+    if (mySubPanels == null) {
+      buildConfigurables();
+    }
+    for (Map.Entry<NewColorAndFontPanel, SearchableConfigurable> entry : mySubPanels.entrySet()) {
+      if (pageClass.isInstance(entry.getKey().getSettingsPage())) {
+        return entry.getValue();
       }
     }
     return null;
