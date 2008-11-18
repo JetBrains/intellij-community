@@ -53,7 +53,11 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(aClass);
-      defaultConstructorFix.invoke(project, editor, file);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          defaultConstructorFix.invoke(project, editor, file);
+        }
+      });
       aClass = getField().getContainingClass();
       constructors = aClass.getConstructors();
     }
