@@ -26,11 +26,11 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
-import git4idea.config.GitVcsSettings;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -46,20 +46,7 @@ public class GitAdd extends BasicAction {
 
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(GitVcs.getInstance(project), affectedFiles)) return;
 
-    final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByVcsRoot(project, affectedFiles);
-
-    for (VirtualFile root : roots.keySet()) {
-      GitCommand command = new GitCommand(project, vcs.getSettings(), root);
-      List<VirtualFile> list = roots.get(root);
-      VirtualFile[] vfiles = list.toArray(new VirtualFile[list.size()]);
-      command.add(vfiles);
-    }
-
-    VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-    for (VirtualFile file : affectedFiles) {
-      mgr.fileDirty(file);
-      file.refresh(true, true);
-    }
+    addFiles(project, affectedFiles);
   }
 
   /**
@@ -70,14 +57,11 @@ public class GitAdd extends BasicAction {
    * @throws VcsException If an error occurs
    */
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile[] files) throws VcsException {
-    final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByVcsRoot(project, files);
-    for (VirtualFile root : roots.keySet()) {
-      GitCommand command = new GitCommand(project, GitVcsSettings.getInstance(project), root);
-      List<VirtualFile> list = roots.get(root);
-      VirtualFile[] vfiles = list.toArray(new VirtualFile[list.size()]);
-      command.add(vfiles);
+    final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByGitRoot(Arrays.asList(files));
+    for (Map.Entry<VirtualFile, List<VirtualFile>> entry : roots.entrySet()) {
+      GitSimpleHandler h = GitSimpleHandler.addFiles(project, entry.getKey(), entry.getValue());
+      h.run();
     }
-
     VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile file : files) {
       mgr.fileDirty(file);
