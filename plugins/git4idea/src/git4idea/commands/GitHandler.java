@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import git4idea.GitUtil;
@@ -244,7 +245,7 @@ public abstract class GitHandler {
    * @param command a command to execute
    */
   protected GitHandler(final Project project, final VirtualFile vcsRoot, final String command) {
-    this(project, GitUtil.getIOFile(vcsRoot), command);
+    this(project, VfsUtil.virtualToIoFile(vcsRoot), command);
   }
 
   /**

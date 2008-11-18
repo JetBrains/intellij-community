@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,21 +45,6 @@ public class GitUtil {
    */
   private GitUtil() {
     // do nothink
-  }
-
-  /**
-   * Get {@link java.io.File} from {@link VirtualFile}. Note that only files from {@link LocalFileSystem} are supported. Since git cannot work with other kinds of filesystems anyway.
-   *
-   * @param file a virtual file
-   * @return a matching {@link java.io.File}
-   */
-  public static File getIOFile(VirtualFile file) {
-    if (file.getFileSystem() instanceof LocalFileSystem) {
-      return new File(file.getPath());
-    }
-    else {
-      throw new IllegalArgumentException("Only local file system is supported: " + file.getFileSystem().getClass().getName());
-    }
   }
 
   @NotNull
@@ -369,7 +355,7 @@ public class GitUtil {
    * @throws IllegalArgumentException if path is not under root.
    */
   public static String relativePath(final VirtualFile root, FilePath path) {
-    return relativePath(getIOFile(root), path.getIOFile());
+    return relativePath(VfsUtil.virtualToIoFile(root), path.getIOFile());
   }
 
 
@@ -394,7 +380,7 @@ public class GitUtil {
    * @throws IllegalArgumentException if path is not under root.
    */
   public static String relativePath(final File root, VirtualFile file) {
-    return relativePath(root, getIOFile(file));
+    return relativePath(root, VfsUtil.virtualToIoFile(file));
   }
 
   /**

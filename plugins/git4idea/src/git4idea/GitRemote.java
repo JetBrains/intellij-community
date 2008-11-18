@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
@@ -186,7 +187,7 @@ public final class GitRemote {
    */
   public static List<String> getFetchSpecs(Project project, VirtualFile root, String remoteName) throws VcsException {
     ArrayList<String> rc = new ArrayList<String>();
-    final File rootFile = GitUtil.getIOFile(root);
+    final File rootFile = VfsUtil.virtualToIoFile(root);
     @NonNls final File remotesFile = new File(rootFile, ".git" + File.separator + "remotes" + File.separator + remoteName);
     // TODO try branches file?
     if (remotesFile.exists() && !remotesFile.isDirectory()) {
