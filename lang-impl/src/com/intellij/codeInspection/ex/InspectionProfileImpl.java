@@ -550,8 +550,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myExternalInfo.copy(inspectionProfile.getExternalInfo());
 
     InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
-    //TODO lesya
-    //save();
   }
 
   public static synchronized InspectionProfileImpl getDefaultProfile() {
@@ -574,20 +572,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public Document saveToDocument() throws WriteExternalException {
-    try {
-      if (isLocal()) {
-        Element root = new Element(ROOT_ELEMENT_TAG);
-        root.setAttribute(PROFILE_NAME_TAG, myName);
-        writeExternal(root);
-        //myVisibleTreeState.writeExternal(root);
-        return new Document(root);
-      }
-      else {
-        return null;
-      }
+    if (isLocal()) {
+      Element root = new Element(ROOT_ELEMENT_TAG);
+      root.setAttribute(PROFILE_NAME_TAG, myName);
+      writeExternal(root);
+      //myVisibleTreeState.writeExternal(root);
+      return new Document(root);
     }
-    finally {
-      InspectionProfileManager.getInstance().fireProfileChanged(this);
+    else {
+      return null;
     }
 
   }
