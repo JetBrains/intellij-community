@@ -252,12 +252,7 @@ public class ParenthesesUtils{
             @NotNull PsiParenthesizedExpression parenthesizedExpression, 
             boolean ignoreClarifyingParentheses)
             throws IncorrectOperationException {
-        PsiExpression body = parenthesizedExpression.getExpression();
-        while(body instanceof PsiParenthesizedExpression){
-            final PsiParenthesizedExpression innerParenthesizedExpression =
-                    (PsiParenthesizedExpression)body;
-            body = innerParenthesizedExpression.getExpression();
-        }
+        final PsiExpression body = parenthesizedExpression.getExpression();
         if (body == null) {
             parenthesizedExpression.delete();
             return;
@@ -311,9 +306,10 @@ public class ParenthesesUtils{
                         return;
                     }
                 }
-                if (ignoreClarifyingParentheses &&
-                        !parentOperator.equals(bodyOperator)) {
-                    removeParentheses(body, ignoreClarifyingParentheses);
+                if (ignoreClarifyingParentheses) {
+                    if (parentOperator.equals(bodyOperator)) {
+                        removeParentheses(body, ignoreClarifyingParentheses);
+                    }
                 } else {
                     final PsiExpression newExpression = (PsiExpression)
                             parenthesizedExpression.replace(body);
@@ -325,10 +321,17 @@ public class ParenthesesUtils{
                         (PsiExpression) parenthesizedExpression.replace(body);
                 removeParentheses(newExpression, ignoreClarifyingParentheses);
             }
-        } else{
-            final PsiExpression newExpression =
-                    (PsiExpression) parenthesizedExpression.replace(body);
-            removeParentheses(newExpression, ignoreClarifyingParentheses);
+        } else {
+            if (ignoreClarifyingParentheses &&
+                    parent instanceof PsiBinaryExpression &&
+                    (body instanceof PsiBinaryExpression ||
+                            body instanceof PsiInstanceOfExpression)) {
+                removeParentheses(body, ignoreClarifyingParentheses);
+            } else {
+                final PsiExpression newExpression =
+                        (PsiExpression) parenthesizedExpression.replace(body);
+                removeParentheses(newExpression, ignoreClarifyingParentheses);
+            }
         }
     }
 
