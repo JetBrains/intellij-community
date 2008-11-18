@@ -22,8 +22,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
-import git4idea.commands.GitCommand;
-import git4idea.config.GitVcsSettings;
+import git4idea.changes.GitChangeUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 
@@ -35,31 +34,25 @@ public class GitShowAllSubmittedFilesAction {
    * Show submitted files
    *
    * @param project  a project
-   * @param settings a git settings
    * @param revision a file revision
    * @param file     file affected by the revision
    */
-  public static void showSubmittedFiles(final Project project,
-                                        GitVcsSettings settings,
-                                        final VcsFileRevision revision,
-                                        final VirtualFile file) {
-    showSubmittedFiles(project, settings, revision.getRevisionNumber().asString(), file);
+  public static void showSubmittedFiles(final Project project, final VcsFileRevision revision, final VirtualFile file) {
+    showSubmittedFiles(project, revision.getRevisionNumber().asString(), file);
   }
 
   /**
    * Show submitted files
    *
    * @param project  a project
-   * @param settings a git settings
    * @param revision a revision number
    * @param file     file affected by the revision
    */
-  public static void showSubmittedFiles(final Project project, GitVcsSettings settings, final String revision, final VirtualFile file) {
+  public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file) {
     VirtualFile vcsRoot = GitUtil.getGitRoot(file);
     assert vcsRoot != null;
-    GitCommand command = new GitCommand(project, settings, vcsRoot);
     try {
-      final CommittedChangeList changeList = command.getRevisionChanges(revision);
+      final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision);
       if (changeList != null) {
         AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList, getTitle(revision));
       }

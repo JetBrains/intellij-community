@@ -29,7 +29,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.text.SyncDateFormat;
 import git4idea.GitRevisionNumber;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,10 +59,6 @@ public class GitFileAnnotation implements FileAnnotation {
    * The project reference
    */
   private final Project myProject;
-  /**
-   * Git settings for annotation
-   */
-  @NotNull private final GitVcsSettings mySettings;
   /**
    * Annotation change listeners
    */
@@ -122,15 +117,12 @@ public class GitFileAnnotation implements FileAnnotation {
    * A constructor
    *
    * @param project     the project of annotation provider
-   * @param monitorFlag
+   * @param file        the git root
+   * @param monitorFlag if false the file system will not be listened for changes (used for annotated files from the repository).
    */
-  public GitFileAnnotation(@NotNull final Project project,
-                           @NotNull GitVcsSettings settings,
-                           @NotNull VirtualFile file,
-                           final boolean monitorFlag) {
+  public GitFileAnnotation(@NotNull final Project project, @NotNull VirtualFile file, final boolean monitorFlag) {
     myProject = project;
     myFile = file;
-    mySettings = settings;
     myMonitorFlag = monitorFlag;
     if (myMonitorFlag) {
       myFileListener = new VirtualFileAdapter() {
@@ -304,7 +296,7 @@ public class GitFileAnnotation implements FileAnnotation {
         final LineInfo info = myLineInfos.get(lineNum);
         VcsFileRevision revision = myRevisionMap.get(info.getRevision());
         if (revision != null) {
-          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, mySettings, revision, myFile);
+          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, revision, myFile);
         }
       }
     }

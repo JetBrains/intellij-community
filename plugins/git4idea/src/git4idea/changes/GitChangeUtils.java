@@ -5,6 +5,8 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -13,10 +15,7 @@ import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Change related utilities
@@ -124,4 +123,105 @@ public class GitChangeUtils {
     return e.getMessage().equals(errorText);
   }
 
+  /**
+   * Get list of changes. Because native Git non-linear revision tree structure is not
+   * supported by the current IDEA interfaces some similfication are made in the case
+   * of the merge, so changes are reported as difference with the first revision
+   * listed on the the merge that has at least some changes.
+   *
+   * @param project      the project file
+   * @param root         the git root
+   * @param revisionName the name of revision (might be tag)
+   * @return change list for the respecitive revision
+   */
+  public static CommittedChangeList getRevisionChanges(Project project, VirtualFile root, String revisionName) throws VcsException {
+    ArrayList<Change> changes = new ArrayList<Change>();
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.SHOW);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--name-status", "--no-abbrev", "-M", "--pretty=format:\"%ct%n%H%n%P%n%an%x20<%ae>%n%cn%x20<%ce>%n%s%n%x00%n%b%n%x00\"",
+                    "--encoding=UTF-8", revisionName, "--");
+    String output = h.run();
+    try {
+      String[] lines = output.split("\n");
+      int i = 0;
+      // parse commit information
+      final Date commitDate = GitUtil.parseTimestamp(lines[i++]);
+      final String revisionNumber = lines[i++];
+      final String parentsLine = lines[i++];
+      final String[] parents = parentsLine.length() == 0 ? new String[0] : parentsLine.split(" ");
+      String authorName = lines[i++];
+      String committerName = lines[i++];
+      committerName = GitUtil.adjustAuthorName(authorName, committerName);
+      // parse comment subject
+      StringBuilder builder = new StringBuilder();
+      while (!"\u0000".equals(lines[i])) {
+        if (builder.length() > 0) {
+          builder.append('\n');
+        }
+        builder.append(lines[i++]);
+      }
+      i++; // skip \u0000
+      String commentSubject = builder.toString();
+      // parse comment body
+      builder = new StringBuilder();
+      while (!"\u0000".equals(lines[i])) {
+        if (builder.length() > 0) {
+          builder.append('\n');
+        }
+        builder.append(lines[i++]);
+      }
+      i++; // skip \u0000
+      String commentBody = builder.toString();
+      // construct full comment
+      String fullComment;
+      if (commentSubject.length() == 0) {
+        fullComment = commentBody;
+      }
+      else if (commentBody.length() == 0) {
+        fullComment = commentSubject;
+      }
+      else {
+        fullComment = commentBody + "\n\n" + commentSubject;
+      }
+      GitRevisionNumber thisRevision = new GitRevisionNumber(revisionNumber, commitDate);
+      GitRevisionNumber parentRevision = parents.length > 0 ? loadRevision(project, root, parents[0]) : null;
+      long number = Long.parseLong(revisionNumber.substring(0, 15), 16) << 4 + Integer.parseInt(revisionNumber.substring(15, 16), 16);
+      if (parents.length <= 1) {
+        // This is the first or normal commit with the single parent.
+        // Just parse changes in this commit as returned by the show command.
+        parseChanges(project, root, thisRevision, parentRevision, lines, i, changes, null);
+      }
+      else {
+        // This is the merge commit. It has multiple parent commits.
+        // Find the first commit with changes and report it as a change list.
+        // If no changes are found (why to merge than?). Empty changelist is reported.
+        i = 0;
+        do {
+          GitSimpleHandler diffHandler = new GitSimpleHandler(project, root, GitHandler.DIFF);
+          diffHandler.setNoSSH(true);
+          diffHandler.setSilent(true);
+          diffHandler.addParameters("--name-status", "-M", parentRevision.getRev(), thisRevision.getRev());
+          String diff = diffHandler.run();
+          parseChanges(project, root, thisRevision, parentRevision, diff.split("\n"), 0, changes, null);
+          if (changes.size() > 0) {
+            break;
+          }
+          parentRevision = loadRevision(project, root, parents[i]);
+        }
+        while (i < parents.length);
+      }
+      return new CommittedChangeListImpl(commentSubject + "(" + revisionNumber + ")", fullComment, committerName, number, commitDate,
+                                         changes);
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (VcsException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new VcsException(e);
+    }
+  }
 }

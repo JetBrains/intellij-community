@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitRevisionNumber;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.config.GitVcsSettings;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -56,10 +55,6 @@ public class GitReferenceValidator {
    * The button that initate validation action
    */
   private final JButton myButton;
-  /**
-   * The git settings
-   */
-  private GitVcsSettings mySettings;
 
   /**
    * A constructor from fields
@@ -78,7 +73,6 @@ public class GitReferenceValidator {
     myGitRoot = gitRoot;
     myTextField = textField;
     myButton = button;
-    mySettings = GitVcsSettings.getInstance(myProject);
     myGitRoot.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         myLastResult = false;
@@ -98,7 +92,7 @@ public class GitReferenceValidator {
         myLastResult = false;
         try {
           GitRevisionNumber revision = GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
-          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, mySettings, revision.asString(), gitRoot());
+          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, revision.asString(), gitRoot());
           myLastResult = true;
         }
         catch (VcsException ex) {

@@ -30,7 +30,6 @@ import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
-import git4idea.config.GitVcsSettings;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
@@ -51,10 +50,6 @@ public class GitAnnotationProvider implements AnnotationProvider {
    */
   private final Project myProject;
   /**
-   * the settings for VCS
-   */
-  private final GitVcsSettings mySettings;
-  /**
    * The author key for annotations
    */
   @NonNls private static final String AUTHOR_KEY = "author";
@@ -66,12 +61,10 @@ public class GitAnnotationProvider implements AnnotationProvider {
   /**
    * A constructor
    *
-   * @param project  a context project
-   * @param settings a settings for the VCS
+   * @param project a context project
    */
-  public GitAnnotationProvider(@NotNull Project project, @NotNull GitVcsSettings settings) {
+  public GitAnnotationProvider(@NotNull Project project) {
     myProject = project;
-    mySettings = settings;
   }
 
   /**
@@ -156,7 +149,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
     String output = h.run();
-    GitFileAnnotation annotation = new GitFileAnnotation(myProject, mySettings, file, revision == null);
+    GitFileAnnotation annotation = new GitFileAnnotation(myProject, file, revision == null);
     class CommitInfo {
       Date date;
       String author;

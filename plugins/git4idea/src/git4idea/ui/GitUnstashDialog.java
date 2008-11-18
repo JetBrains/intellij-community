@@ -25,7 +25,6 @@ import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
-import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.validators.GitBranchNameValidator;
 
@@ -144,8 +143,6 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     });
     myViewButton.addActionListener(new ActionListener() {
-      GitVcsSettings mySettings = GitVcsSettings.getInstance(myProject);
-
       public void actionPerformed(final ActionEvent e) {
         final VirtualFile root = getGitRoot();
         String stash;
@@ -156,7 +153,7 @@ public class GitUnstashDialog extends DialogWrapper {
           GitUIUtil.showOperationError(myProject, ex, "resolving revision");
           return;
         }
-        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, mySettings, stash, root);
+        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, stash, root);
       }
     });
     init();
