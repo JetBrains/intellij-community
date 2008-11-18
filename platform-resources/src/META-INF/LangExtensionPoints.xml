@@ -326,6 +326,8 @@
 
   <extensionPoint name="testFinder"
                   interface="com.intellij.testIntegration.TestFinder"/>
+  <extensionPoint name="testSrcLocator"
+                  interface="com.intellij.testIntegration.TestLocationProvider"/>
   <extensionPoint name="testCreator"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
