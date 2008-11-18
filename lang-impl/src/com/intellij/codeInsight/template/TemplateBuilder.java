@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -43,11 +44,13 @@ public class TemplateBuilder {
   }
 
   private RangeMarker wrapElement(final PsiElement element) {
-    return myDocument.createRangeMarker(element.getTextRange());
+    return myDocument.createRangeMarker(element.getTextRange().shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(element)));
   }
 
   private RangeMarker wrapReference(final PsiReference ref) {
-    return myDocument.createRangeMarker(ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset()));
+    return myDocument.createRangeMarker(ref.getRangeInElement().shiftRight(
+      ref.getElement().getTextRange().getStartOffset() + PsiUtilBase.findInjectedElementOffsetInRealDocument(ref.getElement())
+    ));
   }
 
   public void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt) {

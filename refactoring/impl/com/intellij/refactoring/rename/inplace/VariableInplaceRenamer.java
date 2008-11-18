@@ -11,6 +11,8 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,12 +24,14 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -56,18 +60,19 @@ public class VariableInplaceRenamer {
 
   public VariableInplaceRenamer(PsiNameIdentifierOwner elementToRename, Editor editor) {
     myElementToRename = elementToRename;
-    myEditor = editor;
+    myEditor = (editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : editor;
     myProject = myElementToRename.getProject();
   }
 
   public boolean performInplaceRename() {
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
     final FileViewProvider fileViewProvider = myElementToRename.getContainingFile().getViewProvider();
+    VirtualFile file = getVirtualFileFromViewProvider(fileViewProvider);
 
     for (PsiReference ref : refs) {
       final FileViewProvider usageViewProvider = ref.getElement().getContainingFile().getViewProvider();
 
-      if (usageViewProvider != fileViewProvider) {
+      if (getVirtualFileFromViewProvider(usageViewProvider) != file) {
         return false;
       }
     }
@@ -171,6 +176,12 @@ public class VariableInplaceRenamer {
     return true;
   }
 
+  private static VirtualFile getVirtualFileFromViewProvider(final FileViewProvider fileViewProvider) {
+    VirtualFile file = fileViewProvider.getVirtualFile();
+    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    return file;
+  }
+
   private void finish() {
     if (myHighlighters != null) {
       ourRenamersStack.pop();
@@ -188,10 +199,11 @@ public class VariableInplaceRenamer {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     PsiElement nameId = myElementToRename.getNameIdentifier();
     LOG.assertTrue(nameId != null);
-    rangesToHighlight.put(nameId.getTextRange(), colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
+    rangesToHighlight.put(nameId.getTextRange().shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(nameId)), colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
+    
     for (PsiReference ref : refs) {
-      PsiElement element = ref.getElement();
-      TextRange range = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
+      final PsiElement element = ref.getElement();
+      TextRange range = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset() + PsiUtilBase.findInjectedElementOffsetInRealDocument(element));
       boolean isForWrite = element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element);
       TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(isForWrite ?
                                                                                 EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES :
@@ -216,13 +228,13 @@ public class VariableInplaceRenamer {
 
   private static PsiElement getSelectedInEditorElement(final PsiElement nameIdentifier, final Collection<PsiReference> refs, final int offset) {
     if (nameIdentifier != null) {
-      final TextRange range = nameIdentifier.getTextRange();
+      final TextRange range = nameIdentifier.getTextRange().shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(nameIdentifier));
       if (contains(range, offset)) return nameIdentifier;
     }
 
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      final TextRange range = element.getTextRange();
+      final TextRange range = element.getTextRange().shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(ref.getElement()));
       if (contains(range, offset)) return element;
     }
 
