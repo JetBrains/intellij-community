@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -103,6 +104,7 @@ public class PyResolveUtil {
     PsiElement seeker = elt;
     PsiElement cap = getConcealingParent(elt);
     do {
+      ProgressManager.getInstance().checkCanceled();
       if (fromunder) {
         fromunder = false; // only honour fromunder once per call
         seeker = getPrevNodeOf(getInnermostChildOf(seeker), NameDefiner.class);
