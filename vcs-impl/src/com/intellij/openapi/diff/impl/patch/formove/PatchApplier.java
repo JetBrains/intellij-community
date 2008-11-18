@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -139,7 +138,7 @@ public class PatchApplier {
         final List<Pair<VirtualFile, FilePatch>> binaryPatches = verifier.getBinaryPatches();
         ApplyPatchStatus patchStatus = myCustomForBinaries.apply(binaryPatches);
         final List<FilePatch> appliedPatches = myCustomForBinaries.getAppliedPatches();
-        moveForCustomBinaries(binaryPatches, patchStatus, appliedPatches);
+        moveForCustomBinaries(binaryPatches, appliedPatches);
         
         status = ApplyPatchStatus.and(status, patchStatus);
         myRemainingPatches.removeAll(appliedPatches);
@@ -152,8 +151,8 @@ public class PatchApplier {
     return status;
   }
 
-  private void moveForCustomBinaries(final List<Pair<VirtualFile, FilePatch>> patches, ApplyPatchStatus status,
-                                                 final List<FilePatch> appliedPatches) throws IOException {
+  private void moveForCustomBinaries(final List<Pair<VirtualFile, FilePatch>> patches,
+                                     final List<FilePatch> appliedPatches) throws IOException {
     for (Pair<VirtualFile, FilePatch> patch : patches) {
       if (appliedPatches.contains(patch.getSecond())) {
         myVerifier.doMoveIfNeeded(patch.getFirst());
@@ -168,7 +167,7 @@ public class PatchApplier {
       myVerifier.doMoveIfNeeded(patch.getFirst());
 
       status = ApplyPatchStatus.and(status, patchStatus);
-      if (ApplyPatchStatus.SUCCESS.equals(patchStatus)) {
+      if (patchStatus != ApplyPatchStatus.FAILURE) {
         myRemainingPatches.remove(patch.getSecond());
       } else {
         // interrupt if failure
@@ -216,14 +215,6 @@ public class PatchApplier {
     }
     return true;
   }
-
-  private void refreshIndirectlyAffected(final List<VirtualFile> files) {
-    Collections.sort(files, FilePathComparator.getInstance());
-
-    for (VirtualFile file : files) {
-      file.refresh(true, false);
-    }
-}
 
   public static void showError(final Project project, final String message, final boolean error) {
     final Application application = ApplicationManager.getApplication();
