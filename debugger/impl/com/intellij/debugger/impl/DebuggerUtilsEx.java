@@ -357,7 +357,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         if (elementAtCursor != null) {
           PsiElement element = findExpression(elementAtCursor);
           if (element != null) {
-            defaultExpression = element.getText();
+            if (element instanceof PsiReferenceExpression) {
+              final PsiReferenceExpression reference = (PsiReferenceExpression)element;
+              if (reference.getQualifier() == null) {
+                final PsiElement resolved = reference.resolve();
+                if (resolved instanceof PsiEnumConstant) {
+                  final PsiEnumConstant enumConstant = (PsiEnumConstant)resolved;
+                  final PsiClass enumClass = enumConstant.getContainingClass();
+                  if (enumClass != null) {
+                    defaultExpression = enumClass.getName() + "." + enumConstant.getName();
+                  }
+                }
+              }
+            }
+            if (defaultExpression == null) {
+              defaultExpression = element.getText();
+            }
           }
         }
       }

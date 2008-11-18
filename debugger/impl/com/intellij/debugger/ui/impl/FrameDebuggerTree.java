@@ -416,7 +416,20 @@ public class FrameDebuggerTree extends DebuggerTree {
           final PsiVariable var = (PsiVariable)psiElement;
           if (var instanceof PsiField) {
             if (!hasSideEffects(reference)) {
-              myExpressions.add(new TextWithImportsImpl(reference));
+              if (var instanceof PsiEnumConstant && reference.getQualifier() == null) {
+                final PsiClass enumClass = ((PsiEnumConstant)var).getContainingClass();
+                if (enumClass != null) {
+                  final PsiExpression expression = JavaPsiFacade.getInstance(var.getProject()).getParserFacade().createExpressionFromText(enumClass.getName() + "." + var.getName(), var);
+                  final PsiReference ref = expression.getReference();
+                  if (ref != null) {
+                    ref.bindToElement(var);
+                    myExpressions.add(new TextWithImportsImpl(expression));
+                  }
+                }
+              }                                        
+              else {
+                myExpressions.add(new TextWithImportsImpl(reference));
+              }
             }
           }
           else {
