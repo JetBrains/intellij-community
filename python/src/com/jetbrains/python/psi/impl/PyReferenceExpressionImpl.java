@@ -117,12 +117,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public
   @Nullable
   PsiElement resolve() {
-    final PsiManager manager = getElement().getManager();
-    if (manager instanceof PsiManagerImpl) {
-      final ResolveCache cache = ((PsiManagerImpl)manager).getResolveCache();
-      return cache.resolveWithCaching(this, CachingResolver.INSTANCE, false, false);
-    }
-    else return resolveInner();
+    final ResolveResult[] results = multiResolve(false);
+    return results.length == 1 ? results[0].getElement() : null;
   }
 
   /**
@@ -130,7 +126,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
    * @return resolution result.
    * @see #resolve()
    */
-  public
+  private
   @Nullable
   PsiElement resolveInner() {
     final String referencedName = getReferencedName();
@@ -211,6 +207,29 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     else return EMPTY_LIST; 
   }
 
+  private ResolveResult[] multiResolveInner(boolean incomplete) {
+    final String referencedName = getReferencedName();
+    if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
+
+    // crude logic right here to see it work
+
+    PsiElement target = resolveInner();
+    if (target == null) return ResolveResult.EMPTY_ARRAY;
+
+    List<ResolveResult> ret = new ArrayList<ResolveResult>();
+    ret.add(new PsiElementResolveResult(target));
+
+    if (target instanceof PsiDirectory) {
+      final PsiDirectory dir = (PsiDirectory)target;
+      final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
+      if (file != null) {
+        ret.add(0, new PsiElementResolveResult(file));
+      }
+    }
+
+    return ret.toArray(new ResolveResult[ret.size()]);
+  }
+
   /**
    * Resolves reference to possible referred elements.
    * First element is always what resolve() would return.
@@ -222,26 +241,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   **/
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    final String referencedName = getReferencedName();
-    if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
-    
-    // crude logic right here to see it work
-    
-    PsiElement target = resolve();
-    if (target == null) return ResolveResult.EMPTY_ARRAY;
-    
-    List<ResolveResult> ret = new ArrayList<ResolveResult>();
-    ret.add(new PsiElementResolveResult(target));
-    
-    if (target instanceof PsiDirectory) {
-      final PsiDirectory dir = (PsiDirectory)target;
-      final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
-      if (file != null) {
-        ret.add(0, new PsiElementResolveResult(file));
-      }
+    final PsiManager manager = getElement().getManager();
+    if (manager instanceof PsiManagerImpl) {
+      final ResolveCache cache = ((PsiManagerImpl)manager).getResolveCache();
+      return cache.resolveWithCaching(this, CachingResolver.INSTANCE, false, incompleteCode);
     }
-    
-    return ret.toArray(new ResolveResult[ret.size()]);
+    else {
+      return multiResolveInner(incompleteCode);
+    }
   }
 
   public String getCanonicalText() {
@@ -434,15 +441,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   // our very own caching resolver
-  private static class CachingResolver implements ResolveCache.Resolver {
+  private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceExpression> {
 
     public static CachingResolver INSTANCE = new CachingResolver();
 
     @Nullable
-    public PsiElement resolve(final PsiReference ref, final boolean incompleteCode) {
-      assert ref instanceof PyReferenceExpressionImpl;
-      return ((PyReferenceExpressionImpl)ref).resolveInner(); // TODO: make it more aestetic?  
+    public ResolveResult[] resolve(final PyReferenceExpression ref, final boolean incompleteCode) {
+      assert ref instanceof PyReferenceExpressionImpl; 
+      return ((PyReferenceExpressionImpl)ref).multiResolveInner(incompleteCode); // TODO: make it more aestetic?
     }
+
   }
 
 }
