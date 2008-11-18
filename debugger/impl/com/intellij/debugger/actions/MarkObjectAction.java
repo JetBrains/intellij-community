@@ -41,7 +41,7 @@ public class MarkObjectAction extends DebuggerAction {
         valueDescriptor.setMarkup(debuggerContext.getDebugProcess(), null);
       }
       else {
-        final ValueMarkup valueMarkup = ObjectMarkupPropertiesDialog.chooseMarkup();
+        final ValueMarkup valueMarkup = ObjectMarkupPropertiesDialog.chooseMarkup(valueDescriptor.getName());
         if (valueMarkup != null) {
           valueDescriptor.setMarkup(debuggerContext.getDebugProcess(), valueMarkup);
         }

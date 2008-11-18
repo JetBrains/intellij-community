@@ -29,8 +29,9 @@ public class ObjectMarkupPropertiesDialog extends DialogWrapper {
   private final SimpleColoredComponent myColorSample;
   private SimpleTextAttributes myAttributes;
   private Alarm myUpdateAlarm;
+  private static final int UPDATE_DELAY = 200;
 
-  public ObjectMarkupPropertiesDialog() {
+  public ObjectMarkupPropertiesDialog(final String suggestedName) {
     super(true);
     setTitle("Select object label");
     setModal(true);
@@ -38,6 +39,14 @@ public class ObjectMarkupPropertiesDialog extends DialogWrapper {
     myColorSample = new SimpleColoredComponent();
     myAttributes = createAttributes(Color.RED);
     myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    if (suggestedName != null) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myTextMarkupField.setText(suggestedName.trim());
+          updateLabelSample(0);
+        }
+      });
+    }
     init();
   }
 
@@ -70,20 +79,20 @@ public class ObjectMarkupPropertiesDialog extends DialogWrapper {
 
     myTextMarkupField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
-        updateLabelSample();
+        updateLabelSample(UPDATE_DELAY);
       }
     });
     chooseColorButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final Color color = ColorChooser.chooseColor(myColorSample, "Choose label color", null);
         myAttributes = createAttributes(color);
-        updateLabelSample();
+        updateLabelSample(UPDATE_DELAY);
       }
     });
     return mainPanel;
   }
 
-  private void updateLabelSample() {
+  private void updateLabelSample(final int updateDelay) {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
@@ -91,11 +100,11 @@ public class ObjectMarkupPropertiesDialog extends DialogWrapper {
         myColorSample.append(myTextMarkupField.getText().trim(), myAttributes);
         myColorSample.repaint();
       }
-    }, 200);
+    }, updateDelay);
   }
   
-  public static ValueMarkup chooseMarkup() {
-    final ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog();
+  public static ValueMarkup chooseMarkup(final String suggestedName) {
+    final ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(suggestedName);
     dialog.show();
     if (dialog.isOK()) {
       final String text = dialog.myTextMarkupField.getText().trim();
