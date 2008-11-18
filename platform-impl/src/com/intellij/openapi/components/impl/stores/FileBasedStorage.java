@@ -313,7 +313,7 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
 
   private Document processReadException(final Exception e) {
     myBlockSavingTheContent = isProjectOrModuleFile();
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       SwingUtilities.invokeLater(new Runnable(){
         public void run() {
           JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
