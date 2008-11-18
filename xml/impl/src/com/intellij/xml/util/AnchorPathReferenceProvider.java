@@ -23,38 +23,37 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
 
     final TextRange range = ElementManipulators.getValueTextRange(psiElement);
     final String elementText = psiElement.getText();
-    int offset = getOffset(psiElement, range.getStartOffset(), elementText);
-    if (offset == -1 || offset >= elementText.length()) {
+    final int anchorOffset = elementText.indexOf('#');
+    if (anchorOffset == -1) {
       return false;
     }
-    
-    if (elementText.charAt(offset) == '#') {
-      final int pos = elementText.indexOf('?', offset);
-      final String anchor = pos == -1 ? elementText.substring(offset + 1, range.getEndOffset()) : elementText.substring(offset + 1, pos);
-      references.add(new AnchorReference(anchor, null, psiElement, offset + 1, soft));
+    final boolean dynamic = isDynamic(psiElement, anchorOffset + 1, elementText);
+    if (dynamic) {
       return false;
     }
 
-    FileReference fileReference = findFileReference(references);
-    if (fileReference != null && fileReference.resolve() != null) {
-      final int i = elementText.indexOf('#', offset);
-      if (i >= 0) {
-        final int pos = elementText.indexOf('?', i);
-        final String anchor = pos == -1 ? elementText.substring(i + 1, range.getEndOffset()) : elementText.substring(i + 1, pos);
-        references.add(new AnchorReference(anchor, fileReference, psiElement, range.getStartOffset() + i, soft));
+    FileReference fileReference = null;
+    if (range.getStartOffset() != anchorOffset) {
+      fileReference = findFileReference(references);
+      if (fileReference == null || fileReference.resolve() == null) {
+        return false;
       }
     }
+    final int pos = elementText.indexOf('?', anchorOffset);
+    final String anchor = elementText.substring(anchorOffset + 1, pos == -1 ? range.getEndOffset() : pos);
+    final AnchorReference anchorReference = new AnchorReference(anchor, fileReference, psiElement, anchorOffset + 1, soft);
+    references.add(anchorReference);
     return false;
   }
 
-  private static int getOffset(final PsiElement psiElement, final int offset, final String elementText) {
+  private static boolean isDynamic(final PsiElement psiElement, final int offset, final String elementText) {
     for (DynamicContextProvider provider: Extensions.getExtensions(DynamicContextProvider.EP_NAME)) {
       final int dynamicOffset = provider.getOffset(psiElement, offset, elementText);
       if (dynamicOffset != offset) {
-        return dynamicOffset;
+        return true;
       }
     }
-    return offset;
+    return false;
   }
 
   @Nullable
