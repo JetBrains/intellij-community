@@ -69,13 +69,8 @@ public class FileWatcher {
 
       Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
         public void run() {
-          try {
-            isShuttingDown = true;
-            shutdownProcess();
-          }
-          catch (IOException e) {
-            // Do nothing.
-          }
+          isShuttingDown = true;
+          shutdownProcess();
         }
       }));
     }
@@ -175,10 +170,15 @@ public class FileWatcher {
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
   }
 
-  private void shutdownProcess() throws IOException {
+  private void shutdownProcess() {
     if (notifierProcess != null) {
       if (isAlive()) {
-        writeLine(EXIT_COMMAND);
+        try {
+          writeLine(EXIT_COMMAND);
+        }
+        catch (IOException e) {
+          // Do nothing
+        }
       }
 
       notifierProcess = null;
@@ -251,6 +251,8 @@ public class FileWatcher {
         }
       }
       catch (IOException e) {
+        reset();
+        shutdownProcess();
         LOG.info("Watcher terminated and attempt to restart has failed. Exiting watching thread.", e);
       }
     }
