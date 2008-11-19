@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.validation.AddImportAction;
 import org.jetbrains.annotations.Nls;
@@ -104,6 +105,10 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
               if (qexpr != null) {
                 PyType qtype = qexpr.getType();
                 if (qtype != null) {
+                  if (qtype instanceof PyNoneType) {
+                    // this almost always means that we don't know the type, so don't show an error in this case
+                    continue;
+                  }
                   description_buf.append(" for class ").append(qtype.getName());
                 }
               }
