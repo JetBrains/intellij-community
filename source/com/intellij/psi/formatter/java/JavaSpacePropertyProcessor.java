@@ -61,7 +61,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
           .createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
-        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 0,  mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 0,  true, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
     }
     else {
