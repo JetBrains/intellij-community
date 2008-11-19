@@ -1,7 +1,10 @@
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -10,6 +13,7 @@ import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
@@ -20,6 +24,8 @@ import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -46,6 +52,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     private JButton myMoveUpButton;
     private JButton myMoveDownButton;
 
+    private final HyperlinkLabel myScopesLink = new HyperlinkLabel();
 
     public ProjectSettingsPanel(Project project) {
         myProject = project;
@@ -80,6 +87,19 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             }
         });
         initPanel();
+
+        myScopesLink.setVisible(!myProject.isDefault());
+        myScopesLink.setHyperlinkText("Select Scopes to add new scopes or modify existent ones");
+        myScopesLink.addHyperlinkListener(new HyperlinkListener() {
+          public void hyperlinkUpdate(final HyperlinkEvent e) {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
+              if (optionsEditor != null) {
+                optionsEditor.select(ScopeChooserConfigurable.getInstance(myProject));
+              }
+            }
+          }
+        });
     }
 
     private void updateButtons() {
@@ -203,6 +223,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         component.setComponent(myProfilesComboBox);
         panel.add(component, BorderLayout.NORTH);
         panel.add(this, BorderLayout.CENTER);
+        panel.add(myScopesLink, BorderLayout.SOUTH);
         return panel;
     }
 
@@ -364,7 +385,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                 }
 
                 public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-                    myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope) value).getName());
+                    myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope) value).getName(), false);
                     return new CellEditorComponentWithBrowseButton(myCombo, this);
                 }
             };
