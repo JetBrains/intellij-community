@@ -17,6 +17,7 @@ public interface NavBarModelExtension {
   @Nullable
   PsiElement getParent(PsiElement psiElement);
 
+  @Nullable
   PsiElement adjustElement(PsiElement psiElement);
 
 }

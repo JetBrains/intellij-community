@@ -339,6 +339,7 @@ public class NavBarModel {
     if (child == null) return null;
     for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
       child = modelExtension.adjustElement(child);
+      if (child == null ) return null;
     }
     return child;
   }
