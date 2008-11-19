@@ -225,7 +225,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   private ProcessHandler startProcess() throws ExecutionException {
-    final ProcessHandler handler = JUnitProcessHandler.runJava(getJavaParameters());
+    final ProcessHandler handler = JUnitProcessHandler.runJava(getJavaParameters(), myProject);
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(final ProcessEvent event) {
         if (myTempFile != null) {
