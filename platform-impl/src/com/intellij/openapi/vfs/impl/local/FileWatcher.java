@@ -211,9 +211,11 @@ public class FileWatcher {
           }
 
           if (GIVEUP_COMMAND.equals(command)) {
+            LOG.info("Filewatcher gives up to operate on this platform");
             shutdownProcess();
             return;
           }
+          
           if (RESET_COMMAND.equals(command)) {
             reset();
           }
