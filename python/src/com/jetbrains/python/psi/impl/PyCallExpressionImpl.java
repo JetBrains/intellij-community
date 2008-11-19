@@ -76,7 +76,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     if (calleeReference != null) {
       PsiReference cref = calleeReference.getReference();
       if (cref != null) {
-        PyElement resolved = (PyElement) cref.resolve();
+        PsiElement resolved = cref.resolve();
         if (resolved != null) {
           EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
           //boolean is_inst = isByInstance();
