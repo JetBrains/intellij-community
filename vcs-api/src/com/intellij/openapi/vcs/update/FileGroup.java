@@ -27,14 +27,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 public class FileGroup implements JDOMExternalizable {
 
   public String myUpdateName;
   public String myStatusName;
+  private final Map<String, String> myErrorsMap;
 
   private final Collection<UpdatedFile> myFiles = new ArrayList<UpdatedFile>();
   public boolean mySupportsDeletion;
@@ -74,9 +74,11 @@ public class FileGroup implements JDOMExternalizable {
     myCanBeAbsent = canBeAbsent;
     myUpdateName = updateName;
     myStatusName = statusName;
+    myErrorsMap = new HashMap<String, String>();
   }
 
   public FileGroup() {
+    myErrorsMap = new HashMap<String, String>();
   }
 
   public void addChild(FileGroup child) {
@@ -89,6 +91,14 @@ public class FileGroup implements JDOMExternalizable {
 
   public void add(@NotNull final String path) {
     myFiles.add(new UpdatedFile(path));
+  }
+
+  public void addError(@NotNull final String path, @NotNull final String error) {
+    myErrorsMap.put(path, error);
+  }
+
+  public Map<String, String> getErrorsMap() {
+    return myErrorsMap;
   }
 
   public void add(@NotNull String path, @NotNull AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {

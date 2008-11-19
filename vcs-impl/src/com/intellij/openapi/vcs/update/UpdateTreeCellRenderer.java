@@ -1,7 +1,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.openapi.vcs.update.AbstractTreeNode;
+import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
 
@@ -14,6 +14,12 @@ public class UpdateTreeCellRenderer extends ColoredTreeCellRenderer{
 
     AbstractTreeNode treeNode = (AbstractTreeNode)value;
     append(treeNode.getText(), treeNode.getAttributes());
+    final String errorText = treeNode.getErrorText();
+    if (errorText != null) {
+      append(" - ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append("Error: ", SimpleTextAttributes.ERROR_ATTRIBUTES);
+      append(errorText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
     setIcon(treeNode.getIcon(expanded));
   }
 }

@@ -21,15 +21,17 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private final String myName;
   private final boolean mySupportsDeletion;
   private final List<String> myFilePaths = new ArrayList<String>();
+  private final Map<String, String> myErrorsMap;
   private final SimpleTextAttributes myInvalidAttributes;
   private final Project myProject;
 
   public GroupTreeNode(String name, boolean supportsDeletion, SimpleTextAttributes invalidAttributes,
-                       Project project) {
+                       Project project, final Map<String, String> errorsMap) {
     myName = name;
     mySupportsDeletion = supportsDeletion;
     myInvalidAttributes = invalidAttributes;
     myProject = project;
+    myErrorsMap = errorsMap;
   }
 
   public String getName() {
@@ -165,6 +167,10 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
     for (final String filePath : myFilePaths) {
       final FileTreeNode child = new FileTreeNode(filePath, myInvalidAttributes, myProject, null);
+      final String error = myErrorsMap.get(filePath);
+      if (error != null) {
+        child.setErrorText(error);
+      }
       add(child);
       Disposer.register(this, child);
     }

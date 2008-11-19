@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public class UpdateRootNode extends GroupTreeNode {
@@ -12,7 +13,7 @@ public class UpdateRootNode extends GroupTreeNode {
   private final Project myProject;
 
   public UpdateRootNode(UpdatedFiles updatedFiles, Project project, String rootName, ActionInfo actionInfo) {
-    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project);
+    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.<String, String>emptyMap());
     myProject = project;
 
     addGroupsToNode(updatedFiles.getTopLevelGroups(), this, actionInfo);
@@ -33,7 +34,7 @@ public class UpdateRootNode extends GroupTreeNode {
       return null;
     }
     GroupTreeNode group = new GroupTreeNode(actionInfo.getGroupName(fileGroup), fileGroup.getSupportsDeletion(),
-                                            fileGroup.getInvalidAttributes(), myProject);
+                                            fileGroup.getInvalidAttributes(), myProject, fileGroup.getErrorsMap());
     Disposer.register(this, group);
     parent.add(group);
     for (final String s : fileGroup.getFiles()) {
