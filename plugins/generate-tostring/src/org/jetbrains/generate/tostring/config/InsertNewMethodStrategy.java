@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface that defines a policy for dealing with where to insert a new <code>toString()</code>
@@ -35,6 +36,7 @@ public interface InsertNewMethodStrategy {
      * @return if the policy was executed normally (not cancelled)
      * @throws com.intellij.util.IncorrectOperationException is thrown if there is an IDEA error.
      */
-    boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
+    @Nullable
+    PsiMethod insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
 
 }

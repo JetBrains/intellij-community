@@ -29,22 +29,23 @@ import java.util.Arrays;
  */
 public class InsertAtCaretStrategy implements InsertNewMethodStrategy {
 
-    private static final InsertAtCaretStrategy instance = new InsertAtCaretStrategy();
+  private static final InsertAtCaretStrategy instance = new InsertAtCaretStrategy();
 
-    private InsertAtCaretStrategy() {
-    }
+  private InsertAtCaretStrategy() {
+  }
 
-    public static InsertAtCaretStrategy getInstance() {
-        return instance;
-    }
+  public static InsertAtCaretStrategy getInstance() {
+    return instance;
+  }
 
-    public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-        int offset = editor != null ? editor.getCaretModel().getOffset() : clazz.getTextRange().getEndOffset() - 1;
-        GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(new PsiGenerationInfo(newMethod, false)));
-        return true;
-    }
+  public PsiMethod insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    int offset = editor != null ? editor.getCaretModel().getOffset() : clazz.getTextRange().getEndOffset() - 1;
+    final PsiGenerationInfo generationInfo = new PsiGenerationInfo(newMethod, false);
+    GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(generationInfo));
+    return (PsiMethod) generationInfo.getPsiMember();
+  }
 
-    public String toString() {
-        return "At caret";
-    }
+  public String toString() {
+    return "At caret";
+  }
 }

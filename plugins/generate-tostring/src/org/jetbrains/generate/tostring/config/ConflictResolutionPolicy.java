@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface that defines a policy for dealing with conflicts (i.e., the user is
@@ -45,5 +46,6 @@ public interface ConflictResolutionPolicy {
      * @return if the policy was executed normally (not cancelled)
      * @throws IncorrectOperationException is thrown if there is an IDEA error.
      */
-    boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
+    @Nullable
+    PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
 }

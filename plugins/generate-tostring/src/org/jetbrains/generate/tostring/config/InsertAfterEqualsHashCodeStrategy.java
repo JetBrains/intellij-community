@@ -37,7 +37,7 @@ public class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodStrateg
         return instance;
     }
 
-    public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         // lazy initialize otherwise IDEA throws error: Component requests are not allowed before they are created
         if (psi == null) {
             psi = PsiAdapterFactory.getPsiAdapter();
@@ -61,13 +61,13 @@ public class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodStrateg
 
         if (method != null) {
             // insert after the equals/hashCode method
-            clazz.addAfter(newMethod, method);
+            newMethod = (PsiMethod) clazz.addAfter(newMethod, method);
         } else {
             // no equals/hashCode so insert at caret
-            InsertAtCaretStrategy.getInstance().insertNewMethod(clazz, newMethod, editor);
+            newMethod = InsertAtCaretStrategy.getInstance().insertNewMethod(clazz, newMethod, editor);
         }
 
-        return true;
+        return newMethod;
     }
 
     public String toString() {

@@ -38,10 +38,9 @@ public class ReplacePolicy implements ConflictResolutionPolicy {
         // not needed here
     }
 
-    public boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         if (existingMethod != null) {
-            existingMethod.replace(newMethod);
-            return true;
+            return (PsiMethod) existingMethod.replace(newMethod);
         } else {
             return DuplicatePolicy.getInstance().applyMethod(clazz, existingMethod, newMethod, editor);
         }

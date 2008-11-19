@@ -37,7 +37,7 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
         return instance;
     }
 
-    public boolean insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
 
         // if main method exists and is the last then add toString just before main method
@@ -46,16 +46,13 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
             // add before main method if it is the last method
             PsiMethod[] methods = clazz.getMethods();
             if (mainMethod.equals(methods[methods.length - 1])) {
-                clazz.addBefore(newMethod, mainMethod);
-                return true; // return as the method is added
+                return (PsiMethod) clazz.addBefore(newMethod, mainMethod);  // return as the method is added
             }
         }
 
         // otherwise add it at the end
         PsiElement last = clazz.getRBrace(); // rbrace is the last } java token. fixes bug #9
-        clazz.addBefore(newMethod, last);
-
-        return true;
+        return (PsiMethod) clazz.addBefore(newMethod, last);
     }
 
     public String toString() {

@@ -39,9 +39,8 @@ public class DuplicatePolicy implements ConflictResolutionPolicy {
         newMethodStrategy = strategy;
     }
 
-    public boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-        newMethodStrategy.insertNewMethod(clazz, newMethod, editor);
-        return true;
+    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+        return newMethodStrategy.insertNewMethod(clazz, newMethod, editor);
     }
 
     public String toString() {

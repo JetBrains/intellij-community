@@ -38,8 +38,8 @@ public class CancelPolicy implements ConflictResolutionPolicy {
         // not used as this is cancel
     }
 
-    public boolean applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-        return false; // the user cancels
+    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+        return null;
     }
 
     public String toString() {
