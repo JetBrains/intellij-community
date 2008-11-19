@@ -18,21 +18,22 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.committed.ChangeListFilteringStrategy;
-import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
-import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
-import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
+import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -60,13 +61,17 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private final SvnVcs myVcs;
   private final MessageBusConnection myConnection;
   private MergeInfoUpdatesListener myMergeInfoUpdatesListener;
+  private final MyZipper myZipper;
 
   public final static int VERSION_WITH_COPY_PATHS_ADDED = 2;
   public final static int VERSION_WITH_REPLACED_PATHS = 3;
 
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.SvnCommittedChangesProvider");
+
   public SvnCommittedChangesProvider(final Project project) {
     myProject = project;
     myVcs = SvnVcs.getInstance(myProject);
+    myZipper = new MyZipper();
 
     myConnection = myProject.getMessageBus().connect();
 
@@ -102,7 +107,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     String[] urls = SvnUtil.getLocationsForModule(myVcs, root.getIOFile(), progress);
     if (urls.length == 1) {
-      return new SvnRepositoryLocation(root, urls [0]);
+      return new SvnRepositoryLocation(urls [0]);
     }
     return null;
   }
@@ -115,6 +120,53 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return new SvnLoadingRepositoryLocation(repositoryPath, myVcs);
   }
 
+  public VcsCommittedListsZipper getZipper() {
+    return myZipper;
+  }
+
+  private class MyZipper implements VcsCommittedListsZipper {
+    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
+      final List<RepositoryLocationGroup> groups = new ArrayList<RepositoryLocationGroup>();
+      final List<RepositoryLocation> singles = new ArrayList<RepositoryLocation>();
+
+      final MultiMap<SVNURL, RepositoryLocation> map = new MultiMap<SVNURL, RepositoryLocation>();
+
+      for (RepositoryLocation location : in) {
+        final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
+        final String url = svnLocation.getURL();
+
+        final SVNURL root = SvnUtil.getRepositoryRoot(myVcs, url);
+        if (root == null) {
+          // should not occur
+          LOG.error("repository root not found for location:"+ location.toPresentableString());
+          singles.add(location);
+        } else {
+          map.putValue(root, svnLocation);
+        }
+      }
+
+      final Set<SVNURL> keys = map.keySet();
+      for (SVNURL key : keys) {
+        final Collection<RepositoryLocation> repositoryLocations = map.get(key);
+        if (repositoryLocations.size() == 1) {
+          singles.add(repositoryLocations.iterator().next());
+        } else {
+          final SvnRepositoryLocationGroup group = new SvnRepositoryLocationGroup(key, repositoryLocations);
+          groups.add(group);
+        }
+      }
+      return new Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>>(groups, singles);
+    }
+
+    public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+      return new SvnChangeList(lists, new SvnRepositoryLocation(group.toPresentableString()));
+    }
+
+    public long getNumber(final CommittedChangeList list) {
+      return list.getNumber();
+    }
+  }
+
   public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, final RepositoryLocation location, final int maxCount) throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
@@ -123,11 +175,35 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
       progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
     }
+
+    final String repositoryRoot;
+    try {
+      final SVNRepository repository = myVcs.createRepository(svnLocation.getURL());
+      repositoryRoot = repository.getRepositoryRoot(true).toString();
+      repository.closeSession();
+    }
+    catch (SVNException e) {
+      throw new VcsException(e);
+    }
+
+    getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+      public void consume(final SVNLogEntry svnLogEntry) {
+        result.add(new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot));
+      }
+    });
+    settings.filterChanges(result);
+    return result;
+  }
+
+  private void getCommittedChangesImpl(ChangeBrowserSettings settings, final String url, final String[] filterUrls,
+                                                      final int maxCount, final Consumer<SVNLogEntry> resultConsumer) throws VcsException {
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    if (progress != null) {
+      progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
+      progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));
+    }
     try {
       SVNLogClient logger = myVcs.createLogClient();
-      final SVNRepository repository = myVcs.createRepository(svnLocation.getURL());
-      final String repositoryRoot = repository.getRepositoryRoot(true).toString();
-      repository.closeSession();
 
       final String author = settings.getUserFilter();
       final Date dateFrom = settings.getDateAfterFilter();
@@ -156,7 +232,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         revisionAfter = SVNRevision.create(1);
       }
 
-      logger.doLog(SVNURL.parseURIEncoded(svnLocation.getURL()), new String[]{""}, revisionBefore, revisionBefore, revisionAfter,
+      logger.doLog(SVNURL.parseURIEncoded(url), filterUrls, revisionBefore, revisionBefore, revisionAfter,
                    settings.STOP_ON_COPY, true, maxCount,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
@@ -166,16 +242,14 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                          progress.checkCanceled();
                        }
                        if (logEntry.getDate() == null) {
-                         // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe 
+                         // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
                          return;
                        }
                        if (author == null || author.equalsIgnoreCase(logEntry.getAuthor())) {
-                         result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
+                         resultConsumer.consume(logEntry);
                        }
                      }
                    });
-      settings.filterChanges(result);
-      return result;
     }
     catch (SVNException e) {
       throw new VcsException(e);

@@ -8,7 +8,7 @@ public class SvnLoadingRepositoryLocation extends SvnRepositoryLocation {
   private final LocationDetector locationDetector;
 
   public SvnLoadingRepositoryLocation(final FilePath rootFile, @NotNull final String URL, @NotNull final SvnVcs vcs) {
-    super(rootFile, URL);
+    super(URL);
     locationDetector = new LocationDetector(vcs);
   }
 

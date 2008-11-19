@@ -75,6 +75,27 @@ public class SvnChangeList implements CommittedChangeList {
   private RootMixedInfo myWcRoot;
   private final CommonPathSearcher myCommonPathSearcher;
 
+  public SvnChangeList(@NotNull final List<CommittedChangeList> lists, @NotNull final SvnRepositoryLocation location) {
+
+    final SvnChangeList sample = (SvnChangeList) lists.get(0);
+    myVcs = sample.myVcs;
+    myLocation = location;
+    myRevision = sample.myRevision;
+    myAuthor = sample.myAuthor;
+    myDate = sample.myDate;
+    myMessage = sample.myMessage;
+    myRepositoryRoot = sample.myRepositoryRoot;
+    myCommonPathSearcher = new CommonPathSearcher();
+
+    for (CommittedChangeList list : lists) {
+      final SvnChangeList svnList = (SvnChangeList) list;
+      myChangedPaths.addAll(svnList.myChangedPaths);
+      myAddedPaths.addAll(svnList.myAddedPaths);
+      myDeletedPaths.addAll(svnList.myDeletedPaths);
+      myReplacedPaths.addAll(svnList.myReplacedPaths);
+    }
+  }
+
   public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;

@@ -13,13 +13,7 @@ import java.io.File;
  * @author yole
  */
 public class SvnRepositoryLocation implements RepositoryLocation {
-  private FilePath myRootFile;
   private String myURL;
-
-  public SvnRepositoryLocation(final FilePath rootFile, final String URL) {
-    myRootFile = rootFile;
-    myURL = URL;
-  }
 
   public SvnRepositoryLocation(final String URL) {
     myURL = URL;
@@ -33,11 +27,11 @@ public class SvnRepositoryLocation implements RepositoryLocation {
     return myURL;
   }
 
-  public FilePath getRootFile() {
-    return myRootFile;
+  public String getURL() {
+    return myURL;
   }
 
-  public String getURL() {
+  public String getKey() {
     return myURL;
   }
 

@@ -23,7 +23,7 @@ public class SvnCachingRevisionsTest extends IdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myLocation = new SvnRepositoryLocation(null, URL);
+    myLocation = new SvnRepositoryLocation(URL);
     myInternalManager = LoadedRevisionsCache.getInstance(myProject);
     
     myFilesToDelete.add(SvnApplicationSettings.getLoadedRevisionsDir(myProject));
