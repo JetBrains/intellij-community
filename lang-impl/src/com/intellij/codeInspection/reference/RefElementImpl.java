@@ -114,14 +114,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return myID;
   }
 
-  public void accept(final RefVisitor visitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        visitor.visitElement(RefElementImpl.this);
-      }
-    });
-  }
-
   public void buildReferences() {
   }
 

@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +83,11 @@ public abstract class RefEntityImpl implements RefEntity {
   }
 
   public void accept(final RefVisitor refVisitor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        refVisitor.visitElement(RefEntityImpl.this);
+      }
+    });
   }
 
   public <T> void putUserData(Key<T> key, T value){
