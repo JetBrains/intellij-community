@@ -26,7 +26,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Mark methods lacking first parameter"; // TODO: propertize
+    return "Method lacking first parameter"; // TODO: propertize
   }
 
   @NotNull
