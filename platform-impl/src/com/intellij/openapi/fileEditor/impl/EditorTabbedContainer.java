@@ -57,6 +57,9 @@ final class EditorTabbedContainer implements Disposable {
     myTabs = new JBTabsImpl(project, actionManager, IdeFocusManager.getInstance(project), this);
     myTabs.setDataProvider(new DataProvider() {
       public Object getData(@NonNls final String dataId) {
+        if (DataConstants.PROJECT.equals(dataId)) {
+          return myProject;
+        }
         if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
           return myWindow.getSelectedFile();
         }
