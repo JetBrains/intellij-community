@@ -702,12 +702,16 @@ public class ChangesCacheFile {
         // so we process file delete changes before changes made to deleted files before they were deleted
         myDeletedFiles = new HashSet<FilePath>();
         myCreatedFiles = new HashSet<FilePath>();
+        IncomingChangeState.header(myLocation.toPresentableString());
         for(IncomingChangeListData data: list) {
           debug("Checking incoming changelist " + data.changeList.getNumber());
           boolean updated = false;
           for(Change change: data.changeList.getChanges()) {
             if (data.accountedChanges.contains(change)) continue;
-            final boolean changeFound = processIncomingChange(change, data, incomingFiles);
+            final ContentRevision revision = (change.getAfterRevision() == null) ? change.getBeforeRevision() : change.getAfterRevision();
+            final IncomingChangeState state = new IncomingChangeState(change, revision.getRevisionNumber().asString());
+            final boolean changeFound = processIncomingChange(change, data, incomingFiles, state);
+            state.logSelf();
             if (changeFound) {
               data.accountedChanges.add(change);
             }
@@ -718,6 +722,7 @@ public class ChangesCacheFile {
             saveIncoming(data);
           }
         }
+        IncomingChangeState.footer();
         if (anyChanges) {
           writeHeader();
         }
@@ -730,12 +735,13 @@ public class ChangesCacheFile {
 
     private boolean processIncomingChange(final Change change,
                                           final IncomingChangeListData changeListData,
-                                          @Nullable final Collection<FilePath> incomingFiles) throws IOException {
+                                          @Nullable final Collection<FilePath> incomingFiles, final IncomingChangeState state) throws IOException {
       CommittedChangeList changeList = changeListData.changeList;
       ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
         if (afterRevision.getFile().isNonLocal()) {
           // don't bother to search for nonlocal paths on local disk
+          state.setState(IncomingChangeState.State.AFTER_DOES_NOT_MATTER_NON_LOCAL);
           return true;
         }
         if (change.getBeforeRevision() == null) {
@@ -745,6 +751,7 @@ public class ChangesCacheFile {
         }
         if (incomingFiles != null && !incomingFiles.contains(afterRevision.getFile())) {
           debug("Skipping new/changed file outside of incoming files: " + afterRevision.getFile());
+          state.setState(IncomingChangeState.State.AFTER_DOES_NOT_MATTER_OUTSIDE_INCOMING);
           return true;
         }
         debug("Checking file " + afterRevision.getFile().getPath());
@@ -753,6 +760,7 @@ public class ChangesCacheFile {
         if (! FileUtil.isAncestor(myRootPath.getIOFile(), localPath.getIOFile(), false)) {
           // alien change in list; skip
           debug("Alien path " + localPath.getPresentableUrl() + " under root " + myRootPath.getPresentableUrl() + "; skipping.");
+          state.setState(IncomingChangeState.State.AFTER_DOES_NOT_MATTER_ALIEN_PATH);
           return true;
         }
 
@@ -760,6 +768,7 @@ public class ChangesCacheFile {
         VirtualFile file = localPath.getVirtualFile();
         if (isDeletedFile(myDeletedFiles, afterRevision)) {
           debug("Found deleted file");
+          state.setState(IncomingChangeState.State.AFTER_DOES_NOT_MATTER_DELETED_FOUND_IN_INCOMING_LIST);
           return true;
         }
         else if (file != null) {
@@ -768,26 +777,37 @@ public class ChangesCacheFile {
             debug("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
             //noinspection unchecked
             if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber(), changeList)) {
+              state.setState(IncomingChangeState.State.AFTER_EXISTS_LOCALLY_AVAILABLE);
               return true;
+            } else {
+              state.setState(IncomingChangeState.State.AFTER_EXISTS_NOT_LOCALLY_AVAILABLE);
+              return false;
             }
           }
           else {
             debug("Failed to fetch revision");
+            state.setState(IncomingChangeState.State.AFTER_EXISTS_REVISION_NOT_LOADED);
+            return false;
           }
         }
         else {
           //noinspection unchecked
           if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), null, afterRevision.getRevisionNumber(), changeList)) {
+            state.setState(IncomingChangeState.State.AFTER_NOT_EXISTS_LOCALLY_AVAILABLE);
             return true;
           }
           if (fileMarkedForDeletion(localPath)) {
             debug("File marked for deletion and not committed jet.");
+            state.setState(IncomingChangeState.State.AFTER_NOT_EXISTS_MARKED_FOR_DELETION);
             return true;
           }
           if (wasSubsequentlyDeleted(afterRevision.getFile(), changeListData.indexOffset)) {
+            state.setState(IncomingChangeState.State.AFTER_NOT_EXISTS_SUBSEQUENTLY_DELETED);
             return true;
           }
           debug("Could not find local file for change " + afterRevision.getFile().getPath());
+          state.setState(IncomingChangeState.State.AFTER_NOT_EXISTS_OTHER);
+          return false;
         }
       }
       else {
@@ -797,6 +817,7 @@ public class ChangesCacheFile {
         myDeletedFiles.add(beforeRevision.getFile());
         if (incomingFiles != null && !incomingFiles.contains(beforeRevision.getFile())) {
           debug("Skipping deleted file outside of incoming files: " + beforeRevision.getFile());
+          state.setState(IncomingChangeState.State.BEFORE_DOES_NOT_MATTER_OUTSIDE);
           return true;
         }
         beforeRevision.getFile().refresh();
@@ -804,10 +825,12 @@ public class ChangesCacheFile {
           // if not deleted from vcs, mark as incoming, otherwise file already deleted
           final boolean locallyDeleted = myClManager.getDeletedFiles().contains(beforeRevision.getFile());
           debug(locallyDeleted ? "File deleted locally, change marked as incoming" : "File already deleted");
+          state.setState(locallyDeleted ? IncomingChangeState.State.BEFORE_NOT_EXISTS_DELETED_LOCALLY : IncomingChangeState.State.BEFORE_NOT_EXISTS_ALREADY_DELETED);
           return !locallyDeleted;
         }
         else if (!myVcs.fileExistsInVcs(beforeRevision.getFile())) {
           debug("File exists locally and is unversioned");
+          state.setState(IncomingChangeState.State.BEFORE_UNVERSIONED_INSTEAD_OF_VERS_DELETED);
           return true;
         }
         else {
@@ -816,8 +839,10 @@ public class ChangesCacheFile {
           if ((currentRevision != null) && (currentRevision.compareTo(beforeRevision.getRevisionNumber()) > 0)) {
             // revived in newer revision - possibly was added file with same name
             debug("File with same name was added after file deletion");
+            state.setState(IncomingChangeState.State.BEFORE_SAME_NAME_ADDED_AFTER_DELETION);
             return true;
           }
+          state.setState(IncomingChangeState.State.BEFORE_EXISTS_BUT_SHOULD_NOT);
           debug("File exists locally and no 'create' change found for it");
         }
       }
