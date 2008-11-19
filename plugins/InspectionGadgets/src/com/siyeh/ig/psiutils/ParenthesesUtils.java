@@ -258,7 +258,8 @@ public class ParenthesesUtils{
             return;
         }
         final PsiElement parent = parenthesizedExpression.getParent();
-        if(!(parent instanceof PsiExpression)){
+        if(!(parent instanceof PsiExpression) ||
+                parent instanceof PsiParenthesizedExpression){
             final PsiExpression newExpression =
                     (PsiExpression) parenthesizedExpression.replace(body);
             removeParentheses(newExpression, ignoreClarifyingParentheses);

@@ -102,7 +102,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
             if (child == null) {
                 return;
             }
-            if (!(parent instanceof PsiExpression)) {
+            if (!(parent instanceof PsiExpression) ||
+                    parent instanceof PsiParenthesizedExpression) {
                 registerError(expression);
                 return;
             }
