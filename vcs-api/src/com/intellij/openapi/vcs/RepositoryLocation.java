@@ -20,5 +20,13 @@ package com.intellij.openapi.vcs;
  * @author yole
  */
 public interface RepositoryLocation {
+  /**
+   * those shown in, for instance, Changes Browser tool window title
+   */
   String toPresentableString();
+
+  /**
+   * must uniquely identify this location
+   */
+  String getKey();
 }

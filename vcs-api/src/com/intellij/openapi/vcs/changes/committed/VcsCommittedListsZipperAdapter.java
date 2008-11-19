@@ -1,0 +1,71 @@
+package com.intellij.openapi.vcs.changes.committed;
+
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.MultiMap;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedListsZipper {
+  private final GroupCreator myGroupCreator;
+
+  public interface GroupCreator {
+    Object createKey(final RepositoryLocation location);
+    RepositoryLocationGroup createGroup(final Object key, final Collection<RepositoryLocation> locations);
+  }
+
+  protected VcsCommittedListsZipperAdapter(final GroupCreator groupCreator) {
+    myGroupCreator = groupCreator;
+  }
+
+  public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
+    final List<RepositoryLocationGroup> groups = new ArrayList<RepositoryLocationGroup>();
+    final List<RepositoryLocation> singles = new ArrayList<RepositoryLocation>();
+
+    final MultiMap<Object, RepositoryLocation> map = new MultiMap<Object, RepositoryLocation>();
+
+    for (RepositoryLocation location : in) {
+      final Object key = myGroupCreator.createKey(location);
+      map.putValue(key, location);
+    }
+
+    final Set<Object> keys = map.keySet();
+    for (Object key : keys) {
+      final Collection<RepositoryLocation> locations = map.get(key);
+      if (locations.size() == 1) {
+        singles.addAll(locations);
+      } else {
+        final RepositoryLocationGroup group = myGroupCreator.createGroup(key, locations);
+        groups.add(group);
+      }
+    }
+
+    return new Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>>(groups, singles);
+  }
+
+  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+    if (lists.size() == 1) {
+      return lists.get(0);
+    }
+    final CommittedChangeList result = lists.get(0);
+    for (int i = 1; i < lists.size(); i++) {
+      final CommittedChangeList list = lists.get(i);
+      for (Change change : list.getChanges()) {
+        final Collection<Change> resultChanges = result.getChanges();
+        if (! resultChanges.contains(change)) {
+          resultChanges.add(change);
+        }
+      }
+    }
+    return result;
+  }
+
+  public long getNumber(final CommittedChangeList list) {
+    return list.getNumber();
+  }
+}

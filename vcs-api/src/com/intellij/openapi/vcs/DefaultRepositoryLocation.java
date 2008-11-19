@@ -43,4 +43,12 @@ public class DefaultRepositoryLocation implements RepositoryLocation {
   public String toPresentableString() {
     return myURL;
   }
+
+  public String getKey() {
+    return myURL + "|" + myLocation;
+  }
+
+  public String getLocation() {
+    return myLocation;
+  }
 }

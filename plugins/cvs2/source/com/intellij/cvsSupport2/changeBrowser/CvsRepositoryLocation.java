@@ -39,4 +39,8 @@ public class CvsRepositoryLocation implements RepositoryLocation {
   public String toPresentableString() {
     return myModuleName;
   }
+
+  public String getKey() {
+    return myModuleName;
+  }
 }

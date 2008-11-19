@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -36,6 +37,9 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   RepositoryLocation getLocationFor(FilePath root);
   @Nullable
   RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath);
+
+  @Nullable
+  VcsCommittedListsZipper getZipper();
 
   List<T> getCommittedChanges(U settings, RepositoryLocation location, final int maxCount) throws VcsException;
   ChangeListColumn[] getColumns();

@@ -64,6 +64,10 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return getLocationFor(root);
   }
 
+  public VcsCommittedListsZipper getZipper() {
+    throw new UnsupportedOperationException();
+  }
+
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
                                                        RepositoryLocation location, final int maxCount) throws VcsException {
     throw new UnsupportedOperationException();

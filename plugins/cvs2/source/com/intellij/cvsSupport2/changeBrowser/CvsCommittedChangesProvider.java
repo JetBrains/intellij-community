@@ -20,11 +20,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
-import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
+import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +43,13 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider");
 
   private final Project myProject;
+  private final MyZipper myZipper;
 
   @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
 
   public CvsCommittedChangesProvider(Project project) {
     myProject = project;
+    myZipper = new MyZipper();
   }
 
   public ChangeBrowserSettings createDefaultSettings() {
@@ -56,6 +58,34 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
     return new CvsVersionFilterComponent(showDateFilter);
+  }
+
+  public VcsCommittedListsZipper getZipper() {
+    return myZipper;
+  }
+
+  private class MyZipper extends VcsCommittedListsZipperAdapter {
+    private MyZipper() {
+      super(new GroupCreator() {
+        public Object createKey(final RepositoryLocation location) {
+          final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+          return cvsLocation.getEnvironment().getRepository();
+        }
+
+        public RepositoryLocationGroup createGroup(final Object key, final Collection<RepositoryLocation> locations) {
+          final RepositoryLocationGroup group = new RepositoryLocationGroup((String) key);
+          for (RepositoryLocation location : locations) {
+            group.add(location);
+          }
+          return group;
+        }
+      });
+    }
+
+    @Override
+    public long getNumber(final CommittedChangeList list) {
+      return ((CvsChangeList) list).getCommitDate().getTime();
+    }
   }
 
   @Nullable

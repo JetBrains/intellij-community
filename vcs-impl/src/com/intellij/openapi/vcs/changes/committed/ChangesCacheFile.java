@@ -667,6 +667,10 @@ public class ChangesCacheFile {
     return new RefreshIncomingChangesOperation().invoke();
   }
 
+  public AbstractVcs getVcs() {
+    return myVcs;
+  }
+
   private class RefreshIncomingChangesOperation {
     private FactoryMap<VirtualFile, VcsRevisionNumber> myCurrentRevisions;
     private Set<FilePath> myDeletedFiles;

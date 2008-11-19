@@ -14,12 +14,14 @@ import java.util.Collections;
 public class ReceivedChangeList extends CommittedChangeListImpl {
   @NotNull private CommittedChangeList myBaseList;
   private int myBaseCount;
+  private boolean myForcePartial;
 
   public ReceivedChangeList(@NotNull CommittedChangeList baseList) {
     super(baseList.getName(), baseList.getComment(), baseList.getCommitterName(),
           baseList.getNumber(), baseList.getCommitDate(), Collections.<Change>emptyList());
     myBaseList = baseList;
     myBaseCount = baseList.getChanges().size();
+    myForcePartial = false;
   }
 
   public void addChange(Change change) {
@@ -27,7 +29,11 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
   }
 
   public boolean isPartial() {
-    return myChanges.size() < myBaseCount;
+    return myForcePartial || myChanges.size() < myBaseCount;
+  }
+
+  public void setForcePartial(final boolean forcePartial) {
+    myForcePartial = forcePartial;
   }
 
   @Override

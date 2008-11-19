@@ -30,4 +30,8 @@ class CompositeRepositoryLocation implements RepositoryLocation {
   public RepositoryLocation getProviderLocation() {
     return myProviderLocation;
   }
+
+  public String getKey() {
+    return myProviderLocation.getKey();
+  }
 }

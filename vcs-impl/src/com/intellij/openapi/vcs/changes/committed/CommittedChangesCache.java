@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
@@ -188,19 +189,44 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       private boolean myDisposed = false;
 
       public void run(@NotNull final ProgressIndicator indicator) {
-        final VcsRoot[] vcsRoots = myVcsManager.getAllVcsRoots();
-        for(VcsRoot root: vcsRoots) {
-          try {
-            if (myProject.isDisposed()) {
-              return;
+        for(AbstractVcs vcs: myVcsManager.getAllActiveVcss()) {
+          final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+          if (provider == null) continue;
+          final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
+
+          final VcsCommittedListsZipper vcsZipper = provider.getZipper();
+          CommittedListsSequencesZipper zipper = null;
+          if (vcsZipper != null) {
+            zipper = new CommittedListsSequencesZipper(vcsZipper);
+          }
+          boolean zipSupported = zipper != null;
+
+          for (VirtualFile root : roots) {
+            if (myProject.isDisposed())  return;
+
+            final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(root));
+            if (location == null) continue;
+
+            try {
+              final List<CommittedChangeList> lists = getChanges(settings, root, vcs, maxCount, cacheOnly, provider, location);
+              if (lists != null) {
+                if (zipSupported) {
+                  zipper.add(location, lists);
+                } else {
+                  myResult.addAll(lists);
+                }
+              }
             }
-            myResult.addAll(getChanges(settings, root.path, root.vcs, maxCount, cacheOnly));
+            catch (VcsException e) {
+              myExceptions.add(e);
+            }
+            catch(ProcessCanceledException e) {
+              myDisposed = true;
+            }
           }
-          catch (VcsException e) {
-            myExceptions.add(e);
-          }
-          catch(ProcessCanceledException e) {
-            myDisposed = true;
+
+          if (zipSupported) {
+            myResult.addAll(zipper.execute());
           }
         }
       }
@@ -220,16 +246,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myTaskQueue.run(task);
   }
 
+  @Nullable
   public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, @NotNull final AbstractVcs vcs,
-                                              final int maxCount, final boolean cacheOnly) throws VcsException {
-    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-    if (provider == null) {
-      return Collections.emptyList();
-    }
-    final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(file));
-    if (location == null) {
-      return Collections.emptyList();
-    }
+                                              final int maxCount, final boolean cacheOnly, final CommittedChangesProvider provider,
+                                              final RepositoryLocation location) throws VcsException {
     if (settings instanceof CompositeCommittedChangesProvider.CompositeChangeBrowserSettings) {
       settings = ((CompositeCommittedChangesProvider.CompositeChangeBrowserSettings) settings).get(vcs);
     }
@@ -240,7 +260,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           if (!cacheFile.isEmpty()) {
             return cacheFile.readChanges(settings, maxCount);
           }
-          return Collections.emptyList();
+          return null;
         }
         else {
           if (canGetFromCache(vcs, settings, file, location, maxCount)) {
@@ -420,7 +440,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
 
-    final Pair<Long, List<CommittedChangeList>> externalLists = myExternallyLoadedChangeLists.get(location.toPresentableString());
+    final Pair<Long, List<CommittedChangeList>> externalLists = myExternallyLoadedChangeLists.get(location.getKey());
     final long latestChangeList = getLatestListForFile(cacheFile);
     if ((externalLists != null) && (latestChangeList == externalLists.first.longValue())) {
       newLists.addAll(appendLoadedChanges(cacheFile, location, externalLists.second));
@@ -502,21 +522,87 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private List<CommittedChangeList> loadIncomingChanges() {
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
     final Collection<ChangesCacheFile> caches = getAllCaches();
+
+    final MultiMap<AbstractVcs, Pair<RepositoryLocation, List<CommittedChangeList>>> byVcs =
+      new MultiMap<AbstractVcs, Pair<RepositoryLocation, List<CommittedChangeList>>>();
+
     for(ChangesCacheFile cache: caches) {
       try {
         if (!cache.isEmpty()) {
           debug("Loading incoming changes for " + cache.getLocation());
-          result.addAll(cache.loadIncomingChanges());
+          final List<CommittedChangeList> incomingChanges = cache.loadIncomingChanges();
+          byVcs.putValue(cache.getVcs(), new Pair<RepositoryLocation, List<CommittedChangeList>>(cache.getLocation(), incomingChanges));
         }
       }
       catch (IOException e) {
         LOG.error(e);
       }
     }
+
+    for (AbstractVcs vcs : byVcs.keySet()) {
+      final CommittedChangesProvider committedChangesProvider = vcs.getCommittedChangesProvider();
+      VcsCommittedListsZipper vcsZipper = committedChangesProvider.getZipper();
+      if (vcsZipper != null) {
+        final VcsCommittedListsZipper incomingZipper = new IncomingListsZipper(vcsZipper);
+        final CommittedListsSequencesZipper zipper = new CommittedListsSequencesZipper(incomingZipper);
+        for (Pair<RepositoryLocation, List<CommittedChangeList>> pair : byVcs.get(vcs)) {
+          zipper.add(pair.getFirst(), pair.getSecond());
+        }
+        result.addAll(zipper.execute());
+      } else {
+        for (Pair<RepositoryLocation, List<CommittedChangeList>> pair : byVcs.get(vcs)) {
+          result.addAll(pair.getSecond());
+        }
+      }
+    }
+
     myCachedIncomingChangeLists = result;
     debug("Incoming changes loaded");
     notifyIncomingChangesUpdated(null);
     return result;
+  }
+
+  private class IncomingListsZipper extends VcsCommittedListsZipperAdapter {
+    private final VcsCommittedListsZipper myVcsZipper;
+
+    private IncomingListsZipper(final VcsCommittedListsZipper vcsZipper) {
+      super(null);
+      myVcsZipper = vcsZipper;
+    }
+
+    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
+      return myVcsZipper.groupLocations(in);
+    }
+
+    @Override
+    public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+      if (lists.size() == 1) {
+        return lists.get(0);
+      }
+      final CommittedChangeList victim = lists.get(0) instanceof ReceivedChangeList ? (((ReceivedChangeList) lists.get(0)).getBaseList()) :
+                                         lists.get(0);
+      final ReceivedChangeList result = new ReceivedChangeList(victim);
+      result.setForcePartial(false);
+      final Set<Change> baseChanges = new HashSet<Change>();
+
+      for (CommittedChangeList list : lists) {
+        baseChanges.addAll(list instanceof ReceivedChangeList ? ((ReceivedChangeList) list).getBaseList().getChanges() : list.getChanges());
+
+        final Collection<Change> changes = list.getChanges();
+        for (Change change : changes) {
+          if (! result.getChanges().contains(change)) {
+            result.addChange(change);
+          }
+        }
+      }
+      result.setForcePartial(baseChanges.size() != result.getChanges().size());
+      return result;
+    }
+
+    @Override
+    public long getNumber(final CommittedChangeList list) {
+      return myVcsZipper.getNumber(list);
+    }
   }
 
   public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer) {
@@ -759,7 +845,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private File getCachePath(final RepositoryLocation location) {
     File file = getCacheBasePath();
     file.mkdirs();
-    String s = location.toString();
+    String s = location.getKey();
     try {
       final byte[] bytes = MessageDigest.getInstance("MD5").digest(CharsetToolkit.getUtf8Bytes(s));
       StringBuilder result = new StringBuilder();
@@ -822,7 +908,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public void submitExternallyLoaded(final RepositoryLocation location, final long myLastCl, final List<CommittedChangeList> lists) {
-    myExternallyLoadedChangeLists.put(location.toPresentableString(), new Pair<Long, List<CommittedChangeList>>(myLastCl, lists));
+    myExternallyLoadedChangeLists.put(location.getKey(), new Pair<Long, List<CommittedChangeList>>(myLastCl, lists));
   }
 
   private interface RefreshResultConsumer {
