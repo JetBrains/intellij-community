@@ -141,7 +141,7 @@ class TemplateListPanel extends JPanel {
     return result;
   }
 
-  private static boolean checkAreEqual(final List<TemplateImpl> originalGroup, final List<TemplateImpl> newGroup) {
+  private boolean checkAreEqual(final List<TemplateImpl> originalGroup, final List<TemplateImpl> newGroup) {
     if (originalGroup.size() != newGroup.size()) return false;
 
     for (int i = 0; i < newGroup.size(); i++) {
@@ -152,9 +152,39 @@ class TemplateListPanel extends JPanel {
       if (!originalTemplate.equals(newTemplate)) return false;
       if (originalTemplate.isDeactivated() != newTemplate.isDeactivated()) return false;
 
+      if (!areOptionsEqual(newTemplate, originalTemplate)) return false;
+
+      if (!areContextsEqual(newTemplate, originalTemplate)) return false;
+
+
     }
 
     return true;
+  }
+
+  private boolean areContextsEqual(final TemplateImpl newTemplate, final TemplateImpl originalTemplate) {
+    Map<TemplateContextType, Boolean> templateContext = getTemplateContext(newTemplate);
+    for (TemplateContextType processor : templateContext.keySet()) {
+      if (processor.isEnabled(originalTemplate.getTemplateContext()) != templateContext.get(processor).booleanValue())
+        return false;
+    }
+    return true;
+  }
+
+  private boolean areOptionsEqual(final TemplateImpl newTemplate, final TemplateImpl originalTemplate) {
+    Map<TemplateOptionalProcessor, Boolean> templateOptions = getTemplateOptions(newTemplate);
+    for (TemplateOptionalProcessor processor : templateOptions.keySet()) {
+      if (processor.isEnabled(originalTemplate) != templateOptions.get(processor).booleanValue()) return false;
+    }
+    return true;
+  }
+
+  private Map<TemplateContextType, Boolean> getTemplateContext(final TemplateImpl newTemplate) {
+    return myTemplateContext.get(getKey(newTemplate));
+  }
+
+  private Map<TemplateOptionalProcessor, Boolean> getTemplateOptions(final TemplateImpl newTemplate) {
+    return myTemplateOptions.get(getKey(newTemplate));
   }
 
   private char getDefaultShortcutChar() {
@@ -437,7 +467,7 @@ class TemplateListPanel extends JPanel {
   }
 
   private Map<TemplateOptionalProcessor, Boolean> getOptions(final TemplateImpl template) {
-    return myTemplateOptions.get(System.identityHashCode(template));
+    return getTemplateOptions(template);
   }
 
   @Nullable
@@ -463,8 +493,8 @@ class TemplateListPanel extends JPanel {
 
   private void addRow() {
     TemplateImpl template = new TemplateImpl("", "", TemplateSettings.USER_GROUP_NAME);
-    myTemplateOptions.put(System.identityHashCode(template), template.createOptions());
-    myTemplateContext.put(System.identityHashCode(template), template.createContext());
+    myTemplateOptions.put(getKey(template), template.createOptions());
+    myTemplateContext.put(getKey(template), template.createContext());
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
     dialog.show();
@@ -474,6 +504,10 @@ class TemplateListPanel extends JPanel {
     addTemplate(template);
   }
 
+  private static int getKey(final TemplateImpl template) {
+    return System.identityHashCode(template);
+  }
+
   private void copyRow() {
     int selected = getSelectedIndex();
     if (selected < 0) return;
@@ -481,8 +515,8 @@ class TemplateListPanel extends JPanel {
     TemplateImpl orTemplate = getTemplate(selected);
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
-    myTemplateOptions.put(System.identityHashCode(template), template.createOptions());
-    myTemplateContext.put(System.identityHashCode(template), template.createContext());
+    myTemplateOptions.put(getKey(template), template.createOptions());
+    myTemplateContext.put(getKey(template), template.createContext());
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplateGroups(),
                                                        (String)myExpandByCombo.getSelectedItem(), getOptions(template), getContext(template));
     dialog.show();
@@ -493,7 +527,7 @@ class TemplateListPanel extends JPanel {
   }
 
   private Map<TemplateContextType, Boolean> getContext(final TemplateImpl template) {
-    return myTemplateContext.get(System.identityHashCode(template));
+    return getTemplateContext(template);
   }
 
   private int getSelectedIndex() {
@@ -832,8 +866,8 @@ class TemplateListPanel extends JPanel {
       });
       for (final Object groupTemplate : templates) {
         TemplateImpl template = (TemplateImpl)groupTemplate;
-        myTemplateOptions.put(System.identityHashCode(template), template.createOptions());
-        myTemplateContext.put(System.identityHashCode(template), template.createContext());
+        myTemplateOptions.put(getKey(template), template.createOptions());
+        myTemplateContext.put(getKey(template), template.createContext());
         CheckedTreeNode node = new CheckedTreeNode(template);
         node.setChecked(!template.isDeactivated());
         groupNode.add(node);
