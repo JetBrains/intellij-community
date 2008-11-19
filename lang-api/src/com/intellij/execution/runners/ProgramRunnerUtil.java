@@ -4,9 +4,12 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.process.ProcessNotCreatedException;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 
 /**
@@ -28,7 +31,14 @@ public class ProgramRunnerUtil {
       LOG.assertTrue(false, message);
     }
     else {
-      Messages.showErrorDialog(project, message, ExecutionBundle.message("run.error.message.title"));
+      if (message.contains("87") && e instanceof ProcessNotCreatedException && ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString().length() > 1024 * 32 ) {
+        if (Messages.showYesNoDialog(project, message + "\nCommand line is too long. In order to reduce its length classpath file can be used. Would you like to enable classpath file mode for all run configurations of your project?", ExecutionBundle.message("run.error.message.title"), Messages.getErrorIcon()) ==
+            DialogWrapper.OK_EXIT_CODE) {
+          PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
+        }
+      } else {
+        Messages.showErrorDialog(project, message, ExecutionBundle.message("run.error.message.title"));
+      }
     }
   }
 

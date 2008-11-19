@@ -12,6 +12,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 
 import java.io.InputStream;
@@ -54,7 +55,11 @@ public class JUnitProcessHandler extends OSProcessHandler {
   }
 
   public static JUnitProcessHandler runJava(final JavaParameters javaParameters) throws ExecutionException {
-    return runCommandLine(CommandLineBuilder.createFromJavaParameters(javaParameters, true));
+    return runJava(javaParameters, null);
+  }
+
+  public static JUnitProcessHandler runJava(final JavaParameters javaParameters, final Project project) throws ExecutionException {
+    return runCommandLine(CommandLineBuilder.createFromJavaParameters(javaParameters, project, true));
   }
 
   public static JUnitProcessHandler runCommandLine(final GeneralCommandLine commandLine) throws ExecutionException {
