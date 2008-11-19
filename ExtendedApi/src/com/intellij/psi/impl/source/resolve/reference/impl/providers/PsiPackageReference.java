@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,18 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
       });
     }
     return ResolveResult.EMPTY_ARRAY;
+  }
+
+  @Override
+  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
+    if (!(element instanceof PsiPackage)) {
+      throw new IncorrectOperationException("Cannot bind to " + element);
+    }
+    final String newName = ((PsiPackage)element).getQualifiedName();
+    final TextRange range =
+        new TextRange(getReferenceSet().getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(getElement());
+    return manipulator.handleContentChange(getElement(), range, newName);
   }
 
   public PackageReferenceSet getReferenceSet() {
