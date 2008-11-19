@@ -53,32 +53,40 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public void disposeUIResources() {
     if (myPanels != null) {
-      super.disposeUIResources();
-      for (CodeStyleMainPanel panel : myPanels) {
-        panel.disposeUIResources();
+      try {
+        super.disposeUIResources();
+        for (CodeStyleMainPanel panel : myPanels) {
+          panel.disposeUIResources();
+        }
       }
-      myPanels = null;
-      myModel = null;
-      myRootSchemesPanel = null;
-      myResetCompleted = false;
-      myRevertCompleted = false;
-      myApplyCompleted = false;
-      myInitResetInvoked = false;
+      finally {
+        myPanels = null;
+        myModel = null;
+        myRootSchemesPanel = null;
+        myResetCompleted = false;
+        myRevertCompleted = false;
+        myApplyCompleted = false;
+        myInitResetInvoked = false;
+      }
     }
   }
 
   @Override
-  public void reset() {
+  public synchronized void reset() {
     if (!myInitResetInvoked) {
-      if (!myResetCompleted) {
-        try {
-          resetImpl();
-        }
-        finally {
-          myResetCompleted = true;
+      try {
+        if (!myResetCompleted) {
+          try {
+            resetImpl();
+          }
+          finally {
+            myResetCompleted = true;
+          }
         }
       }
-      myInitResetInvoked = true;
+      finally {
+        myInitResetInvoked = true;
+      }
     }
     else {
       revert();
@@ -93,7 +101,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     }
   }
 
-  public void resetFromChild() {
+  public synchronized void resetFromChild() {
     if (!myResetCompleted) {
       try {
         resetImpl();
@@ -109,8 +117,12 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       myRevertCompleted = false;
     }
     if (!myRevertCompleted) {
-      resetImpl();
-      myRevertCompleted = true;
+      try {
+        resetImpl();
+      }
+      finally {
+        myRevertCompleted = true;
+      }
     }
   }
 
@@ -125,33 +137,37 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public void apply() throws ConfigurationException {
     if (!myApplyCompleted) {
-      super.apply();
+      try {
+        super.apply();
 
-      for (CodeStyleScheme scheme : new ArrayList<CodeStyleScheme>(myModel.getSchemes())) {
-        final boolean isDefaultModified = CodeStyleSchemesModel.cannotBeModified(scheme) && isSchemeModified(scheme);
-        if (isDefaultModified) {
-          CodeStyleScheme newscheme = myModel.createNewScheme(null, scheme);
-          CodeStyleSettings settingsWillBeModified = scheme.getCodeStyleSettings();
-          CodeStyleSettings notModifiedSettings = settingsWillBeModified.clone();
-          ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(notModifiedSettings);
-          ((CodeStyleSchemeImpl)newscheme).setCodeStyleSettings(settingsWillBeModified);
-          myModel.addScheme(newscheme, false);
+        for (CodeStyleScheme scheme : new ArrayList<CodeStyleScheme>(myModel.getSchemes())) {
+          final boolean isDefaultModified = CodeStyleSchemesModel.cannotBeModified(scheme) && isSchemeModified(scheme);
+          if (isDefaultModified) {
+            CodeStyleScheme newscheme = myModel.createNewScheme(null, scheme);
+            CodeStyleSettings settingsWillBeModified = scheme.getCodeStyleSettings();
+            CodeStyleSettings notModifiedSettings = settingsWillBeModified.clone();
+            ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(notModifiedSettings);
+            ((CodeStyleSchemeImpl)newscheme).setCodeStyleSettings(settingsWillBeModified);
+            myModel.addScheme(newscheme, false);
 
-          if (myModel.getSelectedScheme() == scheme) {
-            myModel.selectScheme(newscheme, this);
+            if (myModel.getSelectedScheme() == scheme) {
+              myModel.selectScheme(newscheme, this);
+            }
+
           }
-          
         }
+
+        for (CodeStyleMainPanel panel : myPanels) {
+          panel.apply();
+        }
+
+        myModel.apply();
+        EditorFactory.getInstance().refreshAllEditors();
+      }
+      finally {
+        myApplyCompleted = true;
       }
 
-      for (CodeStyleMainPanel panel : myPanels) {
-        panel.apply();
-      }
-
-      myModel.apply();
-      EditorFactory.getInstance().refreshAllEditors();
-
-      myApplyCompleted = true;
     }
 
   }

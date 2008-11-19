@@ -605,21 +605,25 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     resetSchemesCombo(null);
   }
 
-  public void reset() {
+  public synchronized void reset() {
     if (!myInitResetInvoked) {
-      super.reset();
-      if (!myInitResetCompleted) {
-        ensureSchemesPanel();
+      try {
+        super.reset();
+        if (!myInitResetCompleted) {
+          ensureSchemesPanel();
 
-        try {
-          resetImpl();
-        }
-        finally {
-          myInitResetCompleted = true;
+          try {
+            resetImpl();
+          }
+          finally {
+            myInitResetCompleted = true;
+          }
         }
       }
+      finally {
+        myInitResetInvoked = true;
+      }
 
-      myInitResetInvoked = true;
     }
     else {
       revertChanges();
@@ -627,7 +631,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   }
 
-  public void resetFromChild() {
+  public synchronized void resetFromChild() {
     if (!myInitResetCompleted) {
       ensureSchemesPanel();
 
@@ -659,30 +663,34 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   public void disposeUIResources() {
-    if (!myDisposeCompleted) {
-      try {
-        super.disposeUIResources();
-        if (mySubPanels != null) {
-            for (NewColorAndFontPanel subPanel : getPanels()) {
-              subPanel.disposeUIResources();
+    try {
+      if (!myDisposeCompleted) {
+        try {
+          super.disposeUIResources();
+          if (mySubPanels != null) {
+              for (NewColorAndFontPanel subPanel : getPanels()) {
+                subPanel.disposeUIResources();
+              }
             }
-          }
-        if (myRootSchemesPanel != null) {
-            myRootSchemesPanel.disposeUIResources();
-          }
-      }
-      finally {
-        myDisposeCompleted = true;
+          if (myRootSchemesPanel != null) {
+              myRootSchemesPanel.disposeUIResources();
+            }
+        }
+        finally {
+          myDisposeCompleted = true;
+        }
       }
     }
-    mySubPanels = null;
+    finally {
+      mySubPanels = null;
 
-    myInitResetCompleted = false;
-    myInitResetInvoked = false;
-    myRevertChangesCompleted = false;
+      myInitResetCompleted = false;
+      myInitResetInvoked = false;
+      myRevertChangesCompleted = false;
 
-    myApplyCompleted = false;
-    myRootSchemesPanel = null;
+      myApplyCompleted = false;
+      myRootSchemesPanel = null;      
+    }
   }
 
   public boolean currentSchemeIsReadOnly() {
