@@ -340,9 +340,8 @@ class ExtractedClassBuilder {
         continue;
       }
       final String name = calculateStrippedName(field);
-      final String fieldName = myJavaCodeStyleManager
-      .propertyNameToVariableName(name, field.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
       final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
+      final String fieldName = field.getName();
       if (fieldName.equals(parameterName)) {
         out.append("\t\tthis." + fieldName + " = " + parameterName + ";");
       }
@@ -360,7 +359,7 @@ class ExtractedClassBuilder {
     }
     final PsiType type = field.getType();
     final String typeText = type.getCanonicalText();
-    final String name = calculateStrippedName(field);
+    final String name = field.getName();
 
     @NonNls String modifierString;
     if (field.hasModifierProperty(PsiModifier.PUBLIC) && field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -369,8 +368,6 @@ class ExtractedClassBuilder {
     else {
       modifierString = "private ";
     }
-    final String fieldName = myJavaCodeStyleManager
-      .propertyNameToVariableName(name, field.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
     if (field.hasModifierProperty(PsiModifier.STATIC)) {
       modifierString += "static ";
     }
@@ -390,7 +387,7 @@ class ExtractedClassBuilder {
     out.append(modifierString);
     out.append(typeText);
     out.append(' ');
-    out.append(fieldName);
+    out.append(name);
     if (field.hasInitializer()) {
       final PsiExpression initializer = field.getInitializer();
       if (PsiUtil.isConstantExpression(initializer)) {
@@ -455,13 +452,12 @@ class ExtractedClassBuilder {
 
           if (fieldIsExtracted(field)) {
 
-            final String name = calculateStrippedName(field);
-            final String fieldName = myJavaCodeStyleManager
-      .propertyNameToVariableName(name, field.hasModifierProperty(PsiModifier.STATIC) ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
-            if (qualifier != null && fieldName.equals(expression.getReferenceName())) {
+            final String name = field.getName();
+
+            if (qualifier != null && name.equals(expression.getReferenceName())) {
               out.append("this.");
             }
-            out.append(fieldName);
+            out.append(name);
           }
           else {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {

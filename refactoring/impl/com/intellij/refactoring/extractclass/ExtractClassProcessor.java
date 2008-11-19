@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -404,30 +405,36 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 
     for (PsiReference reference : ReferencesSearch.search(field, scope)) {
-      final PsiReferenceExpression exp = (PsiReferenceExpression)reference.getElement();
-      if (isInMovedElement(exp)) {
+      final PsiElement element = reference.getElement();
+      if (isInMovedElement(element)) {
         continue;
       }
-      if (RefactoringUtil.isPlusPlusOrMinusMinus(exp)) {
-        usages.add(isStatic
-                   ? new ReplaceStaticVariableIncrementDecrement(exp, qualifiedName)
-                   : new ReplaceInstanceVariableIncrementDecrement(exp, delegateFieldName, setter, getter));
-      }
-      else if (RefactoringUtil.isAssignmentLHS(exp)) {
-        usages.add(isStatic
-                   ? new ReplaceStaticVariableAssignment(exp, qualifiedName)
-                   : new ReplaceInstanceVariableAssignment(PsiTreeUtil.getParentOfType(exp, PsiAssignmentExpression.class),
-                                                           delegateFieldName, setter, getter));
 
-      }
-      else {
-        usages.add(isStatic
-                   ? new ReplaceStaticVariableAccess(exp, qualifiedName)
-                   : new ReplaceInstanceVariableAccess(exp, delegateFieldName, getter));
-      }
+      if (element instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression exp = (PsiReferenceExpression)element;
+        if (RefactoringUtil.isPlusPlusOrMinusMinus(exp)) {
+          usages.add(isStatic
+                     ? new ReplaceStaticVariableIncrementDecrement(exp, qualifiedName)
+                     : new ReplaceInstanceVariableIncrementDecrement(exp, delegateFieldName, setter, getter));
+        }
+        else if (RefactoringUtil.isAssignmentLHS(exp)) {
+          usages.add(isStatic
+                     ? new ReplaceStaticVariableAssignment(exp, qualifiedName)
+                     : new ReplaceInstanceVariableAssignment(PsiTreeUtil.getParentOfType(exp, PsiAssignmentExpression.class),
+                                                             delegateFieldName, setter, getter));
 
-      if (!isStatic) {
-        delegationRequired = true;
+        }
+        else {
+          usages.add(isStatic
+                     ? new ReplaceStaticVariableAccess(exp, qualifiedName)
+                     : new ReplaceInstanceVariableAccess(exp, delegateFieldName, getter));
+        }
+
+        if (!isStatic) {
+          delegationRequired = true;
+        }
+      } else if (element instanceof PsiDocTagValue) {
+        usages.add(new BindJavadocReference(element, qualifiedName, field.getName()));
       }
     }
   }
