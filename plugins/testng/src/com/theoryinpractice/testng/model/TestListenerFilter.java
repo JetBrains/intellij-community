@@ -20,10 +20,6 @@ public class TestListenerFilter implements TreeClassChooser.ClassFilterWithScope
     this.project = project;
   }
 
-  public TestListenerFilter intersectionWith(GlobalSearchScope scope) {
-    return new TestListenerFilter(this.scope.intersectWith(scope), project);
-  }
-
   public boolean isAccepted(PsiClass psiClass) {
     if (!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
 

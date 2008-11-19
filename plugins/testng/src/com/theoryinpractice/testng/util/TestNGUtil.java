@@ -491,7 +491,7 @@ public class TestNGUtil implements TestFramework
 
   public static boolean inheritsITestListener(PsiClass psiClass) {
     for (PsiClass anInterface : psiClass.getInterfaces()) {
-      if (anInterface.getQualifiedName().matches("org.testng.(IReporter|ITestListener|internal.annotations.IAnnotationTransformer)"))
+      if (anInterface.getQualifiedName().matches("org.testng.(IReporter|ITestListener|IMethodInterceptor|IInvokedMethodListener|internal.annotations.IAnnotationTransformer)"))
         return true;
     }
     return false;
