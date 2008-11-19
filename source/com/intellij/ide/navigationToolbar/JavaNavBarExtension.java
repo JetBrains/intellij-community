@@ -8,6 +8,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaNavBarExtension implements NavBarModelExtension{
   public String getPresentableText(final Object object) {
@@ -32,6 +33,7 @@ public class JavaNavBarExtension implements NavBarModelExtension{
   }
 
 
+  @Nullable
   public PsiElement adjustElement(final PsiElement psiElement) {
     if (psiElement instanceof PsiJavaFile) {
       final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
@@ -45,6 +47,6 @@ public class JavaNavBarExtension implements NavBarModelExtension{
     if (psiElement instanceof PsiClass) return psiElement;
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) return containingFile;
-    return psiElement;
+    return psiElement.isPhysical() ? psiElement : null;
   }
 }
