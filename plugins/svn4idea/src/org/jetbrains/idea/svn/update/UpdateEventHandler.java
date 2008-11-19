@@ -123,11 +123,11 @@ public class UpdateEventHandler implements ISVNEventHandler {
       if (myExternalsCount == 0) {
         myExternalsCount = 1;
 
+        final long revision = event.getRevision();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(
-          SvnBundle.message("status.text.updated.to.revision", event.getRevision()));
+            WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(SvnBundle.message("status.text.updated.to.revision", revision));
           }
         });
       }
@@ -163,7 +163,12 @@ public class UpdateEventHandler implements ISVNEventHandler {
   }
 
   protected void addFileToGroup(final String id, final SVNEvent event) {
-    myUpdatedFiles.getGroupById(id).add(event.getFile().getAbsolutePath());
+    final FileGroup fileGroup = myUpdatedFiles.getGroupById(id);
+    final String path = event.getFile().getAbsolutePath();
+    fileGroup.add(path);
+    if (event.getErrorMessage() != null) {
+      fileGroup.addError(path, event.getErrorMessage().getMessage());
+    }
   }
 
   public void checkCancelled() throws SVNCancelException {
