@@ -98,6 +98,10 @@ public class GitRefspecPanel extends JPanel {
    */
   private JButton myAddAllTagsButton;
   /**
+   * Restore default mapping button
+   */
+  private JButton myDefaultButton;
+  /**
    * The name of the remote
    */
   private String myRemote;
@@ -188,13 +192,13 @@ public class GitRefspecPanel extends JPanel {
     // add all tags (mapped to tags directory)
     myAddAllTagsButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        myReferencesModel.addMapping(false, REFS_TAGS_PREFIX + "*", REFS_TAGS_PREFIX + "*");
+        myReferencesModel.addMapping(false, tagName("*"), tagName("*"));
       }
     });
     // all heads (mapped to remotes directory)
     myAddAllBranchesButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        myReferencesModel.addMapping(false, REFS_HEADS_PREFIX + "*", "refs/remotes/" + getRemoteName() + "/*");
+        addAllBranches();
       }
     });
     // map selected tags and heads
@@ -212,11 +216,77 @@ public class GitRefspecPanel extends JPanel {
           myReferencesModel.addMapping(false, tag, tag);
         }
         for (String head : d.getSelected(false)) {
-          myReferencesModel
-            .addMapping(true, head, REFS_REMOTES_PREFIX + getRemoteName() + "/" + head.substring(REFS_HEADS_PREFIX.length()));
+          myReferencesModel.addMapping(true, head, remoteName(head.substring(REFS_HEADS_PREFIX.length())));
         }
       }
     });
+    myDefaultButton.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        String remote = myRemote;
+        setRemote(null);
+        setRemote(remote);
+      }
+    });
+  }
+
+  /**
+   * Add mapping for all branches
+   */
+  private void addAllBranches() {
+    myReferencesModel.addMapping(false, headName("*"), remoteName("*"));
+  }
+
+
+  /**
+   * Generate tag with remote name
+   *
+   * @param remoteName the name of remote in the local system
+   * @param tagName    the name of the tag
+   * @return the full path to the head
+   */
+  private static String tagRemoteName(final String remoteName, final String tagName) {
+    return REFS_TAGS_PREFIX + remoteName + "/" + tagName;
+  }
+
+  /**
+   * Simple tag name
+   *
+   * @param tagName
+   * @return the tag name
+   */
+  private static String tagName(final String tagName) {
+    return REFS_TAGS_PREFIX + tagName;
+  }
+
+  /**
+   * Generate remote head name in local file system, note that as name of remote {@link #getRemoteName()} is used.
+   *
+   * @param headName the name head of remote in the local system
+   * @return the full path to the head
+   */
+  private String remoteName(final String headName) {
+    return remoteName(getRemoteName(), headName);
+  }
+
+  /**
+   * Generate remote name in local file system
+   *
+   * @param remote   a remote name, if blank a local branch is returned.
+   * @param headName the name head of remote in the local system
+   * @return the full path to the head
+   */
+  private static String remoteName(final String remote, final String headName) {
+    return remote.length() != 0 ? REFS_REMOTES_PREFIX + remote + "/" + headName : headName(headName);
+  }
+
+  /**
+   * Generate head name
+   *
+   * @param head the head name
+   * @return the full path to the head
+   */
+  private static String headName(final String head) {
+    return REFS_HEADS_PREFIX + head;
   }
 
   /**
@@ -282,15 +352,25 @@ public class GitRefspecPanel extends JPanel {
     if (remote != null) {
       myRemoteNameTextField.setText(name);
       myRemoteNameTextField.setEditable(false);
+      myDefaultButton.setEnabled(true);
     }
     else {
       myRemoteNameTextField.setText("");
       myRemoteNameTextField.setEditable(true);
+      myDefaultButton.setEnabled(false);
     }
     myRemoteHeads.clear();
     myRemoteTags.clear();
+    setDefaulMapping();
+  }
+
+  /**
+   * Set default mapping
+   */
+  private void setDefaulMapping() {
+    final GitRemote remote = myRemotes.get(myRemote);
+    myReferencesModel.clear();
     if (remote != null && myReferenceSource == ReferenceSource.FETCH) {
-      myReferencesModel.clear();
       try {
         for (String ref : GitRemote.getFetchSpecs(myProject, myGitRoot, remote.name())) {
           StringScanner s = new StringScanner(ref);
@@ -303,6 +383,9 @@ public class GitRefspecPanel extends JPanel {
       catch (VcsException e) {
         log.error("Failed to get fetch references ", e);
       }
+    }
+    else {
+      addAllBranches();
     }
   }
 
@@ -335,7 +418,6 @@ public class GitRefspecPanel extends JPanel {
   public String[] getReferences() {
     return myReferencesModel.getReferences();
   }
-
 
   /**
    * Mapping table model
@@ -477,10 +559,10 @@ public class GitRefspecPanel extends JPanel {
     private void remoteUpdated() {
       String newText = myRemoteNameTextField.getText();
       if (mySavedRemoteName != null && !newText.equals(mySavedRemoteName)) {
-        @NonNls String oldTagsPrefix = REFS_TAGS_PREFIX + mySavedRemoteName + "/";
-        @NonNls String newTagsPrefix = REFS_TAGS_PREFIX + newText + "/";
-        @NonNls String oldHeadsPrefix = REFS_REMOTES_PREFIX + mySavedRemoteName + "/";
-        @NonNls String newHeadsPrefix = REFS_REMOTES_PREFIX + newText + "/";
+        @NonNls String oldTagsPrefix = tagRemoteName(mySavedRemoteName, "");
+        @NonNls String newTagsPrefix = tagRemoteName(newText, "");
+        @NonNls String oldHeadsPrefix = remoteName(mySavedRemoteName, "");
+        @NonNls String newHeadsPrefix = remoteName(newText, "");
         for (RefMapping m : myMapping) {
           if (m.local.startsWith(oldTagsPrefix)) {
             m.local = newTagsPrefix + m.local.substring(oldTagsPrefix.length());
@@ -506,11 +588,10 @@ public class GitRefspecPanel extends JPanel {
      * @return true if remote name is actually used in the entries
      */
     boolean isRemoteNameUsed() {
-      String newText = myRemoteNameTextField.getText();
-      @NonNls String newTagsPrefix = REFS_TAGS_PREFIX + newText + "/";
-      @NonNls String newHeadsPrefix = REFS_REMOTES_PREFIX + newText + "/";
+      String text = myRemoteNameTextField.getText();
+      @NonNls String tagsPrefix = tagRemoteName(text, "");
       for (RefMapping m : myMapping) {
-        if (m.local.startsWith(newTagsPrefix) || m.local.startsWith(newHeadsPrefix)) {
+        if (m.local.startsWith(tagsPrefix)) {
           return true;
         }
       }
@@ -567,9 +648,13 @@ public class GitRefspecPanel extends JPanel {
   /**
    * The source of default references
    */
-  enum ReferenceSource {
+  public enum ReferenceSource {
     /**
      * The references are pulled from fetch specification
      */
-    FETCH, }
+    FETCH,
+    /**
+     * The references are pulled from push specification
+     */
+    PUSH, }
 }

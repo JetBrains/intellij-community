@@ -22,6 +22,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -633,7 +634,7 @@ public abstract class GitHandler {
    * @return a translated string
    */
   public static String translateParameter(String s) {
-    return s.replaceAll("([\\{}])", "\\\\$1");
+    return SystemInfo.isWindows ? s.replaceAll("([\\{}])", "\\\\$1") : s;
   }
 
   /**
@@ -643,8 +644,6 @@ public abstract class GitHandler {
    * @return a translated string
    */
   public static String restoreParameter(String s) {
-    return s.replaceAll("\\\\([{}])", "$1");
+    return SystemInfo.isWindows ? s.replaceAll("\\\\([{}])", "$1") : s;
   }
-
-
 }

@@ -17,10 +17,8 @@ package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import git4idea.GitBranch;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -172,16 +170,7 @@ public class GitFetchDialog extends DialogWrapper {
    * Update remotes
    */
   private void updateRemotes() {
-    final VirtualFile root = getGitRoot();
-    GitBranch gitBranch = null;
-    try {
-      gitBranch = GitBranch.current(myProject, root);
-    }
-    catch (VcsException ex) {
-      // ingore error
-    }
-    final String branch = gitBranch != null ? gitBranch.getName() : null;
-    GitUIUtil.setupRemotes(myProject, root, branch, myRemote);
+    GitUIUtil.setupRemotes(myProject, getGitRoot(), myRemote);
   }
 
   /**

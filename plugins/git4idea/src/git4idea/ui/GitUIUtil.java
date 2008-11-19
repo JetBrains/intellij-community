@@ -168,6 +168,28 @@ public class GitUIUtil {
 
   /**
    * Setup remotes combobox. The default remote for the current branch is selected by default.
+   * This method gets current branch for the proejct.
+   *
+   * @param project        the project
+   * @param root           the git root
+   * @param remoteCombobox the combobox to update
+   */
+  public static void setupRemotes(final Project project, final VirtualFile root, final JComboBox remoteCombobox) {
+    GitBranch gitBranch = null;
+    try {
+      gitBranch = GitBranch.current(project, root);
+    }
+    catch (VcsException ex) {
+      // ingore error
+    }
+    final String branch = gitBranch != null ? gitBranch.getName() : null;
+    setupRemotes(project, root, branch, remoteCombobox);
+
+  }
+
+
+  /**
+   * Setup remotes combobox. The default remote for the current branch is selected by default.
    *
    * @param project        the project
    * @param root           the git root
