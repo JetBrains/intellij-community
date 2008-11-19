@@ -500,6 +500,7 @@ public class LibraryTableEditor implements Disposable {
 
   private abstract class AttachItemAction implements ActionListener {
     private final FileChooserDescriptor myDescriptor;
+    private VirtualFile myLastChosen = null;
 
     protected abstract String getTitle();
     protected abstract String getDescription();
@@ -529,21 +530,26 @@ public class LibraryTableEditor implements Disposable {
         for (Map.Entry<DataKey, Object> entry : myFileChooserUserData.entrySet()) {
           myDescriptor.putUserData(entry.getKey(), entry.getValue());
         }
-        VirtualFile toSelect = null;
-        if (Comparing.strEqual(myLibraryTableProvider.getTableLevel(), LibraryTablesRegistrar.PROJECT_LEVEL)) {
+        VirtualFile toSelect = myLastChosen;
+        if (toSelect == null && Comparing.strEqual(myLibraryTableProvider.getTableLevel(), LibraryTablesRegistrar.PROJECT_LEVEL)) {
           final Project project = myProject;
           if (project != null) {
             toSelect = project.getBaseDir();
           }
         }
-        attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor, toSelect)), getRootType(), addAsJarDirectories());
+        final VirtualFile[] attachedFiles =
+          attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor, toSelect)), getRootType(),
+                      addAsJarDirectories());
+        if (attachedFiles.length > 0) {
+          myLastChosen = attachedFiles[0];
+        }
       }
       fireLibrariesChanged();
       myTree.requestFocus();
     }
   }
 
-  private void attachFiles(final Library library, final VirtualFile[] files, final OrderRootType rootType, final boolean isJarDirectories) {
+  private VirtualFile[] attachFiles(final Library library, final VirtualFile[] files, final OrderRootType rootType, final boolean isJarDirectories) {
     final VirtualFile[] filesToAttach = filterAlreadyAdded(library, files, rootType);
     if (filesToAttach.length > 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -564,6 +570,7 @@ public class LibraryTableEditor implements Disposable {
       });
       myTreeBuilder.updateFromRoot();
     }
+    return filesToAttach;
   }
 
   private VirtualFile[] filterAlreadyAdded(Library lib, VirtualFile[] files, final OrderRootType rootType) {
