@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.StringTokenizer;
 
 /**
@@ -128,6 +129,28 @@ public class GitBranch {
         continue;
       }
       branches.add(line.substring(2));
+    }
+  }
+
+  /**
+   * List tags for the git root
+   *
+   * @param project the context
+   * @param root    the git root
+   * @param tags    the tag list
+   * @throws com.intellij.openapi.vcs.VcsException
+   *          if there is a problem with running git
+   */
+  public static void listTags(final Project project, final VirtualFile root, final List<String> tags) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.TAG);
+    handler.setNoSSH(true);
+    handler.setSilent(true);
+    handler.addParameters("-l");
+    for (String line : handler.run().split("\n")) {
+      if (line.length() == 0) {
+        continue;
+      }
+      tags.add(line);
     }
   }
 }

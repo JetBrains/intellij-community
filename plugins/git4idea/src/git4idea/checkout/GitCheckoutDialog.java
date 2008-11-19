@@ -238,23 +238,14 @@ public class GitCheckoutDialog extends DialogWrapper {
         try {
           List<String> branchesAndTags = new ArrayList<String>();
           // get branches
-          GitBranch.list(myProject, GitCheckoutDialog.this.gitRoot(), true, true, branchesAndTags);
+          GitBranch.list(myProject, gitRoot(), true, true, branchesAndTags);
           existingBranches.clear();
           existingBranches.addAll(branchesAndTags);
           Collections.sort(branchesAndTags);
           // get tags
           if (myIncludeTagsCheckBox.isSelected()) {
             int mark = branchesAndTags.size();
-            GitSimpleHandler tags = new GitSimpleHandler(myProject, gitRoot(), GitHandler.TAG);
-            tags.setNoSSH(true);
-            tags.setSilent(true);
-            tags.addParameters("-l");
-            for (String line : tags.run().split("\n")) {
-              if (line.length() == 0) {
-                continue;
-              }
-              branchesAndTags.add(line);
-            }
+            GitBranch.listTags(myProject, gitRoot(), branchesAndTags);
             Collections.sort(branchesAndTags.subList(mark, branchesAndTags.size()));
           }
           myBranchToCkeckout.removeAllItems();

@@ -117,4 +117,39 @@ public class GitConfigUtil {
     }
     return output.substring(0, pos);
   }
+
+  /**
+   * Get boolean configuration value for the repository. Note that the method executes a git command.
+   *
+   * @param project the context project
+   * @param root    the git root
+   * @param key     the keys to be queried
+   * @return the value associtated with the key or null if the value is not found, value is not valid integer or boolean
+   * @throws VcsException an exception
+   */
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
+  public static Boolean getBoolValue(final Project project, final VirtualFile root, @NonNls final String key) throws VcsException {
+    String value = getValue(project, root, key);
+    if (value == null) {
+      return null;
+    }
+    value = value.trim();
+    if (value.length() == 0) {
+      return null;
+    }
+    if ("yes".equals(value) || "true".equals(value)) {
+      return Boolean.TRUE;
+    }
+    if ("no".equals(value) || "false".equals(value)) {
+      return Boolean.FALSE;
+    }
+    try {
+      int i = Integer.parseInt(value);
+      return i != 0;
+    }
+    catch (NumberFormatException ex) {
+      return null;
+    }
+  }
 }

@@ -173,9 +173,11 @@ public class GitLineHandler extends GitHandler {
     else {
       return line;
     }
-    char ch2 = line.charAt(n - 1);
-    if ((ch2 == '\n' || ch2 == '\r') && ch2 != ch) {
-      n--;
+    if (n > 0) {
+      char ch2 = line.charAt(n - 1);
+      if ((ch2 == '\n' || ch2 == '\r') && ch2 != ch) {
+        n--;
+      }
     }
     return line.substring(0, n);
 
