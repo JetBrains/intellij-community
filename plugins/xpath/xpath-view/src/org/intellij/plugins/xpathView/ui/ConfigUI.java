@@ -15,8 +15,9 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.intellij.plugins.xpathView.Config;
+
+import com.intellij.ui.ColorPanel;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -25,10 +26,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ConfigUI extends JPanel implements ActionListener {
-    private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.ui.ConfigUI");
-
-    final JColorChooser chooser = new JColorChooser();
+public class ConfigUI extends JPanel {
 
     private JCheckBox scrollToFirst;
     private JCheckBox useContextAtCursor;
@@ -36,9 +34,8 @@ public class ConfigUI extends JPanel implements ActionListener {
     private JCheckBox addErrorStripe;
     private JCheckBox showInToolbar;
     private JCheckBox showInMainMenu;
-
-    private JButton chooseHighlight;
-    private JButton chooseContext;
+    private ColorPanel chooseHighlight;
+    private ColorPanel chooseContext;
 
     public ConfigUI(Config configuration) {
         init();
@@ -73,14 +70,6 @@ public class ConfigUI extends JPanel implements ActionListener {
         showInMainMenu.setMnemonic('M');
         showInMainMenu.setToolTipText("Uncheck to remove XPath-related actions from the Main-Menubar");
 
-        chooseHighlight = new JButton("Highlight color");
-        chooseHighlight.setMnemonic('c');
-        chooseHighlight.addActionListener(this);
-
-        chooseContext = new JButton("Context node color");
-        chooseContext.setMnemonic('n');
-        chooseContext.addActionListener(this);
-
         JPanel settings = new JPanel(new BorderLayout());
         settings.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Settings"));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.NORTH);
@@ -99,13 +88,31 @@ public class ConfigUI extends JPanel implements ActionListener {
         settings.add(showInMainMenu, BorderLayout.NORTH);
         settings.add(/*settings = */new JPanel(new BorderLayout()), BorderLayout.SOUTH);
 
-        JPanel colors = new JPanel(new BorderLayout());
+        JPanel colors = new JPanel(new GridBagLayout());
         colors.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Colors"));
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         c.add(colors, BorderLayout.NORTH);
 
-        colors.add(chooseHighlight, BorderLayout.NORTH);
-        colors.add(chooseContext, BorderLayout.SOUTH);
+        final GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+
+        colors.add(new JLabel("Highlight color:"), constraints);
+        constraints.gridx = 1;
+        constraints.weightx = 1;
+
+        chooseHighlight = new ColorPanel();
+        colors.add(chooseHighlight, constraints);
+
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.weightx = 0;
+        colors.add(new JLabel("Context node color:"), constraints);
+
+        constraints.gridx = 1;
+        constraints.gridy = 1;
+        constraints.weightx = 1;
+
+        chooseContext = new ColorPanel();
+        colors.add(chooseContext, constraints);
     }
 
     public Config getConfig() {
@@ -116,9 +123,9 @@ public class ConfigUI extends JPanel implements ActionListener {
         config.setAddErrorStripe(addErrorStripe.isSelected());
         config.SHOW_IN_TOOLBAR = showInToolbar.isSelected();
         config.SHOW_IN_MAIN_MENU = showInMainMenu.isSelected();
-        config.getAttributes().setBackgroundColor(chooseHighlight.getBackground());
+        config.getAttributes().setBackgroundColor(chooseHighlight.getSelectedColor());
         if (useContextAtCursor.isSelected()) {
-            config.getContextAttributes().setBackgroundColor(chooseContext.getBackground());
+            config.getContextAttributes().setBackgroundColor(chooseContext.getSelectedColor());
         }
         return config;
     }
@@ -130,28 +137,13 @@ public class ConfigUI extends JPanel implements ActionListener {
         addErrorStripe.setSelected(configuration.isAddErrorStripe());
         showInToolbar.setSelected(configuration.SHOW_IN_TOOLBAR);
         showInMainMenu.setSelected(configuration.SHOW_IN_MAIN_MENU);
-        chooseHighlight.setBackground(configuration.getAttributes().getBackgroundColor());
-        chooseContext.setBackground(configuration.getContextAttributes().getBackgroundColor());
+        chooseHighlight.setSelectedColor(configuration.getAttributes().getBackgroundColor());
+        chooseContext.setSelectedColor(configuration.getContextAttributes().getBackgroundColor());
         stateChanged();
     }
 
     private void stateChanged() {
         chooseContext.setEnabled(useContextAtCursor.isSelected());
-    }
-
-    public void actionPerformed(ActionEvent e) {
-        final Object source = e.getSource();
-        LOG.assertTrue(source instanceof JButton);
-
-        final JButton b = (JButton)source;
-        chooser.setColor(b.getBackground());
-        final JDialog dialog = JColorChooser.createDialog(ConfigUI.this, b.getText(), true, chooser, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                // OK
-                b.setBackground(chooser.getColor());
-            }
-        }, null);
-        dialog.setVisible(true);
     }
 
     public static void main(String[] args) {
