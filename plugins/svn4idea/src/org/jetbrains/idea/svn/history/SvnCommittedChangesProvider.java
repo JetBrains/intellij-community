@@ -138,7 +138,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         final SVNURL root = SvnUtil.getRepositoryRoot(myVcs, url);
         if (root == null) {
           // should not occur
-          LOG.error("repository root not found for location:"+ location.toPresentableString());
+          LOG.info("repository root not found for location:"+ location.toPresentableString());
           singles.add(location);
         } else {
           map.putValue(root, svnLocation);

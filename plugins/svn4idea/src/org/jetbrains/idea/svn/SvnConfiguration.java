@@ -36,8 +36,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -319,5 +322,21 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public Map<File, UpdateRootInfo> getUpdateInfosMap() {
     return Collections.unmodifiableMap(myUpdateRootInfos);
+  }
+
+  public void clearAuthenticationDirectory() {
+    final File authDir = new File(getConfigurationDirectory(), "auth");
+    if (authDir.exists()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
+          if (ind != null) {
+            ind.setIndeterminate(true);
+            ind.setText("Deleting " + authDir.getAbsolutePath());
+            FileUtil.delete(authDir);
+          }
+        }
+      }, "button.text.clear.authentication.cache", false, myProject);
+    }
   }
 }

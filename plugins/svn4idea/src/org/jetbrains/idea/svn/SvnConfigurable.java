@@ -39,8 +39,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
@@ -97,7 +97,7 @@ public class SvnConfigurable implements Configurable {
                                                              Messages.getWarningIcon());
           if (result == 0) {
             SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            SvnApplicationSettings.getInstance().clearAuthenticationInfo();
+            SvnConfiguration.getInstance(myProject).clearAuthenticationDirectory();
           }
         }
 
