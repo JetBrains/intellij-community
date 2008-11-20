@@ -96,15 +96,12 @@ public class VariableInplaceRenamer {
       final SearchScope searchScope = myElementToRename.getUseScope();
       if (searchScope instanceof LocalSearchScope) {
         final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
-        scope = elements[0];
-
-        if (elements.length > 1) {
-          assert scope.getParent() == elements[1].getParent():"Cannot devise common scope out of use scope";
-          scope = scope.getParent();
-        }
+        scope = PsiTreeUtil.findCommonParent(elements);
       }
-
-      assert scope != null:"Should have local search scope for inplace rename";
+      
+      if (scope == null) {
+        return false; // Should have valid local search scope for inplace rename
+      }
     }
 
     final ResolveSnapshot snapshot = ResolveSnapshot.createSnapshot(scope);
