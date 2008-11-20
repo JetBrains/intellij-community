@@ -4,6 +4,7 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SpinAllocator;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
@@ -119,7 +120,17 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
 
 
   private String readLine(final Reader reader) throws IOException {
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    StringBuilder buffer;
+    boolean releaseBuffer = true;
+    try {
+      buffer = StringBuilderSpinAllocator.alloc();
+    }
+    catch (SpinAllocator.AllocatorExhaustedException e) {
+      LOG.info(e);
+      buffer = new StringBuilder();
+      releaseBuffer = false;
+    }
+
     try {
       boolean first = true;
       while (true) {
@@ -148,7 +159,9 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
       return buffer.toString();
     }
     finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+      if (releaseBuffer) {
+        StringBuilderSpinAllocator.dispose(buffer);
+      }
     }
   }
 
