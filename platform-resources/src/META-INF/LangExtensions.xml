@@ -173,8 +173,8 @@
   <projectService serviceInterface="com.intellij.moduleDependencies.DependenciesAnalyzeManager"
                   serviceImplementation="com.intellij.moduleDependencies.DependenciesAnalyzeManager"/>
 
-  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
-  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
+  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
+  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 
   <!-- Editor -->
   <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
