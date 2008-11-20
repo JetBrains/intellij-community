@@ -30,7 +30,7 @@
  *
  */
 package com.intellij.codeInsight.hint;
- 
+
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
@@ -51,6 +51,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
@@ -61,6 +62,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageInfoToUsageConverter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -87,12 +93,15 @@ public class ImplementationViewComponent extends JPanel {
   private FileEditor myNonTextEditor;
   private FileEditorProvider myCurrentNonTextEditorProvider;
   private JBPopup myHint;
+  private String myTitle;
   private static final @NonNls String TEXT_PAGE_KEY = "Text";
   private static final @NonNls String BINARY_PAGE_KEY = "Binary";
   private ActionToolbar myToolbar;
+  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
 
-  public void setHint(final JBPopup hint) {
+  public void setHint(final JBPopup hint, final String title) {
     myHint = hint;
+    myTitle = title;
   }
 
   public boolean hasElementsToShow() {
@@ -342,6 +351,10 @@ public class ImplementationViewComponent extends JPanel {
     edit.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, this);
     group.add(edit);
 
+    final ShowFindUsagesAction findUsagesAction = new ShowFindUsagesAction();
+    findUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_FIND_USAGES)), this);
+    group.add(findUsagesAction);
+
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
   }
 
@@ -444,6 +457,31 @@ public class ImplementationViewComponent extends JPanel {
       }
       else {
         fileEditorManager.openTextEditorEnsureNoFocus(descriptor);
+      }
+    }
+  }
+
+  private class ShowFindUsagesAction extends AnAction {
+    private static final String ACTION_NAME = "Show in usage view";
+
+    public ShowFindUsagesAction() {
+      super(ACTION_NAME, ACTION_NAME, FIND_ICON);
+    }
+
+    @Override
+      public void actionPerformed(final AnActionEvent e) {
+      final UsageViewPresentation presentation = new UsageViewPresentation();
+      presentation.setCodeUsagesString(myTitle);
+      presentation.setTabName(myTitle);
+      presentation.setTabText(myTitle);
+      final UsageInfo[] usages = new UsageInfo[myElements.length];
+      for (int i = 0; i < myElements.length; i++) {
+        usages[i] = new UsageInfo(myElements[i]);
+      }
+      UsageViewManager.getInstance(myEditor.getProject()).showUsages(new UsageTarget[0], UsageInfoToUsageConverter.convert(
+        new UsageInfoToUsageConverter.TargetElementsDescriptor(myElements), usages), presentation);
+      if (myHint.isVisible()) {
+        myHint.cancel();
       }
     }
   }

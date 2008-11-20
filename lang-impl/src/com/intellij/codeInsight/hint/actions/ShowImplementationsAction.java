@@ -177,6 +177,7 @@ public class ShowImplementationsAction extends AnAction {
           updateElementImplementations(element, editor, project, file);
         }
       };
+      final String title = CodeInsightBundle.message("implementation.view.title", text);
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
         .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
         .setProject(project)
@@ -185,10 +186,10 @@ public class ShowImplementationsAction extends AnAction {
         .setDimensionServiceKey(project, "ShowImplementationPopup", false)
         .setResizable(true)
         .setMovable(true)
-        .setTitle(CodeInsightBundle.message("implementation.view.title", text))
+        .setTitle(title)
         .createPopup();
       popup.showInBestPositionFor(DataManager.getInstance().getDataContext());
-      component.setHint(popup);
+      component.setHint(popup, title);
     }
 
   }
