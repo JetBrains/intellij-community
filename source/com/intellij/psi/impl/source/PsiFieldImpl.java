@@ -137,11 +137,17 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       return selfModifierList;
     }
     else {
-      final PsiField firstField = findFirstFieldInDeclaration();
+      PsiField firstField = findFirstFieldInDeclaration();
       if (firstField == this) {
-        LOG.error("Missing modifier list for sequence of fields: '" + getText() + "'");
-        return null;
-      } 
+        if (!isValid()) throw new PsiInvalidElementAccessException(this);
+
+        final PsiField lastResort = findFirstFieldByTree();
+        if (lastResort == this) {
+          throw new IllegalStateException("Missing modifier list for sequence of fields: '" + getText() + "'");
+        }
+
+        firstField = lastResort;
+      }
 
       return firstField.getModifierList();
     }
@@ -172,6 +178,10 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       }
     }
 
+    return findFirstFieldByTree();
+  }
+
+  private PsiField findFirstFieldByTree() {
     CompositeElement treeElement = getNode();
 
     ASTNode modifierList = treeElement.findChildByRole(ChildRole.MODIFIER_LIST);
