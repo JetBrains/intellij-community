@@ -637,7 +637,7 @@ public class CompileDriver {
   private static void logErrorMessages(final CompileContext context) {
     final CompilerMessage[] errors = context.getMessages(CompilerMessageCategory.ERROR);
     if (errors.length > 0) {
-      LOG.debug("There were errors while deleting output directories");
+      LOG.debug("Errors reported: ");
       for (CompilerMessage error : errors) {
         LOG.debug("\t" + error.getMessage());
       }
