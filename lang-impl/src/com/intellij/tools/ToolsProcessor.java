@@ -102,7 +102,9 @@ class ToolsProcessor implements SchemeProcessor<ToolsGroup> {
 
   public Document writeScheme(final ToolsGroup scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);
-    groupElement.setAttribute(ATTRIBUTE_NAME, scheme.getName());
+    if (scheme.getName() != null) {
+      groupElement.setAttribute(ATTRIBUTE_NAME, scheme.getName());
+    }
 
     for (Tool tool : scheme.getElements()) {
       saveTool(tool, groupElement);

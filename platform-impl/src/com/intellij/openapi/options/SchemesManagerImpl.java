@@ -373,7 +373,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private void loadScheme(final E scheme, boolean forceAdd, final String name) throws IOException {
-    if (scheme != null && scheme.getName() != null && (!myDeletedNames.contains(scheme.getName()) || forceAdd)) {
+    if (scheme != null && (!myDeletedNames.contains(scheme.getName()) || forceAdd)) {
       T existing = findSchemeByName(scheme.getName());
       if (existing != null) {
         mySchemes.remove(existing);
@@ -436,7 +436,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         final E scheme = readScheme(document);
         if (scheme != null) {
           if (scheme.getName() == null) {
-            scheme.setName(FileUtil.getNameWithoutExtension(file.getName()));
+            String suggestedName = FileUtil.getNameWithoutExtension(file.getName());
+            if (!"_".equals(suggestedName)) {
+              scheme.setName(suggestedName);
+            }
           }
 
           loadScheme(scheme, forceAdd, file.getName());

@@ -72,6 +72,9 @@ class ToolsPanel extends JPanel {
               if (groupName != null) {
                 getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
               }
+              else {
+                getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+              }
             }
             else if (object instanceof Tool) {
               getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
