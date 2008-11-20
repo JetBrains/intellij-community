@@ -144,18 +144,18 @@ public class Change {
   }
 
   private void cacheRenameOrMove(final Project project) {
-    if (!myRenameOrMoveCached) {
-      myRenameOrMoveCached = true;
-      if (myBeforeRevision != null && myAfterRevision != null && (! revisionPathsSame())) {
+    if (myBeforeRevision != null && myAfterRevision != null && (! revisionPathsSame())) {
+      if (!myRenameOrMoveCached) {
+        myRenameOrMoveCached = true;
         if (Comparing.equal(myBeforeRevision.getFile().getParentPath(), myAfterRevision.getFile().getParentPath())) {
           myRenamed = true;
         }
         else {
           myMoved = true;
         }
-        if (myMoved && myMoveRelativePath == null && project != null) {
-          myMoveRelativePath = VcsPathPresenter.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
-        }
+      }
+      if (myMoved && myMoveRelativePath == null && project != null) {
+        myMoveRelativePath = VcsPathPresenter.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
       }
     }
   }
