@@ -12,12 +12,14 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +29,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StatusBarImpl extends JPanel implements StatusBarEx {
   private final PositionPanel myPositionPanel = new PositionPanel(this);
@@ -36,6 +39,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private final InsertOverwritePanel myInsertOverwritePanel = new InsertOverwritePanel();
   private final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
   private final JPanel myCustomIndicationsPanel = new JPanel(new GridBagLayout());
+  private final JPanel myAppLevelCustomIndicationsPanel = new JPanel(new GridBagLayout());
   private String myInfo = "";
 
   private final MyUISettingsListener myUISettingsListener;
@@ -47,6 +51,8 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private final List<StatusBarPatch> myFileStatusComponents = new ArrayList<StatusBarPatch>();
   private final List<StatusBarPatch> myPatches = new ArrayList<StatusBarPatch>();
   private JPanel myPatchesPanel;
+  private List<StatusBarCustomComponentFactory> myCustomComponentsFactoryList;
+  private final Map<StatusBarCustomComponentFactory, JComponent> myFactory2Component = new HashMap<StatusBarCustomComponentFactory, JComponent>();
 
   public StatusBarImpl(UISettings uiSettings) {
     myUISettings = uiSettings;
@@ -112,6 +118,20 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
       }
     }, true);
 
+    addPatch(new StatusBarPatch() {
+      public JComponent getComponent() {
+        return myAppLevelCustomIndicationsPanel;
+      }
+
+      public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
+        return componentSelected == null ? null : componentSelected.getToolTipText();
+      }
+
+      public void clear() {
+
+      }
+    }, true);
+
     addPatch(myMessagePanel, false);
     addPatch(myMemoryUsagePanel, true);
 
@@ -136,6 +156,18 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
       gbConstraints.fill = GridBagConstraints.VERTICAL;
       gbConstraints.weightx = 0;
       gbConstraints.gridx++;
+    }
+
+  }
+
+  public void setCustomComponentsFactory(final List<StatusBarCustomComponentFactory> customComponentsFactory) {
+    disposeAppLevelCustomComponents();
+    myCustomComponentsFactoryList = customComponentsFactory;
+    for (StatusBarCustomComponentFactory factory : myCustomComponentsFactoryList) {
+      JComponent c = factory.createComponent(this);
+      if (c != null) {
+        addAppLevelCustomIndicationComponent(c);
+      }
     }
   }
 
@@ -165,6 +197,29 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     for (StatusBarPatch patch : myPatches) {
       patch.updateStatusBar(editor, null);
     }
+  }
+
+  public void dispose() {
+    disposeAppLevelCustomComponents();
+
+  }
+
+  private void disposeAppLevelCustomComponents() {
+    if (myCustomComponentsFactoryList != null) {
+      for (StatusBarCustomComponentFactory factory : myCustomComponentsFactoryList) {
+        try {
+          JComponent c = myFactory2Component.get(factory);
+          if (c != null) {
+            factory.disposeComponent(this, c);
+          }
+        }
+        finally {
+          myFactory2Component.remove(factory);
+        }
+
+      }
+    }
+    myCustomComponentsFactoryList = null;
   }
 
   Editor getEditor() {
@@ -229,21 +284,35 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     return myInfo;
   }
 
+  private void addAppLevelCustomIndicationComponent(@NotNull final JComponent c) {
+    addCustomIndicationComponent(c, myAppLevelCustomIndicationsPanel);
+  }
+
   public final void addCustomIndicationComponent(@NotNull JComponent c) {
+
+    addCustomIndicationComponent(c, myCustomIndicationsPanel);
+  }
+
+  private void addCustomIndicationComponent(final JComponent c, final JPanel indicationsPanel) {
     final GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.insets = new Insets(0, 0, 0, 2);
 
-    myCustomIndicationsPanel.setVisible(true);
-    myCustomIndicationsPanel.add(c, gbConstraints);
+
+    indicationsPanel.setVisible(true);
+    indicationsPanel.add(c, gbConstraints);
   }
 
   public void removeCustomIndicationComponent(@NotNull final JComponent component) {
-    myCustomIndicationsPanel.remove(component);
-    if (myCustomIndicationsPanel.getComponentCount() == 0) {
-      myCustomIndicationsPanel.setVisible(false);
+    removeCustomIndicationComponent(component, myCustomIndicationsPanel);
+  }
+
+  private void removeCustomIndicationComponent(final JComponent component, final JPanel indicationsPanel) {
+    indicationsPanel.remove(component);
+    if (indicationsPanel.getComponentCount() == 0) {
+      indicationsPanel.setVisible(false);
     }
   }
 

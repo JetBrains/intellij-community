@@ -71,8 +71,9 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void removeCustomIndicationComponent(@NotNull final JComponent c) {
     }
 
-    public void addFileStatusComponent(final JComponent component, final Runnable onStatusChange) {}
-    public void removeFileStatusComponent(final JComponent component) {}
+    public void dispose() {
+      
+    }
 
     public void cleanupCustomComponents() {
     }

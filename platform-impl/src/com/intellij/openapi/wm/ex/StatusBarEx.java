@@ -23,4 +23,6 @@ public interface StatusBarEx extends StatusBar{
   void setProcessWindowOpen(boolean open);
 
   void update(Editor editor);
+
+  void dispose();
 }

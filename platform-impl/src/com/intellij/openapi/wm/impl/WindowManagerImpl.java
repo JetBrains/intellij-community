@@ -441,6 +441,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       myProject2Frame.put(null, frame);
     }
     else {
+
+      statusBar.dispose();
       frame.dispose();
     }
   }

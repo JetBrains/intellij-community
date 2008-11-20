@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
+import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -85,6 +86,7 @@ public class IdeRootPane extends JRootPane{
     myGlassPane.setVisible(false);
     myApplication = application;
 
+    myStatusBar.setCustomComponentsFactory(Arrays.asList(myApplication.getComponents(StatusBarCustomComponentFactory.class)));
 
   }
 
