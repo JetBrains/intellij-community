@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -213,18 +214,12 @@ public class TestNGRunnableState extends JavaCommandLineState
 
     @NonNls final StringBuilder buf = new StringBuilder();
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
-      for (Iterator<String> it = data.TEST_LISTENERS.iterator(); it.hasNext();) {
-        String listenerClassName = it.next();
-        if (listenerClassName != null && !"".equals(listenerClassName)) {
-          buf.append(listenerClassName);
-          if (it.hasNext()) {
-            buf.append(";");
-          }
-        }
-      }
+      buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));
     }
-    if (buf.length() > 0) buf.append(";");
-    if (hasIDEACoverageEnabled) buf.append(IDEACoverageListener.class.getName());
+    if (hasIDEACoverageEnabled) {
+      if (buf.length() > 0) buf.append(";");
+      buf.append(IDEACoverageListener.class.getName());
+    }
     if (buf.length() > 0) javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, buf.toString());
 
     // Always include the source paths - just makes things easier :)

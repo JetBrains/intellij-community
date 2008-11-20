@@ -26,10 +26,12 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
@@ -490,11 +492,18 @@ public class TestNGUtil implements TestFramework
   }
 
   public static boolean inheritsITestListener(PsiClass psiClass) {
-    for (PsiClass anInterface : psiClass.getInterfaces()) {
-      if (anInterface.getQualifiedName().matches("org.testng.(IReporter|ITestListener|IMethodInterceptor|IInvokedMethodListener|internal.annotations.IAnnotationTransformer)"))
+    final boolean[] inherits = new boolean[1];
+    InheritanceUtil.processSupers(psiClass, false, new Processor<PsiClass>() {
+      public boolean process(final PsiClass superClass) {
+        final String qualifiedName = superClass.getQualifiedName();
+        if (qualifiedName != null && qualifiedName.matches("org.testng.(IReporter|ITestListener|IMethodInterceptor|IInvokedMethodListener|internal.annotations.IAnnotationTransformer)")) {
+          inherits[0] = true;
+          return false;
+        }
         return true;
-    }
-    return false;
+      }
+    });
+    return inherits[0];
   }
 
   public static boolean isTestngXML(final VirtualFile virtualFile) {
