@@ -1,7 +1,7 @@
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
 import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,7 +40,7 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
   }
 
   public boolean hasTask(final RunConfiguration configuration) {
-    if (configuration instanceof ModuleRunProfile && !(configuration instanceof RemoteConfiguration) && getConfig().isCompileBeforeRunning(configuration)) {
+    if (configuration instanceof RunProfileWithCompileBeforeLaunchOption && !(configuration instanceof RemoteConfiguration) && getConfig().isCompileBeforeRunning(configuration)) {
       return true;
     }
 
@@ -52,7 +52,7 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
   }
 
   public boolean executeTask(final DataContext context, final RunConfiguration configuration) {
-    final ModuleRunProfile runConfiguration = (ModuleRunProfile)configuration;
+    final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
     final Semaphore done = new Semaphore();
     final boolean[] result = new boolean[1];
     try {
