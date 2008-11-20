@@ -22,7 +22,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -36,10 +39,6 @@ public abstract class CommandLineState implements RunnableState {
 
   protected CommandLineState(ExecutionEnvironment environment) {
     myEnvironment = environment;
-  }
-
-  protected DataContext getDataContext() {
-    return myEnvironment.getDataContext();
   }
 
   public RunnerSettings getRunnerSettings() {
