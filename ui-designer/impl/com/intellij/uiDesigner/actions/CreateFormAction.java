@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
@@ -41,12 +42,17 @@ public class CreateFormAction extends AbstractCreateFormAction {
           UIDesignerBundle.message("action.gui.form.description"), Icons.UI_FORM_ICON);
 
     // delete obsolete template
-    FileTemplateManager manager = FileTemplateManager.getInstance();
-    final FileTemplate template = manager.getTemplate("GUI Form");
-    //noinspection HardCodedStringLiteral
-    if (template != null && template.getExtension().equals("form")) {
-      manager.removeTemplate(template, false);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        // to prevent deadlocks, this code must run while not holding the ActionManager lock
+        FileTemplateManager manager = FileTemplateManager.getInstance();
+        final FileTemplate template = manager.getTemplate("GUI Form");
+        //noinspection HardCodedStringLiteral
+        if (template != null && template.getExtension().equals("form")) {
+          manager.removeTemplate(template, false);
+        }
+      }
+    });
   }
 
   @NotNull
