@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.*;
-import java.net.URL;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 
 public class Main {
   private static boolean isHeadless;
@@ -17,12 +17,15 @@ public class Main {
   }
 
   public static void main(final String[] args) {
-    installPatch();
-
     isHeadless = isHeadless(args);
-    if (!isHeadless && GraphicsEnvironment.isHeadless()) {
+    if (isHeadless) {
+      System.setProperty("java.awt.headless", Boolean.TRUE.toString());
+    } else if (GraphicsEnvironment.isHeadless()) {
       throw new HeadlessException("Unable to detect graphics environment");
     }
+
+    installPatch();
+
     Bootstrap.main(args, Main.class.getName() + "Impl", "start");
   }
 
