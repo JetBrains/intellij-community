@@ -85,6 +85,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
                                           ActionManager.getInstance(), 0));
       }
     };
+    myPropertiesFilesEncodingCombo.removeAll();
     Presentation templatePresentation = myAction.getTemplatePresentation();
     myPropertiesFilesEncodingCombo.add(myAction.createCustomComponent(templatePresentation), BorderLayout.CENTER);
     myTreeView = new FileTreeTable(myProject);
