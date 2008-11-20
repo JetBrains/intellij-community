@@ -36,4 +36,9 @@ public class SliceTreeStructure extends AbstractTreeStructureBase {
   public boolean hasSomethingToCommit() {
     return false;
   }
+
+  @Override
+  public boolean isToBuildChildrenInBackground(final Object element) {
+    return true;
   }
+}

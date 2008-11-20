@@ -3,7 +3,6 @@ package com.intellij.slicer;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Processor;
@@ -38,17 +37,13 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       myCachedChildren = Collections.synchronizedList(new ArrayList<SliceNode>());
       storedModificationCount = count;
       if (isValid()) {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            getValue().processChildren(new Processor<SliceUsage>() {
-              public boolean process(SliceUsage sliceUsage) {
-                SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, myTreeBuilder);
-                myCachedChildren.add(node);
-                return true;
-              }
-            });
+        getValue().processChildren(new Processor<SliceUsage>() {
+          public boolean process(SliceUsage sliceUsage) {
+            SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, myTreeBuilder);
+            myCachedChildren.add(node);
+            return true;
           }
-        }, "Looking for Usages", false, getProject());
+        });
       }
     }
     return myCachedChildren;
