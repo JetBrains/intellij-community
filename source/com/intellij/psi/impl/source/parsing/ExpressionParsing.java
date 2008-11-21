@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -57,7 +58,7 @@ public class ExpressionParsing extends Parsing {
     CompositeElement parent = dummyRoot;
     final IElementType tokenType = lexer.getTokenType();
 
-    if(tokenType != null && tokenType != ElementType.BAD_CHARACTER){
+    if(tokenType != null && tokenType != TokenType.BAD_CHARACTER){
       final CompositeElement errorElement = Factory.createErrorElement("Unexpected tokens");
       TreeUtil.addChildren(dummyRoot, errorElement);
       parent = errorElement;
@@ -307,7 +308,6 @@ public class ExpressionParsing extends Parsing {
     CompositeElement element = parseConstruct(lexer, PARSE_SHIFT);
     if (element == null) return null;
 
-    Loop:
     while (true) {
       IElementType tokenType = GTTokens.getTokenType(lexer);
       if (tokenType == null) break;
@@ -323,7 +323,7 @@ public class ExpressionParsing extends Parsing {
         argNumber = PARSE_TYPE;
       }
       else {
-        break Loop;
+        break;
       }
 
       CompositeElement result = ASTFactory.composite(elementType);
@@ -681,6 +681,7 @@ public class ExpressionParsing extends Parsing {
         element = ASTFactory.composite(REFERENCE_EXPRESSION);
       }
 
+      TreeUtil.addChildren(element, ASTFactory.composite(REFERENCE_PARAMETER_LIST));
       TreeUtil.addChildren(element, superKeyword);
       return element;
     }
@@ -760,9 +761,8 @@ public class ExpressionParsing extends Parsing {
         TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
 
-        TreeElement dimExpr;
         if (bracketCount == dimCount) {
-          dimExpr = parseExpression(lexer);
+          TreeElement dimExpr = parseExpression(lexer);
           if (dimExpr != null) {
             TreeUtil.addChildren(element, dimExpr);
             dimCount++;
@@ -831,7 +831,7 @@ public class ExpressionParsing extends Parsing {
     boolean first = true;
     while (true) {
       if (first && (lexer.getTokenType() == RPARENTH || lexer.getTokenType() == RBRACE || lexer.getTokenType() == RBRACKET)) break;
-      if (!first & isArgListFinished(lexer)) break;
+      if (!first && isArgListFinished(lexer)) break;
 
       boolean errored = false;
       if (!first) {

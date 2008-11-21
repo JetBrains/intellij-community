@@ -12,8 +12,7 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
   private final PsiTypeElement[] myTypeElements;
   private final String myText;
 
-  public LightReferenceParameterList(PsiManager manager,
-                                     PsiTypeElement[] referenceElements) {
+  public LightReferenceParameterList(PsiManager manager, PsiTypeElement[] referenceElements) {
     super(manager, StdFileTypes.JAVA.getLanguage());
     myTypeElements = referenceElements;
     myText = calculateText();
@@ -21,7 +20,7 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
 
   private String calculateText() {
     if (myTypeElements.length == 0) return "";
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     buffer.append("<");
     for (int i = 0; i < myTypeElements.length; i++) {
       PsiTypeElement type = myTypeElements[i];
