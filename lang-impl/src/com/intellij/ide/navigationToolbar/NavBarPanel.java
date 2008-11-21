@@ -23,7 +23,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -272,8 +272,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private void scrollSelectionToVisible(final int direction) {
+    final int selectedIndex = myModel.getSelectedIndex();
+    if (selectedIndex == -1) return;
     final int firstIndex = myFirstIndex;
-    while (!myList.get(myModel.getSelectedIndex()).isShowing()) {
+    while (!myList.get(selectedIndex).isShowing()) {
       myFirstIndex = myModel.getIndexByMode(myFirstIndex + direction);
       rebuildComponent();
       if (firstIndex == myFirstIndex) break; //to be sure not to hang
@@ -625,7 +627,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   private void rightClick(final int index) {
     final ActionManager actionManager = ActionManager.getInstance();
-    final ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_POPUP);
+    final ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_POPUP);
     final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.NAVIGATION_BAR, group);
     final MyCompositeLabel item = getItem(index);
     if (item != null) {
