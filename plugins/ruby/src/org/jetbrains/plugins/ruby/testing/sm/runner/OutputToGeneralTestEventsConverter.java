@@ -163,6 +163,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
     @NonNls public static final String KEY_TESTS_COUNT = "testCount";
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
+    @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "location";
 
@@ -250,7 +251,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     private void processTestCountInSuite(final ServiceMessage msg) {
-      final String countStr = msg.getArgument();
+      final String countStr = msg.getAttributes().get(ATTR_KEY_TEST_COUNT);
       int count = 0;
       try {
         count = Integer.parseInt(countStr);
