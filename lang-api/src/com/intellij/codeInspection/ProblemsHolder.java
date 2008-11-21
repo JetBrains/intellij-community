@@ -19,7 +19,9 @@ package com.intellij.codeInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +67,16 @@ public class ProblemsHolder {
   public void registerProblem(PsiReference reference) {
     assert reference instanceof EmptyResolveMessageProvider;
     registerProblem(reference, ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern(), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+  }
+
+  public void registerProblem(@NotNull final PsiElement psiElement,
+                              @NotNull final String message,
+                              final ProblemHighlightType highlightType,
+                              final TextRange rangeInElement,
+                              final LocalQuickFix... fixes) {
+
+    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, fixes);
+    registerProblem(descriptor);
   }
 
   @Nullable
