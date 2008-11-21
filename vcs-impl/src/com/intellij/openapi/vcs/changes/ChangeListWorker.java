@@ -233,7 +233,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   @Nullable
   public String editComment(@NotNull final String fromName, final String newComment) {
     final LocalChangeList list = myMap.get(fromName);
-    if (list != null && (! list.isReadOnly())) {
+    if (list != null) {
       final String oldComment = list.getComment();
       if (! Comparing.equal(oldComment, newComment)) {
         final LocalChangeListImpl listImpl = (LocalChangeListImpl) list;
