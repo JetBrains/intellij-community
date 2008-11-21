@@ -51,7 +51,11 @@ public class BackgroundTaskQueue {
             }
           }
           indicator.setText(task.getTitle());
-          task.run(indicator);
+          try {
+            task.run(indicator);
+          } catch (ProcessCanceledException e) {
+            //ok
+          }
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (myProject == null || !myProject.isDisposed()) {
