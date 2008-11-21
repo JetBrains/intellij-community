@@ -31,7 +31,7 @@
       <grid id="71b5" binding="myWholePluginsPanel" layout-manager="GridBagLayout">
         <constraints>
           <grid row="1" column="0" row-span="2" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
+          <gridbag weightx="0.0" weighty="1.0"/>
         </constraints>
         <properties/>
         <border type="none"/>
