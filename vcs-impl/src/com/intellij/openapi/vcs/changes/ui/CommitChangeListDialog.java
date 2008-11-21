@@ -326,14 +326,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateWarning() {
-    myWarningLabel.setVisible(false);
-    final VcsException updateException = ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).getUpdateException();
-    if (updateException != null) {
-      final String[] messages = updateException.getMessages();
-      if (messages != null || messages.length > 0) {
-        final String message = messages[0];
-        myWarningLabel.setText("Warning: not all local changes may be shown due to an error: " + message);
-        myWarningLabel.setVisible(true);
+    // check for null since can be called from constructor before field initialization
+    if (myWarningLabel != null) {
+      myWarningLabel.setVisible(false);
+      final VcsException updateException = ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).getUpdateException();
+      if (updateException != null) {
+        final String[] messages = updateException.getMessages();
+        if (messages != null || messages.length > 0) {
+          final String message = messages[0];
+          myWarningLabel.setText("Warning: not all local changes may be shown due to an error: " + message);
+          myWarningLabel.setVisible(true);
+        }
       }
     }
   }
