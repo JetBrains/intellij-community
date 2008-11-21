@@ -1,32 +1,50 @@
 package com.intellij.ide.ui.customization;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.util.ImageLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
  * Date: Jan 20, 2005
  */
-public class CustomActionsSchema implements JDOMExternalizable {
-  public String myName;
-  public String myDescription;
+public class CustomActionsSchema implements ExportableApplicationComponent, NamedJDOMExternalizable {
+  @NonNls private static final String ACTIONS_SCHEMA = "custom_actions_schema";
+  @NonNls private static final String ACTIVE = "active";
+  @NonNls private static final String ELEMENT_ACTION = "action";
+  @NonNls private static final String ATTRIBUTE_ID = "id";
+  @NonNls private static final String ATTRIBUTE_ICON = "icon";
+
+  private Map<String, String> myIconCustomizations = new HashMap<String, String>();
+
   private ArrayList<ActionUrl> myActions = new ArrayList<ActionUrl>();
-
-  private boolean myModified = false;
-
 
   private HashMap<String , ActionGroup> myIdToActionGroup = new HashMap<String, ActionGroup>();
 
@@ -44,13 +62,10 @@ public class CustomActionsSchema implements JDOMExternalizable {
   }
 
   @NonNls private static final String GROUP = "group";
+  private static final Logger LOG = Logger.getInstance("#" + CustomActionsSchema.class.getName());
 
-  public CustomActionsSchema() {
-  }
-
-  public CustomActionsSchema(String name, String description) {
-    myName = name;
-    myDescription = description;
+  public static CustomActionsSchema getInstance() {
+    return ApplicationManager.getApplication().getComponent(CustomActionsSchema.class);
   }
 
   public void addAction(ActionUrl url) {
@@ -65,48 +80,65 @@ public class CustomActionsSchema implements JDOMExternalizable {
     myActions = actions;
   }
 
-  public CustomActionsSchema copyFrom() {
-    CustomActionsSchema result = new CustomActionsSchema(myName, myDescription);
+  public void copyFrom(CustomActionsSchema result) {
+    myIdToActionGroup.clear();
+    myActions.clear();
+    myIconCustomizations.clear();
 
-    for (ActionUrl actionUrl : myActions) {
+    for (ActionUrl actionUrl : result.myActions) {
       final ActionUrl url = new ActionUrl(new ArrayList<String>(actionUrl.getGroupPath()), actionUrl.getComponent(),
                                           actionUrl.getActionType(), actionUrl.getAbsolutePosition());
       url.setInitialPosition(actionUrl.getInitialPosition());
-      result.addAction(url);
+      addAction(url);
     }
 
-    return result;
+    myIconCustomizations.putAll(result.myIconCustomizations);
   }
 
-  public void setName(final String name) {
-    myName = name;
-  }
-
-  public void setDescription(final String description) {
-    myDescription = description;
-  }
-
-  public String getName() {
-    return myName;
-  }
-
-  public String getDescription() {
-    return myDescription;
+  public boolean isModified(CustomActionsSchema schema) {
+    final ArrayList<ActionUrl> storedActions = schema.getActions();
+    if (storedActions.size() != getActions().size()) {
+      return true;
+    }
+    for (int i = 0; i < getActions().size(); i++) {
+      if (!getActions().get(i).equals(storedActions.get(i))) {
+        return true;
+      }
+    }
+    if (schema.myIconCustomizations.size() != myIconCustomizations.size()) return true;
+    for (String actionId : myIconCustomizations.keySet()) {
+      if (!Comparing.strEqual(schema.getIconPath(actionId), getIconPath(actionId))) return true;
+    }
+    return false;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    for (Iterator<Element> iterator = element.getChildren(GROUP).iterator(); iterator.hasNext();) {
-      Element groupElement = iterator.next();
+    Element schElement = element;
+    final String activeName = element.getAttributeValue(ACTIVE);
+    if (activeName != null) {
+      for (Element toolbarElement : (Iterable<Element>)element.getChildren(ACTIONS_SCHEMA)) {
+        for (Object o : toolbarElement.getChildren("option")) {
+          if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "myName") &&
+              Comparing.strEqual(((Element)o).getAttributeValue("value"), activeName)) {
+            schElement = toolbarElement;
+            break;
+          }
+        }
+      }
+    }
+    for (Object groupElement : schElement.getChildren(GROUP)) {
       ActionUrl url = new ActionUrl();
-      url.readExternal(groupElement);
+      url.readExternal((Element)groupElement);
       myActions.add(url);
     }
+    readIcons(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeActions(element);
+    writeIcons(element);
   }
 
   private void writeActions(Element element) throws WriteExternalException {
@@ -153,13 +185,6 @@ public class CustomActionsSchema implements JDOMExternalizable {
     }
   }
 
-  public boolean isModified() {
-    return myModified;
-  }
-
-  public void setModified(final boolean modified) {
-    myModified = modified;
-  }
 
   public boolean isCorrectActionGroup(ActionGroup group) {
     if (myActions.isEmpty()){
@@ -205,6 +230,106 @@ public class CustomActionsSchema implements JDOMExternalizable {
       }
     }
     return result;
+  }
+
+public void removeIconCustomization(String actionId) {
+    myIconCustomizations.remove(actionId);
+  }
+
+  public void addIconCustomization(String actionId, String iconPath) {
+    myIconCustomizations.put(actionId, iconPath != null ? FileUtil.toSystemIndependentName(iconPath) : null);
+  }
+
+  public String getIconPath(String actionId) {
+    final String path = myIconCustomizations.get(actionId);
+    return path == null ? "" : path;
+  }
+
+  private void readIcons(Element parent) {
+    for (Object actionO : parent.getChildren(ELEMENT_ACTION)) {
+      Element action = (Element)actionO;
+      final String actionId = action.getAttributeValue(ATTRIBUTE_ID);
+      final String iconPath = action.getAttributeValue(ATTRIBUTE_ICON);
+      if (actionId != null){
+        myIconCustomizations.put(actionId, iconPath);
+      }
+    }
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        initActionIcons();
+      }
+    });
+  }
+
+  private void writeIcons(Element parent) {
+    for (String actionId : myIconCustomizations.keySet()) {
+      Element action = new Element(ELEMENT_ACTION);
+      action.setAttribute(ATTRIBUTE_ID, actionId);
+      String icon = myIconCustomizations.get(actionId);
+      if (icon != null) {
+        action.setAttribute(ATTRIBUTE_ICON, icon);
+      }
+      parent.addContent(action);
+    }
+  }
+
+  private void initActionIcons() {
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String actionId : myIconCustomizations.keySet()) {
+      final AnAction anAction = actionManager.getAction(actionId);
+      if (anAction != null) {
+        Icon icon;
+        final String iconPath = myIconCustomizations.get(actionId);
+        if (iconPath != null && new File(FileUtil.toSystemDependentName(iconPath)).exists()) {
+          Image image = null;
+          try {
+            image = ImageLoader.loadFromStream(VfsUtil.convertToURL(VfsUtil.pathToUrl(iconPath)).openStream());
+          }
+          catch (IOException e) {
+            LOG.debug(e);
+          }
+          icon = image != null ? IconLoader.getIcon(image) : null;
+        }
+        else {
+          icon = CustomizableActionsPanel.FULLISH_ICON;
+        }
+        if (anAction.getTemplatePresentation() != null) {
+          anAction.getTemplatePresentation().setIcon(icon);
+          anAction.setDefaultIcon(false);
+        }
+      }
+    }
+    final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
+    if (frame != null) {
+      frame.updateToolbar();
+      frame.updateMenuBar();
+    }
+  }
+
+
+ @NotNull
+  public File[] getExportFiles() {
+    return new File[]{PathManager.getOptionsFile(this)};
+  }
+
+  @NotNull
+  public String getPresentableName() {
+    return IdeBundle.message("title.custom.actions.schemas");
+  }
+
+  @NotNull
+  public String getComponentName() {
+    return "com.intellij.ide.ui.customization.CustomizableActionsSchemas";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  public String getExternalFileName() {
+    return "customization";
   }
 
   private static class Pair {

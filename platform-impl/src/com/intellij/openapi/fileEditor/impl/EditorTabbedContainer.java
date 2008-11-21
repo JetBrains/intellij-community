@@ -1,8 +1,8 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.actions.ShowFilePathAction;
-import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -26,8 +26,8 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +73,7 @@ final class EditorTabbedContainer implements Disposable {
       }
     }).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
-        return (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
+        return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
       }
     }, ActionPlaces.EDITOR_POPUP, false).addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {

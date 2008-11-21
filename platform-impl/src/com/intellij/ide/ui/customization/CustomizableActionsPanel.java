@@ -1,7 +1,9 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,43 +12,47 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTree;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.DetailsComponent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
  * Date: Mar 17, 2005
  */
-public class CustomizableActionsPanel implements MasterDetails {
+public class CustomizableActionsPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizableActionsPanel");
 
   private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
@@ -60,46 +66,21 @@ public class CustomizableActionsPanel implements MasterDetails {
   private JButton myMoveActionUpButton;
   private JPanel myPanel;
   private JTree myActionsTree;
-  private JTextField myDescription;
   private JButton myAddSeparatorButton;
 
   private TreeExpansionMonitor myTreeExpansionMonitor;
 
   private CustomActionsSchema mySelectedSchema;
 
-  private DefaultListModel myCustomizationSchemas = new DefaultListModel();
 
-  private JList myList = new JList();
-  private JTextField myName;
-  private JPanel myListPane;
+
   private JPanel myDetailsPanel;
   public static final Icon FULLISH_ICON = IconLoader.getIcon("/toolbar/unknown.png");
-  private ActionToolbar myToolbar;
   private DetailsComponent myDetailsComponent;
 
   public CustomizableActionsPanel() {
-    myList.setModel(myCustomizationSchemas);
-    //noinspection HardCodedStringLiteral
-    myList.setPrototypeCellValue(new CustomActionsSchema("xxxxxxxxxxxxx", ""));
-    fillSchemaList();
-    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new ColoredListCellRenderer() {
-      protected void customizeCellRenderer(
-        JList list,
-        Object value,
-        int index,
-        boolean selected,
-        boolean hasFocus
-      ) {
-        if (value instanceof CustomActionsSchema) {
-          final CustomActionsSchema schema = (CustomActionsSchema)value;
-          append(schema.getName(),
-                 schema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME)
-                 ? SimpleTextAttributes.GRAYED_ATTRIBUTES
-                 : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-    });
+
+
     //noinspection HardCodedStringLiteral
     Group rootGroup = new Group("root", null, null);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
@@ -138,8 +119,7 @@ public class CustomizableActionsPanel implements MasterDetails {
         myRemoveActionButton.setEnabled(selectionPaths != null);
         if (selectionPaths != null) {
           for (TreePath selectionPath : selectionPaths) {
-            if ((selectionPath.getPath() != null && selectionPath.getPath().length <= 2) ||
-                (mySelectedSchema == null || mySelectedSchema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME))) {
+            if (selectionPath.getPath() != null && selectionPath.getPath().length <= 2) {
               setButtonsDisabled();
               return;
             }
@@ -149,7 +129,7 @@ public class CustomizableActionsPanel implements MasterDetails {
         myMoveActionDownButton.setEnabled(isMoveSupported(myActionsTree, 1));
       }
     });
-    final CustomizableActionsSchemas schemas = CustomizableActionsSchemas.getInstance();
+
     myAddActionButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
@@ -169,7 +149,7 @@ public class CustomizableActionsPanel implements MasterDetails {
               if (o instanceof String) {
                 DefaultMutableTreeNode current = new DefaultMutableTreeNode(url.getComponent());
                 current.setParent((DefaultMutableTreeNode)node.getParent());
-                editToolbarIcon((String)o, current, schemas);
+                editToolbarIcon((String)o, current);
               }
             }
             ((DefaultTreeModel)myActionsTree.getModel()).reload();
@@ -272,88 +252,6 @@ public class CustomizableActionsPanel implements MasterDetails {
       }
     });
 
-    myDescription.setText(mySelectedSchema != null ? mySelectedSchema.getDescription() : "");
-
-    final DefaultActionGroup group = new DefaultActionGroup();
-    ReorderableListController<CustomActionsSchema> controller = ReorderableListController.create(myList, group);
-    controller.addAddAction(IdeBundle.message("action.add.customization.schema"), new Factory<CustomActionsSchema>() {
-      public CustomActionsSchema create() {
-        return new CustomActionsSchema(createUniqueName(), "");
-      }
-    }, true);
-
-    final ReorderableListController<CustomActionsSchema>.RemoveActionDescription removeActionDescription = controller
-      .addRemoveAction(IdeBundle.message("action.remove.customization.schema"));
-    removeActionDescription.setEnableCondition(new Condition<CustomActionsSchema>() {
-      public boolean value(final CustomActionsSchema schema) {
-        return !schema.getName().equals(IdeBundle.message("customizations.schema.default"));
-      }
-    });
-    controller
-      .addCopyAction(IdeBundle.message("action.copy.customization.schema"), new Convertor<CustomActionsSchema, CustomActionsSchema>() {
-        public CustomActionsSchema convert(final CustomActionsSchema o) {
-          final CustomActionsSchema customActionsSchema = o.copyFrom();
-          customActionsSchema.setName(createUniqueName());
-          return customActionsSchema;
-        }
-      }, Conditions.<CustomActionsSchema>alwaysTrue());
-    myListPane.setLayout(new BorderLayout());
-    myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    myListPane.add(myToolbar.getComponent(), BorderLayout.NORTH);
-    myListPane.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
-    myList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        final CustomActionsSchema selectedValue = (CustomActionsSchema)myList.getSelectedValue();
-        if (selectedValue != null) {
-          myTreeExpansionMonitor.freeze();
-          mySelectedSchema = selectedValue;
-          setNameAndDescription(!mySelectedSchema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME),
-                                mySelectedSchema.getName(), mySelectedSchema.getDescription());
-          patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
-          myTreeExpansionMonitor.restore();
-        }
-        else {
-          mySelectedSchema = null;
-          ((DefaultMutableTreeNode)myActionsTree.getModel().getRoot()).removeAllChildren();
-        }
-      }
-    });
-    myList.getModel().addListDataListener(new ListDataListener() {
-      public void contentsChanged(ListDataEvent e) {
-      }
-
-      public void intervalAdded(ListDataEvent e) {
-      }
-
-      public void intervalRemoved(ListDataEvent e) {
-        if (myList.getModel().getSize() == 0) {
-          mySelectedSchema = null;
-          setNameAndDescription(false, "", "");
-          ((DefaultMutableTreeNode)myActionsTree.getModel().getRoot()).removeAllChildren();
-          ((DefaultTreeModel)myActionsTree.getModel()).reload();
-        }
-      }
-    });
-
-    myDescription.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        if (mySelectedSchema != null) {
-          mySelectedSchema.setDescription(myDescription.getText());
-        }
-      }
-    });
-
-    myName.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        if (mySelectedSchema != null) {
-          mySelectedSchema.setName(myName.getText());
-          if (myDetailsComponent != null) {
-            myDetailsComponent.setText(myName.getText());
-          }
-          myList.repaint();
-        }
-      }
-    });
 
 
     patchActionsTreeCorrespondingToSchema(root);
@@ -366,19 +264,11 @@ public class CustomizableActionsPanel implements MasterDetails {
     myDetailsComponent.setContent(myDetailsPanel);
   }
 
-  public JComponent getToolbar() {
-    return myToolbar.getComponent();
-  }
-
-  public JComponent getMaster() {
-    return myListPane;
-  }
-
   public DetailsComponent getDetails() {
     return myDetailsComponent;
   }
 
-  private void editToolbarIcon(String actionId, DefaultMutableTreeNode node, CustomizableActionsSchemas schemas) {
+  private void editToolbarIcon(String actionId, DefaultMutableTreeNode node) {
     final AnAction anAction = ActionManager.getInstance().getAction(actionId);
     if (isToolbarAction(node) &&
         anAction.getTemplatePresentation() != null &&
@@ -387,7 +277,7 @@ public class CustomizableActionsPanel implements MasterDetails {
                                                        IdeBundle.message("title.unable.to.add.action.without.icon.to.toolbar"),
                                                        Messages.getInformationIcon());
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-        schemas.addIconCustomization(actionId, null);
+        mySelectedSchema.addIconCustomization(actionId, null);
         anAction.getTemplatePresentation().setIcon(FULLISH_ICON);
         anAction.setDefaultIcon(false);
         node.setUserObject(Pair.create(actionId, FULLISH_ICON));
@@ -435,60 +325,6 @@ public class CustomizableActionsPanel implements MasterDetails {
     return false;
   }
 
-  private String createUniqueName() {
-    String str = IdeBundle.message("template.unnamed");
-    final ArrayList<String> currentNames = new ArrayList<String>();
-    for (int i = 0; i < myCustomizationSchemas.getSize(); i++) {
-      currentNames.add(((CustomActionsSchema)myCustomizationSchemas.elementAt(i)).getName());
-    }
-    if (!currentNames.contains(str)) return str;
-    int i = 1;
-    while (true) {
-      if (!currentNames.contains(str + i)) return str + i;
-      i++;
-    }
-  }
-
-  private void fillSchemaList() {
-    myCustomizationSchemas.clear();
-    final CustomizableActionsSchemas schemas = CustomizableActionsSchemas.getInstance();
-    final CustomActionsSchema[] customActionsSchemas = schemas.getCustomActionsSchemas();
-    Arrays.sort(customActionsSchemas, new Comparator<CustomActionsSchema>() {
-      public int compare(final CustomActionsSchema o1, final CustomActionsSchema o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-    for (CustomActionsSchema customActionsSchema1 : customActionsSchemas) {
-      final CustomActionsSchema customActionsSchema = customActionsSchema1.copyFrom();
-      myCustomizationSchemas.addElement(customActionsSchema);
-      if (schemas.getActiveSchema().getName().equals(customActionsSchema.getName())) {
-        myList.setSelectedValue(customActionsSchema, true);
-      }
-    }
-    if (mySelectedSchema == null) {
-      setNameAndDescription(false, "", "");
-    }
-  }
-
-  private void setNameAndDescription(boolean enabled, String name, String description) {
-    myName.setEnabled(enabled);
-    myDescription.setEnabled(enabled);
-    myName.setText(name);
-    myDescription.setText(description);
-
-    if (myDetailsComponent != null) {
-      myDetailsComponent.setText(name);
-    }
-
-  }
-
-  public String getDescription() {
-    return myDescription.getText();
-  }
-
-  public String getDisplayName() {
-    return ((CustomActionsSchema)myList.getSelectedValue()).getName();
-  }
 
   public JPanel getPanel() {
     return myPanel;
@@ -521,25 +357,9 @@ public class CustomizableActionsPanel implements MasterDetails {
     if (mySelectedSchema != null) {
       CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
     }
-    final CustomizableActionsSchemas allSchemasComponent = CustomizableActionsSchemas.getInstance();
-    allSchemasComponent.clear();
-    Set<String> names = new HashSet<String>();
-    for (int i = 0; i < myCustomizationSchemas.getSize(); i++) {
-      final CustomActionsSchema schema = (CustomActionsSchema)myCustomizationSchemas.getElementAt(i);
-      final String name = schema.getName();
-      if (names.contains(name)) {
-        throw new ConfigurationException(IdeBundle.message("error.please.specify.new.name.for.schema", name));
-      }
-      names.add(name);
-      if (schema.isModified()) {
-        schema.resetMainActionGroups();
-      }
-      allSchemasComponent.addCustomActionsSchema(schema);
-    }
-    allSchemasComponent.setActiveSchema(mySelectedSchema);
     setCustomizationSchemaForCurrentProjects();
-    fillSchemaList();
     restorePathsAfterTreeOptimization(treePaths);
+    CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
   }
 
   private void restorePathsAfterTreeOptimization(final List<TreePath> treePaths) {
@@ -549,65 +369,14 @@ public class CustomizableActionsPanel implements MasterDetails {
   }
 
   public void reset() {
-    fillSchemaList();
+    mySelectedSchema = new CustomActionsSchema();
+    mySelectedSchema.copyFrom(CustomActionsSchema.getInstance());
     patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
   }
 
   public boolean isModified() {
-    if (mySelectedSchema == null) {
-      return CustomizableActionsSchemas.ACTIVE_SCHEMA != CustomizableActionsSchemas.DEFAULT_SCHEMA;
-    }
-    final CustomizableActionsSchemas allSchemas = CustomizableActionsSchemas.getInstance();
-    if (!mySelectedSchema.getName().equals(allSchemas.getActiveSchema().getName())) {
-      return true;
-    }
-
-    ArrayList<String> currentNames = new ArrayList<String>();
-
-    for (int i = 0; i < myCustomizationSchemas.size(); i++) {
-      final CustomActionsSchema customActionsSchema = (CustomActionsSchema)myCustomizationSchemas.elementAt(i);
-      currentNames.add(customActionsSchema.getName());
-      if (customActionsSchema != mySelectedSchema && customActionsSchema.isModified()) {
-        //one of current schemas was deleted
-        return true;
-      }
-    }
-
-    final CustomActionsSchema[] storedSchemas = allSchemas.getCustomActionsSchemas();
-    if (storedSchemas != null) {
-      for (int i = 0; i < storedSchemas.length; i++) {
-        CustomActionsSchema customActionsSchema = storedSchemas[i];
-        if (!currentNames.contains(customActionsSchema.getName())) {
-          //schema was deleted
-          return true;
-        }
-      }
-      if (storedSchemas.length != myCustomizationSchemas.size()) return true;
-    }
-
-    if (Comparing.strEqual(mySelectedSchema.getName(), CustomizableActionsSchemas.DEFAULT_NAME)) return false;
-
-    final CustomActionsSchema storedSchema = allSchemas.getCustomActionsSchema(mySelectedSchema.getName());
-    if (storedSchema == null) {
-      //selected schema was added
-      mySelectedSchema.setModified(true);
-      return true;
-    }
-
     CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
-
-    if (storedSchema.getActions().size() != mySelectedSchema.getActions().size()) {
-      mySelectedSchema.setModified(true);
-      return true;
-    }
-    for (int i = 0; i < mySelectedSchema.getActions().size(); i++) {
-      if (!mySelectedSchema.getActions().get(i).equals(storedSchema.getActions().get(i))) {
-        mySelectedSchema.setModified(true);
-        return true;
-      }
-    }
-    mySelectedSchema.setModified(false);
-    return false;
+    return CustomActionsSchema.getInstance().isModified(mySelectedSchema);
   }
 
   private void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
@@ -698,7 +467,7 @@ public class CustomizableActionsPanel implements MasterDetails {
   protected void doSetIcon(DefaultMutableTreeNode node, String path) {
     String actionId = getActionId(node);
     if (actionId == null) return;
-    final CustomizableActionsSchemas schemas = CustomizableActionsSchemas.getInstance();
+
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action != null && action.getTemplatePresentation() != null) {
       if (path != null && path.length() > 0) {
@@ -717,15 +486,15 @@ public class CustomizableActionsPanel implements MasterDetails {
             return;
           }
           node.setUserObject(Pair.create(actionId, icon));
-          schemas.addIconCustomization(actionId, path);
+          mySelectedSchema.addIconCustomization(actionId, path);
         }
       }
       else {
         node.setUserObject(Pair.create(actionId, null));
-        schemas.removeIconCustomization(actionId);
+        mySelectedSchema.removeIconCustomization(actionId);
         final DefaultMutableTreeNode nodeOnToolbar = findNodeOnToolbar(actionId);
         if (nodeOnToolbar != null){
-          editToolbarIcon(actionId, nodeOnToolbar, schemas);
+          editToolbarIcon(actionId, nodeOnToolbar);
           node.setUserObject(nodeOnToolbar.getUserObject());
         }
       }
@@ -759,7 +528,7 @@ public class CustomizableActionsPanel implements MasterDetails {
       myNode = node;
       final String actionId = getActionId(node);
       if (actionId != null) {
-        myTextField.setText(CustomizableActionsSchemas.getInstance().getIconPath(actionId));
+        myTextField.setText(mySelectedSchema.getIconPath(actionId));
       }
     }
 
@@ -784,7 +553,7 @@ public class CustomizableActionsPanel implements MasterDetails {
           final Icon icon = (Icon)((Pair)userObject).second;
           action.getTemplatePresentation().setIcon(icon);
           action.setDefaultIcon(icon == null);
-          editToolbarIcon(actionId, myNode, CustomizableActionsSchemas.getInstance());
+          editToolbarIcon(actionId, myNode);
         }
         myActionsTree.repaint();
       }
@@ -818,7 +587,6 @@ public class CustomizableActionsPanel implements MasterDetails {
     }
 
     protected JComponent createCenterPanel() {
-      final CustomizableActionsSchemas schemas = CustomizableActionsSchemas.getInstance();
       Group rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().getAllQuickLists());
       DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
       DefaultTreeModel model = new DefaultTreeModel(root);
@@ -861,7 +629,7 @@ public class CustomizableActionsPanel implements MasterDetails {
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
             final String actionId = getActionId(node);
             if (actionId != null) {
-              myTextField.setText(schemas.getIconPath(actionId));
+              myTextField.setText(mySelectedSchema.getIconPath(actionId));
             }
           }
         }
@@ -871,7 +639,6 @@ public class CustomizableActionsPanel implements MasterDetails {
 
     protected void doOKAction() {
       final ActionManager actionManager = ActionManager.getInstance();
-      final CustomizableActionsSchemas schemas = CustomizableActionsSchemas.getInstance();
       TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
         public boolean accept(Object node) {
           if (node instanceof DefaultMutableTreeNode) {
@@ -883,7 +650,7 @@ public class CustomizableActionsPanel implements MasterDetails {
               Icon icon = (Icon)((Pair)userObject).second;
               action.getTemplatePresentation().setIcon(icon);
               action.setDefaultIcon(icon == null);
-              editToolbarIcon(actionId, mutableNode, schemas);
+              editToolbarIcon(actionId, mutableNode);
             }
           }
           return true;

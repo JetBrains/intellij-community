@@ -3,10 +3,8 @@ package com.intellij.ide.ui.customization;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.ui.DetailsComponent;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,7 +13,7 @@ import javax.swing.*;
  * User: anna
  * Date: Mar 17, 2005
  */
-public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable, MasterDetails {
+public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable{
   private CustomizableActionsPanel myPanel;
 
   public JComponent createComponent() {
@@ -23,25 +21,6 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
       myPanel = new CustomizableActionsPanel();
     }
     return myPanel.getPanel();
-  }
-
-  public void initUi() {
-    if (myPanel == null) {
-      myPanel = new CustomizableActionsPanel();
-    }
-    myPanel.initUi();
-  }
-
-  public JComponent getToolbar() {
-    return myPanel.getToolbar();
-  }
-
-  public JComponent getMaster() {
-    return myPanel.getMaster();
-  }
-
-  public DetailsComponent getDetails() {
-    return myPanel.getDetails();
   }
 
   public String getDisplayName() {

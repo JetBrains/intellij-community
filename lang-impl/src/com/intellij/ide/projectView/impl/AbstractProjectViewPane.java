@@ -12,7 +12,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
-import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -391,7 +391,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     if (ApplicationManager.getApplication() == null) return;
     PopupHandler popupHandler = new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
-        ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(groupName);
+        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupName);
         final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, group);
         popupMenu.getComponent().show(comp, x, y);
       }

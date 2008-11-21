@@ -10,7 +10,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
-import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
@@ -126,8 +126,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
     });
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, (ActionGroup)CustomizableActionsSchemas.getInstance()
-      .getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP), ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
+    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP), ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
     add(scrollPane, BorderLayout.CENTER);
     //add(createActionsToolbar(), BorderLayout.NORTH);
 
@@ -142,7 +141,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   public void updateTreePopupHandler() {
     myTree.removeMouseListener(myTreePopupHandler);
-    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP);
+    ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP);
     myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
   }
 
