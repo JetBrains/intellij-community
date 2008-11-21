@@ -325,8 +325,8 @@ public final class UpdateChecker {
 
     String osSuffix = "";
     if (SystemInfo.isWindows) osSuffix = "-win";
-    if (SystemInfo.isMac) osSuffix = "-mac";
-    if (SystemInfo.isUnix) osSuffix = "-unix";
+    else if (SystemInfo.isMac) osSuffix = "-mac";
+    else if (SystemInfo.isUnix) osSuffix = "-unix";
 
     String fileName = "idea-" + patch.getFromBuild() + "-" + newVersion.getLatestBuild() + "-patch" + osSuffix + ".jar";
     URLConnection connection = null;
