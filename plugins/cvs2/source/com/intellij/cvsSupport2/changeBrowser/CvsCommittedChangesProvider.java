@@ -84,7 +84,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
     @Override
     public long getNumber(final CommittedChangeList list) {
-      return ((CvsChangeList) list).getCommitDate().getTime();
+      return list.getCommitDate().getTime();
     }
   }
 
