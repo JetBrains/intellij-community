@@ -16,16 +16,16 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -303,5 +303,23 @@ public class GenericsUtil {
     }
 
     return type;
+  }
+
+  public static PsiSubstitutor substituteByParameterName(final PsiClass psiClass, final PsiSubstitutor parentSubstitutor) {
+
+    final Map<PsiTypeParameter, PsiType> substitutionMap = parentSubstitutor.getSubstitutionMap();
+    final List<PsiType> result = new ArrayList<PsiType>(substitutionMap.size());
+    for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
+      final String name = typeParameter.getName();
+      final PsiTypeParameter key = ContainerUtil.find(substitutionMap.keySet(), new Condition<PsiTypeParameter>() {
+        public boolean value(final PsiTypeParameter psiTypeParameter) {
+          return name.equals(psiTypeParameter.getName());
+        }
+      });
+      if (key != null) {
+        result.add(substitutionMap.get(key));
+      }
+    }
+    return PsiSubstitutor.EMPTY.putAll(psiClass, result.toArray(new PsiType[result.size()]));
   }
 }
