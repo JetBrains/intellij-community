@@ -400,7 +400,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return myComposite.getSwitchedFileHolder().getBranchToFileMap();
   }
 
-  VcsException getUpdateException() {
+  public VcsException getUpdateException() {
     return myUpdateException;
   }
 

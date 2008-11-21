@@ -43,12 +43,14 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private Map<Change, LocalChangeList> myChangeListsMap;
 
   private ChangesBrowserExtender myExtender;
+  private Runnable myRebuildListListener;
 
   public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                    final ChangeList initialListSelection,
                                    final boolean capableOfExcludingChanges,
-                                   final boolean highlightProblems) {
+                                   final boolean highlightProblems, final Runnable rebuildListListener) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems);
+    myRebuildListListener = rebuildListListener;
 
     myChangeListChooser = new ChangeListChooser(changeLists);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
@@ -143,6 +145,9 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       }
 
       super.rebuildList();
+      if (myRebuildListListener != null) {
+        myRebuildListListener.run();
+      }
     } finally {
       myInRebuildList = false;
     }

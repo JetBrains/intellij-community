@@ -10,10 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.InputException;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -73,6 +70,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final AbstractVcs myVcs;
   private final boolean myIsAlien;
   private boolean myDisposed = false;
+  private JLabel myWarningLabel;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -173,7 +171,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = browser;
       myBrowserExtender = browser;
     } else {
-      MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, changes, initialSelection, true, true);
+      MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, changes, initialSelection, true, true,
+                                                                        new Runnable() {
+                                                                          public void run() {
+                                                                            updateWarning();
+                                                                          }
+                                                                        });
       myBrowser = browser;
       myBrowserExtender = browser.getExtender();
     }
@@ -309,10 +312,30 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myExecutorActions = null;
     }
 
+    // todo +-
+    myWarningLabel = new JLabel();
+    myWarningLabel.setUI(new MultiLineLabelUI());
+    myWarningLabel.setForeground(Color.red);
+
+    updateWarning();
+
     init();
     updateButtons();
     updateVcsOptionsVisibility();
     myCommitMessageArea.requestFocusInMessage();
+  }
+
+  private void updateWarning() {
+    myWarningLabel.setVisible(false);
+    final VcsException updateException = ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).getUpdateException();
+    if (updateException != null) {
+      final String[] messages = updateException.getMessages();
+      if (messages != null || messages.length > 0) {
+        final String message = messages[0];
+        myWarningLabel.setText("Warning: not all local changes may be shown due to an error: " + message);
+        myWarningLabel.setVisible(true);
+      }
+    }
   }
 
   private void updateVcsOptionsVisibility() {
@@ -611,7 +634,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       helper.doCommit();
     }
   }
-  
+
   @Nullable
   protected JComponent createCenterPanel() {
     JPanel rootPane = new JPanel(new BorderLayout());
@@ -633,6 +656,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     infoPanel.add(myAdditionalOptionsPanel, BorderLayout.CENTER);
     rootPane.add(infoPanel, BorderLayout.EAST);
     infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+
+    rootPane.add(myWarningLabel, BorderLayout.SOUTH);
 
     return rootPane;
   }
