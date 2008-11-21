@@ -15,6 +15,7 @@ public interface AppLifecycleListener {
   void appStarting(Project projectFromCommandLine);
   void projectFrameClosed();
   void projectOpenFailed();
+  void welcomeScreenDisplayed();
 
   abstract class Adapter implements AppLifecycleListener {
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
@@ -27,6 +28,9 @@ public interface AppLifecycleListener {
     }
 
     public void projectOpenFailed() {
+    }
+
+    public void welcomeScreenDisplayed() {
     }
   }
 }

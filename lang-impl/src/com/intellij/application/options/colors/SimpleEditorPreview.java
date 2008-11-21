@@ -5,11 +5,11 @@ import com.intellij.application.options.colors.highlighting.HighlightsExtractor;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -22,9 +22,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -162,7 +163,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     return editor;
   }
 
-  public Component getPanel() {
+  public JComponent getPanel() {
     return myEditor.getComponent();
   }
 

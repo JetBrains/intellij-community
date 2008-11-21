@@ -1007,17 +1007,28 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return null;
   }
 
-  @Nullable
-  public SearchableConfigurable findSubConfigurable(Class pageClass) {
+  private Map.Entry<NewColorAndFontPanel,SearchableConfigurable> findPair(final Class pageClass) {
     if (mySubPanels == null) {
       buildConfigurables();
     }
     for (Map.Entry<NewColorAndFontPanel, SearchableConfigurable> entry : mySubPanels.entrySet()) {
       if (pageClass.isInstance(entry.getKey().getSettingsPage())) {
-        return entry.getValue();
+        return entry;
       }
     }
     return null;
+  }
+
+  @Nullable
+  public SearchableConfigurable findSubConfigurable(Class pageClass) {
+    final Map.Entry<NewColorAndFontPanel, SearchableConfigurable> entry = findPair(pageClass);
+    return entry == null ? null : entry.getValue();
+  }
+
+  @Nullable
+  public ColorSettingsPage findPage(Class pageClass) {
+    final Map.Entry<NewColorAndFontPanel, SearchableConfigurable> entry = findPair(pageClass);
+    return entry == null ? null : entry.getKey().getSettingsPage();
   }
 
   private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable {

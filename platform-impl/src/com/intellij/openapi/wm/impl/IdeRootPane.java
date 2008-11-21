@@ -73,10 +73,12 @@ public class IdeRootPane extends JRootPane{
     setJMenuBar(new IdeMenuBar(myActionManager, dataManager, keymapManager));
 
     final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
-    application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appFrameCreated(commandLineArgs, willOpenProject);
+    final AppLifecycleListener lifecyclePublisher = application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
+    lifecyclePublisher.appFrameCreated(commandLineArgs, willOpenProject);
     if (!willOpenProject.get()) {
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);
+      lifecyclePublisher.welcomeScreenDisplayed();
     }
 
     myGlassPane = new IdeGlassPaneImpl(this);
