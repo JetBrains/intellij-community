@@ -48,7 +48,8 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
             "java.math.BigInteger,.*," +
             "java.math.BigDecimal,.*," +
             "java.net.InetAddress,.*," +
-            "java.io.File,.*";
+            "java.io.File,.*," +
+            "java.lang.Object,equals|hashCode";
 
     final List<String> methodNamePatterns = new ArrayList();
     final List<String> classNames = new ArrayList();
