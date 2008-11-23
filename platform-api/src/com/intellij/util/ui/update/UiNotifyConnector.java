@@ -56,7 +56,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
             hideNotify();
           }
         }
-      }, ModalityState.stateForComponent(myComponent));
+      }, ModalityState.current());
     }
   }
 
