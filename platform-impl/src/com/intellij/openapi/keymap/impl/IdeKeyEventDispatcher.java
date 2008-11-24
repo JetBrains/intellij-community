@@ -12,8 +12,8 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor;
+import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
@@ -319,7 +319,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    if (myKeyGestureProcessor.processInitState()) return true;
+  //  if (myKeyGestureProcessor.processInitState()) return true;
 
     updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
 
