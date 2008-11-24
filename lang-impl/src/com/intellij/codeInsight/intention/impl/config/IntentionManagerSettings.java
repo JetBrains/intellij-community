@@ -19,13 +19,11 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ResourceUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -166,7 +164,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     }
   }
 
-  private void registerMetaData(IntentionActionMetaData metaData) {
+  public void registerMetaData(IntentionActionMetaData metaData) {
     MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.getFamily());
     //LOG.assertTrue(!myMetaData.containsKey(metaData.myFamily), "Action '"+metaData.myFamily+"' already registered");
     if (!myMetaData.containsKey(key)){
@@ -179,14 +177,14 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     final Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
-    final URL description = metaData.getDescription();
+    final TextDescriptor description = metaData.getDescription();
     if (description != null) {
       app.executeOnPooledThread(new Runnable(){
         public void run() {
           try {
             SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
             if (registrar == null) return;
-            @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
+            @NonNls String descriptionText = description.getText().toLowerCase();
             descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
             final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
             words.addAll(registrar.getProcessedWords(metaData.getFamily()));

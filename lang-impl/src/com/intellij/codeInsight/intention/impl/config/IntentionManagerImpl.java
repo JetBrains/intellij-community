@@ -98,6 +98,29 @@ public class IntentionManagerImpl extends IntentionManager {
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
+  public void registerIntentionAndMetaData(final IntentionAction action,
+                                           final String[] category,
+                                           final String description,
+                                           final String exampleFileExtension,
+                                           final String[] exampleTextBefore,
+                                           final String[] exampleTextAfter) {
+    addAction(action);
+
+    IntentionActionMetaData metaData = new IntentionActionMetaData(action, category,
+                                                                   new PlainTextDescriptor(description, "description.html"),
+                                                                   mapToDescriptors(exampleTextBefore, "before." + exampleFileExtension),
+                                                                   mapToDescriptors(exampleTextAfter, "after." + exampleFileExtension));
+    mySettings.registerMetaData(metaData);
+  }
+
+  private static TextDescriptor[] mapToDescriptors(String[] texts, String fileName) {
+    TextDescriptor[] result = new TextDescriptor[texts.length];
+    for (int i = 0; i < texts.length; i++) {
+      result [i] = new PlainTextDescriptor(texts [i], fileName);
+    }
+    return result;
+  }
+
   public List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, final PsiElement context) {
     List<IntentionAction> options = new ArrayList<IntentionAction>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));

@@ -16,10 +16,8 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +25,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -50,10 +47,10 @@ public class IntentionDescriptionPanel {
 
   public void reset(IntentionActionMetaData actionMetaData, String filter)  {
     try {
-      final URL url = actionMetaData.getDescription();
+      final TextDescriptor url = actionMetaData.getDescription();
       final String description = url == null ?
                                  CodeInsightBundle.message("under.construction.string") :
-                                 SearchUtil.markup(ResourceUtil.loadText(url), filter);
+                                 SearchUtil.markup(url.getText(), filter);
       myDescriptionBrowser.setText(description);
       setupPoweredByPanel(actionMetaData);
 
@@ -109,9 +106,9 @@ public class IntentionDescriptionPanel {
       setupPoweredByPanel(null);
 
       URL beforeURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + BEFORE_TEMPLATE);
-      showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, new URL[]{beforeURL});
+      showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, new ResourceTextDescriptor[]{new ResourceTextDescriptor(beforeURL)});
       URL afterURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + AFTER_TEMPLATE);
-      showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, new URL[]{afterURL});
+      showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, new ResourceTextDescriptor[]{new ResourceTextDescriptor(afterURL)});
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -127,7 +124,7 @@ public class IntentionDescriptionPanel {
   private static void showUsages(final JPanel panel,
                                  final TitledSeparator separator,
                                  final List<IntentionUsagePanel> usagePanels,
-                                 @Nullable final URL[] exampleUsages) throws IOException {
+                                 @Nullable final TextDescriptor[] exampleUsages) throws IOException {
     GridBagConstraints gb = null;
     boolean reuse = exampleUsages != null && panel.getComponents().length == exampleUsages.length;
     if (!reuse) {
@@ -150,8 +147,8 @@ public class IntentionDescriptionPanel {
 
     if (exampleUsages != null) {
       for (int i = 0; i < exampleUsages.length; i++) {
-        final URL exampleUsage = exampleUsages[i];
-        final String name = StringUtil.trimEnd(exampleUsage.getPath(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
+        final TextDescriptor exampleUsage = exampleUsages[i];
+        final String name = exampleUsage.getFileName();
         final FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
         final String extension = fileTypeManager.getExtension(name);
         final FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
@@ -164,10 +161,9 @@ public class IntentionDescriptionPanel {
           usagePanel = new IntentionUsagePanel();
           usagePanels.add(usagePanel);
         }
-        usagePanel.reset(ResourceUtil.loadText(exampleUsage), fileType);
+        usagePanel.reset(exampleUsage.getText(), fileType);
 
-        String title = StringUtil.trimEnd(new File(exampleUsage.getFile()).getName(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
-        separator.setText(title);
+        separator.setText(name);
         if (!reuse) {
           if (i == exampleUsages.length) {
             gb.gridwidth = GridBagConstraints.REMAINDER;

@@ -26,12 +26,12 @@ public final class IntentionActionMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData");
   @NotNull private final IntentionAction myAction;
   private final ClassLoader myIntentionLoader;
-  @NotNull private final String myDescriptionDirectoryName;
+  private final String myDescriptionDirectoryName;
   @NotNull public final String[] myCategory;
 
-  private URL[] myExampleUsagesBefore = null;
-  private URL[] myExampleUsagesAfter = null;
-  private URL myDescription = null;
+  private TextDescriptor[] myExampleUsagesBefore = null;
+  private TextDescriptor[] myExampleUsagesAfter = null;
+  private TextDescriptor myDescription = null;
   private URL myDirURL = null;
 
   @NonNls private static final String BEFORE_TEMPLATE_PREFIX = "before";
@@ -50,12 +50,26 @@ public final class IntentionActionMetaData {
     myDescriptionDirectoryName = descriptionDirectoryName;
   }
 
+  public IntentionActionMetaData(@NotNull final IntentionAction action,
+                                 @NotNull final String[] category,
+                                 final TextDescriptor description,
+                                 final TextDescriptor[] exampleUsagesBefore,
+                                 final TextDescriptor[] exampleUsagesAfter) {
+    myAction = action;
+    myCategory = category;
+    myExampleUsagesBefore = exampleUsagesBefore;
+    myExampleUsagesAfter = exampleUsagesAfter;
+    myDescription = description;
+    myIntentionLoader = null;
+    myDescriptionDirectoryName = null;
+  }
+
   public String toString() {
     return getFamily();
   }
 
   @Nullable
-  public URL[] getExampleUsagesBefore() {
+  public TextDescriptor[] getExampleUsagesBefore() {
     if(myExampleUsagesBefore == null){
       try {
         myExampleUsagesBefore = retrieveURLs(getDirURL(), BEFORE_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
@@ -68,7 +82,7 @@ public final class IntentionActionMetaData {
   }
 
   @Nullable
-  public URL[] getExampleUsagesAfter() {
+  public TextDescriptor[] getExampleUsagesAfter() {
       if(myExampleUsagesAfter == null){
       try {
         myExampleUsagesAfter = retrieveURLs(getDirURL(), AFTER_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
@@ -81,12 +95,12 @@ public final class IntentionActionMetaData {
   }
 
   @Nullable
-  public URL getDescription() {
+  public TextDescriptor getDescription() {
     if(myDescription == null){
       try {
         final URL dirURL = getDirURL();
         if (dirURL == null) return null;
-        myDescription = new URL(dirURL.toExternalForm() + "/" + DESCRIPTION_FILE_NAME);
+        myDescription = new ResourceTextDescriptor(new URL(dirURL.toExternalForm() + "/" + DESCRIPTION_FILE_NAME));
       }
       catch (MalformedURLException e) {
         LOG.error(e);
@@ -96,8 +110,8 @@ public final class IntentionActionMetaData {
   }
 
   @Nullable
-  private static URL[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix) throws MalformedURLException {
-    List<URL> urls = new ArrayList<URL>();
+  private static TextDescriptor[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix) throws MalformedURLException {
+    List<TextDescriptor> urls = new ArrayList<TextDescriptor>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
       final String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(fileType);
@@ -109,7 +123,7 @@ public final class IntentionActionMetaData {
           try {
             InputStream inputStream = url.openStream();
             inputStream.close();
-            urls.add(url);
+            urls.add(new ResourceTextDescriptor(url));
           }
           catch (IOException ioe) {
             break;
@@ -117,7 +131,7 @@ public final class IntentionActionMetaData {
         }
       }
     }
-    return urls.isEmpty() ? null : urls.toArray(new URL[urls.size()]);
+    return urls.isEmpty() ? null : urls.toArray(new TextDescriptor[urls.size()]);
   }
 
   private static URL getIntentionDescriptionDirURL(ClassLoader aClassLoader, String intentionFolderName) {

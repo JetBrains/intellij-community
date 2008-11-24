@@ -7,15 +7,15 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class IntentionSettingsPanel implements MasterDetails {
   private JPanel myPanel;
@@ -151,9 +151,9 @@ public class IntentionSettingsPanel implements MasterDetails {
         }
       }
       try {
-        final URL description = metaData.getDescription();
+        final TextDescriptor description = metaData.getDescription();
         if (description != null) {
-          if (StringUtil.containsIgnoreCase(ResourceUtil.loadText(description), stripped)){
+          if (StringUtil.containsIgnoreCase(description.getText(), stripped)){
             if (!forceInclude) return true;
           } else if (forceInclude) return false;
         }
