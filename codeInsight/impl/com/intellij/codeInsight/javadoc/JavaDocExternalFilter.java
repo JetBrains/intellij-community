@@ -369,7 +369,8 @@ public class JavaDocExternalFilter {
 
         Matcher anchorMatcher = ourAnchorsuffix.matcher(surl);
         @NonNls String startSection = "<!-- ======== START OF CLASS DATA ======== -->";
-        @NonNls String endSection = "SUMMARY ======== -->";
+        @NonNls String endSection = "SUMMARY ========";
+        @NonNls String greatestEndSection = "<!-- ========= END OF CLASS DATA ========= -->";
         boolean isClassDoc = true;
 
         if (anchorMatcher.find()) {
@@ -414,11 +415,11 @@ public class JavaDocExternalFilter {
 
             StringBuffer classDetails = new StringBuffer();
 
-            while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(HR)) {
+            while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(HR) && !read.toUpperCase().equals(P)) {
               appendLine(classDetails, read);
             }
 
-            while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(P)) {
+            while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(P) && !read.toUpperCase().equals(HR)) {
               appendLine(data, read.replaceAll(DT, DT + BR));
             }
 
@@ -426,7 +427,7 @@ public class JavaDocExternalFilter {
             data.append(P);
           }
 
-          while (((read = buf.readLine()) != null) && read.indexOf(endSection) == -1) {
+          while (((read = buf.readLine()) != null) && read.indexOf(endSection) == -1 && read.indexOf(greatestEndSection) == -1) {
             if (read.toUpperCase().indexOf(HR) == -1) {
               appendLine(data, read);
             }
