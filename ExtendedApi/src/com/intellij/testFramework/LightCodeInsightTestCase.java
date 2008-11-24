@@ -55,7 +55,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private static final String SELECTION_END_MARKER = "</selection>";
 
   protected void runTest() throws Throwable {
-    final Throwable[] throwable = new Throwable[] {null};
+    final Throwable[] throwable = {null};
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
@@ -272,11 +272,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    */
   protected void checkResultByText(String message, String fileText, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
-    });
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     final Document document = EditorFactory.getInstance().createDocument(fileText);
 
     int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -319,14 +315,12 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     checkSelection(selStartMarker, selEndMarker, newFileText, message);
   }
 
-  private static String getMessage(String engineMessage, String userMessage) {
+  private static String getMessage(@NonNls String engineMessage, String userMessage) {
     if (userMessage == null) return engineMessage;
-    StringBuffer buf = new StringBuffer(userMessage);
-    buf.append(" [").append(engineMessage).append("]");
-    return buf.toString();
+    return userMessage + " [" + engineMessage + "]";
   }
 
-  private void checkSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker, String newFileText, String message) {
+  private static void checkSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker, String newFileText, String message) {
     if (selStartMarker != null && selEndMarker != null) {
       int selStartLine = StringUtil.offsetToLineNumber(newFileText, selStartMarker.getStartOffset());
       int selStartCol = selStartMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
@@ -361,7 +355,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     }
   }
 
-  private void checkCaretPosition(final RangeMarker caretMarker, String newFileText, String message) {
+  private static void checkCaretPosition(final RangeMarker caretMarker, String newFileText, String message) {
     if (caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
       //int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
@@ -437,9 +431,9 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
   }
 
-  protected DataContext getCurrentEditorDataContext() {
+  protected static DataContext getCurrentEditorDataContext() {
     final DataContext defaultContext = DataManager.getInstance().getDataContext();
-    DataContext dataContext = new DataContext() {
+    return new DataContext() {
       @Nullable
       public Object getData(@NonNls String dataId) {
         if (dataId.equals(DataConstants.EDITOR)) return getEditor();
@@ -449,6 +443,5 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
         return defaultContext.getData(dataId);
       }
     };
-    return dataContext;
   }
 }

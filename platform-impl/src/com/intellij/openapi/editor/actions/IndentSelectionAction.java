@@ -37,7 +37,7 @@ public class IndentSelectionAction extends EditorAction {
     presentation.setEnabled(isEnabled(editor));
   }
 
-  private boolean isEnabled(Editor editor) {
+  private static boolean isEnabled(Editor editor) {
     return editor.getSelectionModel().hasSelection() && !editor.isOneLineMode();
   }
 

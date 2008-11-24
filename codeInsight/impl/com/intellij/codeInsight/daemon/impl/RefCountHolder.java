@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class RefCountHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RefCountHolder");
@@ -29,13 +29,13 @@ public class RefCountHolder {
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
   private final Map<PsiElement,Boolean> myPossiblyDuplicateElements = new ConcurrentHashMap<PsiElement, Boolean>();
-  private final AtomicInteger myState = new AtomicInteger(State.VIRGIN);
+  private final AtomicReference<State> myState = new AtomicReference<State>(State.VIRGIN);
 
-  private abstract static class State {
-    public static final int VIRGIN = 0;                   // just created or cleared
-    public static final int BEING_WRITTEN_BY_GHP = 1;     // general highlighting pass is storing references during analysis
-    public static final int READY = 2;                    // may be used for higlighting unused stuff
-    public static final int BEING_USED_BY_PHP = 3;        // post highlighting pass is retrieving info
+  private enum State {
+    VIRGIN,                       // just created or cleared
+    BEING_WRITTEN_BY_GHP,         // general highlighting pass is storing references during analysis
+    READY,                        // may be used for higlighting unused stuff
+    BEING_USED_BY_PHP,            // post highlighting pass is retrieving info
   }
 
   private static final Key<RefCountHolder> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
@@ -94,9 +94,6 @@ public class RefCountHolder {
     if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter inner use of itself
     synchronized (myLocalRefsMap) {
       myLocalRefsMap.put(ref, refElement);
-    }
-    if(refElement instanceof PsiNamedElement) {
-      PsiNamedElement namedElement = (PsiNamedElement)refElement;
     }
   }
 

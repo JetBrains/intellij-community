@@ -19,10 +19,15 @@ public class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   private void storeLinesAndCols() {
-    myStartLine = myDocument.getLineNumber(getStartOffset());
-    myStartColumn = getStartOffset() - myDocument.getLineStartOffset(myStartLine);
-    myEndLine = myDocument.getLineNumber(getEndOffset());
-    myEndColumn = getEndOffset() - myDocument.getLineStartOffset(myEndLine);
+    // document might have been changed already
+    if (getStartOffset() < myDocument.getTextLength()) {
+      myStartLine = myDocument.getLineNumber(getStartOffset());
+      myStartColumn = getStartOffset() - myDocument.getLineStartOffset(myStartLine);
+    }
+    if (getEndOffset() < myDocument.getTextLength()) {
+      myEndLine = myDocument.getLineNumber(getEndOffset());
+      myEndColumn = getEndOffset() - myDocument.getLineStartOffset(myEndLine);
+    }
   }
 
   public void documentChanged(DocumentEvent e) {

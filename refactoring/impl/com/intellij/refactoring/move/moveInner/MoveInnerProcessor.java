@@ -6,6 +6,7 @@
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -21,10 +22,10 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -151,6 +152,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         // pass outer as a parameter
         field = factory.createField(myFieldNameOuterClass, factory.createType(myOuterClass));
         field = (PsiField)myInnerClass.add(field);
+        myInnerClass = field.getContainingClass();
         addFieldInitializationToConstructors(myInnerClass, field, myParameterNameOuterClass);
       }
 
@@ -158,10 +160,11 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
       PsiClass newClass;
       if (myTargetContainer instanceof PsiDirectory) {
-        newClass = JavaDirectoryService.getInstance().createClass(((PsiDirectory)myTargetContainer), newClassName);
+        myInnerClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myInnerClass);
+        newClass = JavaDirectoryService.getInstance().createClass((PsiDirectory)myTargetContainer, newClassName);
         PsiDocComment defaultDocComment = newClass.getDocComment();
         if (defaultDocComment != null && myInnerClass.getDocComment() == null) {
-          myInnerClass.addAfter(defaultDocComment, null);
+          myInnerClass = (PsiClass)myInnerClass.addAfter(defaultDocComment, null).getParent();
         }
 
         newClass = (PsiClass)newClass.replace(myInnerClass);
@@ -290,7 +293,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       return true;
     }
     if (myTargetContainer instanceof PsiDirectory) {
-      PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)myTargetContainer));
+      PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myTargetContainer);
       if (targetPackage != null && !isInPackage(myOuterClass.getContainingFile(), targetPackage)) {
         return true;
       }
@@ -314,7 +317,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiMember &&
             PsiTreeUtil.isAncestor(myInnerClass, resolved, true) &&
-            becomesInaccessible(((PsiMember)resolved))) {
+            becomesInaccessible((PsiMember)resolved)) {
           final PsiElement container = ConflictsUtil.getContainer(reference);
           HashSet<PsiElement> containerSet = reported.get(resolved);
           if (containerSet == null) {
@@ -337,7 +340,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         if (PsiModifier.PUBLIC.equals(visibilityModifier)) return false;
         final PsiFile containingFile = myOuterClass.getContainingFile();
         if (myTargetContainer instanceof PsiDirectory) {
-          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)myTargetContainer));
+          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myTargetContainer);
           return !isInPackage(containingFile, aPackage);
         }
         // target container is a class
