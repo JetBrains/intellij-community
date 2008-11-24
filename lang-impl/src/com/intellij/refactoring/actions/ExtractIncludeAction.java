@@ -1,11 +1,13 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.lang.ExtractIncludeHandler;
 import com.intellij.refactoring.lang.LanguageExtractInclude;
 
 /**
@@ -22,6 +24,18 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
 
   protected boolean isAvailableForLanguage(Language language) {
     return true;
+  }
+
+  @Override
+  public void update(final AnActionEvent e) {
+    super.update(e);
+    final RefactoringActionHandler handler = getHandler(e.getDataContext());
+    if (handler instanceof ExtractIncludeHandler) {
+      e.getPresentation().setText(((ExtractIncludeHandler) handler).getActionTitle());
+    }
+    else {
+      e.getPresentation().setText("Extract Include File...");
+    }
   }
 
   protected boolean isAvailableForFile(PsiFile file) {

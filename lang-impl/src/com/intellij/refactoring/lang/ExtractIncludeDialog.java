@@ -30,11 +30,12 @@ import java.io.File;
  * @author ven
  */
 public class ExtractIncludeDialog extends DialogWrapper {
-  private TextFieldWithBrowseButton myTargetDirectoryField;
+  protected TextFieldWithBrowseButton myTargetDirectoryField;
   private JTextField myNameField;
   private final PsiDirectory myCurrentDirectory;
   private static final String REFACTORING_NAME = RefactoringBundle.message("extractIncludeFile.name");
   private final String myExtension;
+  protected JLabel myTargetDirLabel;
 
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
@@ -75,8 +76,8 @@ public class ExtractIncludeDialog extends DialogWrapper {
     panel.add(myNameField);
     nameLabel.setText(RefactoringBundle.message("name.for.extracted.include.file"));
 
-    JLabel targetDirLabel = new JLabel();
-    panel.add(targetDirLabel);
+    myTargetDirLabel = new JLabel();
+    panel.add(myTargetDirLabel);
 
     myTargetDirectoryField = new TextFieldWithBrowseButton();
     myTargetDirectoryField.setText(myCurrentDirectory.getVirtualFile().getPresentableUrl());
@@ -84,7 +85,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
                                                    RefactoringBundle.message("select.target.directory.description"),
                                                    null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-    targetDirLabel.setText(RefactoringBundle.message("extract.to.directory"));
+    myTargetDirLabel.setText(RefactoringBundle.message("extract.to.directory"));
     panel.add(myTargetDirectoryField);
 
     myTargetDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -22,10 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
@@ -40,7 +39,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public abstract class ExtractIncludeFileBase<T extends PsiElement> implements RefactoringActionHandler {
+public abstract class ExtractIncludeFileBase<T extends PsiElement> implements ExtractIncludeHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.lang.ExtractIncludeFileBase");
   private static final String REFACTORING_NAME = RefactoringBundle.message("extract.include.file.title");
   protected PsiFile myIncludingFile;
@@ -49,11 +48,23 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
   protected abstract void doReplaceRange(final String includePath, final T first, final T last);
 
   @NotNull
-  protected abstract String doExtract(final PsiDirectory targetDirectory,
-                                      final String targetfileName,
-                                      final T first,
-                                      final T last,
-                                      final Language includingLanguage) throws IncorrectOperationException;
+  protected String doExtract(final PsiDirectory targetDirectory,
+                             final String targetfileName,
+                             final T first,
+                             final T last,
+                             final Language includingLanguage) throws IncorrectOperationException {
+    final PsiFile file = targetDirectory.createFile(targetfileName);
+    Project project = targetDirectory.getProject();
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final Document document = documentManager.getDocument(file);
+    document.replaceString(0, document.getTextLength(), first.getText().trim());
+    documentManager.commitDocument(document);
+    PsiManager.getInstance(project).getCodeStyleManager().reformat(file);  //TODO: adjustLineIndent
+
+    final String relativePath = PsiFileSystemItemUtil.getRelativePath(first.getContainingFile(), file);
+    if (relativePath == null) throw new IncorrectOperationException("Cannot extract!");
+    return relativePath;
+  }
 
   protected abstract boolean verifyChildRange (final T first, final T last);
 
@@ -116,7 +127,9 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
   }
 
   @NotNull
-  protected abstract Language getLanguageForExtract(PsiElement firstExtracted);
+  protected Language getLanguageForExtract(PsiElement firstExtracted) {
+    return firstExtracted.getLanguage();
+  }
 
   @Nullable
   private static FileType getFileType(final Language language) {
@@ -160,7 +173,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
-    ExtractIncludeDialog dialog = new ExtractIncludeDialog(file.getContainingDirectory(), getExtractExtension(fileType));
+    ExtractIncludeDialog dialog = createDialog(file.getContainingDirectory(), getExtractExtension(fileType, children.first));
     dialog.show();
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       final PsiDirectory targetDirectory = dialog.getTargetDirectory();
@@ -196,11 +209,15 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     }
   }
 
+  protected ExtractIncludeDialog createDialog(final PsiDirectory containingDirectory, final String extractExtension) {
+    return new ExtractIncludeDialog(containingDirectory, extractExtension);
+  }
+
   @Nullable
   protected abstract Pair<T, T> findPairToExtract(int start, int end);
 
   @NonNls
-  protected String getExtractExtension(final FileType extractFileType) {
+  protected String getExtractExtension(final FileType extractFileType, final T first) {
     return extractFileType.getDefaultExtension();
   }
 
@@ -220,4 +237,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return includePath;
   }
 
+  public String getActionTitle() {
+    return "Extract Include File...";
+  }
 }
