@@ -92,7 +92,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
      * version of "support SVN in IDEA". for features tracking. should grow
      */
     public Long myVersion;
-    public boolean mySupportsUserInfoFiltering;
+    public boolean mySupportsUserInfoFilter;
   }
 
   public class SvnSupportOptions {
@@ -247,13 +247,13 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
     for (Map.Entry<String, SvnBranchConfiguration> entry : myConfigurationBean.myConfigurationMap.entrySet()) {
       final SvnBranchConfiguration configuration = entry.getValue();
-      if ((! myConfigurationBean.mySupportsUserInfoFiltering) || configuration.isUserinfoInUrl()) {
+      if ((! myConfigurationBean.mySupportsUserInfoFilter) || configuration.isUserinfoInUrl()) {
         result.myConfigurationMap.put(entry.getKey(), helper.prepareForSerialization(configuration));
       } else {
         result.myConfigurationMap.put(entry.getKey(), entry.getValue());
       }
     }
-    result.mySupportsUserInfoFiltering = true;
+    result.mySupportsUserInfoFilter = true;
     return result;
   }
 
@@ -263,7 +263,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     final Map<String, SvnBranchConfiguration> newMap = new HashMap<String, SvnBranchConfiguration>(map.size(), 1);
     for (Map.Entry<String, SvnBranchConfiguration> entry : map.entrySet()) {
       final SvnBranchConfiguration configuration = entry.getValue();
-      if ((! myConfigurationBean.mySupportsUserInfoFiltering) || configuration.isUserinfoInUrl()) {
+      if ((! myConfigurationBean.mySupportsUserInfoFilter) || configuration.isUserinfoInUrl()) {
         newMap.put(entry.getKey(), helper.afterDeserialization(entry.getKey(), configuration));
       } else {
         newMap.put(entry.getKey(), entry.getValue());

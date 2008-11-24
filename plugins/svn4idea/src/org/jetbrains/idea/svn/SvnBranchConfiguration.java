@@ -110,6 +110,7 @@ public class SvnBranchConfiguration {
 
   public SvnBranchConfiguration copy() {
     SvnBranchConfiguration result = new SvnBranchConfiguration();
+    result.myUserinfoInUrl = myUserinfoInUrl;
     result.myTrunkUrl = myTrunkUrl;
     result.myBranchUrls = new ArrayList<String>(myBranchUrls);
     result.myBranchMap = new HashMap<String, List<SvnBranchItem>>();
