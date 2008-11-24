@@ -32,6 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -40,7 +42,9 @@ import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -88,6 +92,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
      * version of "support SVN in IDEA". for features tracking. should grow
      */
     public Long myVersion;
+    public boolean mySupportsUserInfoFiltering;
   }
 
   public class SvnSupportOptions {
@@ -237,10 +242,152 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     if (myConfigurationBean.myVersion == null || myConfigurationBean.myVersion.longValue() < SvnSupportOptions.CHANGELIST_SUPPORT) {
       myConfigurationBean.myVersion = SvnSupportOptions.UPGRADE_TO_15_VERSION_ASKED;
     }
-    return myConfigurationBean;
+    final ConfigurationBean result = new ConfigurationBean();
+    result.myVersion = myConfigurationBean.myVersion;
+    final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
+    for (Map.Entry<String, SvnBranchConfiguration> entry : myConfigurationBean.myConfigurationMap.entrySet()) {
+      final SvnBranchConfiguration configuration = entry.getValue();
+      if ((! myConfigurationBean.mySupportsUserInfoFiltering) || configuration.isUserinfoInUrl()) {
+        result.myConfigurationMap.put(entry.getKey(), helper.prepareForSerialization(configuration));
+      } else {
+        result.myConfigurationMap.put(entry.getKey(), entry.getValue());
+      }
+    }
+    result.mySupportsUserInfoFiltering = true;
+    return result;
   }
 
   public void loadState(final ConfigurationBean object) {
+    final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
+    final Map<String, SvnBranchConfiguration> map = object.myConfigurationMap;
+    final Map<String, SvnBranchConfiguration> newMap = new HashMap<String, SvnBranchConfiguration>(map.size(), 1);
+    for (Map.Entry<String, SvnBranchConfiguration> entry : map.entrySet()) {
+      final SvnBranchConfiguration configuration = entry.getValue();
+      if ((! myConfigurationBean.mySupportsUserInfoFiltering) || configuration.isUserinfoInUrl()) {
+        newMap.put(entry.getKey(), helper.afterDeserialization(entry.getKey(), configuration));
+      } else {
+        newMap.put(entry.getKey(), entry.getValue());
+      }
+    }
+    object.myConfigurationMap.clear();
+    object.myConfigurationMap.putAll(newMap);
     myConfigurationBean = object;
+  }
+
+  private static class UrlSerializationHelper {
+    private final SvnVcs myVcs;
+
+    private UrlSerializationHelper(final SvnVcs vcs) {
+      myVcs = vcs;
+    }
+
+    public SvnBranchConfiguration prepareForSerialization(final SvnBranchConfiguration configuration) {
+      final Ref<Boolean> withUserInfo = new Ref<Boolean>();
+      final String trunkUrl = serializeUrl(configuration.getTrunkUrl(), withUserInfo);
+
+      if (Boolean.FALSE.equals(withUserInfo.get())) {
+        return configuration;
+      }
+
+      final List<String> branches = configuration.getBranchUrls();
+      final List<String> newBranchesList = new ArrayList<String>(branches.size());
+      for (String s : branches) {
+        newBranchesList.add(serializeUrl(s, withUserInfo));
+      }
+
+      final Map<String, List<SvnBranchItem>> map = configuration.getBranchMap();
+      final Map<String, List<SvnBranchItem>> newMap = new HashMap<String, List<SvnBranchItem>>(map.size(), 1.0f);
+      for (Map.Entry<String, List<SvnBranchItem>> entry : map.entrySet()) {
+        final List<SvnBranchItem> items = entry.getValue();
+        if (items != null) {
+          final List<SvnBranchItem> newItems = new ArrayList<SvnBranchItem>();
+          for (SvnBranchItem item : items) {
+            newItems.add(new SvnBranchItem(serializeUrl(item.getUrl(), withUserInfo), new java.util.Date(item.getCreationDateMillis()),
+                                           item.getRevision()));
+          }
+          newMap.put(serializeUrl(entry.getKey(), withUserInfo), newItems);
+        }
+      }
+
+      final SvnBranchConfiguration result = new SvnBranchConfiguration();
+      result.setTrunkUrl(trunkUrl);
+      result.setBranchUrls(newBranchesList);
+      result.setBranchMap(newMap);
+      result.setUserinfoInUrl(withUserInfo.get());
+      return result;
+    }
+
+    public SvnBranchConfiguration afterDeserialization(final String path, final SvnBranchConfiguration configuration) {
+      if (! configuration.isUserinfoInUrl()) {
+        return configuration;
+      }
+      final String userInfo = getUserInfo(path);
+      if (userInfo == null) {
+        return configuration;
+      }
+
+      final String newTrunkUrl = deserializeUrl(configuration.getTrunkUrl(), userInfo);
+      final List<String> branches = configuration.getBranchUrls();
+      final List<String> newBranchesList = new ArrayList<String>(branches.size());
+      for (String s : branches) {
+        newBranchesList.add(deserializeUrl(s, userInfo));
+      }
+
+      final Map<String, List<SvnBranchItem>> map = configuration.getBranchMap();
+      final Map<String, List<SvnBranchItem>> newMap = new HashMap<String, List<SvnBranchItem>>(map.size(), 1.0f);
+      for (Map.Entry<String, List<SvnBranchItem>> entry : map.entrySet()) {
+        final List<SvnBranchItem> items = entry.getValue();
+        if (items != null) {
+          final List<SvnBranchItem> newItems = new ArrayList<SvnBranchItem>();
+          for (SvnBranchItem item : items) {
+            newItems.add(new SvnBranchItem(deserializeUrl(item.getUrl(), userInfo), new java.util.Date(item.getCreationDateMillis()),
+                                           item.getRevision()));
+          }
+          newMap.put(deserializeUrl(entry.getKey(), userInfo), newItems);
+        }
+      }
+
+      final SvnBranchConfiguration result = new SvnBranchConfiguration();
+      result.setTrunkUrl(newTrunkUrl);
+      result.setBranchUrls(newBranchesList);
+      result.setBranchMap(newMap);
+      result.setUserinfoInUrl(userInfo != null && userInfo.length() > 0);
+      return result;
+    }
+
+    private String serializeUrl(final String url, final Ref<Boolean> withUserInfo) {
+      if (Boolean.FALSE.equals(withUserInfo.get())) {
+        return url;
+      }
+      try {
+        final SVNURL svnurl = SVNURL.parseURIEncoded(url);
+        if (withUserInfo.isNull()) {
+          final String userInfo = svnurl.getUserInfo();
+          withUserInfo.set((userInfo != null) && (userInfo.length() > 0));
+        }
+        if (withUserInfo.get()) {
+          return SVNURL.create(svnurl.getProtocol(), null, svnurl.getHost(), svnurl.getPort(), svnurl.getURIEncodedPath(), true).toString();
+        }
+      }
+      catch (SVNException e) {
+        //
+      }
+      return url;
+    }
+
+    @Nullable
+    private String getUserInfo(final String path) {
+      final SVNURL svnurl = myVcs.getSvnFileUrlMapping().getUrlForFile(new File(path));
+      return svnurl != null ? svnurl.getUserInfo() : null;
+    }
+
+    private String deserializeUrl(final String url, final String userInfo) {
+      try {
+        final SVNURL svnurl = SVNURL.parseURIEncoded(url);
+        return SVNURL.create(svnurl.getProtocol(), userInfo, svnurl.getHost(), svnurl.getPort(), svnurl.getURIEncodedPath(), true).toString();
+      } catch (SVNException e) {
+        return url;
+      }
+    }
   }
 }
