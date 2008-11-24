@@ -44,7 +44,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
         final PsiExpression expression = (PsiExpression) infos[0];
         return InspectionGadgetsBundle.message(
                 "unnecessary.call.to.string.valueof.problem.descriptor",
-                expression);
+                expression.getText());
     }
 
     @Override
