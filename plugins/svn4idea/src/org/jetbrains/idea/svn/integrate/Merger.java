@@ -3,8 +3,8 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.Consumer;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
@@ -50,6 +51,8 @@ public class Merger {
     myCount = 0;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     myDiffClient.setEventHandler(handler);
+    myDiffClient.setMergeOptions(new SVNDiffOptions(mySvnConfig.IGNORE_SPACES_IN_MERGE, mySvnConfig.IGNORE_SPACES_IN_MERGE,
+                                                    mySvnConfig.IGNORE_SPACES_IN_MERGE));
     myCommitMessage = new StringBuilder();
   }
 
