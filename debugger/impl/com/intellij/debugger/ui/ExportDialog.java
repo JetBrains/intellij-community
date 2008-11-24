@@ -214,7 +214,7 @@ public class ExportDialog extends DialogWrapper {
   }
 
   private String threadName(ThreadReference threadReference) {
-    return threadReference.name() + "@" + Long.toHexString(threadReference.uniqueID());
+    return threadReference.name() + "@" + threadReference.uniqueID();
   }
 
   private class CopyToClipboardAction extends AbstractAction {
