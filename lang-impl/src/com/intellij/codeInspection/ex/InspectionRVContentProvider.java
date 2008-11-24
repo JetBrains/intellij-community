@@ -19,6 +19,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public abstract class InspectionRVContentProvider {
@@ -129,7 +130,13 @@ public abstract class InspectionRVContentProvider {
       for (Map<String, InspectionPackageNode> packageNodes : module2PackageMap.values()) {
         for (InspectionPackageNode pNode : packageNodes.values()) {
           for (int i = 0; i < pNode.getChildCount(); i++) {
-            final RefElementNode elementNode = (RefElementNode)pNode.getChildAt(i);
+            final TreeNode childNode = pNode.getChildAt(i);
+            if (childNode instanceof ProblemDescriptionNode) {
+              content.add(pNode);
+              break;
+            }
+            LOG.assertTrue(childNode instanceof RefElementNode, childNode.getClass().getName());
+            final RefElementNode elementNode = (RefElementNode)childNode;
             final Set<RefElementNode> parentNodes = new HashSet<RefElementNode>();
             if (pNode.getPackageName() != null) {
               parentNodes.add(elementNode);
