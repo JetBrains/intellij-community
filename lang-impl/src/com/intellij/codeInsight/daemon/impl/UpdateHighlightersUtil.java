@@ -417,7 +417,7 @@ public class UpdateHighlightersUtil {
         if (!highlighter.isValid()) {
           toRemove = true;
         }
-        else if (start < highlighterEnd && highlighterStart < end) {
+        else if (start < highlighterEnd && highlighterStart <= end) {
           LOG.assertTrue(0 <= highlighterStart);
           LOG.assertTrue(highlighterStart < document.getTextLength());
           documentChangedInsideHighlighter = true;
