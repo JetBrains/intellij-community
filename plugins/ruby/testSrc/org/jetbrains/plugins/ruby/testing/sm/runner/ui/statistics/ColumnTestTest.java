@@ -77,7 +77,7 @@ public class ColumnTestTest extends BaseColumnRenderingTest {
     doRender(mySuite, 0);
     assertFragmentsSize(2);
     assertEquals(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
-    assertEquals("Total:", myFragmentsContainer.getTextAt(0));
+    assertEquals("..", myFragmentsContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.GRAYED_ATTRIBUTES, myFragmentsContainer.getAttribsAt(1));
     assertEquals(" (suite)", myFragmentsContainer.getTextAt(1));
   }

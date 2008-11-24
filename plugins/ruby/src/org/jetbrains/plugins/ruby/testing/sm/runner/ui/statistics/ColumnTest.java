@@ -40,8 +40,8 @@ public class ColumnTest extends BaseColumn implements Comparator<SMTestProxy>{
   }
 
   public static class TestsCellRenderer extends ColoredTableCellRenderer implements ColoredRenderer {
-    @NonNls private static final String TOTAL_TITLE = RBundle.message(
-        "sm.test.runner.ui.tabs.statistics.columns.test.total.title");
+    @NonNls private static final String TOTAL_TITLE = RBundle.message("sm.test.runner.ui.tabs.statistics.columns.test.total.title");
+    @NonNls private static final String PARENT_TITLE = "..";
 
     private final SMTestProxy myProxy;
 
@@ -60,8 +60,11 @@ public class ColumnTest extends BaseColumn implements Comparator<SMTestProxy>{
       final String title = value.toString();
       //Black bold for with caption "Total" for parent suite of items in statistics
       if (myProxy.isSuite() && isFirstLine(row)) {
-        append(TOTAL_TITLE, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        if (myProxy.getParent() != null) {
+        if (myProxy.getParent() == null) {
+          append(TOTAL_TITLE, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+        else {
+          append(PARENT_TITLE, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           append(" (" + myProxy.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         return;
