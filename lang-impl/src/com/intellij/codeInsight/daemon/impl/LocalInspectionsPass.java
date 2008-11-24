@@ -238,7 +238,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                            final String toolTip) {
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
     PsiElement element = problemDescriptor.getPsiElement();
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(highlightInfoType, element, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip);
+    HighlightInfo highlightInfo = new HighlightInfo(highlightInfoType, element, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip);
     highlightInfo.isAfterEndOfLine = problemDescriptor.isAfterEndOfLine();
 
     if (element instanceof PsiFile && textRange.equals(element.getTextRange())) {
@@ -343,9 +343,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             ilManager.intersectWithAllEditableFragments((PsiFile)injectedPsi, new TextRange(info.startOffset, info.endOffset));
         for (TextRange editable : editables) {
           TextRange hostRange = documentRange.injectedToHost(editable);
-          HighlightInfo patched = HighlightInfo
-              .createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description,
-                                   info.toolTip);
+          HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip);
           if (patched != null) {
             registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
             infos.add(patched);
