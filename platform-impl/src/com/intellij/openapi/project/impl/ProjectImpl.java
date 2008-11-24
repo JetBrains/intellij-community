@@ -53,7 +53,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @NonNls private static final String PROJECT_LAYER = "project-components";
 
   public boolean myOptimiseTestLoadSpeed;
-  @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
+  @NonNls public static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
   private final boolean myDefault;
   private static final String DEPRECATED_MESSAGE = "Deprecated method usage: {0}.\n" +

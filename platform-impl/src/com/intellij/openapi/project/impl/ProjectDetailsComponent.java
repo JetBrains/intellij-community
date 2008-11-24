@@ -25,7 +25,12 @@ public class ProjectDetailsComponent implements PersistentStateComponent<Project
   }
 
   public String getProjectName() {
-    return myState.projectName;
+    if (myProject.isDefault()) {
+      return ((ProjectImpl)myProject).getDefaultName();
+    }
+    else {
+      return myState.projectName;
+    }
   }
 
 
@@ -41,11 +46,19 @@ public class ProjectDetailsComponent implements PersistentStateComponent<Project
   }
 
   public State getState() {
-    return myState;
+    if (!myProject.isDefault()) {
+      return myState;
+    }
+    else {
+      return null;
+    }
   }
 
   public void loadState(final State state) {
     myState = state;
+    if (!myProject.isDefault() && ProjectImpl.TEMPLATE_PROJECT_NAME.equals(myState.projectName) && myProject instanceof ProjectImpl){
+      myState.projectName = ((ProjectImpl)myProject).getDefaultName();
+    }
   }
 
   public void projectOpened() {
