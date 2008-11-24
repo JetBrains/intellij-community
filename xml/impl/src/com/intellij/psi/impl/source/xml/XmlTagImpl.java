@@ -677,14 +677,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if(map != null){
       known = new HashSet<String>(map.values());
     }
-    if(parentElement instanceof XmlTag){
+    if (parentElement instanceof XmlTag) {
       if(known.isEmpty()) return ((XmlTag)parentElement).knownNamespaces();
       known.addAll(Arrays.asList(((XmlTag)parentElement).knownNamespaces()));
     }
     else {
       final XmlFile xmlFile = XmlExtension.getExtensionByElement(this).getContainingFile(this);
       final XmlTag rootTag = xmlFile.getDocument().getRootTag();
-      if (rootTag != this) known.addAll(Arrays.asList(rootTag.knownNamespaces()));
+      if (rootTag != null && rootTag != this) {
+        if (known.isEmpty()) return rootTag.knownNamespaces();
+        known.addAll(Arrays.asList(rootTag.knownNamespaces()));
+      }
     }
     return known.toArray(new String[known.size()]);
   }
