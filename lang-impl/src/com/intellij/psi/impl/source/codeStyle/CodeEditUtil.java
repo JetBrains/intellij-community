@@ -40,7 +40,7 @@ public class CodeEditUtil {
     removeChildren(parent, child, child);
   }
 
-  public static ASTNode addChildren(CompositeElement parent, @NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchorBefore) {
+  public static ASTNode addChildren(ASTNode parent, @NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchorBefore) {
     ASTNode lastChild = last.getTreeNext();
     ASTNode current = first;
     while(current != lastChild){
@@ -60,7 +60,7 @@ public class CodeEditUtil {
       }
     }
 
-    parent.addChildren(first, lastChild, anchorBefore);
+    ChangeUtil.addChildren(parent, first, lastChild, anchorBefore);
     final ASTNode firstAddedLeaf = findFirstLeaf(first, last);
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
     if(firstAddedLeaf != null){
