@@ -2,9 +2,11 @@ package com.intellij.ide.fileTemplates.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,13 +33,13 @@ public class CreateFromTemplatePanel{
   private int myHorisontalMargin = -1;
   private int myVerticalMargin = -1;
   private boolean myMustEnterName;
-  private String myDefaultFileName;
+  private AttributesDefaults myAttributesDefaults;
 
   public CreateFromTemplatePanel(final String[] unsetAttributes, final boolean mustEnterName,
-                                 @Nullable final String defaultFilename){
+                                 @Nullable final AttributesDefaults attributesDefaults){
     myMustEnterName = mustEnterName;
     myUnsetAttributes = unsetAttributes;
-    myDefaultFileName = defaultFilename;
+    myAttributesDefaults = attributesDefaults;
     Arrays.sort(myUnsetAttributes);
   }
 
@@ -100,18 +102,36 @@ public class CreateFromTemplatePanel{
   }
 
   private void updateShown() {
-    Insets insets = new Insets(2, 2, 2, 2);
+    final Insets insets = new Insets(2, 2, 2, 2);
     myAttrPanel.add(Box.createHorizontalStrut(200), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
     if(myMustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)){
       final JLabel filenameLabel = new JLabel(IdeBundle.message("label.file.name"));
       myAttrPanel.add(filenameLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
       myFilenameField = new JTextField();
-      if (myDefaultFileName != null) {
-        myFilenameField.setText(myDefaultFileName);
-        final int dot = myDefaultFileName.indexOf('.');
-        if (dot > 0) {
-          myFilenameField.select(0, dot);
-          myFilenameField.putClientProperty(DialogWrapperPeerImpl.HAVE_INITIAL_SELECTION, true);
+
+      // if default settings specified
+      if (myAttributesDefaults != null) {
+        final String fileName = myAttributesDefaults.getDefaultFileName();
+        // if default file name specified
+        if (fileName != null) {
+          // set predefined file name value
+          myFilenameField.setText(fileName);
+          final TextRange selectionRange;
+          // select range from default attrubutes or select file name without extension
+          if (myAttributesDefaults.getDefaultFileNameSelection() != null) {
+            selectionRange = myAttributesDefaults.getDefaultFileNameSelection();
+          } else {
+            final int dot = fileName.indexOf('.');
+            if (dot > 0) {
+              selectionRange = new TextRange(0, dot);
+            } else {
+              selectionRange = null;
+            }
+          }
+          // set selection in editor
+          if (selectionRange != null) {
+            setPredefinedSelectionFor(myFilenameField, selectionRange);
+          }
         }
       }
       myAttrPanel.add(myFilenameField, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
@@ -121,8 +141,19 @@ public class CreateFromTemplatePanel{
       if (attribute.equals(FileTemplate.ATTRIBUTE_NAME)) { // already asked above
         continue;
       }
-      JLabel label = new JLabel(attribute.replace('_', ' ') + ":");
-      JTextField field = new JTextField();
+      final JLabel label = new JLabel(attribute.replace('_', ' ') + ":");
+      final JTextField field = new JTextField();
+      if (myAttributesDefaults != null) {
+        final String defaultValue = myAttributesDefaults.getDefaultValueFor(attribute);
+        final TextRange selectionRange = myAttributesDefaults.getRangeFor(attribute);
+        if (defaultValue != null) {
+          field.setText(defaultValue);
+          // set default selection
+          if (selectionRange != null) {
+            setPredefinedSelectionFor(field, selectionRange);
+          }
+        }
+      }
       myAttributes.add(new Pair<String, JTextField>(attribute, field));
       myAttrPanel.add(label, new GridBagConstraints(0, myLastRow * 2 + 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                     insets, 0, 0));
@@ -152,6 +183,11 @@ public class CreateFromTemplatePanel{
       result.put(pair.first, pair.second.getText());
     }
     return result;
+  }
+
+  private void setPredefinedSelectionFor(final JTextField field, final TextRange selectionRange) {
+    field.select(selectionRange.getStartOffset(), selectionRange.getEndOffset());
+    field.putClientProperty(DialogWrapperPeerImpl.HAVE_INITIAL_SELECTION, true);
   }
 }
 

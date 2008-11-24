@@ -39,7 +39,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
       }
       else {
         FileTemplateManager.getInstance().addRecentName(selectedTemplate.getName());
-        PsiElement createdElement = new CreateFromTemplateDialog(project, dir, selectedTemplate, getDefaultFileName()).create();
+        PsiElement createdElement = new CreateFromTemplateDialog(project, dir, selectedTemplate, getAttributesDefaults()).create();
         if (createdElement != null) {
           view.selectElement(createdElement);
         }
@@ -53,7 +53,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
   protected abstract FileTemplate getTemplate(final Project project, final PsiDirectory dir);
 
   @Nullable
-  public String getDefaultFileName() {
+  public AttributesDefaults getAttributesDefaults() {
     return null;
   }
 }

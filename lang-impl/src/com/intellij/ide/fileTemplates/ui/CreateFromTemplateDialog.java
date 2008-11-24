@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -30,7 +31,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   private Properties myDefaultProperties;
 
   public CreateFromTemplateDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull FileTemplate template,
-                                  @Nullable final String defaultFileName) {
+                                  @Nullable final AttributesDefaults attributesDefaults) {
     super(project, true);
     myDirectory = directory;
     myProject = project;
@@ -49,7 +50,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
 
     if (unsetAttributes != null) {
-      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isJavaClassTemplate(), defaultFileName);
+      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isJavaClassTemplate(), attributesDefaults);
       myAttrComponent = myAttrPanel.getComponent();
       init();
     }
