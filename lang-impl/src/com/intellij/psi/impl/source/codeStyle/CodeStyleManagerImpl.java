@@ -181,7 +181,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     final PsiElement psiElement = parent.getPsi();
 
-    final PsiFile containingFile = psiElement.getContainingFile();
+    PsiFile containingFile = psiElement.getContainingFile();
+    final FileViewProvider fileViewProvider = containingFile.getViewProvider();
+    if (fileViewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
+      containingFile = fileViewProvider.getPsi(fileViewProvider.getBaseLanguage());
+    }
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);
 
     if (builder != null) {
