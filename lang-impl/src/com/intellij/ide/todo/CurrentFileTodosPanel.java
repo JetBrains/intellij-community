@@ -70,7 +70,7 @@ abstract class CurrentFileTodosPanel extends TodoPanel{
   private final class MyFileEditorManagerListener extends FileEditorManagerAdapter{
     public void selectionChanged(FileEditorManagerEvent e){
       VirtualFile file=e.getNewFile();
-      final PsiFile psiFile=file != null ? PsiManager.getInstance(myProject).findFile(file) : null;
+      final PsiFile psiFile=file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
       // This invokeLater is required. The problem is setFile does a commit to PSI, but setFile is
       // invoked inside PSI change event. It causes an Exception like "Changes to PSI are not allowed inside event processing"
       ApplicationManager.getApplication().invokeLater(new Runnable(){
