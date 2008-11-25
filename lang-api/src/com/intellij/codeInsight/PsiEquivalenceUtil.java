@@ -20,17 +20,18 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author ven
@@ -91,17 +92,26 @@ public class PsiEquivalenceUtil {
   }
 
   public static void findChildRangeDuplicates(PsiElement first, PsiElement last,
-                                              List<Pair<PsiElement, PsiElement>> result,
+                                              final List<Pair<PsiElement, PsiElement>> result,
                                               PsiElement scope) {
+    findChildRangeDuplicates(first, last, scope, new PairConsumer<PsiElement, PsiElement>() {
+      public void consume(final PsiElement start, final PsiElement end) {
+        result.add(new Pair<PsiElement, PsiElement>(start, end));
+      }
+    });
+  }
+
+  public static void findChildRangeDuplicates(PsiElement first, PsiElement last, PsiElement scope,
+                                              PairConsumer<PsiElement, PsiElement> consumer) {
     LOG.assertTrue(first.getParent() == last.getParent());
     LOG.assertTrue(!(first instanceof PsiWhiteSpace) && !(last instanceof PsiWhiteSpace));
-    addRangeDuplicates(scope, first, last, result);
+    addRangeDuplicates(scope, first, last, consumer);
   }
 
   private static void addRangeDuplicates(final PsiElement scope,
                                          final PsiElement first,
                                          final PsiElement last,
-                                         final List<Pair<PsiElement, PsiElement>> result) {
+                                         final PairConsumer<PsiElement, PsiElement> result) {
     final PsiElement[] children = getFilteredChildren(scope, true);
     NextChild:
     for (int i = 0; i < children.length;) {
@@ -113,7 +123,7 @@ public class PsiEquivalenceUtil {
           if (!areElementsEquivalent(children[j], next)) break;
           j++;
           if (next == last) {
-            result.add(new Pair<PsiElement, PsiElement>(child, children[j - 1]));
+            result.consume(child, children[j - 1]);
             i = j + 1;
             continue NextChild;
           }

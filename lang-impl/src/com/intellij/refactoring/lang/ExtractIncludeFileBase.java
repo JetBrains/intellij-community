@@ -29,6 +29,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,25 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
   private static final String REFACTORING_NAME = RefactoringBundle.message("extract.include.file.title");
   protected PsiFile myIncludingFile;
   public static final String HELP_ID = "refactoring.extractInclude";
+
+  private static class IncludeDuplicate<E extends PsiElement> {
+    private SmartPsiElementPointer<E> myStart;
+    private SmartPsiElementPointer<E> myEnd;
+
+    private IncludeDuplicate(E start, E end) {
+      myStart = SmartPointerManager.getInstance(start.getProject()).createSmartPsiElementPointer(start);
+      myEnd = SmartPointerManager.getInstance(start.getProject()).createSmartPsiElementPointer(end);
+    }
+
+    E getStart() {
+      return myStart.getElement();
+    }
+
+    E getEnd() {
+      return myEnd.getElement();
+    }
+  }
+
 
   protected abstract void doReplaceRange(final String includePath, final T first, final T last);
 
@@ -69,7 +89,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
   protected abstract boolean verifyChildRange (final T first, final T last);
 
   private void replaceDuplicates(final String includePath,
-                                   final List<Pair<PsiElement, PsiElement>> duplicates,
+                                   final List<IncludeDuplicate<T>> duplicates,
                                    final Editor editor,
                                    final Project project) {
     if (duplicates.size() > 0) {
@@ -80,7 +100,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
             boolean replaceAll = false;
-            for (Pair<PsiElement, PsiElement> pair : duplicates) {
+            for (IncludeDuplicate<T> pair : duplicates) {
               if (!replaceAll) {
 
                 highlightInEditor(project, pair, editor);
@@ -92,10 +112,10 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
                 if (promptResult == FindManager.PromptResult.CANCEL) break;
 
                 if (promptResult == FindManager.PromptResult.OK) {
-                  doReplaceRange(includePath, ((T)pair.getFirst()), (T)pair.getSecond());
+                  doReplaceRange(includePath, pair.getStart(), pair.getEnd());
                 }
                 else if (promptResult == FindManager.PromptResult.ALL) {
-                  doReplaceRange(includePath, ((T)pair.getFirst()), (T)pair.getSecond());
+                  doReplaceRange(includePath, pair.getStart(), pair.getEnd());
                   replaceAll = true;
                 }
                 else {
@@ -103,7 +123,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
                 }
               }
               else {
-                doReplaceRange(includePath, ((T)pair.getFirst()), (T)pair.getSecond());
+                doReplaceRange(includePath, pair.getStart(), pair.getEnd());
               }
             }
           }
@@ -112,12 +132,12 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
     }
   }
 
-  private static void highlightInEditor(final Project project, final Pair<PsiElement, PsiElement> pair, final Editor editor) {
+  private static void highlightInEditor(final Project project, final IncludeDuplicate pair, final Editor editor) {
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    final int startOffset = pair.getFirst().getTextRange().getStartOffset();
-    final int endOffset = pair.getSecond().getTextRange().getEndOffset();
+    final int startOffset = pair.getStart().getTextRange().getStartOffset();
+    final int endOffset = pair.getEnd().getTextRange().getEndOffset();
     highlightManager.addRangeHighlight(editor, startOffset, endOffset, attributes, true, null);
     final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(startOffset);
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
@@ -184,10 +204,14 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                final List<Pair<PsiElement, PsiElement>> duplicates = new ArrayList<Pair<PsiElement, PsiElement>>();
+                final List<IncludeDuplicate<T>> duplicates = new ArrayList<IncludeDuplicate<T>>();
                 final T first = children.getFirst();
                 final T second = children.getSecond();
-                PsiEquivalenceUtil.findChildRangeDuplicates(first, second, duplicates, file);
+                PsiEquivalenceUtil.findChildRangeDuplicates(first, second, file, new PairConsumer<PsiElement, PsiElement>() {
+                  public void consume(final PsiElement start, final PsiElement end) {
+                    duplicates.add(new IncludeDuplicate<T>((T) start, (T) end));
+                  }
+                });
                 final String includePath = processPrimaryFragment(first, second, targetDirectory, targetfileName, file);
 
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
