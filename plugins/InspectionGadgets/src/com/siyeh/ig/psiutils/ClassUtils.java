@@ -89,7 +89,8 @@ public class ClassUtils {
         final PsiManager psiManager = aClass.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiClass ancestorClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(ancestorName, scope);
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiClass ancestorClass = psiFacade.findClass(ancestorName, scope);
         return InheritanceUtil.isCorrectDescendant(aClass, ancestorClass, true);
     }
 

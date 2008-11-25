@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,27 +27,32 @@ import org.jetbrains.annotations.NotNull;
 public class SerializableHasSerialVersionUIDFieldInspection
         extends SerializableInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "serial";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.class.without.serialversionuid.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "serializable.class.without.serialversionuid.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new AddSerialVersionUIDFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SerializableHasSerialVersionUIDFieldVisitor();
     }
@@ -61,18 +66,16 @@ public class SerializableHasSerialVersionUIDFieldInspection
                     aClass.isEnum()) {
                 return;
             }
+            if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
             if (aClass instanceof PsiTypeParameter ||
                     aClass instanceof PsiEnumConstantInitializer) {
                 return;
             }
-            final PsiField[] fields = aClass.getFields();
-            boolean hasSerialVersionUID = false;
-            for (final PsiField field : fields) {
-                if (isSerialVersionUID(field)) {
-                    hasSerialVersionUID = true;
-                }
-            }
-            if (hasSerialVersionUID) {
+            final PsiField serialVersionUIDField = aClass.findFieldByName(
+                    HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+            if (serialVersionUIDField != null) {
                 return;
             }
             if (!SerializationUtils.isSerializable(aClass)) {
@@ -82,12 +85,6 @@ public class SerializableHasSerialVersionUIDFieldInspection
                 return;
             }
             registerClassError(aClass);
-        }
-
-        private boolean isSerialVersionUID(PsiField field) {
-            final String methodName = field.getName();
-            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(
-                    methodName);
         }
     }
 }
