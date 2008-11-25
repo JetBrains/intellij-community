@@ -2,6 +2,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -126,7 +127,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     }
     call.append(");");
 
-    PsiManager psiManager = method.getManager();
+    final PsiManager psiManager = method.getManager();
     PsiStatement stmt = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createStatementFromText(call.toString(), method);
     stmt = (PsiStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(stmt);
     method.getBody().add(stmt);
@@ -136,6 +137,14 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     }
 
     method.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+
+    final Project project = method.getProject();
+    for (PsiAnnotation annotation : methodCandidate.getElement().getModifierList().getAnnotations()) {
+      final AddAnnotationFix fix = new AddAnnotationFix(annotation.getQualifiedName(), method);
+      if (fix.isAvailable(project, null, method.getContainingFile())) {
+        fix.invoke(project, null, method.getContainingFile());
+      }
+    }
 
     return new PsiGenerationInfo<PsiMethod>(method);
   }
