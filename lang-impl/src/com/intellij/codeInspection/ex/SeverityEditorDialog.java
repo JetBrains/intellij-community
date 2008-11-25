@@ -123,7 +123,10 @@ public class SeverityEditorDialog extends DialogWrapper {
         if (optionsEditor != null) {
           optionsEditor.select(javaPage).doWhenDone(new Runnable(){
             public void run() {
-              SwingUtilities.invokeLater(javaPage.enableSearch(toConfigure));
+              final Runnable runnable = javaPage.enableSearch(toConfigure);
+              if (runnable != null) {
+                SwingUtilities.invokeLater(runnable);
+              }
             }
           });
         }
