@@ -28,6 +28,7 @@ public class VirtualFileImpl extends DeprecatedVirtualFile {
   public void cacheIsDirectory(final boolean isDirectory) {
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     throw new UnsupportedOperationException("contentsToByteArray is not implemented"); // TODO
   }
@@ -55,6 +56,7 @@ public class VirtualFileImpl extends DeprecatedVirtualFile {
     throw new UnsupportedOperationException("getName is not implemented"); // TODO
   }
 
+  @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException("getOutputStream is not implemented"); // TODO
   }

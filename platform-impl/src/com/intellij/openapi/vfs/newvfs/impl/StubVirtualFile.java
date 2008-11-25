@@ -5,16 +5,16 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
 public class StubVirtualFile extends VirtualFile {
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     throw new UnsupportedOperationException("contentsToByteArray is not implemented");
   }
@@ -42,6 +42,7 @@ public class StubVirtualFile extends VirtualFile {
     throw new UnsupportedOperationException("getName is not implemented");
   }
 
+  @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException("getOutputStream is not implemented");
   }

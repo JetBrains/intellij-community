@@ -183,10 +183,12 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return getHandler(fileOrDirectory).exists(fileOrDirectory);
   }
 
+  @NotNull
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     return getHandler(file).getInputStream(file);
   }
 
+  @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
     return getHandler(file).contentsToByteArray(file);
   }
@@ -195,8 +197,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return getHandler(file).getLength(file);
   }
 
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws
-                                                                                                                                 IOException {
+  @NotNull
+  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     return getHandler(file).getOutputStream(file, requestor, modStamp, timeStamp);
   }
 

@@ -136,6 +136,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     fsItem.myWritable = writableFlag;
   }
 
+  @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     if (fsItem == null) throw new FileNotFoundException("Cannot find temp for " + file.getPath());
@@ -145,10 +146,12 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return ((FSFile)fsItem).myContent;
   }
 
+  @NotNull
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     return new ByteArrayInputStream(contentsToByteArray(file));
   }
 
+  @NotNull
   public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
       throws IOException {
     return new ByteArrayOutputStream() {

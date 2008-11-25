@@ -206,11 +206,11 @@ public final class LoadTextUtil {
     return null;
   }
 
-  public static CharSequence loadText(VirtualFile file) {
+  public static CharSequence loadText(@NotNull VirtualFile file) {
     return loadText(file, false);
   }
 
-  public static CharSequence loadText(VirtualFile file, final boolean allowMissingDecompiler) {
+  public static CharSequence loadText(@NotNull VirtualFile file, final boolean allowMissingDecompiler) {
     if (file instanceof LightVirtualFile) {
       return ((LightVirtualFile)file).getContent();
     }
@@ -229,7 +229,7 @@ public final class LoadTextUtil {
     }
 
     try {
-      final byte[] bytes = file.contentsToByteArray();
+      byte[] bytes = file.contentsToByteArray();
       return getTextByBinaryPresentation(bytes, file);
     }
     catch (IOException e) {
@@ -237,11 +237,13 @@ public final class LoadTextUtil {
     }
   }
 
-  public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile) {
+  @NotNull
+  public static CharSequence getTextByBinaryPresentation(@NotNull final byte[] bytes, @NotNull VirtualFile virtualFile) {
     return getTextByBinaryPresentation(bytes, virtualFile, true);
   }
 
-  public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
+  @NotNull
+  public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes, @NotNull VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
     detectCharset(virtualFile, bytes);
     final Charset charset = virtualFile.getCharset();
     final int offset = skipBOM(virtualFile, bytes);
@@ -253,12 +255,14 @@ public final class LoadTextUtil {
     return result.getFirst();
   }
 
-  public static CharSequence getTextByBinaryPresentation(final byte[] bytes, Charset charset) {
+  @NotNull
+  public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes, Charset charset) {
     final int offset = getBOM(bytes, charset).length;
     return convertBytes(bytes, charset, offset).getFirst();
   }
 
-  private static Pair<CharSequence, String> convertBytes(final byte[] bytes, Charset charset, final int startOffset) {
+  @NotNull
+  private static Pair<CharSequence, String> convertBytes(@NotNull byte[] bytes, Charset charset, final int startOffset) {
     ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, startOffset, bytes.length - startOffset);
 
     if (charset == null) {
@@ -273,10 +277,10 @@ public final class LoadTextUtil {
   }
 
   private static final Key<Boolean> UTF_CHARSET_WAS_DETECTED_FROM_BYTES = new Key<Boolean>("UTF_CHARSET_WAS_DETECTED_FROM_BYTES");
-  public static boolean utfCharsetWasDetectedFromBytes(final VirtualFile virtualFile) {
+  public static boolean utfCharsetWasDetectedFromBytes(@NotNull VirtualFile virtualFile) {
     return virtualFile.getUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES) != null;
   }
-  private static void setUtfCharsetWasDetectedFromBytes(final VirtualFile virtualFile, boolean flag) {
+  private static void setUtfCharsetWasDetectedFromBytes(@NotNull  VirtualFile virtualFile, boolean flag) {
     virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, flag ? Boolean.TRUE : null);
   }
 }

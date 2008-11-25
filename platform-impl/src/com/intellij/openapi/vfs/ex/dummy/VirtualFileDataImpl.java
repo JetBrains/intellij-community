@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.ex.dummy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 
@@ -33,6 +34,7 @@ class VirtualFileDataImpl extends VirtualFileImpl {
     return new ByteArrayInputStream(myContents);
   }
 
+  @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     return new OutputStream() {
@@ -64,6 +66,7 @@ class VirtualFileDataImpl extends VirtualFileImpl {
     };
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     return myContents;
   }

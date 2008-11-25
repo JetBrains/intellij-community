@@ -102,10 +102,12 @@ public class ResourceBundleAsVirtualFile extends DeprecatedVirtualFile {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     throw new UnsupportedOperationException();
   }

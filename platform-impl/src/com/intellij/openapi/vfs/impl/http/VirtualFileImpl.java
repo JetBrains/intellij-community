@@ -152,6 +152,7 @@ class VirtualFileImpl extends HttpVirtualFile {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     if (myFileInfo != null) {
       VirtualFile localFile = myFileInfo.getLocalFile();
@@ -162,6 +163,7 @@ class VirtualFileImpl extends HttpVirtualFile {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     if (myFileInfo == null) {
       throw new UnsupportedOperationException();

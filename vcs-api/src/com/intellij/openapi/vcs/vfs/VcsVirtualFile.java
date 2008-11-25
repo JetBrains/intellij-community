@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -51,9 +52,10 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     setRevision(revision);
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     if (myContentLoadFailed || myProcessingBeforeContentsChange) {
-      return new byte[0];
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     if (myContent == null) {
       loadContent();

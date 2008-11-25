@@ -20,6 +20,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,9 +47,12 @@ public interface FileSystemInterface {
   void renameFile(final Object requestor, VirtualFile file, String newName) throws IOException;
   VirtualFile copyFile(final Object requestor, VirtualFile file, VirtualFile newParent, final String copyName) throws IOException;
 
+  @NotNull
   byte[] contentsToByteArray(final VirtualFile file) throws IOException;
 
+  @NotNull
   InputStream getInputStream(VirtualFile file) throws IOException;
+  @NotNull 
   OutputStream getOutputStream(VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException;
 
   long getLength(VirtualFile file);

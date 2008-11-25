@@ -32,7 +32,7 @@ public final class FileContent extends UserDataHolderBase {
     }
   }
   
-  public FileContent(@NotNull final VirtualFile file, final @NotNull CharSequence contentAsText, final Charset charset) {
+  public FileContent(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
     this(file);
     myContentAsText = contentAsText;
     myCharset = charset;

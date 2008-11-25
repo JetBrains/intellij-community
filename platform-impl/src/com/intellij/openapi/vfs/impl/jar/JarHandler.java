@@ -234,10 +234,12 @@ public class JarHandler implements FileSystemInterface {
     }
   }
 
+  @NotNull
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     return new ByteArrayInputStream(contentsToByteArray(file));
   }
 
+  @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
     synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
@@ -297,6 +299,7 @@ public class JarHandler implements FileSystemInterface {
     throw new IOException("Jar file system is read-only");
   }
 
+  @NotNull
   @SuppressWarnings({"ConstantConditions"})
   public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     throwReadOnly();

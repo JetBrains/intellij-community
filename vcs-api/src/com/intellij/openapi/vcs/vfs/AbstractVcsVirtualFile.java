@@ -93,10 +93,12 @@ public abstract class AbstractVcsVirtualFile extends DeprecatedVirtualFile {
     }
   }
 
+  @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new RuntimeException(VcsFileSystem.COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
+  @NotNull
   public abstract byte[] contentsToByteArray() throws IOException;
 
   public long getModificationStamp() {

@@ -496,6 +496,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #getModificationStamp()
    */
+  @NotNull
   public abstract OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException;
 
   /**
@@ -505,6 +506,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #getInputStream()
    */
+  @NotNull
   public abstract byte[] contentsToByteArray() throws IOException;
 
 

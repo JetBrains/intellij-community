@@ -141,10 +141,12 @@ public class FileUtil {
     }
   }
 
+  @NotNull
   public static char[] loadFileText(File file) throws IOException {
     return loadFileText(file, null);
   }
 
+  @NotNull
   public static char[] loadFileText(File file, @NonNls String encoding) throws IOException{
     InputStream stream = new FileInputStream(file);
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
@@ -156,6 +158,7 @@ public class FileUtil {
     }
   }
 
+  @NotNull
   public static char[] loadText(Reader reader, int length) throws IOException {
     char[] chars = new char[length];
     int count = 0;
@@ -174,6 +177,7 @@ public class FileUtil {
     }
   }
 
+  @NotNull
   public static byte[] loadFileBytes(File file) throws IOException {
     byte[] bytes;
     final InputStream stream = new FileInputStream(file);
@@ -190,6 +194,7 @@ public class FileUtil {
     return bytes;
   }
 
+  @NotNull
   public static byte[] loadBytes(InputStream stream, int length) throws IOException{
     byte[] bytes = new byte[length];
     int count = 0;
@@ -201,6 +206,7 @@ public class FileUtil {
     return bytes;
   }
 
+  @NotNull
   public static byte[] loadBytes(InputStream stream) throws IOException{
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     final byte[] bytes = BUFFER.get();
@@ -213,7 +219,8 @@ public class FileUtil {
     return buffer.toByteArray();
   }
 
-  @NotNull public static String loadTextAndClose(Reader reader) throws IOException {
+  @NotNull
+  public static String loadTextAndClose(Reader reader) throws IOException {
     try {
       return new String(adaptiveLoadText(reader));
     }
@@ -222,7 +229,8 @@ public class FileUtil {
     }
   }
 
-  @NotNull public static char[] adaptiveLoadText(Reader reader) throws IOException {
+  @NotNull
+  public static char[] adaptiveLoadText(Reader reader) throws IOException {
     char[] chars = new char[4096];
     List<char[]> buffers = null;
     int count = 0;
@@ -254,6 +262,7 @@ public class FileUtil {
     return result;
   }
 
+  @NotNull
   public static byte[] adaptiveLoadBytes(InputStream stream) throws IOException{
     byte[] bytes = new byte[4096];
     List<byte[]> buffers = null;
@@ -335,7 +344,7 @@ public class FileUtil {
     return System.getProperty("java.io.tmpdir");
   }
 
-  public static void asyncDelete(File file) {
+  public static void asyncDelete(@NotNull File file) {
     final File tempFile = renameToTempFileOrDelete(file);
     if (tempFile == null) {
       return;
@@ -343,7 +352,7 @@ public class FileUtil {
     startDeletionThread(tempFile);
   }
 
-  public static void asyncDelete(Collection<File> files) {
+  public static void asyncDelete(@NotNull Collection<File> files) {
     List<File> tempFiles = new ArrayList<File>();
     for (File file : files) {
       final File tempFile = renameToTempFileOrDelete(file);
@@ -356,7 +365,7 @@ public class FileUtil {
     }
   }
 
-  private static void startDeletionThread(final File... tempFiles) {
+  private static void startDeletionThread(@NotNull final File... tempFiles) {
     final Runnable deleteFilesTask = new Runnable() {
       public void run() {
         final Thread currentThread = Thread.currentThread();

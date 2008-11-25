@@ -61,6 +61,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return ourPersistence.getInputStream(this);
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     return ourPersistence.contentsToByteArray(this);
   }

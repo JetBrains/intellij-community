@@ -42,6 +42,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     return exists();
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     final InputStream is = getInputStream();
     final byte[] bytes;

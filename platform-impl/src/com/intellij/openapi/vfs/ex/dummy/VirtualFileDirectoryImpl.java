@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,10 +36,12 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
     throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
 
+  @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new IOException(VfsBundle.message("file.write.error", getUrl()));
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }

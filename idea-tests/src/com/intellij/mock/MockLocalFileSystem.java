@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -138,21 +139,23 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return false;
   }
 
+  @NotNull
   public InputStream getInputStream(final VirtualFile file) throws IOException {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
+  @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
-    return new byte[0];
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   public long getLength(final VirtualFile file) {
     return 0;
   }
 
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws
-                                                                                                                                 IOException {
-    return null;
+  @NotNull
+  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+    throw new UnsupportedOperationException();
   }
 
   public long getTimeStamp(final VirtualFile file) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.WeakHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -60,9 +61,10 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
     return false;
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     if (myContentLoadFailed || myProcessingBeforeContentsChange) {
-      return new byte[0];
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     if (myContent == null) {
       loadContent();

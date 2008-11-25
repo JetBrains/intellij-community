@@ -674,10 +674,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return SystemInfo.isFileSystemCaseSensitive;
   }
 
+  @NotNull
   public InputStream getInputStream(final VirtualFile file) throws FileNotFoundException {
     return new BufferedInputStream(new FileInputStream(convertToIOFile(file)));
   }
 
+  @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
     return FileUtil.loadFileBytes(convertToIOFile(file));
   }
@@ -686,6 +688,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return convertToIOFile(file).lastModified();
   }
 
+  @NotNull
   public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
     return new BufferedOutputStream(new FileOutputStream(ioFile)) {

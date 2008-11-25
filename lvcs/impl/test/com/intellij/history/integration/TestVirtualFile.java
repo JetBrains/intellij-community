@@ -5,6 +5,7 @@ import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,8 +78,9 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
     return myContent == null ? 0 : myContent.getBytes().length;
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
-    return myContent == null ? null : myContent.getBytes();
+    return myContent == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myContent.getBytes();
   }
 
   @NotNull
@@ -104,6 +106,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
     return myParent;
   }
 
+  @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException();
   }

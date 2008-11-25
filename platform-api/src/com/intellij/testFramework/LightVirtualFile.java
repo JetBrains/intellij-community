@@ -169,6 +169,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     return new ByteArrayInputStream(contentsToByteArray());
   }
 
+  @NotNull
   public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     return new ByteArrayOutputStream() {
       public void close() {
@@ -178,6 +179,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     };
   }
 
+  @NotNull
   public byte[] contentsToByteArray() throws IOException {
     final Charset charset = getCharset();
     final String s = getContent().toString();
