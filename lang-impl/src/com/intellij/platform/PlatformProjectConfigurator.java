@@ -24,6 +24,7 @@ public class PlatformProjectConfigurator implements DirectoryProjectConfigurator
           final Module module = moduleManager.newModule(imlName, ModuleTypeManager.getInstance().getDefaultModuleType());
           ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
           rootModel.addContentEntry(baseDir);
+          rootModel.inheritSdk();
           rootModel.commit();
         }
       });
