@@ -5,10 +5,11 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -87,11 +88,7 @@ public class NavBarModel {
   }
 
   protected boolean updateModel(DataContext dataContext) {
-    final String disableNavbarProperty = System.getProperty("idea.disable.empty.navbar");
-    if (disableNavbarProperty != null && Boolean.valueOf(disableNavbarProperty).booleanValue()) {
-      final Editor editor = LangDataKeys.EDITOR.getData(dataContext);
-      if (editor == null) return false;
-    }
+    if (LaterInvocator.isInModalContext()) return false;
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
       psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -101,6 +98,9 @@ public class NavBarModel {
       return updateModel(psiElement);
     }
     else {
+      if (UISettings.getInstance().SHOW_NAVIGATION_BAR) {
+        return false;
+      }
       Object moduleOrProject = LangDataKeys.MODULE.getData(dataContext);
       if (moduleOrProject == null) {
         moduleOrProject = LangDataKeys.PROJECT.getData(dataContext);
