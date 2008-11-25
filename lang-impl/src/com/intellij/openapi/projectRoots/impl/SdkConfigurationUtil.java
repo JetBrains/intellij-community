@@ -64,10 +64,10 @@ public class SdkConfigurationUtil {
     });
   }
 
-  public static void setDirectoryProjectSdk(final Project project, final Sdk pythonSdk) {
+  public static void setDirectoryProjectSdk(final Project project, final Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ProjectRootManager.getInstance(project).setProjectJdk(pythonSdk);
+        ProjectRootManager.getInstance(project).setProjectJdk(sdk);
         final Module[] modules = ModuleManager.getInstance(project).getModules();
         if (modules.length > 0) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(modules[0]).getModifiableModel();
