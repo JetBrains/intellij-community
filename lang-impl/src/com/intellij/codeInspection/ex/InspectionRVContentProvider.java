@@ -141,8 +141,19 @@ public abstract class InspectionRVContentProvider {
             if (pNode.getPackageName() != null) {
               parentNodes.add(elementNode);
             } else {
+              boolean hasElementNodeUnder = true;
               for(int e = 0; e < elementNode.getChildCount(); e++) {
-                parentNodes.add((RefElementNode)elementNode.getChildAt(e));
+                final TreeNode grandChildNode = elementNode.getChildAt(e);
+                if (grandChildNode instanceof ProblemDescriptionNode) {
+                  hasElementNodeUnder = false;
+                  break;
+                }
+                LOG.assertTrue(grandChildNode instanceof RefElementNode);
+                parentNodes.add((RefElementNode)grandChildNode);
+              }
+              if (!hasElementNodeUnder) {
+                content.add(elementNode);
+                continue;
               }
             }
             for (RefElementNode parentNode : parentNodes) {
