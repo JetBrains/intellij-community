@@ -188,10 +188,7 @@ public class SvnVcs extends AbstractVcs {
     if (myProject.isDefault()) {
       myChangeListListener = null;
     } else {
-      final SvnBranchConfigurationManager.SvnSupportOptions supportOptions =
-      SvnBranchConfigurationManager.getInstance(myProject).getSupportOptions();
-      upgradeTo15(supportOptions);
-      changeListSynchronizationIdeaVersionToNative(supportOptions, bus);
+      upgradeIfNeeded(bus);
 
       myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
@@ -229,14 +226,17 @@ public class SvnVcs extends AbstractVcs {
     }
   }
 
-  private void changeListSynchronizationIdeaVersionToNative(final SvnBranchConfigurationManager.SvnSupportOptions supportOptions,
-                                                            final MessageBus bus) {
+  private void upgradeIfNeeded(final MessageBus bus) {
       final MessageBusConnection connection = bus.connect();
       connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {
         public void processLoadedLists(final List<LocalChangeList> lists) {
           try {
             ChangeListManager.getInstanceChecked(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
 
+            final SvnBranchConfigurationManager.SvnSupportOptions supportOptions =
+            SvnBranchConfigurationManager.getInstance(myProject).getSupportOptions();
+
+            upgradeTo15(supportOptions);
             if (! supportOptions.changeListsSynchronized()) {
               processChangeLists(lists);
               supportOptions.upgradeToChangeListsSynchronized();
@@ -307,11 +307,7 @@ public class SvnVcs extends AbstractVcs {
               SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
               SvnBundle.message("upgrade.format.to15.question.title"), Messages.getWarningIcon());
             if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
-              ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                public void run() {
-                  workingCopyChecker.doUpgrade();
-                }
-              });
+              workingCopyChecker.doUpgrade();
             }
           }
         });
