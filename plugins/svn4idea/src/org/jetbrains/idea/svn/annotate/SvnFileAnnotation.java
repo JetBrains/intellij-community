@@ -15,26 +15,26 @@
  */
 package org.jetbrains.idea.svn.annotate;
 
+import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.idea.svn.SvnEntriesListener;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 
+import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
-import java.awt.*;
 
 public class SvnFileAnnotation implements FileAnnotation {
-  private final StringBuffer myContentBuffer = new StringBuffer();
+  private final String myContents;
   private final List<LineInfo> myLineInfos = new ArrayList<LineInfo>();
   private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT));
 
@@ -104,9 +104,10 @@ public class SvnFileAnnotation implements FileAnnotation {
   }
 
 
-  public SvnFileAnnotation(final SvnVcs vcs, final VirtualFile file) {
+  public SvnFileAnnotation(final SvnVcs vcs, final VirtualFile file, final String contents) {
     myVcs = vcs;
     myFile = file;
+    myContents = contents;
     myVcs.getSvnEntriesFileListener().addListener(myListener);
   }
 
@@ -139,16 +140,11 @@ public class SvnFileAnnotation implements FileAnnotation {
   }
 
   public String getAnnotatedContent() {
-    return myContentBuffer.toString();
+    return myContents;
   }
 
-  public void appendLineInfo(final Date date, final long revision, final String author, final String line) {
+  public void appendLineInfo(final Date date, final long revision, final String author) {
     myLineInfos.add(new LineInfo(date, revision, author));
-    if (myContentBuffer.length() > 0) {
-      // newline only if needed
-      myContentBuffer.append("\n");
-    }
-    myContentBuffer.append(line);
   }
 
   public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {

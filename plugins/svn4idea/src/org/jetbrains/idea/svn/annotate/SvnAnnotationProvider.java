@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,6 +30,7 @@ import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Date;
 
@@ -54,9 +56,14 @@ public class SvnAnnotationProvider implements AnnotationProvider {
       public void run() {
         final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         try {
-          final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file);
-
           final File ioFile = new File(file.getPath()).getAbsoluteFile();
+
+          final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+          myVcs.createWCClient().doGetFileContents(ioFile, SVNRevision.UNDEFINED, SVNRevision.BASE, true, buffer);
+          final String contents = LoadTextUtil.getTextByBinaryPresentation(buffer.toByteArray(), file, false).toString();
+
+          final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file, contents);
+
           SVNWCClient wcClient = myVcs.createWCClient();
           SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.WORKING);
           if (info == null) {
@@ -73,11 +80,12 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.computing.annotation", file.getName()));
           }
-          // ignore mime type=true : IDEA-19562 
+
+          // ignore mime type=true : IDEA-19562
           client.doAnnotate(ioFile, SVNRevision.UNDEFINED,
                             SVNRevision.create(0), endRevision, true, new ISVNAnnotateHandler() {
             public void handleLine(Date date, long revision, String author, String line) {
-              result.appendLineInfo(date, revision, author, line);
+              result.appendLineInfo(date, revision, author);
             }
 
             public void handleLine(final Date date,
