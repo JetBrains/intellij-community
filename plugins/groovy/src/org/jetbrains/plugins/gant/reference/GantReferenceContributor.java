@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 /**
  * @author ilyas
  */
-public class GantReferenceContirbutor extends PsiReferenceContributor {
+public class GantReferenceContributor extends PsiReferenceContributor {
 
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(GrReferenceExpression.class),

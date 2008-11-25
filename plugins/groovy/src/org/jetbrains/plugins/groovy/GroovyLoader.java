@@ -51,8 +51,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDoc
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.HashSet;
@@ -139,7 +137,6 @@ public class GroovyLoader implements ApplicationComponent {
         ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(project);
 
         registry.registerReferenceProvider(GroovyDocPsiElement.class, new GroovyDocReferenceProvider());
-        registry.registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
       }
     });
 

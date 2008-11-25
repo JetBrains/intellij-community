@@ -74,6 +74,9 @@
     <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>
 
 
+    <lang.elementManipulator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
+                             implementationClass="org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator"/>
+
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
 
     <!--Run/debug-->
@@ -179,7 +182,9 @@
     <applicationService serviceInterface="org.jetbrains.plugins.gant.settings.GantApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.gant.settings.GantApplicationSettings"/>
 
-    <psi.referenceContributor implementation="org.jetbrains.plugins.gant.reference.GantReferenceContirbutor"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.gant.reference.GantReferenceContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceContributer"/>
+
     <projectService serviceInterface="org.jetbrains.plugins.gant.reference.AntTasksProvider"
                     serviceImplementation="org.jetbrains.plugins.gant.reference.AntTasksProvider"/>
 
