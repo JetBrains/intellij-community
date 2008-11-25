@@ -130,7 +130,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     }
   }
 
-  private void putOptionWithHelpId(String option, final String id, final String groupName, String hit, final String path) {
+  private synchronized void putOptionWithHelpId(String option, final String id, final String groupName, String hit, final String path) {
     if (myStopWords.contains(option)) return;
     String stopWord = PorterStemmerUtil.stem(option);
     if (stopWord == null) return;
