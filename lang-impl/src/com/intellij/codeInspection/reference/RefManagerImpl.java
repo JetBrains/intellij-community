@@ -493,7 +493,7 @@ public class RefManagerImpl extends RefManager {
     }
     final Boolean inProject = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        return psiElement != null && psiElement.isValid() && psiElement.getManager().isInProject(psiElement);
+        return psiElement.getManager().isInProject(psiElement);
       }
     });
     return inProject.booleanValue() && (getScope() == null || getScope().contains(psiElement));
