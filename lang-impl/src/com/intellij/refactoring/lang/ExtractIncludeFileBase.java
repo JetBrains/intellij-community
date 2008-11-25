@@ -221,7 +221,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
                 });
               }
               catch (IncorrectOperationException e) {
-                LOG.error(e);
+                CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), null, project);
               }
 
               editor.getSelectionModel().removeSelection();
