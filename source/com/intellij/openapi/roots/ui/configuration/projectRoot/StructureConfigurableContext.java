@@ -184,12 +184,7 @@ public class StructureConfigurableContext implements Disposable {
   }
 
   public void dispose() {
-    myJdkDependencyCache.clear();
-    myLibraryDependencyCache.clear();
-    myValidityCache.clear();
-    myLibraryPathValidityCache.clear();
-    myModulesDependencyCache.clear();
-    myCacheUpdaters.clear();
+    clearCaches();
     myDisposed = true;
   }
 
@@ -217,6 +212,15 @@ public class StructureConfigurableContext implements Disposable {
 
   public ModulesConfigurator getModulesConfigurator() {
     return myModulesConfigurator;
+  }
+
+  public void clearCaches() {
+    myJdkDependencyCache.clear();
+    myLibraryDependencyCache.clear();
+    myValidityCache.clear();
+    myLibraryPathValidityCache.clear();
+    myModulesDependencyCache.clear();
+    myCacheUpdaters.clear();
   }
 
   public void clearCaches(final Module module, final List<Library> chosen) {
