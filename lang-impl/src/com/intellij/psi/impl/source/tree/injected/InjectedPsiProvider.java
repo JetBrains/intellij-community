@@ -10,6 +10,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -235,7 +236,7 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
         ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
         assert parserDefinition != null;
         PsiFile psiFile = parserDefinition.createFile(viewProvider);
-        assert InjectedLanguageUtil.isInjectedFragment(psiFile) : psiFile.getViewProvider();
+        assert InjectedLanguageManager.getInstance(myProject).isInjectedFragment(psiFile) : psiFile.getViewProvider();
 
         SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
         psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);

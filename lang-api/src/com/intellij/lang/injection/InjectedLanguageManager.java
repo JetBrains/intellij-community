@@ -53,4 +53,6 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
 
   @NotNull
   public abstract List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
+
+  public abstract boolean isInjectedFragment(PsiFile file);
 }

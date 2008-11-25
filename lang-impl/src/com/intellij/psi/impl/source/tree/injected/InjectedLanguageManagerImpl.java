@@ -317,6 +317,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return count == 0 ? Collections.<TextRange>emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
   }
 
+  public boolean isInjectedFragment(final PsiFile file) {
+    return file.getViewProvider() instanceof InjectedFileViewProvider;
+  }
+
   public interface InjProcessor {
     boolean process(PsiElement element, MultiHostInjector injector);
   }

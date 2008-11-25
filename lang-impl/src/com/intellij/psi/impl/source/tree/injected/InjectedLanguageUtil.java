@@ -64,9 +64,6 @@ public class InjectedLanguageUtil {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }
 
-  static boolean isInjectedFragment(final PsiFile file) {
-    return file.getViewProvider() instanceof InjectedFileViewProvider;
-  }
   public static List<PsiLanguageInjectionHost.Shred> getShreds(PsiFile injectedFile) {
     FileViewProvider viewProvider = injectedFile.getViewProvider();
     if (!(viewProvider instanceof InjectedFileViewProvider)) return null;
@@ -78,7 +75,7 @@ public class InjectedLanguageUtil {
     private final PsiFile myInjectedPsi;
     private final List<PsiLanguageInjectionHost.Shred> myShreds;
 
-    public Place(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> shreds) {
+    Place(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> shreds) {
       myShreds = shreds;
       myInjectedPsi = injectedPsi;
     }
@@ -150,7 +147,7 @@ public class InjectedLanguageUtil {
 
   // consider injected elements
   public static PsiElement findElementAtNoCommit(@NotNull PsiFile file, int offset) {
-    if (!isInjectedFragment(file)) {
+    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       PsiElement injected = findInjectedElementNoCommit(file, offset);
       if (injected != null) {
         return injected;
@@ -205,8 +202,9 @@ public class InjectedLanguageUtil {
   }
 
   public static PsiElement findInjectedElementNoCommitWithOffset(@NotNull PsiFile file, final int offset) {
-    if (isInjectedFragment(file)) return null;
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+    Project project = file.getProject();
+    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) return null;
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
     PsiElement element = file.getViewProvider().findElementAt(offset, file.getLanguage());
     return element == null ? null : findInside(element, file, offset, documentManager);
@@ -321,10 +319,12 @@ public class InjectedLanguageUtil {
   }
   public static boolean isInInjectedLanguagePrefixSuffix(final PsiElement element) {
     PsiFile injectedFile = element.getContainingFile();
-    if (injectedFile == null || !isInjectedFragment(injectedFile)) return false;
+    if (injectedFile == null) return false;
+    Project project = injectedFile.getProject();
+    InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(project);
+    if (!languageManager.isInjectedFragment(injectedFile)) return false;
     TextRange elementRange = element.getTextRange();
-    List<TextRange> editables = InjectedLanguageManager.getInstance(injectedFile.getProject())
-        .intersectWithAllEditableFragments(injectedFile, elementRange);
+    List<TextRange> editables = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
     int combinedEdiablesLength = 0;
     for (TextRange editable : editables) {
       combinedEdiablesLength += editable.getLength();
