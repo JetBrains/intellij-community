@@ -206,7 +206,7 @@ public class RenameDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(true);
     panel.add(myCbSearchInComments, gbConstraints);
 
-    gbConstraints.insets = new Insets(4, 4, 4, 8);
+    gbConstraints.insets = new Insets(4, 8, 4, 8);
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
