@@ -501,7 +501,7 @@ public class AnalysisScope {
       LOG.assertTrue(profileManager != null);
       for (final VirtualFile file : myFilesSet) {
         final PsiFile psiFile = getPsiFileInReadAction(psiManager, file);
-        if (psiFile != null && psiFile.isValid()) {
+        if (psiFile != null) {
           result.add(profileManager.getProfileName(psiFile));
         }
       }
@@ -513,7 +513,8 @@ public class AnalysisScope {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Nullable
       public PsiFile compute() {
-        return psiManager.findFile(file);
+        final PsiFile psiFile = psiManager.findFile(file);
+        return psiFile != null && psiFile.isValid() ? psiFile : null;
       }
     });
   }
