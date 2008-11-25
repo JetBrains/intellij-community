@@ -173,7 +173,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
-    LOG.assertTrue(isValid());
+    checkValid();
 
     for (VirtualFile vFile : myFile.getChildren()) {
       if (vFile.isDirectory()) {
@@ -194,7 +194,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   @NotNull
   public PsiElement[] getChildren() {
-    LOG.assertTrue(isValid());
+    checkValid();
 
     VirtualFile[] files = myFile.getChildren();
     final ArrayList<PsiElement> children = new ArrayList<PsiElement>(files.length);
@@ -206,6 +206,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     });
 
     return children.toArray(new PsiElement[children.size()]);
+  }
+
+  private void checkValid() {
+    if (!isValid()) {
+      throw new PsiInvalidElementAccessException(this);
+    }
   }
 
   public PsiDirectory getParent() {

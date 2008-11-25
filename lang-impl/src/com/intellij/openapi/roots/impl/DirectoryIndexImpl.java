@@ -18,14 +18,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
@@ -637,6 +638,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private final PackageSink mySink = new PackageSink();
 
   private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
+    private Condition<VirtualFile> myValidityCondition = new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile virtualFile) {
+        return virtualFile.isValid();
+      }
+    };
+
     public PackageSink() {
       registerExecutor(new QueryExecutor<VirtualFile, VirtualFile[]>() {
         public boolean execute(final VirtualFile[] allDirs, final Processor<VirtualFile> consumer) {
@@ -656,10 +663,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     public Query<VirtualFile> search(@NotNull String packageName, boolean includeLibrarySources) {
       VirtualFile[] allDirs = doGetDirectoriesByPackageName(packageName);
       if (includeLibrarySources) {
-        return new ArrayQuery<VirtualFile>(allDirs);
+        return new FilteredQuery<VirtualFile>(new ArrayQuery<VirtualFile>(allDirs), myValidityCondition);
       }
       else {
-        return createQuery(allDirs);
+        return new FilteredQuery<VirtualFile>(createQuery(allDirs), myValidityCondition);
       }
     }
   }
