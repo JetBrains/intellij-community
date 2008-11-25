@@ -101,7 +101,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     if (myResult == null) {
-      checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix(), token);
+//      checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix(), token);
     }
 
     if (myResult == null) {
@@ -388,8 +388,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
 
     final String name = attribute.getName();
-
-    checkUnboundNamespacePrefix(attribute, tag, XmlUtil.findPrefixByQualifiedName(name), null);
 
     if (attributeDescriptor == null) {
       if (!XmlUtil.attributeFromTemplateFramework(name, tag)) {

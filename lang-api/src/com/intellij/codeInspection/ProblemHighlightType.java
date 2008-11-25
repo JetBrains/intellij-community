@@ -16,12 +16,30 @@
 package com.intellij.codeInspection;
 
 public enum ProblemHighlightType {
+
+  /** Underlying highlighting with color depending on the inspection {@link com.intellij.codeHighlighting.HighlightDisplayLevel} */
   GENERIC_ERROR_OR_WARNING,
-  LIKE_DEPRECATED,
+
+  /** Changes font color depending on the inspection {@link com.intellij.codeHighlighting.HighlightDisplayLevel} */
   LIKE_UNKNOWN_SYMBOL,
+
+  LIKE_DEPRECATED,
+
   LIKE_UNUSED_SYMBOL,
+
+  /** @see #GENERIC_ERROR_OR_WARNING */
+  @Deprecated
   J2EE_PROBLEM,
+
+  /** The same as {@link #LIKE_UNKNOWN_SYMBOL} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
   ERROR,
+
+  /** The same as {@link #GENERIC_ERROR_OR_WARNING} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
   GENERIC_ERROR,
-  INFO
+
+  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#INFO} severity level */
+  INFO,
+
+  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#DO_NOT_SHOW} severity level */
+  INFORMATION
 }

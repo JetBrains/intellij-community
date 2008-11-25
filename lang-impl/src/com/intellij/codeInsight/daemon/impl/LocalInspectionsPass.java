@@ -12,13 +12,12 @@ import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -59,6 +58,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private volatile List<HighlightInfo> myInfos = Collections.emptyList();
   static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
   private final String myShortcutText;
+  private final SeverityRegistrar mySeverityRegistrar;
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset) {
     super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file);
@@ -74,6 +74,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     else {
       myShortcutText = "";
     }
+    mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
@@ -264,39 +265,34 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  @Nullable
+  @NotNull
   private HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor, final HighlightSeverity severity) {
-    ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
-    HighlightInfoType type = null;
-    if (highlightType == ProblemHighlightType.INFO) {
-      type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(HighlightSeverity.INFO);
+    final ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
+    switch (highlightType) {
+      case GENERIC_ERROR_OR_WARNING:
+      case J2EE_PROBLEM:
+        return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      case LIKE_DEPRECATED:
+        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
+      case LIKE_UNKNOWN_SYMBOL:
+        if (severity == HighlightSeverity.ERROR) {
+          return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
+        }
+        else {
+          return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+        }
+      case LIKE_UNUSED_SYMBOL:
+        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
+      case INFO:
+        return HighlightInfoType.INFO;
+      case ERROR:
+        return HighlightInfoType.WRONG_REF;
+      case GENERIC_ERROR:
+        return HighlightInfoType.ERROR;
+      case INFORMATION:
+        return HighlightInfoType.INFORMATION;
     }
-    if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING || highlightType == ProblemHighlightType.J2EE_PROBLEM) {
-      type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
-    }
-    else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
-      type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
-    }
-    else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-      if (severity == HighlightSeverity.ERROR) {
-        type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
-      }
-      else if (severity == HighlightSeverity.WARNING) {
-        type = new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.INFO_ATTRIBUTES);
-      }
-      else {
-        type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
-      }
-    }
-    else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
-      type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
-    }
-    else if (highlightType == ProblemHighlightType.ERROR) {
-      type = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.ERROR, HighlightInfoType.WRONG_REF.getAttributesKey());
-    } else if (highlightType == ProblemHighlightType.GENERIC_ERROR) {
-      type = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.ERROR, HighlightInfoType.ERROR.getAttributesKey());
-    }
-    return type;
+    throw new RuntimeException("Cannot map " + highlightType);
   }
 
   protected void applyInformationWithProgress() {
