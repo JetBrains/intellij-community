@@ -70,7 +70,7 @@ public class ElementToWorkOn {
           if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
             editor.getSelectionModel().selectLineAtCaret();
           } else {
-            final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, offset, statementsInRange);
+            final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
             if (expressions.isEmpty()) {
               editor.getSelectionModel().selectLineAtCaret();
             } else if (expressions.size() == 1) {

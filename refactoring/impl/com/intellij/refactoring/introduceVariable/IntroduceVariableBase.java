@@ -8,6 +8,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
@@ -62,7 +63,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       if (statementsInRange.length == 1 && (PsiUtil.hasErrorElementChild(statementsInRange[0]) || isPreferStatements())) {
         editor.getSelectionModel().selectLineAtCaret();
       } else {
-        final List<PsiExpression> expressions = collectExpressions(file, offset, statementsInRange);
+        final List<PsiExpression> expressions = collectExpressions(file, editor, offset, statementsInRange);
         if (expressions.isEmpty()) {
           editor.getSelectionModel().selectLineAtCaret();
         } else if (expressions.size() == 1) {
@@ -88,12 +89,15 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return Boolean.valueOf(PropertiesComponent.getInstance().getOrInit(PREFER_STATEMENTS_OPTION, "false")).booleanValue();
   }
 
-  public static List<PsiExpression> collectExpressions(final PsiFile file, final int offset, final PsiElement... statementsInRange) {
-    final PsiElement elementAtCaret = file.findElementAt(offset);
+  public static List<PsiExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, final PsiElement... statementsInRange) {
+    final PsiElement elementAtCaret = file.findElementAt(TargetElementUtil.adjustOffset(editor.getDocument(), offset));
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
     for (PsiElement element : statementsInRange) {
       if (element instanceof PsiExpressionStatement) {
-        expressions.add(((PsiExpressionStatement)element).getExpression());
+        final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
+        if (expression.getType() != PsiType.VOID) {
+          expressions.add(expression);
+        }
       }
     }
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
