@@ -70,7 +70,9 @@ public class BreakpointPanel extends AbstractBreakpointPanel<Breakpoint> {
 
     final ListSelectionListener listSelectionListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        updateCurrentBreakpointPropertiesPanel();
+        if (!e.getValueIsAdjusting()) {
+          updateCurrentBreakpointPropertiesPanel();
+        }
       }
     };
     final ListSelectionModel tableSelectionModel = myTable.getSelectionModel();
