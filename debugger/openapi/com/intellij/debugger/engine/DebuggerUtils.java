@@ -77,6 +77,20 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
         return String.valueOf(v);
       }
       if (value instanceof ObjectReference) {
+        if (value instanceof ArrayReference) {
+          final StringBuilder builder = new StringBuilder();
+          builder.append("[");
+          for (Iterator<Value> iterator = ((ArrayReference)value).getValues().iterator(); iterator.hasNext();) {
+            final Value element = iterator.next();
+            builder.append(getValueAsString(evaluationContext, element));
+            if (iterator.hasNext()) {
+              builder.append(",");
+            }
+          }
+          builder.append("]");
+          return builder.toString();
+        }
+
         final ObjectReference objRef = (ObjectReference)value;
         final DebugProcess debugProcess = evaluationContext.getDebugProcess();
         Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
