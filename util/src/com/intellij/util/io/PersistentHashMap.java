@@ -149,7 +149,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     updateValueId(id, header);
   }
 
-  public static interface ValueDataAppender {
+  public interface ValueDataAppender {
     void append(DataOutput out) throws IOException;
   }
   
