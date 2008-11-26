@@ -453,8 +453,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void saveCommentIntoChangeList() {
     if (myLastSelectedChangeList != null) {
       final String actualCommentText = myCommitMessageArea.getComment();
-      if ((! Comparing.equal(myLastSelectedChangeList.getComment(), actualCommentText)) &&
-          (! Comparing.equal(actualCommentText, VcsConfiguration.getInstance(myProject).LAST_COMMIT_MESSAGE))) {
+      if (! Comparing.equal(myLastSelectedChangeList.getComment(), actualCommentText)) {
         myLastSelectedChangeList.setComment(actualCommentText);
       }
     }
