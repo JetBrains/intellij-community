@@ -59,7 +59,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
 
   private final Project myProject;
-  private final Map<RepositoryLocation, ChangesCacheFile> myCacheFiles = new ConcurrentHashMap<RepositoryLocation, ChangesCacheFile>();
+  private final Map<String, ChangesCacheFile> myCacheFiles = new ConcurrentHashMap<String, ChangesCacheFile>();
   private final MessageBus myBus;
   private final BackgroundTaskQueue myTaskQueue;
   private boolean myRefreshingIncomingChanges = false;
@@ -827,10 +827,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public ChangesCacheFile getCacheFile(AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
-    ChangesCacheFile cacheFile = myCacheFiles.get(location);
+    final String key = location.getKey();
+    ChangesCacheFile cacheFile = myCacheFiles.get(key);
     if (cacheFile == null) {
       cacheFile = new ChangesCacheFile(myProject, getCachePath(location), vcs, root, location);
-      myCacheFiles.put(location, cacheFile);
+      myCacheFiles.put(key, cacheFile);
     }
     return cacheFile;
   }
