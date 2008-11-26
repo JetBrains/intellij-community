@@ -79,4 +79,5 @@
   <extensionPoint name="browserSettingsProvider" interface="com.intellij.ide.BrowserSettingsProvider"/>
 
   <extensionPoint name="bundledColorSchemesProvider" interface="com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider"/>
+  <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>  
 </extensionPoints>

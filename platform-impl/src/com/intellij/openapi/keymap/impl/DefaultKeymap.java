@@ -7,16 +7,23 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
+import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.net.URL;
 
 /**
  * @author Eugene Belyaev
  */
 public class DefaultKeymap implements JDOMExternalizable, ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultKeymap");
 
   @NonNls
   private static final String KEY_MAP = "keymap";
@@ -36,6 +43,23 @@ public class DefaultKeymap implements JDOMExternalizable, ApplicationComponent {
 
   public void readExternal(Element element) throws InvalidDataException{
     myKeymaps = new ArrayList<Keymap>();
+    loadKeymapsFromElement(element);
+
+    for(BundledKeymapProvider provider: Extensions.getExtensions(BundledKeymapProvider.EP_NAME)) {
+      final List<String> fileNames = provider.getKeymapFileNames();
+      for (String fileName : fileNames) {
+        try {
+          final Document document = JDOMUtil.loadResourceDocument(new URL("file:///idea/" + fileName));
+          loadKeymapsFromElement(document.getRootElement());
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    }
+  }
+
+  private void loadKeymapsFromElement(final Element element) throws InvalidDataException {
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       Element child=(Element)i.next();
       if (KEY_MAP.equals(child.getName())) {
