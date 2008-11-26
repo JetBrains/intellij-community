@@ -534,8 +534,8 @@ public class FileUtil {
       return;
     }
     File[] files = fromDir.listFiles();
-    if(!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     if(files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
+    if(!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     for (File file : files) {
       if (!copySystemFiles && file.getName().startsWith(".")) {
         continue;
@@ -860,10 +860,9 @@ public class FileUtil {
         LOG.error(e);
       }
     }
-    Process process;
     if (!SystemInfo.isWindows) {
       // UNIXes go here
-      process = Runtime.getRuntime().exec(new String[]{"chmod", executableFlag ? "u+x" : "u-x", path});
+      Process process = Runtime.getRuntime().exec(new String[]{"chmod", executableFlag ? "u+x" : "u-x", path});
       try {
         process.waitFor();
       }
