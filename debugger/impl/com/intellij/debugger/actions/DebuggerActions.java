@@ -4,8 +4,8 @@
  */
 package com.intellij.debugger.actions;
 
-import org.jetbrains.annotations.NonNls;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import org.jetbrains.annotations.NonNls;
 
 public interface DebuggerActions extends XDebuggerActions {
   @NonNls String POP_FRAME = "Debugger.PopFrame";
@@ -15,7 +15,7 @@ public interface DebuggerActions extends XDebuggerActions {
   @NonNls String THREADS_PANEL_POPUP = "Debugger.ThreadsPanelPopup";
   @NonNls String WATCH_PANEL_POPUP = "Debugger.WatchesPanelPopup";
   @NonNls String DEBUGGER_TREE = "DebuggerTree";
-  @NonNls String DEBUGGER_PANEL = "DebuggerPanel";
+  @NonNls String DEBUGGER_TREE_PANEL = "DebuggerPanel";
   @NonNls String REMOVE_WATCH = "Debugger.RemoveWatch";
   @NonNls String NEW_WATCH = "Debugger.NewWatch";
   @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";

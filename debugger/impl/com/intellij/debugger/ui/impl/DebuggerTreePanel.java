@@ -84,7 +84,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   }
 
   public Object getData(String dataId) {
-    if (DebuggerActions.DEBUGGER_PANEL.equals(dataId)) {
+    if (DebuggerActions.DEBUGGER_TREE_PANEL.equals(dataId)) {
       return this;
     }
     return null;

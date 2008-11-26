@@ -34,7 +34,7 @@ public abstract class DebuggerAction extends AnAction {
 
   @Nullable
   public static DebuggerTreePanel getPanel(DataContext dataContext){
-    return (DebuggerTreePanel)dataContext.getData(DebuggerActions.DEBUGGER_PANEL);
+    return (DebuggerTreePanel)dataContext.getData(DebuggerActions.DEBUGGER_TREE_PANEL);
   }
 
   @Nullable
