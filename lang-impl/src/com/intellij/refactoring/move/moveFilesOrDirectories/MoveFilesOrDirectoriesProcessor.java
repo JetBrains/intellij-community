@@ -21,7 +21,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Comparator;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
@@ -102,6 +104,12 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
         getTransaction().getElementListener(element).elementMoved(element);
       }
+      // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
+      Arrays.sort(usages, new Comparator<UsageInfo>() {
+        public int compare(final UsageInfo o1, final UsageInfo o2) {
+          return o1.getElement() == o2.getElement() ? o2.startOffset - o1.startOffset : 0;
+        }
+      });
 
       for (UsageInfo usageInfo : usages) {
         final MyUsageInfo info = (MyUsageInfo)usageInfo;
