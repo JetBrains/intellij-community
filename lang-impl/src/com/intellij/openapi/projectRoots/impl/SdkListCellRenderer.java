@@ -25,8 +25,11 @@ public class SdkListCellRenderer extends ColoredListCellRenderer {
                                        final int index,
                                        final boolean selected,
                                        final boolean hasFocus) {
-    Sdk sdk = (Sdk) value;
+    final Sdk sdk = (Sdk) value;
     if (sdk != null) {
+      // icon
+      setIcon(sdk.getSdkType().getIcon());
+      // text
       append(sdk.getName() + " (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     else {
