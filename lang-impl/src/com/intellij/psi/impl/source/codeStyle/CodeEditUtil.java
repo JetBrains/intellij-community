@@ -163,6 +163,9 @@ public class CodeEditUtil {
     saveWhitespacesInfo(newChild);
     checkForOuters(oldChild);
     checkForOuters(newChild);
+
+    LeafElement oldFirst = TreeUtil.findFirstLeaf(oldChild);
+
     parent.replaceChild(oldChild, newChild);
     final LeafElement firstLeaf = TreeUtil.findFirstLeaf(newChild);
     final ASTNode prevToken = TreeUtil.prevLeaf(newChild);
@@ -174,6 +177,14 @@ public class CodeEditUtil {
       }
     }
     else {
+      if (oldFirst != null && prevToken == null) {
+        ASTNode whitespaceNode = newChild.getTreeNext();
+        if (whitespaceNode != null && whitespaceNode.getElementType() == TokenType.WHITE_SPACE) {
+          // Replacing non-empty prefix to empty shall remove whitespace
+          parent.removeChild(whitespaceNode);
+        }
+      }
+
       makePlaceHolderBetweenTokens(prevToken, TreeUtil.nextLeaf(newChild), isFormattingRequiered(prevToken, newChild), false);
     }
   }
