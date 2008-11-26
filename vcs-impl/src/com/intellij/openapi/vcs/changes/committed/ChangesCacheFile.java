@@ -675,6 +675,7 @@ public class ChangesCacheFile {
     private FactoryMap<VirtualFile, VcsRevisionNumber> myCurrentRevisions;
     private Set<FilePath> myDeletedFiles;
     private Set<FilePath> myCreatedFiles;
+    private Set<FilePath> myReplacedFiles;
     private Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
     private Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
     private List<LocalChangeList> myChangeLists;
@@ -702,6 +703,7 @@ public class ChangesCacheFile {
         // so we process file delete changes before changes made to deleted files before they were deleted
         myDeletedFiles = new HashSet<FilePath>();
         myCreatedFiles = new HashSet<FilePath>();
+        myReplacedFiles = new HashSet<FilePath>();
         IncomingChangeState.header(myLocation.toPresentableString());
         for(IncomingChangeListData data: list) {
           debug("Checking incoming changelist " + data.changeList.getNumber());
@@ -748,6 +750,9 @@ public class ChangesCacheFile {
           final FilePath path = afterRevision.getFile();
           debug("Marking created file " + path);
           myCreatedFiles.add(path);
+        } else if (change.getBeforeRevision().getFile().getIOFile().getAbsolutePath().equals(
+          afterRevision.getFile().getIOFile().getAbsolutePath()) && change.isIsReplaced()) {
+          myReplacedFiles.add(afterRevision.getFile());
         }
         if (incomingFiles != null && !incomingFiles.contains(afterRevision.getFile())) {
           debug("Skipping new/changed file outside of incoming files: " + afterRevision.getFile());
@@ -766,7 +771,7 @@ public class ChangesCacheFile {
 
         localPath.refresh();
         VirtualFile file = localPath.getVirtualFile();
-        if (isDeletedFile(myDeletedFiles, afterRevision)) {
+        if (isDeletedFile(myDeletedFiles, afterRevision, myReplacedFiles)) {
           debug("Found deleted file");
           state.setState(IncomingChangeState.State.AFTER_DOES_NOT_MATTER_DELETED_FOUND_IN_INCOMING_LIST);
           return true;
@@ -921,13 +926,16 @@ public class ChangesCacheFile {
       return changeList; 
     }
 
-    private boolean isDeletedFile(final Set<FilePath> deletedFiles, final ContentRevision afterRevision) {
+    private boolean isDeletedFile(final Set<FilePath> deletedFiles, final ContentRevision afterRevision, final Set<FilePath> replacedFiles) {
       FilePath file = afterRevision.getFile();
       while(file != null) {
         if (deletedFiles.contains(file)) {
           return true;
         }
         file = file.getParentPath();
+        if (file != null && replacedFiles.contains(file)) {
+          return true;
+        }
       }
       return false;
     }
