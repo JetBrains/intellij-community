@@ -68,7 +68,7 @@ public final class IntentionActionMetaData {
     return getFamily();
   }
 
-  @Nullable
+  @NotNull
   public TextDescriptor[] getExampleUsagesBefore() {
     if(myExampleUsagesBefore == null){
       try {
@@ -81,7 +81,7 @@ public final class IntentionActionMetaData {
     return myExampleUsagesBefore;
   }
 
-  @Nullable
+  @NotNull
   public TextDescriptor[] getExampleUsagesAfter() {
       if(myExampleUsagesAfter == null){
       try {
@@ -94,13 +94,13 @@ public final class IntentionActionMetaData {
     return myExampleUsagesAfter;
   }
 
-  @Nullable
+  @NotNull
   public TextDescriptor getDescription() {
     if(myDescription == null){
       try {
         final URL dirURL = getDirURL();
-        if (dirURL == null) return null;
-        myDescription = new ResourceTextDescriptor(new URL(dirURL.toExternalForm() + "/" + DESCRIPTION_FILE_NAME));
+        URL descriptionURL = new URL(dirURL.toExternalForm() + "/" + DESCRIPTION_FILE_NAME);
+        myDescription = new ResourceTextDescriptor(descriptionURL);
       }
       catch (MalformedURLException e) {
         LOG.error(e);
@@ -109,7 +109,6 @@ public final class IntentionActionMetaData {
     return myDescription;
   }
 
-  @Nullable
   private static TextDescriptor[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix) throws MalformedURLException {
     List<TextDescriptor> urls = new ArrayList<TextDescriptor>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
@@ -143,7 +142,7 @@ public final class IntentionActionMetaData {
     return pageURL;
   }
 
-  public URL getDirURL() {
+  private URL getDirURL() {
     if (myDirURL == null) {
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myDescriptionDirectoryName);
     }
