@@ -204,7 +204,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       String suffix = null;
       if (literalExpression != null) {
 
-        final String stripped = StringUtil.stripQuotesAroundValue(text);
+        final int expressionOffset = literalExpression.getTextOffset();
+        final int literalLength = literalExpression.getTextLength();
+
+        String stripped = startOffset == expressionOffset && (StringUtil.startsWithChar(text, '\"') || StringUtil.startsWithChar(text, '\''))
+                          ? text.substring(1)
+                          : text;
+        stripped =
+          endOffset == expressionOffset + literalLength && (StringUtil.endsWithChar(stripped, '\"') || StringUtil.endsWithChar(stripped, '\''))
+          ? stripped.substring(0, stripped.length() - 1)
+          : stripped;
 
         boolean primitive = false;
         if (stripped.equals("true") || stripped.equals("false")) {
@@ -221,12 +230,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
         text = primitive ? stripped : ("\"" + stripped + "\"");
 
-        final int offset = literalExpression.getTextOffset();
-        if (offset + 1 < startOffset) {
+        if (expressionOffset + 1 < startOffset) {
           prefix = "\" + ";
         }
 
-        if (offset + literalExpression.getTextLength() - 1 > endOffset) {
+        if (expressionOffset + literalLength - 1 > endOffset) {
           suffix = " + \"";
         }
       } else {
@@ -544,10 +552,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final TextRange parentRange = parent.getTextRange();
 
     String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
-    if (StringUtil.stripQuotesAroundValue(beg).length() == 0) beg = "";
+    if (StringUtil.stripQuotesAroundValue(beg).length() == 0 && prefix == null) beg = "";
 
     String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
-    if (StringUtil.stripQuotesAroundValue(end).length() == 0) end = "";
+    if (StringUtil.stripQuotesAroundValue(end).length() == 0 && suffix == null) end = "";
 
     final String text = beg + (prefix != null ? prefix : "") + refText + (suffix != null ? suffix : "") + end;
     return JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createExpressionFromText(text, file);
