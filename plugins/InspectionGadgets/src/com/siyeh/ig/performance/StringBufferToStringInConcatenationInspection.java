@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,27 +25,32 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StringBufferToStringInConcatenationInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.buffer.to.string.in.concatenation.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.buffer.to.string.in.concatenation.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringBufferToStringVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new StringBufferToStringFix();
     }
@@ -58,6 +63,7 @@ public class StringBufferToStringInConcatenationInspection
                     "string.buffer.to.string.in.concatenation.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement methodNameToken = descriptor.getPsiElement();
@@ -96,7 +102,12 @@ public class StringBufferToStringInConcatenationInspection
             if (rhs == null) {
                 return;
             }
-            if (!rhs.equals(expression)) {
+            if (rhs.equals(expression)) {
+                final PsiExpression lhs = parentBinary.getLOperand();
+                if (!TypeUtils.expressionHasType("java.lang.String", lhs)) {
+                    return;
+                }
+            } else if (!TypeUtils.expressionHasType("java.lang.String", rhs)) {
                 return;
             }
             if (!isStringBufferToString(expression)) {
@@ -107,12 +118,14 @@ public class StringBufferToStringInConcatenationInspection
 
         private static boolean isStringBufferToString(
                 PsiMethodCallExpression expression) {
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String referenceName = methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.TO_STRING.equals(referenceName)) {
                 return false;
             }
-            final String methodName = method.getName();
-            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
                 return false;
             }
             final PsiParameterList parameterList = method.getParameterList();
@@ -124,7 +137,8 @@ public class StringBufferToStringInConcatenationInspection
                 return false;
             }
             final String className = aClass.getQualifiedName();
-            return "java.lang.StringBuffer".equals(className);
+            return "java.lang.StringBuffer".equals(className) ||
+                    "java.lang.StringBuilder".equals(className);
         }
     }
 }
