@@ -5,6 +5,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import org.apache.xmlrpc.IdeaAwareWebServer;
 import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
 import org.apache.xmlrpc.WebServer;
@@ -32,7 +33,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
   }
 
   public void initComponent() {
-    if (!checkPort()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() || !checkPort()) return;
 
     try {
       myWebServer = new IdeaAwareWebServer(getPortNumber(), null, new IdeaAwareXmlRpcServer());
