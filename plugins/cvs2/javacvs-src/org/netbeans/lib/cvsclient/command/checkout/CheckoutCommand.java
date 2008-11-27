@@ -14,6 +14,7 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command.checkout;
 
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
@@ -54,10 +55,12 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
   private String alternativeCheckoutDirectory;
   private KeywordSubstitution keywordSubstitution;
   private boolean printToOutput;
+  private final ThrowableRunnable<IOCommandException> myAfterCheckout;
 
   // Setup ==================================================================
 
-  public CheckoutCommand() {
+  public CheckoutCommand(final ThrowableRunnable<IOCommandException> afterCheckout) {
+    myAfterCheckout = afterCheckout;
   }
 
   // Implemented ============================================================
@@ -264,13 +267,19 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
       return requestProcessor.processRequests(requests, new DummyRequestsProgressHandler());
     }
     finally {
-      if (directoryPruner != null) {
-        directoryPruner.unregisterListeners(listenerRegistry);
-        try {
-          directoryPruner.pruneEmptyDirectories();
+      try {
+        if (myAfterCheckout != null) {
+          myAfterCheckout.run();
         }
-        catch (IOException ex) {
-          throw new IOCommandException(ex);
+      } finally {
+        if (directoryPruner != null) {
+          directoryPruner.unregisterListeners(listenerRegistry);
+          try {
+            directoryPruner.pruneEmptyDirectories();
+          }
+          catch (IOException ex) {
+            throw new IOCommandException(ex);
+          }
         }
       }
     }

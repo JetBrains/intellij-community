@@ -65,7 +65,7 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    CheckoutCommand result = new CheckoutCommand();
+    CheckoutCommand result = new CheckoutCommand(null);
     result.setRecursive(true);
     result.addModule(myModuleName);
     myRevisionOrDate.setForCommand(result);

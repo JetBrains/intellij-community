@@ -39,7 +39,7 @@ public class GetModuleContentOperation extends CompositeOperaton implements Dire
       private boolean myIsInModule = false;
 
       protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-        CheckoutCommand result = new CheckoutCommand();
+        CheckoutCommand result = new CheckoutCommand(null);
         result.addModule(moduleName);
         result.setRecursive(true);
         return result;
@@ -92,7 +92,7 @@ public class GetModuleContentOperation extends CompositeOperaton implements Dire
     AdminWriterStoringRepositoryPath adminWriter, CvsEnvironment environment, final String moduleName) {
     return new LocalPathIndifferentOperation(adminWriter, environment) {
       protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-        CheckoutCommand result = new CheckoutCommand();
+        CheckoutCommand result = new CheckoutCommand(null);
         result.addModule(moduleName);
         result.setRecursive(false);
         return result;

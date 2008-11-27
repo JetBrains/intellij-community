@@ -12,16 +12,15 @@
  */
 package org.netbeans.lib.cvsclient.admin;
 
+import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
 import org.netbeans.lib.cvsclient.file.*;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
-
-import com.intellij.openapi.util.io.FileUtil;
 
 /**
  * A handler for administrative information that maintains full compatibility
@@ -37,7 +36,8 @@ public final class AdminWriter
         implements IAdminWriter {
 
          private final String myLineSeparator;
-         private final String myCharset;
+         protected final String myCharset;
+         private final EntriesWriter myEntriesWriter;
 
          // for tests only!
          public static boolean WRITE_RELATIVE_PATHS = true;
@@ -55,10 +55,14 @@ public final class AdminWriter
   @NonNls private static final String CVS_BASEREV_FILE_PATH = "CVS/Baserev";
 
   // Setup ==================================================================
-
-        public AdminWriter(String lineSeparator, final String charset) {
+        public AdminWriter(String lineSeparator, final String charset, final EntriesWriter creator) {
           myLineSeparator = lineSeparator;
           myCharset = charset;
+          myEntriesWriter = creator;
+        }
+
+        public AdminWriter(String lineSeparator, final String charset) {
+          this(lineSeparator, charset, new SimpleEntriesWriter(charset, lineSeparator));
         }
 
         // Implemented ============================================================
@@ -152,10 +156,7 @@ public final class AdminWriter
 
                 final File directory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
 
-                final EntriesHandler entriesHandler = new EntriesHandler(directory);
-                entriesHandler.read(myCharset);
-                entriesHandler.getEntries().addEntry(entry);
-                entriesHandler.write(myLineSeparator, myCharset);
+                myEntriesWriter.addEntry(directory, entry);
         }
 
         public void writeTemplateFile(DirectoryObject directoryObject, int fileLength, InputStream inputStream, IReaderFactory readerFactory, IClientEnvironment clientEnvironment) throws IOException {
@@ -251,17 +252,14 @@ public final class AdminWriter
 
                 new Entries().write(entriesFile, myLineSeparator, myCharset);
 
-                // need to know if we had to create any directories so that we can
+                // need to know if we had to addEntry any directories so that we can
                 // update the CVS/Entries file in the *parent* director
                 addDirectoryToParentEntriesFile(cvsDirectory.getParentFile());
         }
 
         private void addDirectoryToParentEntriesFile(File directory) throws IOException {
                 try {
-                        final EntriesHandler entriesHandler = new EntriesHandler(directory.getParentFile());
-                        entriesHandler.read(myCharset);
-                        entriesHandler.getEntries().addEntry(Entry.createDirectoryEntry(directory.getName()));
-                        entriesHandler.write(myLineSeparator, myCharset);
+                        myEntriesWriter.addEntry(directory.getParentFile(), Entry.createDirectoryEntry(directory.getName()));
                 }
                 catch (FileNotFoundException ex) {
                         // The Entries file will not exist in the case where this is the top level of the module
@@ -390,4 +388,22 @@ public final class AdminWriter
                 final File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
                 return new File(file.getParentFile(), CVS_BASE_FILE_PATH + file.getName());
         }
+
+  private static class SimpleEntriesWriter implements EntriesWriter {
+    private final String myCharset;
+    private final String myLineSeparator;
+
+    private SimpleEntriesWriter(final String charset, final String lineSeparator) {
+      myCharset = charset;
+      myLineSeparator = lineSeparator;
+    }
+
+    public void addEntry(final File directory, final Entry entry) throws IOException {
+      final EntriesHandler entriesHandler = new EntriesHandler(directory);
+      entriesHandler.read(myCharset);
+      entriesHandler.getEntries().addEntry(entry);
+      entriesHandler.write(myLineSeparator, myCharset);
+    }
+  }
+
 }

@@ -9,9 +9,10 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.javacvsImpl.io.SendTextFilePreprocessor;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import org.netbeans.lib.cvsclient.admin.AdminWriter;
+import com.intellij.util.ThrowableRunnable;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
+import org.netbeans.lib.cvsclient.command.IOCommandException;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.ILocalFileReader;
@@ -46,7 +47,7 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
                                  boolean pruneEmptyDirectories,
                                  KeywordSubstitution keywordSubstitution) {
     super(new CheckoutAdminReader(),
-      new AdminWriter(CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator(),
+      new CheckoutAdminWriter(CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator(),
         CvsApplicationLevelConfiguration.getCharset()));
     myModuleNames = moduleNames;
     myEnvironment = environment;
@@ -103,7 +104,11 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    CheckoutCommand command = new CheckoutCommand();
+    CheckoutCommand command = new CheckoutCommand(new ThrowableRunnable<IOCommandException>() {
+      public void run() throws IOCommandException {
+        ((CheckoutAdminWriter) myAdminWriter).finish();
+      }
+    });
     command.setRecursive(true);
     for (String myModuleName : myModuleNames) {
       command.addModule(myModuleName);

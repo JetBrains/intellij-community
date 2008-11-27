@@ -162,7 +162,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     myState = LOADING;
     myRoot.changeAdminRootTo(new File("."));
     myRoot.changeLocalRootTo(new File("."));
-    CheckoutCommand command = new CheckoutCommand();
+    CheckoutCommand command = new CheckoutCommand(null);
     command.setRecursive(false);
     command.addModule(myModuleName);
     command.setPrintToOutput(true);
