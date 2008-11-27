@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -28,6 +29,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   private Map<EditorFontType, Font> myFonts = new EnumMap<EditorFontType, Font>(EditorFontType.class);
   private String myEditorFontName;
+  private String myFallbackFontName;
   private String mySchemeName;
 
   // version influences XML format and triggers migration
@@ -123,6 +125,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public String getEditorFontName() {
+    if (myFallbackFontName != null) {
+      return myFallbackFontName;
+    }
     return myEditorFontName == null ? DEFAULT_FONT_NAME : myEditorFontName;
   }
 
@@ -137,6 +142,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected void initFonts() {
     String editorFontName = getEditorFontName();
     int editorFontSize = getEditorFontSize();
+
+    final String[] availableFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+    if (!ArrayUtil.contains(editorFontName, availableFonts) && myParentScheme != null) {
+      editorFontName = myParentScheme.getEditorFontName();
+      myFallbackFontName = editorFontName;
+    }
+    else {
+      myFallbackFontName = null;
+    }
 
     Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
     Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
