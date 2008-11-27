@@ -200,9 +200,6 @@ public class UpdateHighlightersUtil {
         }
         final int docLength = document.getTextLength();
         if (infoEndOffset > docLength) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Invalid HighlightInfo created: (" + infoStartOffset + ":" + infoEndOffset + ")" + info.description);
-          }
           infoEndOffset = docLength;
         }
 
@@ -418,8 +415,6 @@ public class UpdateHighlightersUtil {
           toRemove = true;
         }
         else if (start < highlighterEnd && highlighterStart <= end) {
-          LOG.assertTrue(0 <= highlighterStart);
-          LOG.assertTrue(highlighterStart < document.getTextLength());
           documentChangedInsideHighlighter = true;
           toRemove = true;
         }
