@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.*;
@@ -138,7 +139,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private int[] getPermutationToSortedState() {
     int size = myEqClasses.size();
-    int[] permutation = new int[size];
+    int[] permutation = ArrayUtil.newIntArray(size);
     for (int i = 0; i < size; i++) {
       permutation[i] = i;
     }

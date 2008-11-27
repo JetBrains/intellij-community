@@ -95,7 +95,7 @@ public class Cache {
         classInfoView.setSuperQualifiedName(superQName);
 
         final String[] superInterfaces = reader.getSuperInterfaces();
-        final int[] interfaceNames = new int[superInterfaces.length];
+        final int[] interfaceNames = ArrayUtil.newIntArray(superInterfaces.length);
         for (int idx = 0; idx < superInterfaces.length; idx++) {
           interfaceNames[idx] = symbolTable.getId(superInterfaces[idx]);
         }

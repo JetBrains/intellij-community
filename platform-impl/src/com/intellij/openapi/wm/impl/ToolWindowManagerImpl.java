@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -386,7 +387,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public String[] getToolWindowIds() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final WindowInfoImpl[] infos = myLayout.getInfos();
-    final String[] ids = new String[infos.length];
+    final String[] ids = ArrayUtil.newStringArray(infos.length);
     for (int i = 0; i < infos.length; i++) {
       ids[i] = infos[i].getId();
     }

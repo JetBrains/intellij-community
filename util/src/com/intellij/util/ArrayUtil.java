@@ -434,4 +434,11 @@ public class ArrayUtil {
   public static boolean contains(final Object o, final Object... objects) {
     return indexOf(objects, o) >= 0;
   }
+
+  public static int[] newIntArray(int count) {
+    return count == 0 ? EMPTY_INT_ARRAY : new int[count];
+  }
+  public static String[] newStringArray(int count) {
+    return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
+  }
 }

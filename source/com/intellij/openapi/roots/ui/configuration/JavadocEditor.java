@@ -19,6 +19,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -63,7 +64,7 @@ public class JavadocEditor extends ModuleElementsEditor {
   public void saveData() {
     TableUtil.stopEditing(myTable);
     final int count = myTable.getRowCount();
-    String[] urls = new String[count];
+    String[] urls = ArrayUtil.newStringArray(count);
     for (int row = 0; row < count; row++) {
       final TableItem item = ((MyTableModel)myTable.getModel()).getTableItemAt(row);
       urls[row] = item.getUrl();

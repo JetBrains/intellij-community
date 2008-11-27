@@ -7,6 +7,7 @@ import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListUtil;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -124,7 +125,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
   private ExecuteCompositeTargetEvent createEventObject() {
     final ListModel model = myTargetList.getModel();
     final int size = model.getSize();
-    final String[] names = new String[size];
+    final String[] names = ArrayUtil.newStringArray(size);
     for (int idx = 0; idx < size; idx++) {
       names[idx] = (String)model.getElementAt(idx);
     }

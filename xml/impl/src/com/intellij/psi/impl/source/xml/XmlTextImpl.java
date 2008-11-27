@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.injected.XmlTextLiteralEscaper;
 import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
@@ -97,16 +98,19 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
         child = next;
       }
     }
-    myGapDisplayStarts = new int[gapsShifts.size()];
-    myGapPhysicalStarts = new int[gapsShifts.size()];
+    int[] gapDisplayStarts = ArrayUtil.newIntArray(gapsShifts.size());
+    int[] gapPhysicalStarts = ArrayUtil.newIntArray(gapsShifts.size());
     int currentGapsSum = 0;
-    for (int i = 0; i < myGapDisplayStarts.length; i++) {
+    for (int i = 0; i < gapDisplayStarts.length; i++) {
       currentGapsSum += gapsShifts.get(i);
-      myGapDisplayStarts[i] = gapsStarts.get(i);
-      myGapPhysicalStarts[i] = myGapDisplayStarts[i] + currentGapsSum;
+      gapDisplayStarts[i] = gapsStarts.get(i);
+      gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
     }
-
-    return myDisplayText = buffer.toString();
+    myGapDisplayStarts = gapDisplayStarts;
+    myGapPhysicalStarts = gapPhysicalStarts;
+    String text = buffer.toString();
+    myDisplayText = text;
+    return text;
   }
 
   public int physicalToDisplay(int physicalIndex) {
@@ -143,7 +147,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     int insertionIndex = -bsResult - 1;
     int prevPhysGapStart = insertionIndex > 0 ? myGapPhysicalStarts[insertionIndex - 1] : 0;
     int prevDisplayGapStart = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex - 1] : 0;
-    return (displayIndex - prevDisplayGapStart) + prevPhysGapStart;
+    return displayIndex - prevDisplayGapStart + prevPhysGapStart;
   }
 
   public void setValue(String s) throws IncorrectOperationException {
@@ -346,14 +350,14 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     PsiElement[] elements = getChildren();
     int start = 0;
     if (elements.length != 0 && elements[0].getNode().getElementType() == XmlElementType.XML_CDATA) {
-      ASTNode startNode = elements[0].getNode().findChildByType(XmlElementType.XML_CDATA_START);
+      ASTNode startNode = elements[0].getNode().findChildByType(XmlTokenType.XML_CDATA_START);
       if (startNode != null) {
         start = startNode.getTextRange().getEndOffset() - getTextRange().getStartOffset();
       }
     }
     int end = getTextLength();
     if (elements.length != 0 && elements[elements.length-1].getNode().getElementType() == XmlElementType.XML_CDATA) {
-      ASTNode startNode = elements[elements.length-1].getNode().findChildByType(XmlElementType.XML_CDATA_END);
+      ASTNode startNode = elements[elements.length-1].getNode().findChildByType(XmlTokenType.XML_CDATA_END);
       if (startNode != null) {
         end = startNode.getTextRange().getStartOffset() - getTextRange().getStartOffset();
       }
@@ -386,7 +390,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     class MyTransaction extends PomTransactionBase {
       private XmlTextImpl myRight;
 
-      public MyTransaction() {
+      MyTransaction() {
         super(xmlTag, aspect);
       }
 
@@ -397,7 +401,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
         PsiElement childElement = findElementAt(physicalOffset);
 
         if (childElement != null && childElement.getNode().getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
-          FileElement holder = com.intellij.psi.impl.source.DummyHolderFactory.createHolder(getManager(), null).getTreeElement();
+          FileElement holder = DummyHolderFactory.createHolder(getManager(), null).getTreeElement();
 
           int splitOffset = physicalOffset - childElement.getStartOffsetInParent();
           myRight = (XmlTextImpl)ASTFactory.composite(XmlElementType.XML_TEXT);
@@ -439,7 +443,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
           TreeUtil.addChildren(holder, rightText);
 
-          ((XmlTagImpl)xmlTag).addChild(rightText, getTreeNext());
+          ((ASTNode)xmlTag).addChild(rightText, getTreeNext());
 
           final String value = getValue();
 

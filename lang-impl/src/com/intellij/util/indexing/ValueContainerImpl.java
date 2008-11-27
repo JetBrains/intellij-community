@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 
@@ -85,7 +86,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       idSet = new int[] {((Integer)input).intValue()};
     }
     else {
-      idSet = new int[0];
+      idSet = ArrayUtil.EMPTY_INT_ARRAY;
     }
     return idSet;
   }

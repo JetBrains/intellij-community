@@ -129,16 +129,6 @@ public class RecordUtil {
     return mayHaveClassesInside;
   }
 
-  static int[] createIntArray(int size) {
-    if (size == 0) return ArrayUtil.EMPTY_INT_ARRAY;
-    return new int[size];
-  }
-
-  public static String[] createStringArray(int size) {
-    if (size == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return new String[size];
-  }
-
   static String[][] createStringStringArray(int size) {
     if (size == 0) return ourEmptyStringStringArray;
     return new String[size][];

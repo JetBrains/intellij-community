@@ -142,7 +142,7 @@ public class ClassFileReader {
       final ClsAttributeTable attributeTable = readAttributes(ptr);
       int[] intExceptions = null;
       if (attributeTable.exceptions != null) {
-        intExceptions = new int[attributeTable.exceptions.length];
+        intExceptions = ArrayUtil.newIntArray(attributeTable.exceptions.length);
         for (int idx = 0; idx < intExceptions.length; idx++) {
           intExceptions[idx]  = getSymbolId(attributeTable.exceptions[idx]);
         }
@@ -225,7 +225,7 @@ public class ClassFileReader {
     if (mySuperInterfaces == null) {
       BytePointer ptr = new BytePointer(getData(), getConstantPoolEnd() + 6);
       int count = ClsUtil.readU2(ptr);
-      mySuperInterfaces = new String[count];
+      mySuperInterfaces = ArrayUtil.newStringArray(count);
       BytePointer auxPtr = new BytePointer(ptr.bytes, 0);
       for (int idx = 0; idx < mySuperInterfaces.length; idx++) {
         auxPtr.offset = getOffsetInConstantPool(ClsUtil.readU2(ptr));

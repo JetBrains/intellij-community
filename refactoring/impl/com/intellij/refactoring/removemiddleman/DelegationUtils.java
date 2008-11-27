@@ -1,6 +1,7 @@
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -124,7 +125,7 @@ public class DelegationUtils {
   private static int[] calculatePermutation(PsiMethodCallExpression call, PsiParameterList parameterList) {
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] args = argumentList.getExpressions();
-    final int[] out = new int[args.length];
+    final int[] out = ArrayUtil.newIntArray(args.length);
     for (int i = 0; i < args.length; i++) {
       final PsiExpression arg = args[i];
       final PsiParameter parameter = (PsiParameter)((PsiReference)arg).resolve();

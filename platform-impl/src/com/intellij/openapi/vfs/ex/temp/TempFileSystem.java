@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,7 +205,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     }
 
     public String[] list() {
-      return new String[0];
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
 
@@ -239,7 +240,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     }
 
     public String[] list() {
-      String[] names = new String[myChildren.size()];
+      String[] names = ArrayUtil.newStringArray(myChildren.size());
       for (int i = 0; i < names.length; i++) {
         names[i] = myChildren.get(i).myName;
       }

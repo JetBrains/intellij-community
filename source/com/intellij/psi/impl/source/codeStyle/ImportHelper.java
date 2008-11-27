@@ -15,12 +15,13 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
-import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -52,7 +53,7 @@ public class ImportHelper{
     ArrayList<String> namesList = new ArrayList<String>();
     ImportLayoutTable table = mySettings.IMPORT_LAYOUT_TABLE;
     if (table != null){
-      int[] entriesForName = new int[names.length];
+      int[] entriesForName = ArrayUtil.newIntArray(names.length);
       for(int i = 0; i < names.length; i++){
         entriesForName[i] = findEntryIndex(names[i]);
       }
@@ -384,7 +385,7 @@ public class ImportHelper{
 
     int entryIndex = findEntryIndex(statement);
     PsiImportStatementBase[] allStatements = list.getAllImportStatements();
-    int[] entries = new int[allStatements.length];
+    int[] entries = ArrayUtil.newIntArray(allStatements.length);
     ArrayList<PsiImportStatementBase> array = new ArrayList<PsiImportStatementBase>();
     for(int i = 0; i < allStatements.length; i++){
       PsiImportStatementBase statement1 = allStatements[i];

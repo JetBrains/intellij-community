@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
+import com.intellij.util.ArrayUtil;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -216,7 +217,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private String[] getRegexpPatterns() {
-    String[] patterns = new String[myRegexpResourcePaterns.size()];
+    String[] patterns = ArrayUtil.newStringArray(myRegexpResourcePaterns.size());
     int index = 0;
     for (final Pattern myRegexpResourcePatern : myRegexpResourcePaterns) {
       patterns[index++] = myRegexpResourcePatern.getPattern();

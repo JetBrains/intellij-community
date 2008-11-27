@@ -50,7 +50,7 @@ public class BoundsParser extends SignatureParser{
     }
   }
 
-  private String convertToQalifiedName(String ifaceSignature) {
+  private static String convertToQalifiedName(String ifaceSignature) {
     ifaceSignature = ifaceSignature.replaceAll("<.*>", "");
     return ifaceSignature.replace('/', '.');
   }

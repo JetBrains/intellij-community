@@ -1,6 +1,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -17,7 +18,7 @@ public interface StreamProvider {
     }
 
     public String[] listSubFiles(final String fileSpec) {
-      return new String[0];
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     public void deleteFile(final String fileSpec, final RoamingType roamingType) {

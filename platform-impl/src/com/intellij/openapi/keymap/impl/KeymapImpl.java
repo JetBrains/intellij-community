@@ -482,7 +482,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     } else if (shortcut instanceof KeyboardModifierGestureShortuct) {
       return getActionIds(((KeyboardModifierGestureShortuct)shortcut));
     } else {
-      return new String[0];
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
 

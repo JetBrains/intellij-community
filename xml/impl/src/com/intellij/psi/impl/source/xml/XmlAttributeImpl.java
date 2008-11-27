@@ -23,6 +23,7 @@ import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -184,10 +185,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       }
       child = child.getTreeNext();
     }
-    int[] gapDisplayStarts = new int[gapsShifts.size()];
-    int[] gapPhysicalStarts = new int[gapsShifts.size()];
+    int[] gapDisplayStarts = ArrayUtil.newIntArray(gapsShifts.size());
+    int[] gapPhysicalStarts = ArrayUtil.newIntArray(gapsShifts.size());
     int currentGapsSum = 0;
-    for (int i=0; i<gapDisplayStarts.length;i++) {
+    for (int i = 0; i < gapDisplayStarts.length; i++) {
       currentGapsSum += gapsShifts.get(i);
       gapDisplayStarts[i] = gapsStarts.get(i);
       gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;

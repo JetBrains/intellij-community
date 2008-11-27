@@ -54,7 +54,7 @@ public class PackagingCompilerCache extends MapCache<Long> {
     if (!load()) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    String[] urls = new String[myMap.size()];
+    String[] urls = ArrayUtil.newStringArray(myMap.size());
     int idx = 0;
     for (final String s : myMap.keySet()) {
       urls[idx++] = s;

@@ -105,7 +105,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private String[] listPersisted(final int id) {
     final int[] childrenIds = myRecords.list(id);
-    String[] names = new String[childrenIds.length];
+    String[] names = ArrayUtil.newStringArray(childrenIds.length);
     for (int i = 0; i < childrenIds.length; i++) {
       names[i] = FSRecords.getName(childrenIds[i]);
     }
@@ -132,7 +132,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       names = allNamesSet.toArray(new String[allNamesSet.size()]);
     }
 
-    final int[] childrenIds = new int[names.length];
+    final int[] childrenIds = ArrayUtil.newIntArray(names.length);
 
     for (int i = 0; i < names.length; i++) {
       final String name = names[i];
@@ -351,6 +351,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
   }
 
+  @NotNull
   public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
     InputStream contentStream = null;
     boolean reloadFromDelegate;
@@ -412,6 +413,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     };
   }
 
+  @NotNull
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     synchronized (INPUT_LOCK) {
       InputStream contentStream;
@@ -434,6 +436,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return checkFlag(file, MUST_RELOAD_CONTENT) || FSRecords.getLength(getFileId(file)) == -1L;
   }
 
+  @NotNull
   public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     final VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ArrayUtil;
 import org.apache.oro.text.regex.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -195,7 +196,7 @@ public class GotoActionModel implements ChooseByNameModel {
 
   @NotNull
   public String[] getSeparators() {
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public String getElementName(final Object element) {

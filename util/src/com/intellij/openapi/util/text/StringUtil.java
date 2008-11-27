@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
@@ -857,7 +858,7 @@ public class StringUtil {
   @NotNull public static String[] zip(@NotNull String[] strings1, @NotNull String[] strings2, String separator) {
     if (strings1.length != strings2.length) throw new IllegalArgumentException();
 
-    String[] result = new String[strings1.length];
+    String[] result = ArrayUtil.newStringArray(strings1.length);
     for (int i = 0; i < result.length; i++) {
       result[i] = strings1[i] + separator + strings2[i];
     }
@@ -866,7 +867,7 @@ public class StringUtil {
   }
 
   public static String[] surround(String[] strings1, String prefix, String suffix) {
-    String[] result = new String[strings1.length];
+    String[] result = ArrayUtil.newStringArray(strings1.length);
     for (int i = 0; i < result.length; i++) {
       result[i] = prefix + strings1[i] + suffix;
     }
@@ -1193,7 +1194,7 @@ public class StringUtil {
     }
     if (emptyCount == 0) return strings;
 
-    String[] result = new String[strings.length - emptyCount];
+    String[] result = ArrayUtil.newStringArray(strings.length - emptyCount);
     int count = 0;
     for (String string : strings) {
       if (string == null || string.length() == 0) continue;

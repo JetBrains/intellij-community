@@ -19,6 +19,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -269,7 +270,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     ArrayList<Integer> selection = new ArrayList<Integer>();
     RadContainer container = getSelectedGridContainer();
     if (container == null) {
-      return new int[0];
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
     int size = getCellCount();
     for(int i=0; i<size; i++) {

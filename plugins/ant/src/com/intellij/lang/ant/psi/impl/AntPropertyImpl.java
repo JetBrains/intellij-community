@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.StringSetSpinAllocator;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,7 +168,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     if (propertiesFile != null) {
       final List<Property> propList = propertiesFile.getProperties();
       final String prefix = getPrefix();
-      final String[] names = new String[propList.size()];
+      final String[] names = ArrayUtil.newStringArray(propList.size());
       int idx = 0;
       for (final Property importedProp : propList) {
         names[idx++] = prefix != null? prefix + "." + importedProp.getName() : importedProp.getName();

@@ -1,6 +1,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -70,9 +71,9 @@ public class IntArrayValueProvider implements ByteBufferMap.ValueProvider<int[]>
     final int[] result;
 
     if (myArraySize >= 0) {
-      result = new int[myArraySize];
+      result = ArrayUtil.newIntArray(myArraySize);
     } else {
-      result = new int[in.readInt()];
+      result = ArrayUtil.newIntArray(in.readInt());
     }
 
     for(int i = 0; i < result.length; i++){

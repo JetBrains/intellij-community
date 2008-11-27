@@ -500,7 +500,7 @@ public class FSRecords implements Disposable, Forceable {
       int[] result;
       try {
         final int count = input.readInt();
-        result = new int[count];
+        result = ArrayUtil.newIntArray(count);
         for (int i = 0; i < count; i++) {
           input.readInt(); // Name
           result[i] = input.readInt(); // Id
@@ -534,8 +534,8 @@ public class FSRecords implements Disposable, Forceable {
       if (input != null) {
         try {
           final int count = input.readInt();
-          names = new int[count];
-          ids = new int[count];
+          names = ArrayUtil.newIntArray(count);
+          ids = ArrayUtil.newIntArray(count);
           for (int i = 0; i < count; i++) {
             final int name = input.readInt();
             final int id = input.readInt();
@@ -583,8 +583,8 @@ public class FSRecords implements Disposable, Forceable {
       try {
         count = input.readInt();
 
-        names = new int[count];
-        ids = new int[count];
+        names = ArrayUtil.newIntArray(count);
+        ids = ArrayUtil.newIntArray(count);
         for (int i = 0; i < count; i++) {
           names[i] = input.readInt();
           ids[i] = input.readInt();
@@ -618,10 +618,10 @@ public class FSRecords implements Disposable, Forceable {
     synchronized (lock) {
       try {
         final DataInputStream input = readAttribute(id, CHILDREN_ATT);
-        if (input == null) return new int[0];
+        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
         final int count = input.readInt();
-        final int[] result = new int[count];
+        final int[] result = ArrayUtil.newIntArray(count);
         for (int i = 0; i < count; i++) {
           result[i] = input.readInt();
         }

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 public class MethodInfo extends MemberInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.classParsing.MethodInfo");
 
-  private static final int[] EXCEPTION_INFO_UNAVAILABLE = new int[0];
+  private static final int[] EXCEPTION_INFO_UNAVAILABLE = ArrayUtil.EMPTY_INT_ARRAY;
   public static final MethodInfo[] EMPTY_ARRAY = new MethodInfo[0];
 
   private final int[] myThrownExceptions;
@@ -69,11 +69,8 @@ public class MethodInfo extends MemberInfo {
     if (count == -1) {
       myThrownExceptions = EXCEPTION_INFO_UNAVAILABLE;
     }
-    else if (count == 0) {
-      myThrownExceptions = ArrayUtil.EMPTY_INT_ARRAY;
-    }
     else {
-      myThrownExceptions = new int[count];
+      myThrownExceptions = ArrayUtil.newIntArray(count);
       for (int idx = 0; idx < count; idx++) {
         myThrownExceptions[idx] = in.readInt();
       }

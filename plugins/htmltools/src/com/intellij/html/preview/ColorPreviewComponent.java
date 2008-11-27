@@ -6,6 +6,7 @@ import com.intellij.psi.css.impl.util.CssUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.ColorSampleLookupValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +67,7 @@ public class ColorPreviewComponent extends JComponent {
 
             if (argumentList != null) {
               final PsiExpression[] expressions = argumentList.getExpressions();
-              int[] values = new int[expressions.length];
+              int[] values = ArrayUtil.newIntArray(expressions.length);
               float[] values2 = new float[expressions.length];
               int i = 0;
               int j = 0;

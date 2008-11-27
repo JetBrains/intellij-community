@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashSet;
@@ -587,7 +588,7 @@ public class VfsUtil {
     }
     if (filteredCount == 0) return names;
 
-    String[] result = new String[names.length - filteredCount];
+    String[] result = ArrayUtil.newStringArray(names.length - filteredCount);
     int count = 0;
     for (String string : names) {
       if (isBadName(string)) continue;

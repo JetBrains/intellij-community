@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntIterator;
@@ -38,7 +39,7 @@ public class Enumerator<T> {
   }
 
   public int[] enumerate(T[] objects) {
-    int[] idx = new int[objects.length];
+    int[] idx = ArrayUtil.newIntArray(objects.length);
     for (int i = 0; i < objects.length; i++) {
       final T object = objects[i];
       final int number = enumerate(object);

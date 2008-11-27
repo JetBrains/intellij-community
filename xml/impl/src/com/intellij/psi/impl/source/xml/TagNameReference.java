@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -142,7 +143,7 @@ public class TagNameReference implements PsiReference {
         return new LookupElement[]{LookupElementFactory.getInstance().createLookupElement(((XmlTag)element).getName()).setAutoCompletionPolicy(
             AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)};
       } else {
-        return new String[0];
+        return ArrayUtil.EMPTY_STRING_ARRAY;
       }
     }
     return getTagNameVariants((XmlTag)element);

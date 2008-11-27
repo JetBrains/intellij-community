@@ -38,8 +38,8 @@ public class DependencyCache {
   private final TIntHashSet myTraverseRoots = new TIntHashSet(); // Dependencies are calculated from these clasess
   private final TIntHashSet myClassesWithSourceRemoved = new TIntHashSet();
   private final TIntHashSet myPreviouslyRemoteClasses = new TIntHashSet(); // classes that were Remote, but became non-Remote for some reason
-  private TIntHashSet myMarkedInfos = new TIntHashSet(); // classes to be recompiled
-  private Set<VirtualFile> myMarkedFiles = new HashSet<VirtualFile>();
+  private final TIntHashSet myMarkedInfos = new TIntHashSet(); // classes to be recompiled
+  private final Set<VirtualFile> myMarkedFiles = new HashSet<VirtualFile>();
   
   private DependencyCacheNavigator myCacheNavigator;
   private SymbolTable mySymbolTable;
@@ -374,7 +374,7 @@ public class DependencyCache {
   private int[] findBounds(final String genericClassSignature) throws CacheCorruptedException{
     try {
       final String[] boundInterfaces = BoundsParser.getBounds(genericClassSignature);
-      int[] ids = new int[boundInterfaces.length];
+      int[] ids = ArrayUtil.newIntArray(boundInterfaces.length);
       for (int i = 0; i < boundInterfaces.length; i++) {
         ids[i] = getSymbolTable().getId(boundInterfaces[i]);
       }
@@ -667,7 +667,7 @@ public class DependencyCache {
     private int myDeclaringClass = Cache.UNKNOWN;
     private boolean myIsField;
 
-    public DeclaringClassFinder(MemberInfo memberInfo) {
+    private DeclaringClassFinder(MemberInfo memberInfo) {
       myMemberName = memberInfo.getName();
       myMemberDescriptor = memberInfo.getDescriptor();
       myIsField = memberInfo instanceof FieldInfo;

@@ -939,7 +939,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ApplicationManager.getApplication().runReadAction(new Computable<Collection<HighlightInfo>>() {
       public Collection<HighlightInfo> compute() {
         List<TextEditorHighlightingPass > passes =
-          TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), new int[0]);
+          TextEditorHighlightingPassRegistrarEx.getInstanceEx(getProject()).instantiatePasses(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
         MockProgressIndicator progress = new MockProgressIndicator();
         for (TextEditorHighlightingPass pass : passes) {
           pass.collectInformation(progress);

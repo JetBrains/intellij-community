@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
+import com.intellij.util.ArrayUtil;
 
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
   private final PsiReferenceList.Role myRole;
@@ -95,7 +96,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   }
 
   public String[] getReferencedNames() {
-    String[] names = new String[myNames.length];
+    String[] names = ArrayUtil.newStringArray(myNames.length);
     for (int i = 0; i < names.length; i++) {
       names[i] = StringRef.toString(myNames[i]);
     }

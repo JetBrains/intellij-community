@@ -14,7 +14,7 @@ public class SmartIntToIntArrayMap {
   TIntIntHashMap mySingleValueMap = new TIntIntHashMap(10, 0.9f);
 
   public int[] keys() {
-    int[] multiKeys = myMultipleValuesMap != null ? myMultipleValuesMap.keys() : new int[0];
+    int[] multiKeys = myMultipleValuesMap != null ? myMultipleValuesMap.keys() : ArrayUtil.EMPTY_INT_ARRAY;
     int[] singleKeys = mySingleValueMap.keys();
 
     if (singleKeys.length == 0) return multiKeys;

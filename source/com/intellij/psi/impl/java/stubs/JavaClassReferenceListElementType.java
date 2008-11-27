@@ -17,7 +17,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +71,7 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
 
   private static String[] getTexts(PsiReferenceList psi) {
     final PsiJavaCodeReferenceElement[] refs = psi.getReferenceElements();
-    String[] texts = new String[refs.length];
+    String[] texts = ArrayUtil.newStringArray(refs.length);
     for (int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement ref = refs[i];
       texts[i] = ref instanceof PsiCompiledElement ? ref.getCanonicalText() : ref.getText();

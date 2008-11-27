@@ -22,6 +22,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -65,7 +66,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     if (!basePath.endsWith("/")) {
       basePath += "/";
     }
-    String[] classPath = new String[jars.length];
+    String[] classPath = ArrayUtil.newStringArray(jars.length);
     for (int i = 0; i < jars.length; i++) {
       classPath[i] = basePath + jars[i];
     }
@@ -157,7 +158,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
 
     public String [] getRoots(OrderRootType rootType) {
       final String[] roots = myRoots.get(rootType);
-      return roots != null ? roots : new String[0];
+      return roots != null ? roots : ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
 }

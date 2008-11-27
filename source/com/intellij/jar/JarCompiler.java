@@ -87,7 +87,7 @@ public class JarCompiler implements PackagingCompiler {
           }, false);
         }
       });
-      sourceUrls = new String[url2Timestamps.size()];
+      sourceUrls = ArrayUtil.newStringArray(url2Timestamps.size());
       timestamps = new long[url2Timestamps.size()];
       TObjectLongProcedure<String> iterator = new TObjectLongProcedure<String>() {
         int i = 0;
@@ -117,7 +117,7 @@ public class JarCompiler implements PackagingCompiler {
     public MyValState(final DataInput is) throws IOException {
       myModuleName = IOUtil.readString(is);
       int size = is.readInt();
-      sourceUrls = new String[size];
+      sourceUrls = ArrayUtil.newStringArray(size);
       timestamps = new long[size];
       for (int i=0;i<size;i++) {
         String url = IOUtil.readString(is);

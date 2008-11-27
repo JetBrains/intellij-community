@@ -6,6 +6,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
@@ -21,6 +22,6 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
     if (Comparing.strEqual(fqName, AnnotationUtil.NLS)){
       return new String[]{AnnotationUtil.NON_NLS};
     }
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }

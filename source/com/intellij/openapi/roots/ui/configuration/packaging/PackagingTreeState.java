@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.packaging;
 
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ public class PackagingTreeState {
     if (treePaths != null) {
       for (TreePath path : treePaths) {
         Object[] pathElements = path.getPath();
-        String[] names = new String[pathElements.length];
+        String[] names = ArrayUtil.newStringArray(pathElements.length);
         for (int i = 0; i < pathElements.length; i++) {
           names[i] = ((PackagingTreeNode)pathElements[i]).getOutputFileName();
         }

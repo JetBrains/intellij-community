@@ -351,7 +351,7 @@ class JavaDependencyProcessor {
     }
   }
 
-  private static final int[] ALL_TARGETS = new int[] {
+  private static final int[] ALL_TARGETS = {
     AnnotationTargets.ANNOTATION_TYPE,
     AnnotationTargets.CONSTRUCTOR,
     AnnotationTargets.FIELD,
@@ -898,7 +898,7 @@ class JavaDependencyProcessor {
 
   // search using PSI
   private boolean hasBaseAbstractMethods2(final String qName, final Set methodsToCheck) throws CacheCorruptedException {
-    final boolean[] found = new boolean[] {false};
+    final boolean[] found = {false};
     final CacheCorruptedException ex = ApplicationManager.getApplication().runReadAction(new Computable<CacheCorruptedException>() {
       public CacheCorruptedException compute() {
         try {

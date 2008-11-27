@@ -12,6 +12,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +21,6 @@ import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
-
-  private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
   private volatile AntTarget[] myTargets;
   private volatile AntTarget[] myImportedTargets;
@@ -267,7 +266,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     synchronized (PsiLock.LOCK) {
       if (myRefIdsArray == null) {
         if (myReferencedElements == null) {
-          myRefIdsArray = EMPTY_STRING_ARRAY;
+          myRefIdsArray = ArrayUtil.EMPTY_STRING_ARRAY;
         }
         else {
           myRefIdsArray = myReferencedElements.keySet().toArray(new String[myReferencedElements.size()]);
