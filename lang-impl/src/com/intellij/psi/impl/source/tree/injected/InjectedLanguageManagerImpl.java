@@ -321,6 +321,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return file.getViewProvider() instanceof InjectedFileViewProvider;
   }
 
+  @Override
+  public PsiFile findInjectedPsi(@NotNull PsiFile hostFile, int hostDocumentOffset) {
+    PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(hostFile, hostDocumentOffset);
+    return injectedElement == null ? null : injectedElement.getContainingFile();
+  }
+
   public interface InjProcessor {
     boolean process(PsiElement element, MultiHostInjector injector);
   }
