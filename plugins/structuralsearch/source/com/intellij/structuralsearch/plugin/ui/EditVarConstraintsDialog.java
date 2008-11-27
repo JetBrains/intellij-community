@@ -121,6 +121,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     containedInConstraints.setVisible(false);
     withinCombo.getComboBox().setEditable(true);
 
+    customScriptCode.getTextField().getDocument().putProperty("filterNewlines", null); // do not let newlines to be removed
     customScriptCode.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
 
