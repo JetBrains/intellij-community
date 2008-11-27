@@ -564,7 +564,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     E scheme;
   }
 
-  public Collection<SharedScheme<E>> loadScharedSchemes(Collection<T> currentSchemeList) {
+  public Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList) {
     Collection<String> names = new HashSet<String>(getAllSchemeNames(currentSchemeList));
 
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()

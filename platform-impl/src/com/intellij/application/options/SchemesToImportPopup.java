@@ -22,7 +22,7 @@ public abstract class SchemesToImportPopup<T extends Scheme, E extends Externali
   }
 
   public void show(SchemesManager<T, E> schemesManager, Collection<T> currentSchemeNames) {
-    Collection<SharedScheme<E>> schemes = schemesManager.loadScharedSchemes(currentSchemeNames);
+    Collection<SharedScheme<E>> schemes = schemesManager.loadSharedSchemes(currentSchemeNames);
 
     if (schemes.isEmpty()) {
       Messages.showMessageDialog("There are no available schemes to import", "Import", Messages.getWarningIcon());

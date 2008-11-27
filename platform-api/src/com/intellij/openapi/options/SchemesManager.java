@@ -14,7 +14,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
       return Collections.emptySet();
     }
 
-    public Collection loadScharedSchemes() {
+    public Collection loadSharedSchemes() {
       return Collections.emptySet();
     }
 
@@ -67,8 +67,8 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
       return Collections.emptySet();
     }
 
-    public Collection loadScharedSchemes(final Collection currentSchemeList) {
-      return loadScharedSchemes();
+    public Collection loadSharedSchemes(final Collection currentSchemeList) {
+      return loadSharedSchemes();
     }
 
     public File getRootDirectory() {
@@ -78,8 +78,8 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
   Collection<E> loadSchemes();
 
-  Collection<SharedScheme<E>> loadScharedSchemes();
-  Collection<SharedScheme<E>> loadScharedSchemes(Collection<T> currentSchemeList);
+  Collection<SharedScheme<E>> loadSharedSchemes();
+  Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList);
 
   void exportScheme(final E scheme, final String name, final String description)
       throws WriteExternalException;

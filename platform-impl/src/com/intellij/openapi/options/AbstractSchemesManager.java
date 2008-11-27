@@ -157,8 +157,8 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
   }
 
-  public Collection<SharedScheme<E>> loadScharedSchemes() {
-    return loadScharedSchemes(getAllSchemes());
+  public Collection<SharedScheme<E>> loadSharedSchemes() {
+    return loadSharedSchemes(getAllSchemes());
   }
 
   protected boolean isExternalizable(final T scheme) {

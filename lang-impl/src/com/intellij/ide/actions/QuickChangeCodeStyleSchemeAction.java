@@ -37,7 +37,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
 
 
     Collection<SharedScheme<CodeStyleSchemeImpl>> sharedSchemes =
-        ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemesManager().loadScharedSchemes();
+        ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemesManager().loadSharedSchemes();
     if (!sharedSchemes.isEmpty()) {
       group.add(Separator.getInstance());
 
