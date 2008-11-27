@@ -338,6 +338,7 @@
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorTabsConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.CodeFoldingConfigurable"/>
   <editorOptionsProvider implementation="com.intellij.application.options.CodeCompletionOptions"/>
+  <editorOptionsProvider implementation="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
 
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>

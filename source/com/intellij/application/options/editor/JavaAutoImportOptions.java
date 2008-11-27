@@ -10,20 +10,20 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
-import java.util.regex.Pattern;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
-public class EditorImportOptions implements EditorOptionsProvider {
+public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private static final String INSERT_IMPORTS_ALWAYS = ApplicationBundle.message("combobox.insert.imports.all");
   private static final String INSERT_IMPORTS_ASK = ApplicationBundle.message("combobox.insert.imports.ask");
   private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
-
 
   private JComboBox mySmartPasteCombo;
   private JCheckBox myCbShowImportPopup;
@@ -33,9 +33,9 @@ public class EditorImportOptions implements EditorOptionsProvider {
   private JButton myRemoveButton;
 
   private DefaultListModel myExcludePackagesModel;
-  private static Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
+  @NonNls private static Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
 
-  public EditorImportOptions() {
+  public JavaAutoImportOptions() {
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
@@ -154,25 +154,5 @@ public class EditorImportOptions implements EditorOptionsProvider {
 
   private static boolean isModified(JToggleButton checkBox, boolean value) {
     return checkBox.isSelected() != value;
-  }
-
-  public String getDisplayName() {
-    return "Auto Import";
-  }
-
-  public Icon getIcon() {
-    return null;
-  }
-
-  public String getHelpTopic() {
-    return "reference.settingsdialog.IDE.editor.autoimport";
-  }
-
-  public String getId() {
-    return "editor.preferences.import";
-  }
-
-  public Runnable enableSearch(final String option) {
-    return null;
   }
 }

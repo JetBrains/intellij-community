@@ -36,6 +36,7 @@ import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.application.options.XmlSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +153,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public boolean showHint(final Editor editor) {
-    if (!myElement.isValid() || myNamespacePrefix.length() == 0) {
+    if (!XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS || !myElement.isValid() || myNamespacePrefix.length() == 0) {
       return false;
     }
     final Set<String> namespaces = XmlExtension.getExtension(myFile).guessUnboundNamespaces(myElement, myFile);
