@@ -65,7 +65,7 @@ public class ImportClassFix implements HintAction {
     return myRef != null && myRef.isValid() && file.getManager().isInProject(file) && !getClassesToImport().isEmpty();
   }
 
-  private List<PsiClass> getClassesToImport() {
+  public List<PsiClass> getClassesToImport() {
     PsiManager manager = PsiManager.getInstance(myRef.getProject());
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache();
     String name = myRef.getReferenceName();

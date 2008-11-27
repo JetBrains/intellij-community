@@ -16,17 +16,27 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.util.FQNameCellRenderer;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import javax.swing.*;
+import java.util.*;
 
 public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "JavadocReference";
@@ -39,16 +49,16 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return checkMember(psiMethod, manager);
+    return checkMember(psiMethod, manager, isOnTheFly);
   }
 
   @Nullable
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return checkMember(field, manager);
+    return checkMember(field, manager, isOnTheFly);
   }
 
   @Nullable
-  private ProblemDescriptor[] checkMember(final PsiDocCommentOwner docCommentOwner, final InspectionManager manager) {
+  private ProblemDescriptor[] checkMember(final PsiDocCommentOwner docCommentOwner, final InspectionManager manager, final boolean isOnTheFly) {
     ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     final PsiDocComment docComment = docCommentOwner.getDocComment();
     if (docComment == null) return null;
@@ -56,7 +66,10 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     final Set<PsiJavaCodeReferenceElement> references = new HashSet<PsiJavaCodeReferenceElement>();
     docComment.accept(getVisitor(references, docCommentOwner, problems, manager));
     for (PsiJavaCodeReferenceElement reference : references) {
-      problems.add(createDescriptor(reference, InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + reference.getText() + "</code>"), manager));
+      final List<PsiClass> classesToImport = new ImportClassFix(reference).getClassesToImport();
+      problems.add(manager.createProblemDescriptor(reference, InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve",
+                                                                                        "<code>" + reference.getText() + "</code>"),
+                                                   !isOnTheFly || classesToImport.isEmpty() ? null : new AddImportFix(classesToImport), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL));
     }
 
     return problems.isEmpty()
@@ -66,7 +79,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return checkMember(aClass, manager);
+    return checkMember(aClass, manager, isOnTheFly);
   }
 
 
@@ -164,5 +177,55 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
+  }
+
+  private class AddImportFix implements LocalQuickFix{
+    private final List<PsiClass> myClassesToImport;
+
+    public AddImportFix(final List<PsiClass> classesToImport) {
+      myClassesToImport = classesToImport;
+    }
+
+    @NotNull
+    public String getName() {
+      return QuickFixBundle.message("import.class.fix");
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return QuickFixBundle.message("import.class.fix");
+    }
+
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element instanceof PsiJavaCodeReferenceElement) {
+        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
+        Collections.sort(myClassesToImport, new PsiProximityComparator(referenceElement.getElement()));
+        final JList list = new JList(myClassesToImport.toArray(new PsiClass[myClassesToImport.size()]));
+        list.setCellRenderer(new FQNameCellRenderer());
+        Runnable runnable = new Runnable() {
+          public void run() {
+            int index = list.getSelectedIndex();
+            if (index < 0) return;
+            new WriteCommandAction(project, element.getContainingFile()){
+              protected void run(final Result result) throws Throwable {
+                final PsiClass psiClass = myClassesToImport.get(0);
+                if (psiClass.isValid()) {
+                  PsiDocumentManager.getInstance(project).commitAllDocuments();
+                  referenceElement.bindToElement(psiClass);
+                }
+              }
+            }.execute();
+          }
+        };
+        final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+        assert editor != null; //available for on the fly mode only
+        new PopupChooserBuilder(list).
+          setTitle(QuickFixBundle.message("class.to.import.chooser.title")).
+          setItemChoosenCallback(runnable).
+          createPopup().
+          showInBestPositionFor(editor);
+      }
+    }
   }
 }
