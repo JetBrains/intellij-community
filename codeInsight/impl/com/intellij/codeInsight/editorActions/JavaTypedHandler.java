@@ -137,8 +137,9 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       if (iterator.atEnd()) return false;
     }
     if (lbraceCount == 0) return false;
-    if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
+    if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();
     for(int i=0; i<lbraceCount; i++) {
+      if (iterator.atEnd()) return false;
       if (iterator.getTokenType() != JavaTokenType.RBRACKET) return false;
       iterator.retreat();
       if (iterator.getTokenType() != JavaTokenType.LBRACKET) return false;
@@ -293,11 +294,9 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
       else{
         final PsiElement element = file.findElementAt(offset);
-        if(element != null && "#".equals(lastElement.getText())
-          && !new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent())){
-          return false;
-        }
-        return true;
+        return element == null ||
+               !"#".equals(lastElement.getText()) ||
+               new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent());
       }
     }
   }
