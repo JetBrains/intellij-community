@@ -4,6 +4,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringUtil;
 
 import java.util.ArrayList;
@@ -66,11 +67,12 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
   private static boolean needToDeclareFinal(PsiExpression[] occurrences) {
     PsiElement scopeToDeclare = null;
     for (PsiExpression occurrence : occurrences) {
+      final PsiElement data = occurrence.getUserData(ElementToWorkOn.PARENT);
       if (scopeToDeclare == null) {
-        scopeToDeclare = occurrence;
+        scopeToDeclare = data != null ? data : occurrence;
       }
       else {
-        scopeToDeclare = PsiTreeUtil.findCommonParent(scopeToDeclare, occurrence);
+        scopeToDeclare = PsiTreeUtil.findCommonParent(scopeToDeclare, data != null ? data : occurrence);
       }
     }
     if(scopeToDeclare == null) {
@@ -78,7 +80,8 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
     }
 
     for (PsiExpression occurrence : occurrences) {
-      PsiElement parent = occurrence;
+      PsiElement parent = occurrence.getUserData(ElementToWorkOn.PARENT);
+      if (parent == null) parent = occurrence;
       while (!parent.equals(scopeToDeclare)) {
         parent = parent.getParent();
         if (parent instanceof PsiClass) {
