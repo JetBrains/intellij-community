@@ -573,7 +573,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           PsiStatement st = null;
           if (isDeclaredInside(variable)) {
             st = myElementFactory.createStatementFromText(
-              variable.getType().getCanonicalText() + " " + name + " = " + object + ".get" + StringUtil.capitalize(name) + "();",
+              variable.getType().getCanonicalText() + " " + name + " = " + object + "." + PropertyUtil.suggestGetterName(name, variable.getType()) + "();",
               myInnerMethod);
             if (reassigned.contains(new ControlFlowUtil.VariableInfo(variable, null))) {
               final PsiElement[] psiElements = ((PsiDeclarationStatement)st).getDeclaredElements();
@@ -584,7 +584,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           }
           else {
             if (ArrayUtil.find(myOutputVariables, variable) != -1) {
-              st = myElementFactory.createStatementFromText(name + " = " + object + ".get" + StringUtil.capitalize(name) + "();", myInnerMethod);
+              st = myElementFactory.createStatementFromText(name + " = " + object + "." + PropertyUtil.suggestGetterName(name, variable.getType()) + "();", myInnerMethod);
             }
           }
           if (st != null) {
