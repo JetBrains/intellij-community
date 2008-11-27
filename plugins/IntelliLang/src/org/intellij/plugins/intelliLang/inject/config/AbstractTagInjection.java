@@ -71,7 +71,7 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
 
   @NotNull
   public String getTagNamespace() {
-    return StringUtil.join(myTagNamespace.toArray(new String[myTagNamespace.size()]), "|");
+    return StringUtil.join(myTagNamespace, "|");
   }
 
   public void setTagNamespace(@NotNull @NonNls String tagNamespace) {

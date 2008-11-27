@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.util.StringUtil;
 
@@ -1118,7 +1119,7 @@ public abstract class PsiAdapter {
         PsiClass[] interfaces = clazz.getInterfaces();
 
         if (interfaces == null || interfaces.length == 0) {
-            return new String[0];
+          return ArrayUtil.EMPTY_STRING_ARRAY;
         }
 
         String[] names = new String[interfaces.length];
