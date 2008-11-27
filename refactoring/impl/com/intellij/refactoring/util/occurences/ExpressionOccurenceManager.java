@@ -10,10 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.RefactoringUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author dsl
@@ -80,12 +77,15 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
       final String text = getScope().getText();
       final int offset = getScope().getTextRange().getStartOffset();
       FindResult result = findManager.findString(text, 0, findModel);
+      final Set<PsiLiteralExpression> literals = new HashSet<PsiLiteralExpression>();
       while (result.isStringFound()) {
         final int startOffset = offset + result.getStartOffset();
         final int endOffset = result.getEndOffset();
-        if (PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiLiteralExpression.class) !=
-            null) { //enum. occurrences inside string literals
+        final PsiLiteralExpression literalExpression =
+          PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiLiteralExpression.class);
+        if (literalExpression != null && !literals.contains(literalExpression)) { //enum. occurrences inside string literals
           results.add(IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, offset + endOffset));
+          literals.add(literalExpression);
         }
         result = findManager.findString(text, endOffset, findModel);
       }
