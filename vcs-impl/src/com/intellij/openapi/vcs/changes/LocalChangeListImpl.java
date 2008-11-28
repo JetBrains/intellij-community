@@ -183,7 +183,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return false;
   }
 
-  synchronized boolean doneProcessingChanges() {
+  synchronized boolean doneProcessingChanges(final List<Change> removedChanges) {
     boolean changesDetected = (myChanges.size() != myChangesBeforeUpdate.size());
 
     Change[] newChanges = myChanges.toArray(new Change[myChanges.size()]);
@@ -196,6 +196,10 @@ public class LocalChangeListImpl extends LocalChangeList {
         changesDetected = true;
       }
     }
+    final List<Change> removed = new ArrayList<Change>(myChangesBeforeUpdate);
+    // since there are SAME objects...
+    removed.removeAll(Arrays.asList(newChanges));
+    removedChanges.addAll(removed);
 
     myChanges = new HashSet<Change>(Arrays.asList(newChanges));
     myOutdatedChanges = null;

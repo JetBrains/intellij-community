@@ -268,7 +268,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   public void notifyStartProcessingChanges(final VcsDirtyScope scope) {
     final Collection<Change> oldChanges = new ArrayList<Change>();
     for (LocalChangeList list : myMap.values()) {
-      oldChanges.addAll(((LocalChangeListImpl) list).startProcessingChanges(myProject, scope));
+      final Collection<Change> affectedChanges = ((LocalChangeListImpl)list).startProcessingChanges(myProject, scope);
+      if (! affectedChanges.isEmpty()) {
+        oldChanges.addAll(affectedChanges);
+      }
     }
     for (Change change : oldChanges) {
       myIdx.changeRemoved(change);
@@ -277,11 +280,20 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public void notifyDoneProcessingChanges(final EventDispatcher<ChangeListListener> dispatcher) {
     List<ChangeList> changedLists = new ArrayList<ChangeList>();
+    final Map<LocalChangeListImpl, List<Change>> removedChanges = new HashMap<LocalChangeListImpl, List<Change>>();
       for (LocalChangeList list : myMap.values()) {
-        if (((LocalChangeListImpl) list).doneProcessingChanges()) {
+        final List<Change> removed = new ArrayList<Change>();
+        final LocalChangeListImpl listImpl = (LocalChangeListImpl)list;
+        if (listImpl.doneProcessingChanges(removed)) {
           changedLists.add(list);
         }
+        if (! removed.isEmpty()) {
+          removedChanges.put(listImpl, removed);
+        }
       }
+    for (Map.Entry<LocalChangeListImpl, List<Change>> entry : removedChanges.entrySet()) {
+      dispatcher.getMulticaster().changesRemoved(entry.getValue(), entry.getKey());
+    }
     for(ChangeList changeList: changedLists) {
       dispatcher.getMulticaster().changeListChanged(changeList);
     }
