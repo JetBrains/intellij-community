@@ -40,7 +40,6 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Schem
   void setEditorFontName(String fontName);
 
   Font getFont(EditorFontType key);
-  void setFont(EditorFontType key, Font font);
 
   float getLineSpacing();
   void setLineSpacing(float lineSpacing);

@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -27,10 +26,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected int myEditorFontSize;
   protected float myLineSpacing;
 
-  private Map<EditorFontType, Font> myFonts = new EnumMap<EditorFontType, Font>(EditorFontType.class);
-  private String myEditorFontName;
-  private String myFallbackFontName;
+  String myEditorFontName;
   private String mySchemeName;
+  private ColorSchemeFontInfo myFontInfo;
 
   // version influences XML format and triggers migration
   private int myVersion;
@@ -38,7 +36,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected Map<ColorKey, Color> myColorsMap = new HashMap<ColorKey, Color>();
   protected Map<TextAttributesKey, TextAttributes> myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>();
 
-  @NonNls private static final String DEFAULT_FONT_NAME = "Courier";
+  @NonNls static final String DEFAULT_FONT_NAME = "Courier";
   @NonNls private static final String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
   @NonNls protected static final String SCHEME_NAME = "SCHEME_NAME";
   protected DefaultColorSchemesManager myDefaultColorSchemesManager;
@@ -80,22 +78,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return mySchemeName;
   }
 
-  public void setFont(EditorFontType key, Font font) {
-    myFonts.put(key, font);
-  }
-
   public abstract Object clone();
 
   public void copyTo(AbstractColorsScheme newScheme) {
     newScheme.myEditorFontSize = myEditorFontSize;
     newScheme.myLineSpacing = myLineSpacing;
     newScheme.setEditorFontName(getEditorFontName());
-
-    final Set<EditorFontType> types = myFonts.keySet();
-    for (EditorFontType type : types) {
-      Font font = myFonts.get(type);
-      newScheme.setFont(type, font);
-    }
+    newScheme.myFontInfo = null;
 
     newScheme.myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>(myAttributesMap);
     newScheme.myColorsMap = new HashMap<ColorKey, Color>(myColorsMap);
@@ -117,7 +106,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public Font getFont(EditorFontType key) {
-    return myFonts.get(key);
+    return getFontInfo().getFont(key);
   }
 
   public void setName(String name) {
@@ -125,10 +114,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public String getEditorFontName() {
-    if (myFallbackFontName != null) {
-      return myFallbackFontName;
-    }
-    return myEditorFontName == null ? DEFAULT_FONT_NAME : myEditorFontName;
+    return getFontInfo().getEditorFontName();
   }
 
   public int getEditorFontSize() {
@@ -140,27 +126,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   protected void initFonts() {
-    String editorFontName = getEditorFontName();
-    int editorFontSize = getEditorFontSize();
-
-    final String[] availableFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-    if (!ArrayUtil.contains(editorFontName, availableFonts) && myParentScheme != null) {
-      editorFontName = myParentScheme.getEditorFontName();
-      myFallbackFontName = editorFontName;
-    }
-    else {
-      myFallbackFontName = null;
-    }
-
-    Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
-    Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
-    Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
-    Font boldItalicFont = new Font(editorFontName, Font.BOLD + Font.ITALIC, editorFontSize);
-
-    myFonts.put(EditorFontType.PLAIN, plainFont);
-    myFonts.put(EditorFontType.BOLD, boldFont);
-    myFonts.put(EditorFontType.ITALIC, italicFont);
-    myFonts.put(EditorFontType.BOLD_ITALIC, boldItalicFont);
+    myFontInfo = null;
   }
 
   public String toString() {
@@ -386,5 +352,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
     return true;
 
+  }
+
+  EditorColorsScheme getParentScheme() {
+    return myParentScheme;
+  }
+
+  ColorSchemeFontInfo getFontInfo() {
+    if (myFontInfo == null) {
+      myFontInfo = new ColorSchemeFontInfo(this);
+    }
+    return myFontInfo;
   }
 }

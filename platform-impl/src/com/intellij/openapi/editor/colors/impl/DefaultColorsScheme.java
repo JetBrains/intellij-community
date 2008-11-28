@@ -4,7 +4,6 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -45,9 +44,6 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
 
   public void setColor(ColorKey key, Color color) {
-  }
-
-  public void setFont(EditorFontType key, Font font) {
   }
 
   public Object clone() {
