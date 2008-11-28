@@ -87,17 +87,17 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     });
   }
 
-  public void setParameterInfos(List<ParameterInfo> parameterInfos) {
+  public void setParameterInfos(List<ParameterInfoImpl> parameterInfos) {
     myParametersTableModel.setParameterInfos(parameterInfos, myMethod.getParameterList());
     updateSignature();
   }
 
-  private static List<ParameterInfo> getParameterInfos(PsiMethod method) {
-    final ArrayList<ParameterInfo> result = new ArrayList<ParameterInfo>();
+  private static List<ParameterInfoImpl> getParameterInfos(PsiMethod method) {
+    final ArrayList<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      ParameterInfo info = new ParameterInfo(i, parameter.getName(), parameter.getType());
+      ParameterInfoImpl info = new ParameterInfoImpl(i, parameter.getName(), parameter.getType());
       info.defaultValue = "";
       result.add(info);
     }
@@ -139,7 +139,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
   }
 
-  public ParameterInfo[] getParameters() {
+  public ParameterInfoImpl[] getParameters() {
     return myParametersTableModel.getParameters();
   }
 
@@ -427,7 +427,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   }
 
   private boolean mayPropagateParameters() {
-    final ParameterInfo[] infos = myParametersTableModel.getParameters();
+    final ParameterInfoImpl[] infos = myParametersTableModel.getParameters();
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     if (infos.length < parameters.length) return false;
     for (int i = 0; i < parameters.length; i++) {
@@ -476,11 +476,11 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
     final List<PsiTypeCodeFragment> codeFraments = myParametersTableModel.getCodeFraments();
 
-    final ParameterInfo[] parameterInfos = myParametersTableModel.getParameters();
+    final ParameterInfoImpl[] parameterInfos = myParametersTableModel.getParameters();
     LOG.assertTrue(codeFraments.size() == parameterInfos.length);
     final String indent = "    ";
     for (int i = 0; i < parameterInfos.length; i++) {
-      ParameterInfo info = parameterInfos[i];
+      ParameterInfoImpl info = parameterInfos[i];
       if (i > 0) {
         buffer.append(",");
       }
@@ -560,12 +560,12 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
     final List<PsiTypeCodeFragment> codeFraments = myParametersTableModel.getCodeFraments();
     final List<JavaCodeFragment> defaultValueFraments = myParametersTableModel.getDefaultValueFraments();
-    ParameterInfo[] parameterInfos = myParametersTableModel.getParameters();
+    ParameterInfoImpl[] parameterInfos = myParametersTableModel.getParameters();
     final int newParametersNumber = parameterInfos.length;
     LOG.assertTrue(codeFraments.size() == newParametersNumber);
 
     for (int i = 0; i < newParametersNumber; i++) {
-      ParameterInfo info = parameterInfos[i];
+      ParameterInfoImpl info = parameterInfos[i];
       PsiTypeCodeFragment psiCodeFragment = codeFraments.get(i);
       PsiCodeFragment defaultValueFragment = defaultValueFraments.get(i);
 
@@ -641,9 +641,9 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private boolean checkMethodConflicts() {
     try {
       PsiManager manager = PsiManager.getInstance(myProject);
-      ParameterInfo[] parameters = getParameters();
+      ParameterInfoImpl[] parameters = getParameters();
 
-      for (ParameterInfo info : parameters) {
+      for (ParameterInfoImpl info : parameters) {
         final PsiType parameterType = info.createType(myMethod, manager);
 
         if (!RefactoringUtil.isResolvableType(parameterType)) {

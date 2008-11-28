@@ -13,7 +13,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class SuperMethodReturnFix implements IntentionAction {
@@ -60,7 +60,7 @@ public class SuperMethodReturnFix implements IntentionAction {
             false, null,
             mySuperMethod.getName(),
             mySuperMethodType,
-            ParameterInfo.fromMethod(mySuperMethod));
+            ParameterInfoImpl.fromMethod(mySuperMethod));
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       processor.run();
     } else {

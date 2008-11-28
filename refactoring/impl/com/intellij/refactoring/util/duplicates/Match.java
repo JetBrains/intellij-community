@@ -15,7 +15,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -327,8 +327,8 @@ public final class Match {
       buffer.append("(");
       int count = 0;
       final String INDENT = "    ";
-      final ArrayList<ParameterInfo> params = patchParams(method);
-      for (ParameterInfo param : params) {
+      final ArrayList<ParameterInfoImpl> params = patchParams(method);
+      for (ParameterInfoImpl param : params) {
         String typeText = param.getTypeText();
         if (count > 0) {
           buffer.append(",");
@@ -361,11 +361,11 @@ public final class Match {
   }
 
   public void changeSignature(final PsiMethod psiMethod) {
-    final ArrayList<ParameterInfo> newParameters = patchParams(psiMethod);
+    final ArrayList<ParameterInfoImpl> newParameters = patchParams(psiMethod);
     final PsiType expressionType = getChangedReturnType(psiMethod);
     final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
                                                                       expressionType != null ? expressionType : psiMethod.getReturnType(),
-                                                                      newParameters.toArray(new ParameterInfo[newParameters.size()]));
+                                                                      newParameters.toArray(new ParameterInfoImpl[newParameters.size()]));
 
     csp.run();
   }
@@ -430,8 +430,8 @@ public final class Match {
     return !TypeConversionUtil.isAssignable(currentType, substitutor.substitute(returnType));
   }
 
-  private ArrayList<ParameterInfo> patchParams(final PsiMethod psiMethod) {
-    final ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
+  private ArrayList<ParameterInfoImpl> patchParams(final PsiMethod psiMethod) {
+    final ArrayList<ParameterInfoImpl> newParameters = new ArrayList<ParameterInfoImpl>();
     final PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
     for (int i = 0; i < oldParameters.length; i++) {
       final PsiParameter oldParameter = oldParameters[i];
@@ -442,7 +442,7 @@ public final class Match {
           break;
         }
       }
-      newParameters.add(new ParameterInfo(i, oldParameter.getName(), type));
+      newParameters.add(new ParameterInfoImpl(i, oldParameter.getName(), type));
     }
     return newParameters;
   }

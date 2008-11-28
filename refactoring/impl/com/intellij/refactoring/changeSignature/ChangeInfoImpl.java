@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class ChangeInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeInfo");
+class ChangeInfoImpl implements ChangeInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeInfoImpl");
 
   final String newVisibility;
   private PsiMethod method;
@@ -26,7 +26,7 @@ class ChangeInfo {
   final String[] oldParameterTypes;
   final String newName;
   final CanonicalTypes.Type newReturnType;
-  final ParameterInfo[] newParms;
+  final ParameterInfoImpl[] newParms;
   ThrownExceptionInfo[] newExceptions;
   final boolean[] toRemoveParm;
   boolean isVisibilityChanged = false;
@@ -49,11 +49,11 @@ class ChangeInfo {
   /**
    * @param newExceptions null if not changed
    */
-  public ChangeInfo(@Modifier String newVisibility,
+  public ChangeInfoImpl(@Modifier String newVisibility,
                     PsiMethod method,
                     String newName,
-                    CanonicalTypes.Type newType,
-                    @NotNull ParameterInfo[] newParms,
+                    @NotNull CanonicalTypes.Type newType,
+                    @NotNull ParameterInfoImpl[] newParms,
                     ThrownExceptionInfo[] newExceptions) {
     this.newVisibility = newVisibility;
     this.method = method;
@@ -96,7 +96,7 @@ class ChangeInfo {
     }
     else {
       for(int i = 0; i < newParms.length; i++){
-        ParameterInfo parmInfo = newParms[i];
+        ParameterInfoImpl parmInfo = newParms[i];
         PsiParameter parameter = parameters[i];
         if (i != parmInfo.oldParameterIndex){
           isParameterSetOrOrderChanged = true;
@@ -122,7 +122,7 @@ class ChangeInfo {
 
     toRemoveParm = new boolean[parameters.length];
     Arrays.fill(toRemoveParm, true);
-    for (ParameterInfo info : newParms) {
+    for (ParameterInfoImpl info : newParms) {
       if (info.oldParameterIndex < 0) continue;
       toRemoveParm[info.oldParameterIndex] = false;
     }
@@ -130,7 +130,7 @@ class ChangeInfo {
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     defaultValues = new PsiExpression[newParms.length];
     for(int i = 0; i < newParms.length; i++){
-      ParameterInfo info = newParms[i];
+      ParameterInfoImpl info = newParms[i];
       if (info.oldParameterIndex < 0 && !info.isVarargType()){
         if (info.defaultValue == null) continue;
         try{
@@ -148,7 +148,7 @@ class ChangeInfo {
       arrayToVarargs = false;
     }
     else {
-      final ParameterInfo lastNewParm = this.newParms[this.newParms.length - 1];
+      final ParameterInfoImpl lastNewParm = this.newParms[this.newParms.length - 1];
       obtainsVarags = lastNewParm.isVarargType();
       retainsVarargs = lastNewParm.oldParameterIndex >= 0 && obtainsVarags;
       if (retainsVarargs) {
@@ -159,6 +159,15 @@ class ChangeInfo {
         arrayToVarargs = false;
       }
     }
+  }
+
+  @NotNull
+  public ParameterInfo[] getNewParameters() {
+    return newParms;
+  }
+
+  public boolean isParameterSetOrOrderChanged() {
+    return isParameterSetOrOrderChanged;
   }
 
   private void setupExceptions(ThrownExceptionInfo[] newExceptions, final PsiMethod method) {
@@ -186,13 +195,13 @@ class ChangeInfo {
     isExceptionSetOrOrderChanged |= isExceptionSetChanged;
   }
 
-  private void setupPropagationEnabled(final PsiParameter[] parameters, final ParameterInfo[] newParms) {
+  private void setupPropagationEnabled(final PsiParameter[] parameters, final ParameterInfoImpl[] newParms) {
     if (parameters.length >= newParms.length) {
       isPropagationEnabled = false;
     }
     else {
       for (int i = 0; i < parameters.length; i++) {
-        final ParameterInfo newParm = newParms[i];
+        final ParameterInfoImpl newParm = newParms[i];
         if (newParm.oldParameterIndex != i) {
           isPropagationEnabled = false;
           break;
@@ -219,14 +228,14 @@ class ChangeInfo {
     this.method = method;
   }
 
-  public ParameterInfo[] getCreatedParmsInfoWithoutVarargs() {
-    List<ParameterInfo> result = new ArrayList<ParameterInfo>();
-    for (ParameterInfo newParm : newParms) {
+  public ParameterInfoImpl[] getCreatedParmsInfoWithoutVarargs() {
+    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
+    for (ParameterInfoImpl newParm : newParms) {
       if (newParm.oldParameterIndex < 0 && !newParm.isVarargType()) {
         result.add(newParm);
       }
     }
-    return result.toArray(new ParameterInfo[result.size()]);
+    return result.toArray(new ParameterInfoImpl[result.size()]);
   }
 
   @Nullable

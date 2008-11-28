@@ -23,7 +23,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -262,7 +262,7 @@ public class MethodReturnBooleanFix implements IntentionAction {
 
     private UsagesAwareChangeSignatureProcessor(final Project project, final PsiMethod method, final boolean generateDelegate,
                                                 @Modifier final String newVisibility, final String newName, final PsiType newType,
-                                                @NotNull final ParameterInfo[] parameterInfo, final UsageVisitor usageVisitor) {
+                                                @NotNull final ParameterInfoImpl[] parameterInfo, final UsageVisitor usageVisitor) {
       super(project, method, generateDelegate, newVisibility, newName, newType, parameterInfo);
       myUsageVisitor = usageVisitor;
     }

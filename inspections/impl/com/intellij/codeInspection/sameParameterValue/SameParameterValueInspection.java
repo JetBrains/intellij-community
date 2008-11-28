@@ -12,7 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -189,18 +189,18 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
 
     public static void removeParameter(final PsiMethod method, final PsiParameter parameter) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      final List<ParameterInfo> psiParameters = new ArrayList<ParameterInfo>();
+      final List<ParameterInfoImpl> psiParameters = new ArrayList<ParameterInfoImpl>();
       int paramIdx = 0;
       final String paramName = parameter.getName();
       for (PsiParameter param : parameters) {
         if (!Comparing.strEqual(paramName, param.getName())) {
-          psiParameters.add(new ParameterInfo(paramIdx, param.getName(), param.getType()));
+          psiParameters.add(new ParameterInfoImpl(paramIdx, param.getName(), param.getType()));
         }
         paramIdx++;
       }
 
       new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(), method.getReturnType(),
-                                   psiParameters.toArray(new ParameterInfo[psiParameters.size()])).run();
+                                   psiParameters.toArray(new ParameterInfoImpl[psiParameters.size()])).run();
     }
 
     public String getValue() {

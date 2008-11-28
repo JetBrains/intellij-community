@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ParameterInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfo");
+public class ParameterInfoImpl implements ParameterInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfoImpl");
   public final int oldParameterIndex;
   boolean useAnySingleVariable;
   private String name = "";
@@ -23,24 +23,28 @@ public class ParameterInfo {
 
   String defaultValue = "";
 
-  public ParameterInfo(int oldParameterIndex) {
+  public ParameterInfoImpl(int oldParameterIndex) {
     this.oldParameterIndex = oldParameterIndex;
   }
 
-  public ParameterInfo(int oldParameterIndex, @NonNls String name, PsiType aType) {
+  public ParameterInfoImpl(int oldParameterIndex, @NonNls String name, PsiType aType) {
     setName(name);
     this.oldParameterIndex = oldParameterIndex;
     setType(aType);
   }
 
-  public ParameterInfo(int oldParameterIndex, @NonNls String name, PsiType aType, @NonNls String defaultValue) {
+  public ParameterInfoImpl(int oldParameterIndex, @NonNls String name, PsiType aType, @NonNls String defaultValue) {
     this(oldParameterIndex, name, aType, defaultValue, false);
   }
 
-  public ParameterInfo(int oldParameterIndex, @NonNls String name, PsiType aType, @NonNls String defaultValue, boolean useAnyVariable) {
+  public ParameterInfoImpl(int oldParameterIndex, @NonNls String name, PsiType aType, @NonNls String defaultValue, boolean useAnyVariable) {
     this(oldParameterIndex, name, aType);
     this.defaultValue = defaultValue;
     useAnySingleVariable = useAnyVariable;
+  }
+
+  public int getOldIndex() {
+    return oldParameterIndex;
   }
 
   public void setUseAnySingleVariable(boolean useAnySingleVariable) {
@@ -58,9 +62,9 @@ public class ParameterInfo {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ParameterInfo)) return false;
+    if (!(o instanceof ParameterInfoImpl)) return false;
 
-    ParameterInfo parameterInfo = (ParameterInfo) o;
+    ParameterInfoImpl parameterInfo = (ParameterInfoImpl) o;
 
     if (oldParameterIndex != parameterInfo.oldParameterIndex) return false;
     if (defaultValue != null ? !defaultValue.equals(parameterInfo.defaultValue) : parameterInfo.defaultValue != null) return false;
@@ -113,14 +117,14 @@ public class ParameterInfo {
     return getTypeText().endsWith("...");
   }
 
-  public static ParameterInfo[] fromMethod(PsiMethod method) {
-    List<ParameterInfo> result = new ArrayList<ParameterInfo>();
+  public static ParameterInfoImpl[] fromMethod(PsiMethod method) {
+    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      result.add(new ParameterInfo(i, parameter.getName(), parameter.getType()));
+      result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
     }
-    return result.toArray(new ParameterInfo[result.size()]);
+    return result.toArray(new ParameterInfoImpl[result.size()]);
   }
 
   @Nullable

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,16 +64,16 @@ public class RemoveUnusedParameterFix implements IntentionAction {
     }
   }
 
-  public static ParameterInfo[] getNewParametersInfo(PsiMethod method, PsiParameter parameterToRemove) {
-    List<ParameterInfo> result = new ArrayList<ParameterInfo>();
+  public static ParameterInfoImpl[] getNewParametersInfo(PsiMethod method, PsiParameter parameterToRemove) {
+    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       if (!Comparing.equal(parameter, parameterToRemove)) {
-        result.add(new ParameterInfo(i, parameter.getName(), parameter.getType()));
+        result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
       }
     }
-    return result.toArray(new ParameterInfo[result.size()]);
+    return result.toArray(new ParameterInfoImpl[result.size()]);
   }
 
   public boolean startInWriteAction() {

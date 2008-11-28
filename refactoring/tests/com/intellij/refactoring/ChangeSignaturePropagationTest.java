@@ -5,7 +5,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.containers.HashSet;
@@ -37,7 +37,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
     PsiMethod method = getPrimaryMethod();
     PsiClass aClass = method.getContainingClass();
     PsiType newParamType = myJavaFacade.getElementFactory().createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(myProject));
-    final ParameterInfo[] newParameters = new ParameterInfo[]{new ParameterInfo(-1, "clazz", newParamType, "null")};
+    final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "clazz", newParamType, "null")};
     final Set<PsiMethod> methodsToPropagateParameters = new HashSet<PsiMethod>(Arrays.asList(aClass.getMethods()));
     doTest(newParameters, new ThrownExceptionInfo[0], methodsToPropagateParameters, null, method);
   }
@@ -48,10 +48,10 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
     PsiClassType newExceptionType = myJavaFacade.getElementFactory().createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(myProject));
     final ThrownExceptionInfo[] newExceptions = new ThrownExceptionInfo[]{new ThrownExceptionInfo(-1, newExceptionType)};
     final Set<PsiMethod> methodsToPropagateExceptions = new HashSet<PsiMethod>(Arrays.asList(aClass.getMethods()));
-    doTest(new ParameterInfo[0], newExceptions, null, methodsToPropagateExceptions, method);
+    doTest(new ParameterInfoImpl[0], newExceptions, null, methodsToPropagateExceptions, method);
   }
 
-  private void doTest(ParameterInfo[] newParameters,
+  private void doTest(ParameterInfoImpl[] newParameters,
                       final ThrownExceptionInfo[] newExceptions,
                       Set<PsiMethod> methodsToPropagateParameterChanges,
                       Set<PsiMethod> methodsToPropagateExceptionChanges,
@@ -81,11 +81,11 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
     return "/refactoring/changeSignaturePropagation/";
   }
 
-  private ParameterInfo[] generateParameterInfos (PsiMethod method, ParameterInfo[] newParameters) {
+  private ParameterInfoImpl[] generateParameterInfos (PsiMethod method, ParameterInfoImpl[] newParameters) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    ParameterInfo[] result = new ParameterInfo[parameters.length + newParameters.length];
+    ParameterInfoImpl[] result = new ParameterInfoImpl[parameters.length + newParameters.length];
     for (int i = 0; i < parameters.length; i++) {
-      result[i] = new ParameterInfo(i);
+      result[i] = new ParameterInfoImpl(i);
     }
     System.arraycopy(newParameters, 0, result, parameters.length, newParameters.length);
     return result;

@@ -15,7 +15,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,8 +90,8 @@ public class MethodParameterFix implements IntentionAction {
     }
   }
 
-  private ParameterInfo[] getNewParametersInfo() throws IncorrectOperationException {
-    List<ParameterInfo> result = new ArrayList<ParameterInfo>();
+  private ParameterInfoImpl[] getNewParametersInfo() throws IncorrectOperationException {
+    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
     PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myMethod.getProject());
@@ -107,12 +107,12 @@ public class MethodParameterFix implements IntentionAction {
         newParameter.setName(parameter.getName());
         parameter = newParameter;
       }
-      result.add(new ParameterInfo(i, parameter.getName(), parameter.getType()));
+      result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
     }
     if (parameters.length == myIndex) {
-      result.add(new ParameterInfo(-1, newParameter.getName(), newParameter.getType()));
+      result.add(new ParameterInfoImpl(-1, newParameter.getName(), newParameter.getType()));
     }
-    return result.toArray(new ParameterInfo[result.size()]);
+    return result.toArray(new ParameterInfoImpl[result.size()]);
   }
 
   public boolean startInWriteAction() {

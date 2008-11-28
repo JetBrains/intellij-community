@@ -6,7 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -74,8 +74,8 @@ public class MergeMethodArguments extends FixableUsageInfo {
         }
       }
     }
-    final List<ParameterInfo> parametersInfo = new ArrayList<ParameterInfo>();
-    parametersInfo.add(new ParameterInfo(-1, parameterName, new PsiImmediateClassType(psiClass, subst), null) {
+    final List<ParameterInfoImpl> parametersInfo = new ArrayList<ParameterInfoImpl>();
+    parametersInfo.add(new ParameterInfoImpl(-1, parameterName, new PsiImmediateClassType(psiClass, subst), null) {
       @Override
       public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
         return psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr), expr);
@@ -84,12 +84,12 @@ public class MergeMethodArguments extends FixableUsageInfo {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       if (!isParameterToMerge(i)) {
-        parametersInfo.add(new ParameterInfo(i, parameters[i].getName(), parameters[i].getType()));
+        parametersInfo.add(new ParameterInfoImpl(i, parameters[i].getName(), parameters[i].getType()));
       }
     }
 
     new ChangeSignatureProcessor(method.getProject(), method, myKeepMethodAsDelegate, null, method.getName(), method.getReturnType(),
-                                 parametersInfo.toArray(new ParameterInfo[parametersInfo.size()])).run();
+                                 parametersInfo.toArray(new ParameterInfoImpl[parametersInfo.size()])).run();
   }
 
   private boolean isParameterToMerge(int index) {

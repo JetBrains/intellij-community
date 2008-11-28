@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,10 +159,10 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
         }
       }
       PsiParameter[] params = psiMethod.getParameterList().getParameters();
-      ParameterInfo[] infos = new ParameterInfo[params.length];
+      ParameterInfoImpl[] infos = new ParameterInfoImpl[params.length];
       for (int i = 0; i < params.length; i++) {
         PsiParameter param = params[i];
-        infos[i] = new ParameterInfo(i, param.getName(), param.getType());
+        infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
       }
 
       ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,

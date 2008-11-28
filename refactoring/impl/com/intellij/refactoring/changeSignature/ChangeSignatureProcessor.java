@@ -46,7 +46,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
 
   @Modifier private final String myNewVisibility;
-  private final ChangeInfo myChangeInfo;
+  private final ChangeInfoImpl myChangeInfo;
   private final PsiManager myManager;
   private final PsiElementFactory myFactory;
   private final boolean myGenerateDelegate;
@@ -59,7 +59,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   @Modifier String newVisibility,
                                   String newName,
                                   PsiType newType,
-                                  @NotNull ParameterInfo[] parameterInfo) {
+                                  @NotNull ParameterInfoImpl[] parameterInfo) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
          parameterInfo, null, null, null);
@@ -71,7 +71,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   String newVisibility,
                                   String newName,
                                   PsiType newType,
-                                  ParameterInfo[] parameterInfo,
+                                  ParameterInfoImpl[] parameterInfo,
                                   ThrownExceptionInfo[] exceptionInfos) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
@@ -84,7 +84,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   String newVisibility,
                                   String newName,
                                   CanonicalTypes.Type newType,
-                                  @NotNull ParameterInfo[] parameterInfo,
+                                  @NotNull ParameterInfoImpl[] parameterInfo,
                                   ThrownExceptionInfo[] thrownExceptions,
                                   Set<PsiMethod> propagateParametersMethods,
                                   Set<PsiMethod> propagateExceptionsMethods) {
@@ -103,7 +103,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       myNewVisibility = newVisibility;
     }
 
-    myChangeInfo = new ChangeInfo(myNewVisibility, method, newName, newType, parameterInfo, thrownExceptions);
+    myChangeInfo = new ChangeInfoImpl(myNewVisibility, method, newName, newType, parameterInfo, thrownExceptions);
     LOG.assertTrue(myChangeInfo.getMethod().isValid());
   }
 
@@ -170,6 +170,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         else if(element instanceof PsiClass) {
           result.add(new NoConstructorClassUsageInfo((PsiClass)element));
         }
+        else if (ref instanceof PsiCallReference) {
+          result.add(new CallReferenceUsageInfo((PsiCallReference) ref));
+        }
         else {
           result.add(new MoveRenameUsageInfo(element, ref, method));
         }
@@ -233,7 +236,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
     if (isOriginal) {
       deletedOrRenamedParameters.addAll(Arrays.asList(parameters));
-      for (ParameterInfo parameterInfo : myChangeInfo.newParms) {
+      for (ParameterInfoImpl parameterInfo : myChangeInfo.newParms) {
         if (parameterInfo.oldParameterIndex >= 0) {
           final PsiParameter parameter = parameters[parameterInfo.oldParameterIndex];
           if (parameterInfo.getName().equals(parameter.getName())) {
@@ -243,7 +246,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    for (ParameterInfo parameterInfo : myChangeInfo.newParms) {
+    for (ParameterInfoImpl parameterInfo : myChangeInfo.newParms) {
       final int oldParameterIndex = parameterInfo.oldParameterIndex;
       final String newName = parameterInfo.getName();
       if (oldParameterIndex >= 0) {
@@ -274,7 +277,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private void findParametersUsage(final PsiMethod method, ArrayList<UsageInfo> result, PsiMethod[] overriders) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (ParameterInfo info : myChangeInfo.newParms) {
+    for (ParameterInfoImpl info : myChangeInfo.newParms) {
       if (info.oldParameterIndex >= 0) {
         PsiParameter parameter = parameters[info.oldParameterIndex];
         if (!info.getName().equals(parameter.getName())) {
@@ -313,10 +316,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         prototype = factory.createConstructor();
         prototype.setName(newMethodName);
       }
-      ParameterInfo[] parameters = myChangeInfo.newParms;
+      ParameterInfoImpl[] parameters = myChangeInfo.newParms;
 
 
-      for (ParameterInfo info : parameters) {
+      for (ParameterInfoImpl info : parameters) {
         final PsiType parameterType = info.createType(method, manager);
         PsiParameter param = factory.createParameter(info.getName(), parameterType);
         prototype.getParameterList().add(param);
@@ -506,6 +509,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             postponedUsages.add(usage);
           }
         }
+        else if (usage instanceof CallReferenceUsageInfo) {
+          ((CallReferenceUsageInfo) usage).getReference().handleChangeSignature(myChangeInfo);
+        }
         else if (element instanceof PsiEnumConstant) {
           fixActualArgumentsList(((PsiEnumConstant)element).getArgumentList(), myChangeInfo, true);
         }
@@ -558,9 +564,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void addDelegateArguments(final PsiCallExpression callExpression) throws IncorrectOperationException {
-    final ParameterInfo[] newParms = myChangeInfo.newParms;
+    final ParameterInfoImpl[] newParms = myChangeInfo.newParms;
     for (int i = 0; i < newParms.length; i++) {
-      ParameterInfo newParm = newParms[i];
+      ParameterInfoImpl newParm = newParms[i];
       final PsiExpression actualArg;
       if (newParm.oldParameterIndex >= 0) {
         actualArg = myFactory.createExpressionFromText(myChangeInfo.oldParameterNames[newParm.oldParameterIndex], callExpression);
@@ -641,7 +647,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     processMethodUsage(callExpression.getMethodExpression(), myChangeInfo, true, false, callee, usages);
   }
 
-  private PsiParameter createNewParameter(ParameterInfo newParm,
+  private PsiParameter createNewParameter(ParameterInfoImpl newParm,
                                           PsiSubstitutor substitutor) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     final PsiType type = substitutor.substitute(newParm.createType(myChangeInfo.getMethod().getParameterList(), myManager));
@@ -653,7 +659,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void processMethodUsage(PsiElement ref,
-                                  ChangeInfo changeInfo,
+                                  ChangeInfoImpl changeInfo,
                                   boolean toChangeArguments,
                                   boolean toCatchExceptions,
                                   PsiMethod callee, final UsageInfo[] usages) throws IncorrectOperationException {
@@ -701,7 +707,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return callee.getThrowsList().getReferencedTypes(); //Callee method's throws list is already modified!
   }
 
-  private PsiClassType[] getPrimaryChangedExceptionInfo(ChangeInfo changeInfo) throws IncorrectOperationException {
+  private PsiClassType[] getPrimaryChangedExceptionInfo(ChangeInfoImpl changeInfo) throws IncorrectOperationException {
     PsiClassType[] newExceptions = new PsiClassType[changeInfo.newExceptions.length];
     for (int i = 0; i < newExceptions.length; i++) {
       newExceptions[i] = (PsiClassType)changeInfo.newExceptions[i].myType.getType(myChangeInfo.getMethod(), myManager); //context really does not matter here
@@ -821,20 +827,20 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private static int getNonVarargCount(ChangeInfo changeInfo, PsiExpression[] args) {
+  private static int getNonVarargCount(ChangeInfoImpl changeInfo, PsiExpression[] args) {
     if (!changeInfo.wasVararg) return args.length;
     return changeInfo.oldParameterTypes.length - 1;
   }
 
   //This methods works equally well for primary usages as well as for propagated callers' usages
   private void fixActualArgumentsList(PsiExpressionList list,
-                                      ChangeInfo changeInfo,
+                                      ChangeInfoImpl changeInfo,
                                       boolean toInsertDefaultValue) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
     if (changeInfo.isParameterSetOrOrderChanged) {
       if (changeInfo.isPropagationEnabled) {
-        final ParameterInfo[] createdParmsInfo = changeInfo.getCreatedParmsInfoWithoutVarargs();
-        for (ParameterInfo info : createdParmsInfo) {
+        final ParameterInfoImpl[] createdParmsInfo = changeInfo.getCreatedParmsInfoWithoutVarargs();
+        for (ParameterInfoImpl info : createdParmsInfo) {
           PsiExpression newArg;
           if (toInsertDefaultValue) {
             newArg = createDefaultValue(factory, info, list);
@@ -855,7 +861,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         final int newNonVarargCount;
         if (changeInfo.arrayToVarargs) {
           newNonVarargCount = changeInfo.newParms.length - 1;
-          final ParameterInfo lastNewParm = changeInfo.newParms[changeInfo.newParms.length - 1];
+          final ParameterInfoImpl lastNewParm = changeInfo.newParms[changeInfo.newParms.length - 1];
           final PsiExpression arrayToConvert = args[lastNewParm.oldParameterIndex];
           if (arrayToConvert instanceof PsiNewExpression) {
             final PsiNewExpression expression = (PsiNewExpression)arrayToConvert;
@@ -904,7 +910,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiExpression createActualArgument(final PsiExpressionList list, final ParameterInfo info, final boolean toInsertDefaultValue,
+  private PsiExpression createActualArgument(final PsiExpressionList list, final ParameterInfoImpl info, final boolean toInsertDefaultValue,
                                              final PsiExpression[] args) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
     final int index = info.oldParameterIndex;
@@ -919,7 +925,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiExpression createDefaultValue(final PsiElementFactory factory, final ParameterInfo info, final PsiExpressionList list)
+  private PsiExpression createDefaultValue(final PsiElementFactory factory, final ParameterInfoImpl info, final PsiExpressionList list)
     throws IncorrectOperationException {
     if (info.useAnySingleVariable) {
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
@@ -948,7 +954,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private static void addParameterUsages(PsiParameter parameter,
                                   ArrayList<UsageInfo> results,
-                                  ParameterInfo info) {
+                                  ParameterInfoImpl info) {
     PsiManager manager = parameter.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false)) {
@@ -966,9 +972,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     if (toInsertParams) {
       List<PsiParameter> newParameters = new ArrayList<PsiParameter>();
       newParameters.addAll(Arrays.asList(caller.getParameterList().getParameters()));
-      final ParameterInfo[] primaryNewParms = myChangeInfo.newParms;
+      final ParameterInfoImpl[] primaryNewParms = myChangeInfo.newParms;
       PsiSubstitutor substitutor = baseMethod == null ? PsiSubstitutor.EMPTY : calculateSubstitutor(caller, baseMethod);
-      for (ParameterInfo info : primaryNewParms) {
+      for (ParameterInfoImpl info : primaryNewParms) {
         if (info.oldParameterIndex < 0) newParameters.add(createNewParameter(info, substitutor));
       }
       PsiParameter[] arrayed = newParameters.toArray(new PsiParameter[newParameters.size()]);
@@ -1036,7 +1042,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     PsiParameter[] newParms = new PsiParameter[myChangeInfo.newParms.length];
     for (int i = 0; i < newParms.length; i++) {
-      ParameterInfo info = myChangeInfo.newParms[i];
+      ParameterInfoImpl info = myChangeInfo.newParms[i];
       int index = info.oldParameterIndex;
       if (index >= 0) {
         PsiParameter parameter = parameters[index];
@@ -1143,11 +1149,11 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private void fixJavadocsForChangedMethod(PsiMethod method) throws IncorrectOperationException {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final ParameterInfo[] newParms = myChangeInfo.newParms;
+    final ParameterInfoImpl[] newParms = myChangeInfo.newParms;
     LOG.assertTrue(parameters.length == newParms.length);
     final Set<PsiParameter> newParameters = new HashSet<PsiParameter>();
     for (int i = 0; i < newParms.length; i++) {
-      ParameterInfo newParm = newParms[i];
+      ParameterInfoImpl newParm = newParms[i];
       if (newParm.oldParameterIndex < 0 ||
           !newParm.getName().equals(myChangeInfo.oldParameterNames[newParm.oldParameterIndex])) {
         newParameters.add(parameters[i]);

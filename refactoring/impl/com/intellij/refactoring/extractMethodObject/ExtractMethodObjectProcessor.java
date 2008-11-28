@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -146,10 +146,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     PsiParameter[] params = getMethod().getParameterList().getParameters();
-    ParameterInfo[] infos = new ParameterInfo[params.length];
+    ParameterInfoImpl[] infos = new ParameterInfoImpl[params.length];
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
-      infos[i] = new ParameterInfo(i, param.getName(), param.getType());
+      infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
     }
     ChangeSignatureProcessor cp = new ChangeSignatureProcessor(myProject, getMethod(), false, null, getMethod().getName(),
                                                                new PsiImmediateClassType(innerClass, PsiSubstitutor.EMPTY), infos);

@@ -15,7 +15,7 @@ import java.util.List;
  */
 class ParameterTableModel extends AbstractTableModel implements RowEditableTableModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterTableModel");
-  private List<ParameterInfo> myParameterInfos;
+  private List<ParameterInfoImpl> myParameterInfos;
   private List<PsiTypeCodeFragment> myTypeCodeFraments;
   private List<JavaCodeFragment> myDefaultValuesCodeFragments;
   private final PsiParameterList myParameterList;
@@ -42,13 +42,13 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     return Collections.unmodifiableList(myDefaultValuesCodeFragments);
   }
 
-  public ParameterInfo[] getParameters() {
-    return myParameterInfos.toArray(new ParameterInfo[myParameterInfos.size()]);
+  public ParameterInfoImpl[] getParameters() {
+    return myParameterInfos.toArray(new ParameterInfoImpl[myParameterInfos.size()]);
   }
 
 
   public void addRow() {
-    ParameterInfo info = new ParameterInfo(-1);
+    ParameterInfoImpl info = new ParameterInfoImpl(-1);
     myParameterInfos.add(info);
     myTypeCodeFraments.add(createParameterTypeCodeFragment("", myParameterList));
     myDefaultValuesCodeFragments.add(createDefaultValueCodeFragment("", null));
@@ -83,7 +83,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   }
 
   public Object getValueAt(int rowIndex, int columnIndex) {
-    ParameterInfo info = myParameterInfos.get(rowIndex);
+    ParameterInfoImpl info = myParameterInfos.get(rowIndex);
     switch (columnIndex) {
       case 0:
         return myTypeCodeFraments.get(rowIndex);
@@ -104,7 +104,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     String s = aValue instanceof String ? (String)aValue : null;
     if (s == null) s = "";
     s = s.trim();
-    ParameterInfo info = myParameterInfos.get(rowIndex);
+    ParameterInfoImpl info = myParameterInfos.get(rowIndex);
     switch (columnIndex) {
       case 0:
         //info.setType();
@@ -152,7 +152,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
         {
           final PsiType typeByRow = getTypeByRow(rowIndex);
           final boolean isEllipsis = typeByRow instanceof PsiEllipsisType;
-          ParameterInfo info = myParameterInfos.get(rowIndex);
+          ParameterInfoImpl info = myParameterInfos.get(rowIndex);
           return !isEllipsis && info.oldParameterIndex < 0;
         }
 
@@ -193,11 +193,11 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     return type;
   }
 
-  public void setParameterInfos(List<ParameterInfo> parameterInfos, PsiElement context) {
+  public void setParameterInfos(List<ParameterInfoImpl> parameterInfos, PsiElement context) {
     myParameterInfos = parameterInfos;
     myTypeCodeFraments = new ArrayList<PsiTypeCodeFragment>(parameterInfos.size());
     myDefaultValuesCodeFragments = new ArrayList<JavaCodeFragment>(parameterInfos.size());
-    for (ParameterInfo parameterInfo : parameterInfos) {
+    for (ParameterInfoImpl parameterInfo : parameterInfos) {
       final PsiTypeCodeFragment typeCodeFragment = createParameterTypeCodeFragment(parameterInfo.getTypeText(), context);
       parameterInfo.getTypeWrapper().addImportsTo(typeCodeFragment);
       myTypeCodeFraments.add(typeCodeFragment);

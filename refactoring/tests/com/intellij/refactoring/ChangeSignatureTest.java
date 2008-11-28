@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -16,20 +16,20 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ChangeSignatureTest extends CodeInsightTestCase {
   public void testSimple() throws Exception {
-    doTest(null, null, null, new ParameterInfo[0], new ThrownExceptionInfo[0], false);
+    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
   public void testParameterReorder() throws Exception {
-    doTest(null, new ParameterInfo[]{new ParameterInfo(1), new ParameterInfo(0)}, false);
+    doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
   }
 
   public void testGenericTypes() throws Exception {
     doTest(null, null, "T", new GenParams() {
-      public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        return new ParameterInfo[]{
-          new ParameterInfo(-1, "x", factory.createTypeFromText("T", method.getParameterList()), "null"),
-          new ParameterInfo(-1, "y", factory.createTypeFromText("C<T>", method.getParameterList()), "null")
+        return new ParameterInfoImpl[]{
+          new ParameterInfoImpl(-1, "x", factory.createTypeFromText("T", method.getParameterList()), "null"),
+          new ParameterInfoImpl(-1, "y", factory.createTypeFromText("C<T>", method.getParameterList()), "null")
         };
       }
     }, false);
@@ -37,10 +37,10 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
 
   public void testGenericTypesInOldParameters() throws Exception {
     doTest(null, null, null, new GenParams() {
-      public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        return new ParameterInfo[] {
-          new ParameterInfo(0, "t", factory.createTypeFromText("T", method), null)
+        return new ParameterInfoImpl[] {
+          new ParameterInfoImpl(0, "t", factory.createTypeFromText("T", method), null)
         };
       }
     }, false);
@@ -48,12 +48,12 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
 
   public void testTypeParametersInMethod() throws Exception {
     doTest(null, null, null, new GenParams() {
-             public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
+             public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
                final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-               return new ParameterInfo[]{
-                   new ParameterInfo(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
-                   new ParameterInfo(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
-                   new ParameterInfo(-1, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
+               return new ParameterInfoImpl[]{
+                   new ParameterInfoImpl(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
+                   new ParameterInfoImpl(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
+                   new ParameterInfoImpl(-1, "cu", factory.createTypeFromText("C<U>", method.getParameterList()), "null")
                  };
              }
            }, false);
@@ -61,100 +61,100 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
 
   public void testDefaultConstructor() throws Exception {
     doTest(null,
-           new ParameterInfo[] {
-              new ParameterInfo(-1, "j", PsiType.INT, "27")
+           new ParameterInfoImpl[] {
+              new ParameterInfoImpl(-1, "j", PsiType.INT, "27")
            }, false);
   }
 
   public void testGenerateDelegate() throws Exception {
     doTest(null,
-           new ParameterInfo[] {
-             new ParameterInfo(-1, "i", PsiType.INT, "27")
+           new ParameterInfoImpl[] {
+             new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
            }, true);
   }
 
   public void testGenerateDelegateForAbstract() throws Exception {
     doTest(null,
-           new ParameterInfo[] {
-             new ParameterInfo(-1, "i", PsiType.INT, "27")
+           new ParameterInfoImpl[] {
+             new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
            }, true);
   }
 
   public void testGenerateDelegateWithReturn() throws Exception {
     doTest(null,
-           new ParameterInfo[] {
-             new ParameterInfo(-1, "i", PsiType.INT, "27")
+           new ParameterInfoImpl[] {
+             new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
            }, true);
   }
 
   public void testGenerateDelegateWithParametersReordering() throws Exception {
     doTest(null,
-           new ParameterInfo[] {
-             new ParameterInfo(1),
-             new ParameterInfo(-1, "c", PsiType.CHAR, "'a'"),
-             new ParameterInfo(0, "j", PsiType.INT)
+           new ParameterInfoImpl[] {
+             new ParameterInfoImpl(1),
+             new ParameterInfoImpl(-1, "c", PsiType.CHAR, "'a'"),
+             new ParameterInfoImpl(0, "j", PsiType.INT)
            }, true);
   }
 
   public void testGenerateDelegateConstructor() throws Exception {
-    doTest(null, new ParameterInfo[0], true);
+    doTest(null, new ParameterInfoImpl[0], true);
   }
 
   public void testGenerateDelegateDefaultConstructor() throws Exception {
-    doTest(null, new ParameterInfo[] {
-      new ParameterInfo(-1, "i", PsiType.INT, "27")
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(-1, "i", PsiType.INT, "27")
     }, true);
   }
 
   public void testSCR40895() throws Exception {
-    doTest(null, new ParameterInfo[] {
-      new ParameterInfo(0, "y", PsiType.INT),
-      new ParameterInfo(1, "b", PsiType.BOOLEAN)
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(0, "y", PsiType.INT),
+      new ParameterInfoImpl(1, "b", PsiType.BOOLEAN)
     }, false);
   }
 
   public void testSuperCallFromOtherMethod() throws Exception {
-    doTest(null, new ParameterInfo[] {
-      new ParameterInfo(-1, "nnn", PsiType.INT, "-222"),
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(-1, "nnn", PsiType.INT, "-222"),
     }, false);
   }
 
   public void testUseAnyVariable() throws Exception {
     doTest(null, null, null, new GenParams() {
-      public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
-        return new ParameterInfo[] {
-          new ParameterInfo(-1, "l", factory.createTypeFromText("List", method), "null", true)
+        return new ParameterInfoImpl[] {
+          new ParameterInfoImpl(-1, "l", factory.createTypeFromText("List", method), "null", true)
         };
       }
     }, false);
   }
 
   public void testEnumConstructor() throws Exception {
-    doTest(null, new ParameterInfo[] {
-      new ParameterInfo(-1, "i", PsiType.INT, "10")
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(-1, "i", PsiType.INT, "10")
     }, false);
   }
 
   public void testVarargs1() throws Exception {
-    doTest(null, new ParameterInfo[] {
-      new ParameterInfo(-1, "b", PsiType.BOOLEAN, "true"),
-      new ParameterInfo(0)
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true"),
+      new ParameterInfoImpl(0)
     }, false);
   }
 
   public void testCovariantReturnType() throws Exception {
-    doTest("java.lang.Runnable", new ParameterInfo[0], false);
+    doTest("java.lang.Runnable", new ParameterInfoImpl[0], false);
   }
 
   public void testReorderExceptions() throws Exception {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfo[0]),
+    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new SimpleExceptionsGen(new ThrownExceptionInfo[]{new ThrownExceptionInfo(1), new ThrownExceptionInfo(0)}),
            false);
   }
 
   public void testAlreadyHandled() throws Exception {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfo[0]),
+    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
@@ -166,7 +166,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   }
 
   public void testAddRuntimeException() throws Exception {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfo[0]),
+    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
@@ -178,7 +178,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   }
 
   public void testAddException() throws Exception {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfo[0]),
+    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
@@ -191,14 +191,14 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
 
   public void testReorderWithVarargs() throws Exception {  // IDEADEV-26977
     final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    doTest(null, new ParameterInfo[] {
-        new ParameterInfo(1),
-        new ParameterInfo(0, "s", factory.createTypeFromText("java.lang.String...", getFile()))
+    doTest(null, new ParameterInfoImpl[] {
+        new ParameterInfoImpl(1),
+        new ParameterInfoImpl(0, "s", factory.createTypeFromText("java.lang.String...", getFile()))
     }, false);
   }
 
   public void testIntroduceParameterWithDefaultValueInHierarchy() throws Exception {
-    doTest(null, new ParameterInfo[]{new ParameterInfo(-1, "i", PsiType.INT, "0")}, false);
+    doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "i", PsiType.INT, "0")}, false);
   }
 
   protected void setUpJdk() {
@@ -206,14 +206,14 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
-  private void doTest(String newReturnType, ParameterInfo[] parameterInfos, final boolean generateDelegate) throws Exception {
+  private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
 
   private void doTest(String newVisibility,
                       String newName,
                       String newReturnType,
-                      ParameterInfo[] parameterInfo,
+                      ParameterInfoImpl[] parameterInfo,
                       ThrownExceptionInfo[] exceptionInfo,
                       final boolean generateDelegate) throws Exception {
     doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo), generateDelegate);
@@ -240,18 +240,18 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   }
 
   private interface GenParams {
-    ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException;
+    ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException;
   }
 
   private static class SimpleParameterGen implements GenParams {
-    private final ParameterInfo[] myInfos;
+    private final ParameterInfoImpl[] myInfos;
 
-    private SimpleParameterGen(ParameterInfo[] infos) {
+    private SimpleParameterGen(ParameterInfoImpl[] infos) {
       myInfos = infos;
     }
 
-    public ParameterInfo[] genParams(PsiMethod method) {
-      for (ParameterInfo info : myInfos) {
+    public ParameterInfoImpl[] genParams(PsiMethod method) {
+      for (ParameterInfoImpl info : myInfos) {
         info.updateFromMethod(method);
       }
       return myInfos;

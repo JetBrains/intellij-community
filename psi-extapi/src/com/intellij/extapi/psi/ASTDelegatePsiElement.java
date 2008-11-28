@@ -201,16 +201,24 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
-    TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
-    if (treeElement != null) return ChangeUtil.decodeInformation(treeElement).getPsi();
+    ASTNode treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
+    if (treeElement != null) {
+      if (treeElement instanceof TreeElement) {
+        return ChangeUtil.decodeInformation((TreeElement) treeElement).getPsi();
+      }
+      return treeElement.getPsi();
+    }
     throw new IncorrectOperationException("Element cannot be added");
   }
 
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
-    TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
-    return ChangeUtil.decodeInformation(treeElement).getPsi();
+    ASTNode treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
+    if (treeElement instanceof TreeElement) {
+      return ChangeUtil.decodeInformation((TreeElement) treeElement).getPsi();
+    }
+    return treeElement.getPsi();
   }
 
   @Override
@@ -218,8 +226,8 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     CheckUtil.checkWritable(this);
   }
 
-  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    return (TreeElement)CodeEditUtil.addChildren(getNode(), first, last, getAnchorNode(anchor, before));
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    return CodeEditUtil.addChildren(getNode(), first, last, getAnchorNode(anchor, before));
   }
 
   @Override

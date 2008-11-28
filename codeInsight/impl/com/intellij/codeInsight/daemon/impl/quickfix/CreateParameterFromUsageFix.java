@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -62,12 +62,12 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
 
-    List<ParameterInfo> parameterInfos = new ArrayList<ParameterInfo>(Arrays.asList(ParameterInfo.fromMethod(method)));
-    ParameterInfo parameterInfo = new ParameterInfo(-1, varName, type, PsiTypesUtil.getDefaultValueOfType(type), true);
+    List<ParameterInfoImpl> parameterInfos = new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
+    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, PsiTypesUtil.getDefaultValueOfType(type), true);
     parameterInfos.add(parameterInfo);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ParameterInfo[] array = parameterInfos.toArray(new ParameterInfo[parameterInfos.size()]);
+      ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
       @Modifier String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
       ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
       processor.run();

@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -253,16 +253,16 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
     private static void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod,
                                                                 final Collection<PsiElement> parametersToDelete) {
-      ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
+      ArrayList<ParameterInfoImpl> newParameters = new ArrayList<ParameterInfoImpl>();
       PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
       for (int i = 0; i < oldParameters.length; i++) {
         PsiParameter oldParameter = oldParameters[i];
         if (!parametersToDelete.contains(oldParameter)) {
-          newParameters.add(new ParameterInfo(i, oldParameter.getName(), oldParameter.getType()));
+          newParameters.add(new ParameterInfoImpl(i, oldParameter.getName(), oldParameter.getType()));
         }
       }
 
-      ParameterInfo[] parameterInfos = newParameters.toArray(new ParameterInfo[newParameters.size()]);
+      ParameterInfoImpl[] parameterInfos = newParameters.toArray(new ParameterInfoImpl[newParameters.size()]);
 
       ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
                                                                   psiMethod.getReturnType(), parameterInfos);
