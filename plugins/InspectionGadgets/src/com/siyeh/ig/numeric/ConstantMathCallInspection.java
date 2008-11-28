@@ -35,14 +35,13 @@ public class ConstantMathCallInspection extends BaseInspection {
 
     @SuppressWarnings("StaticCollection")
     @NonNls static final Set<String> constantMathCall =
-            new HashSet<String>(24);
+            new HashSet<String>(23);
 
     static {
         constantMathCall.add("abs");
         constantMathCall.add("acos");
         constantMathCall.add("asin");
         constantMathCall.add("atan");
-        constantMathCall.add("atan2");
         constantMathCall.add("cbrt");
         constantMathCall.add("ceil");
         constantMathCall.add("cos");
@@ -64,18 +63,21 @@ public class ConstantMathCallInspection extends BaseInspection {
         constantMathCall.add("toRadians");
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "constant.math.call.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "constant.math.call.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new MakeStrictFix();
     }
@@ -88,6 +90,7 @@ public class ConstantMathCallInspection extends BaseInspection {
                     "constant.conditional.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiIdentifier nameIdentifier =
@@ -114,6 +117,7 @@ public class ConstantMathCallInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ConstantMathCallVisitor();
     }
@@ -268,12 +272,6 @@ public class ConstantMathCallInspection extends BaseInspection {
                 return "0.0";
             } else if(value == 1.0){
                 return "(Math.PI/4.0)";
-            } else{
-                return null;
-            }
-        } else if("atan2".equals(name)){
-            if(value == 0.0){
-                return "0.0";
             } else{
                 return null;
             }
