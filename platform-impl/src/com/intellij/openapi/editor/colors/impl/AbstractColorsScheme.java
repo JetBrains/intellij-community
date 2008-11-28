@@ -143,6 +143,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       }
     }
     initFonts();
+    System.out.println(new Font("Monaco", 0, 12).getFontName());
+    System.out.println(new Font("Monaco", 0, 12).getFamily());
+    System.out.println(new Font("Consolas", 0, 12).getFontName());
+    System.out.println(new Font("Consolas", 0, 12).getFamily());
   }
 
   private void readScheme(Element node) throws InvalidDataException {
