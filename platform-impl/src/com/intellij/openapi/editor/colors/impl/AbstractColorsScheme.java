@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -143,16 +142,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     String editorFontName = getEditorFontName();
     int editorFontSize = getEditorFontSize();
 
-    final String[] availableFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-    if (!ArrayUtil.contains(editorFontName, availableFonts) && myParentScheme != null) {
+    Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
+    if (plainFont.getFamily().equals("Dialog") && !editorFontName.equals("Dialog")) {
       editorFontName = myParentScheme.getEditorFontName();
       myFallbackFontName = editorFontName;
+      plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
     }
     else {
       myFallbackFontName = null;
     }
 
-    Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
     Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
     Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
     Font boldItalicFont = new Font(editorFontName, Font.BOLD + Font.ITALIC, editorFontSize);
