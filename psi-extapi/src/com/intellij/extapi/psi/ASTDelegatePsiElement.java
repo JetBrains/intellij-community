@@ -7,16 +7,18 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +28,8 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class ASTDelegatePsiElement extends PsiElementBase {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.ASTDelegatePsiElement");
+
   private static final List EMPTY = Collections.emptyList();
 
   public PsiManagerEx getManager() {
@@ -184,5 +188,115 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   public PsiElement copy() {
     return getNode().copyElement().getPsi();
+  }
+
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    return addInnerBefore(element, null);
+  }
+
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    return addInnerBefore(element, anchor);
+  }
+
+  private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    TreeElement elementCopy = ChangeUtil.copyToElement(element);
+    TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
+    if (treeElement != null) return ChangeUtil.decodeInformation(treeElement).getPsi();
+    throw new IncorrectOperationException("Element cannot be added");
+  }
+
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    TreeElement elementCopy = ChangeUtil.copyToElement(element);
+    TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
+    return ChangeUtil.decodeInformation(treeElement).getPsi();
+  }
+
+  @Override
+  public void checkAdd(@NotNull final PsiElement element) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+  }
+
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    return (TreeElement)CodeEditUtil.addChildren(getNode(), first, last, getAnchorNode(anchor, before));
+  }
+
+  @Override
+  public PsiElement addRange(final PsiElement first, final PsiElement last) throws IncorrectOperationException {
+    return SharedImplUtil.addRange(this, first, last, null, null);
+  }
+
+  @Override
+  public PsiElement addRangeBefore(@NotNull final PsiElement first, @NotNull final PsiElement last, final PsiElement anchor)
+    throws IncorrectOperationException {
+    return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
+  }
+
+  @Override
+  public PsiElement addRangeAfter(final PsiElement first, final PsiElement last, final PsiElement anchor) throws IncorrectOperationException {
+    return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    if (getParent() instanceof ASTDelegatePsiElement) {
+      CheckUtil.checkWritable(this);
+      ((ASTDelegatePsiElement) getParent()).deleteChildInternal(getNode());
+    }
+    super.delete();
+  }
+
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    CodeEditUtil.removeChild(getNode(), child);
+  }
+
+  @Override
+  public void checkDelete() throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+  }
+
+  @Override
+  public void deleteChildRange(final PsiElement first, final PsiElement last) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    ASTNode firstElement = SourceTreeToPsiMap.psiElementToTree(first);
+    ASTNode lastElement = SourceTreeToPsiMap.psiElementToTree(last);
+    LOG.assertTrue(firstElement.getTreeParent() == getNode());
+    LOG.assertTrue(lastElement.getTreeParent() == getNode());
+    CodeEditUtil.removeChildren(getNode(), firstElement, lastElement);
+  }
+
+  @Override
+  public PsiElement replace(@NotNull final PsiElement newElement) throws IncorrectOperationException {
+    if (getParent() instanceof ASTDelegatePsiElement) {
+      final ASTDelegatePsiElement parentElement = (ASTDelegatePsiElement)getParent();
+      CheckUtil.checkWritable(this);
+      TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
+      parentElement.replaceChildInternal(this, elementCopy);
+      elementCopy = ChangeUtil.decodeInformation(elementCopy);
+      return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+    }
+
+    return super.replace(newElement);
+  }
+
+  public void replaceChildInternal(final PsiElement child, final TreeElement newElement) {
+    CodeEditUtil.replaceChild(getNode(), child.getNode(), newElement);
+  }
+
+  private ASTNode getAnchorNode(final ASTNode anchor, final Boolean before) {
+    ASTNode anchorBefore;
+    if (anchor != null) {
+      anchorBefore = before.booleanValue() ? anchor : anchor.getTreeNext();
+    }
+    else {
+      if (before != null && !before.booleanValue()) {
+        anchorBefore = getNode().getFirstChildNode();
+      }
+      else {
+        anchorBefore = null;
+      }
+    }
+    return anchorBefore;
   }
 }
