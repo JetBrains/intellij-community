@@ -29,7 +29,7 @@ public abstract class ValueContainer<Value> {
   public abstract int size();
 
 
-  public static interface ContainerAction<T> {
+  public interface ContainerAction<T> {
     void perform(int id, T value);
   }
 
@@ -40,5 +40,15 @@ public abstract class ValueContainer<Value> {
         action.perform(intIterator.next(), value);
       }
     }
+  }
+
+  private volatile boolean myNeedsCompacting = false;
+
+  boolean needsCompacting() {
+    return myNeedsCompacting;
+  }
+
+  void setNeedsCompacting(boolean value) {
+    myNeedsCompacting = value;
   }
 }

@@ -86,22 +86,30 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
           return;
         }
         try {
-          if (valueContainer.canUseDataAppend()) {
-            final ValueContainer<Value> toAppend = valueContainer.getDataToAppend();
-            if (toAppend.size() > 0) {
-              final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-              //noinspection IOResourceOpenedButNotSafelyClosed
-              myValueContainerExternalizer.save(new DataOutputStream(bytes), toAppend);
-                  
-              myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
-                public void append(final DataOutput out) throws IOException {
-                  final byte[] barr = bytes.toByteArray();
-                  out.write(barr);
-                }
-              });
+          if (!valueContainer.needsCompacting()) {
+            final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            //noinspection IOResourceOpenedButNotSafelyClosed
+            final DataOutputStream _out = new DataOutputStream(bytes);
+
+            final ValueContainer<Value> toRemove = valueContainer.getRemovedDelta();
+            if (toRemove.size() > 0) {
+              myValueContainerExternalizer.saveAsRemoved(_out, toRemove);
             }
+
+            final ValueContainer<Value> toAppend = valueContainer.getAddedDelta();
+            if (toAppend.size() > 0) {
+              myValueContainerExternalizer.save(_out, toAppend);
+            }
+
+            myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+              public void append(final DataOutput out) throws IOException {
+                final byte[] barr = bytes.toByteArray();
+                out.write(barr);
+              }
+            });
           }
           else {
+            // rewrite the value container for defragmentation
             myMap.put(key, valueContainer);
           }
         }
@@ -252,20 +260,24 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
 
     public void save(final DataOutput out, final ValueContainer<T> container) throws IOException {
+      saveImpl(out, container, false);
+    }
+
+    public void saveAsRemoved(final DataOutput out, final ValueContainer<T> container) throws IOException {
+      saveImpl(out, container, true);
+    }
+
+    private void saveImpl(final DataOutput out, final ValueContainer<T> container, final boolean asRemovedData) throws IOException {
       for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
-        final T value = valueIterator.next(); 
+        final T value = valueIterator.next();
         myExternalizer.save(out, value);
 
         final ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
         if (ids != null) {
-          if (ids.size() == 1) {
-            DataInputOutputUtil.writeSINT(out, -ids.next());
-          }
-          else {
-            DataInputOutputUtil.writeSINT(out, ids.size());
-            while (ids.hasNext()) {
-              DataInputOutputUtil.writeSINT(out, ids.next());
-            }
+          DataInputOutputUtil.writeSINT(out, ids.size());
+          while (ids.hasNext()) {
+            final int id = ids.next();
+            DataInputOutputUtil.writeSINT(out, asRemovedData ? -id : id);
           }
         }
         else {
@@ -281,12 +293,14 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       while (stream.available() > 0) {
         final T value = myExternalizer.read(in);
         final int idCount = DataInputOutputUtil.readSINT(in);
-        if (idCount < 0) {
-          valueContainer.addValue(-idCount, value);
-        }
-        else if (idCount > 0){
-          for (int i = 0; i < idCount; i++) {
-            valueContainer.addValue(DataInputOutputUtil.readSINT(in), value);
+        for (int i = 0; i < idCount; i++) {
+          final int id = DataInputOutputUtil.readSINT(in);
+          if (id < 0) {
+            valueContainer.removeValue(-id, value);
+            valueContainer.setNeedsCompacting(true);
+          }
+          else {
+            valueContainer.addValue(id, value);
           }
         }
       }

@@ -107,6 +107,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       fromDisk.forEach(addAction);
       myRemoved.forEach(removeAction);
       myAdded.forEach(addAction);
+      setNeedsCompacting(fromDisk.needsCompacting());
 
       myMerged = newMerged;
       return newMerged;
@@ -114,14 +115,14 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   public boolean isDirty() {
-    return myAdded.size() > 0 || myRemoved.size() > 0;
+    return myAdded.size() > 0 || myRemoved.size() > 0 || needsCompacting();
   }
 
-  public boolean canUseDataAppend() {
-    return myRemoved.size() == 0;
+  public ValueContainer<Value> getAddedDelta() {
+    return myAdded;
   }
   
-  public ValueContainer<Value> getDataToAppend() {
-    return myAdded;
+  public ValueContainer<Value> getRemovedDelta() {
+    return myRemoved;
   }
 }
