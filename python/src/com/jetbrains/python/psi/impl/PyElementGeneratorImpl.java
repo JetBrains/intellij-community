@@ -239,4 +239,14 @@ public class PyElementGeneratorImpl implements PyElementGenerator {
     final PsiFile dummyFile = createDummyFile(project, text);
     return (PyImportStatement)dummyFile.getFirstChild();
   }
+
+  public <T> T createFromText(final Project project, Class<T> aClass, final String text, final int[] path) {
+    final PsiFile dummyFile = createDummyFile(project, text);
+    PsiElement ret = dummyFile;
+    for (int skip : path) {
+      ret = ret.getFirstChild();
+      for (int i = 0; i < skip; i += 1) ret = ret.getNextSibling();
+    }
+    return (T)ret;
+  }
 }

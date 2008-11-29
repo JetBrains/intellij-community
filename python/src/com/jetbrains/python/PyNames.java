@@ -10,13 +10,15 @@ import java.util.Collections;
  * @author yole
  */
 public class PyNames {
-  @NonNls public static final String NONE = "None";
-
   private PyNames() {
   }
 
+  @NonNls public static final String NONE = "None";
+
   @NonNls public static final String INIT = "__init__";
   @NonNls public static final String OBJECT = "object";
+
+  @NonNls public static final String DOT_PY = ".py";
 
   @NonNls private static Set<String> _UnderscoredNames = new HashSet<String>();
   static {

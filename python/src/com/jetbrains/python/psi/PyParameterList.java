@@ -28,4 +28,10 @@ import com.jetbrains.python.psi.stubs.PyParameterListStub;
  */
 public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub>, NameDefiner {
   PyParameter[] getParameters();
+
+  /**
+   * Adds a paramter to list, after all other parameters.
+   * @param param
+   */
+  void addParameter(PyParameter param);
 }

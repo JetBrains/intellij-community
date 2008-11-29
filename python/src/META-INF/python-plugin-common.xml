@@ -3,7 +3,7 @@
 
   <application-components>
     <component>
-      <implementation-class>com.jetbrains.python.PyInspectionToolProvider</implementation-class>
+      <implementation-class>com.jetbrains.python.inspections.PythonPyInspectionToolProvider</implementation-class>
     </component>
   </application-components>
 
@@ -74,7 +74,6 @@
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
   </extensions>
-  <!--  
   <actions>
     <action 
       id="Devmode.DumpPsi" 
@@ -84,5 +83,4 @@
       <add-to-group group-id="EditMenu" anchor="before" relative-to-action="Undo"/>
     </action>
   </actions>
-  -->            
 </idea-plugin>

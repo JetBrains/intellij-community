@@ -19,6 +19,7 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import static com.jetbrains.python.PyBundle.message;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 
@@ -96,7 +97,7 @@ public class ExpressionParsing extends Parsing {
       return;
     }
     if (!parseSingleExpression(isTargetExpression)) {
-      builder.error("expression expected");
+      builder.error(message("PARSE.expected.expression"));
     }
     if (builder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
       parseListCompExpression(expr, PyTokenTypes.RBRACKET, PyElementTypes.LIST_COMP_EXPRESSION);
@@ -107,11 +108,11 @@ public class ExpressionParsing extends Parsing {
           builder.advanceLexer();
         }
         else if (!parseSingleExpression(isTargetExpression)) {
-          builder.error("expression or , or ] expected");
+          builder.error(message("PARSE.expected.expr.or.comma.or.bracket"));
           break;
         }
       }
-      checkMatches(PyTokenTypes.RBRACKET, "] expected");
+      checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
       expr.done(PyElementTypes.LIST_LITERAL_EXPRESSION);
     }
   }
@@ -123,9 +124,9 @@ public class ExpressionParsing extends Parsing {
     while (true) {
       myBuilder.advanceLexer();
       parseExpression(true, true);
-      checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
+      checkMatches(PyTokenTypes.IN_KEYWORD, message("PARSE.expected.in"));
       if (!parseTupleExpression(false, false, true)) {
-        myBuilder.error("expression expected");
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       while (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
         myBuilder.advanceLexer();
@@ -140,7 +141,7 @@ public class ExpressionParsing extends Parsing {
         expr = expr.precede();
         continue;
       }
-      myBuilder.error("closing bracket or 'for' expected");
+      myBuilder.error(message("PARSE.expected.for.or.bracket"));
       break;
     }
     expr.done(exprType);
@@ -155,7 +156,7 @@ public class ExpressionParsing extends Parsing {
         break;
       }
       if (builder.getTokenType() != PyTokenTypes.RBRACE) {
-        checkMatches(PyTokenTypes.COMMA, "comma expected");
+        checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
       }
     }
     builder.advanceLexer();
@@ -168,7 +169,7 @@ public class ExpressionParsing extends Parsing {
       marker.drop();
       return false;
     }
-    checkMatches(PyTokenTypes.COLON, ": expected");
+    checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
     if (!parseSingleExpression(false)) {
       marker.drop();
       return false;
@@ -191,7 +192,7 @@ public class ExpressionParsing extends Parsing {
         parseListCompExpression(expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
       }
       else {
-        checkMatches(PyTokenTypes.RPAR, ") expected");
+        checkMatches(PyTokenTypes.RPAR, message("PARSE.expected.rpar"));
         expr.done(PyElementTypes.PARENTHESIZED_EXPRESSION);
       }
     }
@@ -202,7 +203,7 @@ public class ExpressionParsing extends Parsing {
     final PsiBuilder.Marker expr = builder.mark();
     builder.advanceLexer();
     parseExpression();
-    checkMatches(PyTokenTypes.TICK, "` expected");
+    checkMatches(PyTokenTypes.TICK, message("PARSE.expected.tick"));
     expr.done(PyElementTypes.REPR_EXPRESSION);
   }
 
@@ -227,7 +228,7 @@ public class ExpressionParsing extends Parsing {
           }
           else recast_first_identifier = false; 
           builder.advanceLexer();
-          checkMatches(PyTokenTypes.IDENTIFIER, "name expected");
+          checkMatches(PyTokenTypes.IDENTIFIER, message("PARSE.expected.name"));
           if (isTargetExpression && builder.getTokenType() != PyTokenTypes.DOT) {
             expr.done(PyElementTypes.TARGET_EXPRESSION);
           }
@@ -254,7 +255,7 @@ public class ExpressionParsing extends Parsing {
               parseSliceEnd(builder, expr);
             }
             else {
-              checkMatches(PyTokenTypes.RBRACKET, "] expected");
+              checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
               expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
             }
           }
@@ -287,13 +288,13 @@ public class ExpressionParsing extends Parsing {
         parseExpression();
       }
       if (builder.getTokenType() != PyTokenTypes.RBRACKET && builder.getTokenType() != PyTokenTypes.COLON) {
-        builder.error(": or ] expected");
+        builder.error(message("PARSE.expected.colon.or.rbracket"));
       }
       if (builder.getTokenType() == PyTokenTypes.COLON) {
         builder.advanceLexer();
         parseExpressionOptional();
       }
-      checkMatches(PyTokenTypes.RBRACKET, "] expected");
+      checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
     }
     expr.done(PyElementTypes.SLICE_EXPRESSION);
   }
@@ -320,7 +321,7 @@ public class ExpressionParsing extends Parsing {
           }
         }
         else {
-          builder.error(", or ) expected");
+          builder.error(message("PARSE.expected.comma.or.rpar"));
           break;
         }
       }
@@ -328,7 +329,7 @@ public class ExpressionParsing extends Parsing {
         final PsiBuilder.Marker starArgMarker = builder.mark();
         builder.advanceLexer();
         if (!parseSingleExpression(false)) {
-          builder.error("expression expected");
+          builder.error(message("PARSE.expected.expression"));
         }
         starArgMarker.done(PyElementTypes.STAR_ARGUMENT_EXPRESSION);
       }
@@ -339,7 +340,7 @@ public class ExpressionParsing extends Parsing {
           if (builder.getTokenType() == PyTokenTypes.EQ) {
             builder.advanceLexer();
             if (!parseSingleExpression(false)) {
-              builder.error("expression expected");
+              builder.error(message("PARSE.expected.expression"));
             }
             keywordArgMarker.done(PyElementTypes.KEYWORD_ARGUMENT_EXPRESSION);
             continue;
@@ -347,14 +348,14 @@ public class ExpressionParsing extends Parsing {
           keywordArgMarker.rollbackTo();
         }
         if (!parseSingleExpression(false)) {
-          builder.error("expression expected");
+          builder.error(message("PARSE.expected.expression"));
         }
       }
     }
 
     if (needBracket) {
       genexpr.drop();
-      checkMatches(PyTokenTypes.RPAR, ") expected");
+      checkMatches(PyTokenTypes.RPAR, message("PARSE.expected.rpar"));
     }
     arglist.done(PyElementTypes.ARGUMENT_LIST);
   }
@@ -369,13 +370,13 @@ public class ExpressionParsing extends Parsing {
 
   public void parseExpression() {
     if (!parseExpressionOptional()) {
-      myBuilder.error("expression expected");
+      myBuilder.error(message("PARSE.expected.expression"));
     }
   }
 
   public void parseExpression(boolean stopOnIn, boolean isTargetExpression) {
     if (!parseTupleExpression(stopOnIn, isTargetExpression, false)) {
-      myBuilder.error("expression expected");
+      myBuilder.error(message("PARSE.expected.expression"));
     }
   }
 
@@ -434,16 +435,16 @@ public class ExpressionParsing extends Parsing {
     if (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
       myBuilder.advanceLexer();
       if (!parseORTestExpression(myBuilder, stopOnIn, isTargetExpression)) {
-        myBuilder.error("expression expected");
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       else {
         if (myBuilder.getTokenType() != PyTokenTypes.ELSE_KEYWORD) {
-          myBuilder.error("'else' expected");
+          myBuilder.error(message("PARSE.expected.else"));
         }
         else {
           myBuilder.advanceLexer();
           if (!parseTestExpression(stopOnIn, isTargetExpression)) {
-            myBuilder.error("expression expected");
+            myBuilder.error(message("PARSE.expected.expression"));
           }
         }
       }
@@ -468,7 +469,7 @@ public class ExpressionParsing extends Parsing {
     getFunctionParser().parseParameterListContents(PyTokenTypes.COLON, false);
     boolean parseExpressionResult = oldTest ? parseOldTestExpression() : parseSingleExpression(false);
     if (!parseExpressionResult) {
-      myBuilder.error("expression expected");
+      myBuilder.error(message("PARSE.expected.expression"));
     }
     expr.done(PyElementTypes.LAMBDA_EXPRESSION);
     return true;
@@ -483,7 +484,7 @@ public class ExpressionParsing extends Parsing {
     while (builder.getTokenType() == PyTokenTypes.OR_KEYWORD) {
       builder.advanceLexer();
       if (!parseANDTestExpression(builder, stopOnIn, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -502,7 +503,7 @@ public class ExpressionParsing extends Parsing {
     while (builder.getTokenType() == PyTokenTypes.AND_KEYWORD) {
       builder.advanceLexer();
       if (!parseNOTTestExpression(builder, stopOnIn, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -517,7 +518,7 @@ public class ExpressionParsing extends Parsing {
       final PsiBuilder.Marker expr = builder.mark();
       builder.advanceLexer();
       if (!parseNOTTestExpression(builder, stopOnIn, isTargetExpression)) {
-        builder.error("Expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.PREFIX_EXPRESSION);
       return true;
@@ -559,7 +560,7 @@ public class ExpressionParsing extends Parsing {
       }
 
       if (!parseBitwiseORExpression(builder, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -578,7 +579,7 @@ public class ExpressionParsing extends Parsing {
     while (builder.getTokenType() == PyTokenTypes.OR) {
       builder.advanceLexer();
       if (!parseBitwiseXORExpression(builder, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -597,7 +598,7 @@ public class ExpressionParsing extends Parsing {
     while (builder.getTokenType() == PyTokenTypes.XOR) {
       builder.advanceLexer();
       if (!parseBitwiseANDExpression(builder, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -616,7 +617,7 @@ public class ExpressionParsing extends Parsing {
     while (builder.getTokenType() == PyTokenTypes.AND) {
       builder.advanceLexer();
       if (!parseShiftExpression(builder, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -635,7 +636,7 @@ public class ExpressionParsing extends Parsing {
     while (PyTokenTypes.SHIFT_OPERATIONS.contains(builder.getTokenType())) {
       builder.advanceLexer();
       if (!parseAdditiveExpression(builder, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -654,7 +655,7 @@ public class ExpressionParsing extends Parsing {
     while (PyTokenTypes.ADDITIVE_OPERATIONS.contains(builder.getTokenType())) {
       builder.advanceLexer();
       if (!parseMultiplicativeExpression(builder, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -674,7 +675,7 @@ public class ExpressionParsing extends Parsing {
     while (PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(builder.getTokenType())) {
       builder.advanceLexer();
       if (!parseUnaryExpression(builder, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -690,7 +691,7 @@ public class ExpressionParsing extends Parsing {
       final PsiBuilder.Marker expr = builder.mark();
       builder.advanceLexer();
       if (!parseUnaryExpression(builder, isTargetExpression)) {
-        builder.error("Expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.PREFIX_EXPRESSION);
       return true;
@@ -710,7 +711,7 @@ public class ExpressionParsing extends Parsing {
     if (builder.getTokenType() == PyTokenTypes.EXP) {
       builder.advanceLexer();
       if (!parseUnaryExpression(builder, isTargetExpression)) {
-        builder.error("expression expected");
+        builder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
     }

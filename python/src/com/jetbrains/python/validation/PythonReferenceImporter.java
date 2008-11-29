@@ -17,6 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PythonReferenceImporter implements ReferenceImporter {
+  public PythonReferenceImporter() {
+    // nothing
+  }
+
   public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();

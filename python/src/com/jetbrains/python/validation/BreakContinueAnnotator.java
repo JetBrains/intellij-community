@@ -17,10 +17,11 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.psi.PsiElement;
+import static com.jetbrains.python.PyBundle.message;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyBreakStatement;
 import com.jetbrains.python.psi.PyContinueStatement;
 import com.jetbrains.python.psi.PyTryExceptStatement;
-import com.jetbrains.python.PyElementTypes;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,13 +33,13 @@ import com.jetbrains.python.PyElementTypes;
 public class BreakContinueAnnotator extends PyAnnotator {
     @Override public void visitPyBreakStatement(final PyBreakStatement node) {
         if (node.getContainingElement(PyElementTypes.LOOPS) == null) {
-            getHolder().createErrorAnnotation(node, "'break' outside of loop");
+            getHolder().createErrorAnnotation(node, message("ANN.break.outside.loop"));
         }
     }
 
     @Override public void visitPyContinueStatement(final PyContinueStatement node) {
         if (node.getContainingElement(PyElementTypes.LOOPS) == null) {
-            getHolder().createErrorAnnotation(node, "'continue' outside of loop");
+            getHolder().createErrorAnnotation(node, message("ANN.continue.outside.loop"));
             return;
         }
         PyTryExceptStatement tryStatement = node.getContainingElement(PyTryExceptStatement.class);
@@ -46,7 +47,7 @@ public class BreakContinueAnnotator extends PyAnnotator {
             PsiElement parent = node.getParent();
             while (parent != null) {
                 if (parent == tryStatement.getFinallyStatementList()) {
-                    getHolder().createErrorAnnotation(node, "'continue' not supported inside 'finally' clause");
+                    getHolder().createErrorAnnotation(node, message("ANN.cant.continue.in.finally"));
                     break;
                 }
                 parent = parent.getParent();

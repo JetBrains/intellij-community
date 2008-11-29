@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -17,13 +19,15 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyBundle;
+import static com.jetbrains.python.PyNames.DOT_PY;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddImportAction implements HintAction, QuestionAction {
+public class AddImportAction implements HintAction, QuestionAction, LocalQuickFix {
   private final PsiReference myReference;
   private Project myProject;
   private static final Logger LOG = Logger.getInstance("#" + AddImportAction.class.getName());
@@ -35,7 +39,7 @@ public class AddImportAction implements HintAction, QuestionAction {
 
   @NotNull
   public String getText() {
-    return "Add import";
+    return PyBundle.message("ACT.NAME.add.import");
   }
 
   @NotNull
@@ -45,7 +49,11 @@ public class AddImportAction implements HintAction, QuestionAction {
 
   @NotNull
   public String getFamilyName() {
-    return "import";
+    return PyBundle.message("ACT.FAMILY.import");
+  }
+
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    execute(descriptor.getPsiElement().getContainingFile());
   }
 
   @Nullable
@@ -54,7 +62,7 @@ public class AddImportAction implements HintAction, QuestionAction {
   }
   
   protected PsiFile[] getRefFiles(final String referenceName) {
-    PsiFile[] files = FilenameIndex.getFilesByName(myProject, referenceName + ".py", GlobalSearchScope.allScope(myProject));
+    PsiFile[] files = FilenameIndex.getFilesByName(myProject, referenceName + DOT_PY, GlobalSearchScope.allScope(myProject));
     if (files == null) files = PsiFile.EMPTY_ARRAY;
     return files;
   }

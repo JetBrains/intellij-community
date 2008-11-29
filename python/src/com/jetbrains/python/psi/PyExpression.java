@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public interface PyExpression extends PyElement {
   PyExpression[] EMPTY_ARRAY = new PyExpression[0];
-  List<PyExpression> EMPTY_LIST = new ArrayList<PyExpression>(0);
+  List<PyExpression> EMPTY_LIST = Collections.unmodifiableList(new ArrayList<PyExpression>(0));
 
   @Nullable
   PyType getType();

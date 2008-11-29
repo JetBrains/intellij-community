@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NonNls;
 
 public class EvaluatedTextRange {
   private TextRange range;
@@ -39,7 +40,7 @@ public class EvaluatedTextRange {
     return value;
   }
 
-
+  @NonNls
   public String toString() {
     return "EvaluatedTextRange[" + range + "]: " + value;
   }

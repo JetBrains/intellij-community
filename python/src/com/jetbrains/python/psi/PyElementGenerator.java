@@ -62,4 +62,6 @@ public interface PyElementGenerator {
   void setStringValue(PyStringLiteralExpression string, String value);
 
   PyImportStatement createImportStatementFromText(Project project, String text);
+
+  <T> T createFromText(final Project project, Class<T> aClass, final String text, final int[] path);
 }

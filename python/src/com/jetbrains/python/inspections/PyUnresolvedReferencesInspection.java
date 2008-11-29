@@ -1,20 +1,22 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.validation.AddImportAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,13 +29,13 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return "Python"; // TODO: propertize
+    return PyBundle.message("INSP.GROUP.python");
   }
 
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Unresolved Python reference"; // TODO: propertize
+    return PyBundle.message("INSP.NAME.unresolved.refs");
   }
 
   @NotNull
@@ -76,6 +78,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         if (reference.resolve() == null) {
           StringBuffer description_buf = new StringBuffer("");
           String text = reference.getElement().getText();
+          String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
+          HintAction action = null;
+          if (ref_text.length() <= 0) return; // empty text, nothing to highlight
           if (reference instanceof PyReferenceExpression) {
             PyReferenceExpression refex = (PyReferenceExpression)reference;
             String refname = refex.getReferencedName();
@@ -90,8 +95,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             if ((PsiTreeUtil.getParentOfType(
                 PsiTreeUtil.getParentOfType(node, PyImportElement.class), PyTryExceptStatement.class, PyIfStatement.class) != null)
             ) {
-              severity = HighlightSeverity.WARNING;
-              description_buf.append("Module '").append(reference.getRangeInElement().substring(text)).append("' not found");
+              severity = HighlightSeverity.INFO;
+              String errmsg = PyBundle.message("INSP.module.$0.not.found", ref_text);
+              description_buf.append(errmsg);
             }
           }
           if (reference instanceof PsiReferenceEx) {
@@ -99,7 +105,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             if (s != null) description_buf.append(s);
           }
           if (description_buf.length() == 0) {
-            description_buf.append("Unresolved reference '").append(reference.getRangeInElement().substring(text)).append("'");
+            boolean marked_for_class = false;
             if (reference instanceof PyQualifiedExpression) {
               final PyExpression qexpr = ((PyQualifiedExpression)reference).getQualifier();
               if (qexpr != null) {
@@ -109,24 +115,27 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                     // this almost always means that we don't know the type, so don't show an error in this case
                     continue;
                   }
-                  description_buf.append(" for class ").append(qtype.getName());
+                  description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
+                  marked_for_class = true;
                 }
               }
+            }
+            if (! marked_for_class) {
+              description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
+              /*action = new AddImportAction(reference);*/
             }
           }
           String description = description_buf.toString();
           ProblemHighlightType hl_type;
-          //final TextRange highlightRange = reference.getRangeInElement().shiftRight(reference.getElement().getTextRange().getStartOffset());
           if (severity == HighlightSeverity.WARNING) {
-            //annotation = getHolder().createWarningAnnotation(highlightRange, description_buf.toString());
             hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           }
           else {
-            //annotation = getHolder().createErrorAnnotation(highlightRange, description_buf.toString());
-            //annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
             hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
           }
-          registerProblem(reference.getElement(), description, hl_type, new AddImportAction(reference));
+          PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
+          if (point == null) point = node;
+          registerProblem(/*reference.getElement()*/ point, description, hl_type, action);
         }
       }
     }

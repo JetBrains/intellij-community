@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +21,13 @@ public class PyRedeclarationInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return "Python"; // TODO: propertize
+    return PyBundle.message("INSP.GROUP.python");
   }
 
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Duplicate definition"; // TODO: propertize
+    return PyBundle.message("INSP.NAME.redeclaration");
   }
 
   @NotNull
@@ -58,21 +59,24 @@ public class PyRedeclarationInspection extends LocalInspectionTool {
     
     // TODO: This function is a shame; replace with a proper interface.
     private static String _getKind(PsiElement elt) {
-      if (elt instanceof PyFunction) return "function";
-      if (elt instanceof PyClass) return "class";
-      if (elt instanceof PyTargetExpression) return "variable";
-      return "item";
+      if (elt instanceof PyFunction) return PyBundle.message("GNAME.function");
+      if (elt instanceof PyClass) return PyBundle.message("GNAME.class");
+      if (elt instanceof PyTargetExpression) return PyBundle.message("GNAME.var");
+      return PyBundle.message("GNAME.item");
     }
 
-    private void _checkAbove(PyElement  node, String kind) {
+    private void _checkAbove(PyElement node, String kind) {
       String name = node.getName();
       if (name != null) {
         PyResolveUtil.ResolveProcessor proc = new PyResolveUtil.ResolveProcessor(node.getName());
         PyResolveUtil.treeCrawlUp(proc, node);
         PsiElement found = proc.getResult();
         // TODO: check if the redefined name is used somehow
-        if (found != null) {
-          registerProblem(node.getNode().findChildByType(PyTokenTypes.IDENTIFIER).getPsi(), "Shadows same-named " + _getKind(found) + " above");
+        if (found != null && ! (found instanceof PyTargetExpression)) {
+          registerProblem(
+            node.getNode().findChildByType(PyTokenTypes.IDENTIFIER).getPsi(),
+            PyBundle.message("INSP.shadows.same.named.$0.above", _getKind(found))
+          );
           //registerProblem(prev.getNode().findChildByType(PyTokenTypes.IDENTIFIER).getPsi(), "Overridden by same-named " + kind + " below");
         }
       }
@@ -82,17 +86,17 @@ public class PyRedeclarationInspection extends LocalInspectionTool {
 
     @Override
     public void visitPyFunction(final PyFunction node) {
-      _checkAbove(node, "function");
+      _checkAbove(node, PyBundle.message("GNAME.function"));
     }
 
     @Override
     public void visitPyTargetExpression(final PyTargetExpression node) {
-      _checkAbove(node, "variable");
+      _checkAbove(node, PyBundle.message("GNAME.var"));
     }
 
     @Override
     public void visitPyClass(final PyClass node) {
-      _checkAbove(node, "class");
+      _checkAbove(node, PyBundle.message("GNAME.class"));
     }
   }
 }
