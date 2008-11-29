@@ -52,7 +52,7 @@ class ChangeInfoImpl implements ChangeInfo {
   public ChangeInfoImpl(@Modifier String newVisibility,
                     PsiMethod method,
                     String newName,
-                    @NotNull CanonicalTypes.Type newType,
+                    CanonicalTypes.Type newType,
                     @NotNull ParameterInfoImpl[] newParms,
                     ThrownExceptionInfo[] newExceptions) {
     this.newVisibility = newVisibility;
