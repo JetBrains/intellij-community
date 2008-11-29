@@ -6,13 +6,14 @@ import com.intellij.testFramework.InspectionTestCase;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.inspections.PyArgumentListInspection;
 import com.jetbrains.python.inspections.PyRedeclarationInspection;
+import com.jetbrains.python.inspections.PythonPyInspectionToolProvider;
 
 /**
  * @author yole
  */
 public class PythonInspectionsTest extends InspectionTestCase {
   public void testReturnValueFromInit() throws Exception {
-    doTest(getTestName(true), PyInspectionToolProvider.getInstance().createLocalInspectionTool("ReturnValueFromInitInspection"));
+    doTest(getTestName(true), PythonPyInspectionToolProvider.getInstance().createLocalInspectionTool("ReturnValueFromInitInspection"));
   }
 
   public void testPyUnresolvedReferencesInspection() throws Exception {
