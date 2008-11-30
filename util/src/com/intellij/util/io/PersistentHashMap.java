@@ -101,7 +101,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
   
   private boolean makesSenceToCompact() {
-    final long filesize = myFile.length();
+    final long filesize = getDataFile(myFile).length();
     return filesize > 5 * 1024 * 1024 && myGarbageSize * 2 > filesize; // file is longer than 5MB and more than 50% of data is garbage
   }
 
