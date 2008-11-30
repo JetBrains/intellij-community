@@ -20,8 +20,8 @@ public abstract class ExcludedFileIndex {
    * between them are excluded from the project.
    *
    * @param baseDir the parent directory to check for ancestry.
-   * @param childDir the child directory to check for ancestry.
+   * @param child the child directory or file to check for ancestry.
    * @return true if it's a valid ancestor, false otherwise.
    */
-  public abstract boolean isValidAncestor(final VirtualFile baseDir, final VirtualFile childDir);
+  public abstract boolean isValidAncestor(final VirtualFile baseDir, final VirtualFile child);
 }

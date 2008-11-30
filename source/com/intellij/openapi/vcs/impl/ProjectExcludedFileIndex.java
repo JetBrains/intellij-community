@@ -25,6 +25,9 @@ public class ProjectExcludedFileIndex extends ExcludedFileIndex {
   }
 
   public boolean isValidAncestor(final VirtualFile baseDir, VirtualFile childDir) {
+    if (!childDir.isDirectory()) {
+      childDir = childDir.getParent();
+    }
     while (true) {
       if (childDir == null) return false;
       if (childDir.equals(baseDir)) return true;
