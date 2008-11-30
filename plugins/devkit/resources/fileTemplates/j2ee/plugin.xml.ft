@@ -14,7 +14,7 @@
   </project-components>
 
   <actions>
-    <!-- Add your actions components here -->
+    <!-- Add your actions here -->
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
