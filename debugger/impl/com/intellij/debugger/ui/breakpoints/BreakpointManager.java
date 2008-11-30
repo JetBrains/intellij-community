@@ -437,14 +437,15 @@ public class BreakpointManager implements JDOMExternalizable {
   public MethodBreakpoint addMethodBreakpoint(Document document, int lineIndex) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    ToolWindowManager.getInstance(myProject).notifyByBalloon(
-      ToolWindowId.DEBUG, MessageType.WARNING, "Method breakpoints may dramatically slow down debugging", null, null
-    );
-
     MethodBreakpoint breakpoint = MethodBreakpoint.create(myProject, document, lineIndex);
     if (breakpoint == null) {
       return null;
     }
+
+    ToolWindowManager.getInstance(myProject).notifyByBalloon(
+      ToolWindowId.DEBUG, MessageType.WARNING, "Method breakpoints may dramatically slow down debugging", null, null
+    );
+
     addBreakpoint(breakpoint);
     return breakpoint;
   }
