@@ -1,6 +1,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TextComponentUndoProvider;
@@ -48,6 +49,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
   private Action mySendAction;
   private Action myCancelAction;
   protected JLabel mySendingSettingsLabel;
+  private JLabel myCreateAccountLabel;
 
   private boolean myShouldSend = false;
 
@@ -91,6 +93,13 @@ public class EAPSendErrorDialog extends DialogWrapper {
 
     loadInfo();
 
+    myCreateAccountLabel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(final MouseEvent e) {
+        BrowserUtil.launchBrowser("http://account.jetbrains.com");
+      }
+    });
+    myCreateAccountLabel.setCursor(new Cursor (Cursor.HAND_CURSOR));
 
     new TextComponentUndoProvider(myErrorDescriptionTextArea);
     super.init ();
