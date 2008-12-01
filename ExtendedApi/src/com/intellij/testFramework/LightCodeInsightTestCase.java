@@ -97,6 +97,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     configureFromFileText(ioFile.getName(), fileText);
   }
 
+  @NonNls
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
   }

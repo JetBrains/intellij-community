@@ -76,7 +76,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
               editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
 
               startTemplate(editor, template, project);
-            } else {
+            }
+            else {
               positionCursor(project, aClass.getContainingFile(), aClass);
             }
           }
