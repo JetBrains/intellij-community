@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -25,13 +26,16 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.codeStyle.HelperFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -226,6 +230,8 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   }
 
   private void doPostponedFormattingInner(final FileViewProvider key) {
+
+
     final List<ASTNode> astNodes = myReformatElements.remove(key);
     final Document document = key.getDocument();
     // Sort ranges by end offsets so that we won't need any offset adjustment after reformat or reindent
@@ -251,6 +257,10 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     // then we create ranges by changed nodes. One per node. There ranges can instersect. Ranges are sorted by end offset.
     if (astNodes != null) createActionsMap(astNodes, key, rangesToProcess);
 
+    if ("true".equals(System.getProperty("check.psi.is.valid")) && ApplicationManager.getApplication().isUnitTestMode()) {
+      checkPsiIsCorrect(key);
+    }
+
     while(!rangesToProcess.isEmpty()){
       // now we have to normalize actions so that they not intersect and ordered in most appropriate way
       // (free reformating -> reindent -> formating under reindent)
@@ -269,6 +279,25 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
         }
       }
     }
+  }
+
+  private void checkPsiIsCorrect(final FileViewProvider key) {
+    PsiFile actualPsi = key.getPsi(key.getBaseLanguage());
+    String actualPsiTree = DebugUtil.psiToString(actualPsi, true);
+
+    String fileName = key.getVirtualFile().getName();
+    PsiFile psi = PsiFileFactory.getInstance(myProject)
+      .createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName), actualPsi.getNode().getText(),
+                          LocalTimeCounter.currentTime(), false);
+
+    String expectedPsi = DebugUtil.psiToString(psi, true);
+
+    if (!expectedPsi.equals(actualPsiTree)) {
+      myReformatElements.clear();
+      Assert.assertEquals("Refactored psi should be the same as result of parsing", expectedPsi, actualPsiTree);
+    }
+
+
   }
 
   private List<Pair<RangeMarker, ? extends PostponedAction>> normalizeAndReorderPostponedActions(final TreeMap<RangeMarker, PostponedAction> rangesToProcess, Document document) {
