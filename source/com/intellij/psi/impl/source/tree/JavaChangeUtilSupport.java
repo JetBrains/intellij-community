@@ -151,7 +151,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, componentTypeCopy);
         TreeUtil.addChildren(element, createLeafFromText("[", table, manager, original, JavaTokenType.LBRACKET));
-        TreeUtil.addChildren(element, createLeafFromText("]", table, manager, original, JavaTokenType.LBRACKET));
+        TreeUtil.addChildren(element, createLeafFromText("]", table, manager, original, JavaTokenType.RBRACKET));
         return element;
       }
       else if (type instanceof PsiPrimitiveType) {
