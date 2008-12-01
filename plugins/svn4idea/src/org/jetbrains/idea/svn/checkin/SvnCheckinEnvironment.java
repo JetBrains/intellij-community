@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -205,8 +206,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (committedRevisions.length() > 0) {
-      WindowManager.getInstance().getStatusBar(mySvnVcs.getProject()).setInfo(
-        SvnBundle.message("status.text.committed.revision", committedRevisions));
+      final StatusBar bar = WindowManager.getInstance().getStatusBar(mySvnVcs.getProject());
+      if (bar != null) {
+        bar.setInfo(SvnBundle.message("status.text.committed.revision", committedRevisions));
+      }
     }
   }
 
