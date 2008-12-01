@@ -6,10 +6,7 @@ package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.*;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -34,7 +31,7 @@ public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
   public void fixUsage() throws IncorrectOperationException {
     if (myReferenceExpression.isValid()) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory();
-      myReferenceExpression.replace(elementFactory.createReferenceExpression(myTargetClass));
+      myReferenceExpression.replace(myReferenceExpression instanceof PsiReferenceExpression ? elementFactory.createReferenceExpression(myTargetClass) : elementFactory.createClassReferenceElement(myTargetClass));
     }
   }
 
