@@ -80,7 +80,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
         .XML_ATTRIBUTE_VALUE_TOKEN) {
         buffer.append(child.getText());
       }
-      else if (elementType == TokenType.ERROR_ELEMENT) {
+      else if (elementType == TokenType.ERROR_ELEMENT || elementType == TokenType.NEW_LINE_INDENT) {
         buffer.append(child.getText());
       }
 

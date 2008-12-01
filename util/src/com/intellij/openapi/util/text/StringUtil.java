@@ -1409,4 +1409,12 @@ public class StringUtil {
     }
     return res;
   }
+
+  public static String fixVariableNameDerivedFromPropertyName(String name) {
+    char c = name.charAt(0);
+    if (isVowel(c)) {
+      return "an" + Character.toUpperCase(c) + name.substring(1);
+    }
+    return "a" + Character.toUpperCase(c) + name.substring(1);
+  }
 }

@@ -1021,11 +1021,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     PsiManager manager = PsiManager.getInstance(myProject);
 
     if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
-      char c = name.charAt(0);
-      if (StringUtil.isVowel(c)) {
-        return "an" + Character.toUpperCase(c) + name.substring(1);
-      }
-      return "a" + Character.toUpperCase(c) + name.substring(1);
+      return StringUtil.fixVariableNameDerivedFromPropertyName(name);
     }
     return name;
   }
