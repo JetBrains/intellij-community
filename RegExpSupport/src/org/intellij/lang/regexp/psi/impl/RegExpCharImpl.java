@@ -56,7 +56,9 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
 
     @Nullable
     public Character getValue() {
-        return unescapeChar(getUnescapedText());
+      final String s = getUnescapedText();
+      if (s.equals("\\") && getType() == Type.CHAR) return '\\';
+      return unescapeChar(s);
     }
 
     @Nullable

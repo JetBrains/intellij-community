@@ -599,6 +599,10 @@
       <pattern>a\Qabc?*+.))]][]\E)</pattern>
       <expected>ERR</expected>
     </test>
+    <test>
+      <pattern>\Q\j\E</pattern>
+      <expected>OK</expected>
+    </test>
   </escapes>
 
   <anchors>
