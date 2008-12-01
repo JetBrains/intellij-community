@@ -11,7 +11,7 @@ public class CompletionContext {
   public final Project project;
   public final Editor editor;
   public final PsiFile file;
-  private OffsetMap myOffsetMap;
+  private final OffsetMap myOffsetMap;
 
   public CompletionContext(Project project, Editor editor, PsiFile file, final OffsetMap offsetMap){
     this.project = project;
