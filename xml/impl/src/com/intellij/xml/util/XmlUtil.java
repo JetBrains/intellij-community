@@ -1083,7 +1083,7 @@ public class XmlUtil {
       }
       XmlTag retTag;
       if (bodyText != null && bodyText.length() > 0) {
-        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">");
+        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">", xmlTag.getLanguage());
         if (enforceNamespacesDeep) {
           retTag.acceptChildren(new XmlRecursiveElementVisitor() {
             @Override public void visitXmlTag(XmlTag tag) {
@@ -1109,7 +1109,7 @@ public class XmlUtil {
         }
       }
       else {
-        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + "/>");
+        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + "/>", xmlTag.getLanguage());
       }
       return retTag;
     }

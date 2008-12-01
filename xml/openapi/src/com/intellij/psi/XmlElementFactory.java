@@ -1,10 +1,11 @@
 package com.intellij.psi;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +44,23 @@ public abstract class XmlElementFactory {
    *
    * @param text the text of an XML tag (which can contain attributes and subtags).
    * @return the created tag instance.
+   * @deprecated Use #createTagFromText(String text, Language language)
    * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid XML fragment.
    */
   @NotNull
+  @Deprecated
   public abstract XmlTag createTagFromText(@NotNull @NonNls String text) throws IncorrectOperationException;
+
+  /**
+   * Creates XML like tag with the specified text and language.
+   *
+   * @param text the text of an XML tag (which can contain attributes and subtags).
+   * @param language the language for tag to be created.
+   * @return the created tag instance.
+   * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid XML fragment.
+   */
+  @NotNull
+  public abstract XmlTag createTagFromText(@NotNull @NonNls String text, @NotNull Language language) throws IncorrectOperationException;
 
   /**
    * Creates an XML attribute with the specified name and value.
@@ -54,9 +68,10 @@ public abstract class XmlElementFactory {
    * @param name  the name of the attribute to create.
    * @param value the value of the attribute to create.
    * @return the created attribute instance.
+   * @deprecated
    * @throws IncorrectOperationException if either <code>name</code> or <code>value</code> are not valid.
    */
   @NotNull
+  @Deprecated
   public abstract XmlAttribute createXmlAttribute(@NotNull @NonNls String name, String value) throws IncorrectOperationException;
-
 }

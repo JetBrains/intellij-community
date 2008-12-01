@@ -1,7 +1,11 @@
 package com.intellij.psi;
 
 import com.intellij.lang.ASTFactory;
+import com.intellij.lang.Language;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagTextUtil;
@@ -20,11 +24,19 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   }
 
   @NotNull
-  public XmlTag createTagFromText(@NotNull String text) throws IncorrectOperationException {
-    final XmlDocument document = createXmlDocument(text, "dummy.xml");
+  public XmlTag createTagFromText(@NotNull @NonNls String text, @NotNull Language language) throws IncorrectOperationException {
+    assert language instanceof XMLLanguage:"Tag can be created only for xml language";
+    FileType type = language.getAssociatedFileType();
+    if (type == null) type = StdFileTypes.XML;
+    final XmlDocument document = createXmlDocument(text, "dummy."+ type.getDefaultExtension());
     final XmlTag tag = document.getRootTag();
     if (tag == null) throw new IncorrectOperationException("Incorrect tag text");
     return tag;
+  }
+
+  @NotNull
+  public XmlTag createTagFromText(@NotNull String text) throws IncorrectOperationException {
+    return createTagFromText(text, StdFileTypes.XML.getLanguage());
   }
 
   @NotNull
