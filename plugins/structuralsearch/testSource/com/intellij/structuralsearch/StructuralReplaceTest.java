@@ -1953,6 +1953,25 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testReplaceFinalModifier() throws Exception {
+    String s1 = "class Foo {\n" +
+                "  void foo(final int i,final int i2, final int i3) {\n" +
+                "     final int x = 5;\n" +
+                "  }\n" +
+                "}";
+    String s2 = "final '_type 'var = '_init?";
+    String s3 = "$type$ $var$ = $init$";
+
+    String expected = "2 = 1;\nint b = a;\nb2 = 3;";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+  }
+
   public void testRemovingRedundancy() throws Exception {
     String s1 = "int a = 1;\n" +
                 "a = 2;\n" +

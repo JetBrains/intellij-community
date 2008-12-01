@@ -160,8 +160,10 @@ final class ReplacementBuilder extends JavaRecursiveElementVisitor {
           --offset;
         }
         else if (info.variableInitialContext) {
-          result.delete(info.beforeDelimiterPos + offset, info.afterDelimiterPos + offset - 1);
-          offset -= (info.afterDelimiterPos - info.beforeDelimiterPos - 1);
+          //if (info.afterDelimiterPos > 0) {
+            result.delete(info.beforeDelimiterPos + offset, info.afterDelimiterPos + offset - 1);
+            offset -= (info.afterDelimiterPos - info.beforeDelimiterPos - 1);
+          //}
         } else if (info.statementContext) {
           offset = removeExtraSemicolon(info, offset, result, r);
         }
