@@ -410,8 +410,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         e.getPresentation().setDescription(SvnBundle.message("repository.browser.edit.location.menu.item"));
         e.getPresentation().setText(SvnBundle.message("repository.browser.edit.location.menu.item"));
         e.getPresentation().setIcon(IconLoader.findIcon("/actions/editSource.png"));
-        e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
       }
+      e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
     }
 
     public void actionPerformed(AnActionEvent e) {
