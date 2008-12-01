@@ -26,7 +26,7 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiTreeDebugBuilder;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.Helper;
@@ -283,19 +283,22 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
   private void checkPsiIsCorrect(final FileViewProvider key) {
     PsiFile actualPsi = key.getPsi(key.getBaseLanguage());
-    String actualPsiTree = DebugUtil.psiToString(actualPsi, true);
 
-    String fileName = key.getVirtualFile().getName();
-    PsiFile psi = PsiFileFactory.getInstance(myProject)
-      .createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName), actualPsi.getNode().getText(),
-                          LocalTimeCounter.currentTime(), false);
+        PsiTreeDebugBuilder treeDebugBuilder = new PsiTreeDebugBuilder().setShowErrorElements(false).setShowWhiteSpaces(false);
 
-    String expectedPsi = DebugUtil.psiToString(psi, true);
+        String actualPsiTree = treeDebugBuilder.psiToString(actualPsi);
 
-    if (!expectedPsi.equals(actualPsiTree)) {
-      myReformatElements.clear();
-      Assert.assertEquals("Refactored psi should be the same as result of parsing", expectedPsi, actualPsiTree);
-    }
+        String fileName = key.getVirtualFile().getName();
+        PsiFile psi = PsiFileFactory.getInstance(myProject)
+          .createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName), actualPsi.getNode().getText(),
+                              LocalTimeCounter.currentTime(), false);
+
+        String expectedPsi = treeDebugBuilder.psiToString(psi);
+
+        if (!expectedPsi.equals(actualPsiTree)) {
+          myReformatElements.clear();
+          Assert.assertEquals("Refactored psi should be the same as result of parsing", expectedPsi, actualPsiTree);
+        }
 
 
   }
