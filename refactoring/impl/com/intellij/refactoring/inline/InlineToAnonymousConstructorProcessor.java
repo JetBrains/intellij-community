@@ -5,12 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -444,7 +444,12 @@ class InlineToAnonymousConstructorProcessor {
             if (substType == null) {
               substType = PsiType.getJavaLangObject(element.getManager(), ProjectScope.getAllScope(element.getProject()));
             }
-            elementsToReplace.put(element, myElementFactory.createTypeElement(substType));
+            if (element instanceof PsiJavaCodeReferenceElement) {
+              LOG.assertTrue(substType instanceof PsiClassType);
+              elementsToReplace.put(element, myElementFactory.createReferenceElementByType((PsiClassType)substType));
+            } else {
+              elementsToReplace.put(element, myElementFactory.createTypeElement(substType));
+            }
           }
         }
       }
