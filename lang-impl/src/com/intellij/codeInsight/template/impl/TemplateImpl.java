@@ -8,6 +8,7 @@ import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -20,7 +21,7 @@ public class TemplateImpl implements Template, SchemeElement {
   private String myDescription;
   private String myGroupName;
   private char myShortcutChar = TemplateSettings.DEFAULT_CHAR;
-  private ArrayList<Variable> myVariables = new ArrayList<Variable>();
+  private final ArrayList<Variable> myVariables = new ArrayList<Variable>();
   private ArrayList<Segment> mySegments = null;
   private String myTemplateText = null;
   private String myId;
@@ -67,10 +68,10 @@ public class TemplateImpl implements Template, SchemeElement {
   private boolean toParseSegments = true;
   private TemplateContext myTemplateContext = new TemplateContext();
 
-  public static final @NonNls String END = "END";
-  public static final @NonNls String SELECTION = "SELECTION";
-  public static final @NonNls String SELECTION_START = "SELECTION_START";
-  public static final @NonNls String SELECTION_END = "SELECTION_END";
+  @NonNls public static final String END = "END";
+  @NonNls public static final String SELECTION = "SELECTION";
+  @NonNls public static final String SELECTION_START = "SELECTION_START";
+  @NonNls public static final String SELECTION_END = "SELECTION_END";
 
   public static final Set<String> INTERNAL_VARS_SET = new HashSet<String>(Arrays.asList(
       END, SELECTION, SELECTION_START, SELECTION_END));
@@ -92,14 +93,14 @@ public class TemplateImpl implements Template, SchemeElement {
 
 
 
-  public TemplateImpl(String key, String group) {
+  public TemplateImpl(@NotNull String key, String group) {
     this(key, null, group);
     toParseSegments = false;
     myTemplateText = "";
     mySegments = new ArrayList<Segment>();
   }
 
-  public TemplateImpl(String key, String string, String group) {
+  public TemplateImpl(@NotNull String key, String string, String group) {
     myKey = key;
     myString = string;
     myGroupName = group;
@@ -249,7 +250,7 @@ public class TemplateImpl implements Template, SchemeElement {
     if (myString == null) myString = "";
     myString = StringUtil.convertLineSeparators(myString, "\n");
     mySegments = new ArrayList<Segment>();
-    StringBuffer buffer = new StringBuffer("");
+    StringBuilder buffer = new StringBuilder("");
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(myString,0,myString.length(),0);
 
@@ -386,14 +387,14 @@ public class TemplateImpl implements Template, SchemeElement {
   }
 
   public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {
-    for (TemplateOptionalProcessor processor : context.keySet()) {
-      processor.setEnabled(this,  context.get(processor).booleanValue());
+    for (Map.Entry<TemplateOptionalProcessor, Boolean> entry : context.entrySet()) {
+      entry.getKey().setEnabled(this, entry.getValue().booleanValue());
     }
   }
 
   public void applyContext(final Map<TemplateContextType, Boolean> context) {
-    for (TemplateContextType processor : context.keySet()) {
-      processor.setEnabled(getTemplateContext(), context.get(processor).booleanValue());
+    for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
+      entry.getKey().setEnabled(getTemplateContext(), entry.getValue().booleanValue());
     }
   }
 
@@ -401,7 +402,7 @@ public class TemplateImpl implements Template, SchemeElement {
     public String name;
     public int offset;
 
-    public Segment(String name, int offset) {
+    private Segment(String name, int offset) {
       this.name = name;
       this.offset = offset;
     }

@@ -299,31 +299,22 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  protected static void startTemplate (final Editor editor, final Template template, final Project project) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        TemplateManager.getInstance(project).startTemplate(editor, template);
-      }
-    };
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
-    else {
-      runnable.run();
-    }
+  protected static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {
+    startTemplate(editor, template, project, null);
   }
 
-  protected static void startTemplate (final Editor editor, final Template template, final Project project, final TemplateEditingListener listener) {
+  protected static void startTemplate (@NotNull final Editor editor, final Template template, @NotNull final Project project, final TemplateEditingListener listener) {
     Runnable runnable = new Runnable() {
       public void run() {
+        if (project.isDisposed() || editor.isDisposed()) return;
         TemplateManager.getInstance(project).startTemplate(editor, template, listener);
       }
     };
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater(runnable);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
     }
     else {
-      runnable.run();
+      ApplicationManager.getApplication().invokeLater(runnable);
     }
   }
 }

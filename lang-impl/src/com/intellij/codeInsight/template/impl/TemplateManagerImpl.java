@@ -70,11 +70,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     myDisposables.remove(tState);
   }
 
-  public Template createTemplate(String key, String group) {
+  public Template createTemplate(@NotNull String key, String group) {
     return new TemplateImpl(key, group);
   }
 
-  public Template createTemplate(String key, String group, String text) {
+  public Template createTemplate(@NotNull String key, String group, String text) {
     return new TemplateImpl(key, text, group);
   }
 
@@ -98,15 +98,15 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return state;
   }
 
-  public boolean startTemplate(Editor editor, char shortcutChar) {
+  public boolean startTemplate(@NotNull Editor editor, char shortcutChar) {
     return startTemplate(this, editor, shortcutChar);
   }
 
-  public void startTemplate(final Editor editor, Template template) {
+  public void startTemplate(@NotNull final Editor editor, @NotNull Template template) {
     startTemplate(editor, template, null);
   }
 
-  public void startTemplate(Editor editor, String selectionString, Template template) {
+  public void startTemplate(@NotNull Editor editor, String selectionString, @NotNull Template template) {
     startTemplate(editor, selectionString, template, null);
   }
 
@@ -145,7 +145,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return ApplicationManager.getApplication().isUnitTestMode() && !myTemplateTesting;
   }
 
-  public void startTemplate(final Editor editor, final Template template, TemplateEditingListener listener) {
+  public void startTemplate(@NotNull final Editor editor, @NotNull final Template template, TemplateEditingListener listener) {
     startTemplate(editor, null, template, listener);
   }
 
@@ -251,7 +251,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return contextType.isEnabled(templateContext);
   }
 
-  public TemplateContextType getContextType(PsiFile file, int offset) {
+  public TemplateContextType getContextType(@NotNull PsiFile file, int offset) {
     final Collection<TemplateContextType> typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
     for(TemplateContextType contextType: typeCollection) {
@@ -281,7 +281,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   @Nullable
-  public Template getActiveTemplate(Editor editor) {
+  public Template getActiveTemplate(@NotNull Editor editor) {
     final TemplateState templateState = getTemplateState(editor);
     return templateState != null ? templateState.getTemplate() : null;
   }
