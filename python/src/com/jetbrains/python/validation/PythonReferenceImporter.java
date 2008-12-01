@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.actions.AddImportAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

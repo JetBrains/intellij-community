@@ -1,8 +1,8 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.actions.AddImportAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +80,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           StringBuffer description_buf = new StringBuffer("");
           String text = reference.getElement().getText();
           String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
-          HintAction action = null;
+          LocalQuickFix action = null;
           if (ref_text.length() <= 0) return; // empty text, nothing to highlight
           if (reference instanceof PyReferenceExpression) {
             PyReferenceExpression refex = (PyReferenceExpression)reference;
@@ -122,7 +123,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             }
             if (! marked_for_class) {
               description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
-              /*action = new AddImportAction(reference);*/
+              action = new AddImportAction(reference);
             }
           }
           String description = description_buf.toString();
@@ -135,7 +136,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           }
           PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
           if (point == null) point = node;
-          registerProblem(/*reference.getElement()*/ point, description, hl_type, action);
+          registerProblem(/*reference.getElement()*/ point, description, hl_type, null, action);
         }
       }
     }

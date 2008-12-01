@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * User: dcheryasov
  * Date: Nov 19, 2008
  */
-public class AddSelfQuickfix implements LocalQuickFix {
+public class AddSelfQuickFix implements LocalQuickFix {
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.add.parameter.self");

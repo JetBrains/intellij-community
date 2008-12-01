@@ -2,7 +2,7 @@
  * User: anna
  * Date: 07-Mar-2008
  */
-package com.jetbrains.python.validation;
+package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;

@@ -1,14 +1,13 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.actions.AddSelfQuickfix;
+import com.jetbrains.python.actions.AddSelfQuickFix;
+import com.jetbrains.python.actions.RenameToSelfQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -77,7 +76,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
             ) {
               registerProblem(
                 plist, PyBundle.message("INSP.must.have.first.parameter"),
-                ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickfix()
+                ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix()
               );
             }
           }
@@ -88,7 +87,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
           @NonNls String[] mangled = {"eslf", "sself", "elf", "felf", "slef", "seelf", "slf", "sslf", "sefl", "sellf", "sef", "seef"};
           for (String typo : mangled) {
             if (typo.equals(pname)) {
-              registerProblem(params[0].getNode().getPsi(), PyBundle.message("INSP.probably.mistyped.self"));
+              registerProblem(params[0].getNode().getPsi(), PyBundle.message("INSP.probably.mistyped.self"), new RenameToSelfQuickFix());
               return;
             }
           }
@@ -100,4 +99,5 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
       }
     }
   }
+
 }

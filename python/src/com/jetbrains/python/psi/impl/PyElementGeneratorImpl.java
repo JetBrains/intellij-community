@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
@@ -240,6 +241,7 @@ public class PyElementGeneratorImpl implements PyElementGenerator {
     return (PyImportStatement)dummyFile.getFirstChild();
   }
 
+  // TODO: use to generate most other things
   public <T> T createFromText(final Project project, Class<T> aClass, final String text, final int[] path) {
     final PsiFile dummyFile = createDummyFile(project, text);
     PsiElement ret = dummyFile;
@@ -248,5 +250,11 @@ public class PyElementGeneratorImpl implements PyElementGenerator {
       for (int i = 0; i < skip; i += 1) ret = ret.getNextSibling();
     }
     return (T)ret;
+  }
+
+  static int[] PATH_PARAMETER = {0, 3, 1};
+
+  public PyParameter createParameter(@NotNull final Project project, @NotNull String name) {
+    return createFromText(project, PyParameter.class, "def f("+name+"): pass", PATH_PARAMETER);
   }
 }
