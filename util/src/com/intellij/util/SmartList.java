@@ -41,9 +41,7 @@ public class SmartList<E> extends AbstractList<E> {
     if (mySize == 2) {
       return (E)((Object[])myElem)[index];
     }
-    else {
-      return ((List<E>)myElem).get(index);
-    }
+    return ((List<E>)myElem).get(index);
   }
 
   public boolean add(E e) {
@@ -69,6 +67,7 @@ public class SmartList<E> extends AbstractList<E> {
     }
 
     mySize++;
+    modCount++;
     return true;
   }
 
@@ -79,6 +78,7 @@ public class SmartList<E> extends AbstractList<E> {
   public void clear() {
     myElem = null;
     mySize = 0;
+    modCount++;
   }
 
   public E set(final int index, final E element) {
@@ -119,7 +119,7 @@ public class SmartList<E> extends AbstractList<E> {
       List<E> list = (List<E>)myElem;
       oldValue = list.get(index);
       Object[] array = new Object[2];
-      int i0 = index==0 ? 1 : index==1 ? 0 : 0;
+      int i0 = index==0 ? 1 : 0;
       int i1 = index==0 ? 2 : index==1 ? 2 : 1;
       array[0] = list.get(i0);
       array[1] = list.get(i1);
@@ -130,6 +130,7 @@ public class SmartList<E> extends AbstractList<E> {
       oldValue = list.remove(index);
     }
     mySize--;
+    modCount++;
     return oldValue;
   }
 
