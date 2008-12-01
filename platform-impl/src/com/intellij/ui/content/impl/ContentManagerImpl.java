@@ -54,7 +54,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final Set<Content> myContentWithChangedComponent = new HashSet<Content>();
 
   private boolean myDisposed;
-  private Project myProject;
+  private final Project myProject;
 
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
@@ -112,8 +112,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   private class MyFocusProxy extends Wrapper.FocusHolder implements DataProvider {
-
-    public MyFocusProxy() {
+    private MyFocusProxy() {
       setOpaque(false);
       setPreferredSize(new Dimension(0, 0));
     }
@@ -253,12 +252,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public Content getContent(int index) {
-    if (index >= 0 && index < myContents.size()) {
-      return myContents.get(index);
-    }
-    else {
-      return null;
-    }
+    return index >= 0 && index < myContents.size() ? myContents.get(index) : null;
   }
 
   public Content getContent(JComponent component) {
@@ -359,7 +353,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     Runnable selection = new Runnable() {
       public void run() {
-        if (getIndexOfContent(content) == -1) return;
+        if (myDisposed || getIndexOfContent(content) == -1) return;
 
         for (Content each : old) {
           removeFromSelection(each);
@@ -476,7 +470,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return IdeFocusManager.getInstance(myProject);
   }
 
-  private void doRequestFocus(final Content toSelect) {
+  private static void doRequestFocus(final Content toSelect) {
     JComponent toFocus = toSelect.getPreferredFocusableComponent();
     if (toFocus != null) {
       toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
