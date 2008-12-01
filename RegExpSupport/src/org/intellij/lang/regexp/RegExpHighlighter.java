@@ -80,7 +80,7 @@ class RegExpHighlighter extends SyntaxHighlighterBase {
     );
     static final TextAttributesKey CTRL_CHARACTER = TextAttributesKey.createTextAttributesKey(
             "REGEXP.CTRL_CHARACTER",
-            HighlighterColors.BAD_CHARACTER.getDefaultAttributes()
+            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
     );
     static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(
             "REGEXP.COMMENT",
