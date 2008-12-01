@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,26 +27,27 @@ public class VariableUsedVisitor extends JavaRecursiveElementVisitor {
     @NotNull private final PsiVariable variable;
 
     public VariableUsedVisitor(@NotNull PsiVariable variable){
-        super();
         this.variable = variable;
     }
 
     @Override public void visitElement(@NotNull PsiElement element){
-        if(!used){
-            super.visitElement(element);
+        if (used) {
+            return;
         }
+        super.visitElement(element);
     }
 
-    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
+    @Override public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression referenceExpression){
         if(used){
             return;
         }
-        super.visitReferenceExpression(ref);
-        final PsiElement referent = ref.resolve();
-        if(referent == null){
+        super.visitReferenceExpression(referenceExpression);
+        final PsiElement target = referenceExpression.resolve();
+        if(target == null){
             return;
         }
-        if(referent.equals(variable)){
+        if(target.equals(variable)){
             used = true;
         }
     }

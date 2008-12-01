@@ -72,4 +72,10 @@ public class TooBroadScope
         int i = 10;
         i -= 1;
     }
+
+    private String variableUsedAsArgument(String s) {
+        String separator = "";
+        separator = variableUsedAsArgument(separator);
+        return null;
+    }
 }

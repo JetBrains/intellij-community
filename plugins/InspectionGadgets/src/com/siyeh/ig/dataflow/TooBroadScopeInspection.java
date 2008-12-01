@@ -49,18 +49,21 @@ public class TooBroadScopeInspection extends BaseInspection
     /** @noinspection PublicField for externalization*/
     public boolean m_onlyLookAtBlocks = false;
 
+    @Override
     @NotNull
     public String getDisplayName()
     {
         return InspectionGadgetsBundle.message("too.broad.scope.display.name");
     }
 
+    @Override
     @NotNull
     public String getID()
     {
         return "TooBroadScope";
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel()
     {
@@ -76,6 +79,7 @@ public class TooBroadScopeInspection extends BaseInspection
         return checkboxOptionsPanel;
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos)
     {
@@ -83,6 +87,7 @@ public class TooBroadScopeInspection extends BaseInspection
                 "too.broad.scope.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos)
     {
         final PsiVariable variable = (PsiVariable) infos[0];
@@ -105,6 +110,7 @@ public class TooBroadScopeInspection extends BaseInspection
                     "too.broad.scope.narrow.quickfix", variableName);
         }
 
+        @Override
         protected void doFix(@NotNull Project project,
                              ProblemDescriptor descriptor)
                 throws IncorrectOperationException
@@ -200,8 +206,9 @@ public class TooBroadScopeInspection extends BaseInspection
                 @Nullable PsiExpression initializer)
                 throws IncorrectOperationException
         {
-            final PsiManager manager = variable.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final Project project = variable.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = psiFacade.getElementFactory();
             String name = variable.getName();
             if (name == null)
             {
@@ -298,7 +305,7 @@ public class TooBroadScopeInspection extends BaseInspection
                     final IElementType tokenType =
                             assignmentExpression.getOperationTokenType();
                     if (location.equals(lhs) && JavaTokenType.EQ == tokenType &&
-                        !VariableAccessUtils.mayEvaluateToVariable(rhs, variable))
+                        !VariableAccessUtils.variableIsUsed(variable, rhs))
                     {
                         PsiDeclarationStatement newDeclaration=
                                 createNewDeclaration(variable, rhs);
@@ -412,6 +419,7 @@ public class TooBroadScopeInspection extends BaseInspection
         return false;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor()
     {
         return new TooBroadScopeVisitor();
@@ -529,7 +537,7 @@ public class TooBroadScopeInspection extends BaseInspection
                     return;
                 }
                 final PsiExpression rhs = assignmentExpression.getRExpression();
-                if (VariableAccessUtils.mayEvaluateToVariable(rhs, variable))
+                if (VariableAccessUtils.variableIsUsed(variable, rhs))
                 {
                     return;
                 }
