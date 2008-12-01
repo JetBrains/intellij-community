@@ -1082,8 +1082,11 @@ public class XmlUtil {
         StringBuilderSpinAllocator.dispose(tagStartBuilder);
       }
       XmlTag retTag;
+      Language language = xmlTag.getLanguage();
+      if (!(language instanceof HTMLLanguage)) language = StdFileTypes.XML.getLanguage();
       if (bodyText != null && bodyText.length() > 0) {
-        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">", xmlTag.getLanguage());
+        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">",
+                                                                                      language);
         if (enforceNamespacesDeep) {
           retTag.acceptChildren(new XmlRecursiveElementVisitor() {
             @Override public void visitXmlTag(XmlTag tag) {
@@ -1109,7 +1112,7 @@ public class XmlUtil {
         }
       }
       else {
-        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + "/>", xmlTag.getLanguage());
+        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + "/>", language);
       }
       return retTag;
     }
