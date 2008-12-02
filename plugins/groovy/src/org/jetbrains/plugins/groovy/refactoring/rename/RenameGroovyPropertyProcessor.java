@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
@@ -44,6 +45,7 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
       for (GrAccessorMethod getter : getters) {
         refs.addAll(MethodReferencesSearch.search(getter, projectScope, true).findAll());
       }
+      refs.addAll(ReferencesSearch.search(field, projectScope, true).findAll());
       return refs;
     }
     return super.findReferences(element);
@@ -77,9 +79,11 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
               ref.handleElementRename(newGetterName);
             } else {
               if (method == setter) {
-
                 ref.handleElementRename(newSetterName);
               }
+              else {
+              ref.handleElementRename(newName);
+            }
             }
           } else {
             ref.handleElementRename(newName);

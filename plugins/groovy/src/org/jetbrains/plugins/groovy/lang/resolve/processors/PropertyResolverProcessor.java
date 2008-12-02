@@ -21,7 +21,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -74,7 +78,8 @@ public class PropertyResolverProcessor extends ResolverProcessor {
       boolean containingAccessorFound = false;
       for (Iterator<GroovyResolveResult> it = myCandidates.iterator(); it.hasNext();) {
         PsiElement element = it.next().getElement();
-        if (element instanceof GrMethod && PsiTreeUtil.isAncestor(element, myPlace, false)) {
+        if (element instanceof GrMethod &&
+            (PsiTreeUtil.isAncestor(element, myPlace, false) || inSameClass(element))) {
           it.remove();
           containingAccessorFound = true;
           break;
@@ -89,6 +94,13 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     }
 
     return super.getCandidates();
+  }
+
+  private boolean inSameClass(PsiElement element) {
+    if (PsiTreeUtil.getParentOfType(myPlace, GrTypeDefinition.class) != ((GrMethod)element).getContainingClass() ||
+      !(myPlace instanceof GrReferenceExpression)) return false;
+    final GrExpression qual = ((GrReferenceExpression)myPlace).getQualifierExpression();
+    return qual == null || qual instanceof GrThisReferenceExpression;
   }
 
   public <T> T getHint(Class<T> hintClass) {
