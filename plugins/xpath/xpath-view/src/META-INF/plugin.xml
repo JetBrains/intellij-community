@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 
-<idea-plugin url="http://www.intellij.org/twiki/bin/view/Main/XPathViewPlugin" version="2">
+<idea-plugin version="2">
 
   <!-- Plugin name -->
   <id>XPathView</id>
