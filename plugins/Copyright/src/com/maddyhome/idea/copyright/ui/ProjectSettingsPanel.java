@@ -240,7 +240,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             final NamedScope scope = setting.getScope();
             final String profileName = map.get(scope.getName());
             if (profileName == null) return true;
-            if (!profileName.equals(setting.getProfile().getName())) return true;
+            if (!profileName.equals(setting.getProfileName())) return true;
             map.remove(scope.getName());
         }
         return !map.isEmpty();
@@ -267,7 +267,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         for (final String scopeName : copyrights.keySet()) {
             final NamedScope scope = manager.getScope(scopeName);
             if (scope != null) {
-                mappings.add(new ScopeSetting(scope, myManager.getCopyright(copyrights.get(scopeName))));
+                mappings.add(new ScopeSetting(scope, copyrights.get(scopeName)));
             } else {
                 myManager.unmapCopyright(scopeName);
             }
@@ -280,13 +280,25 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     private class ScopeSetting {
         private NamedScope myScope;
         private CopyrightProfile myProfile;
+      private String myProfileName;
 
-        private ScopeSetting(NamedScope scope, CopyrightProfile profile) {
+      private ScopeSetting(NamedScope scope, CopyrightProfile profile) {
             myScope = scope;
             myProfile = profile;
+            if (myProfile != null) {
+              myProfileName = myProfile.getName();
+            }
         }
 
-        public CopyrightProfile getProfile() {
+      public ScopeSetting(NamedScope scope, String profile) {
+         myScope = scope;
+        myProfileName = profile;
+      }
+
+      public CopyrightProfile getProfile() {
+            if (myProfile == null && myProfileName != null) {
+              myProfile = myManager.getCopyright(myProfileName);
+            }
             return myProfile;
         }
 
@@ -301,6 +313,10 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         public void setScope(NamedScope scope) {
             myScope = scope;
         }
+
+      public String getProfileName() {
+        return myProfileName;
+      }
     }
 
 
@@ -320,8 +336,8 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                 public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                     final Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                     if (!isSelected)
-                        setForeground(myManager.getCopyright(scopeSetting.getProfile().getName()) == null ? Color.red : UIUtil.getTableForeground());
-                    setText(scopeSetting.getProfile().getName());
+                        setForeground(myManager.getCopyright(scopeSetting.getProfileName()) == null ? Color.red : UIUtil.getTableForeground());
+                    setText(scopeSetting.getProfileName());
                     return rendererComponent;
                 }
             };
