@@ -76,12 +76,7 @@ public abstract class ReadonlyStatusHandler {
   public abstract OperationStatus ensureFilesWritable(VirtualFile... files);
 
   public OperationStatus ensureFilesWritable(final Collection<VirtualFile> files) {
-    final VirtualFile[] array = new VirtualFile[files.size()];
-    int i = 0;
-    for (VirtualFile file : files) {
-      array[i++] = file;
-    }
-    return ensureFilesWritable(array);
+    return ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
   }
 
   public static ReadonlyStatusHandler getInstance(Project project) {
