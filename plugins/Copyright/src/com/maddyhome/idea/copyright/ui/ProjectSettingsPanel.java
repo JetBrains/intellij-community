@@ -201,6 +201,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                 }
             }
         }
+        updateButtons();
     }
 
     private void fillCopyrightProfiles(DefaultComboBoxModel boxModel) {
