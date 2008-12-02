@@ -33,7 +33,7 @@ import java.util.List;
 public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix");
 
-  private SmartPsiElementPointer myMethodCall;
+  private final SmartPsiElementPointer myMethodCall;
 
   public CreateMethodFromUsageFix(PsiMethodCallExpression methodCall) {
     myMethodCall = SmartPointerManager.getInstance(methodCall.getProject()).createSmartPsiElementPointer(methodCall);
