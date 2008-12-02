@@ -760,11 +760,18 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       if (JavaPsiFacade.getInstance(psiField.getProject()).getResolveHelper().isAccessible(getter, newExpr, null)) {
         PsiElementFactory factory = JavaPsiFacade.getInstance(newExpr.getProject()).getElementFactory();
         String id = getter.getName();
-        PsiMethodCallExpression getterCall =
-                (PsiMethodCallExpression) factory.createExpressionFromText(id + "()", null);
+        final PsiElement parent = newExpr.getParent();
+        String qualifier = null;
+        if (parent instanceof PsiReferenceExpression) {
+          final PsiExpression qualifierExpression = ((PsiReferenceExpression)parent).getQualifierExpression();
+          if (qualifierExpression != null) {
+            qualifier = qualifierExpression.getText();
+          }
+        }
+        PsiMethodCallExpression getterCall = (PsiMethodCallExpression)factory.createExpressionFromText((qualifier != null ? qualifier + "." : "") + id + "()", null);
         getterCall = (PsiMethodCallExpression) CodeStyleManager.getInstance(myProject).reformat(getterCall);
-        if(newExpr.getParent() != null) {
-          newExpr = newExpr.replace(getterCall);
+        if(parent != null) {
+          newExpr = parent.replace(getterCall);
         }
         else {
           newExpr = getterCall;
