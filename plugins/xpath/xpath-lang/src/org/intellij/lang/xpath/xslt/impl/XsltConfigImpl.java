@@ -15,14 +15,18 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
+import org.intellij.lang.xpath.XPathFileType;
+import org.intellij.lang.xpath.xslt.XsltConfig;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
+import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport;
+import org.intellij.lang.xpath.xslt.validation.XsltAnnotator;
+
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.LanguageDocumentation;
-import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.*;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,16 +42,17 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport;
-import org.intellij.lang.xpath.xslt.validation.XsltAnnotator;
-import org.jdom.Element;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.RenameInputValidator;
+import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,6 +116,11 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             LanguageDocumentation.INSTANCE.addExplicitExtension(xmlLang, provider);
             LanguageDocumentation.INSTANCE.addExplicitExtension(xpathLang, provider);
 
+            RenameInputValidatorRegistry.getInstance().registerInputValidator(psiElement().withLanguage(XsltLanguage.INSTANCE), new RenameInputValidator() {
+                public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
+                    return LanguageNamesValidation.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage()).isIdentifier(newName, element.getProject());
+                }
+            });
 //            intentionManager.addAction(new DeleteUnusedParameterFix());
 //            intentionManager.addAction(new DeleteUnusedVariableFix());
 
