@@ -1,10 +1,13 @@
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -13,6 +16,8 @@ import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
 import com.maddyhome.idea.copyright.CopyrightManager;
@@ -134,7 +139,23 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
         });
         result.add(new AnAction("Import", "Import", Icons.ADVICE_ICON) {
             public void actionPerformed(AnActionEvent event) {
-                Options external = ExternalOptionHelper.getExternalOptions(myProject);
+              final VirtualFile[] files = FileChooser.chooseFiles(myProject, new OpenProjectFileChooserDescriptor(true) {
+                @Override
+                public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+                  return super.isFileVisible(file, showHiddenFiles) || isModuleFile(file);
+                }
+
+                @Override
+                public boolean isFileSelectable(VirtualFile file) {
+                  return super.isFileSelectable(file) || isModuleFile(file);
+                }
+
+                private boolean isModuleFile(VirtualFile file) {
+                  return !file.isDirectory() && file.getFileType() == StdFileTypes.IDEA_MODULE;
+                }
+              });
+                if (files.length != 1) return;
+                Options external = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(files[0]));
                 if (external != null) {
                     final String profileName = askForProfileName("Import copyright profile");
                     if (profileName == null) return;
@@ -142,15 +163,13 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
                     copyrightProfile.setName(profileName);
                     copyrightProfile.setOptions(external);
                     addProfileNode(copyrightProfile);
-                    JOptionPane.showMessageDialog(null,
+                    Messages.showInfoMessage(myProject,
                             "The copyright settings have been successfully imported.",
-                            "Import Complete",
-                            JOptionPane.INFORMATION_MESSAGE);
+                            "Import Complete");
                 } else {
-                    JOptionPane.showMessageDialog(null,
+                    Messages.showWarningDialog(myProject,
                             "The selected file did not contain any copyright settings.",
-                            "Import Failure",
-                            JOptionPane.WARNING_MESSAGE);
+                            "Import Failure");
                 }
             }
         });

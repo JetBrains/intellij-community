@@ -21,6 +21,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -303,8 +304,9 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             return myProfile;
         }
 
-        public void setProfile(CopyrightProfile profile) {
-            myProfile = profile;
+        public void setProfile(@NotNull CopyrightProfile profile) {
+          myProfile = profile;
+          myProfileName = profile.getName();
         }
 
         public NamedScope getScope() {
