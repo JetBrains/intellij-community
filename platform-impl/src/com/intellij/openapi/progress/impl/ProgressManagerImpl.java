@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ProgressManagerImpl extends ProgressManager {
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
-  private final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
+  private static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
   private final AtomicInteger myCurrentProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 

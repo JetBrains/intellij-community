@@ -364,9 +364,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (myIsFiringLoadingEvent) {
       return null;
     }
-    else {
-      return super.getComponentFromContainer(interfaceClass);
-    }
+    return super.getComponentFromContainer(interfaceClass);
   }
 
   private static void loadComponentRoamingTypes() {
@@ -503,9 +501,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return false;
     }
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (!progressIndicator.isModal()) return false;
-    if (!((ProgressIndicatorEx)progressIndicator).isModalityEntered()) return false;
-    return ((ModalityStateEx)getCurrentModalityState()).contains(progressIndicator);
+    return progressIndicator.isModal() && ((ProgressIndicatorEx)progressIndicator).isModalityEntered();
   }
 
   public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull Collection<Callable<T>> tasks, final ExecutorService executorService) throws Throwable {
@@ -578,12 +574,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     else {
       ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-      if (progress != null) {
-        return progress.getModalityState();
-      }
-      else {
-        return getNoneModalityState();
-      }
+      return progress == null ? getNoneModalityState() : progress.getModalityState();
     }
   }
 
@@ -693,7 +684,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public static boolean setExceptionalThreadWithReadAccessFlag(boolean flag) {
     boolean old = isExceptionalThreadWithReadAccess();
     if (flag) {
-      exceptionalThreadWithReadAccessFlag.set(true);
+      exceptionalThreadWithReadAccessFlag.set(Boolean.TRUE);
     }
     else {
       exceptionalThreadWithReadAccessFlag.remove();

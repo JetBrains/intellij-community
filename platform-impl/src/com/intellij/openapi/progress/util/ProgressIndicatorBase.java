@@ -40,8 +40,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   private boolean myModalityEntered = false;
 
   private final Set<ProgressIndicatorEx> myStateDelegates = new HashSet<ProgressIndicatorEx>();
-  private boolean myStoppingNow;
-  private WeakList<TaskInfo> myFinished = new WeakList<TaskInfo>();
+  private final WeakList<TaskInfo> myFinished = new WeakList<TaskInfo>();
   private boolean myWasStarted;
 
   private TaskInfo myOwnerTask;
