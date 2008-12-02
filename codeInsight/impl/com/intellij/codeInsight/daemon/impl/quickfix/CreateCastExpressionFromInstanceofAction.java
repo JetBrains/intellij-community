@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -16,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
  */
 public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFromInstanceofAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction");
-
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     boolean available = super.isAvailable(project, editor, file);
@@ -47,12 +44,15 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
   @Nullable
   private static PsiElement createAndInsertCast(final PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(instanceOfExpression.getProject()).getElementFactory();
-    PsiParenthesizedExpression paren = (PsiParenthesizedExpression)factory.createExpressionFromText("((a)b)", instanceOfExpression);
+    PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("((a)b)", instanceOfExpression);
+
+    PsiParenthesizedExpression paren = (PsiParenthesizedExpression)statement.getExpression();
     PsiTypeCastExpression cast = (PsiTypeCastExpression)paren.getExpression();
     PsiType castType = instanceOfExpression.getCheckType().getType();
     cast.getCastType().replace(factory.createTypeElement(castType));
     cast.getOperand().replace(instanceOfExpression.getOperand());
-    PsiElement element = insertAtAnchor(instanceOfExpression, paren);
+
+    PsiElement element = insertAtAnchor(instanceOfExpression, statement);
     return CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
   }
 
