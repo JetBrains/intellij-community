@@ -11,10 +11,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,12 +29,12 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
     myProject = project;
   }
 
-  public List<VcsException> rollbackChanges(List<Change> changes) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+  public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
 
     CvsRollbacker rollbacker = new CvsRollbacker(myProject);
     for (Change change : changes) {
       final FilePath filePath = ChangesUtil.getFilePath(change);
+      listener.accept(change);
       VirtualFile parent = filePath.getVirtualFileParent();
       String name = filePath.getName();
 
@@ -60,8 +61,6 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
         exceptions.add(new VcsException(e));
       }
     }
-
-    return exceptions;
   }
 
   public List<VcsException> rollbackMissingFileDeletion(List<FilePath> filePaths) {

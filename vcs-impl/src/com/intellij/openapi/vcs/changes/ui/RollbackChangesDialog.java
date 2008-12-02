@@ -1,19 +1,15 @@
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -123,8 +119,9 @@ public class RollbackChangesDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    doRollback(myProject, myBrowser.getCurrentIncludedChanges(),
-               myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(), myRefreshSynchronously, myAfterVcsRefreshInAwt, null);
+    new RollbackWorker(myProject, myRefreshSynchronously).doRollback(myBrowser.getCurrentIncludedChanges(),
+                                                                     myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(),
+                                                                     myAfterVcsRefreshInAwt, null);
   }
 
   @Nullable
@@ -136,97 +133,6 @@ public class RollbackChangesDialog extends DialogWrapper {
       return panel;
     }
     return myBrowser;
-  }
-
-  public static void doRollback(final Project project,
-                                final Collection<Change> changes,
-                                final boolean deleteLocallyAddedFiles,
-                                final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt,
-                                final String localHistoryActionName) {
-    final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
-    final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
-
-    final ChangeListManager changeListManager = ChangeListManagerImpl.getInstance(project);
-    final Runnable notifier = changeListManager.prepareForChangeDeletion(changes);
-    final Runnable afterRefresh = new Runnable() {
-      public void run() {
-        changeListManager.invokeAfterUpdate(new Runnable() {
-          public void run() {
-            notifier.run();
-            if (afterVcsRefreshInAwt != null) {
-              afterVcsRefreshInAwt.run();
-            }
-          }
-        }, InvokeAfterUpdateMode.SILENT, "Refresh change lists after update", ModalityState.current());
-      }
-    };
-
-    Runnable rollbackAction = new Runnable() {
-      public void run() {
-        ChangesUtil.processChangesByVcs(project, changes, new ChangesUtil.PerVcsProcessor<Change>() {
-          public void process(AbstractVcs vcs, List<Change> changes) {
-            final RollbackEnvironment environment = vcs.getRollbackEnvironment();
-            if (environment != null) {
-              pathsToRefresh.addAll(ChangesUtil.getPaths(changes));
-
-              final List<VcsException> exceptions = environment.rollbackChanges(changes);
-              if (exceptions != null && exceptions.size() > 0) {
-                vcsExceptions.addAll(exceptions);
-              }
-              else if (deleteLocallyAddedFiles) {
-                for (Change c : changes) {
-                  if (c.getType() == Change.Type.NEW) {
-                    ContentRevision rev = c.getAfterRevision();
-                    assert rev != null;
-                    FileUtil.delete(rev.getFile().getIOFile());
-                  }
-                }
-              }
-            }
-          }
-        });
-
-        doRefresh(project, pathsToRefresh, (! refreshSynchronously), afterRefresh, localHistoryActionName);
-
-        AbstractVcsHelper.getInstanceChecked(project).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
-      }
-    };
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(rollbackAction, VcsBundle.message("changes.action.rollback.text"), true, project);
-    }
-    else {
-      rollbackAction.run();
-    }
-    ((ChangeListManagerImpl) changeListManager).showLocalChangesInvalidated();
-  }
-
-  private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous,
-                                final Runnable runAfter, final String localHistoryActionName) {
-    final String actionName = VcsBundle.message("changes.action.rollback.text");
-    final LocalHistoryAction action = LocalHistory.startAction(project, actionName);
-    RefreshSession session = RefreshQueue.getInstance().createSession(asynchronous, true, new Runnable() {
-      public void run() {
-        action.finish();
-        LocalHistory.putSystemLabel(project, (localHistoryActionName == null) ? actionName : localHistoryActionName);
-        if (!project.isDisposed()) {
-          for (FilePath path : pathsToRefresh) {
-            if (path.isDirectory()) {
-              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(path);
-            }
-            else {
-              VcsDirtyScopeManager.getInstance(project).fileDirty(path);
-            }
-          }
-          runAfter.run();
-        }
-      }
-    });
-    for(FilePath path: pathsToRefresh) {
-      session.addFile(ChangesUtil.findValidParent(path));
-    }
-    session.launch();
   }
 
   public JComponent getPreferredFocusedComponent() {
