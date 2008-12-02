@@ -16,6 +16,7 @@
 
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Attribute;
 import org.jdom.Content;
@@ -24,11 +25,13 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 //todo: use TagBinding
 class OptionTagBinding implements Binding {
+
+  private final static Logger LOG = Logger.getInstance("#" + OptionTagBinding.class.getName());
+
   private Accessor accessor;
   private String myName;
   private Binding myBinding;
@@ -62,7 +65,11 @@ class OptionTagBinding implements Binding {
   }
 
   public Object deserialize(Object o, Object... nodes) {
-    assert nodes.length == 1 : "Wrong nodes: " + Arrays.asList(nodes) + " passed to: " + this;
+    if (nodes.length > 1) {
+      LOG.info("Duplicated options for " + o + " will be ignored");
+    }
+    assert nodes.length != 0 : "Empty nodes passed to: " + this;
+
     Element element = ((Element)nodes[0]);
     Attribute valueAttr = element.getAttribute(Constants.VALUE);
 
