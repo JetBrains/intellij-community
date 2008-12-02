@@ -61,6 +61,7 @@ class TemplateListPanel extends JPanel {
 
   public void dispose() {
     EditorFactory.getInstance().releaseEditor(myEditor);
+    myAlarm.cancelAllRequests();
   }
 
   public void reset() {
