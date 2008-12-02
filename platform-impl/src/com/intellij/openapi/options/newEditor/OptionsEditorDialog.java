@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.CommonBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Map;
 
-public class OptionsEditorDialog extends DialogWrapper {
+public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
 
   private Project myProject;
   private ConfigurableGroup[] myGroups;
@@ -193,6 +195,13 @@ public class OptionsEditorDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myEditor.getPreferredFocusedComponent();
+  }
+
+  public Object getData(@NonNls String dataId) {
+    if (dataId.equals(OptionsEditor.KEY.getName())) {
+      return myEditor;
+    }
+    return null;
   }
 
   private class ApplyAction extends AbstractAction {
