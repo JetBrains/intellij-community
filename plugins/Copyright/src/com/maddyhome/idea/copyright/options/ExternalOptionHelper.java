@@ -21,19 +21,19 @@ package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Icons;
 import org.jdom.Document;
 import org.jdom.Element;
 
-import java.awt.Window;
-import java.io.File;
-import java.util.List;
-import javax.swing.Icon;
-import javax.swing.JFileChooser;
+import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileView;
+import java.awt.*;
+import java.io.File;
+import java.util.List;
 
 public class ExternalOptionHelper
 {
@@ -62,6 +62,22 @@ public class ExternalOptionHelper
             {
                 Element component = (Element)element;
                 String name = component.getAttributeValue("name");
+                if (name.equals("CopyrightManager")) {
+                  final Element child = component.getChild("copyright");
+                  if (child != null) {
+                    for (Object o : child.getChildren("option")) {
+                      if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "myOptions")) {
+                        final Element valueElement = ((Element)o).getChild("value");
+                        if (valueElement != null) {
+                          Options res = new Options();
+                          res.readExternal(valueElement);
+
+                          return res;
+                        }
+                      }
+                    }
+                  }
+                } else
                 if (name.equals("copyright"))
                 {
                     Options res = new Options();
