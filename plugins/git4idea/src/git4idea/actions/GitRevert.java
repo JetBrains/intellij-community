@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -54,7 +55,7 @@ public class GitRevert extends BasicAction {
       }
     }
     GitRollbackEnvironment re = GitRollbackEnvironment.getInstance(project);
-    re.rollbackChanges(changes);
+    re.rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
     VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile file : roots) {
       mgr.dirDirtyRecursively(file);

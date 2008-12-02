@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
@@ -84,8 +85,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   /**
    * {@inheritDoc}
    */
-  public List<VcsException> rollbackChanges(@NotNull List<Change> changes) {
-    List<VcsException> result = new ArrayList<VcsException>();
+  public void rollbackChanges(@NotNull List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
     HashMap<VirtualFile, List<FilePath>> toUnindex = new HashMap<VirtualFile, List<FilePath>>();
     HashMap<VirtualFile, List<FilePath>> toRevert = new HashMap<VirtualFile, List<FilePath>>();
     List<FilePath> toDelete = new ArrayList<FilePath>();
@@ -114,37 +114,39 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     }
     // unindex files
     for (Map.Entry<VirtualFile, List<FilePath>> entry : toUnindex.entrySet()) {
+      listener.accept(entry.getValue());
       try {
         unindex(entry.getKey(), entry.getValue());
       }
       catch (VcsException e) {
-        result.add(e);
+        exceptions.add(e);
       }
     }
     // delete files
     for (FilePath file : toDelete) {
+      listener.accept(file);
       try {
         final File ioFile = file.getIOFile();
         if (ioFile.exists()) {
           if (!ioFile.delete()) {
-            result.add(new VcsException("Unable to delete file: " + file));
+            exceptions.add(new VcsException("Unable to delete file: " + file));
           }
         }
       }
       catch (Exception e) {
-        result.add(new VcsException("Unable to delete file: " + file, e));
+        exceptions.add(new VcsException("Unable to delete file: " + file, e));
       }
     }
     // revert files from HEAD
     for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
+      listener.accept(entry.getValue());
       try {
         revert(entry.getKey(), entry.getValue());
       }
       catch (VcsException e) {
-        result.add(e);
+        exceptions.add(e);
       }
     }
-    return result;
   }
 
   /**

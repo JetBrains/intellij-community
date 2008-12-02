@@ -8,10 +8,12 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.EmptyChangelistBuilder;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -36,9 +38,10 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     return SvnBundle.message("action.name.revert");
   }
 
-  public List<VcsException> rollbackChanges(List<Change> changes) {
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
-    for (Change change : changes) {
+  public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
+    for (Change change: changes) {
+      listener.accept(change);
+
       File beforePath = null;
       ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
@@ -68,8 +71,6 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
         }
       }
     }
-
-    return exceptions;
   }
 
   private void checkRevertFile(final File ioFile, final List<VcsException> exceptions) {

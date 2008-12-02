@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -139,7 +140,10 @@ public class SvnRenameTest extends SvnTestCase {
     final Change change = changeListManager.getChange(myWorkingCopyDir.findChild("newchild"));
     Assert.assertNotNull(change);
 
-    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change));
+    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
+                                                                           RollbackProgressListener.EMPTY);
+    Assert.assertTrue(exceptions.isEmpty());
     Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "newchild").exists());
     Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "child").exists());
   }
@@ -201,7 +205,9 @@ public class SvnRenameTest extends SvnTestCase {
     changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild").findChild("a.txt")));
     changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild")));
 
-    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes);
+    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+    Assert.assertTrue(exceptions.isEmpty());
     Assert.assertTrue(new File(childPath, "a.txt").exists());
     Assert.assertTrue(new File(childPath, "u.txt").exists());
     final File unversionedDirFile = new File(childPath, "uc");
