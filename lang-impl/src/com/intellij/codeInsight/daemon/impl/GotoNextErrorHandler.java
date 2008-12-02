@@ -78,13 +78,9 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
   static void showMessageWhenNoHighlights(Project project, PsiFile file, Editor editor) {
     DaemonCodeAnalyzerImpl codeHighlighter = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    String message;
-    if (codeHighlighter.isErrorAnalyzingFinished(file)){
-      message = InspectionsBundle.message("no.errors.found.in.this.file");
-    }
-    else{
-      message = InspectionsBundle.message("error.analysis.is.in.progress");
-    }
+    String message = codeHighlighter.isErrorAnalyzingFinished(file)
+                     ? InspectionsBundle.message("no.errors.found.in.this.file")
+                     : InspectionsBundle.message("error.analysis.is.in.progress");
     HintManager.getInstance().showInformationHint(editor, message);
   }
 
@@ -105,8 +101,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     scrollingModel.runActionOnScrollingFinished(
       new Runnable(){
         public void run() {
-          scrollingModel.scrollTo(editor.offsetToLogicalPosition(endOffset), ScrollType.MAKE_VISIBLE);
-          scrollingModel.scrollTo(editor.offsetToLogicalPosition(offset), ScrollType.MAKE_VISIBLE);
+          int maxOffset = editor.getDocument().getTextLength() - 1;
+          if (maxOffset == -1) return;
+          scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, endOffset)), ScrollType.MAKE_VISIBLE);
+          scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, offset)), ScrollType.MAKE_VISIBLE);
         }
       }
     );
@@ -115,7 +113,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   private static int getNavigationPositionFor(HighlightInfo info, Document document) {
-    int shift = info.isAfterEndOfLine ? +1 : info.navigationShift;
+    int shift = info.isAfterEndOfLine ? 1 : info.navigationShift;
     int offset = info.highlighter.getStartOffset() + shift;
     return Math.min(offset, document.getTextLength());
   }
