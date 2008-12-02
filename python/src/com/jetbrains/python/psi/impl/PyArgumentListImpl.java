@@ -468,8 +468,16 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
           }
         }
         // any args left?
+        boolean tuple_arg_consumed_some = false;
+        for (PyExpression arg : param_slots.values()) { // any(\x: x == tuple_arg)
+          if (arg != null && arg == tuple_arg) {
+            tuple_arg_consumed_some = true;
+            break;
+          }
+        }
         for (PyExpression arg : unmatched_args) {
           //getHolder().createErrorAnnotation(arg, "unexpected arg");
+          if (arg == kwd_arg && tuple_arg_consumed_some) continue; // *arg consumed anything that **arg might equally consume.
           ret.markArgument(arg, ArgFlag.IS_UNMAPPED);
         }
         // any params still unfilled?

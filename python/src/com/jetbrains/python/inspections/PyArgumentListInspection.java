@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParameter;
@@ -24,13 +25,13 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return "Python"; // TODO: propertize
+    return PyBundle.message("INSP.GROUP.python");
   }
 
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Incorrect call arguments"; // TODO: propertize
+    return PyBundle.message("INSP.NAME.incorrect.call.arguments");
   }
 
   @NotNull
@@ -110,19 +111,19 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
         if (!flags.isEmpty()) { // something's wrong
           PyExpression arg = arg_entry.getKey();
           if (flags.contains(PyArgumentList.ArgFlag.IS_DUP)) {
-            registerProblem(arg, "Duplicate argument");
+            registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
           }
           if (flags.contains(PyArgumentList.ArgFlag.IS_DUP_KWD)) {
-            registerProblem(arg, "Duplicate **arg");
+            registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
           }
           if (flags.contains(PyArgumentList.ArgFlag.IS_DUP_TUPLE)) {
-            registerProblem(arg, "Duplicate *arg");
+            registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
           }
           if (flags.contains(PyArgumentList.ArgFlag.IS_POS_PAST_KWD)) {
-            registerProblem(arg, "Cannot appear past keyword arguments");
+            registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
           }
           if (flags.contains(PyArgumentList.ArgFlag.IS_UNMAPPED)) {
-            registerProblem(arg, "Unexpected argument");
+            registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
           }
         }
       }
@@ -132,7 +133,7 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
         ASTNode close_paren = our_node.findChildByType(PyTokenTypes.RPAR);
         if (close_paren != null) {
           for (PyParameter param : result.getUnmappedParams()) {
-            registerProblem(close_paren.getPsi(), "Parameter '" + param.getName() + "' unfilled");
+            registerProblem(close_paren.getPsi(), PyBundle.message("INSP.parameter.$0.unfilled", param.getName()));
           }
         }
       }

@@ -70,4 +70,14 @@
     <line>55</line> <!-- yes, two identical problems on same line -->
     <description>Cannot appear past keyword arguments</description>
   </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>65</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>66</line>
+    <description>Unexpected argument</description>
+  </problem>
 </problems>
