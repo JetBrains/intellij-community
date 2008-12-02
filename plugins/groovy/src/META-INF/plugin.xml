@@ -97,7 +97,7 @@
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
     <annotatedMembersSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
 
-    <compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>
+    <!--<compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>-->
 
     <facetType implementation="org.jetbrains.plugins.groovy.config.GroovyFacetType"/>
 
@@ -343,6 +343,9 @@
   <project-components>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.grails.console.GrailsConsole</implementation-class>

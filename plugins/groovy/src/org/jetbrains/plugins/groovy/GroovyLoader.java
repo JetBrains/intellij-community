@@ -124,7 +124,6 @@ public class GroovyLoader implements ApplicationComponent {
         GroovyToJavaGenerator generator = new GroovyToJavaGenerator(project);
         compilerManager.addCompiler(generator);
         compilerManager.addCompilationStatusListener(generator);
-
         compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 
         DebuggerManager.getInstance(project).registerPositionManagerFactory(new Function<DebugProcess, PositionManager>() {
