@@ -121,32 +121,37 @@ public class OptimizeImportsTest extends IdeaTestCase {
 
   private void doTest(String folder, String filePath) throws Throwable {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
-    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
-    String basePath = TestUtils.getTestDataPath() + "/optimizeImports/";
-    String resultText = getResultFromFile(basePath + folder);
-    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + basePath + folder + "/" + filePath);
+    int oldCount = settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
+    try {
+      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+      String basePath = TestUtils.getTestDataPath() + "/optimizeImports/";
+      String resultText = getResultFromFile(basePath + folder);
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + basePath + folder + "/" + filePath);
 
-    assertNotNull("Virtual file points to null", virtualFile);
+      assertNotNull("Virtual file points to null", virtualFile);
 
-    PsiManager manager = PsiManager.getInstance(myProject);
-    PsiFile file = manager.findFile(virtualFile);
+      PsiManager manager = PsiManager.getInstance(myProject);
+      PsiFile file = manager.findFile(virtualFile);
 
-    assertNotNull("PsiFile points to null", file);
+      assertNotNull("PsiFile points to null", file);
 
-    GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
-    final Runnable runnable = optimizer.processFile(file);
+      GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
+      final Runnable runnable = optimizer.processFile(file);
 
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(runnable);
-      }
-    }, "Optimize imports", null);
+      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(runnable);
+        }
+      }, "Optimize imports", null);
 
-    String text = file.getText();
-    //System.out.println("---------------------------- " + folder + " ----------------------------");
-    //System.out.println(text);
-    assertEquals("Results are not equal", resultText, text);
-    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
+      String text = file.getText();
+      //System.out.println("---------------------------- " + folder + " ----------------------------");
+      //System.out.println(text);
+      assertEquals("Results are not equal", resultText, text);
+    }
+    finally {
+      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = oldCount;
+    }
   }
 
   private String getResultFromFile(String basePath) throws IOException {
