@@ -99,7 +99,7 @@ public class StatementParsing extends Parsing {
     Lexer badLexer = lexer instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)lexer).getOriginal() : lexer;
     if (badLexer instanceof FilterLexer){
       final Lexer original = ((FilterLexer)badLexer).getOriginal();
-      if (original instanceof JavaWithJspTemplateDataLexer || original instanceof AbstractJspJavaLexer){
+      if (original instanceof AbstractJspJavaLexer){
         deep = true; // deep parsing of code blocks in JSP would lead to incorrect parsing on transforming
       }
     }

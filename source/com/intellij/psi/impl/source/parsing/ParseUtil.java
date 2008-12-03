@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.parsing;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.JavaWithJspTemplateDataLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +49,7 @@ public class ParseUtil implements Constants {
                                          TokenProcessor processor,
                                          ParsingContext context) {
     final MissingTokenInserter inserter;
-    if (lexer instanceof JavaLexer || lexer instanceof JavaWithJspTemplateDataLexer || lexer instanceof AbstractJspJavaLexer) {
+    if (lexer instanceof JavaLexer || lexer instanceof AbstractJspJavaLexer) {
       inserter = new JavaMissingTokenInserter(root, lexer, startOffset, endOffset, state, processor, context);
     }
     else {
