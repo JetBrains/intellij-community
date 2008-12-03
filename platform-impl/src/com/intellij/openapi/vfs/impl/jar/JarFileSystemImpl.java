@@ -139,7 +139,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     final String jarRootPath = extractRootPath(entryVFile.getPath());
 
     JarHandler handler;
-    JarHandler freshHanlder = null;
+    final JarHandler freshHanlder;
     
     synchronized (LOCK) {
       handler = myHandlers.get(jarRootPath);
@@ -147,11 +147,18 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         freshHanlder = handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
         myHandlers.put(jarRootPath, handler);
       }
+      else {
+        freshHanlder = null;
+      }
     }
 
     if (freshHanlder != null) {
       // Refresh must be outside of the lock, since it potentially requires write action.
-      freshHanlder.refreshLocalFileForJar();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          freshHanlder.refreshLocalFileForJar();
+        }
+      }, ModalityState.defaultModalityState());
     }
 
     return handler;
