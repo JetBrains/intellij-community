@@ -529,6 +529,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         vcsDirtyScopeManager.filesDirty(toRefreshFiles, toRefreshDirs);
       }
     });
+    filterOutInvalid(myFilesToRefresh);
     session.addAllFiles(myFilesToRefresh);
     session.launch();
     myFilesToRefresh.clear();
@@ -663,6 +664,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
                                                             vcs.getDeleteConfirmation());
       }
       if (filesToProcess != null) {
+        deletedFiles.removeAll(filesToProcess);
+
         List<VcsException> exceptions = new ArrayList<VcsException>();
         SVNWCClient wcClient = vcs.createWCClient();
         for(FilePath file: filesToProcess) {
@@ -685,6 +688,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         if (!exceptions.isEmpty()) {
           vcsHelper.showErrors(exceptions, SvnBundle.message("delete.files.errors.title"));
         }
+      }
+      for (FilePath file : deletedFiles) {
+        final FilePath parent = file.getParentPath();
+        if (parent != null) {
+          myFilesToRefresh.add(parent.getVirtualFile());
+        }
+        FileUtil.delete(file.getIOFile());
       }
     }
   }
