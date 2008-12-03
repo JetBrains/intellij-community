@@ -12,10 +12,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -121,7 +119,7 @@ public class RollbackWorker {
                 myIndicator.setText(vcs.getDisplayName() + ": doing rollback...");
                 myIndicator.setIndeterminate(false);
               }
-              environment.rollbackChanges(changes, myExceptions, new MyProgressModifier(changes.size()));
+              environment.rollbackChanges(changes, myExceptions, new RollbackProgressModifier(changes.size(), myIndicator));
               if (myIndicator != null) {
                 myIndicator.setText2("");
               }
@@ -174,50 +172,4 @@ public class RollbackWorker {
     }
   }
 
-  private class MyProgressModifier implements RollbackProgressListener {
-    private final Set<String> myTakenPaths;
-    private final double myTotal;
-    private int myCnt;
-
-    private MyProgressModifier(final double total) {
-      myTotal = total;
-      myTakenPaths = new HashSet<String>();
-      myCnt = 0;
-    }
-
-    private void acceptImpl(final String name) {
-      myIndicator.setText2(VcsBundle.message("rolling.back.file", name));
-      checkName(name);
-      myIndicator.setFraction(myCnt / myTotal);
-    }
-
-    private void checkName(final String name) {
-      if (! myTakenPaths.contains(name)) {
-        myTakenPaths.add(name);
-        if (myTotal >= (myCnt + 1)) {
-          ++ myCnt;
-        }
-      }
-    }
-
-    public void accept(@NotNull final Change change) {
-      acceptImpl(ChangesUtil.getFilePath(change).getIOFile().getAbsolutePath());
-    }
-
-    public void accept(@NotNull final FilePath filePath) {
-      acceptImpl(filePath.getIOFile().getAbsolutePath());
-    }
-
-    public void accept(final List<FilePath> paths) {
-      if (paths != null && (! paths.isEmpty())) {
-        for (int i = 0; i < paths.size(); i++) {
-          final FilePath path = paths.get(i);
-          final String name = path.getIOFile().getAbsolutePath();
-          checkName(name);
-        }
-        myIndicator.setFraction(myCnt / myTotal);
-        myIndicator.setText2(VcsBundle.message("rolling.back.file", paths.get(0).getIOFile().getAbsolutePath()));
-      }
-    }
-  }
 }

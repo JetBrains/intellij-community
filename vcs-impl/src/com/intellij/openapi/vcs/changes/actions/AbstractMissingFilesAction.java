@@ -13,6 +13,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -36,28 +37,41 @@ public abstract class AbstractMissingFilesAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (files == null) return;
 
-    final List<VcsException> allExceptions = new ArrayList<VcsException>();
-    ChangesUtil.processFilePathsByVcs(project, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
-      public void process(final AbstractVcs vcs, final List<FilePath> items) {
-        final List<VcsException> exceptions = processFiles(vcs, files);
-        if (exceptions != null) {
-          allExceptions.addAll(exceptions);
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final Runnable action = new Runnable() {
+      public void run() {
+        final List<VcsException> allExceptions = new ArrayList<VcsException>();
+        ChangesUtil.processFilePathsByVcs(project, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
+          public void process(final AbstractVcs vcs, final List<FilePath> items) {
+            final List<VcsException> exceptions = processFiles(vcs, files);
+            if (exceptions != null) {
+              allExceptions.addAll(exceptions);
+            }
+          }
+        });
+
+        for (FilePath file : files) {
+          VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+        }
+        ChangesViewManager.getInstance(project).scheduleRefresh();
+        if (allExceptions.size() > 0) {
+          AbstractVcsHelper.getInstance(project).showErrors(allExceptions, "VCS Errors");
         }
       }
-    });
-
-    for (FilePath file : files) {
-      VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-    }
-    ChangesViewManager.getInstance(project).scheduleRefresh();
-    if (allExceptions.size() > 0) {
-      AbstractVcsHelper.getInstance(project).showErrors(allExceptions, "VCS Errors");
+    };
+    if (synchronously()) {
+      action.run();
+    } else {
+      progressManager.runProcessWithProgressSynchronously(action, getName(), true, project);
     }
   }
+
+  protected abstract boolean synchronously();
+  protected abstract String getName();
 
   protected abstract List<VcsException> processFiles(final AbstractVcs vcs, final List<FilePath> files);
 }

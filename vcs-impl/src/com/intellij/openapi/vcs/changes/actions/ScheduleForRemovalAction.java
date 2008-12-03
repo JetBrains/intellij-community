@@ -26,4 +26,12 @@ public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
     if (result == null) return Collections.emptyList();
     return result;
   }
+
+  protected String getName() {
+    return null;
+  }
+
+  protected boolean synchronously() {
+    return true;
+  }
 }

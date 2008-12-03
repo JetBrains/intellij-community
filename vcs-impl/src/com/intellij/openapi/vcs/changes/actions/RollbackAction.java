@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
@@ -23,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
+import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -136,23 +139,38 @@ public class RollbackAction extends AnAction {
       return;
     }
     final List<VcsException> exceptions = new ArrayList<VcsException>();
-    ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-      public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-        final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-        if (rollbackEnvironment != null) {
-          exceptions.addAll(rollbackEnvironment.rollbackModifiedWithoutCheckout(items));
-        }
-      }
-    });
-    if (!exceptions.isEmpty()) {
-      AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab"));
-    }
-    VirtualFileManager.getInstance().refresh(true, new Runnable() {
+
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final Runnable action = new Runnable() {
       public void run() {
-        for(VirtualFile virtualFile: modifiedWithoutEditing) {
-          VcsDirtyScopeManager.getInstance(project).fileDirty(virtualFile);
+        final ProgressIndicator indicator = progressManager.getProgressIndicator();
+        ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
+          public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
+            final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+            if (rollbackEnvironment != null) {
+              if (indicator != null) {
+                indicator.setText(vcs.getDisplayName() + ": doing rollback...");
+                indicator.setIndeterminate(false);
+              }
+              rollbackEnvironment.rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
+              if (indicator != null) {
+                indicator.setText2("");
+              }
+            }
+          }
+        });
+        if (!exceptions.isEmpty()) {
+          AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab"));
         }
+        VirtualFileManager.getInstance().refresh(true, new Runnable() {
+          public void run() {
+            for(VirtualFile virtualFile: modifiedWithoutEditing) {
+              VcsDirtyScopeManager.getInstance(project).fileDirty(virtualFile);
+            }
+          }
+        });
       }
-    });
+    };
+    progressManager.runProcessWithProgressSynchronously(action, VcsBundle.message("changes.action.rollback.text"), true, project);
   }
 }

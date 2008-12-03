@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -63,11 +62,11 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
     }
   }
 
-  public List<VcsException> rollbackMissingFileDeletion(List<FilePath> filePaths) {
+  public void rollbackMissingFileDeletion(List<FilePath> filePaths, final List<VcsException> exceptions,
+                                                        final RollbackProgressListener listener) {
     final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[filePaths.size()]),
                                                                               CvsConfiguration.getInstance(myProject));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(cvsHandler, CvsOperationExecutorCallback.EMPTY);
-    return Collections.emptyList();
   }
 }

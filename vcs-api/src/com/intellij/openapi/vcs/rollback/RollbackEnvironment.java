@@ -55,9 +55,11 @@ public interface RollbackEnvironment {
    * {@link com.intellij.openapi.vcs.changes.ChangelistBuilder#processLocallyDeletedFile}.
    *
    * @param files the files to rollback deletion of.
-   * @return list of errors occurred, or an empty list if no errors occurred.
+   * @param exceptions
+   * @param listener @return list of errors occurred, or an empty list if no errors occurred.
    */
-  List<VcsException> rollbackMissingFileDeletion(List<FilePath> files);
+  void rollbackMissingFileDeletion(List<FilePath> files, final List<VcsException> exceptions,
+                                                 final RollbackProgressListener listener);
 
   /**
    * Rolls back the modifications of files which have been made writable but not properly checked out from VCS.
@@ -65,9 +67,11 @@ public interface RollbackEnvironment {
    * {@link com.intellij.openapi.vcs.changes.ChangelistBuilder#processModifiedWithoutCheckout}.
    *
    * @param files the files to rollback.
-   * @return list of errors occurred, or an empty list if no errors occurred.
+   * @param exceptions
+   * @param listener @return list of errors occurred, or an empty list if no errors occurred.
    */
-  List<VcsException> rollbackModifiedWithoutCheckout(List<VirtualFile> files);
+  void rollbackModifiedWithoutCheckout(List<VirtualFile> files, final List<VcsException> exceptions,
+                                                     final RollbackProgressListener listener);
 
   /**
    * This is called when the user performs an undo that returns a file to a state in which it was

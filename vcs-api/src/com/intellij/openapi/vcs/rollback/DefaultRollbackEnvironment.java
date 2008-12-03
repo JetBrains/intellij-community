@@ -30,7 +30,8 @@ public abstract class DefaultRollbackEnvironment implements RollbackEnvironment 
     return VcsBundle.message("changes.action.rollback.text");
   }
 
-  public List<VcsException> rollbackModifiedWithoutCheckout(final List<VirtualFile> files) {
+  public void rollbackModifiedWithoutCheckout(final List<VirtualFile> files, final List<VcsException> exceptions,
+                                                            final RollbackProgressListener listener) {
     throw new UnsupportedOperationException();
   }
 

@@ -2,7 +2,9 @@ package com.intellij.openapi.vcs.rollback;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -18,9 +20,15 @@ public interface RollbackProgressListener {
     }
     public void accept(final List<FilePath> paths) {
     }
+    public void accept(final File file) {
+    }
+    public void accept(final VirtualFile file) {
+    }
   };
 
   void accept(final Change change);
   void accept(final FilePath filePath);
   void accept(final List<FilePath> paths);
+  void accept(final File file);
+  void accept(final VirtualFile file);
 }
