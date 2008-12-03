@@ -60,10 +60,28 @@ public class ResolveUtil {
         final XmlAttributeValue valueElement = location.getValueElement();
         if (valueElement == null) return null;
 
+        // prefer direct relative path
+        final String value = valueElement.getValue();
+        final PsiFile file = resolveFile(value, baseFile);
+        if (file != baseFile && file instanceof XmlFile) {
+            return file;
+        }
+
         final PsiReference[] references = valueElement.getReferences();
         for (PsiReference reference : references) {
             final PsiElement target = reference.resolve();
-            if (target != baseFile && target instanceof XmlFile) {
+            if (target == null && reference instanceof PsiPolyVariantReference) {
+                final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+                for (ResolveResult result : results) {
+                    if (result.isValidResult()) {
+                        // TODO: how to weigh/prioritize the results? 
+                        final PsiElement element = result.getElement();
+                        if (element != baseFile && element instanceof XmlFile) {
+                            return (PsiFile)target;
+                        }
+                    }
+                }
+            } else if (target != baseFile && target instanceof XmlFile) {
                 return (PsiFile)target;
             }
         }
