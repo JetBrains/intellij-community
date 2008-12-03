@@ -240,7 +240,7 @@ public class GitUnstashDialog extends DialogWrapper {
     }
     myBranches.clear();
     try {
-      GitBranch.list(myProject, getGitRoot(), false, true, myBranches);
+      GitBranch.listAsStrings(myProject, getGitRoot(), false, true, myBranches);
     }
     catch (VcsException e) {
       // ignore error

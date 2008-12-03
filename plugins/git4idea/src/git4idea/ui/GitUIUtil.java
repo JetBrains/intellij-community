@@ -68,6 +68,16 @@ public class GitUIUtil {
   }
 
   /**
+   * Get text field from combobox
+   *
+   * @param cb a combobox to examine
+   * @return the text field reference
+   */
+  public static JTextField getTextField(JComboBox cb) {
+    return (JTextField)cb.getEditor().getEditorComponent();
+  }
+
+  /**
    * Create list cell renderd for remotes. It shows both name and url and highlights the default
    * remote for the branch with bold.
    *

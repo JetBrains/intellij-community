@@ -26,6 +26,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import git4idea.GitBranch;
+import git4idea.GitTag;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
@@ -154,10 +156,10 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
           while (s.hasMoreData()) {
             s.tabToken(); // skip last commit hash
             String ref = s.line();
-            if (ref.startsWith(GitRefspecPanel.REFS_HEADS_PREFIX)) {
+            if (ref.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
               myBranches.add(ref);
             }
-            else if (ref.startsWith(GitRefspecPanel.REFS_TAGS_PREFIX)) {
+            else if (ref.startsWith(GitTag.REFS_TAGS_PREFIX)) {
               myTags.add(ref);
             }
             else {

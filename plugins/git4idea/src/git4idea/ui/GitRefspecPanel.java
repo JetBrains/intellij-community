@@ -21,7 +21,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.HashMap;
+import git4idea.GitBranch;
 import git4idea.GitRemote;
+import git4idea.GitTag;
 import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
 import git4idea.validators.GitBranchNameValidator;
@@ -113,18 +115,6 @@ public class GitRefspecPanel extends JPanel {
    * Mapping table model
    */
   private final MyMappingTableModel myReferencesModel = new MyMappingTableModel();
-  /**
-   * Prefix for local branches
-   */
-  @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/";
-  /**
-   * Prefix for tags
-   */
-  @NonNls public static final String REFS_TAGS_PREFIX = "refs/tags/";
-  /**
-   * Prefix for remotes
-   */
-  @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/";
 
   /**
    * A constructor
@@ -216,7 +206,7 @@ public class GitRefspecPanel extends JPanel {
           myReferencesModel.addMapping(false, tag, tag);
         }
         for (String head : d.getSelected(false)) {
-          myReferencesModel.addMapping(true, head, remoteName(head.substring(REFS_HEADS_PREFIX.length())));
+          myReferencesModel.addMapping(true, head, remoteName(head.substring(GitBranch.REFS_HEADS_PREFIX.length())));
         }
       }
     });
@@ -245,7 +235,7 @@ public class GitRefspecPanel extends JPanel {
    * @return the full path to the head
    */
   private static String tagRemoteName(final String remoteName, final String tagName) {
-    return REFS_TAGS_PREFIX + remoteName + "/" + tagName;
+    return GitTag.REFS_TAGS_PREFIX + remoteName + "/" + tagName;
   }
 
   /**
@@ -255,7 +245,7 @@ public class GitRefspecPanel extends JPanel {
    * @return the tag name
    */
   private static String tagName(final String tagName) {
-    return REFS_TAGS_PREFIX + tagName;
+    return GitTag.REFS_TAGS_PREFIX + tagName;
   }
 
   /**
@@ -276,7 +266,7 @@ public class GitRefspecPanel extends JPanel {
    * @return the full path to the head
    */
   private static String remoteName(final String remote, final String headName) {
-    return remote.length() != 0 ? REFS_REMOTES_PREFIX + remote + "/" + headName : headName(headName);
+    return remote.length() != 0 ? GitBranch.REFS_REMOTES_PREFIX + remote + "/" + headName : headName(headName);
   }
 
   /**
@@ -286,7 +276,7 @@ public class GitRefspecPanel extends JPanel {
    * @return the full path to the head
    */
   private static String headName(final String head) {
-    return REFS_HEADS_PREFIX + head;
+    return GitBranch.REFS_HEADS_PREFIX + head;
   }
 
   /**

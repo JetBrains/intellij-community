@@ -211,9 +211,21 @@ public abstract class GitHandler {
    */
   @NonNls public static final String STASH = "stash";
   /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String REBASE = "rebase";
+  /**
+   * Name of environement variable that specifies editor for the git
+   */
+  @NonNls public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
+  /**
    * The vcs object
    */
   protected final GitVcs myVcs;
+  /**
+   * The environment
+   */
+  private final Map<String, String> myEnv;
 
   /**
    * A constructor
@@ -225,6 +237,7 @@ public abstract class GitHandler {
   protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     myProject = project;
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    myEnv = new HashMap<String, String>(System.getenv());
     myVcs = GitVcs.getInstance(project);
     if (myVcs != null) {
       myVcs.checkVersion();
@@ -438,15 +451,14 @@ public abstract class GitHandler {
       if (log.isDebugEnabled()) {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
       }
-      final Map<String, String> env = new HashMap<String, String>(System.getenv());
       if (!myNoSSHFlag) {
         GitSSHService ssh = GitSSHService.getInstance();
-        env.put(GitSSHService.GIT_SSH_ENV, ssh.getScriptPath().getPath());
+        myEnv.put(GitSSHService.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
         myEnvironmentCleanedUp = false;
-        env.put(GitSSHService.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
+        myEnv.put(GitSSHService.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
       }
-      myCommandLine.setEnvParams(env);
+      myCommandLine.setEnvParams(myEnv);
       // start process
       myProcess = myCommandLine.createProcess();
       myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString()) {
@@ -625,6 +637,16 @@ public abstract class GitHandler {
   public void setStderrSuppressed(final boolean stderrSuppressed) {
     checkNotStarted();
     myStderrSuppressed = stderrSuppressed;
+  }
+
+  /**
+   * Set environement variable
+   *
+   * @param name  the variable name
+   * @param value the varianble value
+   */
+  public void setenv(String name, String value) {
+    myEnv.put(name, value);
   }
 
   /**

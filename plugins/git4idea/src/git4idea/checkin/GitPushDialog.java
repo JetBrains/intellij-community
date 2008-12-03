@@ -26,6 +26,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.HashMap;
 import git4idea.GitBranch;
 import git4idea.GitRemote;
+import git4idea.GitTag;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
@@ -359,8 +360,8 @@ public class GitPushDialog extends DialogWrapper {
         myBranchNames.clear();
         myTagNames.clear();
         try {
-          GitBranch.list(myProject, getGitRoot(), false, true, myBranchNames);
-          GitBranch.listTags(myProject, getGitRoot(), myTagNames);
+          GitBranch.listAsStrings(myProject, getGitRoot(), false, true, myBranchNames);
+          GitTag.listAsStrings(myProject, getGitRoot(), myTagNames);
         }
         catch (VcsException ex) {
           LOG.warn("Exception in branchlist: \n" + StringUtil.getThrowableText(ex));

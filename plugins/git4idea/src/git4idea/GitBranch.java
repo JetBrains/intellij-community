@@ -12,6 +12,7 @@ package git4idea;
  * Copyright 2007 Decentrix Inc
  * Copyright 2007 Aspiro AS
  * Copyright 2008 MQSoftware
+ * Copyright 2008 JetBrains s.r.o.
  * Authors: gevession, Erlend Simonsen & Mark Scott
  *
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
@@ -26,46 +27,60 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.StringTokenizer;
 
 /**
  * This data class represents a Git branch
  */
-public class GitBranch {
-  private final Project project;
-  private final String name;
-  private final boolean remote;
-  private final boolean active;
+public class GitBranch extends GitReference {
   /**
-   * The name that specifies that git is on specific commit rather then on some branch
+   * If true, the branch is remote
    */
-  @NonNls public static final String NO_BRANCH_NAME = "(no " + GitHandler.BRANCH + ")";
+  private final boolean myRemote;
+  /**
+   * If true, the branch is active
+   */
+  private final boolean myActive;
+  /**
+   * The name that specifies that git is on specific commit rather then on some branch ({@value})
+   */
+  @NonNls public static final String NO_BRANCH_NAME = "(no branch)";
+  /**
+   * Prefix for local branches ({@value})
+   */
+  @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/";
+  /**
+   * Prefix for remote branches ({@value})
+   */
+  @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/";
 
-  public GitBranch(@NotNull Project project, @NotNull String name, boolean active, boolean remote) {
-    this.project = project;
-    this.name = name;
-    this.remote = remote;
-    this.active = active;
+  /**
+   * The constructor for the branch
+   *
+   * @param name   the name of the branch
+   * @param active if true, the branch is active
+   * @param remote if true, the branch is remote
+   */
+  public GitBranch(@NotNull String name, boolean active, boolean remote) {
+    super(name);
+    myRemote = remote;
+    myActive = active;
   }
 
-  @NotNull
-  public Project getProject() {
-    return project;
-  }
-
-  @NotNull
-  public String getName() {
-    return name;
-  }
-
+  /**
+   * @return true if the branch is remtoe
+   */
   public boolean isRemote() {
-    return remote;
+    return myRemote;
   }
 
+  /**
+   * @return true if the branch is active
+   */
   public boolean isActive() {
-    return active;
+    return myActive;
   }
 
   /**
@@ -89,7 +104,7 @@ public class GitBranch {
           return null;
         }
         else {
-          return new GitBranch(project, line.substring(2), true, false);
+          return new GitBranch(line.substring(2), true, false);
         }
       }
     }
@@ -106,11 +121,11 @@ public class GitBranch {
    * @param branches the collection used to store branches
    * @throws VcsException if there is a problem with running git
    */
-  public static void list(final Project project,
-                          final VirtualFile root,
-                          final boolean remote,
-                          final boolean local,
-                          final Collection<String> branches) throws VcsException {
+  public static void listAsStrings(final Project project,
+                                   final VirtualFile root,
+                                   final boolean remote,
+                                   final boolean local,
+                                   final Collection<String> branches) throws VcsException {
     if (!local && !remote) {
       // no need to run hanler
       return;
@@ -133,24 +148,41 @@ public class GitBranch {
   }
 
   /**
-   * List tags for the git root
-   *
-   * @param project the context
-   * @param root    the git root
-   * @param tags    the tag list
-   * @throws com.intellij.openapi.vcs.VcsException
-   *          if there is a problem with running git
+   * {@inheritDoc}
    */
-  public static void listTags(final Project project, final VirtualFile root, final List<String> tags) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.TAG);
-    handler.setNoSSH(true);
-    handler.setSilent(true);
-    handler.addParameters("-l");
-    for (String line : handler.run().split("\n")) {
-      if (line.length() == 0) {
-        continue;
+  @NotNull
+  public String getFullName() {
+    return (myRemote ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
+  }
+
+  /**
+   * List branches for the git root
+   *
+   * @param project  the context project
+   * @param root     the git root
+   * @param remote   if true remote branches are listed
+   * @param local    if true local branches are listed
+   * @param branches the collection used to store branches
+   * @throws VcsException if there is a problem with running git
+   */
+  public static void list(final Project project,
+                          final VirtualFile root,
+                          final boolean local,
+                          final boolean remote,
+                          final Collection<GitBranch> branches) throws VcsException {
+    ArrayList<String> temp = new ArrayList<String>();
+    if (local) {
+      listAsStrings(project, root, false, true, temp);
+      for (String b : temp) {
+        branches.add(new GitBranch(b, false, false));
       }
-      tags.add(line);
+      temp.clear();
+    }
+    if (remote) {
+      listAsStrings(project, root, true, false, temp);
+      for (String b : temp) {
+        branches.add(new GitBranch(b, false, true));
+      }
     }
   }
 }

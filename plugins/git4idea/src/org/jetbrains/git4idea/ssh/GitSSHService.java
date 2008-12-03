@@ -16,14 +16,12 @@
 package org.jetbrains.git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.PathUtil;
 import com.trilead.ssh2.KnownHosts;
+import git4idea.commands.ScriptGenerator;
 import git4idea.i18n.GitBundle;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -32,9 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Random;
 import java.util.Vector;
 
@@ -64,19 +60,9 @@ public class GitSSHService implements ApplicationComponent {
    */
   @NonNls private static final String GIT_SSH_PREFIX = "git-ssh-";
   /**
-   * The extension of the ssh script name
+   * If true, the component has been intialized
    */
-  @NonNls private static final String GIT_SSH_EXT;
-
-  static {
-    if (SystemInfo.isWindows) {
-      GIT_SSH_EXT = ".cmd";
-    }
-    else {
-      GIT_SSH_EXT = ".sh";
-    }
-  }
-
+  private boolean myInitialized = false;
   /**
    * Path to the generated script
    */
@@ -125,72 +111,19 @@ public class GitSSHService implements ApplicationComponent {
    * Get file to the script service
    *
    * @return path to the script
-   * @throws IOException
+   * @throws IOException if script cannot be generated
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
   public synchronized File getScriptPath() throws IOException {
-    myXmlRpcServer.addHandler(HANDLER_NAME, new InternalRequestHandler());
     if (myScriptPath == null) {
-      myScriptPath = File.createTempFile(GIT_SSH_PREFIX, GIT_SSH_EXT);
-      myScriptPath.deleteOnExit();
-      PrintWriter out = new PrintWriter(new FileWriter(myScriptPath));
-      try {
-        if (SystemInfo.isWindows) {
-          out.println("@echo off");
-        }
-        else {
-          out.println("#!/bin/sh");
-        }
-        String mainPath = PathUtil.getJarPathForClass(SSHMain.class);
-        String sshPath = PathUtil.getJarPathForClass(KnownHosts.class);
-        String xmlRcpPath = PathUtil.getJarPathForClass(XmlRpcClientLite.class);
-        String codecPath = PathUtil.getJarPathForClass(DecoderException.class);
-        String resPath = getJarForResource(GitBundle.class, "/git4idea/i18n/GitBundle.properties");
-        String utilPath = PathUtil.getJarPathForClass(FileUtil.class);
-        // six parameters are enough for the git case (actually 4 are enough)
-        out.print("java -cp \"" +
-                  mainPath +
-                  File.pathSeparator +
-                  sshPath +
-                  File.pathSeparator +
-                  codecPath +
-                  File.pathSeparator +
-                  xmlRcpPath +
-                  File.pathSeparator +
-                  resPath +
-                  File.pathSeparator +
-                  utilPath +
-                  "\" " +
-                  SSHMain.class.getName() +
-                  " " +
-                  myXmlRpcServer.getPortNumber());
-        if (SystemInfo.isWindows) {
-          out.println(" %1 %2 %3 %4 %5 %6");
-        }
-        else {
-          out.println(" \"$@\"");
-        }
-      }
-      finally {
-        out.close();
-      }
-      FileUtil.setExectuableAttribute(myScriptPath.getAbsolutePath(), true);
+      ScriptGenerator generator = new ScriptGenerator(GIT_SSH_PREFIX, SSHMain.class);
+      generator.addInternal(Integer.toString(myXmlRpcServer.getPortNumber()));
+      generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
+      generator.addClasses(KnownHosts.class, FileUtil.class);
+      generator.addResource(GitBundle.class, "/git4idea/i18n/GitBundle.properties");
+      myScriptPath = generator.generate();
     }
     return myScriptPath;
-  }
-
-  /**
-   * Get path for resources.jar
-   *
-   * @param context a context class
-   * @param res     a resource
-   * @return a path to classpath entry
-   */
-  @SuppressWarnings({"SameParameterValue"})
-  private static String getJarForResource(Class context, String res) {
-    String resourceRoot = PathManager.getResourceRoot(context, res);
-    return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
   }
 
   /**
@@ -205,8 +138,10 @@ public class GitSSHService implements ApplicationComponent {
    * {@inheritDoc}
    */
   public void initComponent() {
-    myXmlRpcServer.addHandler(HANDLER_NAME, new InternalRequestHandler());
-    // do nothing
+    if (!myInitialized) {
+      myXmlRpcServer.addHandler(HANDLER_NAME, new InternalRequestHandler());
+      myInitialized = true;
+    }
   }
 
   /**
@@ -228,6 +163,7 @@ public class GitSSHService implements ApplicationComponent {
    * @return an identifier to pass to the environment variable
    */
   public synchronized int registerHandler(@NotNull Handler handler) {
+    initComponent();
     while (true) {
       int rnd = RANDOM.nextInt();
       if (rnd == Integer.MIN_VALUE) {

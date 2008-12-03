@@ -55,7 +55,7 @@ public class GitMergeUtil {
    * @return an array of strategy names
    */
   @NonNls
-  private static String[] getMergeStrategies(int branchCount) {
+  public static String[] getMergeStrategies(int branchCount) {
     if (branchCount < 0) {
       throw new IllegalArgumentException("Brach count must be non-negative: " + branchCount);
     }

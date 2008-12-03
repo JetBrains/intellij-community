@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitBranch;
+import git4idea.GitTag;
 import git4idea.GitVcs;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
@@ -238,14 +239,14 @@ public class GitCheckoutDialog extends DialogWrapper {
         try {
           List<String> branchesAndTags = new ArrayList<String>();
           // get branches
-          GitBranch.list(myProject, gitRoot(), true, true, branchesAndTags);
+          GitBranch.listAsStrings(myProject, gitRoot(), true, true, branchesAndTags);
           existingBranches.clear();
           existingBranches.addAll(branchesAndTags);
           Collections.sort(branchesAndTags);
           // get tags
           if (myIncludeTagsCheckBox.isSelected()) {
             int mark = branchesAndTags.size();
-            GitBranch.listTags(myProject, gitRoot(), branchesAndTags);
+            GitTag.listAsStrings(myProject, gitRoot(), branchesAndTags);
             Collections.sort(branchesAndTags.subList(mark, branchesAndTags.size()));
           }
           myBranchToCkeckout.removeAllItems();

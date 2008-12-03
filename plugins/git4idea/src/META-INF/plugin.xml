@@ -56,6 +56,11 @@
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes"/>
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes"/>
       <separator/>
+      <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase ..."/>
+      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
+      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
+      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
+      <separator/>
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGroups" anchor="last"/>
@@ -92,6 +97,9 @@
     <applicationService
         serviceInterface="org.jetbrains.git4idea.ssh.GitSSHService"
         serviceImplementation="org.jetbrains.git4idea.ssh.GitSSHService"/>
+    <applicationService
+        serviceInterface="git4idea.rebase.GitRebaseEditorService"
+        serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
   </extensions>
 
