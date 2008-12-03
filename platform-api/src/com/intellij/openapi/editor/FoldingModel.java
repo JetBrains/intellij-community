@@ -44,7 +44,7 @@ public interface FoldingModel {
    *
    * @param region the region to remove.
    */
-  void removeFoldRegion(FoldRegion region);
+  void removeFoldRegion(@NotNull FoldRegion region);
 
   /**
    * Gets the list of all fold regions in the specified editor.
@@ -70,7 +70,7 @@ public interface FoldingModel {
    *
    * @param operation the operation to execute.
    */
-  void runBatchFoldingOperation(Runnable operation);
+  void runBatchFoldingOperation(@NotNull Runnable operation);
 
-  void runBatchFoldingOperationDoNotCollapseCaret(Runnable operation);
+  void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation);
 }

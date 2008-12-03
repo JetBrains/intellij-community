@@ -44,7 +44,7 @@ public class FoldingModelWindow implements FoldingModelEx{
     return myDelegate.addFoldRegion(myDocumentWindow.injectedToHost(startOffset), myDocumentWindow.injectedToHost(endOffset), placeholderText);
   }
 
-  public void removeFoldRegion(FoldRegion region) {
+  public void removeFoldRegion(@NotNull FoldRegion region) {
     myDelegate.removeFoldRegion(region);
   }
 
@@ -61,11 +61,11 @@ public class FoldingModelWindow implements FoldingModelEx{
     return myDelegate.getCollapsedRegionAtOffset(myDocumentWindow.injectedToHost(offset));
   }
 
-  public void runBatchFoldingOperation(Runnable operation) {
+  public void runBatchFoldingOperation(@NotNull Runnable operation) {
     myDelegate.runBatchFoldingOperation(operation);
   }
 
-  public void runBatchFoldingOperationDoNotCollapseCaret(Runnable operation) {
+  public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
     myDelegate.runBatchFoldingOperationDoNotCollapseCaret(operation);
   }
 }
