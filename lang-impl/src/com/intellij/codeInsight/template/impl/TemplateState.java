@@ -572,11 +572,22 @@ public class TemplateState implements Disposable {
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
     String oldText = myDocument.getCharsSequence().subSequence(start, end).toString();
+    
     if (!oldText.equals(newValue)) {
+      int segmentNumberWithTheSameStart = mySegments.getSegmentWithTheSameStart(segmentNumber, start);
       mySegments.setNeighboursGreedy(segmentNumber, false);
       myDocument.replaceString(start, end, newValue);
-      mySegments.replaceSegmentAt(segmentNumber, start, start + newValue.length());
+      int newEnd = start + newValue.length();
+      mySegments.replaceSegmentAt(segmentNumber, start, newEnd);
       mySegments.setNeighboursGreedy(segmentNumber, true);
+
+      if (segmentNumberWithTheSameStart != -1) {
+        mySegments.replaceSegmentAt(
+          segmentNumberWithTheSameStart,
+          newEnd,
+          newEnd + mySegments.getSegmentEnd(segmentNumberWithTheSameStart) - mySegments.getSegmentStart(segmentNumberWithTheSameStart)
+        );
+      }
     }
   }
 
