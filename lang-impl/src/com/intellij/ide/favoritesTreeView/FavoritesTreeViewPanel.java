@@ -79,11 +79,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myFavoritesTreeStructure.getRootElement());
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    myTree = new DnDAwareTree(treeModel) {
-      public void setRowHeight(int i) {
-        super.setRowHeight(0);
-      }
-    };
+    myTree = new DnDAwareTree(treeModel);
     myBuilder = new FavoritesViewTreeBuilder(myProject, myTree, treeModel, myFavoritesTreeStructure, myListName);
 
     TreeUtil.installActions(myTree);
