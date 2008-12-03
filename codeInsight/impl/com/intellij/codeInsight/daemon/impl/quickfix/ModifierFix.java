@@ -17,6 +17,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -68,9 +69,7 @@ public class ModifierFix implements IntentionAction {
       }
     }
 
-    final String modifierText = myModifier.equals(PsiModifier.PACKAGE_LOCAL)
-                                ? QuickFixBundle.message("package.local.visibility.presentation")
-                                : myModifier;
+    String modifierText = VisibilityUtil.toPresentableText(myModifier);
 
     return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix", name, modifierText);
   }

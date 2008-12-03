@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 
@@ -40,7 +41,6 @@ public class VisibilityUtil  {
     if(PsiModifier.PRIVATE.equals(v1)) return v2;
     if(PsiModifier.PUBLIC.equals(v1)) return PsiModifier.PUBLIC;
     if(PsiModifier.PRIVATE.equals(v2)) return v1;
-    if(PsiModifier.PUBLIC.equals(v2)) return PsiModifier.PUBLIC;
 
     return PsiModifier.PUBLIC;
   }
@@ -53,14 +53,15 @@ public class VisibilityUtil  {
       if(modifier.equals(visibilityModifier)) break;
     }
     for(;index < visibilityModifiers.length && !PsiUtil.isAccessible(modifierListOwner, place, null); index++) {
-      modifierListOwner.getModifierList().setModifierProperty(visibilityModifiers[index], true);
+      @Modifier String modifier = visibilityModifiers[index];
+      modifierListOwner.getModifierList().setModifierProperty(modifier, true);
     }
   }
 
 
   @Modifier
   public static String getPossibleVisibility(final PsiMember psiMethod, final PsiElement place) {
-    if (PsiUtil.isAccessible(psiMethod, place, null)) return getVisibilityStringToDisplay(psiMethod);
+    if (PsiUtil.isAccessible(psiMethod, place, null)) return getVisibilityModifier(psiMethod.getModifierList());
     if (JavaPsiFacade.getInstance(psiMethod.getProject()).arePackagesTheSame(psiMethod, place)) {
       return PsiModifier.PACKAGE_LOCAL;
     }
@@ -89,17 +90,21 @@ public class VisibilityUtil  {
     return visibilityModifier;
   }
 
-  @NonNls
+  @Nls
   public static String getVisibilityStringToDisplay(PsiMember member) {
     if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
-      return "public";
+      return toPresentableText(PsiModifier.PUBLIC);
     }
     if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return "protected";
+      return toPresentableText(PsiModifier.PROTECTED);
     }
     if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return "private";
+      return toPresentableText(PsiModifier.PRIVATE);
     }
-    return "package local";
+    return toPresentableText(PsiModifier.PACKAGE_LOCAL);
+  }
+
+  public static String toPresentableText(@Modifier String modifier) {
+    return PsiBundle.visibilityPresentation(modifier);
   }
 }

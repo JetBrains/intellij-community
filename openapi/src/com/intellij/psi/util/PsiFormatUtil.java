@@ -333,7 +333,7 @@ public class PsiFormatUtil {
         appendModifier(buffer, PsiBundle.message("local.class.preposition"));
       }
       else {
-        appendModifier(buffer, PsiBundle.message("package.local.visibility"));
+        appendModifier(buffer, PsiBundle.visibilityPresentation(PsiModifier.PACKAGE_LOCAL));
       }
     }
 

@@ -18,7 +18,6 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,6 +25,7 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +44,6 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   public boolean SUGGEST_PRIVATE_FOR_INNERS = false;
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls private static final String SHORT_NAME = "WeakerAccess";
-
-  @NonNls private static final String PACKAGE_LOCAL = InspectionsBundle.message("inspection.package.local");
 
   private class OptionsPanel extends JPanel {
     private final JCheckBox myPackageLocalForMembersCheckbox;
@@ -152,7 +150,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       }
 
       //ignore unreferenced code. They could be a potential entry points.
-      if (refElement.getInReferences().size() == 0) return null;
+      if (refElement.getInReferences().isEmpty()) return null;
 
       //ignore interface members. They always have public access modifier.
       if (refElement.getOwner() instanceof RefClass) {
@@ -164,7 +162,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
         final PsiElement psiElement = HighlightUsagesHandler.getNameIdentifier(refElement.getElement());
         if (psiElement != null) {
           return new ProblemDescriptor[]{manager.createProblemDescriptor(psiElement,
-                                                                         InspectionsBundle.message("inspection.visibility.compose.suggestion", access == PsiModifier.PACKAGE_LOCAL ? PACKAGE_LOCAL : access),
+                                                                         InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(access)),
                                                                          new AcceptSuggestedAccess(globalContext.getRefManager(), access),
                                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
         }
@@ -470,9 +468,9 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
     private final RefManager myManager;
     @Modifier private final String myHint;
 
-    public AcceptSuggestedAccess(final RefManager manager, @Modifier String hint) {
+    private AcceptSuggestedAccess(final RefManager manager, @Modifier String hint) {
       myManager = manager;
-      myHint = Comparing.strEqual(hint, PACKAGE_LOCAL) ? PsiModifier.PACKAGE_LOCAL : hint;
+      myHint = hint;
     }
 
     @NotNull

@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -46,5 +47,10 @@ public class PsiBundle {
       ourBundle = new SoftReference<ResourceBundle>(bundle);
     }
     return bundle;
+  }
+
+  @NotNull
+  public static String visibilityPresentation(@NotNull String modifier) {
+    return message(modifier + ".visibility.presentation");
   }
 }

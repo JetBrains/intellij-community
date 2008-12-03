@@ -158,7 +158,6 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
     final PsiStatement[] statements = body.getStatements();
-    final DuplicatesFinder duplicatesFinder;
     PsiElement[] pattern = statements;
     ReturnValue matchedReturnValue = null;
     if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
@@ -180,8 +179,9 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         pattern = new PsiElement[]{returnValue};
       }
     }
-    duplicatesFinder = new DuplicatesFinder(pattern, Arrays.asList(method.getParameterList().getParameters()), matchedReturnValue,
-                                            new ArrayList<PsiVariable>());
+    final DuplicatesFinder duplicatesFinder =
+      new DuplicatesFinder(pattern, Arrays.asList(method.getParameterList().getParameters()), matchedReturnValue,
+                           new ArrayList<PsiVariable>());
 
     return duplicatesFinder.findDuplicates(file);
   }
@@ -202,7 +202,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     private final PsiMethod myMethod;
     private final List<Match> myDuplicates;
 
-    public MethodDuplicatesMatchProvider(PsiMethod method, List<Match> duplicates) {
+    private MethodDuplicatesMatchProvider(PsiMethod method, List<Match> duplicates) {
       myMethod = method;
       myDuplicates = duplicates;
     }
@@ -217,7 +217,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
       final boolean needQualifier = match.getInstanceExpression() != null;
       final boolean needStaticQualifier = isExternal(match);
-      final @NonNls String text = needQualifier || needStaticQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
+      @NonNls final String text = needQualifier || needStaticQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
       methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
       final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
@@ -264,11 +264,9 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       if (PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false)) {
         return false;
       }
-      else {
-        final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
-        if (psiClass != null) {
-          if (InheritanceUtil.isInheritorOrSelf(psiClass, myMethod.getContainingClass(), true)) return false;
-        }
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
+      if (psiClass != null) {
+        if (InheritanceUtil.isInheritorOrSelf(psiClass, myMethod.getContainingClass(), true)) return false;
       }
       return true;
     }
@@ -294,7 +292,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     @NotNull
     public String getConfirmDuplicatePrompt(final Match match) {
       final PsiElement matchStart = match.getMatchStart();
-      final String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
+      @Modifier String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
       final boolean shouldBeStatic = isEssentialStaticContextAbsent(match);
       final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
       if (signature != null) {
@@ -302,13 +300,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       }
       final boolean needToEscalateVisibility = !PsiUtil.isAccessible(myMethod, matchStart, null);
       if (needToEscalateVisibility) {
-        @NonNls final String visibilityPresentation = visibility == PsiModifier.PACKAGE_LOCAL ? "package local" : visibility;
-        if (shouldBeStatic) {
-          return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static.visible", visibilityPresentation);
-        }
-        else {
-          return RefactoringBundle.message("replace.this.code.fragment.and.make.method.visible", visibilityPresentation);
-        }
+        final String visibilityPresentation = VisibilityUtil.toPresentableText(visibility);
+        return shouldBeStatic
+               ? RefactoringBundle.message("replace.this.code.fragment.and.make.method.static.visible", visibilityPresentation)
+               : RefactoringBundle.message("replace.this.code.fragment.and.make.method.visible", visibilityPresentation);
       }
       if (shouldBeStatic) {
         return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");

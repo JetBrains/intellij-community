@@ -304,11 +304,11 @@ public final class Match {
   }
 
   @Nullable
-  public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, final String visibilityString) {
+  public String getChangedSignature(final PsiMethod method, final boolean shouldBeStatic, @Modifier String visibility) {
     final PsiType returnType = getChangedReturnType(method);
     if (!myChangedParams.isEmpty() || returnType != null) {
       @NonNls StringBuilder buffer = new StringBuilder();
-      buffer.append(visibilityString);
+      buffer.append(visibility);
       if (buffer.length() > 0) {
         buffer.append(" ");
       }
