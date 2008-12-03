@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -246,9 +247,21 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
 
   private final class MyPropertyChangeListener implements PropertyChangeListener{
     public void propertyChange(PropertyChangeEvent e){
-      if (TodoConfiguration.PROP_TODO_PATTERNS.equals(e.getPropertyName()) ||
-          TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
+      if (TodoConfiguration.PROP_TODO_PATTERNS.equals(e.getPropertyName()) || TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
+        _updateFilters();
+      }
+    }
+
+    private void _updateFilters() {
+      try {
         updateFilters();
+      }
+      catch (ProcessCanceledException e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            _updateFilters();
+          }
+        }, ModalityState.NON_MODAL);
       }
     }
 
