@@ -107,6 +107,11 @@ public class VariableInplaceRenamer {
       }
     }
 
+    final PsiElement context = scope.getContainingFile().getContext();
+    if (context != null) {
+      scope = context.getContainingFile();
+    }
+
     String stringToSearch = myElementToRename.getName();
     List<UsageInfo> usages = new ArrayList<UsageInfo>();
     if (stringToSearch != null) {
@@ -197,9 +202,10 @@ public class VariableInplaceRenamer {
   }
 
   private void finish() {
-    if (myHighlighters != null) {
+    if (ourRenamersStack.size() > 0 && ourRenamersStack.peek() == this) {
       ourRenamersStack.pop();
-
+    }
+    if (myHighlighters != null) {
       final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
       for (RangeHighlighter highlighter : myHighlighters) {
         highlightManager.removeSegmentHighlighter(myEditor, highlighter);
