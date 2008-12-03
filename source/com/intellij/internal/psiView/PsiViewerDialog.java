@@ -46,17 +46,17 @@ import java.util.*;
 import java.util.List;
 
 public class PsiViewerDialog extends DialogWrapper {
-  private Project myProject;
+  private final Project myProject;
 
-  private Tree myTree;
-  private ViewerTreeBuilder myTreeBuilder;
+  private final Tree myTree;
+  private final ViewerTreeBuilder myTreeBuilder;
 
   private Editor myEditor;
   private String myLastParsedText = null;
 
-  private JRadioButton myRbMethod = new JRadioButton("Method");
-  private JRadioButton myRbCodeBlock = new JRadioButton("Code Block");
-  private JRadioButton myRbExpression = new JRadioButton("Expression");
+  private final JRadioButton myRbMethod = new JRadioButton("Method");
+  private final JRadioButton myRbCodeBlock = new JRadioButton("Code Block");
+  private final JRadioButton myRbExpression = new JRadioButton("Expression");
 
   private JRadioButton[] myFileTypeButtons;
   private FileType[] myFileTypes;
