@@ -284,21 +284,23 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   private void checkPsiIsCorrect(final FileViewProvider key) {
     PsiFile actualPsi = key.getPsi(key.getBaseLanguage());
 
-        PsiTreeDebugBuilder treeDebugBuilder = new PsiTreeDebugBuilder().setShowErrorElements(false).setShowWhiteSpaces(false);
+    PsiTreeDebugBuilder treeDebugBuilder = new PsiTreeDebugBuilder().setShowErrorElements(false).setShowWhiteSpaces(false);
 
-        String actualPsiTree = treeDebugBuilder.psiToString(actualPsi);
+    String actualPsiTree = treeDebugBuilder.psiToString(actualPsi);
 
-        String fileName = key.getVirtualFile().getName();
-        PsiFile psi = PsiFileFactory.getInstance(myProject)
-          .createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName), actualPsi.getNode().getText(),
-                              LocalTimeCounter.currentTime(), false);
+    String fileName = key.getVirtualFile().getName();
+    PsiFile psi = PsiFileFactory.getInstance(myProject)
+      .createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName), actualPsi.getNode().getText(),
+                          LocalTimeCounter.currentTime(), false);
 
-        String expectedPsi = treeDebugBuilder.psiToString(psi);
+    if (actualPsi.getClass().equals(psi.getClass())) {
+      String expectedPsi = treeDebugBuilder.psiToString(psi);
 
-        if (!expectedPsi.equals(actualPsiTree)) {
-          myReformatElements.clear();
-          Assert.assertEquals("Refactored psi should be the same as result of parsing", expectedPsi, actualPsiTree);
-        }
+      if (!expectedPsi.equals(actualPsiTree)) {
+        myReformatElements.clear();
+        Assert.assertEquals("Refactored psi should be the same as result of parsing", expectedPsi, actualPsiTree);
+      }
+    }
 
 
   }

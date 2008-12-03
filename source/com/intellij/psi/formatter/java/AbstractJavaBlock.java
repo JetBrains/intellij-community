@@ -831,6 +831,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (role == ChildRole.INITIALIZER && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return null;
       if (role == ChildRole.ROPERAND && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
       if (role == ChildRole.ROPERAND && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return null;
+      if (role == ChildRole.CLOSING_SEMICOLON) return null;
       //if (role == ChildRole.TYPE) return defaultWrap;
       return defaultWrap;
     }
