@@ -61,18 +61,18 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     final boolean startedRename = new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor).performInplaceRename();
 
     if (!startedRename) {
-      RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
+      final DataContext ourDataContext = new DataContext() {
+        public Object getData(@NonNls final String dataId) {
+          if (INVOKING_DEFAULT.equals(dataId)) {
+            return Boolean.TRUE;
+          }
+          return dataContext.getData(dataId);
+        }
+      };
+      RenameHandlerRegistry.getInstance().getRenameHandler(ourDataContext).invoke(
         elementToRename.getProject(),
         editor,
-        elementToRename.getContainingFile(),
-        new DataContext() {
-          public Object getData(@NonNls final String dataId) {
-            if (INVOKING_DEFAULT.equals(dataId)) {
-              return Boolean.TRUE;
-            }
-            return dataContext.getData(dataId);
-          }
-        }
+        elementToRename.getContainingFile(), ourDataContext
       );
     }
   }

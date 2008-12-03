@@ -35,9 +35,12 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -102,6 +105,20 @@ public class VariableInplaceRenamer {
       if (scope == null) {
         return false; // Should have valid local search scope for inplace rename
       }
+    }
+
+    String stringToSearch = myElementToRename.getName();
+    List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    if (stringToSearch != null) {
+      TextOccurrencesUtil.addUsagesInStringsAndComments(myElementToRename, stringToSearch, usages, new TextOccurrencesUtil.UsageInfoFactory() {
+        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+          return new UsageInfo(usage); //will not need usage
+        }
+      }, true);
+    }
+
+    if(!usages.isEmpty()) {
+      return false;
     }
 
     final ResolveSnapshot snapshot = ResolveSnapshot.createSnapshot(scope);
