@@ -95,6 +95,13 @@ public class GridCellImpl implements GridCell, Disposable {
     });
     rebuildPopupGroup();
     myTabs.addListener(new TabsListener() {
+
+      public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+        if (oldSelection != null && myContext.isStateBeingRestored()) {
+          saveUiState();
+        }
+      }
+
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         updateSelection(myTabs.getComponent().isShowing());
 

@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.List;
+import java.awt.*;
 
 public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform.Facade, DataProvider {
 
@@ -78,7 +80,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   public void removeNotify() {
     super.removeNotify();
 
-    processRemoveFromUi(true);
+    processRemoveFromUi();
   }
 
   public void processAddToUi(boolean restoreProportions) {
@@ -92,14 +94,8 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   }
 
 
-  public void processRemoveFromUi(boolean savePropertions) {
+  public void processRemoveFromUi() {
     if (Disposer.isDisposed(this)) return;
-
-    if (savePropertions) {
-      for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
-        cell.saveProportions();
-      }
-    }
 
     updateSelection(false);
   }
@@ -242,7 +238,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   }
 
   void saveSplitterProportions(final PlaceInGrid placeInGrid) {
-    if (!RunnerContentUi.ensureValid(this)) return;
+    if (getRootPane() == null) return;
+    final Rectangle bounds = getBounds();
+    if (bounds.width == 0 && bounds.height == 0) return;
 
     final GridCellImpl cell = myPlaceInGrid2Cell.get(placeInGrid);
 
@@ -269,6 +267,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   }
 
   void restoreLastSplitterProportions(PlaceInGrid placeInGrid) {
+    if (getRootPane() == null) return;
     if (!RunnerContentUi.ensureValid(this)) return;
 
     final TabImpl tab = (TabImpl)getTab();

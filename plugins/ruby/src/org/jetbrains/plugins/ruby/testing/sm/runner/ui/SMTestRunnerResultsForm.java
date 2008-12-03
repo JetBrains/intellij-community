@@ -232,7 +232,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
       log.attachStopLogConsoleTrackingListener(myRunProcess);
     }
     addAdditionalTabComponent(log, path);
-    final TabsListener listener = new TabsListener() {
+    final TabsListener listener = new TabsListener.Adapter() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         log.stateChanged(new ChangeEvent(myTabs));
       }

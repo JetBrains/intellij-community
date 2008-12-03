@@ -561,6 +561,13 @@ public class JBTabsImpl extends JComponent
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
 
+    if (oldInfo != newInfo) {
+      for (TabsListener eachListener : myTabListeners) {
+        eachListener.beforeSelectionChanged(oldInfo, newInfo);
+      }
+    }
+
+
     updateContainer(false, true);
 
     if (oldInfo != newInfo) {

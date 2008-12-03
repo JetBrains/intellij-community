@@ -101,7 +101,7 @@ public class JBTabsTest {
 
     frame.getContentPane().add(south, BorderLayout.SOUTH);
 
-    tabs.addListener(new TabsListener() {
+    tabs.addListener(new TabsListener.Adapter() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         System.out.println("TabsWithActions.selectionChanged old=" + oldSelection + " new=" + newSelection);
       }

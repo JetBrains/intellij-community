@@ -150,6 +150,16 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myComponent.setContent(wrappper);
 
     myTabs.addListener(new TabsListener() {
+
+      public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+        if (oldSelection != null && !isStateBeingRestored()) {
+          final GridImpl grid = getGridFor(oldSelection);
+          if (grid != null) {
+            grid.saveUiState();
+          }
+        }
+      }
+
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
          if (!myTabs.getComponent().isShowing()) return;
 
@@ -159,7 +169,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         }
 
         if (oldSelection != null) {
-          getGridFor(oldSelection).processRemoveFromUi(false);
+          getGridFor(oldSelection).processRemoveFromUi();
         }
       }
     });
@@ -290,7 +300,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         GridImpl grid = (GridImpl)findGridFor(event.getContent());
         if (grid != null) {
           grid.remove(event.getContent());
-          grid.processRemoveFromUi(false);
+          grid.processRemoveFromUi();
           removeGridIfNeeded(grid);
         }
         updateTabsUI(false);
@@ -485,10 +495,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     try {
       setStateIsBeingRestored(true, this);
 
-      if (!RunnerContentUi.ensureValid(myTabs.getComponent())) return new ActionCallback.Rejected();
-
-
-      List<TabInfo> tabs = new ArrayList<TabInfo>();
+        List<TabInfo> tabs = new ArrayList<TabInfo>();
       tabs.addAll(myTabs.getTabs());
 
       final ActionCallback result = new ActionCallback(tabs.size());
@@ -497,32 +504,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         getGridFor(each).restoreLastUiState().notifyWhenDone(result);
       }
 
-      //restoreLastSelectedTab();
-
-      return result;
+       return result;
     }
     finally {
       setStateIsBeingRestored(false, this);
     }
   }
 
-  private void restoreLastSelectedTab() {
-    int index = myLayoutSettings.getDefaultSelectedTabIndex();
-
-    if (myTabs.getTabCount() > 0) {
-      myTabs.select(myTabs.getTabAt(0), false);
-    }
-
-    for (TabInfo each : myTabs.getTabs()) {
-      TabImpl tab = getTabFor(each);
-      if (tab.getIndex() == index) {
-        myTabs.select(each, true);
-        break;
-      }
-    }
-  }
-
-  public void saveUiState() {
+   public void saveUiState() {
     if (isStateBeingRestored()) return;
 
     for (TabInfo each : myTabs.getTabs()) {

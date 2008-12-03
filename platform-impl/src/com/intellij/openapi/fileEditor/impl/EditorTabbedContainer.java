@@ -107,7 +107,7 @@ final class EditorTabbedContainer implements Disposable {
         .setGhostsAlwaysVisible(true)
         .setTabLabelActionsAutoHide(false)
         .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())
-        .setPaintFocus(false).getJBTabs().addListener(new TabsListener() {
+        .setPaintFocus(false).getJBTabs().addListener(new TabsListener.Adapter() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
         final FileEditor oldEditor = editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject());
