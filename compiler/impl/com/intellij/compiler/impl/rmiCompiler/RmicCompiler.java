@@ -7,8 +7,8 @@ import com.intellij.compiler.impl.javaCompiler.CompilerParsingThread;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThreadImpl;
 import com.intellij.compiler.make.Cache;
 import com.intellij.compiler.make.CacheCorruptedException;
-import com.intellij.compiler.make.CacheUtils;
 import com.intellij.compiler.make.DependencyCache;
+import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -73,7 +73,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
           final LocalFileSystem lfs = LocalFileSystem.getInstance();
           for (final int className : allClassNames) {
             final int classId = className;
-            final boolean isRemoteObject = cache.isRemote(classId) && !CacheUtils.isInterface(cache, className);
+            final boolean isRemoteObject = cache.isRemote(classId) && !MakeUtil.isInterface(cache.getFlags(className));
             if (!isRemoteObject && !dependencyCache.wasRemote(className)) {
               continue;
             }

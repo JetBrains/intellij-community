@@ -5,7 +5,6 @@ import com.intellij.compiler.classParsing.MethodInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,10 +17,6 @@ import java.util.ArrayList;
  */
 public class CacheUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.CacheUtils");
-
-  public static String getMethodReturnTypeDescriptor(final Cache cache, final MethodInfo methodInfo, final SymbolTable symbolTable) throws CacheCorruptedException {
-    return methodInfo.getReturnTypeDescriptor(symbolTable);
-  }
 
   public static String[] getParameterSignatures(MethodInfo methodDeclarationId, SymbolTable symbolTable) throws CacheCorruptedException {
     String descriptor = symbolTable.getSymbol(methodDeclarationId.getDescriptor());
@@ -104,20 +99,5 @@ public class CacheUtils {
       }
     }
     return true;
-  }
-
-  public static boolean isInterface(Cache cache, int classQName) throws CacheCorruptedException {
-    final int classId = classQName;
-    return MakeUtil.isInterface(cache.getFlags(classId));
-  }
-
-  public static boolean isAbstract(Cache cache, int classQName) throws CacheCorruptedException {
-    final int classId = classQName;
-    return ClsUtil.isAbstract(cache.getFlags(classId));
-  }
-
-  public static boolean isFinal(Cache cache, int classQName) throws CacheCorruptedException {
-    final int classId = classQName;
-    return ClsUtil.isFinal(cache.getFlags(classId));
   }
 }

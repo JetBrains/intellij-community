@@ -274,7 +274,9 @@ public class MakeUtil {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         final String url = CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
-        if (url == null) return null;
+        if (url == null) {
+          return null;
+        }
         return VfsUtil.urlToPath(url);
       }
     });

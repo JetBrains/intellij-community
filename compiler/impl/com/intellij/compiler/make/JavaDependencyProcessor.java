@@ -64,7 +64,7 @@ class JavaDependencyProcessor {
     myMembersChanged = !myAddedMembers.isEmpty() || !myRemovedMembers.isEmpty() || !myChangedMembers.isEmpty();
     // track changes in super list
 
-    myIsRemoteInterface = CacheUtils.isInterface(cache, myQName) && cache.isRemote(qName);
+    myIsRemoteInterface = MakeUtil.isInterface(cache.getFlags(myQName)) && cache.isRemote(qName);
     myIsAnnotation = ClsUtil.isAnnotation(cache.getFlags(qName));
     myWereAnnotationTargetsRemoved = myIsAnnotation && wereAnnotationTargesRemoved(cache, newClassesCache);
     myRetentionPolicyChanged = myIsAnnotation && hasRetentionPolicyChanged(cache, newClassesCache);
@@ -193,8 +193,8 @@ class JavaDependencyProcessor {
     }
 
     final boolean isKindChanged =
-      (CacheUtils.isInterface(oldCache, myQName) && !CacheUtils.isInterface(newCache, myQName)) ||
-      (!CacheUtils.isInterface(oldCache, myQName) && CacheUtils.isInterface(newCache, myQName));
+      (MakeUtil.isInterface(oldCache.getFlags(myQName)) && !MakeUtil.isInterface(newCache.getFlags(myQName))) ||
+      (!MakeUtil.isInterface(oldCache.getFlags(myQName)) && MakeUtil.isInterface(newCache.getFlags(myQName)));
     if (isKindChanged) {
       markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: class kind changed (class/interface) " + myDependencyCache.resolve(myQName) : "");
       cacheNavigator.walkSubClasses(myQName, new ClassInfoProcessor() {
@@ -206,12 +206,12 @@ class JavaDependencyProcessor {
       return;
     }
 
-    boolean becameFinal = !CacheUtils.isFinal(oldCache, myQName) && CacheUtils.isFinal(newCache, myQName);
+    boolean becameFinal = !ClsUtil.isFinal(oldCache.getFlags(myQName)) && ClsUtil.isFinal(newCache.getFlags(myQName));
     if (becameFinal) {
       markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: class became final: " + myDependencyCache.resolve(myQName) : "");
     }
     else {
-      boolean becameAbstract = !CacheUtils.isAbstract(oldCache, myQName) && CacheUtils.isAbstract(newCache, myQName);
+      boolean becameAbstract = !ClsUtil.isAbstract(oldCache.getFlags(myQName)) && ClsUtil.isAbstract(newCache.getFlags(myQName));
       boolean accessRestricted = MakeUtil.isMoreAccessible(oldCache.getFlags(myQName), newCache.getFlags(myQName));
       for (Dependency backDependency : myBackDependencies) {
         if (myDependencyCache.isTargetClassInfoMarked(backDependency)) continue;
@@ -290,7 +290,7 @@ class JavaDependencyProcessor {
           }
         });
       }
-      if (addedFieldsCount > 0 && CacheUtils.isInterface(oldCache, myQName)) {
+      if (addedFieldsCount > 0 && MakeUtil.isInterface(oldCache.getFlags(myQName))) {
         final TIntHashSet visitedClasses = new TIntHashSet();
         visitedClasses.add(myQName);
         cacheNavigator.walkSubClasses(myQName, new ClassInfoProcessor() {
@@ -584,7 +584,7 @@ class JavaDependencyProcessor {
     final Cache oldCache = myDependencyCache.getCache();
     final Cache newCache = myDependencyCache.getNewClassesCache();
 
-    final boolean becameFinal = !CacheUtils.isFinal(oldCache, myQName) && CacheUtils.isFinal(newCache, myQName);
+    final boolean becameFinal = !ClsUtil.isFinal(oldCache.getFlags(myQName)) && ClsUtil.isFinal(newCache.getFlags(myQName));
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
 
     final Set<MemberInfo> removedConcreteMethods = fetchNonAbstractMethods(myRemovedMembers);
@@ -611,7 +611,7 @@ class JavaDependencyProcessor {
           return true;
         }
 
-        if (!removedMethods.isEmpty() && myIsRemoteInterface && !CacheUtils.isInterface(oldCache, subclassQName)) {
+        if (!removedMethods.isEmpty() && myIsRemoteInterface && !MakeUtil.isInterface(oldCache.getFlags(subclassQName))) {
           if (myDependencyCache.markClass(subclassQName)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) +
@@ -662,7 +662,7 @@ class JavaDependencyProcessor {
             if (!method.isPrivate()) {
               MethodInfo derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, method.getDescriptor(symbolTable), symbolTable);
               if (derivedMethod != null) {
-                if (!method.getReturnTypeDescriptor(symbolTable).equals(CacheUtils.getMethodReturnTypeDescriptor(oldCache, derivedMethod, symbolTable))) {
+                if (!method.getReturnTypeDescriptor(symbolTable).equals(derivedMethod.getReturnTypeDescriptor(symbolTable))) {
                   if (myDependencyCache.markClass(subclassQName)) {
                     if (LOG.isDebugEnabled()) {
                       LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: return types of method " +
