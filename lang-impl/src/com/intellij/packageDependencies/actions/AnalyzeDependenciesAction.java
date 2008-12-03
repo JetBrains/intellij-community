@@ -19,13 +19,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
 
   public AnalyzeDependenciesAction() {
     super(AnalysisScopeBundle.message("action.forward.dependency.analysis"), AnalysisScopeBundle.message("action.analysis.noun"));
-    myBorderChooser.setModel(new SpinnerNumberModel(5, 0, Integer.MAX_VALUE, 1));
-    myTransitiveCB.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myBorderChooser.setEnabled(myTransitiveCB.isSelected());
-      }
-    });
-    myBorderChooser.setEnabled(myTransitiveCB.isSelected());
+
   }
 
   protected void analyze(@NotNull final Project project, AnalysisScope scope) {
@@ -35,6 +29,13 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
     myTransitiveCB.setText("Show transitive dependencies. Do not travel deeper than");
+    myTransitiveCB.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        myBorderChooser.setEnabled(myTransitiveCB.isSelected());
+      }
+    });
+    myBorderChooser.setModel(new SpinnerNumberModel(5, 0, Integer.MAX_VALUE, 1));
+    myBorderChooser.setEnabled(myTransitiveCB.isSelected());
     return myWholePanel;
   }
 }
