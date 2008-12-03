@@ -25,7 +25,7 @@ public class ChangedRetentionPolicyDependencyProcessor {
 
   public void checkAnnotationRetentionPolicyChanges(final int annotationQName) throws CacheCorruptedException {
     final Cache oldCache = myDependencyCache.getCache();
-    if (!ClsUtil.isAnnotation(oldCache.getFlags(oldCache.getClassId(annotationQName)))) {
+    if (!ClsUtil.isAnnotation(oldCache.getFlags(annotationQName))) {
       return;
     }
     if (!hasRetentionPolicyChanged(annotationQName, oldCache, myDependencyCache.getNewClassesCache(), myDependencyCache.getSymbolTable())) {

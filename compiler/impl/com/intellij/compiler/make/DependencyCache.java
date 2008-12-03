@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.rmi.Remote;
 import java.util.*;
 
@@ -54,8 +55,7 @@ public class DependencyCache {
     mySymbolTableFilePath = myStoreDirectoryPath + "/" + SYMBOLTABLE_FILE_NAME;
   }
 
-
-  public DependencyCacheNavigator getCacheNavigator() {
+  public DependencyCacheNavigator getCacheNavigator() throws CacheCorruptedException {
     if (myCacheNavigator == null) {
       myCacheNavigator = new DependencyCacheNavigator(getCache());
     }
@@ -67,20 +67,30 @@ public class DependencyCache {
     getNewClassesCache().wipe();
   }
 
-  public Cache getCache() {
-    if (myCache == null) {
-      // base number of cached record views of each type
-      myCache = new Cache(myStoreDirectoryPath, 2048);
-    }
+  public Cache getCache() throws CacheCorruptedException {
+    try {
+      if (myCache == null) {
+        // base number of cached record views of each type
+        myCache = new Cache(myStoreDirectoryPath, 2048);
+      }
 
-    return myCache;
+      return myCache;
+    }
+    catch (IOException e) {
+      throw new CacheCorruptedException(e);
+    }
   }
 
-  public Cache getNewClassesCache() {
-    if (myNewClassesCache == null) {
-      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 2048);
+  public Cache getNewClassesCache() throws CacheCorruptedException {
+    try {
+      if (myNewClassesCache == null) {
+        myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 2048);
+      }
+      return myNewClassesCache;
     }
-    return myNewClassesCache;
+    catch (IOException e) {
+      throw new CacheCorruptedException(e);
+    }
   }
 
   public void addTraverseRoot(int qName) {
@@ -136,39 +146,26 @@ public class DependencyCache {
     final DependencyCacheNavigator navigator = getCacheNavigator();
 
     // remove unnecesary dependencies
-    final TIntHashSet toClean = new TIntHashSet();
-    toClean.addAll(namesToUpdate);
-    toClean.addAll(myClassesWithSourceRemoved.toArray());
-
-    for (final int qName : toClean.toArray()) {
-      final int oldClassId = cache.getClassId(qName);
-      if (oldClassId == Cache.UNKNOWN) {
-        continue;
-      }
+    for (final int qName : namesToUpdate) {
       // process use-dependencies
-      final int[] referencedClasses = cache.getReferencedClassQNames(oldClassId);
-      for (int referencedClassQName : referencedClasses) {
-        final int referencedClassDeclarationId = cache.getClassDeclarationId(referencedClassQName);
-        if (referencedClassDeclarationId == Cache.UNKNOWN) {
+      for (int referencedClassQName : cache.getReferencedClassQNames(qName)) {
+        if (!cache.containsClass(referencedClassQName)) {
           continue;
         }
-        cache.removeClassReferencer(referencedClassDeclarationId, qName);
+        cache.removeClassReferencer(referencedClassQName, qName);
 
-        final int[] fieldIds = cache.getFieldIds(referencedClassDeclarationId);
-        for (int fieldId : fieldIds) {
-          cache.removeFieldReferencer(fieldId, qName);
+        for (FieldInfo fieldId : cache.getFieldIds(referencedClassQName)) {
+          cache.removeFieldReferencer(referencedClassQName, fieldId.getName(), qName);
         }
 
-        final int[] methodIds = cache.getMethodIds(referencedClassDeclarationId);
-        for (int methodId : methodIds) {
-          cache.removeMethodReferencer(methodId, qName);
+        for (MethodInfo methodId : cache.getMethodIds(referencedClassQName)) {
+          cache.removeMethodReferencer(referencedClassQName, methodId.getName(), methodId.getDescriptor(), qName);
         }
       }
       // process inheritance dependencies
       navigator.walkSuperClasses(qName, new ClassInfoProcessor() {
         public boolean process(int classQName) throws CacheCorruptedException {
-          final int classId = cache.getClassId(classQName);
-          cache.removeSubclass(classId, qName);
+          cache.removeSubclass(classQName, qName);
           return true;
         }
       });
@@ -176,10 +173,6 @@ public class DependencyCache {
 
     // do update of classInfos
     for (final int qName : namesToUpdate) {
-      final int newInfoId = newCache.getClassId(qName);
-      if (newInfoId == Cache.UNKNOWN) {
-        continue; // no member data to update
-      }
       cache.importClassInfo(newCache, qName);
     }
 
@@ -188,15 +181,13 @@ public class DependencyCache {
     final SymbolTable symbolTable = getSymbolTable();
 
     for (final int qName : namesToUpdate) {
-      final int newClassId = newCache.getClassId(qName);
-      if (newClassId == Cache.UNKNOWN) {
+      if (!newCache.containsClass(qName)) {
         continue;
       }
-      buildForwardDependencies(qName, newCache.getReferences(newClassId));
+      buildForwardDependencies(qName, newCache.getReferences(qName));
       boolean isRemote = false;
-      final int classId = cache.getClassId(qName);
       // "remote objects" are classes that _directly_ implement remote interfaces
-      final int[] superInterfaces = cache.getSuperInterfaces(classId);
+      final int[] superInterfaces = cache.getSuperInterfaces(qName);
       if (superInterfaces.length > 0) {
         final int remoteInterfaceName = symbolTable.getId(REMOTE_INTERFACE_NAME);
         for (int superInterface : superInterfaces) {
@@ -206,21 +197,24 @@ public class DependencyCache {
           }
         }
       }
-      final boolean wasRemote = cache.isRemote(classId);
+      final boolean wasRemote = cache.isRemote(qName);
       if (wasRemote && !isRemote) {
         synchronized (myPreviouslyRemoteClasses) {
           myPreviouslyRemoteClasses.add(qName);
         }
       }
-      cache.setRemote(classId, isRemote);
+      cache.setRemote(qName, isRemote);
     }
 
     // building subclass dependencies
     for (final int qName : namesToUpdate) {
-      final int classId = cache.getClassId(qName);
+      final int classId = qName;
       buildSubclassDependencies(getCache(), qName, classId);
     }
 
+    for (final int qName : myClassesWithSourceRemoved.toArray()) {
+      cache.removeClass(qName);
+    }
      myToUpdate = new TIntHashSet();
 
     //System.out.println("Dependency cache update took: " + (System.currentTimeMillis() - updateStart) + " ms");
@@ -229,96 +223,81 @@ public class DependencyCache {
 
   private void buildForwardDependencies(final int classQName, final Collection<ReferenceInfo> references) throws CacheCorruptedException {
     final Cache cache = getCache();
-    final int classId = cache.getClassId(classQName);
 
-    final int genericSignature = cache.getGenericSignature(classId);
+    final int genericSignature = cache.getGenericSignature(classQName);
     if (genericSignature != -1) {
       final String genericClassSignature = resolve(genericSignature);
       final int[] bounds = findBounds(genericClassSignature);
       for (int boundClassQName : bounds) {
-        cache.addClassReferencer(cache.getClassDeclarationId(boundClassQName), classQName);
-        cache.addReferencedClass(classId, boundClassQName);
+        cache.addClassReferencer(boundClassQName, classQName);
+        cache.addReferencedClass(classQName, boundClassQName);
       }
     }
 
-    buildAnnotationDependencies(classQName, cache.getRuntimeVisibleAnnotations(classId));
-    buildAnnotationDependencies(classQName, cache.getRuntimeInvisibleAnnotations(classId));
+    buildAnnotationDependencies(classQName, cache.getRuntimeVisibleAnnotations(classQName));
+    buildAnnotationDependencies(classQName, cache.getRuntimeInvisibleAnnotations(classQName));
 
     for (final ReferenceInfo refInfo : references) {
       final int declaringClassName = getActualDeclaringClassForReference(refInfo);
       if (declaringClassName == Cache.UNKNOWN) {
         continue;
       }
-      final int declaringClassId = cache.getClassDeclarationId(declaringClassName);
       if (refInfo instanceof MemberReferenceInfo) {
         final MemberInfo memberInfo = ((MemberReferenceInfo)refInfo).getMemberInfo();
         if (memberInfo instanceof FieldInfo) {
-          int fieldId = cache.findField(declaringClassId, memberInfo.getName(), memberInfo.getDescriptor());
-          if (fieldId == Cache.UNKNOWN) {
-            fieldId = cache.putMember(declaringClassId, Cache.UNKNOWN, memberInfo);
-          }
-          cache.addFieldReferencer(fieldId, classQName);
+          cache.addFieldReferencer(declaringClassName, memberInfo.getName(), classQName);
         }
         else if (memberInfo instanceof MethodInfo) {
-          int methodId = cache.findMethod(declaringClassId, memberInfo.getName(), memberInfo.getDescriptor());
-          if (methodId == Cache.UNKNOWN) {
-            methodId = cache.putMember(declaringClassId, Cache.UNKNOWN, memberInfo);
-          }
-          cache.addMethodReferencer(methodId, classQName);
+          cache.addMethodReferencer(declaringClassName, memberInfo.getName(), memberInfo.getDescriptor(), classQName);
         }
         else {
           LOG.error("Unknown member info class: " + memberInfo.getClass().getName());
         }
       }
       else { // reference to class
-        cache.addClassReferencer(declaringClassId, classQName);
+        cache.addClassReferencer(declaringClassName, classQName);
       }
-      cache.addReferencedClass(classId, declaringClassName);
+      cache.addReferencedClass(classQName, declaringClassName);
     }
     final SymbolTable symbolTable = getSymbolTable();
-    final int classDeclarationId = cache.getClassDeclarationId(classQName);
 
-    final int[] fieldIds = cache.getFieldIds(classDeclarationId);
-    for (final int fieldId : fieldIds) {
-      buildAnnotationDependencies(classQName, cache.getFieldRuntimeVisibleAnnotations(fieldId));
-      buildAnnotationDependencies(classQName, cache.getFieldRuntimeInvisibleAnnotations(fieldId));
+    for (final FieldInfo fieldInfo : cache.getFieldIds(classQName)) {
+      buildAnnotationDependencies(classQName, fieldInfo.getRuntimeVisibleAnnotations());
+      buildAnnotationDependencies(classQName, fieldInfo.getRuntimeInvisibleAnnotations());
 
-      final int signature = cache.getFieldDescriptor(fieldId);
-      String className = MakeUtil.parseObjectType(symbolTable.getSymbol(signature), 0);
+      String className = MakeUtil.parseObjectType(symbolTable.getSymbol(fieldInfo.getDescriptor()), 0);
       if (className == null) {
         continue;
       }
       final int cls = symbolTable.getId(className);
-      cache.addClassReferencer(cache.getClassDeclarationId(cls), classQName);
-      cache.addReferencedClass(classId, cls);
+      cache.addClassReferencer(cls, classQName);
+      cache.addReferencedClass(classQName, cls);
     }
 
-    final int[] methods = cache.getMethodIds(classDeclarationId);
-    for (final int methodId : methods) {
-      buildAnnotationDependencies(classQName, cache.getMethodRuntimeVisibleAnnotations(methodId));
-      buildAnnotationDependencies(classQName, cache.getMethodRuntimeInvisibleAnnotations(methodId));
-      buildAnnotationDependencies(classQName, cache.getMethodRuntimeVisibleParamAnnotations(methodId));
-      buildAnnotationDependencies(classQName, cache.getMethodRuntimeInvisibleParamAnnotations(methodId));
+    for (final MethodInfo methodInfo : cache.getMethodIds(classQName)) {
+      buildAnnotationDependencies(classQName, methodInfo.getRuntimeVisibleAnnotations());
+      buildAnnotationDependencies(classQName, methodInfo.getRuntimeInvisibleAnnotations());
+      buildAnnotationDependencies(classQName, methodInfo.getRuntimeVisibleParameterAnnotations());
+      buildAnnotationDependencies(classQName, methodInfo.getRuntimeInvisibleParameterAnnotations());
 
-      if (cache.isConstructor(methodId)) {
+      if (methodInfo.isConstructor()) {
         continue;
       }
 
-      final String returnTypeClassName =
-        MakeUtil.parseObjectType(CacheUtils.getMethodReturnTypeDescriptor(cache, methodId, symbolTable), 0);
+      final String returnTypeClassName = MakeUtil.parseObjectType(methodInfo.getReturnTypeDescriptor(symbolTable), 0);
       if (returnTypeClassName != null) {
-        final int returnTypeClassId = symbolTable.getId(returnTypeClassName);
-        cache.addClassReferencer(cache.getClassDeclarationId(returnTypeClassId), classQName);
-        cache.addReferencedClass(classId, returnTypeClassId);
+        final int returnTypeClassQName = symbolTable.getId(returnTypeClassName);
+        cache.addClassReferencer(returnTypeClassQName, classQName);
+        cache.addReferencedClass(classQName, returnTypeClassQName);
       }
 
-      String[] parameterSignatures = CacheUtils.getParameterSignatures(cache, methodId, symbolTable);
+      String[] parameterSignatures = CacheUtils.getParameterSignatures(methodInfo, symbolTable);
       for (String parameterSignature : parameterSignatures) {
         String paramClassName = MakeUtil.parseObjectType(parameterSignature, 0);
         if (paramClassName != null) {
           final int paramClassId = symbolTable.getId(paramClassName);
-          cache.addClassReferencer(cache.getClassDeclarationId(paramClassId), classQName);
-          cache.addReferencedClass(classId, paramClassId);
+          cache.addClassReferencer(paramClassId, classQName);
+          cache.addReferencedClass(classQName, paramClassId);
         }
       }
     }
@@ -328,8 +307,7 @@ public class DependencyCache {
     if (ifaceName == remoteInterfaceName) {
       return true;
     }
-    final int[] superInterfaces = cache.getSuperInterfaces(cache.getClassId(ifaceName));
-    for (int superInterfaceName : superInterfaces) {
+    for (int superInterfaceName : cache.getSuperInterfaces(ifaceName)) {
       if (isRemoteInterface(cache, superInterfaceName, remoteInterfaceName)) {
         return true;
       }
@@ -352,20 +330,17 @@ public class DependencyCache {
       return;
     }
     final Cache cache = getCache();
-    final int classId = cache.getClassId(classQName);
+    final int classId = classQName;
     for (AnnotationConstantValue annotation : annotations) {
       final int annotationQName = annotation.getAnnotationQName();
 
-      final int annotationDeclarationId = cache.getClassDeclarationId(annotationQName);
-
-      cache.addClassReferencer(annotationDeclarationId, classQName);
+      cache.addClassReferencer(annotationQName, classQName);
       cache.addReferencedClass(classId, annotationQName);
 
       final AnnotationNameValuePair[] memberValues = annotation.getMemberValues();
       for (final AnnotationNameValuePair nameValuePair : memberValues) {
-        final int[] annotationMembers = cache.findMethodsByName(annotationDeclarationId, nameValuePair.getName());
-        for (int annotationMember : annotationMembers) {
-          cache.addMethodReferencer(annotationMember, classQName);
+        for (MethodInfo annotationMember : cache.findMethodsByName(annotationQName, nameValuePair.getName())) {
+          cache.addMethodReferencer(annotationQName, annotationMember.getName(), annotationMember.getDescriptor(), classQName);
         }
       }
     }
@@ -393,18 +368,14 @@ public class DependencyCache {
     }
     final int declaringClassName = refInfo.getClassName();
     final Cache cache = getCache();
-    if (cache.getClassId(declaringClassName) == Cache.UNKNOWN) {
-      return declaringClassName;
-    }
-    final int classDeclarationId = cache.getClassDeclarationId(declaringClassName);
     final MemberInfo memberInfo = ((MemberReferenceInfo)refInfo).getMemberInfo();
     if (memberInfo instanceof FieldInfo) {
-      if (cache.findFieldByName(classDeclarationId, memberInfo.getName()) != Cache.UNKNOWN) {
+      if (cache.findFieldByName(declaringClassName, memberInfo.getName()) != null) {
         return declaringClassName;
       }
     }
     else if (memberInfo instanceof MethodInfo) {
-      if (cache.findMethod(classDeclarationId, memberInfo.getName(), memberInfo.getDescriptor()) != Cache.UNKNOWN) {
+      if (cache.findMethod(declaringClassName, memberInfo.getName(), memberInfo.getDescriptor()) != null) {
         return declaringClassName;
       }
     }
@@ -435,12 +406,10 @@ public class DependencyCache {
       final CachingSearcher searcher = new CachingSearcher(project);
       final ChangedRetentionPolicyDependencyProcessor changedRetentionPolicyDependencyProcessor = new ChangedRetentionPolicyDependencyProcessor(project, searcher, this);
       for (final int qName : qNamesToUpdate) {
-        final int oldInfoId = getCache().getClassId(qName);
-        if (oldInfoId == Cache.UNKNOWN) {
+        if (!getCache().containsClass(qName)) {
           continue;
         }
-        final int newInfoId = getNewClassesCache().getClassId(qName);
-        if (newInfoId != Cache.UNKNOWN) { // there is a new class file created
+        if (getNewClassesCache().containsClass(qName)) { // there is a new class file created
           new JavaDependencyProcessor(project, this, qName).run();
           ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo> changed =
             new ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo>();
@@ -464,9 +433,9 @@ public class DependencyCache {
           if (myClassesWithSourceRemoved.contains(qName)) { // no recompiled class file, check whether the classfile exists
             isSourceDeleted = true;
           }
-          else if (!new File(getCache().getPath(oldInfoId)).exists()) {
+          else if (!new File(getCache().getPath(qName)).exists()) {
             final String qualifiedName = resolve(qName);
-            final String sourceFileName = getCache().getSourceFileName(oldInfoId);
+            final String sourceFileName = getCache().getSourceFileName(qName);
             final boolean markAsRemovedSource = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
               public Boolean compute() {
                 VirtualFile sourceFile = sourceFileFinder.findSourceFile(qualifiedName, sourceFileName);
@@ -509,24 +478,21 @@ public class DependencyCache {
     Collection<ChangedConstantsDependencyProcessor.FieldChangeInfo> removedConstants) throws CacheCorruptedException {
 
     final Cache cache = getCache();
-    int[] fields = cache.getFieldIds(cache.getClassDeclarationId(qName));
-    for (final int field : fields) {
-      final int oldFlags = cache.getFieldFlags(field);
+    for (final FieldInfo field : cache.getFieldIds(qName)) {
+      final int oldFlags = field.getFlags();
       if (ClsUtil.isStatic(oldFlags) && ClsUtil.isFinal(oldFlags)) {
         final Cache newClassesCache = getNewClassesCache();
-        int newField = newClassesCache.findFieldByName(newClassesCache.getClassDeclarationId(qName), cache.getFieldName(field));
-        if (newField == Cache.UNKNOWN) {
-          if (!ConstantValue.EMPTY_CONSTANT_VALUE.equals(cache.getFieldConstantValue(field)))
-          { // if the field was really compile time constant
-            removedConstants.add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(cache.createFieldInfo(field)));
+        FieldInfo newField = newClassesCache.findFieldByName(qName, field.getName());
+        if (newField == null) {
+          if (!ConstantValue.EMPTY_CONSTANT_VALUE.equals(field.getConstantValue())) {
+            // if the field was really compile time constant
+            removedConstants.add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(field));
           }
         }
         else {
-          final boolean visibilityRestricted = MakeUtil.isMoreAccessible(oldFlags, newClassesCache.getFieldFlags(newField));
-          if (!cache.getFieldConstantValue(field).equals(newClassesCache.getFieldConstantValue(newField)) || visibilityRestricted)
-          {
-            changedConstants
-              .add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(cache.createFieldInfo(field), visibilityRestricted));
+          final boolean visibilityRestricted = MakeUtil.isMoreAccessible(oldFlags, newField.getFlags());
+          if (!field.getConstantValue().equals(newField.getConstantValue()) || visibilityRestricted) {
+            changedConstants.add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(field, visibilityRestricted));
           }
         }
       }
@@ -536,20 +502,14 @@ public class DependencyCache {
   private static void buildSubclassDependencies(Cache cache, final int qName, int targetClassId) throws CacheCorruptedException {
     final int superQName = cache.getSuperQualifiedName(targetClassId);
     if (superQName != Cache.UNKNOWN) {
-      final int superClassId = cache.getClassId(superQName);
-      if (superClassId != Cache.UNKNOWN) {
-        cache.addSubclass(superClassId, qName);
-        buildSubclassDependencies(cache, qName, superClassId);
-      }
+      cache.addSubclass(superQName, qName);
+      buildSubclassDependencies(cache, qName, superQName);
     }
 
     int[] interfaces = cache.getSuperInterfaces(targetClassId);
     for (final int interfaceName : interfaces) {
-      final int superId = cache.getClassId(interfaceName);
-      if (superId != Cache.UNKNOWN) {
-        cache.addSubclass(superId, qName);
-        buildSubclassDependencies(cache, qName, superId);
-      }
+      cache.addSubclass(interfaceName, qName);
+      buildSubclassDependencies(cache, qName, interfaceName);
     }
   }
 
@@ -596,14 +556,14 @@ public class DependencyCache {
    * @return true if really marked, false otherwise
    */
   private boolean markClassInfo(int qName, boolean force) throws CacheCorruptedException {
-    if (getCache().getClassId(qName) == Cache.UNKNOWN) {
+    if (!getCache().containsClass(qName)) {
       return false;
     }
     if (myClassesWithSourceRemoved.contains(qName)) {
       return false; // no need to recompile since source has been removed
     }
     if (!force) {
-      if (getNewClassesCache().getClassId(qName) != Cache.UNKNOWN) { // already recompiled
+      if (getNewClassesCache().containsClass(qName)) { // already recompiled
         return false;
       }
     }
@@ -616,14 +576,9 @@ public class DependencyCache {
     myMarkedInfos.clear();
     myToUpdate.clear();
     myTraverseRoots.clear();
-    try {
-      if (myNewClassesCache != null) {
-        myNewClassesCache.wipe();
-        myNewClassesCache = null;
-      }
-    }
-    catch (CacheCorruptedException e) {
-      LOG.info(e); 
+    if (myNewClassesCache != null) {
+      myNewClassesCache.wipe();
+      myNewClassesCache = null;
     }
     try {
       if (myCache != null) {
@@ -679,16 +634,15 @@ public class DependencyCache {
 
     public boolean process(int classQName) throws CacheCorruptedException {
       final Cache cache = getCache();
-      final int classDeclarationId = cache.getClassDeclarationId(classQName);
       if (myIsField) {
-        final int fieldId = cache.findField(classDeclarationId, myMemberName, myMemberDescriptor);
-        if (fieldId != Cache.UNKNOWN) {
+        final FieldInfo fieldId = cache.findField(classQName, myMemberName, myMemberDescriptor);
+        if (fieldId != null) {
           myDeclaringClass = classQName;
         }
       }
       else {
-        final int methodId = cache.findMethod(classDeclarationId, myMemberName, myMemberDescriptor);
-        if (methodId != Cache.UNKNOWN) {
+        final MethodInfo methodId = cache.findMethod(classQName, myMemberName, myMemberDescriptor);
+        if (methodId != null) {
           myDeclaringClass = classQName;
           return false;
         }

@@ -203,6 +203,16 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
+  public synchronized boolean containsMapping(Key key) throws IOException {
+    myAppendCache.remove(key);
+    final int id = tryEnumerate(key);
+    if (id == NULL_ID) {
+      return false;
+    }
+    return readValueId(id).address != NULL_ID;
+
+  }
+
   public synchronized void remove(Key key) throws IOException {
     myAppendCache.remove(key);
     final int id = tryEnumerate(key);

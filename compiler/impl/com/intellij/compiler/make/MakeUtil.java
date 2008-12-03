@@ -196,7 +196,7 @@ public class MakeUtil {
   public static int getAnnotationTargets(final Cache cache, final int annotationQName, final SymbolTable symbolTable) throws CacheCorruptedException {
     final AnnotationConstantValue targetAnnotation = findAnnotation(
       "java.lang.annotation.Target",
-      cache.getRuntimeVisibleAnnotations(cache.getClassId(annotationQName)), symbolTable);
+      cache.getRuntimeVisibleAnnotations(annotationQName), symbolTable);
     if (targetAnnotation == null) {
       return AnnotationTargets.ALL; // all program elements are annotation targets by default
     }
@@ -239,7 +239,7 @@ public class MakeUtil {
   public static int getAnnotationRetentionPolicy(final int annotationQName, final Cache cache, final SymbolTable symbolTable) throws CacheCorruptedException {
     final AnnotationConstantValue retentionPolicyAnnotation = findAnnotation(
       "java.lang.annotation.Retention",
-      cache.getRuntimeVisibleAnnotations(cache.getClassId(annotationQName)), symbolTable
+      cache.getRuntimeVisibleAnnotations(annotationQName), symbolTable
     );
     if (retentionPolicyAnnotation == null) {
       return RetentionPolicies.CLASS; // default retention policy

@@ -72,7 +72,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
           final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
           final LocalFileSystem lfs = LocalFileSystem.getInstance();
           for (final int className : allClassNames) {
-            final int classId = cache.getClassId(className);
+            final int classId = className;
             final boolean isRemoteObject = cache.isRemote(classId) && !CacheUtils.isInterface(cache, className);
             if (!isRemoteObject && !dependencyCache.wasRemote(className)) {
               continue;

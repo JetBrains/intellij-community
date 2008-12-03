@@ -17,11 +17,10 @@ public class DependencyCacheNavigator {
   }
 
   public void walkSuperClasses(int classQName, ClassInfoProcessor processor) throws CacheCorruptedException {
-    final int classId = myCache.getClassId(classQName);
-    if (classId == Cache.UNKNOWN) {
+    if (classQName == Cache.UNKNOWN) {
       return;
     }
-    int superQName = myCache.getSuperQualifiedName(classId);
+    int superQName = myCache.getSuperQualifiedName(classQName);
 
     if (classQName == superQName) {
       LOG.assertTrue(false, "Superclass qualified name is the same as class' name: " + classQName);
@@ -29,50 +28,36 @@ public class DependencyCacheNavigator {
     }
 
     if (superQName != Cache.UNKNOWN) {
-      int superInfoId = myCache.getClassId(superQName);
-      if (superInfoId != Cache.UNKNOWN) {
-        if (processor.process(superQName)) {
-          walkSuperClasses(superQName, processor);
-        }
+      if (processor.process(superQName)) {
+        walkSuperClasses(superQName, processor);
       }
     }
-    int[] superInterfaces = myCache.getSuperInterfaces(classId);
-    for (int superInterfaceQName : superInterfaces) {
-      int superInfoId = myCache.getClassId(superInterfaceQName);
-      if (superInfoId != Cache.UNKNOWN) {
-        if (processor.process(superInterfaceQName)) {
-          walkSuperClasses(superInterfaceQName, processor);
-        }
+    for (int superInterfaceQName : myCache.getSuperInterfaces(classQName)) {
+      if (processor.process(superInterfaceQName)) {
+        walkSuperClasses(superInterfaceQName, processor);
       }
     }
   }
 
   public void walkSuperInterfaces(int classQName, ClassInfoProcessor processor) throws CacheCorruptedException {
-    final int classId = myCache.getClassId(classQName);
-    if (classId == Cache.UNKNOWN) {
+    if (classQName == Cache.UNKNOWN) {
       return;
     }
 
-    final int[] superInterfaces = myCache.getSuperInterfaces(classId);
-    for (int superInterfaceQName : superInterfaces) {
-      int superInfoId = myCache.getClassId(superInterfaceQName);
-      if (superInfoId != Cache.UNKNOWN) {
-        if (processor.process(superInterfaceQName)) {
-          walkSuperInterfaces(superInterfaceQName, processor);
-        }
+    for (int superInterfaceQName : myCache.getSuperInterfaces(classQName)) {
+      if (processor.process(superInterfaceQName)) {
+        walkSuperInterfaces(superInterfaceQName, processor);
       }
     }
   }
 
   public void walkSubClasses(int fromClassQName, ClassInfoProcessor processor) throws CacheCorruptedException {
-    final int[] subclasses = myCache.getSubclasses(myCache.getClassId(fromClassQName));
-    for (int subQName : subclasses) {
+    for (int subQName : myCache.getSubclasses(fromClassQName)) {
       if (fromClassQName == subQName) {
         LOG.assertTrue(false, "Subclass qualified name is the same as class' name: " + fromClassQName);
         return;
       }
-      int subclassId = myCache.getClassId(subQName);
-      if (subclassId != Cache.UNKNOWN) {
+      if (subQName != Cache.UNKNOWN) {
         if (!processor.process(subQName)) {
           break;
         }

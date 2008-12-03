@@ -17,7 +17,6 @@ public class MemberInfoExternalizer {
   public static final byte METHOD_INFO_TAG = 2;
 
   public static final byte DECLARATION_INFO_TAG = 9;
-  public static final byte MEMBER_DECLARATION_INFO_TAG = 10;
 
   public static final byte REFERENCE_INFO_TAG = 11;
   public static final byte MEMBER_REFERENCE_INFO_TAG = 12;
@@ -46,15 +45,9 @@ public class MemberInfoExternalizer {
     return null;
   }
 
-  public static ItemInfo loadItemInfo(DataInput in) throws IOException {
+  public static ReferenceInfo loadReferenceInfo(DataInput in) throws IOException {
     final byte tag = in.readByte();
-    if (tag == DECLARATION_INFO_TAG) {
-      return new DeclarationInfo(in);
-    }
-    else if (tag == MEMBER_DECLARATION_INFO_TAG) {
-      return new MemberDeclarationInfo(in);
-    }
-    else if (tag == REFERENCE_INFO_TAG) {
+    if (tag == REFERENCE_INFO_TAG) {
       return new ReferenceInfo(in);
     }
     else if (tag == MEMBER_REFERENCE_INFO_TAG) {
@@ -116,21 +109,12 @@ public class MemberInfoExternalizer {
     info.save(out);
   }
 
-  public static void saveItemInfo(DataOutput out, ItemInfo info) throws IOException {
-    if (info instanceof MemberDeclarationInfo) {
-      out.writeByte(MEMBER_DECLARATION_INFO_TAG);
-    }
-    else if (info instanceof MemberReferenceInfo) {
+  public static void saveReferenceInfo(DataOutput out, ReferenceInfo info) throws IOException {
+    if (info instanceof MemberReferenceInfo) {
       out.writeByte(MEMBER_REFERENCE_INFO_TAG);
     }
-    else if (info instanceof DeclarationInfo){
-      out.writeByte(DECLARATION_INFO_TAG);
-    }
-    else if (info instanceof ReferenceInfo){
+    else{
       out.writeByte(REFERENCE_INFO_TAG);
-    }
-    else {
-      LOG.error("Unknown info type: " + info.getClass().getName());
     }
     info.save(out);
   }
@@ -173,4 +157,47 @@ public class MemberInfoExternalizer {
       value.save(out);
     }
   }
+
+  public static AnnotationConstantValue[] readAnnotationConstantValueArray1(DataInput in) throws IOException {
+    final int size = in.readInt();
+    final AnnotationConstantValue[] array = size > 0? new AnnotationConstantValue[size] : AnnotationConstantValue.EMPTY_ARRAY;
+    for (int idx = 0; idx < size; idx++) {
+      array[idx] = (AnnotationConstantValue)loadConstantValue(in);
+    }
+    return array;
+  }
+
+  public static AnnotationConstantValue[][] readAnnotationConstantValueArray2(DataInput in) throws IOException {
+    final int size = in.readInt();
+    final AnnotationConstantValue[][] array = size > 0? new AnnotationConstantValue[size][] : AnnotationConstantValue.EMPTY_ARRAY_ARRAY;
+    for (int idx = 0; idx < size; idx++) {
+      array[idx] = readAnnotationConstantValueArray1(in);
+    }
+    return array;
+  }
+
+  public static void writeConstantValueArray1(DataOutput writer, final ConstantValue[] array) throws IOException {
+    if (array != null && array.length > 0) {
+      writer.writeInt(array.length);
+      for (ConstantValue value : array) {
+        saveConstantValue(writer, value);
+      }
+    }
+    else {
+      writer.writeInt(0);
+    }
+  }
+
+  public static void writeConstantValueArray2(DataOutput writer, final ConstantValue[][] array) throws IOException {
+    if (array != null && array.length > 0) {
+      writer.writeInt(array.length);
+      for (ConstantValue[] aArray : array) {
+        writeConstantValueArray1(writer, aArray);
+      }
+    }
+    else {
+      writer.writeInt(0);
+    }
+  }
+
 }

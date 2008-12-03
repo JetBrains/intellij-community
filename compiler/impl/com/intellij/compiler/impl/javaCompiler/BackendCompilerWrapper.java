@@ -8,6 +8,7 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.*;
 import com.intellij.compiler.classParsing.AnnotationConstantValue;
+import com.intellij.compiler.classParsing.MethodInfo;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.make.*;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
@@ -346,7 +347,7 @@ public class BackendCompilerWrapper {
           final Cache cache = dependencyCache.getCache();
           for (final int infoQName : depQNames) {
             final String qualifiedName = dependencyCache.resolve(infoQName);
-            final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, cache.getSourceFileName(cache.getClassId(infoQName)));
+            final VirtualFile file = sourceFileFinder.findSourceFile(qualifiedName, cache.getSourceFileName(infoQName));
             if (file != null) {
               if (!compilerConfiguration.isExcludedFromCompilation(file)) {
                 dependentFiles.add(file);
@@ -732,7 +733,7 @@ public class BackendCompilerWrapper {
           final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, srcFile);
           if (realLocation != null) {
             myOutputItems.add(new OutputItemImpl(realLocation.getFirst(), realLocation.getSecond(), srcFile));
-            newCache.setPath(newCache.getClassId(cc.qName), realLocation.getSecond());
+            newCache.setPath(cc.qName, realLocation.getSecond());
             if (LOG.isDebugEnabled()) {
               LOG.debug("Added output item: [outputDir; outputPath; sourceFile]  = [" + realLocation.getFirst() + "; " +
                         realLocation.getSecond() + "; " + srcFile.getPresentableUrl() + "]");
@@ -924,7 +925,7 @@ public class BackendCompilerWrapper {
         final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
         final int newClassQName = dependencyCache.reparseClassFile(file, fileContent);
         final Cache newClassesCache = dependencyCache.getNewClassesCache();
-        final String sourceFileName = newClassesCache.getSourceFileName(newClassesCache.getClassId(newClassQName));
+        final String sourceFileName = newClassesCache.getSourceFileName(newClassQName);
         final String qName = dependencyCache.resolve(newClassQName);
         String relativePathToSource = "/" + MakeUtil.createRelativePathToSource(qName, sourceFileName);
         putName(sourceFileName, newClassQName, relativePathToSource, path);
@@ -970,13 +971,13 @@ public class BackendCompilerWrapper {
   }
 
   private static boolean hasNotNullAnnotations(final Cache cache, final SymbolTable symbolTable, final int className) throws CacheCorruptedException {
-    for (int methodId : cache.getMethodIds(cache.getClassDeclarationId(className))) {
-      for (AnnotationConstantValue annotation : cache.getMethodRuntimeInvisibleAnnotations(methodId)) {
+    for (MethodInfo methodId : cache.getMethodIds(className)) {
+      for (AnnotationConstantValue annotation : methodId.getRuntimeInvisibleAnnotations()) {
         if (AnnotationUtil.NOT_NULL.equals(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
           return true;
         }
       }
-      final AnnotationConstantValue[][] paramAnnotations = cache.getMethodRuntimeInvisibleParamAnnotations(methodId);
+      final AnnotationConstantValue[][] paramAnnotations = methodId.getRuntimeInvisibleParameterAnnotations();
       for (AnnotationConstantValue[] _singleParamAnnotations : paramAnnotations) {
         for (AnnotationConstantValue annotation : _singleParamAnnotations) {
           if (AnnotationUtil.NOT_NULL.equals(symbolTable.getSymbol(annotation.getAnnotationQName()))) {

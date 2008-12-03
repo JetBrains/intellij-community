@@ -1,6 +1,7 @@
 package com.intellij.compiler.make;
 
 import com.intellij.compiler.SymbolTable;
+import com.intellij.compiler.classParsing.MethodInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -18,25 +19,12 @@ import java.util.ArrayList;
 public class CacheUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.CacheUtils");
 
-  public static String getMethodReturnTypeDescriptor(final Cache cache, final int methodDeclarationId, final SymbolTable symbolTable) throws CacheCorruptedException {
-    String descriptor = symbolTable.getSymbol(cache.getMethodDescriptor(methodDeclarationId));
-    return getMethodReturnTypeDescriptor(descriptor);
+  public static String getMethodReturnTypeDescriptor(final Cache cache, final MethodInfo methodInfo, final SymbolTable symbolTable) throws CacheCorruptedException {
+    return methodInfo.getReturnTypeDescriptor(symbolTable);
   }
 
-  private static String getMethodReturnTypeDescriptor(final String methodDescriptor) {
-    return methodDescriptor.substring(methodDescriptor.indexOf(')') + 1, methodDescriptor.length());
-  }
-
-  public static String getMethodGenericSignature(final Cache cache, final int methodDeclarationId, final SymbolTable symbolTable) throws CacheCorruptedException {
-    final int methodGenericSignature = cache.getMethodGenericSignature(methodDeclarationId);
-    if (methodGenericSignature == -1) {
-      return null;
-    }
-    return symbolTable.getSymbol(methodGenericSignature);
-  }
-
-  public static String[] getParameterSignatures(Cache cache, int methodDeclarationId, SymbolTable symbolTable) throws CacheCorruptedException {
-    String descriptor = symbolTable.getSymbol(cache.getMethodDescriptor(methodDeclarationId));
+  public static String[] getParameterSignatures(MethodInfo methodDeclarationId, SymbolTable symbolTable) throws CacheCorruptedException {
+    String descriptor = symbolTable.getSymbol(methodDeclarationId.getDescriptor());
     int endIndex = descriptor.indexOf(')');
     if (endIndex <= 0) {
       LOG.assertTrue(false, "Corrupted method descriptor: "+descriptor);
@@ -119,17 +107,17 @@ public class CacheUtils {
   }
 
   public static boolean isInterface(Cache cache, int classQName) throws CacheCorruptedException {
-    final int classId = cache.getClassId(classQName);
+    final int classId = classQName;
     return MakeUtil.isInterface(cache.getFlags(classId));
   }
 
   public static boolean isAbstract(Cache cache, int classQName) throws CacheCorruptedException {
-    final int classId = cache.getClassId(classQName);
+    final int classId = classQName;
     return ClsUtil.isAbstract(cache.getFlags(classId));
   }
 
   public static boolean isFinal(Cache cache, int classQName) throws CacheCorruptedException {
-    final int classId = cache.getClassId(classQName);
+    final int classId = classQName;
     return ClsUtil.isFinal(cache.getFlags(classId));
   }
 }

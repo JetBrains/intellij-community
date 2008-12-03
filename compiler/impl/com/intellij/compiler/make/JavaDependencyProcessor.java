@@ -63,24 +63,22 @@ class JavaDependencyProcessor {
 
     myMembersChanged = !myAddedMembers.isEmpty() || !myRemovedMembers.isEmpty() || !myChangedMembers.isEmpty();
     // track changes in super list
-    final int oldCacheClassId = cache.getClassId(qName);
-    final int newCacheClassId = newClassesCache.getClassId(qName);
 
-    myIsRemoteInterface = CacheUtils.isInterface(cache, myQName) && cache.isRemote(oldCacheClassId);
-    myIsAnnotation = ClsUtil.isAnnotation(cache.getFlags(oldCacheClassId));
+    myIsRemoteInterface = CacheUtils.isInterface(cache, myQName) && cache.isRemote(qName);
+    myIsAnnotation = ClsUtil.isAnnotation(cache.getFlags(qName));
     myWereAnnotationTargetsRemoved = myIsAnnotation && wereAnnotationTargesRemoved(cache, newClassesCache);
     myRetentionPolicyChanged = myIsAnnotation && hasRetentionPolicyChanged(cache, newClassesCache);
     myAnnotationSemanticsChanged = myIsAnnotation && hasAnnotationSemanticsChanged(cache, newClassesCache);
 
-    int[] oldInterfaces = cache.getSuperInterfaces(oldCacheClassId);
-    int[] newInterfaces = newClassesCache.getSuperInterfaces(newCacheClassId);
+    int[] oldInterfaces = cache.getSuperInterfaces(qName);
+    int[] newInterfaces = newClassesCache.getSuperInterfaces(qName);
     mySuperInterfaceRemoved = wereInterfacesRemoved(oldInterfaces, newInterfaces);
     mySuperInterfaceAdded = wereInterfacesRemoved(newInterfaces, oldInterfaces);
 
-    mySuperlistGenericSignatureChanged = isSuperlistGenericSignatureChanged(cache.getGenericSignature(oldCacheClassId), newClassesCache.getGenericSignature(newCacheClassId));
+    mySuperlistGenericSignatureChanged = isSuperlistGenericSignatureChanged(cache.getGenericSignature(qName), newClassesCache.getGenericSignature(qName));
 
-    boolean superclassesDiffer = cache.getSuperQualifiedName(oldCacheClassId) != newClassesCache.getSuperQualifiedName(newCacheClassId);
-    boolean wasDerivedFromObject = "java.lang.Object".equals(dependencyCache.resolve(cache.getSuperQualifiedName(oldCacheClassId)));
+    boolean superclassesDiffer = cache.getSuperQualifiedName(qName) != newClassesCache.getSuperQualifiedName(qName);
+    boolean wasDerivedFromObject = "java.lang.Object".equals(dependencyCache.resolve(cache.getSuperQualifiedName(qName)));
     mySuperClassChanged = !wasDerivedFromObject && superclassesDiffer;
     mySuperClassAdded = wasDerivedFromObject && superclassesDiffer;
   }
@@ -140,7 +138,7 @@ class JavaDependencyProcessor {
     final Cache newCache = myDependencyCache.getNewClassesCache();
 
     if (!myMembersChanged &&
-        oldCache.getFlags(oldCache.getClassId(myQName)) == newCache.getFlags(newCache.getClassId(myQName)) &&
+        oldCache.getFlags(myQName) == newCache.getFlags(myQName) &&
         !superListChanged && !myWereAnnotationTargetsRemoved && !myRetentionPolicyChanged && !myAnnotationSemanticsChanged) {
       return; // nothing to do
     }
@@ -214,7 +212,7 @@ class JavaDependencyProcessor {
     }
     else {
       boolean becameAbstract = !CacheUtils.isAbstract(oldCache, myQName) && CacheUtils.isAbstract(newCache, myQName);
-      boolean accessRestricted = MakeUtil.isMoreAccessible(oldCache.getFlags(oldCache.getClassId(myQName)), newCache.getFlags(newCache.getClassId(myQName)));
+      boolean accessRestricted = MakeUtil.isMoreAccessible(oldCache.getFlags(myQName), newCache.getFlags(myQName));
       for (Dependency backDependency : myBackDependencies) {
         if (myDependencyCache.isTargetClassInfoMarked(backDependency)) continue;
 
@@ -342,7 +340,7 @@ class JavaDependencyProcessor {
         }
       }
       final int depQName = dependency.getClassQualifiedName();
-      if (ClsUtil.isAnnotation(oldCache.getFlags(oldCache.getClassId(depQName)))) {
+      if (ClsUtil.isAnnotation(oldCache.getFlags(depQName))) {
         if (!visitedAnnotations.contains(depQName)) {
           visitedAnnotations.add(depQName);
           markAnnotationDependenciesRecursively(oldCache.getBackDependencies(depQName), LOG.isDebugEnabled()? "; reason: cascade semantics change for " + myDependencyCache.resolve(depQName) : "", new TIntHashSet());
@@ -433,7 +431,7 @@ class JavaDependencyProcessor {
 
 
   private TIntObjectHashMap<AnnotationConstantValue> fetchAllAnnotations(final Cache cache) throws CacheCorruptedException {
-    final int classId = cache.getClassId(myQName);
+    final int classId = myQName;
     TIntObjectHashMap<AnnotationConstantValue> oldAnnotations = new TIntObjectHashMap<AnnotationConstantValue>();
     for (AnnotationConstantValue annot : cache.getRuntimeVisibleAnnotations(classId)) {
       oldAnnotations.put(annot.getAnnotationQName(), annot);
@@ -609,8 +607,7 @@ class JavaDependencyProcessor {
           return true;
         }
 
-        final int subclassId = oldCache.getClassId(subclassQName);
-        if (subclassId == Cache.UNKNOWN) {
+        if (!oldCache.containsClass(subclassQName)) {
           return true;
         }
 
@@ -636,7 +633,7 @@ class JavaDependencyProcessor {
 
         // if info became final, mark direct inheritors
         if (becameFinal) {
-          if (myQName == oldCache.getSuperQualifiedName(subclassId)) {
+          if (myQName == oldCache.getSuperQualifiedName(subclassQName)) {
             if (myDependencyCache.markClass(subclassQName)) {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the class " +
@@ -647,7 +644,7 @@ class JavaDependencyProcessor {
           }
         }
 
-        final int subclassDeclarationId = oldCache.getClassDeclarationId(subclassQName);
+        final int subclassDeclarationId = subclassQName;
         // process added members
         for (final MemberInfo member : myAddedMembers) {
           if (member instanceof MethodInfo) {
@@ -663,8 +660,8 @@ class JavaDependencyProcessor {
               return true;
             }
             if (!method.isPrivate()) {
-              int derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, method.getDescriptor(symbolTable), symbolTable);
-              if (derivedMethod != Cache.UNKNOWN) {
+              MethodInfo derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, method.getDescriptor(symbolTable), symbolTable);
+              if (derivedMethod != null) {
                 if (!method.getReturnTypeDescriptor(symbolTable).equals(CacheUtils.getMethodReturnTypeDescriptor(oldCache, derivedMethod, symbolTable))) {
                   if (myDependencyCache.markClass(subclassQName)) {
                     if (LOG.isDebugEnabled()) {
@@ -674,7 +671,7 @@ class JavaDependencyProcessor {
                   }
                   return true;
                 }
-                if (MakeUtil.isMoreAccessible(method.getFlags(), oldCache.getMethodFlags(derivedMethod))) {
+                if (MakeUtil.isMoreAccessible(method.getFlags(), derivedMethod.getFlags())) {
                   if (myDependencyCache.markClass(subclassQName)) {
                     if (LOG.isDebugEnabled()) {
                       LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the method " + method +
@@ -683,7 +680,7 @@ class JavaDependencyProcessor {
                   }
                   return true;
                 }
-                if (!CacheUtils.areArraysContentsEqual(method.getThrownExceptions(), oldCache.getMethodThrownExceptions(derivedMethod))) {
+                if (!CacheUtils.areArraysContentsEqual(method.getThrownExceptions(), derivedMethod.getThrownExceptions())) {
                   if (myDependencyCache.markClass(subclassQName)) {
                     if (LOG.isDebugEnabled()) {
                       LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: exception lists of " +
@@ -705,7 +702,7 @@ class JavaDependencyProcessor {
             }
           }
           else if (member instanceof FieldInfo) {
-            if (oldCache.findFieldByName(subclassDeclarationId, member.getName()) != Cache.UNKNOWN) {
+            if (oldCache.findFieldByName(subclassDeclarationId, member.getName()) != null) {
               if (myDependencyCache.markClass(subclassQName)) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: added field " + member +
@@ -723,7 +720,7 @@ class JavaDependencyProcessor {
             final MethodInfo oldMethod = (MethodInfo)changedMember;
             MethodChangeDescription changeDescription = (MethodChangeDescription)myChangeDescriptions.get(oldMethod);
             if (changeDescription.becameAbstract) {
-              if (!ClsUtil.isAbstract(oldCache.getFlags(subclassId))) { // if the subclass was not abstract
+              if (!ClsUtil.isAbstract(oldCache.getFlags(subclassQName))) { // if the subclass was not abstract
                 if (myDependencyCache.markClass(subclassQName)) {
                   if (LOG.isDebugEnabled()) {
                     LOG.debug(
@@ -736,8 +733,8 @@ class JavaDependencyProcessor {
             
             final String oldMethodDescriptor = oldMethod.getDescriptor(symbolTable);
             
-            final int derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, oldMethodDescriptor, symbolTable);
-            if (derivedMethod != Cache.UNKNOWN) {
+            final MethodInfo derivedMethod = oldCache.findMethodsBySignature(subclassDeclarationId, oldMethodDescriptor, symbolTable);
+            if (derivedMethod != null) {
               if (myDependencyCache.markClass(subclassQName)) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: changed base method " + oldMethod);
@@ -752,8 +749,8 @@ class JavaDependencyProcessor {
                 if (found) {
                   return false;
                 }
-                final int implementee = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(ifaceQName), oldMethodDescriptor, symbolTable);
-                if (implementee != Cache.UNKNOWN) {
+                final MethodInfo implementee = oldCache.findMethodsBySignature(ifaceQName, oldMethodDescriptor, symbolTable);
+                if (implementee != null) {
                   found = true;
                   if (myDependencyCache.markClass(subclassQName)) {
                     if (LOG.isDebugEnabled()) {
@@ -770,7 +767,7 @@ class JavaDependencyProcessor {
           }
         }
 
-        if (!ClsUtil.isAbstract(oldCache.getFlags(subclassId))) {
+        if (!ClsUtil.isAbstract(oldCache.getFlags(subclassQName))) {
           if (hasUnimplementedAbstractMethods(subclassQName, new HashSet<MemberInfo>(removedConcreteMethods))) {
             if (myDependencyCache.markClass(subclassQName)) {
               if (LOG.isDebugEnabled()) {
@@ -781,14 +778,13 @@ class JavaDependencyProcessor {
             return true;
           }
         }
-        
-        if (!removedOverridableMethods.isEmpty() && !myDependencyCache.isClassInfoMarked(subclassQName) && myDependencyCache.getNewClassesCache().getClassId(subclassQName) == Cache.UNKNOWN /*not compiled in this session*/) {
+
+        if (!removedOverridableMethods.isEmpty() && !myDependencyCache.isClassInfoMarked(subclassQName) && !myDependencyCache.getNewClassesCache().containsClass(subclassQName) /*not compiled in this session*/) {
           final Cache cache = myDependencyCache.getCache();
-          final int[] subclassMethods = cache.getMethodIds(cache.getClassDeclarationId(subclassQName));
-          for (int subclassMethodId : subclassMethods) {
-            if (!cache.isConstructor(subclassMethodId)) {
+          for (MethodInfo subclassMethod : cache.getMethodIds(subclassQName)) {
+            if (!subclassMethod.isConstructor()) {
               for (MethodInfo removedMethod : removedOverridableMethods) {
-                if (removedMethod.getName() == cache.getMethodName(subclassMethodId) /*todo: check param signatures here for better accuracy*/) {
+                if (removedMethod.getName() == subclassMethod.getName() /*todo: check param signatures here for better accuracy*/) {
                   // got it
                   if (myDependencyCache.markClass(subclassQName)) {
                     if (LOG.isDebugEnabled()) {
@@ -810,14 +806,13 @@ class JavaDependencyProcessor {
 
   private static boolean hasGenericsNameClashes(final MethodInfo baseMethod, final Cache oldCache, final int subclassQName) throws CacheCorruptedException {
     // it is illegal if 2 methods in a hierarchy have 1) same name 2) different signatures 3) same erasure
-    final int[] methods = oldCache.findMethodsByName(oldCache.getClassDeclarationId(subclassQName), baseMethod.getName());
-    if (methods.length > 0) {
-      for (final int methodInSubclass : methods) {
-        if (ClsUtil.isBridge(oldCache.getMethodFlags(methodInSubclass))) {
+    final List<MethodInfo> methods = oldCache.findMethodsByName(subclassQName, baseMethod.getName());
+    if (methods.size() > 0) {
+      for (final MethodInfo methodInSubclass : methods) {
+        if (ClsUtil.isBridge(methodInSubclass.getFlags())) {
           continue;
         }
-        if (baseMethod.getDescriptor() == oldCache.getMethodDescriptor(methodInSubclass) &&
-            baseMethod.getGenericSignature() != oldCache.getMethodGenericSignature(methodInSubclass)) {
+        if (baseMethod.getDescriptor() == methodInSubclass.getDescriptor() && baseMethod.getGenericSignature() != methodInSubclass.getGenericSignature()) {
           return true;
         }
       }
@@ -840,7 +835,7 @@ class JavaDependencyProcessor {
   }
 
   private boolean hasUnimplementedAbstractMethods(int superQName, final Set methodsToCheck) throws CacheCorruptedException {
-    if (myDependencyCache.getCache().getClassId(superQName) != Cache.UNKNOWN) {
+    if (myDependencyCache.getCache().containsClass(superQName)) {
       return hasBaseAbstractMethods(superQName, methodsToCheck) ||
              hasBaseAbstractMethodsInHierarchy(superQName, methodsToCheck);
     }
@@ -860,7 +855,7 @@ class JavaDependencyProcessor {
       return false;
     }
     final Cache cache = myDependencyCache.getCache();
-    int superName = cache.getSuperQualifiedName(cache.getClassId(fromClassQName));
+    int superName = cache.getSuperQualifiedName(fromClassQName);
     if (superName != Cache.UNKNOWN) {
       if (hasUnimplementedAbstractMethods(superName, methodsToCheck)) {
         return true;
@@ -869,7 +864,7 @@ class JavaDependencyProcessor {
     if (methodsToCheck.isEmpty()) {
       return false;
     }
-    int[] superInterfaces = cache.getSuperInterfaces(cache.getClassId(fromClassQName));
+    int[] superInterfaces = cache.getSuperInterfaces(fromClassQName);
     for (int superInterface : superInterfaces) {
       if (hasUnimplementedAbstractMethods(superInterface, methodsToCheck)) {
         return true;
@@ -882,12 +877,12 @@ class JavaDependencyProcessor {
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
     final Cache oldCache = myDependencyCache.getCache();
     final Cache newCache = myDependencyCache.getNewClassesCache();
-    final Cache cache = newCache.getClassId(qName) != Cache.UNKNOWN? newCache : oldCache; // use recompiled version (if any) for searching methods
+    final Cache cache = newCache.containsClass(qName)? newCache : oldCache; // use recompiled version (if any) for searching methods
     for (Iterator it = methodsToCheck.iterator(); it.hasNext();) {
       final MethodInfo methodInfo = (MethodInfo)it.next();
-      final int superMethod = cache.findMethodsBySignature(cache.getClassDeclarationId(qName), methodInfo.getDescriptor(symbolTable), symbolTable);
-      if (superMethod != Cache.UNKNOWN) {
-        if (ClsUtil.isAbstract(cache.getMethodFlags(superMethod))) {
+      final MethodInfo superMethod = cache.findMethodsBySignature(qName, methodInfo.getDescriptor(symbolTable), symbolTable);
+      if (superMethod != null) {
+        if (ClsUtil.isAbstract(superMethod.getFlags())) {
           return true;
         }
         it.remove();
@@ -983,10 +978,8 @@ class JavaDependencyProcessor {
   /** @return a map [fieldName->FieldInfo]*/
   private static TIntObjectHashMap<FieldInfo> getFieldInfos(Cache cache, int qName) throws CacheCorruptedException {
     final TIntObjectHashMap<FieldInfo> map = new TIntObjectHashMap<FieldInfo>();
-    final int[] fields = cache.getFieldIds(cache.getClassDeclarationId(qName));
-    for (int fieldId : fields) {
-      final FieldInfo info = cache.createFieldInfo(fieldId);
-      map.put(info.getName(), info);
+    for (FieldInfo fieldInfo : cache.getFieldIds(qName)) {
+      map.put(fieldInfo.getName(), fieldInfo);
     }
     return map;
   }
@@ -994,18 +987,16 @@ class JavaDependencyProcessor {
   /** @return a map [methodSignature->MethodInfo]*/
   private Map<String, MethodInfoContainer> getMethodInfos(Cache cache, int qName) throws CacheCorruptedException {
     final Map<String, MethodInfoContainer> map = new HashMap<String, MethodInfoContainer>();
-    final int[] methods = cache.getMethodIds(cache.getClassDeclarationId(qName));
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
-    for (int methodId : methods) {
-      final MethodInfo info = cache.createMethodInfo(methodId);
-      final String signature = info.getDescriptor(symbolTable);
+    for (MethodInfo methodInfo : cache.getMethodIds(qName)) {
+      final String signature = methodInfo.getDescriptor(symbolTable);
       final MethodInfoContainer currentValue = map.get(signature);
       // covariant methods have the same signature, so there might be several MethodInfos for one key
       if (currentValue == null) {
-        map.put(signature, new MethodInfoContainer(info));
+        map.put(signature, new MethodInfoContainer(methodInfo));
       }
       else {
-        currentValue.add(info);
+        currentValue.add(methodInfo);
       }
     }
     return map;
