@@ -194,9 +194,9 @@ public class FileStatusMap {
     if (old == null) {
       return document.createRangeMarker(scope);
     }
-    TextRange documentRange = TextRange.from(0, textLength);
     if (scope.getEndOffset() >= textLength) {
-      return document.createRangeMarker(documentRange);
+      ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)old);
+      return document.createRangeMarker(0, textLength);
     }
     TextRange oldRange = new TextRange(old.getStartOffset(), old.getEndOffset());
     TextRange union = scope.union(oldRange);
