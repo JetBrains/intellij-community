@@ -44,7 +44,7 @@ public class CompilerOrderingTest extends IdeaTestCase {
     
     compareDescriptions(new String[] {
       CompilerBundle.message("resource.compiler.description"),
-      "groovy compiler",
+      //"groovy compiler",
       "C2",
       "C4",
       "C1", 
