@@ -162,11 +162,12 @@ public abstract class ContextProvider {
 
     @Nullable
     public QName getQName(QNameElement element) {
-        return getQName(element.getQName(), element);
+        final PrefixedName qname = element.getQName();
+        return qname != null ? getQName(qname, element) : null;
     }
 
     @Nullable
-    public QName getQName(PrefixedName qName, XPathElement context) {
+    public QName getQName(@NotNull PrefixedName qName, XPathElement context) {
         final String prefix = qName.getPrefix();
         final NamespaceContext namespaceContext = getNamespaceContext();
         if (namespaceContext != null) {

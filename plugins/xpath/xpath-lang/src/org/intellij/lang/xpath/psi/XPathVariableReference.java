@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 public interface XPathVariableReference extends XPathExpression, QNameElement, PsiReference {
-    @Nullable
-    PrefixedName getQName();
-
     @NotNull
     String getReferencedName();
 

@@ -26,6 +26,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
 import java.util.Set;
@@ -124,7 +125,8 @@ public class CheckNodeTest extends XPathInspection {
                     fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
 
-        private static boolean matches(PrefixedName prefixedName, QName element, NamespaceContext namespaceContext, XmlElement context) {
+        private static boolean matches(@Nullable PrefixedName prefixedName, QName element, NamespaceContext namespaceContext, XmlElement context) {
+            if (prefixedName == null) return false;
             boolean b = prefixedName.getLocalName().equals(element.getLocalPart()) || "*".equals(element.getLocalPart());
             if (prefixedName.getPrefix() != null) {
                 b = b && element.getNamespaceURI().equals(namespaceContext.getNamespaceURI(prefixedName.getPrefix(), context));

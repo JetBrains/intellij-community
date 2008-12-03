@@ -15,6 +15,9 @@
  */
 package org.intellij.lang.xpath.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface QNameElement extends XPathElement{
+    @Nullable
     PrefixedName getQName();
 }
