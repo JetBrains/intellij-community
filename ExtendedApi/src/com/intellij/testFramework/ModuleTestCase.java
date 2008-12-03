@@ -15,6 +15,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.highlighter.ModuleFileType;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
         final ModuleImpl childModule = loadAllModulesUnder(child);
         if (module == null) module = childModule;
       }
-      else if (child.getName().endsWith(".iml")) {
+      else if (child.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
         String modulePath = child.getPath();
         module = (ModuleImpl)loadModule(new File(modulePath));
         readJdomExternalizables(module);

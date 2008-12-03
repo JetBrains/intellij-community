@@ -59,7 +59,7 @@ public class ModuleFileType implements FileType {
 
   @NotNull
   public String getDefaultExtension() {
-    return "iml";
+    return DEFAULT_EXTENSION;
   }
 
   public Icon getIcon() {

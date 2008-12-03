@@ -16,6 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
@@ -166,7 +167,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
         myName = project.getName();
       }
       if (myModuleFilePath == null) {
-        myModuleFilePath = project.getBaseDir().getPath() + File.separator + myName + ".iml";
+        myModuleFilePath = project.getBaseDir().getPath() + File.separator + myName + ModuleFileType.DOT_DEFAULT_EXTENSION;
       }
       Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
         public Exception compute() {

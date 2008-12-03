@@ -3,6 +3,8 @@ package com.intellij.testFramework;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
@@ -185,7 +187,7 @@ import java.util.HashSet;
   }
 
   protected File getIprFile() throws IOException {
-    return File.createTempFile("temp", ".ipr");
+    return File.createTempFile("temp", ProjectFileType.DOT_DEFAULT_EXTENSION);
   }
 
   protected void setUpModule() {
@@ -213,7 +215,7 @@ import java.util.HashSet;
     final VirtualFile baseDir = myProject.getBaseDir();
     assertNotNull(baseDir);
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar),
-                                     moduleName + ".iml");
+                                     moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     try {
       moduleFile.createNewFile();
     }

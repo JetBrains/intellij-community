@@ -2,6 +2,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
@@ -44,7 +45,6 @@ import java.util.*;
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ProjectStoreImpl");
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
-  @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
 
   protected ProjectEx myProject;
@@ -191,7 +191,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
         int lastDot = filePath.lastIndexOf(".");
         final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
-        String workspacePath = filePathWithoutExt + WORKSPACE_EXTENSION;
+        String workspacePath = filePathWithoutExt + WorkspaceFileType.DOT_DEFAULT_EXTENSION;
 
         LocalFileSystem.getInstance().refreshAndFindFileByPath(workspacePath);
         stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
@@ -202,7 +202,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   private static void useOldWsContent(final String filePath, final IFile ws) {
     int lastDot = filePath.lastIndexOf(".");
     final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
-    String workspacePath = filePathWithoutExt + WORKSPACE_EXTENSION;
+    String workspacePath = filePathWithoutExt + WorkspaceFileType.DOT_DEFAULT_EXTENSION;
     IFile oldWs = FILE_SYSTEM.createFile(workspacePath);
     if (oldWs.exists()) {
       try {

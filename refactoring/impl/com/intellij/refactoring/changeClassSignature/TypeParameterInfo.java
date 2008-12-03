@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -30,7 +31,7 @@ class TypeParameterInfo {
     }
   }
 
-  TypeParameterInfo(PsiClass aClass, String name, String defaultValue) throws IncorrectOperationException {
+  TypeParameterInfo(PsiClass aClass, @NonNls String name, @NonNls String defaultValue) throws IncorrectOperationException {
     this(name, JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createTypeFromText(defaultValue, aClass.getLBrace()));
   }
 

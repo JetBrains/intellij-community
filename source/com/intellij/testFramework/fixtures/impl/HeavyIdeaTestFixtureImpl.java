@@ -5,6 +5,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -52,7 +53,7 @@ import java.util.Set;
 class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
 
   @NonNls private static final String PROJECT_FILE_PREFIX = "temp";
-  @NonNls private static final String PROJECT_FILE_SUFFIX = ".ipr";
+  @NonNls private static final String PROJECT_FILE_SUFFIX = ProjectFileType.DOT_DEFAULT_EXTENSION;
 
   private Project myProject;
   private final Set<File> myFilesToDelete = new HashSet<File>();

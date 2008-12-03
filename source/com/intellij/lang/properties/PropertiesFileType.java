@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
@@ -16,6 +17,8 @@ import java.nio.charset.Charset;
 public class PropertiesFileType extends LanguageFileType {
   public static final Icon FILE_ICON = IconLoader.getIcon("/fileTypes/properties.png");
   public static final LanguageFileType FILE_TYPE = new PropertiesFileType();
+  @NonNls public static final String DEFAULT_EXTENSION = "properties";
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
 
   private PropertiesFileType() {
     super(PropertiesLanguage.INSTANCE);
@@ -33,7 +36,7 @@ public class PropertiesFileType extends LanguageFileType {
 
   @NotNull
   public String getDefaultExtension() {
-    return "properties";
+    return DEFAULT_EXTENSION;
   }
 
   public Icon getIcon() {

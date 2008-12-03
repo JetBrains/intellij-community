@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -55,7 +56,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
   }
 
   public PsiElement handleElementRename(final String newElementName) {
-    return handleFileRename(newElementName, ".properties", false);
+    return handleFileRename(newElementName, PropertiesFileType.DOT_DEFAULT_EXTENSION, false);
   }
 
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
@@ -63,7 +64,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
       throw new IncorrectOperationException();
     }
 
-    final PropertiesFile propertyFile = ((PropertiesFile)element);
+    final PropertiesFile propertyFile = (PropertiesFile)element;
     final String bundleName = FormReferenceProvider.getBundleName(propertyFile);
     LOG.assertTrue(bundleName != null);
     updateRangeText(bundleName);

@@ -1,6 +1,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -28,16 +29,15 @@ import java.io.File;
  */
 public class NameLocationStep extends ModuleWizardStep {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.NameLocationStep");
-  private JPanel myPanel;
-  private NamePathComponent myNamePathComponent;
+  private final JPanel myPanel;
+  private final NamePathComponent myNamePathComponent;
   private final WizardContext myWizardContext;
   private final JavaModuleBuilder myBuilder;
   private final ModulesProvider myModulesProvider;
   private final Icon myIcon;
   private final String myHelpId;
-  @NonNls private static final String MODULE_FILE_EXTENSION = ".iml";
   private boolean myModuleFileDirectoryChangedByUser = false;
-  private JTextField myTfModuleFilePath;
+  private final JTextField myTfModuleFilePath;
   private boolean myFirstTimeInitializationDone = false;
 
   public NameLocationStep(WizardContext wizardContext, JavaModuleBuilder builder,
@@ -109,7 +109,7 @@ public class NameLocationStep extends ModuleWizardStep {
       }
       else { // project already exists
         final VirtualFile baseDir = myWizardContext.getProject().getBaseDir();
-        final String projectFileDirectory = (baseDir != null) ? VfsUtil.virtualToIoFile(baseDir).getPath() : null;
+        final String projectFileDirectory = baseDir != null ? VfsUtil.virtualToIoFile(baseDir).getPath() : null;
         if (projectFileDirectory != null) {
           final String name = ProjectWizardUtil.findNonExistingFileName(projectFileDirectory, suggestModuleName(myBuilder.getModuleType()), "");
           setModuleName(name);
@@ -156,7 +156,7 @@ public class NameLocationStep extends ModuleWizardStep {
   }
 
   public String getModuleFilePath() {
-    return getModuleFileDirectory() + "/" + myNamePathComponent.getNameValue() + MODULE_FILE_EXTENSION;
+    return getModuleFileDirectory() + "/" + myNamePathComponent.getNameValue() + ModuleFileType.DOT_DEFAULT_EXTENSION;
   }
 
   public boolean isSyncEnabled() {
@@ -212,10 +212,7 @@ public class NameLocationStep extends ModuleWizardStep {
       }
     }
     final String moduleFileDirectory = getModuleFileDirectory();
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), moduleFileDirectory, myModuleFileDirectoryChangedByUser)) {
-      return false;
-    }
-    return true;
+    return ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), moduleFileDirectory, myModuleFileDirectoryChangedByUser);
   }
 
   public void updateDataModel() {
@@ -230,8 +227,7 @@ public class NameLocationStep extends ModuleWizardStep {
 
   private boolean isAlreadyExists(String moduleName) {
     final Module[] modules = myModulesProvider.getModules();
-    for (int idx = 0; idx < modules.length; idx++) {
-      Module module = modules[idx];
+    for (Module module : modules) {
       if (moduleName.equals(module.getName())) {
         return true;
       }
@@ -255,9 +251,9 @@ public class NameLocationStep extends ModuleWizardStep {
   }
 
   private class BrowseModuleFileDirectoryListener extends BrowseFilesListener {
-    public BrowseModuleFileDirectoryListener(final JTextField textField) {
+    private BrowseModuleFileDirectoryListener(final JTextField textField) {
       super(textField, IdeBundle.message("title.select.module.file.location"),
-            IdeBundle.message("description.select.module.file.location"), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+            IdeBundle.message("description.select.module.file.location"), SINGLE_DIRECTORY_DESCRIPTOR);
     }
 
     public void actionPerformed(ActionEvent e) {

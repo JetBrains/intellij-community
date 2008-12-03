@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -169,7 +170,7 @@ import java.util.Map;
 
 
   private static void initProject(final Sdk projectJDK) throws Exception {
-    final File projectFile = File.createTempFile("lighttemp", ".ipr");
+    final File projectFile = File.createTempFile("lighttemp", ProjectFileType.DOT_DEFAULT_EXTENSION);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
       public void run() {

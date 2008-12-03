@@ -97,12 +97,12 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
   }
 
   private void doTest(GenParams gen) throws Exception {
-    final String filePathBefore = getTestName(false) + ".java";
-    final String filePathAfter = getTestName(false) + ".java.after";
+    @NonNls final String filePathBefore = getTestName(false) + ".java";
+    @NonNls final String filePathAfter = getTestName(false) + ".java.after";
     doTest(gen, filePathBefore, filePathAfter);
   }
 
-  private void doTest(GenParams gen, String filePathBefore, String filePathAfter) throws Exception {
+  private void doTest(GenParams gen, @NonNls String filePathBefore, @NonNls String filePathAfter) throws Exception {
     final String filePath = DATA_PATH + filePathBefore;
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
@@ -112,8 +112,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
     checkResultByFile(DATA_PATH + filePathAfter);
   }
 
-  public interface GenParams {
+  private interface GenParams {
     TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException;
   }
-
 }

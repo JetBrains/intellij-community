@@ -1,6 +1,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
@@ -181,7 +182,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
     final String moduleFilePath;
     final Set<File> contentRoots = descriptor.getContentRoots();
     if (contentRoots.size() > 0) {
-      moduleFilePath = contentRoots.iterator().next().getPath() + File.separator + name + ".iml";
+      moduleFilePath = contentRoots.iterator().next().getPath() + File.separator + name + ModuleFileType.DOT_DEFAULT_EXTENSION;
     }
     else {
       throw new InvalidDataException("Module " + name + " has no content roots and will not be created");

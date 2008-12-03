@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
+import com.intellij.ide.highlighter.ProjectFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,6 @@ import java.util.Locale;
 public class CompilerPaths {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
   private static volatile String ourSystemPath;
-  @NonNls private static final String PROJECT_FILE_EXTENSION = ".ipr";
 
   /**
    * Returns a directory
@@ -112,8 +112,8 @@ public class CompilerPaths {
       projectName = projectName.substring(lastSlash + 1);
     }
 
-    if (StringUtil.endsWithIgnoreCase(projectName, PROJECT_FILE_EXTENSION)) {
-      projectName = projectName.substring(0, projectName.length() - PROJECT_FILE_EXTENSION.length());
+    if (StringUtil.endsWithIgnoreCase(projectName, ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+      projectName = projectName.substring(0, projectName.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
     }
     
     projectName = projectName.toLowerCase(Locale.US);

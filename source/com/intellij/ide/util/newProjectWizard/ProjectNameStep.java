@@ -2,6 +2,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -10,7 +11,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,7 +22,6 @@ import java.io.File;
  */
 public class ProjectNameStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  @NonNls private static final String MODULE_FILE_EXTENSION = ".iml";
 
   private final JPanel myPanel;
   protected final JPanel myAdditionalContentPanel;
@@ -86,7 +85,7 @@ public class ProjectNameStep extends ModuleWizardStep {
 
   public String getProjectFilePath() {
     return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue() +
-           (myWizardContext.getProject() == null ? ProjectFileType.DOT_DEFAULT_EXTENSION : MODULE_FILE_EXTENSION);
+           (myWizardContext.getProject() == null ? ProjectFileType.DOT_DEFAULT_EXTENSION : ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   public String getProjectFileDirectory() {

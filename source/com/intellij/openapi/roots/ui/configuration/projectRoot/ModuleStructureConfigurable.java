@@ -9,6 +9,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetActionGroup;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -757,7 +758,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             }
           };
           builder.setName(component.getNameValue());
-          builder.setModuleFilePath(path + "/" + builder.getName() + ".iml");
+          builder.setModuleFilePath(path + "/" + builder.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
           final Module module = myContext.myModulesConfigurator.addModule(builder);
           if (module != null) {
             addModuleNode(module);

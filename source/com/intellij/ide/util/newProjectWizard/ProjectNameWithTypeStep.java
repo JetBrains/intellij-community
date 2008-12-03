@@ -2,6 +2,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -278,7 +279,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
       assert builder != null;
       builder.setName(myModuleName.getText());
-      builder.setModuleFilePath(FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + myModuleName.getText() + ".iml");
+      builder.setModuleFilePath(FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + myModuleName.getText() + ModuleFileType.DOT_DEFAULT_EXTENSION);
       ((SourcePathsBuilder)builder).setContentEntryPath(FileUtil.toSystemIndependentName(myModuleContentRoot.getText()));
     } else {
       mySequence.setType(null);

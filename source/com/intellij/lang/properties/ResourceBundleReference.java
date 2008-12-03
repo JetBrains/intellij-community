@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -16,7 +15,6 @@ import java.util.List;
  */
 public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implements PsiPolyVariantReference {
   private String myBundleName;
-  @NonNls private static final String PROPERTIES = ".properties";
 
   public ResourceBundleReference(final PsiElement element) {
     this(element, false);
@@ -52,8 +50,8 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    if (newElementName.endsWith(PROPERTIES)) {
-      newElementName = newElementName.substring(0, newElementName.lastIndexOf(PROPERTIES));
+    if (newElementName.endsWith(PropertiesFileType.DOT_DEFAULT_EXTENSION)) {
+      newElementName = newElementName.substring(0, newElementName.lastIndexOf(PropertiesFileType.DOT_DEFAULT_EXTENSION));
     }
 
     final int index = myBundleName.lastIndexOf('.');

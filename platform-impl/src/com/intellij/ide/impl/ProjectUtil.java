@@ -3,18 +3,19 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -22,12 +23,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -86,26 +86,23 @@ public class ProjectUtil {
 
     if (virtualFile == null) return null;
 
-    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) || virtualFile.isDirectory() && virtualFile.findChild(
-        DIRECTORY_BASED_PROJECT_DIR) != null) {
+    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
+        virtualFile.isDirectory() && virtualFile.findChild(DIRECTORY_BASED_PROJECT_DIR) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
-    else {
-      ProjectOpenProcessor provider = getImportProvider(virtualFile);
-      if (provider != null) {
-        return provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
-      }
+    ProjectOpenProcessor provider = getImportProvider(virtualFile);
+    if (provider != null) {
+      return provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
     }
     return null;
   }
 
-  @Nullable
   public static void saveInNewFormat(@NotNull final String path, final Runnable postRunnable) throws Exception {
 
     final File iprFile = new File(path);
 
     File ideaDir = new File(iprFile.getParentFile(), DIRECTORY_BASED_PROJECT_DIR);
-    File iwsFile = new File(iprFile.getParentFile(), getProjectName(iprFile) + ".iws");
+    File iwsFile = new File(iprFile.getParentFile(), getProjectName(iprFile) + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
 
     ideaDir.mkdirs();
 
@@ -127,9 +124,8 @@ public class ProjectUtil {
 
       System.setProperty("convert.project.mode", "on");
 
-      final Exception[] ex = new Exception[1];
-
       try {
+        final Exception[] ex = new Exception[1];
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
           public void run() {
             try {
@@ -158,8 +154,6 @@ public class ProjectUtil {
         }, "Converting Project", false, null);
 
         if (ex[0] != null) throw ex[0];
-
-
       }
       finally {
         System.setProperty("convert.project.mode", "off");
@@ -237,7 +231,7 @@ public class ProjectUtil {
   }
 
   private static boolean isSameProject(String path, Project p) {
-    String projectPath = ((ProjectImpl)p).getStateStore().getProjectFilePath();
+    String projectPath = ((ProjectEx)p).getStateStore().getProjectFilePath();
     String p1 = FileUtil.toSystemIndependentName(path);
     String p2 = FileUtil.toSystemIndependentName(projectPath);
     return FileUtil.pathsEqual(p1, p2);
@@ -263,6 +257,6 @@ public class ProjectUtil {
     return fileType instanceof WorkspaceFileType ||
            fileType instanceof ProjectFileType ||
            fileType instanceof ModuleFileType ||
-           (parent != null && parent.getName().equals(DIRECTORY_BASED_PROJECT_DIR));
+           parent != null && parent.getName().equals(DIRECTORY_BASED_PROJECT_DIR);
   }
 }

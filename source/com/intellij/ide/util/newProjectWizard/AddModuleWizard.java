@@ -6,6 +6,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -319,7 +320,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
 
   @NonNls
   public String getModuleFilePath() {
-    return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ".iml";
+    return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
   }
 
   public ProjectBuilder getProjectBuilder() {

@@ -10,6 +10,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -68,7 +69,6 @@ public final class PreviewFormAction extends AnAction{
    */
   private static final String CLASS_TO_BIND_NAME = "FormPreviewFrame";
   @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
-  @NonNls private static final String RUNTIME_BUNDLE_EXTENSION = ".properties";
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
   public void actionPerformed(final AnActionEvent e) {
@@ -156,13 +156,13 @@ public final class PreviewFormAction extends AnAction{
       Locale locale = Locale.getDefault();
       if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
         CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() +
-                                                   "_" + locale.getCountry() + RUNTIME_BUNDLE_EXTENSION);
+                                                   "_" + locale.getCountry() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
       }
       if (locale.getLanguage().length() > 0) {
-        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
+        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
       }
-      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
-      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + RUNTIME_BUNDLE_EXTENSION);
+      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
+      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + PropertiesFileType.DOT_DEFAULT_EXTENSION);
 
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, nestedFormLoader, true,
                                                                   new PsiClassWriter(module));

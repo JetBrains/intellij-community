@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
+import com.intellij.ide.highlighter.GuiFormFileType;
 
 import java.util.List;
 
@@ -13,12 +14,12 @@ import java.util.List;
  */
 public class FormsRenamer extends AutomaticRenamer {
   public String nameToCanonicalName(String name, PsiNamedElement psiFile) {
-    if (name.endsWith(".form")) return name.substring(0, name.length() - ".form".length());
+    if (name.endsWith(GuiFormFileType.DOT_DEFAULT_EXTENSION)) return name.substring(0, name.length() - GuiFormFileType.DOT_DEFAULT_EXTENSION.length());
     return name;
   }
 
   public String canonicalNameToName(String canonicalName, PsiNamedElement psiFile) {
-    return canonicalName.contains(".") ? canonicalName : canonicalName + ".form";
+    return canonicalName.contains(".") ? canonicalName : canonicalName + GuiFormFileType.DOT_DEFAULT_EXTENSION;
   }
 
   public FormsRenamer(PsiClass aClass, String newClassName) {

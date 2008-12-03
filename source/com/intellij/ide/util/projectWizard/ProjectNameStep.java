@@ -1,6 +1,8 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -21,9 +23,8 @@ import java.util.List;
  */
 public class ProjectNameStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  @NonNls private static final String PROJECT_FILE_EXTENSION = ".ipr";
-  private NamePathComponent myNamePathComponent;
-  private JPanel myPanel;
+  private final NamePathComponent myNamePathComponent;
+  private final JPanel myPanel;
   private final WizardContext myWizardContext;
 
   public ProjectNameStep(WizardContext wizardContext) {
@@ -60,7 +61,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     String name = myWizardContext.getProjectName();
     if (name == null) {
       List<String> components = StringUtil.split(FileUtil.toSystemIndependentName(myWizardContext.getProjectFileDirectory()), "/");
-      if (components.size() > 0) {
+      if (!components.isEmpty()) {
         name = components.get(components.size()-1);
       }
     }
@@ -105,7 +106,7 @@ public class ProjectNameStep extends ModuleWizardStep {
         IdeBundle.message("title.file.already.exists"),
         Messages.getQuestionIcon()
       );
-      shouldContinue = (answer == 0);
+      shouldContinue = answer == 0;
     }
 
     return shouldContinue;
@@ -114,7 +115,7 @@ public class ProjectNameStep extends ModuleWizardStep {
   @NonNls
   public String getProjectFilePath() {
     return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue()/*myTfProjectName.getText().trim()*/ +
-      (myWizardContext.getProject() == null ? PROJECT_FILE_EXTENSION : ".iml");
+      (myWizardContext.getProject() == null ? ProjectFileType.DOT_DEFAULT_EXTENSION : ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   public String getProjectFileDirectory() {

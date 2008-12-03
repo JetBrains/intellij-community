@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.highlighter.GuiFormFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -68,7 +69,6 @@ import java.util.TreeSet;
  */
 public class CreateSnapShotAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.uiDesigner.snapShooter.CreateSnapShotAction");
-  @NonNls private static final String FORM_EXTENSION = ".form";
 
   @Override
   public void update(AnActionEvent e) {
@@ -218,7 +218,7 @@ public class CreateSnapShotAction extends AnAction {
               public void run() {
                 try {
                   PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
-                    .createFileFromText(dlg.getFormName() + FORM_EXTENSION, snapshot1);
+                    .createFileFromText(dlg.getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION, snapshot1);
                   formFile = (PsiFile)dir.add(formFile);
                   formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
                   formFile.getViewProvider().getDocument().setText(snapshot1);
@@ -249,8 +249,7 @@ public class CreateSnapShotAction extends AnAction {
   @Nullable
   private static RunnerAndConfigurationSettingsImpl promptForSnapshotConfiguration(final Project project,
                                                                                    final List<RunnerAndConfigurationSettingsImpl> configurations) {
-    final RunnerAndConfigurationSettingsImpl snapshotConfiguration;
-    if (configurations.size() == 0) {
+    if (configurations.isEmpty()) {
       Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.no.configuration.error"),
                                  UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
       return null;
@@ -262,12 +261,13 @@ public class CreateSnapShotAction extends AnAction {
       }
     }
 
-    if (configurations.size() == 0) {
+    if (configurations.isEmpty()) {
       Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.no.compatible.configuration.error"),
                                  UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
       return null;
     }
 
+    final RunnerAndConfigurationSettingsImpl snapshotConfiguration;
     if (configurations.size() == 1) {
       final int rc = Messages.showYesNoDialog(
         project,
@@ -309,10 +309,10 @@ public class CreateSnapShotAction extends AnAction {
     private final PsiDirectory myDirectory;
     @NonNls private static final String SWING_PACKAGE = "javax.swing.";
 
-    private Icon myUnknownComponentIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
-    private Icon myFormIcon = IconLoader.getIcon("/fileTypes/uiForm.png");
+    private final Icon myUnknownComponentIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
+    private final Icon myFormIcon = IconLoader.getIcon("/fileTypes/uiForm.png");
 
-    public MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
+    private MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
       super(project, true);
       myProject = project;
       myClient = client;
@@ -387,7 +387,8 @@ public class CreateSnapShotAction extends AnAction {
       int count = 0;
       do {
         count++;
-      } while(myDirectory.findFile("Form" + count + ".form") != null);
+      }
+      while(myDirectory.findFile("Form" + count + GuiFormFileType.DOT_DEFAULT_EXTENSION) != null);
       return "Form" + count;
     }
 
@@ -456,7 +457,7 @@ public class CreateSnapShotAction extends AnAction {
     protected void doOKAction() {
       if (getOKAction().isEnabled()) {
         try {
-          myDirectory.checkCreateFile(getFormName() + FORM_EXTENSION);
+          myDirectory.checkCreateFile(getFormName() + GuiFormFileType.DOT_DEFAULT_EXTENSION);
         }
         catch (IncorrectOperationException e) {
           JOptionPane.showMessageDialog(myRootPanel, UIDesignerBundle.message("error.form.already.exists", getFormName()));
@@ -491,7 +492,7 @@ public class CreateSnapShotAction extends AnAction {
         Messages.showErrorDialog(myRootPanel, UIDesignerBundle.message("snapshot.connection.broken"), UIDesignerBundle.message("snapshot.title"));
         return false;
       }
-      if (layoutManagerClasses.size() > 0) {
+      if (!layoutManagerClasses.isEmpty()) {
         StringBuilder builder = new StringBuilder(UIDesignerBundle.message("snapshot.unknown.layout.prefix"));
         for(String layoutManagerClass: layoutManagerClasses) {
           builder.append(layoutManagerClass).append("\n");

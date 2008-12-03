@@ -1,6 +1,8 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.Application;
@@ -360,15 +362,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         convertorComponent = null;
       }
 
-      final Project[] project = new Project[1];
-
-      final IOException[] io = new IOException[]{null};
-      final StateStorage.StateStorageException[] stateStorage = new StateStorage.StateStorageException[]{null};
+      final IOException[] io = {null};
+      final StateStorage.StateStorageException[] stateStorage = {null};
 
       if (filePath != null) {
         refreshProjectFiles(filePath);
       }
 
+      final Project[] project = new Project[1];
       boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -421,16 +422,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  private void refreshProjectFiles(final String filePath) {
+  private static void refreshProjectFiles(final String filePath) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isDispatchThread()) {
-      String ipr = ".ipr";
+      String ipr = ProjectFileType.DOT_DEFAULT_EXTENSION;
       if (filePath.endsWith(ipr)) {
         VirtualFile projectFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
         if (projectFile != null) {
           projectFile.refresh(false, false);
         }
 
-        String iwsPath = filePath.substring(0, filePath.length() - ipr.length()) + ".iws";
+        String iwsPath = filePath.substring(0, filePath.length() - ipr.length()) + WorkspaceFileType.DOT_DEFAULT_EXTENSION;
         VirtualFile wsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(iwsPath);
         if (wsFile != null) {
           wsFile.refresh(false, false);
@@ -502,7 +503,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
       if (causes.isEmpty()) return true;
 
-      final boolean[] reloadOk = new boolean[]{false};
+      final boolean[] reloadOk = {false};
       final LinkedHashSet<String> components = new LinkedHashSet<String>();
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -554,7 +555,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (project.isDisposed()) return false;
     final HashSet<Pair<VirtualFile, StateStorage>> causes = new HashSet<Pair<VirtualFile, StateStorage>>(myChangedProjectFiles.get(project));
 
-    final boolean[] reloadOk = new boolean[]{false};
+    final boolean[] reloadOk = {false};
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -710,8 +711,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     reloadProject(p, takeMemorySnapshot);
   }
 
-  public void reloadProject(final Project p, final boolean takeMemorySnapshot) {
-    final Project[] project = new Project[]{p};
+  public void reloadProject(@NotNull Project p, final boolean takeMemorySnapshot) {
+    final Project[] project = {p};
 
     ProjectReloadState.getInstance(project[0]).onBeforeAutomaticProjectReload();
     final Application application = ApplicationManager.getApplication();

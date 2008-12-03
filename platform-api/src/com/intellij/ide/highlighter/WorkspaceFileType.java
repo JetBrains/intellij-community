@@ -44,6 +44,7 @@ import javax.swing.*;
 public class WorkspaceFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaWorkspace.png");
   @NonNls public static final String DEFAULT_EXTENSION = "iws";
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
   @NotNull
   public String getName() {

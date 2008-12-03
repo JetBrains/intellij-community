@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.highlighter.ModuleFileType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,7 +21,7 @@ public class PlatformProjectConfigurator implements DirectoryProjectConfigurator
     if (modules.length == 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          String imlName = baseDir.getPath() + "/.idea/" + baseDir.getName() + ".iml";
+          String imlName = baseDir.getPath() + "/.idea/" + baseDir.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
           final Module module = moduleManager.newModule(imlName, ModuleTypeManager.getInstance().getDefaultModuleType());
           ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
           rootModel.addContentEntry(baseDir);

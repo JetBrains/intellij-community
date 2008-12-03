@@ -40,6 +40,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.ide.highlighter.ProjectFileType;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -108,6 +109,7 @@ import java.io.File;
   
   protected String getRootFiles() {
     return " " + myModule.getModuleFile().getName() + "\n" +
-           " " + myProject.getName() + ".ipr\n";
+           " " + myProject.getName() + ProjectFileType.DOT_DEFAULT_EXTENSION +
+           "\n";
   }
 }

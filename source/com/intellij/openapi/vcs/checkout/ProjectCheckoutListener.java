@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -14,8 +15,7 @@ import java.io.FilenameFilter;
  */
 public class ProjectCheckoutListener implements CheckoutListener {
   public boolean processCheckedOutDirectory(Project project, File directory) {
-    //noinspection HardCodedStringLiteral
-    File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*.ipr"));
+    File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*" + ProjectFileType.DOT_DEFAULT_EXTENSION));
     if (files != null && files.length > 0) {
       int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", files[0].getAbsolutePath()),
                                         VcsBundle.message("checkout.title"), Messages.getQuestionIcon());

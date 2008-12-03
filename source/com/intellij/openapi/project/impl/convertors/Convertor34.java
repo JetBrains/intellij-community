@@ -1,6 +1,7 @@
 package com.intellij.openapi.project.impl.convertors;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
@@ -117,7 +118,7 @@ public class Convertor34 {
 
     Element module = createModule(root);
 
-    final String moduleFilePath = filePath.substring(0, filePath.lastIndexOf('.')) + ".iml";
+    final String moduleFilePath = filePath.substring(0, filePath.lastIndexOf('.')) + ModuleFileType.DOT_DEFAULT_EXTENSION;
 
     Element moduleRootComponent = convertProjectRootManager(rootComponent, conversionProblems);
     module.addContent(moduleRootComponent);
@@ -193,7 +194,7 @@ public class Convertor34 {
         String moduleName = (!"".equals(name) ? name : moduleDirectory.getName());
         if(moduleName.equals(mainModule)) moduleName = "web" + moduleName;
         try {
-          final String modulePath = moduleDirectory.getPath() + "/" + moduleName + ".iml";
+          final String modulePath = moduleDirectory.getPath() + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
           JDOMUtil.writeDocument(moduleDocument, modulePath, "\n");
           addModule(modulePath, moduleManager);
 

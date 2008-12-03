@@ -20,6 +20,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.ide.highlighter.ModuleFileType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected Module createModule() {
     final Project project = myFixtureBuilder.getFixture().getProject();
     assert project != null;
-    return ModuleManager.getInstance(project).newModule(getNextIndex() + ".iml", myModuleType);
+    return ModuleManager.getInstance(project).newModule(getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION, myModuleType);
   }
 
   private static int getNextIndex() {

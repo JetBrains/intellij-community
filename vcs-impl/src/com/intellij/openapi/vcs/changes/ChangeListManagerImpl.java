@@ -23,6 +23,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.Topic;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +132,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
         if (myIgnoredIdeaLevel.isEmpty()) {
           final String name = myProject.getName();
-          myIgnoredIdeaLevel.add(IgnoredFileBean.withPath(name + ".iws"));
+          myIgnoredIdeaLevel.add(IgnoredFileBean.withPath(name + WorkspaceFileType.DOT_DEFAULT_EXTENSION));
           myIgnoredIdeaLevel.add(IgnoredFileBean.withPath(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml"));
         }
       }

@@ -39,10 +39,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class GuiFormFileType implements FileType {
+  @NonNls public static final String DEFAULT_EXTENSION = "form";
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = DEFAULT_EXTENSION;
 
   @NotNull
   public String getName() {
@@ -56,7 +59,7 @@ public class GuiFormFileType implements FileType {
 
   @NotNull
   public String getDefaultExtension() {
-    return "form";
+    return DEFAULT_EXTENSION;
   }
 
   public Icon getIcon() {

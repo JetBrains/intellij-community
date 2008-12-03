@@ -34,12 +34,11 @@ import java.util.List;
 public class IdeaApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
-  private String[] myArgs;
+  private final String[] myArgs;
   private boolean myPerformProjectLoad = true;
   private static IdeaApplication ourInstance;
   private ApplicationStarter myStarter;
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
-  @NonNls public static final String IPR_SUFFIX = ".ipr";
 
   public IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
