@@ -64,14 +64,16 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   /**
    * {@inheritDoc}
    */
-  public List<VcsException> rollbackModifiedWithoutCheckout(@NotNull List<VirtualFile> files) {
+  public void rollbackModifiedWithoutCheckout(@NotNull List<VirtualFile> files, final List<VcsException> exceptions,
+                                                            final RollbackProgressListener listener) {
     throw new UnsupportedOperationException("Explicit file checkout is not supported by GIT.");
   }
 
   /**
    * {@inheritDoc}
    */
-  public List<VcsException> rollbackMissingFileDeletion(@NotNull List<FilePath> files) {
+  public void rollbackMissingFileDeletion(@NotNull List<FilePath> files, final List<VcsException> exceptions,
+                                                        final RollbackProgressListener listener) {
     throw new UnsupportedOperationException("Missing file delete is not reported by GIT.");
   }
 

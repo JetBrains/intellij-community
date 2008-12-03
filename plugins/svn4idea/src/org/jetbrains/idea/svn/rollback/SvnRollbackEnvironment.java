@@ -96,12 +96,13 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
   }
 
-  public List<VcsException> rollbackMissingFileDeletion(List<FilePath> filePaths) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+  public void rollbackMissingFileDeletion(List<FilePath> filePaths, final List<VcsException> exceptions,
+                                                        final RollbackProgressListener listener) {
     final SVNWCClient wcClient = mySvnVcs.createWCClient();
 
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
     for (File file : files) {
+      listener.accept(file);
       try {
         SVNInfo info = wcClient.doInfo(file, SVNRevision.BASE);
         if (info != null && info.getKind() == SVNNodeKind.FILE) {
@@ -115,8 +116,6 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
         exceptions.add(new VcsException(e));
       }
     }
-
-    return exceptions;
   }
 
   private static class UnversionedFilesCollector extends EmptyChangelistBuilder {
