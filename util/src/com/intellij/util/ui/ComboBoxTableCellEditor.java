@@ -20,6 +20,8 @@ import com.intellij.util.ListWithSelection;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Iterator;
 
 /**
@@ -33,10 +35,14 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
 
   private ComboBoxTableCellEditor() {
     myComboBox.setRenderer(new BasicComboBoxRenderer());
-    myPanel.add(
-      myComboBox,
-        new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0)
-    );
+    myComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        stopCellEditing();
+      }
+    });
+    myPanel.add(myComboBox,
+                new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,
+                                       0));
   }
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
