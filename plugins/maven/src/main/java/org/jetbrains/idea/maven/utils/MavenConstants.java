@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.utils;
 
 public class MavenConstants {
-  public static final String IML_EXT = ".iml";
   public static final String POM_XML = "pom.xml";
 
   public static final String JAR_TYPE = "jar";

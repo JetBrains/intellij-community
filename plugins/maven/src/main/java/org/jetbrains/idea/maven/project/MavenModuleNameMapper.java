@@ -2,14 +2,13 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ide.highlighter.ModuleFileType;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.jetbrains.idea.maven.utils.MavenConstants;
 
 public class MavenModuleNameMapper {
   public static void map(MavenProjectsTree mavenTree,
@@ -120,7 +119,7 @@ public class MavenModuleNameMapper {
     String dir = StringUtil.isEmptyOrSpaces(dedicatedModuleDir)
                  ? project.getDirectory()
                  : dedicatedModuleDir;
-    String fileName = mavenProjectToModuleName.get(project) + MavenConstants.IML_EXT;
+    String fileName = mavenProjectToModuleName.get(project) + ModuleFileType.DOT_DEFAULT_EXTENSION;
     return new File(dir, fileName).getPath();
   }
 }
