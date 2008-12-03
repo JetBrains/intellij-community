@@ -38,7 +38,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return parseActionHint(file, contents);
   }
 
-  private void doTestFor(final String testName) {
+  protected void doTestFor(final String testName) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -96,7 +96,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     // "quick fix action text to perform" "should be available"
     Pattern pattern = Pattern.compile("^" + comment.replace("*", "\\*") + actionPattern, Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
-    assertTrue(matcher.matches());
+    assertTrue("No comment found", matcher.matches());
     final String text = matcher.group(1);
     final Boolean actionShouldBeAvailable = Boolean.valueOf(matcher.group(2));
     return Pair.create(text, actionShouldBeAvailable);

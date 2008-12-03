@@ -61,6 +61,11 @@ public class CommonRefactoringUtil {
     return "<b><code>" + text + "</code></b>";
   }
 
+  public static boolean checkReadOnlyStatus(@NotNull PsiElement element) {
+    final PsiFile psiFile = element.getContainingFile();
+    return !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(psiFile.getVirtualFile()).hasReadonlyFiles();
+  }
+
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement element) {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"));
   }

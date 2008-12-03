@@ -14,6 +14,9 @@
     <extensionPoint name="xml.elementDescriptorProvider"
                     interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider"/>
 
+    <extensionPoint name="xml.xmlSuppressionProvider"
+                    interface="com.intellij.codeInspection.XmlSuppressionProvider"/>
+
     <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider"/>
 
     <extensionPoint name="xmlStructureViewElementProvider"
@@ -236,6 +239,8 @@
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
 
     <browserSettingsProvider implementation="com.intellij.ide.browsers.BrowsersConfiguration"/>
+    
+    <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
 
     <intentionAction>
       <category>XML</category>
