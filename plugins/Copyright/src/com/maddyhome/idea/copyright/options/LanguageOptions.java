@@ -25,7 +25,6 @@ import org.jdom.Element;
 
 public class LanguageOptions implements JDOMExternalizable, Cloneable
 {
-    public static final int USE_NONE = 1;
     public static final int USE_TEMPLATE = 2;
     public static final int USE_TEXT = 3;
     
@@ -56,26 +55,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
     {
         this.templateOptions = templateOptions;
     }
-
-    /*public String getNotice()
-    {
-        return EntityUtil.decode(notice);
-    }
-
-    public void setNotice(String notice)
-    {
-        this.notice = EntityUtil.encode(notice);
-    }
-
-    public String getKeyword()
-    {
-        return EntityUtil.decode(keyword);
-    }
-
-    public void setKeyword(String keyword)
-    {
-        this.keyword = EntityUtil.encode(keyword);
-    }*/
 
     public int getFileTypeOverride()
     {

@@ -76,8 +76,6 @@ public class Options implements JDOMExternalizable, Cloneable
             LanguageOptions temp = getTemplateOptions().clone();
             switch (lang.getFileTypeOverride())
             {
-                case LanguageOptions.USE_NONE:
-                    return null;
                 case LanguageOptions.USE_TEMPLATE:
                     temp.setFileLocation(lang.getFileLocation());
                     temp.setFileTypeOverride(lang.getFileTypeOverride());

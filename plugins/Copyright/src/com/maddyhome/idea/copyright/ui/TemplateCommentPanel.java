@@ -30,13 +30,15 @@ import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.options.TemplateOptions;
+import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 public class TemplateCommentPanel implements Configurable {
   private CopyrightManager myManager;
@@ -45,28 +47,26 @@ public class TemplateCommentPanel implements Configurable {
   private TemplateCommentPanel parentPanel;
   private JRadioButton[] fileLocations = null;
 
-  private FileTypeOverridePanel ftOptionsPanel = null;
+
   private TemplateOptionsPanel tempOptionsPanel;
   private JTextArea preview;
   private JPanel mainPanel;
-  private JPanel overridePanel;
+
   private JRadioButton rbBefore;
   private JRadioButton rbAfter;
   private JPanel fileLocationPanel;
   private JCheckBox cbAddBlank;
   private JCheckBox cbUseAlternate;
+  private JRadioButton myUseDefaultSettingsRadioButton;
+  private JRadioButton myUseCustomFormattingOptionsRadioButton;
 
   public TemplateCommentPanel(FileType fileType, TemplateCommentPanel parentPanel, String[] locations, Project project) {
     this.parentPanel = parentPanel;
 
     myManager = CopyrightManager.getInstance(project);
-    overridePanel.setLayout(new BorderLayout());
-    if (fileType != null) {
-      ftOptionsPanel = new FileTypeOverridePanel();
-      overridePanel.add(ftOptionsPanel.getMainComponent(), BorderLayout.CENTER);
-    }
-    else {
-      overridePanel.setVisible(false);
+    if (fileType == null) {
+      myUseDefaultSettingsRadioButton.setVisible(false);
+      myUseCustomFormattingOptionsRadioButton.setVisible(false);
     }
 
     this.fileType = fileType != null ? fileType : StdFileTypes.JAVA;
@@ -114,13 +114,7 @@ public class TemplateCommentPanel implements Configurable {
     }
 
 
-    if (ftOptionsPanel != null) {
-      ftOptionsPanel.addOptionChangeListener(new FileTypeOverridePanelListener() {
-        public void optionChanged() {
-          updateOverride();
-        }
-      });
-    }
+
 
     tempOptionsPanel.addOptionChangeListener(new TemplateOptionsPanelListener() {
       public void optionChanged() {
@@ -132,6 +126,23 @@ public class TemplateCommentPanel implements Configurable {
     preview.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
 
     preview.setColumns(CodeStyleSettingsManager.getInstance().getCurrentSettings().RIGHT_MARGIN);
+
+    myUseDefaultSettingsRadioButton.setSelected(true);
+
+        ItemListener listener = new ItemListener()
+        {
+            public void itemStateChanged(ItemEvent itemEvent)
+            {
+                if (itemEvent.getStateChange() == ItemEvent.SELECTED)
+                {
+                    updateOverride();
+                }
+            }
+        };
+
+        myUseDefaultSettingsRadioButton.addItemListener(listener);
+        myUseCustomFormattingOptionsRadioButton.addItemListener(listener);
+
   }
 
 
@@ -141,12 +152,7 @@ public class TemplateCommentPanel implements Configurable {
     LanguageOptions res = new LanguageOptions();
     res.setTemplateOptions(tempOptionsPanel.getOptions());
 
-    if (ftOptionsPanel != null) {
-      res.setFileTypeOverride(ftOptionsPanel.getOptions());
-    }
-    else {
-      res.setFileTypeOverride(LanguageOptions.USE_TEMPLATE);
-    }
+    res.setFileTypeOverride(getOverrideChoice());
     res.setRelativeBefore(rbBefore.isSelected());
     res.setAddBlankAfter(cbAddBlank.isSelected());
     res.setUseAlternate(cbUseAlternate.isSelected());
@@ -162,30 +168,13 @@ public class TemplateCommentPanel implements Configurable {
   }
 
   private int getOverrideChoice() {
-    int choice = LanguageOptions.USE_TEMPLATE;
-    if (ftOptionsPanel != null) {
-      choice = ftOptionsPanel.getOptions();
-    }
-
-    return choice;
+    return myUseDefaultSettingsRadioButton.isSelected() ? LanguageOptions.USE_TEMPLATE : LanguageOptions.USE_TEXT;
   }
 
   private void updateOverride() {
     int choice = getOverrideChoice();
     LanguageOptions parentOpts = parentPanel != null ? parentPanel.getOptions() : null;
     switch (choice) {
-      case LanguageOptions.USE_NONE:
-        tempOptionsPanel.setEnabled(false);
-        preview.setText("");
-        rbBefore.setEnabled(false);
-        rbAfter.setEnabled(false);
-        cbAddBlank.setEnabled(false);
-        if (fileLocations != null) {
-          for (JRadioButton fileLocation : fileLocations) {
-            fileLocation.setEnabled(false);
-          }
-        }
-        break;
       case LanguageOptions.USE_TEMPLATE:
         final boolean isTemplate = parentPanel == null;
         tempOptionsPanel.setEnabled(isTemplate);
@@ -217,7 +206,7 @@ public class TemplateCommentPanel implements Configurable {
 
   private void showPreview(TemplateOptions options) {
     final String defaultCopyrightText =
-      FileTypeUtil.buildComment(fileType, cbUseAlternate.isSelected(), CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE, options);
+      FileTypeUtil.buildComment(fileType, cbUseAlternate.isSelected(), EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE), options);
     preview.setText(defaultCopyrightText);
   }
 
@@ -262,9 +251,9 @@ public class TemplateCommentPanel implements Configurable {
 
     tempOptionsPanel
       .setOptions(parentPanel == null ? myManager.getOptions().getTemplateOptions().getTemplateOptions() : options.getTemplateOptions());
-    if (ftOptionsPanel != null) {
-      ftOptionsPanel.setOptions(options.getFileTypeOverride());
-    }
+    final boolean isTemplate = options.getFileTypeOverride() == LanguageOptions.USE_TEMPLATE;
+    myUseDefaultSettingsRadioButton.setSelected(isTemplate);
+    myUseCustomFormattingOptionsRadioButton.setSelected(!isTemplate);
     if (options.isRelativeBefore()) {
       rbBefore.setSelected(true);
     }
