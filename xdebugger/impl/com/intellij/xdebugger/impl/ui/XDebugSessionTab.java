@@ -226,7 +226,11 @@ public class XDebugSessionTab implements Disposable {
   }
 
   public void toFront() {
-    WindowManagerEx.getInstanceEx().getFrame(myProject).toFront();
-    ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        WindowManagerEx.getInstanceEx().getFrame(myProject).toFront();
+        ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
+      }
+    });
   }
 }
