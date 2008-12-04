@@ -81,15 +81,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
       step.setDefaultOptionIndex(defaultOptionIndex);
 
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (app == null || !app.isUnitTestMode()) {
-      return new ListPopupImpl(step);
-    } else {
-      return new MockConfirmation(step, yesText);
-    }
+    return app == null || !app.isUnitTestMode() ? new ListPopupImpl(step) : new MockConfirmation(step, yesText);
   }
 
 
-  public ListPopup createActionGroupPopup(final String title,
+  private static ListPopup createActionGroupPopup(final String title,
                                           final ActionGroup actionGroup,
                                           DataContext dataContext,
                                           boolean showNumbers,
@@ -114,7 +110,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                   maxRowCount, null);
   }
 
-  public ListPopup createActionGroupPopup(final String title,
+  private static ListPopup createActionGroupPopup(final String title,
                                           final ActionGroup actionGroup,
                                           DataContext dataContext,
                                           boolean showNumbers,
@@ -222,7 +218,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
   }
 
-  public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
+  private static ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
                                          String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
                                          final boolean autoSelectionEnabled) {
     final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
@@ -354,7 +350,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private boolean myPrependWithSeparator;
     private String mySeparatorText;
 
-    public ActionItem(@NotNull AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator, String separatorText) {
+    private ActionItem(@NotNull AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator, String separatorText) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
@@ -396,7 +392,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private int myDefaultOptionIndex;
     private boolean myAutoSelectionEnabled;
 
-    public ActionPopupStep(@NotNull final List<ActionItem> items,
+    private ActionPopupStep(@NotNull final List<ActionItem> items,
                            final String title,
                            Component context,
                            boolean enableMnemonics,
@@ -452,7 +448,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public PopupStep onChosen(final ActionItem actionChoice, final boolean finalChoice) {
-      if (!actionChoice.isEnabled()) return PopupStep.FINAL_CHOICE;
+      if (!actionChoice.isEnabled()) return FINAL_CHOICE;
       final AnAction action = actionChoice.getAction();
       final DataContext dataContext = DataManager.getInstance().getDataContext(myContext);
       if (action instanceof ActionGroup) {
@@ -470,7 +466,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                      0));
           }
         });
-        return PopupStep.FINAL_CHOICE;
+        return FINAL_CHOICE;
       }
     }
 
@@ -526,7 +522,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private String mySeparatorText;
     private final boolean myHonorActionMnemonics;
 
-    public ActionStepBuilder(final DataContext dataContext,
+    private ActionStepBuilder(final DataContext dataContext,
                              final boolean showNumbers,
                              final boolean useAlphaAsNumbers,
                              final boolean showDisabled,
@@ -624,15 +620,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
         Icon icon = presentation.getIcon();
         if (icon == null) {
           @NonNls final String actionId = ActionManager.getInstance().getId(action);
-          if (actionId != null && actionId.startsWith("QuickList.")){
-            icon = QUICK_LIST_ICON;
-          }
-          else {
-            icon = emptyIcon;
-          }
+          icon = actionId != null && actionId.startsWith("QuickList.") ? QUICK_LIST_ICON : emptyIcon;
 
         }
-        boolean prependSeparator = myListModel.size() > 0 && myPrependWithSeparator;
+        boolean prependSeparator = !myListModel.isEmpty() && myPrependWithSeparator;
         myListModel.add(new ActionItem(action, text, presentation.isEnabled(), icon, prependSeparator, mySeparatorText));
         myPrependWithSeparator = false;
         mySeparatorText = null;
