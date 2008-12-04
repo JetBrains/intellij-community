@@ -647,7 +647,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
       Collection<FilePath> filesToProcess;
       if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-        filesToProcess = deletedFiles;
+        filesToProcess = new ArrayList<FilePath>(deletedFiles);
       }
       else {
 
