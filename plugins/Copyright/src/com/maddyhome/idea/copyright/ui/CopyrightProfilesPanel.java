@@ -47,7 +47,7 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-public class CopyrightProfilesPanel extends MasterDetailsComponent {
+public class CopyrightProfilesPanel extends MasterDetailsComponent implements CopyrightProfilesModel{
     private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
     private Project myProject;

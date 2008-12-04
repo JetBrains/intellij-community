@@ -55,7 +55,8 @@ import java.util.Map;
 
 public class ProjectSettingsPanel extends PanelWithButtons {
     private final Project myProject;
-    private final CopyrightManager myManager;
+  private CopyrightProfilesModel myProfilesModel;
+  private final CopyrightManager myManager;
 
     private final TableView<ScopeSetting> myScopeMappingTable;
     private final ListTableModel<ScopeSetting> myScopeMappingModel;
@@ -68,9 +69,10 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
     private final HyperlinkLabel myScopesLink = new HyperlinkLabel();
 
-    public ProjectSettingsPanel(Project project) {
+    public ProjectSettingsPanel(Project project, CopyrightProfilesModel profilesModel) {
         myProject = project;
-        myManager = CopyrightManager.getInstance(project);
+      myProfilesModel = profilesModel;
+      myManager = CopyrightManager.getInstance(project);
 
         myScopeMappingModel = new ListTableModel<ScopeSetting>(new ColumnInfo[]{SCOPE, SETTING}, new ArrayList<ScopeSetting>(), 0);
         myScopeMappingTable = new TableView<ScopeSetting>(myScopeMappingModel);
@@ -112,7 +114,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     }
 
     private void updateButtons() {
-        myAddButton.setEnabled(!myManager.getCopyrights().isEmpty());
+        myAddButton.setEnabled(!myProfilesModel.getAllProfiles().isEmpty());
         int index = myScopeMappingTable.getSelectedRow();
         if (0 <= index && index < myScopeMappingModel.getRowCount()) {
           myRemoveButton.setEnabled(true);
@@ -139,7 +141,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                 TableUtil.stopEditing(myScopeMappingTable);
                 List<ScopeSetting> newList = new ArrayList<ScopeSetting>(myScopeMappingModel.getItems());
                 newList.add(new ScopeSetting(DefaultScopesProvider.getInstance(myProject).getAllScope(),
-                        myManager.getCopyrights().iterator().next()));
+                        myProfilesModel.getAllProfiles().values().iterator().next()));
                 myScopeMappingModel.setItems(newList);
                 TableUtil.editCellAt(myScopeMappingTable, myScopeMappingModel.getRowCount() - 1, 0);
             }
@@ -190,7 +192,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
     private void fillCopyrightProfiles(DefaultComboBoxModel boxModel) {
         boxModel.addElement(null);
-        for (CopyrightProfile profile : myManager.getCopyrights()) {
+        for (CopyrightProfile profile : myProfilesModel.getAllProfiles().values()) {
             boxModel.addElement(profile);
         }
     }
@@ -263,8 +265,8 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
 
     private class ScopeSetting {
-        private NamedScope myScope;
-        private CopyrightProfile myProfile;
+      private NamedScope myScope;
+      private CopyrightProfile myProfile;
       private String myProfileName;
 
       private ScopeSetting(NamedScope scope, CopyrightProfile profile) {
@@ -282,7 +284,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
       public CopyrightProfile getProfile() {
             if (myProfile == null && myProfileName != null) {
-              myProfile = myManager.getCopyright(myProfileName);
+              myProfile = myProfilesModel.getAllProfiles().get(myProfileName);
             }
             return myProfile;
         }
@@ -301,6 +303,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         }
 
       public String getProfileName() {
+        if (myProfile != null) return myProfile.getName();
         return myProfileName;
       }
     }
@@ -322,7 +325,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                 public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                     final Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                     if (!isSelected)
-                        setForeground(myManager.getCopyright(scopeSetting.getProfileName()) == null ? Color.red : UIUtil.getTableForeground());
+                        setForeground(myProfilesModel.getAllProfiles().get(scopeSetting.getProfileName()) == null ? Color.red : UIUtil.getTableForeground());
                     setText(scopeSetting.getProfileName());
                     return rendererComponent;
                 }
@@ -338,7 +341,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                 }
 
                 public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-                    final Collection<CopyrightProfile> copyrights = myManager.getCopyrights();
+                    final Collection<CopyrightProfile> copyrights = myProfilesModel.getAllProfiles().values();
                     myProfilesCombo = new ComboBox(copyrights.toArray(new CopyrightProfile[copyrights.size()]), 60);
                     myProfilesCombo.setRenderer(new DefaultListCellRenderer() {
                         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

@@ -21,8 +21,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 
-public class ConfigTabFactory {
-  public static Configurable createConfigTab(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
+public class FileTypeCopyrightConfigurableFactory {
+  public static Configurable createFileTypeConfigurable(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
     // NOTE: If any change is made here you need to update LanguageOptionsFactory and UpdateCopyrightFactory too.
     if (fileType.equals(StdFileTypes.JAVA)) {
       return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Package", "Before Imports", "Before Class"}, project);
@@ -41,6 +41,6 @@ public class ConfigTabFactory {
     }
   }
 
-  private ConfigTabFactory() {
+  private FileTypeCopyrightConfigurableFactory() {
   }
 }
