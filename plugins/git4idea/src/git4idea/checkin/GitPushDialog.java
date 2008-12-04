@@ -131,7 +131,7 @@ public class GitPushDialog extends DialogWrapper {
    */
   public GitPushDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
-    setTitle(GitBundle.getString("fetch.title"));
+    setTitle(GitBundle.getString("push.title"));
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     myProject = project;
     setupRemotes();
