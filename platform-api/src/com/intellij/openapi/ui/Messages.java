@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -527,6 +528,7 @@ public class Messages {
           editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(label.getFont(), label.getForeground()));
           messageComponent.setEditorKit(editorKit);
           messageComponent.setContentType("text/html");
+          messageComponent.addHyperlinkListener(new BrowserHyperlinkListener());
         }
         messageComponent.setText(myMessage);
         messageComponent.setEditable(false);
