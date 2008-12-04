@@ -4,19 +4,24 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -24,11 +29,15 @@ import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -75,7 +84,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, myPassIdToShowIntentionsFor);
+    List<HighlightInfo.IntentionActionDescriptor> guttersToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, guttersToShow, myPassIdToShowIntentionsFor);
     if (myFile instanceof IntentionFilterOwner) {
       final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)myFile).getIntentionActionsFilter();
       if (actionsFilter == null) return;
@@ -86,12 +96,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
     }
 
-    if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
-      boolean showBulb = false;
-      for (HighlightInfo.IntentionActionDescriptor action : ContainerUtil.concat(errorFixesToShow, inspectionFixesToShow)) {
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
-          showBulb = true;
-          break;
+    if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty() || !guttersToShow.isEmpty()) {
+      boolean showBulb = !guttersToShow.isEmpty();
+      if (!showBulb) {
+        for (HighlightInfo.IntentionActionDescriptor action : ContainerUtil.concat(errorFixesToShow, inspectionFixesToShow)) {
+          if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
+            showBulb = true;
+            break;
+          }
         }
       }
       if (!showBulb) {
@@ -108,13 +120,17 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
 
         if (hintComponent != null) {
-          if (hintComponent.updateActions(intentionsToShow, errorFixesToShow, inspectionFixesToShow)) {
+          if (hintComponent.updateActions(intentionsToShow, errorFixesToShow, inspectionFixesToShow, guttersToShow)) {
             return;
           }
           codeAnalyzer.setLastIntentionHint(null);
         }
         if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          hintComponent = IntentionHintComponent.showIntentionHint(myProject, myFile, myEditor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, false);
+          hintComponent = IntentionHintComponent.showIntentionHint(myProject, myFile, myEditor,
+                                                                   intentionsToShow,
+                                                                   errorFixesToShow,
+                                                                   inspectionFixesToShow,
+                                                                   guttersToShow, false);
           codeAnalyzer.setLastIntentionHint(hintComponent);
         }
       }
@@ -128,9 +144,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
   }
 
-  public static void getActionsToShow(final Editor editor, final PsiFile psiFile, final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow,
+  public static void getActionsToShow(final Editor editor, final PsiFile psiFile,
+                                      final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow,
                                       final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow,
                                       final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow,
+                                      final List<HighlightInfo.IntentionActionDescriptor> guttersToShow,
                                       int passIdToShowIntentionsFor) {
     final PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
@@ -152,12 +170,38 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, true);
+    final Document document = editor.getDocument();
+    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, true);
     if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
       errorFixesToShow.addAll(actions);
     }
     else {
       inspectionFixesToShow.addAll(actions);
+    }
+    final int line = document.getLineNumber(offset);
+    final HighlightInfo[] infoList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.INFORMATION, project,
+                                                                          document.getLineStartOffset(line),
+                                                                          document.getLineEndOffset(line));
+    for (HighlightInfo info : infoList) {
+      final GutterIconRenderer renderer = info.getGutterIconRenderer();
+      if (renderer != null) {
+        final AnAction action = renderer.getClickAction();
+        if (action != null) {
+          final String text = renderer.getTooltipText();
+          final IntentionAction actionAdapter = new AbstractIntentionAction() {
+            public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+              final RelativePoint relativePoint = PopupFactoryImpl.getInstance().guessBestPopupLocation(editor);
+              action.actionPerformed(new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(), ActionManager.getInstance(), 0));
+            }
+
+            @NotNull
+            public String getText() {
+              return text;
+            }
+          };
+          guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+        }
+      }
     }
   }
 }

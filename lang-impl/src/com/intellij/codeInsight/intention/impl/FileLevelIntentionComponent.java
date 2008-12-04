@@ -64,6 +64,7 @@ public class FileLevelIntentionComponent extends JPanel {
         IntentionHintComponent.showIntentionHint(myProject, psiFile, myEditor,
                                                  Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
                                                  myIntentions, Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
+                                                 Collections.<HighlightInfo.IntentionActionDescriptor>emptyList(),
                                                  true, location);
       }
     });

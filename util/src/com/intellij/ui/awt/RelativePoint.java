@@ -65,6 +65,10 @@ public class RelativePoint {
     return point;
   }
 
+  public MouseEvent toMouseEvent() {
+    return new MouseEvent(myComponent, 0, 0, 0, myPointOnComponent.x, myPointOnComponent.y, 1, false); 
+  }
+
   public String toString() {
     //noinspection HardCodedStringLiteral
     return getPoint() + " on " + getComponent().toString();

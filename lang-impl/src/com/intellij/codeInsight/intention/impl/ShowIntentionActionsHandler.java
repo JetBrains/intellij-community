@@ -54,18 +54,20 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     final ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     final ArrayList<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     final ArrayList<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    final ArrayList<HighlightInfo.IntentionActionDescriptor> gutters = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
 
-    ShowIntentionsPass.getActionsToShow(editor, file, intentionsToShow, errorFixesToShow, inspectionFixesToShow, -1);
+    ShowIntentionsPass.getActionsToShow(editor, file, intentionsToShow, errorFixesToShow, inspectionFixesToShow, gutters, -1);
     
     if (!codeAnalyzer.isAllAnalysisFinished(file)) {
-      runPassesAndShowIntentions(project, editor, file, intentionsToShow);
+      runPassesAndShowIntentions(project, editor, file, intentionsToShow, gutters);
     }
-    else if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
-      IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
+    else if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty() || !gutters.isEmpty()) {
+      IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, gutters, true);
     }
   }
 
-  private static void runPassesAndShowIntentions(final Project project, final Editor editor, final PsiFile file, final ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow) {
+  private static void runPassesAndShowIntentions(final Project project, final Editor editor, final PsiFile file, final ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow,
+                                                 final ArrayList<HighlightInfo.IntentionActionDescriptor> gutters) {
     final ArrayList<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     final ArrayList<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     errorFixesToShow.clear();
@@ -111,7 +113,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           public void run() {
             if (editor.getComponent().isDisplayable()) {
               if (!intentionsToShow.isEmpty() || !errorFixesToShow.isEmpty() || !inspectionFixesToShow.isEmpty()) {
-                IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, true);
+                IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, errorFixesToShow, inspectionFixesToShow, gutters, true);
               }
             }
           }

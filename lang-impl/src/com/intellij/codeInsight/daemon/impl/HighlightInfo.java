@@ -343,17 +343,22 @@ public class HighlightInfo {
     private List<IntentionAction> myOptions;
     private HighlightDisplayKey myKey;
     private final String myDisplayName;
+    private final Icon myIcon;
 
     public IntentionActionDescriptor(@NotNull IntentionAction action, final HighlightDisplayKey key) {
-      myAction = action;
+      this(action, null, HighlightDisplayKey.getDisplayNameByKey(key), null);
       myKey = key;
-      myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
     }
 
     public IntentionActionDescriptor(final IntentionAction action, final List<IntentionAction> options, final String displayName) {
+      this(action, options, displayName, null);
+    }
+
+    public IntentionActionDescriptor(final IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
+      myIcon = icon;
     }
 
     @NotNull
@@ -394,6 +399,10 @@ public class HighlightInfo {
     @NonNls
     public String toString() {
       return "descriptor: " + getAction().getText();
+    }
+
+    public Icon getIcon() {
+      return myIcon;
     }
   }
 }

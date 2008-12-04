@@ -983,7 +983,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static List<IntentionAction> doGetAvailableIntentions(Editor editor, PsiFile file) {
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    ShowIntentionsPass.getActionsToShow(editor, file, descriptors, descriptors, descriptors, -1);
+    ShowIntentionsPass.getActionsToShow(editor, file, descriptors, descriptors, descriptors, descriptors, -1);
 
     /*
     final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();

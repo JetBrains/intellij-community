@@ -94,19 +94,24 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     private final Set<IntentionActionWithTextCaching> myCachedIntentions = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
     private final Set<IntentionActionWithTextCaching> myCachedErrorFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
     private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
+    private final Set<IntentionActionWithTextCaching> myCachedGutters = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
     private final IntentionManagerSettings mySettings;
 
     private IntentionListStep(List<HighlightInfo.IntentionActionDescriptor> intentions, List<HighlightInfo.IntentionActionDescriptor> quickFixes,
-                              final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes) {
+                              final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes,
+                              List<HighlightInfo.IntentionActionDescriptor> gutters) {
       mySettings = IntentionManagerSettings.getInstance();
-      updateActions(intentions, quickFixes, inspectionFixes);
+      updateActions(intentions, quickFixes, inspectionFixes, gutters);
     }
 
     //true if nothing changed
-    private boolean updateActions(final List<HighlightInfo.IntentionActionDescriptor> intentions, final List<HighlightInfo.IntentionActionDescriptor> errorFixes, final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes) {
+    private boolean updateActions(final List<HighlightInfo.IntentionActionDescriptor> intentions, final List<HighlightInfo.IntentionActionDescriptor> errorFixes,
+                                  final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes,
+                                  List<HighlightInfo.IntentionActionDescriptor> gutters) {
       boolean result = wrapActionsTo(errorFixes, myCachedErrorFixes);
       result &= wrapActionsTo(inspectionFixes, myCachedInspectionFixes);
       result &= wrapActionsTo(intentions, myCachedIntentions);
+      result &= wrapActionsTo(gutters, myCachedGutters);
       return result;
     }
 
@@ -114,7 +119,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       boolean result = true;
       for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
         IntentionAction action = descriptor.getAction();
-        IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName());
+        IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName(), descriptor.getIcon());
         result &= !cachedActions.add(cachedAction);
         final int caretOffset = myEditor.getCaretModel().getOffset();
         final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
@@ -200,7 +205,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         inspectionFixes.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null));
       }
 
-      return new IntentionListStep(intentions, errorFixes, inspectionFixes){
+      return new IntentionListStep(intentions, errorFixes, inspectionFixes, Collections.<HighlightInfo.IntentionActionDescriptor>emptyList()){
         public String getTitle() {
           return action.getToolName();
         }
@@ -216,6 +221,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       List<IntentionActionWithTextCaching> result = new ArrayList<IntentionActionWithTextCaching>(myCachedErrorFixes);
       result.addAll(myCachedInspectionFixes);
       result.addAll(myCachedIntentions);
+      result.addAll(myCachedGutters);
       Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
         public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
           int weight1 = myCachedErrorFixes.contains(o1) ? 2 : myCachedInspectionFixes.contains(o1) ? 1 : 0;
@@ -235,6 +241,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
 
     public Icon getIconFor(final IntentionActionWithTextCaching value) {
+      if (value.getIcon() != null) {
+        return value.getIcon();
+      }
+
       final IntentionAction action = value.getAction();
 
       if (mySettings.isShowLightBulb(action)) {
@@ -310,8 +320,14 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     private final IntentionAction myAction;
     private final String myDisplayName;
     private final List<IntentionAction> myOptionInspectionFixes;
+    private final Icon myIcon;
 
-    public IntentionActionWithTextCaching(IntentionAction action, String displayName) {
+    public IntentionActionWithTextCaching(IntentionAction action, String displayName){
+      this(action, displayName, null);
+    }
+
+    public IntentionActionWithTextCaching(IntentionAction action, String displayName, Icon icon) {
+      myIcon = icon;
       myOptionIntentions = new ArrayList<IntentionAction>();
       myOptionErrorFixes = new ArrayList<IntentionAction>();
       myOptionInspectionFixes = new ArrayList<IntentionAction>();
@@ -370,24 +386,30 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       }
       return Comparing.compare(getText(), other.getText());
     }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
   }
 
   public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor,
                                                          List<HighlightInfo.IntentionActionDescriptor> intentions,
                                                          List<HighlightInfo.IntentionActionDescriptor> errorFixes,
                                                          final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes,
+                                                         final List<HighlightInfo.IntentionActionDescriptor> gutters,
                                                          boolean showExpanded) {
     final Point position = getHintPosition(editor);
-    return showIntentionHint(project, file, editor, intentions, errorFixes, inspectionFixes, showExpanded, position);
+    return showIntentionHint(project, file, editor, intentions, errorFixes, inspectionFixes, gutters, showExpanded, position);
   }
 
   public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor,
                                                          List<HighlightInfo.IntentionActionDescriptor> intentions,
                                                          List<HighlightInfo.IntentionActionDescriptor> errorFixes,
                                                          final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes,
+                                                         final List<HighlightInfo.IntentionActionDescriptor> gutters,
                                                          boolean showExpanded,
                                                          final Point position) {
-    final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions, errorFixes, inspectionFixes);
+    final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions, errorFixes, inspectionFixes, gutters);
 
     if (showExpanded) {
       component.showIntentionHintImpl(false, position);
@@ -417,11 +439,12 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   //true if success
   public boolean updateActions(List<HighlightInfo.IntentionActionDescriptor> intentions, List<HighlightInfo.IntentionActionDescriptor> errorFixes,
-                               final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes) {
+                               final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes,
+                               List<HighlightInfo.IntentionActionDescriptor> guttersToShow) {
     if (myPopup.isDisposed()) return false;
     if (!myFile.isValid()) return false;
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
-    if (step.updateActions(intentions, errorFixes, inspectionFixes)) {
+    if (step.updateActions(intentions, errorFixes, inspectionFixes, guttersToShow)) {
       return true;
     }
     if (!myPopupShown) {
@@ -468,7 +491,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   private IntentionHintComponent(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, @NotNull List<HighlightInfo.IntentionActionDescriptor> intentions,
                                  @NotNull List<HighlightInfo.IntentionActionDescriptor> errorFixes,
-                                 final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes) {
+                                 final List<HighlightInfo.IntentionActionDescriptor> inspectionFixes,
+                                 List<HighlightInfo.IntentionActionDescriptor> gutters) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myFile = file;
     myProject = project;
@@ -517,7 +541,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     });
 
     myComponentHint = new MyComponentHint(this);
-    IntentionListStep step = new IntentionListStep(intentions, errorFixes, inspectionFixes);
+    IntentionListStep step = new IntentionListStep(intentions, errorFixes, inspectionFixes, gutters);
     step.recreateMyPopup();
   }
 
