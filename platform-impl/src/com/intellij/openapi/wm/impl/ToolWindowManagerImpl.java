@@ -1414,12 +1414,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (myEditorComponentActive) {
         return;
       }
-      invokeLater(// we have to be last listener
-                  new Runnable() {
-                    public void run() {
-                      activateEditorComponent(false);
-                    }
-                  });
+
+
+      final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+      final Component owner = mgr.getFocusOwner();
+
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+        public void run() {
+          if (mgr.getFocusOwner() == owner) {
+            activateEditorComponent(false);
+          }
+        }
+      });
     }
   }
 
