@@ -227,7 +227,7 @@ public class GitCheckoutDialog extends DialogWrapper {
    * @return the branch, tag, or expression to checkout
    */
   public String getSourceBranch() {
-    return (String)myBranchToCkeckout.getSelectedItem();
+    return GitUIUtil.getTextField(myBranchToCkeckout).getText();
   }
 
   /**
