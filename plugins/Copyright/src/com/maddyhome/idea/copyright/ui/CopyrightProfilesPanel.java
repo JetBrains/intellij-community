@@ -46,14 +46,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CopyrightProfilesPanel extends MasterDetailsComponent implements CopyrightProfilesModel{
     private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
     private Project myProject;
     private CopyrightManager myManager;
+  private AtomicBoolean myInitialized = new AtomicBoolean(false);
 
-    public CopyrightProfilesPanel(Project project) {
+  public CopyrightProfilesPanel(Project project) {
       ServiceManager.getService(project, MasterDetailsStateService.class).register("Copyright.UI", this);
         myProject = project;
         myManager = CopyrightManager.getInstance(project);
@@ -108,11 +110,17 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Co
     }
 
     public Map<String, CopyrightProfile> getAllProfiles() {
-        final Map<String, CopyrightProfile> profiles = new HashMap<String, CopyrightProfile>();
-        for (int i = 0; i < myRoot.getChildCount(); i++) {
+      final Map<String, CopyrightProfile> profiles = new HashMap<String, CopyrightProfile>();
+        if (!myInitialized.get()) {
+          for (CopyrightProfile profile : myManager.getCopyrights()) {
+            profiles.put(profile.getName(), profile);
+          }
+        } else {
+          for (int i = 0; i < myRoot.getChildCount(); i++) {
             MyNode node = (MyNode) myRoot.getChildAt(i);
             final CopyrightProfile copyrightProfile = ((CopyrightConfigurable) node.getConfigurable()).getEditableObject();
             profiles.put(copyrightProfile.getName(), copyrightProfile);
+          }
         }
         return profiles;
     }
@@ -210,6 +218,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Co
     }
 
     private void reloadTree() {
+        myInitialized.set(true);
         myRoot.removeAllChildren();
         Collection<CopyrightProfile> collection = myManager.getCopyrights();
         for (CopyrightProfile profile : collection) {
