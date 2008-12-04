@@ -26,10 +26,15 @@ import java.util.Locale;
  */
 public final class GitVersion implements Comparable<GitVersion> {
   /**
-   * The format of the "git version"
+   * The format of the "git version" (four components)
    */
-  @NonNls private static MessageFormat FORMAT =
+  @NonNls private static MessageFormat FORMAT_4 =
     new MessageFormat("git version {0,number,integer}.{1,number,integer}.{2,number,integer}.{3,number,integer}", Locale.US);
+  /**
+   * The format of the "git version" (three components)
+   */
+  @NonNls private static MessageFormat FORMAT_3 =
+    new MessageFormat("git version {0,number,integer}.{1,number,integer}.{2,number,integer}", Locale.US);
   /**
    * Invalid version number
    */
@@ -79,7 +84,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   public static GitVersion parse(String version) {
     try {
-      Object[] parsed = FORMAT.parse(version);
+      Object[] parsed = FORMAT_4.parse(version);
       int major = ((Long)parsed[0]).intValue();
       int minor = ((Long)parsed[1]).intValue();
       int revision = ((Long)parsed[2]).intValue();
@@ -87,7 +92,17 @@ public final class GitVersion implements Comparable<GitVersion> {
       return new GitVersion(major, minor, revision, patchLevel);
     }
     catch (ParseException e) {
-      throw new IllegalArgumentException("Unsupported format of git --version output: " + version);
+      try {
+        Object[] parsed = FORMAT_3.parse(version);
+        int major = ((Long)parsed[0]).intValue();
+        int minor = ((Long)parsed[1]).intValue();
+        int revision = ((Long)parsed[2]).intValue();
+        int patchLevel = 0;
+        return new GitVersion(major, minor, revision, patchLevel);
+      }
+      catch (ParseException ex) {
+        throw new IllegalArgumentException("Unsupported format of git --version output: " + version);
+      }
     }
   }
 

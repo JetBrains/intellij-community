@@ -201,7 +201,7 @@ public class GitRebaseEditor extends DialogWrapper {
    * Cancel rebase
    */
   public void cancel() throws IOException {
-    myTableModel.cancel(myFile);
+    MyTableModel.cancel(myFile);
   }
 
 
