@@ -57,7 +57,7 @@ public abstract class Logger {
   }
 
   public void error(Throwable t) {
-    error("", t, ArrayUtil.EMPTY_STRING_ARRAY);
+    error(t.getMessage(), t, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public void warn(@NonNls String message) {
@@ -65,7 +65,7 @@ public abstract class Logger {
   }
 
   public void warn(Throwable t) {
-    warn("", t);
+    warn(t.getMessage(), t);
   }
 
 
@@ -78,7 +78,7 @@ public abstract class Logger {
   public abstract void warn(@NonNls String message, Throwable t);
 
   public void info(Throwable t) {
-    info("", t);
+    info(t.getMessage(), t);
   }
 
   public boolean assertTrue(boolean value, @NonNls Object message) {
