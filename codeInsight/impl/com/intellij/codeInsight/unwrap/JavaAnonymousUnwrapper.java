@@ -36,18 +36,23 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
       context.deleteExactly(from.getNextSibling());
     }
     context.deleteExactly(from);
-  }                                     
+  }
 
   private PsiElement findElementToExtractFrom(PsiElement el) {
     if (el.getParent() instanceof PsiNewExpression) el = el.getParent();
     el = findTopmostParentOfType(el, PsiMethodCallExpression.class);
     el = findTopmostParentOfType(el, PsiAssignmentExpression.class);
     el = findTopmostParentOfType(el, PsiDeclarationStatement.class);
+
+    while (el.getParent() instanceof PsiExpressionStatement) {
+      el = el.getParent();
+    }
+
     return el;
   }
 
   private PsiElement findTopmostParentOfType(PsiElement el, Class clazz) {
-    while(true) {
+    while (true) {
       PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz);
       if (temp == null || temp instanceof PsiFile) return el;
       el = temp;
