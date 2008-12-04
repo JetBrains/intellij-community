@@ -6,9 +6,11 @@
         a consistent copyright notice.
     </description>
     <depends>com.intellij.css</depends>
-     <extensions defaultExtensionNs="com.intellij">
-       <projectConfigurable implementation="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
-     </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+      <projectConfigurable implementation="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
+      <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    </extensions>
+    <version>8.1</version>
 
     <project-components>
         <component>
