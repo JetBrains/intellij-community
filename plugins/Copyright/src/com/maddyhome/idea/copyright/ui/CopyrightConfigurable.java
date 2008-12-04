@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
+import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -96,13 +97,13 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public boolean isModified() {
     return myModified ||
-           !Comparing.strEqual(myCopyrightPane.getText().trim(), myCopyrightProfile.getNotice()) ||
+           !Comparing.strEqual(EntityUtil.encode(myCopyrightPane.getText().trim()), myCopyrightProfile.getNotice()) ||
            !Comparing.strEqual(myKeywordTf.getText().trim(), myCopyrightProfile.getKeyword()) ||
            !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
   }
 
   public void apply() throws ConfigurationException {
-    myCopyrightProfile.setNotice(myCopyrightPane.getText());
+    myCopyrightProfile.setNotice(EntityUtil.encode(myCopyrightPane.getText().trim()));
     myCopyrightProfile.setKeyword(myKeywordTf.getText());
     CopyrightManager.getInstance(myProject).addCopyright(myCopyrightProfile);
     myModified = false;
@@ -110,7 +111,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public void reset() {
     myDisplayName = myCopyrightProfile.getName();
-    myCopyrightPane.setText(myCopyrightProfile.getNotice());
+    myCopyrightPane.setText(EntityUtil.decode(myCopyrightProfile.getNotice()));
     myKeywordTf.setText(myCopyrightProfile.getKeyword());
   }
 
