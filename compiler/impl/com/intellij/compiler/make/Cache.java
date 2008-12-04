@@ -310,7 +310,7 @@ public class Cache {
     }
   }
 
-  public FieldInfo[] getFieldIds(int classDeclarationId) throws CacheCorruptedException{
+  public FieldInfo[] getFields(int classDeclarationId) throws CacheCorruptedException{
     try {
       final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classDeclarationId));
       return classInfo != null? classInfo.getFields() : FieldInfo.EMPTY_ARRAY;
@@ -323,7 +323,7 @@ public class Cache {
   @Nullable
   public FieldInfo findField(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
     try {
-      for (FieldInfo fieldInfo : getFieldIds(classDeclarationId)) {
+      for (FieldInfo fieldInfo : getFields(classDeclarationId)) {
         if (fieldInfo.getName() == name && fieldInfo.getDescriptor() == descriptor) {
           return fieldInfo;
         }
@@ -338,7 +338,7 @@ public class Cache {
   @Nullable
   public FieldInfo findFieldByName(final int classDeclarationId, final int name) throws CacheCorruptedException{
     try {
-      for (FieldInfo fieldInfo : getFieldIds(classDeclarationId)) {
+      for (FieldInfo fieldInfo : getFields(classDeclarationId)) {
         if (fieldInfo.getName() == name) {
           return fieldInfo;
         }
@@ -350,7 +350,7 @@ public class Cache {
     }
   }
 
-  public MethodInfo[] getMethodIds(int classDeclarationId) throws CacheCorruptedException{
+  public MethodInfo[] getMethods(int classDeclarationId) throws CacheCorruptedException{
     try {
       final ClassInfo classInfo = myQNameToClassInfoMap.get(new StorageClassId(classDeclarationId));
       return classInfo != null? classInfo.getMethods() : MethodInfo.EMPTY_ARRAY;
@@ -363,7 +363,7 @@ public class Cache {
   @Nullable
   public MethodInfo findMethod(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
     try {
-      for (MethodInfo methodInfo : getMethodIds(classDeclarationId)) {
+      for (MethodInfo methodInfo : getMethods(classDeclarationId)) {
         if (methodInfo.getName() == name && methodInfo.getDescriptor() == descriptor) {
           return methodInfo;
         }
@@ -378,7 +378,7 @@ public class Cache {
   public List<MethodInfo> findMethodsByName(final int classDeclarationId, final int name) throws CacheCorruptedException{
     try {
       final List<MethodInfo> methods = new ArrayList<MethodInfo>();
-      for (MethodInfo methodInfo : getMethodIds(classDeclarationId)) {
+      for (MethodInfo methodInfo : getMethods(classDeclarationId)) {
         if (methodInfo.getName() == name) {
           methods.add(methodInfo);
         }
@@ -393,7 +393,7 @@ public class Cache {
   @Nullable
   public MethodInfo findMethodsBySignature(final int classDeclarationId, final String signature, SymbolTable symbolTable) throws CacheCorruptedException{
     try {
-      for (MethodInfo methodInfo : getMethodIds(classDeclarationId)) {
+      for (MethodInfo methodInfo : getMethods(classDeclarationId)) {
         if (signature.equals(CacheUtils.getMethodSignature(symbolTable.getSymbol(methodInfo.getName()), symbolTable.getSymbol(methodInfo.getDescriptor())))) {
           return methodInfo;
         }
@@ -469,7 +469,7 @@ public class Cache {
         }
       }
 
-      for (final FieldInfo field : getFieldIds(classQName)) {
+      for (final FieldInfo field : getFields(classQName)) {
         for (int referencer : getFieldReferencers(classQName, field.getName())) {
           if (referencer != classQName) { // skip self-dependencies
             final Dependency dependency = addDependency(dependencies, referencer);
@@ -478,7 +478,7 @@ public class Cache {
         }
       }
 
-      for (final MethodInfo methodId : getMethodIds(classQName)) {
+      for (final MethodInfo methodId : getMethods(classQName)) {
         for (int referencer : getMethodReferencers(classQName, methodId.getName(), methodId.getDescriptor())) {
           if (referencer != classQName) {
             final Dependency dependency = addDependency(dependencies, referencer);

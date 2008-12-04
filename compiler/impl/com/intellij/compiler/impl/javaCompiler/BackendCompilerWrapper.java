@@ -971,7 +971,7 @@ public class BackendCompilerWrapper {
   }
 
   private static boolean hasNotNullAnnotations(final Cache cache, final SymbolTable symbolTable, final int className) throws CacheCorruptedException {
-    for (MethodInfo methodId : cache.getMethodIds(className)) {
+    for (MethodInfo methodId : cache.getMethods(className)) {
       for (AnnotationConstantValue annotation : methodId.getRuntimeInvisibleAnnotations()) {
         if (AnnotationUtil.NOT_NULL.equals(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
           return true;

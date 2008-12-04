@@ -154,11 +154,11 @@ public class DependencyCache {
         }
         cache.removeClassReferencer(referencedClassQName, qName);
 
-        for (FieldInfo fieldId : cache.getFieldIds(referencedClassQName)) {
+        for (FieldInfo fieldId : cache.getFields(referencedClassQName)) {
           cache.removeFieldReferencer(referencedClassQName, fieldId.getName(), qName);
         }
 
-        for (MethodInfo methodId : cache.getMethodIds(referencedClassQName)) {
+        for (MethodInfo methodId : cache.getMethods(referencedClassQName)) {
           cache.removeMethodReferencer(referencedClassQName, methodId.getName(), methodId.getDescriptor(), qName);
         }
       }
@@ -261,7 +261,7 @@ public class DependencyCache {
     }
     final SymbolTable symbolTable = getSymbolTable();
 
-    for (final FieldInfo fieldInfo : cache.getFieldIds(classQName)) {
+    for (final FieldInfo fieldInfo : cache.getFields(classQName)) {
       buildAnnotationDependencies(classQName, fieldInfo.getRuntimeVisibleAnnotations());
       buildAnnotationDependencies(classQName, fieldInfo.getRuntimeInvisibleAnnotations());
 
@@ -274,7 +274,7 @@ public class DependencyCache {
       cache.addReferencedClass(classQName, cls);
     }
 
-    for (final MethodInfo methodInfo : cache.getMethodIds(classQName)) {
+    for (final MethodInfo methodInfo : cache.getMethods(classQName)) {
       buildAnnotationDependencies(classQName, methodInfo.getRuntimeVisibleAnnotations());
       buildAnnotationDependencies(classQName, methodInfo.getRuntimeInvisibleAnnotations());
       buildAnnotationDependencies(classQName, methodInfo.getRuntimeVisibleParameterAnnotations());
@@ -478,7 +478,7 @@ public class DependencyCache {
     Collection<ChangedConstantsDependencyProcessor.FieldChangeInfo> removedConstants) throws CacheCorruptedException {
 
     final Cache cache = getCache();
-    for (final FieldInfo field : cache.getFieldIds(qName)) {
+    for (final FieldInfo field : cache.getFields(qName)) {
       final int oldFlags = field.getFlags();
       if (ClsUtil.isStatic(oldFlags) && ClsUtil.isFinal(oldFlags)) {
         final Cache newClassesCache = getNewClassesCache();

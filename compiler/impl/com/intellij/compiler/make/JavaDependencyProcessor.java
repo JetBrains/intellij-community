@@ -30,7 +30,7 @@ class JavaDependencyProcessor {
   private final Set<MemberInfo> myRemovedMembers = new HashSet<MemberInfo>();
   private final Set<MemberInfo> myChangedMembers = new HashSet<MemberInfo>();
   private final Map<MemberInfo, ChangeDescription> myChangeDescriptions = new HashMap<MemberInfo, ChangeDescription>();
-  private final Dependency[] myBackDependencies;
+  private Dependency[] myBackDependencies;
   private final boolean myMembersChanged;
   private final boolean mySuperInterfaceAdded;
   private final boolean mySuperInterfaceRemoved;
@@ -50,8 +50,6 @@ class JavaDependencyProcessor {
     myQName = qName;
     final Cache cache = dependencyCache.getCache();
     final Cache newClassesCache = dependencyCache.getNewClassesCache();
-
-    myBackDependencies = cache.getBackDependencies(qName);
 
     final TIntObjectHashMap<FieldInfo> oldFields = getFieldInfos(cache, qName);
     final Map<String, MethodInfoContainer> oldMethods = getMethodInfos(cache, qName);
@@ -147,31 +145,31 @@ class JavaDependencyProcessor {
       if (myAnnotationSemanticsChanged) {
         final TIntHashSet visited = new TIntHashSet();
         visited.add(myQName);
-        markAnnotationDependenciesRecursively(myBackDependencies, LOG.isDebugEnabled()? "; reason: semantics changed for " + myDependencyCache.resolve(myQName) : "", visited);
+        markAnnotationDependenciesRecursively(getBackDependencies(), LOG.isDebugEnabled()? "; reason: semantics changed for " + myDependencyCache.resolve(myQName) : "", visited);
         return;
       }
       if (hasMembersWithoutDefaults(myAddedMembers)) {
-        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: added annotation type member without default " + myDependencyCache.resolve(myQName) : "");
+        markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: added annotation type member without default " + myDependencyCache.resolve(myQName) : "");
         return;
       }
       if (!myRemovedMembers.isEmpty()) {
-        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: removed annotation type member " + myDependencyCache.resolve(myQName) : "");
+        markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: removed annotation type member " + myDependencyCache.resolve(myQName) : "");
         return;
       }
       if (!myChangedMembers.isEmpty()) { // for annotations "changed" means return type changed
-        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: changed annotation member's type " + myDependencyCache.resolve(myQName) : "");
+        markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: changed annotation member's type " + myDependencyCache.resolve(myQName) : "");
         return;
       }
       if (wereAnnotationDefaultsRemoved()) {
-        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: removed annotation member's default value " + myDependencyCache.resolve(myQName): "");
+        markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: removed annotation member's default value " + myDependencyCache.resolve(myQName): "");
         return;
       }
       if (myWereAnnotationTargetsRemoved) {
-        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: removed annotation's targets " + myDependencyCache.resolve(myQName) : "");
+        markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: removed annotation's targets " + myDependencyCache.resolve(myQName) : "");
         return;
       }
       if (myRetentionPolicyChanged) {
-        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: retention policy changed for " + myDependencyCache.resolve(myQName) : "");
+        markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: retention policy changed for " + myDependencyCache.resolve(myQName) : "");
         return;
       }
     }
@@ -182,7 +180,7 @@ class JavaDependencyProcessor {
       // superclass changed == old removed and possibly new added
       // if anything (class or interface) in the superlist was removed, should recompile all subclasses (both direct and indirect)
       // and all back-dependencies of this class and its subclasses
-      markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: deleted items from the superlist or changed superlist generic signature of " + myDependencyCache.resolve(myQName) : "");
+      markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: deleted items from the superlist or changed superlist generic signature of " + myDependencyCache.resolve(myQName) : "");
       cacheNavigator.walkSubClasses(myQName, new ClassInfoProcessor() {
         public boolean process(int classQName) throws CacheCorruptedException {
           markAll(oldCache.getBackDependencies(classQName), LOG.isDebugEnabled()? "; reason: deleted items from the superlist or changed superlist generic signature of " + myDependencyCache.resolve(myQName) : "");
@@ -196,7 +194,7 @@ class JavaDependencyProcessor {
       (MakeUtil.isInterface(oldCache.getFlags(myQName)) && !MakeUtil.isInterface(newCache.getFlags(myQName))) ||
       (!MakeUtil.isInterface(oldCache.getFlags(myQName)) && MakeUtil.isInterface(newCache.getFlags(myQName)));
     if (isKindChanged) {
-      markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: class kind changed (class/interface) " + myDependencyCache.resolve(myQName) : "");
+      markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: class kind changed (class/interface) " + myDependencyCache.resolve(myQName) : "");
       cacheNavigator.walkSubClasses(myQName, new ClassInfoProcessor() {
         public boolean process(int classQName) throws CacheCorruptedException {
           markAll(oldCache.getBackDependencies(classQName), LOG.isDebugEnabled()? "; reason: class kind changed (class/interface) " + myDependencyCache.resolve(myQName) : "");
@@ -208,12 +206,12 @@ class JavaDependencyProcessor {
 
     boolean becameFinal = !ClsUtil.isFinal(oldCache.getFlags(myQName)) && ClsUtil.isFinal(newCache.getFlags(myQName));
     if (becameFinal) {
-      markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: class became final: " + myDependencyCache.resolve(myQName) : "");
+      markAll(getBackDependencies(), LOG.isDebugEnabled()? "; reason: class became final: " + myDependencyCache.resolve(myQName) : "");
     }
     else {
       boolean becameAbstract = !ClsUtil.isAbstract(oldCache.getFlags(myQName)) && ClsUtil.isAbstract(newCache.getFlags(myQName));
       boolean accessRestricted = MakeUtil.isMoreAccessible(oldCache.getFlags(myQName), newCache.getFlags(myQName));
-      for (Dependency backDependency : myBackDependencies) {
+      for (Dependency backDependency : getBackDependencies()) {
         if (myDependencyCache.isTargetClassInfoMarked(backDependency)) continue;
 
         if (accessRestricted) {
@@ -543,7 +541,7 @@ class JavaDependencyProcessor {
   }
 
   private void markUseDependenciesOnEquivalentMethods(final int checkedInfoQName, Set<MethodInfo> methodsToCheck, int methodsClassName) throws CacheCorruptedException {
-    Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName);
+    final Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName);
     for (Dependency dependency : backDependencies) {
       if (myDependencyCache.isTargetClassInfoMarked(dependency)) continue;
       if (isDependentOnEquivalentMethods(dependency.getUsedMethods(), methodsToCheck)) {
@@ -781,7 +779,7 @@ class JavaDependencyProcessor {
 
         if (!removedOverridableMethods.isEmpty() && !myDependencyCache.isClassInfoMarked(subclassQName) && !myDependencyCache.getNewClassesCache().containsClass(subclassQName) /*not compiled in this session*/) {
           final Cache cache = myDependencyCache.getCache();
-          for (MethodInfo subclassMethod : cache.getMethodIds(subclassQName)) {
+          for (MethodInfo subclassMethod : cache.getMethods(subclassQName)) {
             if (!subclassMethod.isConstructor()) {
               for (MethodInfo removedMethod : removedOverridableMethods) {
                 if (removedMethod.getName() == subclassMethod.getName() /*todo: check param signatures here for better accuracy*/) {
@@ -978,7 +976,7 @@ class JavaDependencyProcessor {
   /** @return a map [fieldName->FieldInfo]*/
   private static TIntObjectHashMap<FieldInfo> getFieldInfos(Cache cache, int qName) throws CacheCorruptedException {
     final TIntObjectHashMap<FieldInfo> map = new TIntObjectHashMap<FieldInfo>();
-    for (FieldInfo fieldInfo : cache.getFieldIds(qName)) {
+    for (FieldInfo fieldInfo : cache.getFields(qName)) {
       map.put(fieldInfo.getName(), fieldInfo);
     }
     return map;
@@ -988,7 +986,7 @@ class JavaDependencyProcessor {
   private Map<String, MethodInfoContainer> getMethodInfos(Cache cache, int qName) throws CacheCorruptedException {
     final Map<String, MethodInfoContainer> map = new HashMap<String, MethodInfoContainer>();
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
-    for (MethodInfo methodInfo : cache.getMethodIds(qName)) {
+    for (MethodInfo methodInfo : cache.getMethods(qName)) {
       final String signature = methodInfo.getDescriptor(symbolTable);
       final MethodInfoContainer currentValue = map.get(signature);
       // covariant methods have the same signature, so there might be several MethodInfos for one key
@@ -1168,6 +1166,13 @@ class JavaDependencyProcessor {
     } catch(StringIndexOutOfBoundsException e) { // Should never occur
       throw new RuntimeException("Invalid signature: " + e + ":" + signature);
     }
+  }
+
+  private Dependency[] getBackDependencies() throws CacheCorruptedException {
+    if (myBackDependencies == null) {
+      myBackDependencies = myDependencyCache.getCache().getBackDependencies(myQName);
+    }
+    return myBackDependencies;
   }
 
   private static class MethodInfoContainer {
