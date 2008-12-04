@@ -75,7 +75,7 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
         }
       }
       catch (IOException e) {
-        context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot read filter", each, -1, -1);
+        context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot read the filter. " + e.getMessage(), each, -1, -1);
       }
     }
     return properties;
