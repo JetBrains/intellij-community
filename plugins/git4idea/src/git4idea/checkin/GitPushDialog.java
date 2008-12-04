@@ -187,26 +187,32 @@ public class GitPushDialog extends DialogWrapper {
    * Setup dialog validation
    */
   private void setupValidation() {
-    final ActionListener listener = new ActionListener() {
+    myPushPolicy.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        boolean isValid = getRemoteTextField().getText().length() != 0;
-        final Object policy = myPushPolicy.getSelectedItem();
-        isValid &= !policy.equals(PUSH_POLICY_SELECTED) || myBranchChooser.getMarkedElements().size() != 0;
-        setOKActionEnabled(isValid);
+        validateFields();
       }
-    };
-    myPushPolicy.addActionListener(listener);
+    });
     getRemoteTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
-        listener.actionPerformed(null);
+        validateFields();
       }
     });
     myBranchChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
       public void elementMarkChanged(final String element, final boolean isMarked) {
-        listener.actionPerformed(null);
+        validateFields();
       }
     });
-    listener.actionPerformed(null);
+    validateFields();
+  }
+
+  /**
+   * Validate fields in the dialog
+   */
+  private void validateFields() {
+    boolean isValid = getRemoteTextField().getText().length() != 0;
+    final Object policy = myPushPolicy.getSelectedItem();
+    isValid &= !policy.equals(PUSH_POLICY_SELECTED) || myBranchChooser.getMarkedElements().size() != 0;
+    setOKActionEnabled(isValid);
   }
 
   /**
@@ -297,14 +303,16 @@ public class GitPushDialog extends DialogWrapper {
    */
   private void updateBranchChooser() {
     myBranchChooser.clear();
+    final String current = myCurrentBranch.getText();
     for (String b : myBranchNames) {
-      myBranchChooser.addElement(b, myCurrentBranch.getText().equals(b));
+      myBranchChooser.addElement(b, b.equals(current));
     }
     if (myShowTagsCheckBox.isSelected()) {
       for (String t : myTagNames) {
         myBranchChooser.addElement(t, false);
       }
     }
+    validateFields();
   }
 
   /**
