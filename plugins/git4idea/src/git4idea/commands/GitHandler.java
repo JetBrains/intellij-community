@@ -22,7 +22,6 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -348,9 +347,7 @@ public abstract class GitHandler {
   @SuppressWarnings({"WeakerAccess"})
   public void addParameters(@NonNls @NotNull String... parameters) {
     checkNotStarted();
-    for (String s : parameters) {
-      myCommandLine.addParameter(translateParameter(s));
-    }
+    myCommandLine.addParameters(parameters);
   }
 
   /**
@@ -373,7 +370,7 @@ public abstract class GitHandler {
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(translateParameter(GitUtil.relativePath(myWorkingDirectory, path)));
+      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, path));
     }
   }
 
@@ -387,7 +384,7 @@ public abstract class GitHandler {
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
     checkNotStarted();
     for (VirtualFile file : files) {
-      myCommandLine.addParameter(translateParameter(GitUtil.relativePath(myWorkingDirectory, file)));
+      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, file));
     }
   }
 
@@ -509,7 +506,7 @@ public abstract class GitHandler {
   public String printableCommandLine() {
     final GeneralCommandLine line = myCommandLine.clone();
     line.setExePath("git");
-    return restoreParameter(line.getCommandLineString());
+    return line.getCommandLineString();
   }
 
   /**
@@ -647,25 +644,5 @@ public abstract class GitHandler {
    */
   public void setenv(String name, String value) {
     myEnv.put(name, value);
-  }
-
-  /**
-   * Translate parameter
-   *
-   * @param s a string to translate
-   * @return a translated string
-   */
-  public static String translateParameter(String s) {
-    return SystemInfo.isWindows ? s.replaceAll("([\\{}])", "\\\\$1") : s;
-  }
-
-  /**
-   * Restore parameter
-   *
-   * @param s a string to translate
-   * @return a translated string
-   */
-  public static String restoreParameter(String s) {
-    return SystemInfo.isWindows ? s.replaceAll("\\\\([{}])", "$1") : s;
   }
 }

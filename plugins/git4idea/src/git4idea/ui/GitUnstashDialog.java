@@ -133,31 +133,80 @@ public class GitUnstashDialog extends DialogWrapper {
     });
     myDropButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitHandler.STASH);
-        h.setNoSSH(true);
         final String stash = getSelectedStash();
-        h.addParameters("drop", stash);
-        GitHandlerUtil.doSynchronously(h, GitBundle.message("unstash.dropping.stash", stash), h.printableCommandLine());
+        GitSimpleHandler h = dropHandler(stash);
+        try {
+          h.setSilent(true);
+          h.run();
+          h.unsilence();
+        }
+        catch (VcsException ex) {
+          try {
+            //noinspection HardCodedStringLiteral
+            if (ex.getMessage().startsWith("fatal: Needed a single revision")) {
+              h = dropHandler(translateStash(stash));
+              h.run();
+            }
+            else {
+              h.unsilence();
+              throw ex;
+            }
+          }
+          catch (VcsException ex2) {
+            GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine());
+            return;
+          }
+        }
         refreshStashList();
         updateDialogState();
+      }
+
+      private GitSimpleHandler dropHandler(String stash) {
+        GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitHandler.STASH);
+        h.setNoSSH(true);
+        h.addParameters("drop", stash);
+        return h;
       }
     });
     myViewButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final VirtualFile root = getGitRoot();
-        String stash;
+        String resolvedStash;
+        String selectedStash = getSelectedStash();
         try {
-          stash = GitRevisionNumber.resolve(myProject, root, getSelectedStash()).asString();
+          resolvedStash = GitRevisionNumber.resolve(myProject, root, selectedStash).asString();
         }
         catch (VcsException ex) {
-          GitUIUtil.showOperationError(myProject, ex, "resolving revision");
-          return;
+          try {
+            //noinspection HardCodedStringLiteral
+            if (ex.getMessage().startsWith("fatal: bad revision 'stash@")) {
+              selectedStash = translateStash(selectedStash);
+              resolvedStash = GitRevisionNumber.resolve(myProject, root, selectedStash).asString();
+            }
+            else {
+              throw ex;
+            }
+          }
+          catch (VcsException ex2) {
+            GitUIUtil.showOperationError(myProject, ex, "resolving revision");
+            return;
+          }
         }
-        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, stash, root);
+        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, resolvedStash, root);
       }
     });
     init();
     updateDialogState();
+  }
+
+  /**
+   * Translate stash name so that { } are escaped.
+   *
+   * @param selectedStash a selected stash
+   * @return translated name
+   */
+  private static String translateStash(String selectedStash) {
+    return selectedStash.replaceAll("([\\{}])", "\\\\$1");
   }
 
   /**
@@ -255,10 +304,12 @@ public class GitUnstashDialog extends DialogWrapper {
   }
 
   /**
+   * @param escaped if true stash name will be escaped
    * @return unstash handler
    */
-  public GitLineHandler handler() {
-    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitHandler.STASH);
+  public GitSimpleHandler handler(boolean escaped) {
+    GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitHandler.STASH);
+    h.setNoSSH(true);
     String branch = myBranchTextField.getText();
     if (branch.length() == 0) {
       h.addParameters(myPopStashCheckBox.isSelected() ? "pop" : "apply");
@@ -269,7 +320,8 @@ public class GitUnstashDialog extends DialogWrapper {
     else {
       h.addParameters("branch", branch);
     }
-    h.addParameters(getSelectedStash());
+    final String selectedStash = getSelectedStash();
+    h.addParameters(escaped ? translateStash(selectedStash) : selectedStash);
     return h;
   }
 

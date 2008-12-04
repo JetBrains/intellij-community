@@ -95,6 +95,19 @@ public class GitSimpleHandler extends GitHandler {
   }
 
   /**
+   * For silent handlers, print out everithng
+   */
+  public void unsilence() {
+    myVcs.showCommandLine(printableCommandLine());
+    if (myStderr.length() != 0) {
+      myVcs.showErrorMessages(myStderr.toString());
+    }
+    if (myStdout.length() != 0) {
+      myVcs.showMessages(myStdout.toString());
+    }
+  }
+
+  /**
    * {@inheritDoc}
    */
   protected void onTextAvailable(final String text, final Key outputType) {

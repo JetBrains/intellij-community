@@ -18,9 +18,9 @@ package git4idea.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,8 +53,28 @@ public class GitUnstash extends GitRepositoryAction {
     if (!d.isOK()) {
       return;
     }
-    final GitLineHandler h = d.handler();
     affectedRoots.add(d.getGitRoot());
-    GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstashing.title"), h.printableCommandLine());
+    GitSimpleHandler h = d.handler(false);
+    try {
+      h.setSilent(true);
+      h.run();
+      h.unsilence();
+    }
+    catch (VcsException ex) {
+      try {
+        //noinspection HardCodedStringLiteral
+        if (ex.getMessage().startsWith("fatal: Needed a single revision")) {
+          h = d.handler(true);
+          h.run();
+        }
+        else {
+          h.unsilence();
+          throw ex;
+        }
+      }
+      catch (VcsException ex2) {
+        GitUIUtil.showOperationError(project, ex, h.printableCommandLine());
+      }
+    }
   }
 }
