@@ -607,12 +607,7 @@ public class JBTabsImpl extends JComponent
   private ActionCallback requestFocus(final JComponent toFocus) {
     if (toFocus == null) return new ActionCallback.Done();
 
-    return myFocusManager.requestFocus(new FocusCommand(toFocus) {
-      public ActionCallback run() {
-        toFocus.requestFocus();
-        return new ActionCallback.Done();
-      }
-    }, true);
+    return myFocusManager.requestFocus(new FocusCommand.ByComponent(toFocus), true);
   }
 
   private ActionCallback removeDeferred() {

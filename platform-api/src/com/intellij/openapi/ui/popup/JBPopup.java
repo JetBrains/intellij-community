@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +37,9 @@ import java.awt.*;
  * @since 6.0
  */
 public interface JBPopup extends Disposable {
+
+  @NonNls String KEY = "JBPopup";
+
   /**
    * Shows the popup at the bottom left corner of the specified component.
    *
@@ -148,4 +152,6 @@ public interface JBPopup extends Disposable {
   void removeListener(JBPopupListener listener);
 
   boolean isDisposed();
+
+  Component getOwner();
 }

@@ -1576,27 +1576,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ActionCallback requestFocus(final Component c, final boolean forced) {
-    return requestFocus(new FocusCommand(c) {
-      public ActionCallback run() {
-        final ActionCallback result = new ActionCallback();
-        if (!c.requestFocusInWindow()) {
-          c.requestFocus();
-          result.setDone();
-        } else {
-          result.setDone();
-        }
-        return result;
-      }
-
-      @Override
-      public boolean isExpired() {
-        return SwingUtilities.windowForComponent(c) == null;
-      }
-
-      public String toString() {
-        return "comp request=" + c;
-      }
-    }, forced);
+    return requestFocus(new FocusCommand.ByComponent(c), forced);
   }
 
   public ActionCallback requestFocus(final FocusCommand command, final boolean forced) {
@@ -1651,15 +1631,26 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     });
   }
 
-  private boolean checkForRejectOrByPass(final ActiveRunnable cmd, final boolean forced, final ActionCallback result) {
+  private boolean checkForRejectOrByPass(final FocusCommand cmd, final boolean forced, final ActionCallback result) {
+    if (cmd.isExpired()) return true;
+
+    final FocusCommand lastRequest = getLastEffectiveForcedRequest();
+
     if (!forced && !isUnforcedRequestAllowed()) {
-      if (cmd.equals(getLastEffectiveForcedRequest())) {
+      if (cmd.equals(lastRequest)) {
         result.setDone();
       } else {
         result.setRejected();
       }
       return true;
     }
+
+
+    if (lastRequest != null && lastRequest.dominatesOver(cmd)) {
+      result.setRejected();
+      return true;
+    }
+
     return false;
   }
 

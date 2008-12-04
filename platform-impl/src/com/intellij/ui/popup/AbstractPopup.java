@@ -22,14 +22,13 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
-import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +44,6 @@ public class AbstractPopup implements JBPopup, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
   private static final Image ourMacCorner = ImageLoader.loadFromResource("/general/macCorner.png");
-
-  @NonNls public static final String KEY = "JBPopup";
 
   private Popup myPopup;
   private MyContentPanel myContent;
@@ -92,6 +89,7 @@ public class AbstractPopup implements JBPopup, Disposable {
   private PopupBorder myPopupBorder;
   private Dimension myRestoreWindowSize;
   protected Component myOwner;
+  protected Component myRequestorComponent;
   private boolean myHeaderAlwaysFocusable;
   private JComponent myHeaderComponent;
 
@@ -543,6 +541,8 @@ public class AbstractPopup implements JBPopup, Disposable {
     if (myOwner == null) {
       myOwner = owner;
     }
+
+    myRequestorComponent = owner;
 
     myPopup = setupPopupFactory(myForcedHeavyweight || myResizable).getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
 
@@ -1110,5 +1110,9 @@ public class AbstractPopup implements JBPopup, Disposable {
   }
 
   protected void onSpeedSearchPatternChanged() {
+  }
+
+  public Component getOwner() {
+    return myRequestorComponent;
   }
 }

@@ -452,16 +452,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return true;
   }
 
-  public void requestFocus(Content content, boolean forced) {
+  public void requestFocus(final Content content, final boolean forced) {
     final Content toSelect = content == null ? getSelectedContent() : content;
     if (toSelect == null) return;
     assert myContents.contains(toSelect);
 
 
-    getFocusManager().requestFocus(new FocusCommand(content) {
+    getFocusManager().requestFocus(new FocusCommand(content, toSelect.getComponent()) {
       public ActionCallback run() {
-        doRequestFocus(toSelect);
-        return new ActionCallback.Done();
+        return doRequestFocus(toSelect);
       }
     }, forced);
   }
@@ -470,17 +469,24 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return IdeFocusManager.getInstance(myProject);
   }
 
-  private static void doRequestFocus(final Content toSelect) {
+  private static ActionCallback doRequestFocus(final Content toSelect) {
+    JComponent toFocus = computeWillFocusComponent(toSelect);
+
+    if (toFocus != null) {
+      toFocus.requestFocus();
+    }
+
+    return new ActionCallback.Done();
+  }
+
+  private static JComponent computeWillFocusComponent(Content toSelect) {
     JComponent toFocus = toSelect.getPreferredFocusableComponent();
     if (toFocus != null) {
       toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
     }
 
     if (toFocus == null) toFocus = toSelect.getPreferredFocusableComponent();
-
-    if (toFocus != null) {
-      toFocus.requestFocus();
-    }
+    return toFocus;
   }
 
   public void addDataProvider(@NotNull final DataProvider provider) {

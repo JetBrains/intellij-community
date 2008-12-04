@@ -963,5 +963,6 @@ public class UIUtil {
   public static void setFocusProxy(JComponent c, boolean isProxy) {
     c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
   }
+
 }
 
