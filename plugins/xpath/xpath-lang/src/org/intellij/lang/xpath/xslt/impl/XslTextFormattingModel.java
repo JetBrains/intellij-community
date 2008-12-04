@@ -42,6 +42,11 @@ class XslTextFormattingModel implements FormattingModel {
                 public boolean keepWhiteSpacesInsideTag(XmlTag xmlTag) {
                     return super.keepWhiteSpacesInsideTag(xmlTag) || isXslTextTag(xmlTag);
                 }
+
+                @Override
+                public boolean isTextElement(XmlTag tag) {
+                    return super.isTextElement(tag) || isXslTextTag(tag) || isXslValueOfTag(tag);
+                }
             };
 
             final ASTNode node = xmlBlock.getNode();
@@ -58,6 +63,10 @@ class XslTextFormattingModel implements FormattingModel {
 
     private static boolean isXslTextTag(XmlTag xmlTag) {
         return "text".equals(xmlTag.getLocalName()) && XsltSupport.XSLT_NS.equals(xmlTag.getNamespace());
+    }
+
+    private static boolean isXslValueOfTag(XmlTag xmlTag) {
+        return "value-of".equals(xmlTag.getLocalName()) && XsltSupport.XSLT_NS.equals(xmlTag.getNamespace());
     }
 
     @NotNull
