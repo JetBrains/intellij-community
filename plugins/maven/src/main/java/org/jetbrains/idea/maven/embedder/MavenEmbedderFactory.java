@@ -12,9 +12,10 @@ import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.JDOMReader;
+import org.jetbrains.idea.maven.project.MavenProcess;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.utils.JDOMReader;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -158,36 +159,42 @@ public class MavenEmbedderFactory {
   }
 
   public static MavenEmbedderWrapper createEmbedderForRead(MavenGeneralSettings settings,
-                                                           MavenConsole console) {
-    return createEmbedderForRead(settings, console, null);
+                                                           MavenConsole console,
+                                                           MavenProcess process) {
+    return createEmbedderForRead(settings, console, process, null);
   }
 
   public static MavenEmbedderWrapper createEmbedderForRead(MavenGeneralSettings settings,
                                                            MavenConsole console,
+                                                           MavenProcess process,
                                                            MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, console, new MyCustomizer(projectsTree, false, false));
+    return createEmbedder(settings, console, process,  new MyCustomizer(projectsTree, false, false));
   }
 
   public static MavenEmbedderWrapper createEmbedderForResolve(MavenGeneralSettings settings,
                                                               MavenConsole console,
+                                                              MavenProcess process,
                                                               MavenProjectsTree projectsTree) {
-    return createEmbedderForResolve(settings, console, projectsTree, false);
+    return createEmbedderForResolve(settings, console, process, projectsTree, false);
   }
 
   public static MavenEmbedderWrapper createEmbedderForResolve(MavenGeneralSettings settings,
                                                               MavenConsole console,
+                                                              MavenProcess process,
                                                               MavenProjectsTree projectsTree,
                                                               boolean strictResolve) {
-    return createEmbedder(settings, console, new MyCustomizer(projectsTree, true, strictResolve));
+    return createEmbedder(settings, console, process, new MyCustomizer(projectsTree, true, strictResolve));
   }
 
   public static MavenEmbedderWrapper createEmbedderForExecute(MavenGeneralSettings settings,
-                                                              MavenConsole console) {
-    return createEmbedder(settings, console, null);
+                                                              MavenConsole console,
+                                                              MavenProcess process) {
+    return createEmbedder(settings, console, process, null);
   }
 
   private static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings,
                                                      MavenConsole console,
+                                                     MavenProcess process,
                                                      ContainerCustomizer customizer) {
     Configuration configuration = new DefaultConfiguration();
 
@@ -218,7 +225,7 @@ public class MavenEmbedderFactory {
     try {
       MavenEmbedder e = new MavenEmbedder(configuration);
       e.getSettings().setUsePluginRegistry(settings.isUsePluginRegistry());
-      return new MavenEmbedderWrapper(e);
+      return new MavenEmbedderWrapper(e, process);
     }
     catch (MavenEmbedderException e) {
       MavenLog.LOG.info(e);

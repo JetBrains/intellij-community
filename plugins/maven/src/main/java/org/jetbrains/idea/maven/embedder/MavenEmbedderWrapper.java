@@ -36,17 +36,17 @@ import java.util.concurrent.TimeoutException;
 public class MavenEmbedderWrapper {
   private MavenEmbedder myEmbedder;
 
-  public MavenEmbedderWrapper(MavenEmbedder embedder) {
+  public MavenEmbedderWrapper(MavenEmbedder embedder, MavenProcess process) {
     myEmbedder = embedder;
-    installTransferListener();
+    installTransferListener(process);
   }
 
-  private void installTransferListener() {
-    myEmbedder.getDefaultRequest().setTransferListener(new TransferListenerAdapter());
+  private void installTransferListener(MavenProcess process) {
+    myEmbedder.getDefaultRequest().setTransferListener(new TransferListenerAdapter(process.getIndicator()));
 
     try {
       WagonManager wagon = (WagonManager)myEmbedder.getPlexusContainer().lookup(WagonManager.ROLE);
-      wagon.setDownloadMonitor(new TransferListenerAdapter());
+      wagon.setDownloadMonitor(new TransferListenerAdapter(process.getIndicator()));
     }
     catch (ComponentLookupException e) {
       MavenLog.LOG.info(e);
@@ -177,10 +177,10 @@ public class MavenEmbedderWrapper {
 
   private static MavenExecutionResult doExecute(final MavenExecutionRequest request,
                                                 final RequestExecutor executor,
-                                                MavenProcess p) throws MavenProcessCanceledException {
+                                                final MavenProcess p) throws MavenProcessCanceledException {
     return doExecute(new Executor<MavenExecutionResult>() {
       public MavenExecutionResult execute() throws Exception {
-        request.setTransferListener(new TransferListenerAdapter());
+        request.setTransferListener(new TransferListenerAdapter(p.getIndicator()));
         return executor.execute(request);
       }
     }, p);

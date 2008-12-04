@@ -57,10 +57,10 @@ public class MavenProjectsTree {
   private void update(Collection<VirtualFile> files,
                       MavenGeneralSettings mavenSettings,
                       MavenConsole console,
-                      MavenProcess p,
+                      MavenProcess process,
                       boolean force)
     throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, console, this);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(mavenSettings, console, process, this);
 
     try {
       Set<VirtualFile> readFiles = new HashSet<VirtualFile>();
@@ -69,10 +69,10 @@ public class MavenProjectsTree {
       for (VirtualFile each : files) {
         MavenProjectModel project = findProject(each);
         if (project == null) {
-          doAdd(each, e, readFiles, updateStack, p, force);
+          doAdd(each, e, readFiles, updateStack, process, force);
         }
         else {
-          doUpdate(findAggregator(project), project, e, false, readFiles, updateStack, p, force);
+          doUpdate(findAggregator(project), project, e, false, readFiles, updateStack, process, force);
         }
       }
     }
@@ -394,21 +394,21 @@ public class MavenProjectsTree {
   public void resolve(MavenGeneralSettings generalSettings,
                       MavenDownloadingSettings downloadingSettings,
                       MavenConsole console,
-                      MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForResolve(generalSettings, console, this);
+                      MavenProcess process) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForResolve(generalSettings, console, process, this);
 
     try {
       List<MavenProjectModel> projects = getProjects();
 
       for (MavenProjectModel each : projects) {
-        p.checkCanceled();
-        p.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(each.getPath())));
-        p.setText2("");
-        each.resolve(e, p);
+        process.checkCanceled();
+        process.setText(ProjectBundle.message("maven.resolving.pom", FileUtil.toSystemDependentName(each.getPath())));
+        process.setText2("");
+        each.resolve(e, process);
         fireUpdated(each);
       }
 
-      doDownload(downloadingSettings, p, e, projects, false);
+      doDownload(downloadingSettings, process, e, projects, false);
     }
     finally {
       e.release();
@@ -417,15 +417,15 @@ public class MavenProjectsTree {
 
   public void generateSources(MavenGeneralSettings coreSettings,
                               MavenConsole console,
-                              MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, console, this, true);
+                              MavenProcess process) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedderForResolve(coreSettings, console, process, this, true);
 
     try {
       for (MavenProjectModel each : getProjects()) {
-        p.checkCanceled();
-        p.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
-        p.setText2("");
-        each.generateSources(embedder, console, p);
+        process.checkCanceled();
+        process.setText(ProjectBundle.message("maven.generating.sources.pom", FileUtil.toSystemDependentName(each.getPath())));
+        process.setText2("");
+        each.generateSources(embedder, console, process);
       }
     }
     finally {
@@ -436,10 +436,10 @@ public class MavenProjectsTree {
   public void download(MavenGeneralSettings generalSettings,
                        MavenDownloadingSettings downloadingSettings,
                        MavenConsole console,
-                       MavenProcess p) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(generalSettings, console);
+                       MavenProcess process) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(generalSettings, console, process);
     try {
-      doDownload(downloadingSettings, p, e, getProjects(), true);
+      doDownload(downloadingSettings, process, e, getProjects(), true);
     }
     finally {
       e.release();
@@ -465,7 +465,7 @@ public class MavenProjectsTree {
                                    MavenGeneralSettings coreSettings,
                                    MavenConsole console,
                                    MavenProcess process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, console);
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, console, process);
     try {
       Artifact artifact = e.createArtifact(id.groupId,
                                            id.artifactId,

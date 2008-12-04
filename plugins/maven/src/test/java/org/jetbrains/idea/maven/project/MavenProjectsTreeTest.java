@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MavenProjectsTreeTest extends MavenImportingTestCase {
-  private static final MavenConsole NULL_CONSOLE = new NullMavenConsole();
+  private static final MavenConsole NULL_CONSOLE = NULL_MAVEN_CONSOLE;
 
   MavenProjectsTree myTree = new MavenProjectsTree();
 

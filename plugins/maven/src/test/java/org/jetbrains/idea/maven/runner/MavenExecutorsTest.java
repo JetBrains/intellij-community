@@ -35,11 +35,11 @@ public class MavenExecutorsTest extends MavenTestCase {
 
     MavenExecutor e;
     if (useEmbedder) {
-      e = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), settings, new NullMavenConsole());
+      e = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
     }
     else {
       settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
-      e = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, new NullMavenConsole());
+      e = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
     }
 
     assertTrue(e.execute(new EmptyProgressIndicator()));

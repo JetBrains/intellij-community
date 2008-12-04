@@ -1,9 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
@@ -11,7 +8,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 public class TransferListenerAdapter implements TransferListener {
   private ProgressIndicator myIndicator;
 
-  private Wagon myWagon;
+  private String myRepository;
   private String myResource;
   private long mySize;
   private long myProgress;
@@ -19,40 +16,33 @@ public class TransferListenerAdapter implements TransferListener {
   //private static long total;
   //private long started;
 
-  public TransferListenerAdapter() {
-    myIndicator = getProgressIndicator();
-  }
-
-  private ProgressIndicator getProgressIndicator() {
-    ProgressIndicator i = ProgressManager.getInstance().getProgressIndicator();
-    return i == null ? new EmptyProgressIndicator() : i;
+  public TransferListenerAdapter(ProgressIndicator indicator) {
+    myIndicator = indicator;
   }
 
   public void transferInitiated(TransferEvent event) {
     myIndicator.checkCanceled();
-  }
 
-  public void transferStarted(TransferEvent event) {
-    myIndicator.checkCanceled();
-    myWagon = event.getWagon();
-
+    myRepository = event.getWagon().getRepository().getName();
     myResource = event.getResource().getName();
     mySize = event.getResource().getContentLength();
     myProgress = 0;
 
-    //myIndicator.setText2(ProjectBundle.message("maven.transfer.start",
-    //                                           event.getWagon().getRepository().getName(),
-    //                                           event.getResource().getName()));
+    updateProgress();
+  }
+
+  public void transferStarted(TransferEvent event) {
+    //updateProgress();
+
     //System.out.print("Downloading " + event.getResource().getName() + " from [" + event.getWagon().getRepository().getId() + "]...");
     //started = System.currentTimeMillis();
-    updateProgress();
   }
 
   private void updateProgress() {
     myIndicator.setText2(ProjectBundle.message("maven.transfer.progress",
                                                myProgress / 1024,
                                                mySize / 1024,
-                                               myWagon.getRepository().getName(),
+                                               myRepository,
                                                myResource));
   }
 

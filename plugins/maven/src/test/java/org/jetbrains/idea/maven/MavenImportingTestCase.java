@@ -311,7 +311,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myMavenProjectsManager.doInitComponent(false);
       myMavenProjectsManager.setManagedFiles(files);
       myMavenProjectsManager.setActiveProfiles(myProfilesList);
-      myMavenProjectsManager.doReimport(new NullMavenConsole());
+      myMavenProjectsManager.doReimport(NULL_MAVEN_CONSOLE);
       myMavenTree = myMavenProjectsManager.getMavenProjectTree();
     }
     catch (MavenProcessCanceledException e) {
@@ -332,7 +332,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenGeneralSettings(), rs, new NullMavenConsole());
+    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenGeneralSettings(), rs, NULL_MAVEN_CONSOLE);
 
     e.execute(new EmptyProgressIndicator());
   }

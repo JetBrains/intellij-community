@@ -34,10 +34,10 @@ public class ArchetypesTest extends MavenTestCase {
     settings.setMavenProperties(props);
     MavenExecutor exec;
     if (useEmbedder) {
-      exec = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), settings, new NullMavenConsole());
+      exec = new MavenEmbeddedExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
     } else {
       settings.setJreName(MavenRunnerSettings.USE_INTERNAL_JAVA);
-      exec = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, new NullMavenConsole());
+      exec = new MavenExternalExecutor(params, getMavenGeneralSettings(), settings, NULL_MAVEN_CONSOLE);
     }
     exec.execute(new EmptyProgressIndicator());
 

@@ -35,7 +35,7 @@ public class NexusIndexerTest extends MavenTestCase {
     super.setUp();
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenGeneralSettings(), new NullMavenConsole()).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(getMavenGeneralSettings(), NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS).getEmbedder();
 
     PlexusContainer p = myEmbedder.getPlexusContainer();
     myIndexer = (NexusIndexer)p.lookup(NexusIndexer.class);

@@ -121,13 +121,13 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     });
   }
 
-  private void collectProfiles(MavenProcess p) {
+  private void collectProfiles(MavenProcess process) {
     getParameters().myProfiles = new ArrayList<String>();
 
-    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getGeneralSettings(), new SoutMavenConsole());
+    MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getGeneralSettings(), new SoutMavenConsole(), process);
     try {
       for (VirtualFile f : getParameters().myFiles) {
-        MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>(), p);
+        MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>(), process);
         if (!holder.isValid) continue;
 
         Set<String> profiles = new LinkedHashSet<String>();

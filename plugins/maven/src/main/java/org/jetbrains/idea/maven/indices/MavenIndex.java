@@ -311,7 +311,7 @@ public class MavenIndex {
       }
     }
     else {
-      updater.fetchAndUpdateIndex(context, new TransferListenerAdapter(), proxyInfo);
+      updater.fetchAndUpdateIndex(context, new TransferListenerAdapter(progress), proxyInfo);
     }
   }
 

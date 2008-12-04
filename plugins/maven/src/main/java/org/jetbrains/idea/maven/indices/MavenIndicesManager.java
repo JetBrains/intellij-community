@@ -3,10 +3,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProcess;
 import org.jetbrains.idea.maven.runner.SoutMavenConsole;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -72,7 +70,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     if (myIndices != null) return;
 
     MavenGeneralSettings defaultSettings = new MavenGeneralSettings();
-    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(defaultSettings, new SoutMavenConsole()).getEmbedder();
+    myEmbedder = MavenEmbedderFactory.createEmbedderForExecute(defaultSettings, new SoutMavenConsole(), new MavenProcess(new EmptyProgressIndicator())).getEmbedder();
     File dir = myTestIndicesDir == null
                ? MavenUtil.getPluginSystemDir("Indices")
                : myTestIndicesDir;
