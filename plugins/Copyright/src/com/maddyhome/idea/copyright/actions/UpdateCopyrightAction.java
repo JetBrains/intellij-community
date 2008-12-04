@@ -22,8 +22,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
-import com.maddyhome.idea.copyright.util.FileUtil;
 
 public class UpdateCopyrightAction extends AnAction
 {

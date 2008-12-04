@@ -17,7 +17,7 @@
 package com.maddyhome.idea.copyright;
 
 import com.intellij.profile.ProfileEx;
-import com.maddyhome.idea.copyright.util.EntityUtil;
+import com.maddyhome.idea.copyright.pattern.EntityUtil;
 
 public class CopyrightProfile extends ProfileEx {
   public static final String DEFAULT_COPYRIGHT_NOTICE =

@@ -24,8 +24,8 @@ import com.intellij.psi.PsiManager;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
+import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
-import com.maddyhome.idea.copyright.util.VelocityHelper;
 
 public abstract class AbstractUpdateCopyright implements UpdateCopyright {
   private String commentText = null;

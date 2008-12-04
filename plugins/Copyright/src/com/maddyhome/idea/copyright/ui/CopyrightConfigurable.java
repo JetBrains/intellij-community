@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
-import com.maddyhome.idea.copyright.util.VelocityHelper;
+import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;

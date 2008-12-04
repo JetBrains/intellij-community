@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.maddyhome.idea.copyright.util;
+package com.maddyhome.idea.copyright.pattern;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

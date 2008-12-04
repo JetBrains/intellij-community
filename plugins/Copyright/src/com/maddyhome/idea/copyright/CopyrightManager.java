@@ -61,7 +61,7 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable {
 
   private Project myProject;
 
-  private final String myVersion = "1.0";
+  private static final String myVersion = "1.0";
 
   public CopyrightManager(Project project) {
     myProject = project;
