@@ -18,6 +18,7 @@ package git4idea.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -46,7 +47,9 @@ public class GitInit extends AnAction {
    */
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    assert project != null;
+    if (project == null) {
+      return;
+    }
     FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle(GitBundle.getString("init.destination.directory.title"));
@@ -70,6 +73,11 @@ public class GitInit extends AnAction {
     }
     catch (VcsException ex) {
       GitUIUtil.showOperationError(project, ex, "git init");
+    }
+    int rc = Messages.showYesNoDialog(project, GitBundle.getString("init.add.root.message"), GitBundle.getString("init.add.root.title"),
+                                      Messages.getQuestionIcon());
+    if (rc != 0) {
+      return;
     }
     final String path = root.equals(baseDir) ? "" : root.getPath();
     ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
@@ -95,5 +103,21 @@ public class GitInit extends AnAction {
     vcs.setDirectoryMappings(vcsDirectoryMappings);
     vcs.updateActiveVcss();
     GitUtil.refreshFiles(project, Collections.singleton(root));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void update(AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    Presentation presentation = e.getPresentation();
+    if (project == null) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
+    presentation.setEnabled(true);
+    presentation.setVisible(true);
   }
 }
