@@ -162,21 +162,23 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Co
         });
         result.add(new AnAction("Import", "Import", Icons.ADVICE_ICON) {
             public void actionPerformed(AnActionEvent event) {
-              final VirtualFile[] files = FileChooser.chooseFiles(myProject, new OpenProjectFileChooserDescriptor(true) {
+              final OpenProjectFileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
                 @Override
                 public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-                  return super.isFileVisible(file, showHiddenFiles) || isModuleFile(file);
+                  return super.isFileVisible(file, showHiddenFiles) || canContainCopyright(file);
                 }
 
                 @Override
                 public boolean isFileSelectable(VirtualFile file) {
-                  return super.isFileSelectable(file) || isModuleFile(file);
+                  return super.isFileSelectable(file) || canContainCopyright(file);
                 }
 
-                private boolean isModuleFile(VirtualFile file) {
-                  return !file.isDirectory() && file.getFileType() == StdFileTypes.IDEA_MODULE;
+                private boolean canContainCopyright(VirtualFile file) {
+                  return !file.isDirectory() && (file.getFileType() == StdFileTypes.IDEA_MODULE || file.getFileType() == StdFileTypes.XML);
                 }
-              });
+              };
+              descriptor.setTitle("Choose file containing copyright notice");
+              final VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
                 if (files.length != 1) return;
               final CopyrightProfile copyrightProfile = new CopyrightProfile();
               if (ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(files[0]), copyrightProfile)) {
