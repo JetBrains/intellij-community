@@ -1,7 +1,6 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -18,6 +17,7 @@ import com.intellij.util.ui.MessageCategory;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -157,9 +157,13 @@ class ReloadClassesWorker {
     catch (Throwable e) {
       processException(e);
     }
-        
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (project.isDisposed()) {
+          return;
+        }
         final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
         breakpointManager.reloadBreakpoints();
         breakpointManager.updateAllRequests();
@@ -168,7 +172,7 @@ class ReloadClassesWorker {
           LOG.debug("time stamp set");
         }
         myDebuggerSession.refresh(false);
-            
+
         getDebugProcess().getManagerThread().invokeLater(new DebuggerCommandImpl() {
           protected void action() throws Exception {
             try {
