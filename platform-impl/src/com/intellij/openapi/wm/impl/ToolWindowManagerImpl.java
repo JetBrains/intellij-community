@@ -838,8 +838,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       stripe.repaint();
     }
 
-    final StripeButton button = stripe.getButtonFor(toolWindowId);
-
     final ToolWindowAnchor anchor = getInfo(toolWindowId).getAnchor();
     final Ref<Balloon.Position> position = Ref.create(Balloon.Position.below);
     if (ToolWindowAnchor.TOP == anchor) {
@@ -864,6 +862,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     });
 
+    final StripeButton button = stripe.getButtonFor(toolWindowId);
+    if (button == null) return;
 
     final Runnable show = new Runnable() {
       public void run() {
