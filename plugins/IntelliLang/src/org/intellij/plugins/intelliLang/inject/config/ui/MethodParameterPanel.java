@@ -177,26 +177,30 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   private void rebuildTreeModel() {
     myData.clear();
-    final PsiClass psiClass = findClass(getClassType());
-    if (psiClass == null) return;
-    final List<PsiMethod> methods = ContainerUtil.findAll(psiClass.getMethods(), new Condition<PsiMethod>() {
-      public boolean value(final PsiMethod method) {
-        final PsiModifierList modifiers = method.getModifierList();
-        if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-          return false;
-        }
-        if (isInjectable(method.getReturnType(), method.getProject())) return true;
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        return null != ContainerUtil.find(parameters, new Condition<PsiParameter>() {
-          public boolean value(PsiParameter p) {
-            return isInjectable(p.getType(), p.getProject());
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final PsiClass psiClass = findClass(getClassType());
+        if (psiClass == null) return;
+        final List<PsiMethod> methods = ContainerUtil.findAll(psiClass.getMethods(), new Condition<PsiMethod>() {
+          public boolean value(final PsiMethod method) {
+            final PsiModifierList modifiers = method.getModifierList();
+            if (modifiers.hasModifierProperty(PsiModifier.PRIVATE) || modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+              return false;
+            }
+            if (isInjectable(method.getReturnType(), method.getProject())) return true;
+            final PsiParameter[] parameters = method.getParameterList().getParameters();
+            return null != ContainerUtil.find(parameters, new Condition<PsiParameter>() {
+              public boolean value(PsiParameter p) {
+                return isInjectable(p.getType(), p.getProject());
+              }
+            });
           }
         });
+        for (PsiMethod method : methods) {
+          myData.put(method, MethodParameterInjection.createMethodInfo(method));
+        }
       }
     });
-    for (PsiMethod method : methods) {
-      myData.put(method, MethodParameterInjection.createMethodInfo(method));
-    }
   }
 
   private void refreshTreeStructure() {
