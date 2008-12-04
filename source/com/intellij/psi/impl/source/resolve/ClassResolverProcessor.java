@@ -16,7 +16,7 @@ import java.util.List;
 
 public class ClassResolverProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
   private final String myClassName;
-  private PsiElement myPlace;
+  private final PsiElement myPlace;
   private PsiClass myAccessClass = null;
   private List<ClassCandidateInfo> myCandidates = null;
   private boolean myHasAccessibleCandidate;
@@ -26,11 +26,11 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
 
   public ClassResolverProcessor(String className, PsiElement place) {
     myClassName = className;
-    myPlace = place;
-    final PsiFile file = myPlace.getContainingFile();
+    final PsiFile file = place.getContainingFile();
     if (file instanceof JavaCodeFragment) {
-      if (((JavaCodeFragment)file).getVisibilityChecker() != null) myPlace = null;
+      if (((JavaCodeFragment)file).getVisibilityChecker() != null) place = null;
     }
+    myPlace = place;
     if (place instanceof PsiReferenceExpression) {
       final PsiReferenceExpression expression = (PsiReferenceExpression)place;
       final PsiExpression qualifierExpression = expression.getQualifierExpression();

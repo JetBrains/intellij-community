@@ -55,13 +55,13 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
 
   public void handleEvent(Event event, Object associated){
     if(event == JavaScopeProcessorEvent.CHANGE_LEVEL && myName != null){
-      myCachedResult = getResult();
+      getResult();
     }
   }
 
   public JavaResolveResult[] getResult(){
     if(myCachedResult == null){
-      final SmartList<CandidateInfo> conflicts = super.getResults();
+      final SmartList<CandidateInfo> conflicts = getResults();
       for (PsiConflictResolver resolver : myResolvers) {
         CandidateInfo candidate = resolver.resolveConflict(conflicts);
         if (candidate != null) {

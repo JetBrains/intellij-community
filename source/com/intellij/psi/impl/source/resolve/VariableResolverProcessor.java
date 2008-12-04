@@ -62,7 +62,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   public void add(PsiElement element, PsiSubstitutor substitutor) {
     final boolean staticProblem = myStaticScopeFlag && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC);
-    super.add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
+    add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
   }
 
   public boolean shouldProcess(Class elementClass) {
