@@ -123,7 +123,7 @@ public class BrowserUtil {
       return true;
     }
     else {
-      return GeneralSettings.getInstance().isUseDefaultBrowser();
+      return getGeneralSettingsInstance().isUseDefaultBrowser();
     }
   }
 
@@ -152,7 +152,7 @@ public class BrowserUtil {
   private static void launchBrowserUsingStandardWay(final String url) {
     String[] command;
     try {
-      String browserPath = GeneralSettings.getInstance().getBrowserPath();
+      String browserPath = getGeneralSettingsInstance().getBrowserPath();
       if (browserPath == null || browserPath.trim().length() == 0) {
         showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser"),
                          IdeBundle.message("title.browser.not.found"));
@@ -176,6 +176,11 @@ public class BrowserUtil {
     launchBrowser(url, command);
   }
 
+  private static GeneralSettings getGeneralSettingsInstance() {
+    final GeneralSettings settings = GeneralSettings.getInstance();
+    if (settings != null) return settings;
+    return new GeneralSettings();
+  }
 
   public static void launchBrowser(final String url, String name) {
     //noinspection HardCodedStringLiteral
