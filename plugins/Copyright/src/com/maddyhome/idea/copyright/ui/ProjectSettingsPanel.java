@@ -19,16 +19,13 @@ package com.maddyhome.idea.copyright.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.TableUtil;
@@ -62,7 +59,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
     private final TableView<ScopeSetting> myScopeMappingTable;
     private final ListTableModel<ScopeSetting> myScopeMappingModel;
-    private final ComboboxWithBrowseButton myProfilesComboBox = new ComboboxWithBrowseButton();
+    private final JComboBox myProfilesComboBox = new JComboBox();
 
     private JButton myAddButton;
     private JButton myRemoveButton;
@@ -78,9 +75,9 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         myScopeMappingModel = new ListTableModel<ScopeSetting>(new ColumnInfo[]{SCOPE, SETTING}, new ArrayList<ScopeSetting>(), 0);
         myScopeMappingTable = new TableView<ScopeSetting>(myScopeMappingModel);
 
-        final DefaultComboBoxModel boxModel = (DefaultComboBoxModel) myProfilesComboBox.getComboBox().getModel();
+        final DefaultComboBoxModel boxModel = (DefaultComboBoxModel) myProfilesComboBox.getModel();
         fillCopyrightProfiles(boxModel);
-        myProfilesComboBox.getComboBox().setRenderer(new DefaultListCellRenderer() {
+        myProfilesComboBox.setRenderer(new DefaultListCellRenderer() {
             public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value == null) {
@@ -89,11 +86,6 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                     setText(((CopyrightProfile) value).getName());
                 }
                 return rendererComponent;
-            }
-        });
-        myProfilesComboBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                configureCopyrightProfiles();
             }
         });
 
@@ -193,32 +185,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                 }
         );
 
-        JButton configureButton = new JButton("Configure...");
-        configureButton.setMnemonic('f');
-        configureButton.addActionListener(new ActionListener() {
-            public void actionPerformed(final ActionEvent e) {
-                configureCopyrightProfiles();
-            }
-        });
-        return new JButton[]{myAddButton, myRemoveButton, myMoveUpButton, myMoveDownButton, configureButton};
-    }
-
-    private void configureCopyrightProfiles() {
-        final CopyrightProfile copyrightProfile = (CopyrightProfile) myProfilesComboBox.getComboBox().getSelectedItem();
-        ShowSettingsUtil.getInstance().editConfigurable(myProject, new CopyrightProfilesPanel(myProject));
-        final DefaultComboBoxModel boxModel = (DefaultComboBoxModel) myProfilesComboBox.getComboBox().getModel();
-        boxModel.removeAllElements();
-        fillCopyrightProfiles(boxModel);
-        if (copyrightProfile != null) {
-            for(int i = 0;i < boxModel.getSize(); i++) {
-                final CopyrightProfile profile = (CopyrightProfile) boxModel.getElementAt(i);
-                if (profile != null && Comparing.strEqual(profile.getName(), copyrightProfile.getName())) {
-                    myProfilesComboBox.getComboBox().setSelectedItem(profile);
-                    break;
-                }
-            }
-        }
-        updateButtons();
+        return new JButton[]{myAddButton, myRemoveButton, myMoveUpButton, myMoveDownButton};
     }
 
     private void fillCopyrightProfiles(DefaultComboBoxModel boxModel) {
@@ -235,7 +202,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
     public JComponent getMainComponent() {
         final JPanel panel = new JPanel(new BorderLayout(0, 10));
-        final LabeledComponent<ComboboxWithBrowseButton> component = new LabeledComponent<ComboboxWithBrowseButton>();
+        final LabeledComponent<JComboBox> component = new LabeledComponent<JComboBox>();
         component.setText("Default &project copyright:");
         component.setLabelLocation(BorderLayout.WEST);
         component.setComponent(myProfilesComboBox);
@@ -247,7 +214,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
     public boolean isModified() {
         final CopyrightProfile defaultCopyright = myManager.getDefaultCopyright();
-        final Object selected = myProfilesComboBox.getComboBox().getSelectedItem();
+        final Object selected = myProfilesComboBox.getSelectedItem();
         if (defaultCopyright != selected) {
             if (selected == null) return true;
             if (defaultCopyright == null) return true;
@@ -274,11 +241,11 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         for (ScopeSetting scopeSetting : settingList) {
             myManager.mapCopyright(scopeSetting.getScope().getName(), scopeSetting.getProfile());
         }
-        myManager.setDefaultCopyright((CopyrightProfile) myProfilesComboBox.getComboBox().getSelectedItem());
+        myManager.setDefaultCopyright((CopyrightProfile) myProfilesComboBox.getSelectedItem());
     }
 
     public void reset() {
-        myProfilesComboBox.getComboBox().setSelectedItem(myManager.getDefaultCopyright());
+        myProfilesComboBox.setSelectedItem(myManager.getDefaultCopyright());
         final List<ScopeSetting> mappings = new ArrayList<ScopeSetting>();
         final Map<String, String> copyrights = new HashMap<String, String>(myManager.getCopyrightsMapping());
         final DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
