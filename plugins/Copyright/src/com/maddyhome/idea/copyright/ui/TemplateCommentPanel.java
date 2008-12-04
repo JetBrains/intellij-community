@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nls;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 public class TemplateCommentPanel implements Configurable {
   private CopyrightManager myManager;
@@ -59,6 +57,7 @@ public class TemplateCommentPanel implements Configurable {
   private JCheckBox cbUseAlternate;
   private JRadioButton myUseDefaultSettingsRadioButton;
   private JRadioButton myUseCustomFormattingOptionsRadioButton;
+  private JRadioButton myNoCopyright;
 
   public TemplateCommentPanel(FileType fileType, TemplateCommentPanel parentPanel, String[] locations, Project project) {
     this.parentPanel = parentPanel;
@@ -67,6 +66,7 @@ public class TemplateCommentPanel implements Configurable {
     if (fileType == null) {
       myUseDefaultSettingsRadioButton.setVisible(false);
       myUseCustomFormattingOptionsRadioButton.setVisible(false);
+      myNoCopyright.setVisible(false);
     }
 
     this.fileType = fileType != null ? fileType : StdFileTypes.JAVA;
@@ -129,20 +129,15 @@ public class TemplateCommentPanel implements Configurable {
 
     myUseDefaultSettingsRadioButton.setSelected(true);
 
-        ItemListener listener = new ItemListener()
-        {
-            public void itemStateChanged(ItemEvent itemEvent)
-            {
-                if (itemEvent.getStateChange() == ItemEvent.SELECTED)
-                {
+        final ActionListener listener = new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
                     updateOverride();
-                }
             }
         };
 
-        myUseDefaultSettingsRadioButton.addItemListener(listener);
-        myUseCustomFormattingOptionsRadioButton.addItemListener(listener);
-
+        myUseDefaultSettingsRadioButton.addActionListener(listener);
+        myUseCustomFormattingOptionsRadioButton.addActionListener(listener);
+        myNoCopyright.addActionListener(listener);
   }
 
 
@@ -168,13 +163,26 @@ public class TemplateCommentPanel implements Configurable {
   }
 
   private int getOverrideChoice() {
-    return myUseDefaultSettingsRadioButton.isSelected() ? LanguageOptions.USE_TEMPLATE : LanguageOptions.USE_TEXT;
+    return myUseDefaultSettingsRadioButton.isSelected() ? LanguageOptions.USE_TEMPLATE : myNoCopyright.isSelected() ? LanguageOptions.NO_COPYRIGHT : LanguageOptions.USE_TEXT;
   }
 
   private void updateOverride() {
     int choice = getOverrideChoice();
     LanguageOptions parentOpts = parentPanel != null ? parentPanel.getOptions() : null;
     switch (choice) {
+      case LanguageOptions.NO_COPYRIGHT:
+        tempOptionsPanel.setEnabled(false);
+        rbBefore.setEnabled(false);
+        rbAfter.setEnabled(false);
+        cbAddBlank.setEnabled(false);
+        if (fileLocations != null)
+        {
+            for (JRadioButton fileLocation : fileLocations)
+            {
+                fileLocation.setEnabled(false);
+            }
+        }
+        break;
       case LanguageOptions.USE_TEMPLATE:
         final boolean isTemplate = parentPanel == null;
         tempOptionsPanel.setEnabled(isTemplate);
@@ -251,9 +259,10 @@ public class TemplateCommentPanel implements Configurable {
 
     tempOptionsPanel
       .setOptions(parentPanel == null ? myManager.getOptions().getTemplateOptions().getTemplateOptions() : options.getTemplateOptions());
-    final boolean isTemplate = options.getFileTypeOverride() == LanguageOptions.USE_TEMPLATE;
-    myUseDefaultSettingsRadioButton.setSelected(isTemplate);
-    myUseCustomFormattingOptionsRadioButton.setSelected(!isTemplate);
+    final int fileTypeOverride = options.getFileTypeOverride();
+    myUseDefaultSettingsRadioButton.setSelected(fileTypeOverride == LanguageOptions.USE_TEMPLATE);
+    myUseCustomFormattingOptionsRadioButton.setSelected(fileTypeOverride == LanguageOptions.USE_TEXT);
+    myNoCopyright.setSelected(fileTypeOverride == LanguageOptions.NO_COPYRIGHT);
     if (options.isRelativeBefore()) {
       rbBefore.setSelected(true);
     }

@@ -25,6 +25,7 @@ import org.jdom.Element;
 
 public class LanguageOptions implements JDOMExternalizable, Cloneable
 {
+    public static final int NO_COPYRIGHT = 1;
     public static final int USE_TEMPLATE = 2;
     public static final int USE_TEXT = 3;
     
