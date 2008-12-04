@@ -25,11 +25,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.maddyhome.idea.copyright.options.Options;
+import com.maddyhome.idea.copyright.CopyrightProfile;
 
 public class UpdateJavaScriptFileCopyright extends UpdatePsiFileCopyright
 {
-    public UpdateJavaScriptFileCopyright(Project project, Module module, VirtualFile root, Options options)
+    public UpdateJavaScriptFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
     {
         super(project, module, root, options);
     }

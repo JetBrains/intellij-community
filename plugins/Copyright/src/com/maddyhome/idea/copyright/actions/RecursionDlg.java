@@ -1,4 +1,4 @@
-package com.maddyhome.idea.copyright.ui;
+package com.maddyhome.idea.copyright.actions;
 
 /*
  * Copyright - Copyright notice updater for IDEA
@@ -28,15 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 
-import java.awt.Insets;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 
 public class RecursionDlg extends DialogWrapper
 {

@@ -24,8 +24,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.maddyhome.idea.copyright.util.EntityUtil;
-import com.maddyhome.idea.copyright.util.VelocityHelper;
 import org.jdom.Element;
 
 public class LanguageOptions implements JDOMExternalizable, Cloneable
@@ -33,7 +31,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
     public static final int USE_NONE = 1;
     public static final int USE_TEMPLATE = 2;
     public static final int USE_TEXT = 3;
-    public static final int USE_CUSTOM = 4;
+    
 
     public LanguageOptions()
     {
@@ -44,8 +42,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
     {
         templateOptions = new TemplateOptions();
         templateOptions.setDefaults();
-        notice = EntityUtil.encode("Copyright (c) $today.year, Your Corporation. All Rights Reserved.");
-        keyword = EntityUtil.encode("Copyright");
+
         fileTypeOverride = USE_TEMPLATE;
         relativeBefore = true;
         addBlankAfter = true;
@@ -63,7 +60,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
         this.templateOptions = templateOptions;
     }
 
-    public String getNotice()
+    /*public String getNotice()
     {
         return EntityUtil.decode(notice);
     }
@@ -81,7 +78,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
     public void setKeyword(String keyword)
     {
         this.keyword = EntityUtil.encode(keyword);
-    }
+    }*/
 
     public int getFileTypeOverride()
     {
@@ -176,14 +173,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
         {
             return false;
         }
-        if (keyword != null ? !keyword.equals(that.keyword) : that.keyword != null)
-        {
-            return false;
-        }
-        if (notice != null ? !notice.equals(that.notice) : that.notice != null)
-        {
-            return false;
-        }
         return !(templateOptions != null ? !templateOptions.equals(that.templateOptions) :
             that.templateOptions != null);
     }
@@ -192,8 +181,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
     {
         int result;
         result = (templateOptions != null ? templateOptions.hashCode() : 0);
-        result = 29 * result + (notice != null ? notice.hashCode() : 0);
-        result = 29 * result + (keyword != null ? keyword.hashCode() : 0);
         result = 29 * result + fileTypeOverride;
         result = 29 * result + (relativeBefore ? 1 : 0);
         result = 29 * result + (addBlankAfter ? 1 : 0);
@@ -207,8 +194,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
         final StringBuffer sb = new StringBuffer();
         sb.append("LanguageOptions");
         sb.append("{templateOptions=").append(templateOptions);
-        sb.append(", notice='").append(notice).append('\'');
-        sb.append(", keyword='").append(keyword).append('\'');
         sb.append(", fileTypeOverride=").append(fileTypeOverride);
         sb.append(", relativeBefore=").append(relativeBefore);
         sb.append(", addBlankAfter=").append(addBlankAfter);
@@ -228,34 +213,13 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
 
     public void validate() throws ConfigurationException
     {
-        if (fileTypeOverride == USE_TEXT || fileTypeOverride == USE_CUSTOM)
+        if (fileTypeOverride == USE_TEXT )
         {
             templateOptions.validate();
-        }
-        if (fileTypeOverride == USE_CUSTOM && (keyword == null || keyword.length() == 0))
-        {
-            throw new ConfigurationException("Copyright keyword is required.");
-        }
-        if (fileTypeOverride == USE_CUSTOM && (notice == null || notice.length() == 0))
-        {
-            throw new ConfigurationException("Copyright text is required.");
-        }
-        if (fileTypeOverride == USE_CUSTOM)
-        {
-            try
-            {
-                VelocityHelper.verify(notice);
-            }
-            catch (Exception e)
-            {
-                throw new ConfigurationException("Copyright notice error:\n" + e.getMessage());
-            }
         }
     }
 
     public TemplateOptions templateOptions;
-    public String notice;
-    public String keyword;
     public int fileTypeOverride;
     public boolean relativeBefore;
     public boolean addBlankAfter;

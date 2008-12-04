@@ -23,18 +23,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.maddyhome.idea.copyright.ui.ModuleDlg;
-import com.maddyhome.idea.copyright.ui.RecursionDlg;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import com.maddyhome.idea.copyright.util.FileUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class UpdateCopyrightAction extends AnAction
 {

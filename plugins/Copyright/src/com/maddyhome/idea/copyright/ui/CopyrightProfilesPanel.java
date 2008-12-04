@@ -23,7 +23,6 @@ import com.intellij.util.containers.HashMap;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
-import com.maddyhome.idea.copyright.options.Options;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -155,13 +154,11 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
                 }
               });
                 if (files.length != 1) return;
-                Options external = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(files[0]));
-                if (external != null) {
-                    final String profileName = askForProfileName("Import copyright profile");
-                    if (profileName == null) return;
-                    final CopyrightProfile copyrightProfile = new CopyrightProfile();
+              final CopyrightProfile copyrightProfile = new CopyrightProfile();
+              if (ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(files[0]), copyrightProfile)) {
+                  final String profileName = askForProfileName("Import copyright profile");
+                  if (profileName == null) return;
                     copyrightProfile.setName(profileName);
-                    copyrightProfile.setOptions(external);
                     addProfileNode(copyrightProfile);
                     Messages.showInfoMessage(myProject,
                             "The copyright settings have been successfully imported.",

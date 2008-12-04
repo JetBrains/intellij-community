@@ -24,19 +24,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlAttributeDecl;
-import com.intellij.psi.xml.XmlDoctype;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlProlog;
-import com.intellij.psi.xml.XmlTag;
-import com.maddyhome.idea.copyright.options.Options;
+import com.intellij.psi.xml.*;
+import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.XmlOptions;
 
 public class UpdateXmlFileCopyright extends UpdatePsiFileCopyright
 {
-    public UpdateXmlFileCopyright(Project project, Module module, VirtualFile root, Options options)
+    public UpdateXmlFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
     {
         super(project, module, root, options);
     }

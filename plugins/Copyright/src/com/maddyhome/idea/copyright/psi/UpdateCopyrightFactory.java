@@ -29,25 +29,21 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.maddyhome.idea.copyright.options.Options;
+import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
 public class UpdateCopyrightFactory
 {
     public static UpdateCopyright createUpdateCopyright(Project project, Module module, PsiFile file,
-        Options options)
+        CopyrightProfile options)
     {
         return createUpdateCopyright(project, module, file.getVirtualFile(), file.getFileType(), options);
     }
 
-    public static UpdateCopyright createUpdateCopyright(Project project, Module module, VirtualFile file,
-        Options options)
-    {
-        return createUpdateCopyright(project, module, file, file.getFileType(), options);
-    }
+
 
     private static UpdateCopyright createUpdateCopyright(Project project, Module module, VirtualFile file,
-        FileType base, Options options)
+        FileType base, CopyrightProfile options)
     {
         if (base == null || file == null)
         {

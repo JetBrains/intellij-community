@@ -1,28 +1,37 @@
 package com.maddyhome.idea.copyright;
 
 import com.intellij.profile.ProfileEx;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.maddyhome.idea.copyright.options.Options;
-import org.jdom.Element;
+import com.maddyhome.idea.copyright.util.EntityUtil;
 
 public class CopyrightProfile extends ProfileEx {
-    public Options myOptions = new Options();
+  public static final String DEFAULT_COPYRIGHT_NOTICE =
+    EntityUtil.encode("Copyright (c) $today.year, Your Corporation. All Rights Reserved.");
 
-    //read external
-    public CopyrightProfile() {
-        super("");
-    }
+  public String notice = DEFAULT_COPYRIGHT_NOTICE;
+  public String keyword = EntityUtil.encode("Copyright");
 
-    public CopyrightProfile(String profileName) {
-        super(profileName);
-    }
+  //read external
+  public CopyrightProfile() {
+    super("");
+  }
 
-    public Options getOptions() {
-        return myOptions;
-    }
+  public CopyrightProfile(String profileName) {
+    super(profileName);
+  }
 
-    public void setOptions(Options options) {
-        myOptions = options;
-    }
+  public String getNotice() {
+    return notice;
+  }
+
+  public String getKeyword() {
+    return keyword;
+  }
+
+  public void setNotice(String text) {
+    notice = text;
+  }
+
+  public void setKeyword(String keyword) {
+    this.keyword = keyword;
+  }
 }

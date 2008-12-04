@@ -26,6 +26,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,7 @@ public class Options implements JDOMExternalizable, Cloneable
         setOptions(LANG_TEMPLATE, options);
     }
 
+   @Nullable
     public LanguageOptions getMergedOptions(String name)
     {
         try
@@ -78,18 +80,13 @@ public class Options implements JDOMExternalizable, Cloneable
             switch (lang.getFileTypeOverride())
             {
                 case LanguageOptions.USE_NONE:
-                    lang.setNotice("");
-                    break;
+                    return null;
                 case LanguageOptions.USE_TEMPLATE:
                     temp.setFileLocation(lang.getFileLocation());
                     temp.setFileTypeOverride(lang.getFileTypeOverride());
                     lang = temp;
                     break;
                 case LanguageOptions.USE_TEXT:
-                    lang.setNotice(temp.getNotice());
-                    break;
-                case LanguageOptions.USE_CUSTOM:
-                    // No-op: lang is correct as-is
                     break;
             }
 
@@ -141,7 +138,7 @@ public class Options implements JDOMExternalizable, Cloneable
             {
                 String lname = StdFileTypes.JAVA.getName();
                 LanguageOptions opts = LanguageOptionsFactory.createOptions(lname);
-                opts.setFileTypeOverride(LanguageOptions.USE_CUSTOM);
+                opts.setFileTypeOverride(LanguageOptions.USE_TEMPLATE);
                 List children = root.getChildren("option");
                 for (Object option : children)
                 {
@@ -149,7 +146,7 @@ public class Options implements JDOMExternalizable, Cloneable
                     String val = ((Element)option).getAttributeValue("value");
                     if ("body".equals(name))
                     {
-                        opts.setNotice(val);
+                        //todo opts.setNotice(val);
                     }
                     else if ("location".equals(name))
                     {

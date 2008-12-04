@@ -21,17 +21,17 @@ package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.maddyhome.idea.copyright.CopyrightManager;
-import com.maddyhome.idea.copyright.options.Options;
+import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.psi.UpdateCopyright;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightFactory;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
@@ -78,7 +78,7 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor
 
         if (mod == null) return EmptyRunnable.getInstance();
 
-        Options opts = CopyrightManager.getInstance(project).getCopyrightOptions(file);
+        CopyrightProfile opts = CopyrightManager.getInstance(project).getCopyrightOptions(file);
 
         if (opts != null && FileTypeUtil.getInstance().isSupportedFile(file))
         {

@@ -21,40 +21,29 @@ package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
 
-public class ConfigTabFactory
-{
-    public static ConfigTab createConfigTab(FileType fileType, TemplateCommentPanel parentPanel)
-    {
-        // NOTE: If any change is made here you need to update LanguageOptionsFactory and UpdateCopyrightFactory too.
-        ConfigTab res;
-        if (fileType.equals(StdFileTypes.JAVA))
-        {
-            res = new JavaConfigTab(fileType, parentPanel);
-        }
-        else if (fileType.equals(StdFileTypes.XML))
-        {
-            res = new XmlConfigTab(fileType, parentPanel);
-        }
-        else if (fileType.equals(StdFileTypes.HTML))
-        {
-            res = new XmlConfigTab(fileType, parentPanel);
-        }
-        else if (fileType.equals(StdFileTypes.JSP))
-        {
-            res = new XmlConfigTab(fileType, parentPanel);
-        }
-        else
-        {
-            res = new BasicConfigTab(fileType, parentPanel);
-        }
-
-        res.setName(fileType.getName());
-
-        return res;
+public class ConfigTabFactory {
+  public static Configurable createConfigTab(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
+    // NOTE: If any change is made here you need to update LanguageOptionsFactory and UpdateCopyrightFactory too.
+    if (fileType.equals(StdFileTypes.JAVA)) {
+      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Package", "Before Imports", "Before Class"}, project);
     }
-
-    private ConfigTabFactory()
-    {
+    else if (fileType.equals(StdFileTypes.XML)) {
+      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Doctype", "Before Root Tag"}, project);
     }
+    else if (fileType.equals(StdFileTypes.HTML)) {
+      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Doctype", "Before Root Tag"}, project);
+    }
+    else if (fileType.equals(StdFileTypes.JSP)) {
+      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Doctype", "Before Root Tag"}, project);
+    }
+    else {
+      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Top Of File"}, project);
+    }
+  }
+
+  private ConfigTabFactory() {
+  }
 }

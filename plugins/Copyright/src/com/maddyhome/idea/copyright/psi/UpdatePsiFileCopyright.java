@@ -28,15 +28,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.maddyhome.idea.copyright.CopyrightManager;
+import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
-import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
 import java.util.ArrayList;
@@ -47,14 +43,17 @@ import java.util.regex.Pattern;
 
 public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright
 {
-    protected UpdatePsiFileCopyright(Project project, Module module, VirtualFile root, Options options)
+  private final CopyrightProfile myOptions;
+
+  protected UpdatePsiFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
     {
         super(project, module, root, options);
+      myOptions = options;
 
-        PsiManager manager = PsiManager.getInstance(project);
+      PsiManager manager = PsiManager.getInstance(project);
         file = manager.findFile(root);
         FileType type = FileTypeUtil.getInstance().getFileTypeByFile(root);
-        langOpts = options.getMergedOptions(type.getName());
+        langOpts = CopyrightManager.getInstance(project).getOptions().getMergedOptions(type.getName());
     }
 
     public void prepare()
@@ -110,7 +109,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright
         try
         {
             ArrayList<CommentRange> found = new ArrayList<CommentRange>();
-            Pattern pattern = Pattern.compile(langOpts.getKeyword());
+            Pattern pattern = Pattern.compile(myOptions.getKeyword());
             Document doc = FileDocumentManager.getInstance().getDocument(getFile().getVirtualFile());
             for (int i = 0; i < comments.size(); i++)
             {

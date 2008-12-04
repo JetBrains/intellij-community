@@ -30,12 +30,12 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
-import com.maddyhome.idea.copyright.options.Options;
+import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.XmlOptions;
 
 public class UpdateJspFileCopyright extends UpdatePsiFileCopyright
 {
-    public UpdateJspFileCopyright(Project project, Module module, VirtualFile root, Options options)
+    public UpdateJspFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
     {
         super(project, module, root, options);
     }

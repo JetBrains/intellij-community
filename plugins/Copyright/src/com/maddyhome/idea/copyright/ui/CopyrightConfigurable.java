@@ -2,86 +2,106 @@ package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
-import com.maddyhome.idea.copyright.options.Options;
+import com.maddyhome.idea.copyright.util.VelocityHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile>{
-    private CopyrightProfile myCopyrightProfile;
-    private OptionsPanel myOptionsPanel;
-    private Project myProject;
-    private boolean myModified;
+public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
+  private CopyrightProfile myCopyrightProfile;
+  private JPanel myWholePanel;
 
-    private String myDisplayName;
+  private Project myProject;
+  private boolean myModified;
 
-    public CopyrightConfigurable(Project project, CopyrightProfile copyrightProfile, Runnable updater) {
-        super(true, updater);
-        myProject = project;
-        myCopyrightProfile = copyrightProfile;
-        myOptionsPanel = new OptionsPanel(project, copyrightProfile.getOptions());
-        myDisplayName = myCopyrightProfile.getName();
-    }
+  private String myDisplayName;
+  private JEditorPane myCopyrightPane;
+  private JButton myValidateButton;
+  private JTextField myKeywordTf;
 
-    public void setDisplayName(String s) {
-      myCopyrightProfile.setName(s);
-    }
+  public CopyrightConfigurable(Project project, CopyrightProfile copyrightProfile, Runnable updater) {
+    super(true, updater);
+    myProject = project;
+    myCopyrightProfile = copyrightProfile;
+    myDisplayName = myCopyrightProfile.getName();
+  }
 
-    public CopyrightProfile getEditableObject() {
-        return myCopyrightProfile;
-    }
+  public void setDisplayName(String s) {
+    myCopyrightProfile.setName(s);
+  }
 
-    public String getBannerSlogan() {
-        return myCopyrightProfile.getName();
-    }
+  public CopyrightProfile getEditableObject() {
+    return myCopyrightProfile;
+  }
 
-    public JComponent createOptionsPanel() {
-        return myOptionsPanel.getMainComponent();
-    }
+  public String getBannerSlogan() {
+    return myCopyrightProfile.getName();
+  }
 
-    @Nls
-    public String getDisplayName() {
-        return myCopyrightProfile.getName();
-    }
+  public JComponent createOptionsPanel() {
+    myValidateButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        try {
+          VelocityHelper.verify(myCopyrightPane.getText());
+          Messages.showInfoMessage(myProject, "Velocity template valid.", "Validation");
+        }
+        catch (Exception e1) {
+          Messages.showInfoMessage(myProject, "Velocity template error:\n" + e1.getMessage(), "Validation");
+        }
+      }
+    });
+    return myWholePanel;
+  }
 
-    @Nullable
-    public Icon getIcon() {
-        return null;
-    }
+  @Nls
+  public String getDisplayName() {
+    return myCopyrightProfile.getName();
+  }
 
-    @Nullable
-    @NonNls
-    public String getHelpTopic() {
-        return null;
-    }
+  @Nullable
+  public Icon getIcon() {
+    return null;
+  }
 
-    public boolean isModified() {
-        return myModified || myOptionsPanel.isModified(myCopyrightProfile.getOptions()) || !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
-    }
+  @Nullable
+  @NonNls
+  public String getHelpTopic() {
+    return null;
+  }
 
-    public void apply() throws ConfigurationException {
-        final Options options = myOptionsPanel.getOptions();
-        myCopyrightProfile.setOptions(options);
-        CopyrightManager.getInstance(myProject).addCopyright(myCopyrightProfile);
-        myModified = false;
-    }
+  public boolean isModified() {
+    return myModified ||
+           !Comparing.strEqual(myCopyrightPane.getText().trim(), myCopyrightProfile.getNotice()) ||
+           !Comparing.strEqual(myKeywordTf.getText().trim(), myCopyrightProfile.getKeyword()) ||
+           !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
+  }
 
-    public void reset() {
-       myOptionsPanel.setOptions(myCopyrightProfile.getOptions());
-       myDisplayName = myCopyrightProfile.getName();
-    }
+  public void apply() throws ConfigurationException {
+    myCopyrightProfile.setNotice(myCopyrightPane.getText());
+    myCopyrightProfile.setKeyword(myKeywordTf.getText());
+    CopyrightManager.getInstance(myProject).addCopyright(myCopyrightProfile);
+    myModified = false;
+  }
 
-    public void disposeUIResources() {
-      myOptionsPanel = null;
-    }
+  public void reset() {
+    myDisplayName = myCopyrightProfile.getName();
+    myCopyrightPane.setText(myCopyrightProfile.getNotice());
+    myKeywordTf.setText(myCopyrightProfile.getKeyword());
+  }
 
-    public void setModified(boolean modified) {
-        myModified = modified;
-    }
+  public void disposeUIResources() {
+  }
+
+  public void setModified(boolean modified) {
+    myModified = modified;
+  }
 }

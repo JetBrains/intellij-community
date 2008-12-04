@@ -25,12 +25,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
+import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.JavaOptions;
-import com.maddyhome.idea.copyright.options.Options;
 
 public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
 {
-    public UpdateJavaFileCopyright(Project project, Module module, VirtualFile root, Options options)
+    public UpdateJavaFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
     {
         super(project, module, root, options);
     }
