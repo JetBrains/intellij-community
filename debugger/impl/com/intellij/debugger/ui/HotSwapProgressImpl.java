@@ -72,7 +72,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
                                                                       Messages.getWarningIcon(), null);
           WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.warnings"));
         }
-        else {
+        else if (myMessages.size() > 0){
           final StringBuilder msg = StringBuilderSpinAllocator.alloc();
           try {
             for (int category : myMessages.keys()) {
@@ -87,7 +87,9 @@ public class HotSwapProgressImpl extends HotSwapProgress{
                 }
               }
             }
-            WindowManager.getInstance().getStatusBar(getProject()).setInfo(msg.toString());
+            final String message = msg.toString();
+            ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message, Messages.getInformationIcon(), null);
+            WindowManager.getInstance().getStatusBar(getProject()).setInfo(message);
           }
           finally {
             StringBuilderSpinAllocator.dispose(msg);
