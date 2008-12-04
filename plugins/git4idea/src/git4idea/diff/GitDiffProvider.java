@@ -80,6 +80,9 @@ public class GitDiffProvider implements DiffProvider {
    */
   @Nullable
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
+    if (file.isDirectory()) {
+      return null;
+    }
     return new GitRevisionNumber(GitRevisionNumber.TIP, new Date());
   }
 
@@ -88,6 +91,9 @@ public class GitDiffProvider implements DiffProvider {
    */
   @Nullable
   public ItemLatestState getLastRevision(VirtualFile file) {
+    if (file.isDirectory()) {
+      return null;
+    }
     if (!myGoodStatuses.contains(myStatusManager.getStatus(file))) {
       return null;
     }
@@ -105,6 +111,9 @@ public class GitDiffProvider implements DiffProvider {
    */
   @Nullable
   public ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
+    if (selectedFile.isDirectory()) {
+      return null;
+    }
     final String path = selectedFile.getPath();
     if (GitUtil.gitRootOrNull(selectedFile) == null) {
       return null;

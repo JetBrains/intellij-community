@@ -86,6 +86,9 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    */
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
+    if (filePath.isDirectory()) {
+      return null;
+    }
     List<VcsFileRevision> revisions = GitHistoryUtils.history(project, filePath);
     return new VcsHistorySession(revisions) {
       @Nullable
