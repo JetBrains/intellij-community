@@ -23,6 +23,10 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    invokeOnElement(project, editor, element);
+  }
+
+  private static void invokeOnElement(Project project, Editor editor, PsiElement element) {
     if (element instanceof PsiMethod) {
       invoke((PsiMethod) element, project, editor);
     }
@@ -38,16 +42,10 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (elements[0] instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)elements[0];
-      invoke(method, project, editor);
-    }
-    else if (elements[0] instanceof PsiClass){
-      invoke((PsiClass) elements[0], editor);
-    }
+    invokeOnElement(project, editor, elements[0]);
   }
 
-  private static void invoke(final PsiMethod method, final Project project, final @Nullable Editor editor) {
+  private static void invoke(final PsiMethod method, final Project project, @Nullable final Editor editor) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));

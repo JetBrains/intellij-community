@@ -80,12 +80,13 @@ public abstract class BaseRefactoringAction extends AnAction {
         }
         element = getElementAtCaret(editor, file);
       }
-      final boolean isEnabled = element != null && !(element instanceof SyntheticElement) && isAvailableForLanguage(element.getLanguage()) &&
-        isAvailableOnElementInEditor(element, editor);
+      final boolean isEnabled = element != null &&
+                                !(element instanceof SyntheticElement) &&
+                                isAvailableForLanguage(element.getLanguage()) &&
+                                isAvailableOnElementInEditor(element, editor);
       if (!isEnabled) {
         disableAction(e);
       }
-
     }
     else {
       if (isAvailableInEditorOnly()) {
