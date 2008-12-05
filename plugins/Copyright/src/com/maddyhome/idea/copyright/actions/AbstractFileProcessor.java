@@ -27,6 +27,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -314,19 +316,25 @@ public abstract class AbstractFileProcessor
 
     }
 
-    private void findFiles(Module module, List<PsiFile> files)
-    {
-        VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-        for (VirtualFile file : roots)
-        {
-            PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
-            if (dir != null)
-            {
-                findFiles(files, dir, true);
-            }
-        }
+  private void findFiles(Module module, final List<PsiFile> files) {
+    final ModuleFileIndex idx = ModuleRootManager.getInstance(module).getFileIndex();
 
+    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+
+    for (VirtualFile root : roots) {
+      idx.iterateContentUnderDirectory(root, new ContentIterator() {
+        public boolean processFile(final VirtualFile dir) {
+          if (dir.isDirectory()) {
+            final PsiDirectory psiDir = PsiManager.getInstance(myProject).findDirectory(dir);
+            if (psiDir != null) {
+              findFiles(files, psiDir, false);
+            }
+          }
+          return true;
+        }
+      });
     }
+  }
 
     private void handleFiles(final List<PsiFile> files)
     {
