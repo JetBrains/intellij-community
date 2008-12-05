@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +86,7 @@ public abstract class EditorAction extends AnAction {
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
     // use new Ref() here to avoid merging two consequential commands, and, in the same time, pass along the Document
-    CommandProcessor.getInstance().executeCommand(editor.getProject(), command, commandName, new Ref(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+    CommandProcessor.getInstance().executeCommand(editor.getProject(), command, commandName, new Ref<Document>(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
   }
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {

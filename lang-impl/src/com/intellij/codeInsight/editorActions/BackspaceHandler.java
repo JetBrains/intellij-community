@@ -2,6 +2,8 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -13,10 +15,13 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+
+import java.util.List;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -49,7 +54,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     final Editor injectedEditor = TypedHandler.injectedEditorIfCharTypedIsSignificant(c, editor, file);
     if (injectedEditor != editor) {
       int injectedOffset = injectedEditor.getCaretModel().getOffset();
-      if (injectedOffset != 0 && injectedOffset < injectedEditor.getDocument().getTextLength()) {
+      if (isOffsetInsideInjected(injectedEditor, injectedOffset)) {
         file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
         editor = injectedEditor;
         offset = injectedOffset - 1;
@@ -115,6 +120,18 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     return true;
+  }
+
+  private static boolean isOffsetInsideInjected(Editor injectedEditor, int injectedOffset) {
+    if (injectedOffset == 0 || injectedOffset >= injectedEditor.getDocument().getTextLength()) {
+      return false;
+    }
+    PsiFile injectedFile = ((EditorWindow)injectedEditor).getInjectedFile();
+    InjectedLanguageManager ilm = InjectedLanguageManager.getInstance(injectedFile.getProject());
+    TextRange rangeToEdit = new TextRange(injectedOffset - 1, injectedOffset);
+    List<TextRange> editables = ilm.intersectWithAllEditableFragments(injectedFile, rangeToEdit);
+
+    return editables.size() == 1 && editables.get(0).equals(rangeToEdit);
   }
 
   public static LogicalPosition getBackspaceUnindentPosition(final PsiFile file, final Editor editor) {

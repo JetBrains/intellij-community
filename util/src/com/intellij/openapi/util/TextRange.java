@@ -49,7 +49,7 @@ public class TextRange {
     return myStartOffset + myEndOffset;
   }
 
-  public boolean contains(TextRange range) {
+  public boolean contains(@NotNull TextRange range) {
     return myStartOffset <= range.getStartOffset() && myEndOffset >= range.getEndOffset();
   }
 
@@ -113,7 +113,8 @@ public class TextRange {
     return myStartOffset >= myEndOffset;
   }
 
-  public TextRange union(TextRange textRange) {
+  @NotNull
+  public TextRange union(@NotNull TextRange textRange) {
     return new TextRange(Math.min(myStartOffset, textRange.getStartOffset()), Math.max(myEndOffset, textRange.getEndOffset()));
   }
 
