@@ -785,6 +785,24 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     checkHighlighting();
   }
 
+  public void testHighlightingCoordinatesWithClosedTags() throws Throwable {
+    if (ignore()) return;
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId/><error></error>" +
+                     "    <artifactId/><error></error>" +
+                     "    <version/><error></error>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
   public void testHandlingProperties() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

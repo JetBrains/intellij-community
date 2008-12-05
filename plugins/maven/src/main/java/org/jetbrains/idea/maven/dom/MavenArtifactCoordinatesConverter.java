@@ -15,10 +15,7 @@ import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.Dependency;
-import org.jetbrains.idea.maven.dom.model.Extension;
-import org.jetbrains.idea.maven.dom.model.MavenParent;
-import org.jetbrains.idea.maven.dom.model.Plugin;
+import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -69,22 +66,36 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   @Override
+  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    return selectStrategy(context).getContextName() + " ''" + MavenArtifactCoordinatesHelper.getId(context) + "'' not found";
+  }
+
+  @Override
   public LocalQuickFix[] getQuickFixes(ConvertContext context) {
     return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
   }
 
   private ConverterStrategy selectStrategy(ConvertContext context) {
+    if (MavenDomUtil.getImmediateParent(context, MavenModel.class) != null) {
+      return new ProjectStrategy();
+    }
+
+    MavenParent parent = MavenDomUtil.getImmediateParent(context, MavenParent.class);
+    if (parent != null) {
+      return new ParentStrategy(parent);
+    }
+
     Dependency dependency = MavenDomUtil.getImmediateParent(context, Dependency.class);
     if (dependency != null) {
       return new DependencyStrategy(dependency);
     }
-    if (MavenDomUtil.getImmediateParent(context, Plugin.class) != null
-        || MavenDomUtil.getImmediateParent(context, Extension.class) != null) {
-      return new PluginOrExtensionStrategy();
+
+    if (MavenDomUtil.getImmediateParent(context, Plugin.class) != null ) {
+      return new PluginOrExtensionStrategy(true);
     }
-    MavenParent parent = MavenDomUtil.getImmediateParent(context, MavenParent.class);
-    if (parent != null) {
-      return new ParentStrategy(parent);
+
+    if (MavenDomUtil.getImmediateParent(context, Extension.class) != null) {
+      return new PluginOrExtensionStrategy(false);
     }
 
     return new ConverterStrategy();
@@ -107,6 +118,10 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private class ConverterStrategy {
+    public String getContextName() {
+      return "Artifact";
+    }
+
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
       return doIsValid(id, manager, context);
     }
@@ -158,11 +173,28 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
   }
 
+  private class ProjectStrategy extends ConverterStrategy {
+    @Override
+    public PsiFile resolve(Project project, MavenId id) {
+      return null;
+    }
+
+    @Override
+    public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
+      return true;
+    }
+  }
+
   private class ParentStrategy extends ConverterStrategy {
     private MavenParent myParent;
 
     public ParentStrategy(MavenParent parent) {
       myParent = parent;
+    }
+
+    @Override
+    public String getContextName() {
+      return "Project";
     }
 
     @Override
@@ -178,6 +210,11 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       myDependency = dependency;
     }
 
+    @Override
+    public String getContextName() {
+      return "Dependency";
+    }
+
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
       if ("system".equals(myDependency.getScope().getStringValue())) return true;
       return super.isValid(id, manager, context);
@@ -190,6 +227,17 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private class PluginOrExtensionStrategy extends ConverterStrategy {
+    private boolean myPlugin;
+
+    public PluginOrExtensionStrategy(boolean isPlugin) {
+      myPlugin = isPlugin;
+    }
+
+    @Override
+    public String getContextName() {
+      return myPlugin ? "Plugin " : "Build Extension";
+    }
+
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
       if (StringUtil.isEmpty(id.groupId)) {
         for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {

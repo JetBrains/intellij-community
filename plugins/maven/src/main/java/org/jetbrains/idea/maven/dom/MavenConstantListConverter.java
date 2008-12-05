@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,4 +36,9 @@ public abstract class MavenConstantListConverter extends MavenPropertyResolvingC
   }
 
   protected abstract List<String> getValues();
+
+  @Override
+  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    return "<html>Specified value is not acceptable here.<br>Acceptable values: " + StringUtil.join(getValues(), ", ") + "</html>";
+  }
 }

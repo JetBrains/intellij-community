@@ -50,4 +50,11 @@ public class ModelValidationTest extends MavenCompletionAndResolutionWithIndices
                      "</project>");
     checkHighlighting();
   }
+
+  public void testEmptyValues() throws Throwable {
+    updateProjectPom("<<error>groupId</error>></groupId>" +
+                     "<<error>artifactId</error>></artifactId>" +
+                     "<<error>version</error>></version>");
+    checkHighlighting();
+  }
 }
