@@ -138,6 +138,7 @@ public class GitAnnotationProvider implements AnnotationProvider {
                                      final VirtualFile file) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(myProject, repositoryFilePath), GitHandler.ANNOTATE);
     h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
     h.setCharset(file.getCharset());
     h.addParameters("-p", "-l", "-t", "-M");
     if (revision == null) {
