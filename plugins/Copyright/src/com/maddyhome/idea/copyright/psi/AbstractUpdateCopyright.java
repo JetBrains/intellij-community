@@ -24,6 +24,7 @@ import com.intellij.psi.PsiManager;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
+import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
@@ -47,7 +48,7 @@ public abstract class AbstractUpdateCopyright implements UpdateCopyright {
     if (commentText == null) {
       FileType ftype = FileTypeUtil.getInstance().getFileTypeByFile(root);
       LanguageOptions opts = CopyrightManager.getInstance(project).getOptions().getMergedOptions(ftype.getName());
-      String base = myCopyrightProfile.getNotice();
+      String base = EntityUtil.decode(myCopyrightProfile.getNotice());
       if (base.length() > 0) {
         String expanded = VelocityHelper.evaluate(manager.findFile(root), project, module, base);
         String cmt = FileTypeUtil.buildComment(root.getFileType(), opts.isUseAlternate(), expanded, opts.getTemplateOptions());
