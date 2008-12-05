@@ -39,8 +39,9 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     super(fixes, descriptionTemplate);
     myHintAction = hintAction;
     LOG.assertTrue(startElement.isValid(), startElement);
-    LOG.assertTrue(endElement.isValid(), endElement);
-    assertPhysical(startElement, endElement);
+    LOG.assertTrue(startElement == endElement || endElement.isValid(), endElement);
+    assertPhysical(startElement);
+    if (startElement != endElement) assertPhysical(endElement);
 
     if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
@@ -57,9 +58,11 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     myTextRangeInElement = rangeInElement;
   }
 
-  protected void assertPhysical(final PsiElement startElement, final PsiElement endElement) {
-    LOG.assertTrue(startElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
-    LOG.assertTrue(endElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
+  protected void assertPhysical(final PsiElement element) {
+    if (!element.isPhysical()) {
+      LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
+                element + "; file: " + element.getContainingFile());
+    }
   }
 
   public PsiElement getPsiElement() {
