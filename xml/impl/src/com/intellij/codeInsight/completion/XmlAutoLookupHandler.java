@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.xml.util.XmlUtil;
 
 /**
@@ -34,7 +35,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandlerBase {
     PsiFile file = context.file;
     int offset = context.getStartOffset();
 
-    PsiElement lastElement = file.findElementAt(offset - 1);
+    PsiElement lastElement = InjectedLanguageUtil.findElementAtNoCommit(file, offset - 1);
     if (lastElement == null) return;
 
     final Ref<Boolean> isRelevantLanguage = new Ref<Boolean>();
