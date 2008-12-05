@@ -20,156 +20,126 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
-public class UpdateCopyrightAction extends AnAction
-{
-    public void update(AnActionEvent event)
-    {
-        Presentation presentation = event.getPresentation();
-        DataContext context = event.getDataContext();
-        Project project = (Project)context.getData(DataConstants.PROJECT);
-        if (project == null)
-        {
-            presentation.setEnabled(false);
-            return;
-        }
-
-        VirtualFile[] files = (VirtualFile[])context.getData(DataConstants.VIRTUAL_FILE_ARRAY);
-        Editor editor = (Editor)context.getData(DataConstants.EDITOR);
-        if (editor != null)
-        {
-            PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file))
-            {
-                presentation.setEnabled(false);
-            }
-        }
-        else if (files != null && FileUtil.areFiles(files))
-        {
-            for (VirtualFile vfile : files)
-            {
-                PsiFile file = PsiManager.getInstance(project).findFile(vfile);
-                if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file.getVirtualFile()))
-                {
-                    presentation.setEnabled(false);
-                    return;
-                }
-            }
-
-            presentation.setEnabled(true);
-
-        }
-        else if ((files == null || files.length != 1) && context.getData(DataConstants.MODULE_CONTEXT) == null &&
-            context.getData(DataConstants.PROJECT_CONTEXT) == null)
-        {
-            PsiElement elem = (PsiElement)context.getData(DataConstants.PSI_ELEMENT);
-            if (elem == null)
-            {
-                presentation.setEnabled(false);
-                return;
-            }
-
-            if (!(elem instanceof PsiDirectory))
-            {
-                PsiFile file = elem.getContainingFile();
-                if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file.getVirtualFile()))
-                {
-                    presentation.setEnabled(false);
-
-                }
-            }
-        }
+public class UpdateCopyrightAction extends AnAction {
+  public void update(AnActionEvent event) {
+    final Presentation presentation = event.getPresentation();
+    final DataContext context = event.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      presentation.setEnabled(false);
+      return;
     }
 
-    public void actionPerformed(AnActionEvent event)
-    {
-        DataContext context = event.getDataContext();
-        Project project = (Project)context.getData(DataConstants.PROJECT);
-        Module module = (Module)context.getData(DataConstants.MODULE);
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-        VirtualFile[] files = (VirtualFile[])context.getData(DataConstants.VIRTUAL_FILE_ARRAY);
-        Editor editor = (Editor)context.getData(DataConstants.EDITOR);
-
-        PsiFile file = null;
-        PsiDirectory dir;
-        if (editor != null)
-        {
-            file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            if (file == null)
-            {
-                return;
-            }
-            dir = file.getContainingDirectory();
-        }
-        else
-        {
-            if (FileUtil.areFiles(files))
-            {
-                (new UpdateCopyrightProcessor(project, null, FileUtil.convertToPsiFiles(files, project))).run();
-
-                return;
-            }
-            Module modCtx = (Module)context.getData(DataConstants.MODULE_CONTEXT);
-            if (modCtx != null)
-            {
-                ModuleDlg dlg = new ModuleDlg(project, module);
-                dlg.show();
-                if (!dlg.isOK())
-                {
-                    return;
-                }
-
-                (new UpdateCopyrightProcessor(project, module)).run();
-
-                return;
-            }
-
-            PsiElement psielement = (PsiElement)context.getData(DataConstants.PSI_ELEMENT);
-            if (psielement == null)
-            {
-                return;
-            }
-
-            if (psielement instanceof PsiPackage)
-            {
-                dir = ((PsiPackage)psielement).getDirectories()[0];
-            }
-            else if (psielement instanceof PsiDirectory)
-            {
-                dir = (PsiDirectory)psielement;
-            }
-            else
-            {
-                file = psielement.getContainingFile();
-                if (file == null)
-                {
-                    return;
-                }
-                dir = file.getContainingDirectory();
-            }
-        }
-
-        RecursionDlg recDlg = new RecursionDlg(project, file != null ? file.getVirtualFile() : dir.getVirtualFile());
-        recDlg.show();
-        if (!recDlg.isOK())
-        {
-            return;
-        }
-
-        if (recDlg.isAll())
-        {
-            (new UpdateCopyrightProcessor(project, module, dir, recDlg.includeSubdirs())).run();
-        }
-
-        else
-        {
-            (new UpdateCopyrightProcessor(project, module, file)).run();
-        }
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    if (editor != null) {
+      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file)) {
+        presentation.setEnabled(false);
+        return;
+      }
     }
+    else if (files != null && FileUtil.areFiles(files)) {
+      for (VirtualFile vfile : files) {
+        final PsiFile file = PsiManager.getInstance(project).findFile(vfile);
+        if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file.getVirtualFile())) {
+          presentation.setEnabled(false);
+          return;
+        }
+      }
+
+    }
+    else if ((files == null || files.length != 1) &&
+             LangDataKeys.MODULE_CONTEXT.getData(context) == null &&
+             PlatformDataKeys.PROJECT_CONTEXT.getData(context) == null) {
+      final PsiElement elem = LangDataKeys.PSI_ELEMENT.getData(context);
+      if (elem == null) {
+        presentation.setEnabled(false);
+        return;
+      }
+
+      if (!(elem instanceof PsiDirectory)) {
+        final PsiFile file = elem.getContainingFile();
+        if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file.getVirtualFile())) {
+          presentation.setEnabled(false);
+          return;
+        }
+      }
+    }
+    presentation.setEnabled(true);
+  }
+
+  public void actionPerformed(AnActionEvent event) {
+    final DataContext context = event.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    assert project != null;
+
+    final Module module = LangDataKeys.MODULE.getData(context);
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+
+    PsiFile file = null;
+    PsiDirectory dir;
+    if (editor != null) {
+      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null) {
+        return;
+      }
+      dir = file.getContainingDirectory();
+    }
+    else {
+      if (FileUtil.areFiles(files)) {
+        new UpdateCopyrightProcessor(project, null, FileUtil.convertToPsiFiles(files, project)).run();
+        return;
+      }
+      final Module modCtx = LangDataKeys.MODULE_CONTEXT.getData(context);
+      if (modCtx != null) {
+        if (Messages.showOkCancelDialog(project, "Update copyright for module \'" + modCtx.getName() + "\'?", "Update Copyright", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+        new UpdateCopyrightProcessor(project, module).run();
+        return;
+      }
+
+      final PsiElement psielement = LangDataKeys.PSI_ELEMENT.getData(context);
+      if (psielement == null) {
+        return;
+      }
+
+      if (psielement instanceof PsiPackage) {
+        dir = ((PsiPackage)psielement).getDirectories()[0];
+      }
+      else if (psielement instanceof PsiDirectory) {
+        dir = (PsiDirectory)psielement;
+      }
+      else {
+        file = psielement.getContainingFile();
+        if (file == null) {
+          return;
+        }
+        dir = file.getContainingDirectory();
+      }
+    }
+
+    final RecursionDlg recDlg = new RecursionDlg(project, file != null ? file.getVirtualFile() : dir.getVirtualFile());
+    recDlg.show();
+    if (!recDlg.isOK()) {
+      return;
+    }
+
+    if (recDlg.isAll()) {
+      new UpdateCopyrightProcessor(project, module, dir, recDlg.includeSubdirs()).run();
+    }
+    else {
+      new UpdateCopyrightProcessor(project, module, file).run();
+    }
+  }
 
 }
