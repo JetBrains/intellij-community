@@ -469,9 +469,9 @@ public class PsiUtilBase {
   public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file) {
     PsiElement elt = getElementAtOffset(file, start);
 
-    if (elt != null) {
+    TextRange selectionRange = new TextRange(start, end);
+    if (elt != null && !(elt instanceof PsiFile)) {
       elt = elt.getParent();
-      TextRange selectionRange = new TextRange(start, end);
       TextRange range = elt.getTextRange();
       assert range != null : "Range is null for " + elt + "; " + elt.getClass();
       while(!range.contains(selectionRange)) {
