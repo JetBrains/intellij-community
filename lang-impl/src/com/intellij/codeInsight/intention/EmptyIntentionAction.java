@@ -23,6 +23,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * User: anna
  * Date: May 11, 2005
@@ -72,4 +74,9 @@ public final class EmptyIntentionAction implements IntentionAction{
     return result;
   }
 
+  // used by TeamCity plugin
+  @Deprecated
+  public EmptyIntentionAction(@NotNull final String name, @NotNull List<IntentionAction> options) {
+    myName = name;
+  }
 }
