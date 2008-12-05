@@ -241,6 +241,7 @@ public class TemplateCommentPanel implements Configurable {
   }
 
   public boolean isModified() {
+    if (parentPanel == null) return !myManager.getOptions().getTemplateOptions().equals(getOptions());
     return !myManager.getOptions().getOptions(fileType.getName()).equals(getOptions());
   }
 
