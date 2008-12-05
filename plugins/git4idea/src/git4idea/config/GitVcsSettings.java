@@ -19,11 +19,14 @@ package git4idea.config;
  * This code was originally derived from the MKS & Mercurial IDEA VCS plugins
  */
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -113,6 +116,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    */
   public static GitVcsSettings getInstance(Project project) {
     return ServiceManager.getService(project, GitVcsSettings.class);
+  }
+
+  public static GitVcsSettings getInstanceChecked(final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<GitVcsSettings>() {
+      public GitVcsSettings compute() {
+        if (project.isDisposed()) throw new ProcessCanceledException();
+        return ServiceManager.getService(project, GitVcsSettings.class);
+      }
+    });
   }
 
   /**

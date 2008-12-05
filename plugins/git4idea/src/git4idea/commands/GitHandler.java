@@ -235,7 +235,7 @@ public abstract class GitHandler {
    */
   protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
     myProject = project;
-    GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    GitVcsSettings settings = GitVcsSettings.getInstanceChecked(project);
     myEnv = new HashMap<String, String>(System.getenv());
     myVcs = GitVcs.getInstance(project);
     if (myVcs != null) {
