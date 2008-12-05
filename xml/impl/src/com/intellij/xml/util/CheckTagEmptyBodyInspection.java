@@ -10,10 +10,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -93,7 +93,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
     }
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        final PsiElement tag = descriptor.getPsiElement();
+      final PsiElement tag = descriptor.getPsiElement();
       if (!CodeInsightUtilBase.prepareFileForWrite(tag.getContainingFile())) {
         return;
       }
@@ -103,13 +103,12 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
       final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
       if (child == null) return;
       final int offset = child.getTextRange().getStartOffset();
-      OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, tag.getContainingFile().getVirtualFile(), offset);
-      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, true);
-
+      VirtualFile file = tag.getContainingFile().getVirtualFile();
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
 
       new WriteCommandAction(project) {
         protected void run(final Result result) throws Throwable {
-          editor.getDocument().replaceString(offset, tag.getTextRange().getEndOffset(),"/>");
+          document.replaceString(offset, tag.getTextRange().getEndOffset(),"/>");
         }
       }.execute();
     }
