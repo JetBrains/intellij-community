@@ -24,43 +24,27 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 
-public class UpdatePropertiesFileCopyright extends UpdatePsiFileCopyright
-{
-    public UpdatePropertiesFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options)
-    {
-        super(project, module, root, options);
+public class UpdatePropertiesFileCopyright extends UpdatePsiFileCopyright {
+  public UpdatePropertiesFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options) {
+    super(project, module, root, options);
+  }
+
+  protected void scanFile() {
+    PsiElement first = getFile().getFirstChild(); // PropertiesList
+    PsiElement last = first;
+    PsiElement next = first;
+    while (next != null) {
+      if (next instanceof PsiComment || next instanceof PsiWhiteSpace) {
+        next = getNextSibling(next);
+      }
+      else {
+        break;
+      }
+      last = next;
     }
 
-    protected void scanFile()
-    {
-        PsiElement first = getFile().getFirstChild(); // PropertiesList
-        if (first != null)
-        {
-            first = first.getFirstChild(); // First member of properties list
-        }
-        PsiElement last = first;
-        PsiElement next = first;
-        while (next != null)
-        {
-            if (next instanceof PsiComment || next instanceof PsiWhiteSpace)
-            {
-                next = getNextSibling(next);
-            }
-            else
-            {
-                break;
-            }
-            last = next;
-        }
-
-        if (first != null)
-        {
-            checkComments(first, last, true);
-        }
-        else
-        {
-            first = getFile().getFirstChild();
-            checkComments(first, first, true);
-        }
+    if (first != null) {
+      checkComments(first, last, true);
     }
+  }
 }
