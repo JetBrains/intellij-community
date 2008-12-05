@@ -10,6 +10,7 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -34,7 +35,12 @@ public class RollbackDeletionAction extends AbstractMissingFilesAction {
       indicator.setText(vcs.getDisplayName() + ": doing rollback...");
     }
     final List<VcsException> result = new ArrayList<VcsException>(0);
-    environment.rollbackMissingFileDeletion(files, result, new RollbackProgressModifier(files.size(), indicator));
+    try {
+      environment.rollbackMissingFileDeletion(files, result, new RollbackProgressModifier(files.size(), indicator));
+    }
+    catch (ProcessCanceledException e) {
+      // for files refresh
+    }
     LocalFileSystem.getInstance().refreshIoFiles(ChangesUtil.filePathsToFiles(files));
     return result;
   }
