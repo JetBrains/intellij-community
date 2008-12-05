@@ -367,8 +367,7 @@ public class StringUtil {
     }
   }
 
-  @NonNls private static final String[] ourPrepositions =
-    new String[]{"at", "the", "and", "not", "if", "a", "or", "to", "in", "on", "into"};
+  @NonNls private static final String[] ourPrepositions = {"at", "the", "and", "not", "if", "a", "or", "to", "in", "on", "into"};
 
 
   public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
@@ -1136,8 +1135,8 @@ public class StringUtil {
     return buf.toString();
   }
 
-  @NonNls private static final String[] REPLACES_REFS = new String[]{"&lt;", "&gt;", "&amp;", "&apos;", "&quot;"};
-  @NonNls private static final String[] REPLACES_DISP = new String[]{"<", ">", "&", "'", "\""};
+  @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&apos;", "&quot;"};
+  @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\""};
 
   public static String unescapeXml(final String text) {
     if (text == null) return null;
