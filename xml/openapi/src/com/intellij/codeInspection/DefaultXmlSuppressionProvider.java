@@ -47,7 +47,7 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
 
   public boolean isSuppressedFor(PsiElement element, String inspectionId) {
     final XmlTag tag = PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
-    return tag != null && findSuppression(tag, inspectionId) != null;
+    return tag != null && findSuppression(tag, inspectionId, element) != null;
   }
 
   public void suppressForFile(PsiElement element, String inspectionId) {
@@ -55,39 +55,38 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
     final XmlDocument document = ((XmlFile)file).getDocument();
     final PsiElement anchor = document != null ? document.getRootTag() : file.findElementAt(0);
     assert anchor != null;
-    suppress(file, findSuppressionLeaf(anchor, null), inspectionId, anchor.getTextRange().getStartOffset());
+    suppress(file, findFileSuppression(anchor, null, element), inspectionId, anchor.getTextRange().getStartOffset());
   }
 
   public void suppressForTag(PsiElement element, String inspectionId) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     assert tag != null;
-    suppress(element.getContainingFile(), findSuppressionLeaf(tag, null), inspectionId, tag.getTextRange().getStartOffset());
+    suppress(element.getContainingFile(), findSuppressionLeaf(tag, null, 0), inspectionId, tag.getTextRange().getStartOffset());
   }
 
   @Nullable
-  protected PsiElement findSuppression(final PsiElement anchor, final String id) {
-    final PsiElement element = findSuppressionLeaf(anchor, id);
+  protected PsiElement findSuppression(final PsiElement anchor, final String id, PsiElement originalElement) {
+    final PsiElement element = findSuppressionLeaf(anchor, id, 0);
     if (element != null) return element;
 
+    return findFileSuppression(anchor, id, originalElement);
+  }
+
+  @Nullable
+  protected PsiElement findFileSuppression(PsiElement anchor, String id, PsiElement originalElement) {
     final PsiFile file = anchor.getContainingFile();
     if (file instanceof XmlFile) {
-      return findFileSuppression(file, id);
+      final XmlDocument document = ((XmlFile)file).getDocument();
+      final XmlTag rootTag = document != null ? document.getRootTag() : null;
+      PsiElement leaf = rootTag != null ? rootTag.getPrevSibling() : file.findElementAt(0);
+      return findSuppressionLeaf(leaf, id, 0);
     }
-
     return null;
   }
 
   @Nullable
-  protected PsiElement findFileSuppression(PsiFile file, String id) {
-    final XmlDocument document = ((XmlFile)file).getDocument();
-    final XmlTag rootTag = document != null ? document.getRootTag() : null;
-    PsiElement leaf = rootTag != null ? rootTag.getPrevSibling() : file.findElementAt(0);
-    return findSuppressionLeaf(leaf, id);
-  }
-
-  @Nullable
-  protected PsiElement findSuppressionLeaf(PsiElement leaf, @Nullable final String id) {
-    while (leaf != null) {
+  protected PsiElement findSuppressionLeaf(PsiElement leaf, @Nullable final String id, int offset) {
+    while (leaf != null && leaf.getTextOffset() >= offset) {
       if (leaf instanceof PsiComment || leaf instanceof XmlProlog) {
         @NonNls String text = leaf.getText();
         if (isSuppressedFor(text, id)) return leaf;
