@@ -297,6 +297,7 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
     try {
       VirtualFile file = getVirtualFile();
       if (file == null || file.isDirectory()) {
+        LOG.info("Document was not loaded for " + myFileSpec + " file is " + (file == null ? "null" : "directory"));        
         return null;
       }
       else {

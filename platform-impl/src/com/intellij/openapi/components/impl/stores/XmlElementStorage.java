@@ -104,6 +104,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     StorageData result = createStorageData();
 
     if (document != null) {
+      LOG.info("Document was not loaded for " + myFileSpec);
       loadState(result, document.getRootElement());
     }
 
@@ -654,6 +655,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       for (String componentToRetain : componentsToRetain) {
         if (!storageData.myComponentStates.containsKey(componentToRetain)) {
           Element emptyElement = new Element("component");
+          LOG.info("Create empty component element for " + componentsToRetain);
           emptyElement.setAttribute(NAME, componentToRetain);
           storageData.myComponentStates.put(componentToRetain, emptyElement);
         }
