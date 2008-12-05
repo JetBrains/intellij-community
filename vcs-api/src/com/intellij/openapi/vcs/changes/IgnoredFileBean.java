@@ -22,32 +22,30 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.regex.Pattern;
 
 public class IgnoredFileBean {
-  private String myPath;
-  private String myMask;
-  private Pattern myPattern;
+  private final String myPath;
+  private final String myMask;
+  private final Pattern myPattern;
+  private final IgnoreSettingsType myType;
+  private String myAbsolutePath;
+  private boolean myPathIsAbsolute;
 
-  @Nullable
-  public String getPath() {
-    return myPath;
-  }
-
-  public void setPath(final String path) {
+  IgnoredFileBean(String path, IgnoreSettingsType type) {
     myPath = path;
+    myType = type;
+    myMask = null; 
+    myPattern = null;
   }
 
-  @Nullable
-  public String getMask() {
-    return myMask;
-  }
-
-  public void setMask(final String mask) {
+  IgnoredFileBean(String mask) {
+    myType = IgnoreSettingsType.MASK;
     myMask = mask;
     if (mask == null) {
       myPattern = null;
@@ -55,21 +53,71 @@ public class IgnoredFileBean {
     else {
       myPattern = PatternUtil.fromMask(mask);
     }
+    myPath = null;
+  }
+
+  @Nullable
+  public String getPath() {
+    return myPath;
+  }
+
+  @Nullable
+  public String getMask() {
+    return myMask;
   }
 
   public Pattern getPattern() {
     return myPattern;
   }
 
-  public static IgnoredFileBean withPath(@NonNls String path) {
-    IgnoredFileBean result = new IgnoredFileBean();
-    result.setPath(path);
+  public IgnoreSettingsType getType() {
+    return myType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    IgnoredFileBean that = (IgnoredFileBean)o;
+
+    if (myPath != null ? !myPath.equals(that.myPath) : that.myPath != null) return false;
+    if (myMask != null ? !myMask.equals(that.myMask) : that.myMask != null) return false;
+    if (myType != that.myType) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myPath != null ? myPath.hashCode() : 0;
+    result = 31 * result + (myMask != null ? myMask.hashCode() : 0);
+    result = 31 * result + myType.hashCode();
     return result;
   }
 
-  public static IgnoredFileBean withMask(String mask) {
-    IgnoredFileBean result = new IgnoredFileBean();
-    result.setMask(mask);
-    return result;
+  public void initAbsolute() {
+    if (myAbsolutePath == null && (myPath != null)) {
+      final File file = new File(myPath);
+      myAbsolutePath = file.getAbsolutePath();
+      if (IgnoreSettingsType.UNDER_DIR.equals(myType)) {
+        myAbsolutePath += "/";
+      }
+      myPathIsAbsolute = file.isAbsolute();
+    }
+  }
+
+  public boolean fileIsUnderMe(final String ioFileAbsPath, final File baseDir) {
+    if (! IgnoreSettingsType.MASK.equals(myType)) {
+      initAbsolute();
+      if (myPathIsAbsolute) {
+        return StringUtil.startsWithIgnoreCase(ioFileAbsPath, myAbsolutePath);
+      }
+      final File file = new File(baseDir, myPath);
+      String absPath = file.getAbsolutePath();
+      absPath = IgnoreSettingsType.UNDER_DIR.equals(myType) ? absPath + "/" : absPath;
+      return StringUtil.startsWithIgnoreCase(ioFileAbsPath, absPath);
+    }
+    return false;
   }
 }

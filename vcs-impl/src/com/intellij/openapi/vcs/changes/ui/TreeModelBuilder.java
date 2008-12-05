@@ -117,7 +117,22 @@ public class TreeModelBuilder {
     return model;
   }
 
+  private void buildVirtualFiles(final Iterator<FilePath> iterator, @Nullable final Object tag) {
+    final ChangesBrowserNode baseNode = createNode(tag);
+    final HashMap<String, ChangesBrowserNode> foldersCache = new HashMap<String, ChangesBrowserNode>();
+    final ChangesGroupingPolicy policy = createGroupingPolicy();
+    for (; ; iterator.hasNext()) {
+      final FilePath path = iterator.next();
+      insertChangeNode(path.getVirtualFile(), foldersCache, policy, baseNode);
+    }
+  }
+
   private void buildVirtualFiles(final List<VirtualFile> files, @Nullable final Object tag) {
+    final ChangesBrowserNode baseNode = createNode(tag);
+    insertFilesIntoNode(files, baseNode);
+  }
+
+  private ChangesBrowserNode createNode(Object tag) {
     ChangesBrowserNode baseNode;
     if (tag != null) {
       baseNode = ChangesBrowserNode.create(myProject, tag);
@@ -126,6 +141,10 @@ public class TreeModelBuilder {
     else {
       baseNode = root;
     }
+    return baseNode;
+  }
+
+  private void insertFilesIntoNode(List<VirtualFile> files, ChangesBrowserNode baseNode) {
     final HashMap<String, ChangesBrowserNode> foldersCache = new HashMap<String, ChangesBrowserNode>();
     final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (VirtualFile file : files) {

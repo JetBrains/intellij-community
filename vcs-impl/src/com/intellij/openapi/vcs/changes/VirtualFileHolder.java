@@ -2,15 +2,12 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -80,6 +77,14 @@ public class VirtualFileHolder implements FileHolder {
 
   public synchronized void removeFile(VirtualFile file) {
     myFiles.remove(file);
+  }
+
+  public synchronized void removeFiles(final Collection<VirtualFile> files) {
+    myFiles.removeAll(files);
+  }
+
+  public synchronized void addFiles(final Collection<VirtualFile> files) {
+    myFiles.addAll(files);
   }
 
   public synchronized List<VirtualFile> getFiles() {

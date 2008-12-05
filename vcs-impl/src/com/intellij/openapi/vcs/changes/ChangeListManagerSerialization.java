@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.List;
 
 class ChangeListManagerSerialization {
@@ -70,16 +71,17 @@ class ChangeListManagerSerialization {
   }
 
   private void readFileToIgnore(final Element ignoredNode) {
-    IgnoredFileBean bean = new IgnoredFileBean();
     String path = ignoredNode.getAttributeValue(ChangeListManagerSerialization.ATT_PATH);
     if (path != null) {
-      bean.setPath(path);
+      final IgnoredFileBean bean = path.endsWith("/") || path.endsWith(File.separator) ? IgnoredBeanFactory.ignoreUnderDirectory(path) :
+             IgnoredBeanFactory.ignoreFile(path);
+      myIgnoredIdeaLevel.add(bean);
     }
     String mask = ignoredNode.getAttributeValue(ChangeListManagerSerialization.ATT_MASK);
     if (mask != null) {
-      bean.setMask(mask);
+      final IgnoredFileBean bean = IgnoredBeanFactory.withMask(mask);
+      myIgnoredIdeaLevel.add(bean);
     }
-    myIgnoredIdeaLevel.add(bean);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
+import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.help.HelpManager;
@@ -190,9 +191,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   public IgnoredFileBean[] getSelectedIgnoredFiles() {
     if (myIgnoreSpecifiedFileRadioButton.isSelected()) {
       if (myFilesToIgnore == null) {
-        IgnoredFileBean bean = new IgnoredFileBean();
-        bean.setPath(myIgnoreFileTextField.getText().replace(File.separatorChar, '/'));
-        return new IgnoredFileBean[] { bean };
+        return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreFile(myIgnoreFileTextField.getText().replace(File.separatorChar, '/')) };
       }
       return getBeansFromFilesToIgnore(false);
     }
@@ -200,7 +199,6 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       if (getDirectoriesToIgnore() > 1) {
         return getBeansFromFilesToIgnore(true);
       }
-      IgnoredFileBean result = new IgnoredFileBean();
       String path = myIgnoreDirectoryTextField.getText();
       if (new File(path).isAbsolute()) {
         final String relPath = ChangesUtil.getProjectRelativePath(myProject, new File(path));
@@ -208,16 +206,10 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
           path = relPath;
         }
       }
-      if (!path.endsWith("/") && !path.endsWith(File.separator)) {
-        path += File.separator;
-      }
-      result.setPath(FileUtil.toSystemIndependentName(path));
-      return new IgnoredFileBean[] { result };
+      return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreUnderDirectory(FileUtil.toSystemIndependentName(path)) };
     }
     if (myIgnoreAllFilesMatchingRadioButton.isSelected()) {
-      IgnoredFileBean result = new IgnoredFileBean();
-      result.setMask(myIgnoreMaskTextField.getText());
-      return new IgnoredFileBean[] { result };
+      return new IgnoredFileBean[] { IgnoredBeanFactory.withMask(myIgnoreMaskTextField.getText()) };
     }
     return new IgnoredFileBean[0];
   }
@@ -229,10 +221,10 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       if (path != null) {
         path = FileUtil.toSystemIndependentName(path);
         if (fileToIgnore.isDirectory()) {
-          result.add(IgnoredFileBean.withPath(path + "/"));
+          result.add(IgnoredBeanFactory.ignoreUnderDirectory(path));
         }
         else if (!onlyDirs) {
-          result.add(IgnoredFileBean.withPath(path));
+          result.add(IgnoredBeanFactory.ignoreFile(path));
         }
       }
     }

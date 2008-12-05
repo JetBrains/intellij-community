@@ -7,18 +7,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class IgnoredFilesComponent {
   private final Project myProject;
-  private final List<IgnoredFileBean> myFilesToIgnore;
+  private final Set<IgnoredFileBean> myFilesToIgnore;
 
   public IgnoredFilesComponent(final Project project) {
     myProject = project;
-    myFilesToIgnore = new ArrayList<IgnoredFileBean>();
+    myFilesToIgnore = new HashSet<IgnoredFileBean>();
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
@@ -51,14 +51,25 @@ public class IgnoredFilesComponent {
     }
   }
 
+  public static enum IgnoreResult {
+    NO,
+    SELF,
+    SUBTREE
+  }
+
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
+    return ! IgnoreResult.NO.equals(isIgnoredFileWithType(file));
+  }
+
+  public IgnoreResult isIgnoredFileWithType(@NotNull VirtualFile file) {
     synchronized(myFilesToIgnore) {
       if (myFilesToIgnore.size() == 0) {
-        return false;
+        return IgnoreResult.NO;
       }
       String filePath = null;
       // don't use VfsUtil.getRelativePath() here because it can't handle paths where one file is not a direct ancestor of another one
       final VirtualFile baseDir = myProject.getBaseDir();
+      final File baseDirIoFile = (baseDir != null) ? new File(baseDir.getPath()) : null;
       if (baseDir != null) {
         filePath = FileUtil.getRelativePath(new File(baseDir.getPath()), new File(file.getPath()));
         if (filePath != null) {
@@ -68,6 +79,8 @@ public class IgnoredFilesComponent {
           filePath += "/";
         }
       }
+      String absIoPath = new File(file.getPath()).getAbsolutePath();
+      absIoPath = file.isDirectory() ? (absIoPath + "/") : absIoPath;
       for(IgnoredFileBean bean: myFilesToIgnore) {
         if (filePath != null) {
           final String prefix = bean.getPath();
@@ -76,19 +89,19 @@ public class IgnoredFilesComponent {
             final String basePath = FileUtil.toSystemIndependentName(baseDir.getPath());
             final String fileAbsPath = FileUtil.toSystemIndependentName(file.getPath());
             if (StringUtil.startsWithIgnoreCase(fileAbsPath, basePath)) {
-              return true;
+              return IgnoreResult.SUBTREE;
             }
           }
-          else if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, FileUtil.toSystemIndependentName(prefix))) {
-            return true;
+          else if (prefix != null && bean.fileIsUnderMe(absIoPath, baseDirIoFile)) {
+            return IgnoreSettingsType.UNDER_DIR.equals(bean.getType()) ? IgnoreResult.SUBTREE : IgnoreResult.SELF;
           }
         }
         final Pattern pattern = bean.getPattern();
         if (pattern != null && pattern.matcher(file.getName()).matches()) {
-          return true;
+          return IgnoreResult.SELF;
         }
       }
-      return false;
+      return IgnoreResult.NO;
     }
   }
 }

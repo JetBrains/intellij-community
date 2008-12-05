@@ -132,8 +132,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
         if (myIgnoredIdeaLevel.isEmpty()) {
           final String name = myProject.getName();
-          myIgnoredIdeaLevel.add(IgnoredFileBean.withPath(name + WorkspaceFileType.DOT_DEFAULT_EXTENSION));
-          myIgnoredIdeaLevel.add(IgnoredFileBean.withPath(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml"));
+          myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(name + WorkspaceFileType.DOT_DEFAULT_EXTENSION));
+          myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml"));
         }
       }
     }
