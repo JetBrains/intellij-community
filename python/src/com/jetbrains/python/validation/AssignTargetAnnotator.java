@@ -16,6 +16,8 @@
 
 package com.jetbrains.python.validation;
 
+import static com.jetbrains.python.PyBundle.message;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 
 /**
@@ -61,50 +63,53 @@ public class AssignTargetAnnotator extends PyAnnotator {
     }
 
     private class ExprVisitor extends PyElementVisitor {
-        private Operation _op;
+      private Operation _op;
+      private final String DELETING_NONE = message("ANN.deleting.none");
+      private final String ASSIGNMENT_TO_NONE = message("ANN.assign.to.none");
+      private final String CANT_ASSIGN_TO_FUNCTION_CALL = message("ANN.cant.assign.to.call");
+      private final String CANT_DELETE_FUNCTION_CALL = message("ANN.cant.delete.call");
 
-        public ExprVisitor(Operation op) {
+      public ExprVisitor(Operation op) {
             _op = op;
         }
 
         @Override public void visitPyReferenceExpression(final PyReferenceExpression node) {
             String referencedName = node.getReferencedName();
-            if (referencedName != null && referencedName.equals("None")) {
+            if (referencedName != null && referencedName.equals(PyNames.NONE)) {
                 getHolder().createErrorAnnotation(node,
-                        (_op == Operation.Delete) ? "deleting None" : "assignment to None");
+                        (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
             }
         }
 
         @Override public void visitPyTargetExpression(final PyTargetExpression node) {
             String targetName = node.getName();
-            if (targetName != null && targetName.equals("None")) {
+            if (targetName != null && targetName.equals(PyNames.NONE)) {
                 getHolder().createErrorAnnotation(node,
-                        (_op == Operation.Delete) ? "deleting None" : "assignment to None");
+                        (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
             }
         }
 
         @Override public void visitPyCallExpression(final PyCallExpression node) {
             getHolder().createErrorAnnotation(node,
-                (_op == Operation.Delete) ? "can't delete function call" : "can't assign to function call");
+                (_op == Operation.Delete) ? CANT_DELETE_FUNCTION_CALL : CANT_ASSIGN_TO_FUNCTION_CALL);
         }
 
         @Override public void visitPyGeneratorExpression(final PyGeneratorExpression node) {
             getHolder().createErrorAnnotation(node,
-                (_op == Operation.AugAssign)
-                        ? "augmented assign to generator expression not possible"
-                        : "assign to generator expression not possible");
+              message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.generator" : "ANN.cant.assign.to.generator")
+            );
         }
 
         @Override public void visitPyBinaryExpression(final PyBinaryExpression node) {
-            getHolder().createErrorAnnotation(node, "can't assign to operator");
+            getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.operator"));
         }
 
         @Override public void visitPyTupleExpression(final PyTupleExpression node) {
             if (node.getElements().length == 0) {
-                getHolder().createErrorAnnotation(node, "can't assign to ()");
+                getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.parens"));
             }
             else if (_op == Operation.AugAssign) {
-                getHolder().createErrorAnnotation(node, "augmented assign to tuple literal or generator expression not possible");
+                getHolder().createErrorAnnotation(node, message("ANN.cant.aug.assign.to.tuple.or.generator"));
             }
             else {
                 node.acceptChildren(this);
@@ -113,7 +118,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
         @Override public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
             if (_op == Operation.AugAssign) {
-                getHolder().createErrorAnnotation(node, "augmented assign to tuple literal or generator expression not possible");
+                getHolder().createErrorAnnotation(node, message("ANN.cant.aug.assign.to.tuple.or.generator"));
             }
             else {
                 node.acceptChildren(this);
@@ -122,10 +127,10 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
         @Override public void visitPyListLiteralExpression(final PyListLiteralExpression node) {
             if (node.getElements().length == 0) {
-                getHolder().createErrorAnnotation(node, "can't assign to []");
+                getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.brackets"));
             }
             else if (_op == Operation.AugAssign) {
-                getHolder().createErrorAnnotation(node, "augmented assign to list literal or comprehension not possible");
+                getHolder().createErrorAnnotation(node, message("ANN.cant.aug.assign.to.list.or.comprh"));
             }
             else {
                 node.acceptChildren(this);
@@ -134,9 +139,8 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
         @Override public void visitPyListCompExpression(final PyListCompExpression node) {
             getHolder().createErrorAnnotation(node,
-                    _op == Operation.AugAssign
-                            ? "augmented assign to list comprehension not possible"
-                            : "can't assign to list comprehension");
+                message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.comprh" : "ANN.cant.assign.to.comprh")
+            );
         }
 
         public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
@@ -148,11 +152,11 @@ public class AssignTargetAnnotator extends PyAnnotator {
         }
 
         private void checkLiteral(PyExpression node) {
-            getHolder().createErrorAnnotation(node, "can't assign to literal");
+            getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.literal"));
         }
 
         public void visitPyLambdaExpression(final PyLambdaExpression node) {
-            getHolder().createErrorAnnotation(node, "can't assign to lambda");
+            getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.lambda"));
         }
     }
 }

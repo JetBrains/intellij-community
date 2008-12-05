@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -76,7 +77,15 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           severity = ((PsiReferenceEx) reference).getUnresolvedHighlightSeverity();
           if (severity == null) continue;
         }
-        if (reference.resolve() == null) {
+        boolean unresolved;
+        if (reference instanceof PsiPolyVariantReference) {
+          final PsiPolyVariantReference poly = (PsiPolyVariantReference)reference;
+          unresolved = (poly.multiResolve(false).length == 0);
+        }
+        else {
+          unresolved = (reference.resolve() == null);
+        }
+        if (unresolved) {
           StringBuffer description_buf = new StringBuffer("");
           String text = reference.getElement().getText();
           String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with

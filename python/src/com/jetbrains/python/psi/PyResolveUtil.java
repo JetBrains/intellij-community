@@ -19,13 +19,14 @@ package com.jetbrains.python.psi;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.impl.PyScopeProcessor;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -307,30 +308,47 @@ public class PyResolveUtil {
   public static class ResolveProcessor implements PyScopeProcessor {
     private String myName;
     private PsiElement myResult = null;
-    private Set<String> mySeen;
+    /*private Set<String> mySeen;*/
+    private List<NameDefiner> myDefiners;
 
     public ResolveProcessor(final String name) {
       myName = name;
-      mySeen = new HashSet<String>();
+      /*mySeen = new HashSet<String>();*/
+      myDefiners = new ArrayList<NameDefiner>(2); // 1 is typical, 2 is sometimes, more is rare.
     }
 
     public PsiElement getResult() {
       return myResult;
     }
-    
+
+    @NonNls
     static String _nvl(Object s) {
       if (s != null) return "'" + s.toString() + "'";
-      else return "null";  // TODO: move to PyNames
+      else return "null";
     }
-    
+
+    /*
     public Set<String> getSeen() {
       return mySeen;
     }
-    
+    */
+
+    /**
+     * Adds a NameDefiner point which is a secondary resolution target. E.g. import statement for imported name.  
+     * @param definer
+     */
+    protected void addNameDefiner(NameDefiner definer) {
+      myDefiners.add(definer);
+    }
+
+    public List<NameDefiner>getDefiners() {
+      return myDefiners;
+    }
+
     public String toString() {
       return _nvl(myName) + ", " + _nvl(myResult);
     }
-    
+
     public boolean execute(PsiElement element, ResolveState substitutor) {
       if (element instanceof PyFile) {
         final VirtualFile file = ((PyFile)element).getVirtualFile();
@@ -367,6 +385,9 @@ public class PyResolveUtil {
         PsiElement by_name = definer.getElementNamed(myName);
         if (by_name != null) {
           myResult = by_name;
+          if (!PsiTreeUtil.isAncestor(element, by_name, true)) { // non-trivial definer
+            addNameDefiner(definer);
+          }
           return false;
         }
       }

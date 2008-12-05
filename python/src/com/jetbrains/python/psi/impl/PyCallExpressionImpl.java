@@ -19,6 +19,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.*;
@@ -146,12 +147,15 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   public PyType getType() {
     PyExpression callee = getCallee();
     if (callee instanceof PyReferenceExpression) {
-      PsiElement target = ((PyReferenceExpression)callee).resolve();
-      if (target instanceof PyClass) {
-        return new PyClassType((PyClass) target, false); // we call a class name, that is, the constructor, we get an instance.
+      ResolveResult[] targets = ((PyReferenceExpression)callee).multiResolve(false);
+      if (targets.length == 0) {
+        PsiElement target = targets[0].getElement();
+        if (target instanceof PyClass) {
+          return new PyClassType((PyClass) target, false); // we call a class name, that is, the constructor, we get an instance.
+        }
+        // TODO: look at well-known functions and their return types
+        return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target);
       }
-      // TODO: look at well-known functions and their return types
-      return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target);
     }
     return callee.getType();
   }

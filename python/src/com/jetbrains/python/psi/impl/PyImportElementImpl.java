@@ -17,6 +17,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -26,6 +28,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -87,6 +90,63 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
       }
     }
     return true;
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+
+      @NotNull
+      private String getRefName(String default_name) {
+        PyReferenceExpression ref = getImportReference();
+        if (ref != null) {
+          String refname = ref.getName();
+          if (refname != null) return refname;
+        }
+        return default_name;
+      }
+
+      public String getPresentableText() {
+        return getRefName("<none>");
+      }
+
+      public String getLocationString() {
+        PyElement elt = PsiTreeUtil.getParentOfType(PyImportElementImpl.this, PyImportStatement.class, PyFromImportStatement.class);
+        StringBuffer buf = new StringBuffer("| ");
+        if (elt != null) { // always? who knows :)
+          if (elt instanceof PyFromImportStatement) { // from ... import ...
+            buf.append("from ");
+            PyReferenceExpression imp_src = ((PyFromImportStatement)elt).getImportSource();
+            if (imp_src != null) {
+              buf.append(PyResolveUtil.toPath(imp_src, "."));
+            }
+            else buf.append("<?>");
+            buf.append(" import ");
+          }
+          else { // "import ... "
+            buf.append("import ");
+          }
+          buf.append(getRefName("<?>"));
+        }
+        else {
+          buf.append("import?.. ");
+        }
+        // are we the name or the 'as'?
+        PyTargetExpression as_part = getAsName();
+        if (as_part != null) {
+          buf.append(" as ").append(as_part.getName());
+        }
+        return buf.toString();
+      }
+
+      public Icon getIcon(final boolean open) {
+        return null;
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
   }
 
   @NotNull

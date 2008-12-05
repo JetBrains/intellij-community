@@ -6,9 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PsiTestUtil;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 
 /**
  * @author yole
@@ -20,16 +18,40 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertEquals("ImportedFile.py", ((PyFile) element).getName());
   }
 
+  /*
   public void testFromImport() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFunction);
     assertEquals("func", ((PyFunction) element).getName());
   }
+  */
 
+  public void testFromImport() throws Exception {
+    ResolveResult[] results = doMultiResolve();
+    assertTrue(results.length == 2); // func and import stmt
+    PsiElement func_elt = results[0].getElement();
+    assertTrue("is PyFunction?", func_elt instanceof PyFunction);
+    assertEquals("named 'func'?", "func", ((PyFunction) func_elt).getName());
+    PsiElement import_elt = results[1].getElement();
+    assertTrue("is import?", import_elt instanceof PyImportElement);
+  }
+
+  /*
   public void testFromImportStar() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFunction);
     assertEquals("func", ((PyFunction) element).getName());
+  }
+  */
+
+  public void testFromImportStar() throws Exception {
+    ResolveResult[] results = doMultiResolve();
+    assertTrue(results.length == 2); // func and import-* stmt
+    PsiElement func_elt = results[0].getElement();
+    assertTrue("is PyFunction?", func_elt instanceof PyFunction);
+    assertEquals("named 'func'?", "func", ((PyFunction) func_elt).getName());
+    PsiElement import_elt = results[1].getElement();
+    assertTrue("is import?", import_elt instanceof PyStarImportElement);
   }
 
   protected void _checkInitPyDir(PsiElement elt, String dirname) throws Exception {
@@ -79,14 +101,35 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertTrue(element instanceof PyFunction);
   }
 
+  /*
   public void testTransitiveImport() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyTargetExpression);
   }
+  */
 
+  public void testTransitiveImport() throws Exception {
+    ResolveResult[] results = doMultiResolve();
+    assertTrue(results.length == 2); // func and import stmt
+    PsiElement elt = results[0].getElement();
+    assertTrue("is target?", elt instanceof PyTargetExpression);
+  }
+
+  /*
   public void testResolveInPkg() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFunction);
+  }
+  */
+
+  public void testResolveInPkg() throws Exception {
+    ResolveResult[] results = doMultiResolve();
+    assertTrue(results.length == 2); // func and import stmt
+    PsiElement func_elt = results[0].getElement();
+    assertTrue("is PyFunction?", func_elt instanceof PyFunction);
+    assertEquals("named 'token'?", "token", ((PyFunction) func_elt).getName());
+    PsiElement import_elt = results[1].getElement();
+    assertTrue("is import?", import_elt instanceof PyImportElement);
   }
 
   // Currently fails due to inadequate stubs
@@ -96,7 +139,7 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
   }
 
 
-  private PsiElement doResolve() throws Exception {
+  private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
     String root = PathManager.getHomePath() + "/plugins/python/testData/resolve/multiFile/" + testName;
@@ -107,9 +150,21 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     VirtualFile sourceFile = rootDir.findChild(fileName);
     assert sourceFile != null;
     PsiFile psiFile = myPsiManager.findFile(sourceFile);
+    return psiFile;
+  }
+
+  private PsiElement doResolve() throws Exception {
+    PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
     final PsiReference ref = psiFile.findReferenceAt(offset);
     return ref.resolve();
+  }
+
+  private ResolveResult[] doMultiResolve() throws Exception {
+    PsiFile psiFile = prepareFile();
+    int offset = findMarkerOffset(psiFile);
+    final PsiPolyVariantReference ref = (PsiPolyVariantReference)psiFile.findReferenceAt(offset);
+    return ref.multiResolve(false);
   }
 
   private int findMarkerOffset(final PsiFile psiFile) {

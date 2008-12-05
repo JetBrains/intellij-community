@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
@@ -121,16 +122,39 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return results.length == 1 ? results[0].getElement() : null;
   }
 
+
+  private static class ResultList extends ArrayList<RatedResolveResult> {
+    // Allows to add non-null elements and discard nulls in a hassle-free way.
+    public boolean poke(final PsiElement what, final int rate) {
+      if (what == null) return false;
+      super.add(new RatedResolveResult() {
+        public int getRate() { return rate; }
+
+        public PsiElement getElement() { return what; }
+
+        public boolean isValidResult() { return true; }
+      });
+      return true;
+    }
+
+    public void pokeAll(Collection<PsiElement> elts, int rate) {
+      for (PsiElement elt : elts) poke(elt, rate);
+    }
+  }
+
   /**
    * Does actual resolution of resolve().
    * @return resolution result.
    * @see #resolve()
    */
   private
-  @Nullable
-  PsiElement resolveInner() {
+  @NotNull
+  List<RatedResolveResult> resolveInner() {
+    //List<PsiElement> ret = new ArrayList<PsiElement>();
+    ResultList ret = new ResultList();
+
     final String referencedName = getReferencedName();
-    if (referencedName == null) return null;
+    if (referencedName == null) return ret;
 
     if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
       PsiElement target = ResolveImportUtil.resolveImportReference(this);
@@ -145,9 +169,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           If we ever need to exactly tell a dir from __init__.py, that logic has to change.
           */
         }
-        else return null; // dir without __init__.py does not resolve
+        else {
+          ret.clear();
+          return ret; // dir without __init__.py does not resolve
+        }
       }
-      return target;
+      ret.poke(target, RatedResolveResult.RATE_HIGH);
+      return ret;
     }
 
     final PyExpression qualifier = getQualifier();
@@ -159,40 +187,65 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
           if (qualifier_path != null) {
             for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
-              if (referencedName.equals(ex.getName())) return ex;
+              if (referencedName.equals(ex.getName())) {
+                ret.poke(ex, RatedResolveResult.RATE_NORMAL);
+                return ret;
+              }
             }
           }
         }
         // resolve within the type proper
-        return qualifierType.resolveMember(referencedName);
+        PsiElement ref_elt = qualifierType.resolveMember(referencedName);
+        if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
+        return ret;
       }
-      return null;
+      return ret;
     }
 
     // here we have an unqualified expr. it may be defined:
     // ...in current file
-    PsiElement ret = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), this);
-    if ((ret != null) && (ret instanceof PyClass)) {
-      // is it a case of the bizarre "class Foo(Foo)" construct?
-      PyClass cls = (PyClass)ret;
-      for (PyExpression base_expr : cls.getSuperClassExpressions()){
-        if (base_expr == this) return null; // cannot resolve us, the base class ref, to the class being defined
+    PyResolveUtil.ResolveProcessor processor = new PyResolveUtil.ResolveProcessor(referencedName);
+    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, this);
+    if ((uexpr != null)) {
+      if ((uexpr instanceof PyClass)) {
+        // is it a case of the bizarre "class Foo(Foo)" construct?
+        PyClass cls = (PyClass)uexpr;
+        for (PyExpression base_expr : cls.getSuperClassExpressions()){
+          if (base_expr == this) {
+            ret.clear();
+            return ret; // cannot resolve us, the base class ref, to the class being defined
+          }
+        }
+      }
+      // sort what we got
+      for (NameDefiner hit : processor.getDefiners()) {
+        ret.poke(hit, getRate(hit));
       }
     }
-    if (ret == null) {
+    if (uexpr == null) {
       // ...as a part of current module
-      PyType otype = PyBuiltinCache.getInstance(this.getProject()).getObjectType(); // "object" as a closest kin to "module"
-      if (otype != null) ret = otype.resolveMember(getName());
+      PyType otype = PyBuiltinCache.getInstance(getProject()).getObjectType(); // "object" as a closest kin to "module"
+      if (otype != null) uexpr = otype.resolveMember(getName());
     }
-    if (ret == null) {
+    if (uexpr == null) {
       // ...as a builtin symbol
-      PyFile bfile = PyBuiltinCache.getInstance(this.getProject()).getBuiltinsFile();
-      ret = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), true, bfile);
+      PyFile bfile = PyBuiltinCache.getInstance(getProject()).getBuiltinsFile();
+      uexpr = PyResolveUtil.treeCrawlUp(new PyResolveUtil.ResolveProcessor(referencedName), true, bfile);
     }
-    if (ret == null) {
-      ret = PyResolveUtil.resolveOffContext(this);
+    if (uexpr == null) {
+      uexpr = PyResolveUtil.resolveOffContext(this);
     }
+    ret.poke(uexpr, getRate(uexpr));
     return ret;
+  }
+
+  // NOTE: very crude
+  private static int getRate(PsiElement elt) {
+    int rate;
+    if (elt instanceof PyImportElement || elt instanceof PyStarImportElement) rate = RatedResolveResult.RATE_LOW;
+    else if (elt instanceof PyFile) rate = RatedResolveResult.RATE_HIGH;
+    else rate = RatedResolveResult.RATE_NORMAL;
+    return rate;
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
@@ -213,25 +266,21 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     // crude logic right here to see it work
 
-    PsiElement target = resolveInner();
-    if (target == null) return ResolveResult.EMPTY_ARRAY;
+    List<RatedResolveResult> targets = resolveInner();
+    if (targets.size() == 0) return ResolveResult.EMPTY_ARRAY;
 
-    List<ResolveResult> ret = new ArrayList<ResolveResult>();
-    ret.add(new PsiElementResolveResult(target));
-
-    if (target instanceof PsiDirectory) {
-      final PsiDirectory dir = (PsiDirectory)target;
-      final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
-      if (file != null) {
-        ret.add(0, new PsiElementResolveResult(file));
+    List<RatedResolveResult> ret = new SortedList<RatedResolveResult>(new Comparator<RatedResolveResult>() {
+      public int compare(final RatedResolveResult one, final RatedResolveResult another) {
+        return another.getRate() - one.getRate();
       }
-    }
+    });
+    ret.addAll(targets);
 
     return ret.toArray(new ResolveResult[ret.size()]);
   }
 
   /**
-   * Resolves reference to possible referred elements.
+   * Reso   lves reference to possible referred elements.
    * First element is always what resolve() would return.
    * Imported module names: to module file, or {directory, '___init__.py}' for a qualifier.
    * @todo Local identifiers: a list of definitions in the most recent compound statement 
@@ -402,7 +451,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return PyNoneType.INSTANCE;
       }
     }
-    PsiElement target = resolve();
+    ResolveResult[] targets = multiResolve(false);
+    if (targets.length == 0) return null;
+    PsiElement target = targets[0].getElement();
     if (target == this) {
       return null;
     }
