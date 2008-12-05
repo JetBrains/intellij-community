@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
-import com.maddyhome.idea.copyright.options.TemplateOptions;
+import com.maddyhome.idea.copyright.options.LanguageOptions;
 
 import java.util.*;
 
@@ -44,7 +44,7 @@ public class FileTypeUtil
         return instance;
     }
 
-    public static String buildComment(FileType type, boolean useAlternate, String template, TemplateOptions options)
+    public static String buildComment(FileType type, boolean useAlternate, String template, LanguageOptions options)
     {
         FileType fileType = type;
         if (useAlternate)
@@ -83,7 +83,7 @@ public class FileTypeUtil
         char filler = options.getFiller();
         if (!allowSeparator)
         {
-            if (options.getFiller() == TemplateOptions.DEFAULT_FILLER)
+            if (options.getFiller() == LanguageOptions.DEFAULT_FILLER)
             {
                 filler = '~';
             }
@@ -104,7 +104,7 @@ public class FileTypeUtil
         StringBuffer pre = new StringBuffer(5);
         StringBuffer leader = new StringBuffer(5);
         StringBuffer post = new StringBuffer(5);
-        if (filler == TemplateOptions.DEFAULT_FILLER)
+        if (filler == LanguageOptions.DEFAULT_FILLER)
         {
             filler = open.charAt(open.length() - 1);
         }

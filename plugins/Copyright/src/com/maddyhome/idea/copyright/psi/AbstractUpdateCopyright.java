@@ -51,7 +51,7 @@ public abstract class AbstractUpdateCopyright implements UpdateCopyright {
       String base = EntityUtil.decode(myCopyrightProfile.getNotice());
       if (base.length() > 0) {
         String expanded = VelocityHelper.evaluate(manager.findFile(root), project, module, base);
-        String cmt = FileTypeUtil.buildComment(root.getFileType(), opts.isUseAlternate(), expanded, opts.getTemplateOptions());
+        String cmt = FileTypeUtil.buildComment(root.getFileType(), opts.isUseAlternate(), expanded, opts);
         commentText = prefix + cmt + suffix;
       }
       else {

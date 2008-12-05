@@ -22,175 +22,251 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public class LanguageOptions implements JDOMExternalizable, Cloneable
-{
-    public static final int NO_COPYRIGHT = 1;
-    public static final int USE_TEMPLATE = 2;
-    public static final int USE_TEXT = 3;
-    
+public class LanguageOptions implements JDOMExternalizable, Cloneable {
+  public static final int NO_COPYRIGHT = 1;
+  public static final int USE_TEMPLATE = 2;
+  public static final int USE_TEXT = 3;
 
-    public LanguageOptions()
-    {
-        setDefaults();
+  public static final int MIN_SEPARATOR_LENGTH = 5;
+  public static final int MAX_SEPARATOR_LENGTH = 300;
+  public static final char DEFAULT_FILLER = ' ';
+
+  public LanguageOptions() {
+    setBlock(true);
+    setPrefixLines(true);
+    setSeparateBefore(false);
+    setLenBefore(80);
+    setSeparateAfter(false);
+    setLenAfter(80);
+    setBox(false);
+    setFiller(DEFAULT_FILLER);
+
+    fileTypeOverride = USE_TEMPLATE;
+    relativeBefore = true;
+    addBlankAfter = true;
+    fileLocation = 1;
+    useAlternate = false;
+  }
+
+
+  public int getFileTypeOverride() {
+    return fileTypeOverride;
+  }
+
+  public void setFileTypeOverride(int fileTypeOverride) {
+    this.fileTypeOverride = fileTypeOverride;
+  }
+
+  public boolean isRelativeBefore() {
+    return relativeBefore;
+  }
+
+  public void setRelativeBefore(boolean relativeBefore) {
+    this.relativeBefore = relativeBefore;
+  }
+
+  public boolean isAddBlankAfter() {
+    return addBlankAfter;
+  }
+
+  public void setAddBlankAfter(boolean addBlankAfter) {
+    this.addBlankAfter = addBlankAfter;
+  }
+
+  public int getFileLocation() {
+    return fileLocation;
+  }
+
+  public void setFileLocation(int fileLocation) {
+    this.fileLocation = fileLocation;
+  }
+
+  public boolean isUseAlternate() {
+    return useAlternate;
+  }
+
+  public void setUseAlternate(boolean useAlternate) {
+    this.useAlternate = useAlternate;
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
 
-    public void setDefaults()
-    {
-        templateOptions = new TemplateOptions();
-        templateOptions.setDefaults();
+    final LanguageOptions that = (LanguageOptions)o;
 
-        fileTypeOverride = USE_TEMPLATE;
-        relativeBefore = true;
-        addBlankAfter = true;
-        fileLocation = 1;
-        useAlternate = false;
+    if (addBlankAfter != that.addBlankAfter) {
+      return false;
     }
-
-    public TemplateOptions getTemplateOptions()
-    {
-        return templateOptions;
+    if (fileLocation != that.fileLocation) {
+      return false;
     }
-
-    public void setTemplateOptions(TemplateOptions templateOptions)
-    {
-        this.templateOptions = templateOptions;
+    if (fileTypeOverride != that.fileTypeOverride) {
+      return false;
     }
-
-    public int getFileTypeOverride()
-    {
-        return fileTypeOverride;
+    if (relativeBefore != that.relativeBefore) {
+      return false;
     }
-
-    public void setFileTypeOverride(int fileTypeOverride)
-    {
-        this.fileTypeOverride = fileTypeOverride;
+    if (useAlternate != that.useAlternate) {
+      return false;
     }
-
-    public boolean isRelativeBefore()
-    {
-        return relativeBefore;
+    if (block != that.block) {
+      return false;
     }
-
-    public void setRelativeBefore(boolean relativeBefore)
-    {
-        this.relativeBefore = relativeBefore;
+    if (box != that.box) {
+      return false;
     }
-
-    public boolean isAddBlankAfter()
-    {
-        return addBlankAfter;
+    if (filler != that.filler) {
+      return false;
     }
-
-    public void setAddBlankAfter(boolean addBlankAfter)
-    {
-        this.addBlankAfter = addBlankAfter;
+    if (lenAfter != that.lenAfter) {
+      return false;
     }
-
-    public int getFileLocation()
-    {
-        return fileLocation;
+    if (lenBefore != that.lenBefore) {
+      return false;
     }
-
-    public void setFileLocation(int fileLocation)
-    {
-        this.fileLocation = fileLocation;
+    if (prefixLines != that.prefixLines) {
+      return false;
     }
-
-    public boolean isUseAlternate()
-    {
-        return useAlternate;
+    if (separateAfter != that.separateAfter) {
+      return false;
     }
+    return separateBefore == that.separateBefore;
 
-    public void setUseAlternate(boolean useAlternate)
-    {
-        this.useAlternate = useAlternate;
-    }
+  }
 
-    public void readExternal(Element element) throws InvalidDataException
-    {
-        DefaultJDOMExternalizer.readExternal(this, element);
-    }
+  public int hashCode() {
+    int result;
+    result = (block ? 1 : 0);
+    result = 29 * result + (separateBefore ? 1 : 0);
+    result = 29 * result + (separateAfter ? 1 : 0);
+    result = 29 * result + (prefixLines ? 1 : 0);
+    result = 29 * result + lenBefore;
+    result = 29 * result + lenAfter;
+    result = 29 * result + (box ? 1 : 0);
+    result = 29 * result + (int)filler;
+    result = 29 * result + fileTypeOverride;
+    result = 29 * result + (relativeBefore ? 1 : 0);
+    result = 29 * result + (addBlankAfter ? 1 : 0);
+    result = 29 * result + fileLocation;
+    result = 29 * result + (useAlternate ? 1 : 0);
+    return result;
+  }
 
-    public void writeExternal(Element element) throws WriteExternalException
-    {
-        DefaultJDOMExternalizer.writeExternal(this, element);
-    }
+  public String toString() {
+    final StringBuffer sb = new StringBuffer();
+    sb.append("LanguageOptions");
 
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
+    sb.append(", fileTypeOverride=").append(fileTypeOverride);
+    sb.append(", relativeBefore=").append(relativeBefore);
+    sb.append(", addBlankAfter=").append(addBlankAfter);
+    sb.append(", fileLocation=").append(fileLocation);
+    sb.append(", useAlternate=").append(useAlternate);
+    sb.append(", block=").append(block);
+    sb.append(", separateBefore=").append(separateBefore);
+    sb.append(", separateAfter=").append(separateAfter);
+    sb.append(", prefixLines=").append(prefixLines);
+    sb.append(", lenBefore=").append(lenBefore);
+    sb.append(", lenAfter=").append(lenAfter);
+    sb.append(", box=").append(box);
+    sb.append(", filler=").append(filler);
+    sb.append('}');
 
-        final LanguageOptions that = (LanguageOptions)o;
+    return sb.toString();
+  }
 
-        if (addBlankAfter != that.addBlankAfter)
-        {
-            return false;
-        }
-        if (fileLocation != that.fileLocation)
-        {
-            return false;
-        }
-        if (fileTypeOverride != that.fileTypeOverride)
-        {
-            return false;
-        }
-        if (relativeBefore != that.relativeBefore)
-        {
-            return false;
-        }
-        if (useAlternate != that.useAlternate)
-        {
-            return false;
-        }
-        return !(templateOptions != null ? !templateOptions.equals(that.templateOptions) :
-            that.templateOptions != null);
-    }
+  public LanguageOptions clone() throws CloneNotSupportedException {
+    LanguageOptions res = (LanguageOptions)super.clone();
+    return res;
+  }
 
-    public int hashCode()
-    {
-        int result;
-        result = (templateOptions != null ? templateOptions.hashCode() : 0);
-        result = 29 * result + fileTypeOverride;
-        result = 29 * result + (relativeBefore ? 1 : 0);
-        result = 29 * result + (addBlankAfter ? 1 : 0);
-        result = 29 * result + fileLocation;
-        result = 29 * result + (useAlternate ? 1 : 0);
-        return result;
-    }
+  public boolean isBlock() {
+    return block;
+  }
 
-    public String toString()
-    {
-        final StringBuffer sb = new StringBuffer();
-        sb.append("LanguageOptions");
-        sb.append("{templateOptions=").append(templateOptions);
-        sb.append(", fileTypeOverride=").append(fileTypeOverride);
-        sb.append(", relativeBefore=").append(relativeBefore);
-        sb.append(", addBlankAfter=").append(addBlankAfter);
-        sb.append(", fileLocation=").append(fileLocation);
-        sb.append(", useAlternate=").append(useAlternate);
-        sb.append('}');
-        return sb.toString();
-    }
+  public void setBlock(boolean block) {
+    this.block = block;
+  }
 
-    public LanguageOptions clone() throws CloneNotSupportedException
-    {
-        LanguageOptions res = (LanguageOptions)super.clone();
-        res.templateOptions = templateOptions.clone();
+  public boolean isSeparateBefore() {
+    return separateBefore;
+  }
 
-        return res;
-    }
+  public void setSeparateBefore(boolean separateBefore) {
+    this.separateBefore = separateBefore;
+  }
 
-  public TemplateOptions templateOptions;
-    public int fileTypeOverride;
-    public boolean relativeBefore;
-    public boolean addBlankAfter;
-    public int fileLocation;
-    public boolean useAlternate;
+  public boolean isSeparateAfter() {
+    return separateAfter;
+  }
+
+  public void setSeparateAfter(boolean separateAfter) {
+    this.separateAfter = separateAfter;
+  }
+
+  public boolean isPrefixLines() {
+    return prefixLines;
+  }
+
+  public void setPrefixLines(boolean prefixLines) {
+    this.prefixLines = prefixLines;
+  }
+
+  public int getLenBefore() {
+    return lenBefore;
+  }
+
+  public void setLenBefore(int lenBefore) {
+    this.lenBefore = lenBefore;
+  }
+
+  public int getLenAfter() {
+    return lenAfter;
+  }
+
+  public void setLenAfter(int lenAfter) {
+    this.lenAfter = lenAfter;
+  }
+
+  public boolean isBox() {
+    return box;
+  }
+
+  public void setBox(boolean box) {
+    this.box = box;
+  }
+
+  public char getFiller() {
+    return filler;
+  }
+
+  public void setFiller(char filler) {
+    this.filler = filler;
+  }
+
+  public int fileTypeOverride;
+  public boolean relativeBefore;
+  public boolean addBlankAfter;
+  public int fileLocation;
+  public boolean useAlternate;
+  public boolean block;
+  public boolean separateBefore;
+  public boolean separateAfter;
+  public boolean prefixLines;
+  public int lenBefore;
+  public int lenAfter;
+  public boolean box;
+  public char filler;
 }

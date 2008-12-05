@@ -24,19 +24,24 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.util.ui.UIUtil;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
-import com.maddyhome.idea.copyright.options.TemplateOptions;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.EventListenerList;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 public class TemplateCommentPanel implements Configurable {
   private CopyrightManager myManager;
@@ -45,19 +50,61 @@ public class TemplateCommentPanel implements Configurable {
   private TemplateCommentPanel parentPanel;
   private JRadioButton[] fileLocations = null;
 
-
-  private TemplateOptionsPanel tempOptionsPanel;
   private JTextArea preview;
   private JPanel mainPanel;
 
   private JRadioButton rbBefore;
   private JRadioButton rbAfter;
+
   private JPanel fileLocationPanel;
-  private JCheckBox cbAddBlank;
-  private JCheckBox cbUseAlternate;
+
   private JRadioButton myUseDefaultSettingsRadioButton;
   private JRadioButton myUseCustomFormattingOptionsRadioButton;
   private JRadioButton myNoCopyright;
+
+  private JRadioButton rbLineComment;
+  private JCheckBox cbPrefixLines;
+  private JRadioButton rbBlockComment;
+  private JCheckBox cbUseAlternate;
+  private JPanel myCommentTypePanel;
+
+  private JCheckBox cbSeparatorBefore;
+  private JTextField txtLengthBefore;
+  private JTextField txtLengthAfter;
+  private JCheckBox cbAddBlank;
+  private JCheckBox cbSeparatorAfter;
+  private JCheckBox cbBox;
+  private JTextField txtFiller;
+  private JPanel myBorderPanel;
+  private JLabel lblLengthBefore;
+  private JLabel lblLengthAfter;
+  private JLabel mySeparatorCharLabel;
+
+
+  private void updateBox() {
+    boolean enable = true;
+    if (!cbSeparatorBefore.isSelected()) {
+      enable = false;
+    }
+    else if (!cbSeparatorAfter.isSelected()) {
+      enable = false;
+    }
+    else {
+      if (!txtLengthBefore.getText().equals(txtLengthAfter.getText())) {
+        enable = false;
+      }
+    }
+
+    boolean either = cbSeparatorBefore.isSelected() || cbSeparatorAfter.isSelected();
+
+    cbBox.setEnabled(enable);
+
+    txtFiller.setEnabled(either);
+  }
+
+  private EventListenerList listeners = new EventListenerList();
+  private boolean allowBlock = false;
+
 
   public TemplateCommentPanel(FileType fileType, TemplateCommentPanel parentPanel, String[] locations, Project project) {
     this.parentPanel = parentPanel;
@@ -70,7 +117,7 @@ public class TemplateCommentPanel implements Configurable {
     }
 
     this.fileType = fileType != null ? fileType : StdFileTypes.JAVA;
-    tempOptionsPanel.setFileType(this.fileType);
+    allowBlock = FileTypeUtil.hasBlockComment(this.fileType);
     FileType alternate = FileTypeUtil.getInstance().getAlternate(this.fileType);
     if (alternate != null) {
       cbUseAlternate.setText("Use " + alternate.getName() + " Comments");
@@ -85,7 +132,7 @@ public class TemplateCommentPanel implements Configurable {
     }
 
     if (parentPanel != null) {
-      parentPanel.tempOptionsPanel.addOptionChangeListener(new TemplateOptionsPanelListener() {
+      parentPanel.addOptionChangeListener(new TemplateOptionsPanelListener() {
         public void optionChanged() {
           updateOverride();
         }
@@ -114,11 +161,9 @@ public class TemplateCommentPanel implements Configurable {
     }
 
 
-
-
-    tempOptionsPanel.addOptionChangeListener(new TemplateOptionsPanelListener() {
+    addOptionChangeListener(new TemplateOptionsPanelListener() {
       public void optionChanged() {
-        showPreview(tempOptionsPanel.getOptions());
+        showPreview(getOptions());
       }
     });
 
@@ -129,23 +174,110 @@ public class TemplateCommentPanel implements Configurable {
 
     myUseDefaultSettingsRadioButton.setSelected(true);
 
-        final ActionListener listener = new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-                    updateOverride();
-            }
-        };
+    final ActionListener listener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateOverride();
+      }
+    };
 
-        myUseDefaultSettingsRadioButton.addActionListener(listener);
-        myUseCustomFormattingOptionsRadioButton.addActionListener(listener);
-        myNoCopyright.addActionListener(listener);
+    myUseDefaultSettingsRadioButton.addActionListener(listener);
+    myUseCustomFormattingOptionsRadioButton.addActionListener(listener);
+    myNoCopyright.addActionListener(listener);
+    txtLengthBefore.setText("80");
+    txtLengthAfter.setText("80");
+
+    rbBlockComment.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent actionEvent) {
+        cbPrefixLines.setEnabled(rbBlockComment.isSelected());
+        fireChangeEvent();
+      }
+    });
+
+    rbLineComment.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent actionEvent) {
+        cbPrefixLines.setEnabled(rbBlockComment.isSelected());
+        fireChangeEvent();
+      }
+    });
+
+    cbPrefixLines.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent actionEvent) {
+        fireChangeEvent();
+      }
+    });
+
+    cbSeparatorBefore.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent actionEvent) {
+        showPreview(getOptions());
+        lblLengthBefore.setEnabled(cbSeparatorBefore.isSelected());
+        txtLengthBefore.setEnabled(cbSeparatorBefore.isSelected());
+        updateBox();
+      }
+    });
+
+    cbSeparatorAfter.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent actionEvent) {
+        showPreview(getOptions());
+        lblLengthAfter.setEnabled(cbSeparatorAfter.isSelected());
+        txtLengthAfter.setEnabled(cbSeparatorAfter.isSelected());
+        updateBox();
+      }
+    });
+
+    final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
+        if ("value".equals(propertyChangeEvent.getPropertyName())) {
+          fireChangeEvent();
+        }
+      }
+    };
+    txtLengthBefore.addPropertyChangeListener(propertyChangeListener);
+    txtLengthAfter.addPropertyChangeListener(propertyChangeListener);
+
+    txtFiller.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        fireChangeEvent();
+      }
+    });
+
+    cbBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent actionEvent) {
+        fireChangeEvent();
+      }
+    });
   }
 
 
   public LanguageOptions getOptions() {
     // If this is a fully custom comment we should really ensure there are no blank lines in the comments outside
     // of a block comment. If there are any blank lines the replacement logic will fall apart.
-    LanguageOptions res = new LanguageOptions();
-    res.setTemplateOptions(tempOptionsPanel.getOptions());
+    final LanguageOptions res = new LanguageOptions();
+    res.setBlock(rbBlockComment.isSelected());
+    res.setPrefixLines(!allowBlock || cbPrefixLines.isSelected());
+    res.setSeparateAfter(cbSeparatorAfter.isSelected());
+    res.setSeparateBefore(cbSeparatorBefore.isSelected());
+    try {
+      Object val = Integer.parseInt(txtLengthBefore.getText());
+      if (val instanceof Number) {
+        res.setLenBefore(((Number)val).intValue());
+      }
+      val = Integer.parseInt(txtLengthAfter.getText());
+      if (val instanceof Number) {
+        res.setLenAfter(((Number)val).intValue());
+      }
+    }
+    catch (NumberFormatException e) {
+      //leave blank
+    }
+    res.setBox(cbBox.isSelected());
+
+    String filler = txtFiller.getText();
+    if (filler.length() > 0) {
+      res.setFiller(filler.charAt(0));
+    }
+    else {
+      res.setFiller(LanguageOptions.DEFAULT_FILLER);
+    }
 
     res.setFileTypeOverride(getOverrideChoice());
     res.setRelativeBefore(rbBefore.isSelected());
@@ -163,7 +295,9 @@ public class TemplateCommentPanel implements Configurable {
   }
 
   private int getOverrideChoice() {
-    return myUseDefaultSettingsRadioButton.isSelected() ? LanguageOptions.USE_TEMPLATE : myNoCopyright.isSelected() ? LanguageOptions.NO_COPYRIGHT : LanguageOptions.USE_TEXT;
+    return myUseDefaultSettingsRadioButton.isSelected()
+           ? LanguageOptions.USE_TEMPLATE
+           : myNoCopyright.isSelected() ? LanguageOptions.NO_COPYRIGHT : LanguageOptions.USE_TEXT;
   }
 
   private void updateOverride() {
@@ -171,23 +305,20 @@ public class TemplateCommentPanel implements Configurable {
     LanguageOptions parentOpts = parentPanel != null ? parentPanel.getOptions() : null;
     switch (choice) {
       case LanguageOptions.NO_COPYRIGHT:
-        tempOptionsPanel.setEnabled(false);
+        enableFormattingOptions(false);
         rbBefore.setEnabled(false);
         rbAfter.setEnabled(false);
         cbAddBlank.setEnabled(false);
-        if (fileLocations != null)
-        {
-            for (JRadioButton fileLocation : fileLocations)
-            {
-                fileLocation.setEnabled(false);
-            }
+        if (fileLocations != null) {
+          for (JRadioButton fileLocation : fileLocations) {
+            fileLocation.setEnabled(false);
+          }
         }
         break;
       case LanguageOptions.USE_TEMPLATE:
         final boolean isTemplate = parentPanel == null;
-        tempOptionsPanel.setEnabled(isTemplate);
-        showPreview(parentOpts != null ? parentOpts.getTemplateOptions() : getOptions().getTemplateOptions());
-
+        enableFormattingOptions(isTemplate);
+        showPreview(parentOpts != null ? parentOpts : getOptions());
         rbBefore.setEnabled(isTemplate);
         rbAfter.setEnabled(isTemplate);
         cbAddBlank.setEnabled(isTemplate);
@@ -198,8 +329,8 @@ public class TemplateCommentPanel implements Configurable {
         }
         break;
       case LanguageOptions.USE_TEXT:
-        tempOptionsPanel.setEnabled(true);
-        showPreview(tempOptionsPanel.getOptions());
+        enableFormattingOptions(true);
+        showPreview(getOptions());
         rbBefore.setEnabled(true);
         rbAfter.setEnabled(true);
         cbAddBlank.setEnabled(true);
@@ -212,9 +343,28 @@ public class TemplateCommentPanel implements Configurable {
     }
   }
 
-  private void showPreview(TemplateOptions options) {
-    final String defaultCopyrightText =
-      FileTypeUtil.buildComment(fileType, cbUseAlternate.isSelected(), EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE), options);
+  private void enableFormattingOptions(boolean enable) {
+    if (enable) {
+      rbBlockComment.setEnabled(true);
+      rbLineComment.setEnabled(true);
+      cbPrefixLines.setEnabled(allowBlock);
+      cbSeparatorBefore.setEnabled(true);
+      cbSeparatorAfter.setEnabled(true);
+      lblLengthBefore.setEnabled(cbSeparatorBefore.isSelected());
+      txtLengthBefore.setEnabled(cbSeparatorBefore.isSelected());
+      lblLengthAfter.setEnabled(cbSeparatorAfter.isSelected());
+      txtLengthAfter.setEnabled(cbSeparatorAfter.isSelected());
+      mySeparatorCharLabel.setEnabled(true);
+      updateBox();
+    } else {
+      UIUtil.setEnabled(myCommentTypePanel, enable, true);
+      UIUtil.setEnabled(myBorderPanel, enable, true);
+    }
+  }
+
+  private void showPreview(LanguageOptions options) {
+    final String defaultCopyrightText = FileTypeUtil
+      .buildComment(fileType, cbUseAlternate.isSelected(), EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE), options);
     preview.setText(defaultCopyrightText);
   }
 
@@ -256,10 +406,24 @@ public class TemplateCommentPanel implements Configurable {
   }
 
   public void reset() {
-    LanguageOptions options = myManager.getOptions().getOptions(fileType.getName());
+    final LanguageOptions options =
+      parentPanel == null ? myManager.getOptions().getTemplateOptions() : myManager.getOptions().getOptions(fileType.getName());
+    boolean isBlock = options.isBlock();
+    if (isBlock) {
+      rbBlockComment.setSelected(true);
+    }
+    else {
+      rbLineComment.setSelected(true);
+    }
 
-    tempOptionsPanel
-      .setOptions(parentPanel == null ? myManager.getOptions().getTemplateOptions().getTemplateOptions() : options.getTemplateOptions());
+    cbPrefixLines.setSelected(!allowBlock || options.isPrefixLines());
+    cbSeparatorAfter.setSelected(options.isSeparateAfter());
+    cbSeparatorBefore.setSelected(options.isSeparateBefore());
+    txtLengthBefore.setText(String.valueOf(options.getLenBefore()));
+    txtLengthAfter.setText(String.valueOf(options.getLenAfter()));
+    txtFiller.setText(options.getFiller() == LanguageOptions.DEFAULT_FILLER ? "" : Character.toString(options.getFiller()));
+    cbBox.setSelected(options.isBox());
+
     final int fileTypeOverride = options.getFileTypeOverride();
     myUseDefaultSettingsRadioButton.setSelected(fileTypeOverride == LanguageOptions.USE_TEMPLATE);
     myUseCustomFormattingOptionsRadioButton.setSelected(fileTypeOverride == LanguageOptions.USE_TEXT);
@@ -285,4 +449,18 @@ public class TemplateCommentPanel implements Configurable {
   public void disposeUIResources() {
 
   }
+
+  public void addOptionChangeListener(TemplateOptionsPanelListener listener) {
+    listeners.add(TemplateOptionsPanelListener.class, listener);
+  }
+
+  private void fireChangeEvent() {
+    Object[] fires = listeners.getListenerList();
+    for (int i = fires.length - 2; i >= 0; i -= 2) {
+      if (fires[i] == TemplateOptionsPanelListener.class) {
+        ((TemplateOptionsPanelListener)fires[i + 1]).optionChanged();
+      }
+    }
+  }
+
 }
