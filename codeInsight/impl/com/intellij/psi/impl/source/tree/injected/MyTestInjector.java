@@ -121,6 +121,10 @@ public class MyTestInjector {
               }
               return;
             }
+            if ("jsprefix".equals(attrName)) {
+              inject(host, placesToInject, js, "function foo(doc, window){", "}");
+              return;
+            }
           }
         }
         if (host instanceof XmlText) {
@@ -129,18 +133,15 @@ public class MyTestInjector {
           XmlTag tag = xmlText.getParentTag();
           if (tag == null) return;
           if ("ql".equals(tag.getLocalName())) {
-            TextRange textRange = new TextRange(0, xmlText.getTextLength());
-            placesToInject.addPlace(ql, textRange, null, null);
+            inject(host, placesToInject, ql);
             return;
           }
           if ("js".equals(tag.getLocalName())) {
-            TextRange textRange = new TextRange(0, xmlText.getTextLength());
-            placesToInject.addPlace(js, textRange, null, null);
+            inject(host, placesToInject, js);
             return;
           }
           if ("jsprefix".equals(tag.getLocalName())) {
-            TextRange textRange = new TextRange(0, xmlText.getTextLength());
-            placesToInject.addPlace(js, textRange, "function foo(doc, window){", "}");
+            inject(host, placesToInject, js, "function foo(doc, window){", "}");
             return;
           }
 
@@ -215,6 +216,9 @@ public class MyTestInjector {
   }
 
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language) {
+    inject(host, placesToInject, language, null, null);
+  }
+  private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language, @NonNls String prefix, String suffix) {
     ASTNode[] children = ((ASTNode)host).getChildren(null);
     TextRange insideQuotes = new TextRange(0, host.getTextLength());
 
@@ -225,6 +229,6 @@ public class MyTestInjector {
       insideQuotes = new TextRange(insideQuotes.getStartOffset(), children[children.length-2].getTextRange().getEndOffset() - host.getTextRange().getStartOffset());
     }
 
-    placesToInject.addPlace(language, insideQuotes, null, null);
+    placesToInject.addPlace(language, insideQuotes, prefix, suffix);
   }
 }

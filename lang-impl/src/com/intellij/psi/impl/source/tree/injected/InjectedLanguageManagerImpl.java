@@ -366,7 +366,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {
     private final PsiManagerEx myPsiManager;
 
-    public PsiManagerRegisteredInjectorsAdapter(PsiManagerEx psiManager) {
+    private PsiManagerRegisteredInjectorsAdapter(PsiManagerEx psiManager) {
       myPsiManager = psiManager;
     }
 

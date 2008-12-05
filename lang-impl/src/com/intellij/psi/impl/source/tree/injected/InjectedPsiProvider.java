@@ -418,8 +418,9 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
                                                   "\nLanguage: "+parsedNode.getPsi().getLanguage()+
                                                   "\nHost file: "+shreds.get(0).host.getContainingFile().getVirtualFile()
         ;
-    for (LeafElement leaf : newTexts.keySet()) {
-      String newText = newTexts.get(leaf);
+    for (Map.Entry<LeafElement, String> entry : newTexts.entrySet()) {
+      LeafElement leaf = entry.getKey();
+      String newText = entry.getValue();
       leaf.setText(newText);
     }
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
@@ -604,6 +605,7 @@ class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, Ps
         }
         if (!range.isEmpty()) {
           int start = escaper.getOffsetInHost(range.getStartOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
+          if (start == -1) start = rangeInsideHost.getStartOffset();
           int end = escaper.getOffsetInHost(range.getEndOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
           if (end == -1) {
             end = rangeInsideHost.getEndOffset();
