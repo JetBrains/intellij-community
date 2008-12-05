@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.IdeaTestCase;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -119,11 +120,11 @@ public class OptimizeImportsTest extends IdeaTestCase {
     doTest("semicolons", "A.groovy");
   }
 
-  private void doTest(String folder, String filePath) throws Throwable {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
-    int oldCount = settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
+  private void doTest(@NonNls String folder, @NonNls String filePath) throws Throwable {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject).clone();
+    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
     try {
-      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
       String basePath = TestUtils.getTestDataPath() + "/optimizeImports/";
       String resultText = getResultFromFile(basePath + folder);
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + basePath + folder + "/" + filePath);
@@ -150,12 +151,12 @@ public class OptimizeImportsTest extends IdeaTestCase {
       assertEquals("Results are not equal", resultText, text);
     }
     finally {
-      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = oldCount;
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     }
   }
 
-  private String getResultFromFile(String basePath) throws IOException {
-    StringBuffer contents = new StringBuffer();
+  private static String getResultFromFile(String basePath) throws IOException {
+    StringBuilder contents = new StringBuilder();
     String line;
     File aFile = new File(basePath + "/" + "result.test");
     BufferedReader input = new BufferedReader(new FileReader(aFile));
