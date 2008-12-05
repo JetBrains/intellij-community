@@ -381,7 +381,7 @@ public class FileTypeUtil
         alternates.put(StdFileTypes.JSP, StdFileTypes.XML);
     }
 
-    private boolean isSupportedType(FileType type)
+    private static boolean isSupportedType(FileType type)
     {
         if (type.isBinary() || type.getName().indexOf("IDEA") >= 0 || "GUI_DESIGNER_FORM".equals(type.getName()))
         {

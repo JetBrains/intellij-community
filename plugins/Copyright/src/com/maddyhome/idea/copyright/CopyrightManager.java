@@ -180,10 +180,6 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable {
     return myModule2Copyrights;
   }
 
-  public void setCopyrightsMapping(LinkedHashMap<String, String> copyrights) {
-    myModule2Copyrights = copyrights;
-  }
-
   public void setDefaultCopyright(@Nullable CopyrightProfile copyright) {
     myDefaultCopyright = copyright;
   }
@@ -225,10 +221,6 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable {
     return myCopyrights.values();
   }
 
-  public CopyrightProfile getCopyright(String name) {
-    return myCopyrights.get(name);
-  }
-
   @Nullable
   public CopyrightProfile getCopyrightOptions(@NotNull PsiFile file) {
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
@@ -251,7 +243,4 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable {
     return myOptions;
   }
 
-  public void setOptions(Options options) {
-    myOptions = options;
-  }
 }

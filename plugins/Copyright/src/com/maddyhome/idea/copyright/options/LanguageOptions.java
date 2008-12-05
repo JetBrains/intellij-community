@@ -16,7 +16,6 @@
 
 package com.maddyhome.idea.copyright.options;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -188,15 +187,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable
         return res;
     }
 
-    public void validate() throws ConfigurationException
-    {
-        if (fileTypeOverride == USE_TEXT )
-        {
-            templateOptions.validate();
-        }
-    }
-
-    public TemplateOptions templateOptions;
+  public TemplateOptions templateOptions;
     public int fileTypeOverride;
     public boolean relativeBefore;
     public boolean addBlankAfter;

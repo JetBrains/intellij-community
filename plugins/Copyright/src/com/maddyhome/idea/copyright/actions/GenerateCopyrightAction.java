@@ -30,7 +30,7 @@ public class GenerateCopyrightAction extends AnAction
     {
         Presentation presentation = event.getPresentation();
         DataContext context = event.getDataContext();
-        Project project = (Project)context.getData(DataConstants.PROJECT);
+        Project project = PlatformDataKeys.PROJECT.getData(context);
         if (project == null)
         {
             presentation.setEnabled(false);
@@ -39,7 +39,7 @@ public class GenerateCopyrightAction extends AnAction
 
         PsiFile file = LangDataKeys.PSI_FILE.getData(context);
         if (file == null) {
-            Editor editor = (Editor)context.getData(DataConstants.EDITOR);
+            Editor editor = PlatformDataKeys.EDITOR.getData(context);
             if (editor != null)
             {
                 file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -54,11 +54,12 @@ public class GenerateCopyrightAction extends AnAction
     public void actionPerformed(AnActionEvent event)
     {
         DataContext context = event.getDataContext();
-        Project project = (Project)context.getData(DataConstants.PROJECT);
-        Module module = (Module)context.getData(DataConstants.MODULE);
+        Project project = PlatformDataKeys.PROJECT.getData(context);
+        assert project != null;
+        Module module = LangDataKeys.MODULE.getData(context);
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        Editor editor = (Editor)context.getData(DataConstants.EDITOR);
+        Editor editor = PlatformDataKeys.EDITOR.getData(context);
 
         PsiFile file = null;
         if (editor != null)
@@ -70,6 +71,6 @@ public class GenerateCopyrightAction extends AnAction
             }
         }
 
-        (new UpdateCopyrightProcessor(project, module, file)).run();
+        new UpdateCopyrightProcessor(project, module, file).run();
     }
 }

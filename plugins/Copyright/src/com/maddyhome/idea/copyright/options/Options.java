@@ -45,7 +45,8 @@ public class Options implements JDOMExternalizable, Cloneable
         LanguageOptions res = options.get(lang);
         if (res == null)
         {
-            res = LanguageOptionsFactory.createOptions(lang);
+          // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
+          res = new LanguageOptions();
         }
 
         return res;
@@ -106,7 +107,8 @@ public class Options implements JDOMExternalizable, Cloneable
             {
                 Element lang = (Element)langs.get(i);
                 String name = lang.getAttributeValue("name");
-                LanguageOptions opts = LanguageOptionsFactory.createOptions(name);
+              // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
+              LanguageOptions opts = new LanguageOptions();
                 opts.readExternal(lang);
 
                 setOptions(name, opts);
@@ -131,7 +133,8 @@ public class Options implements JDOMExternalizable, Cloneable
             if (root != null)
             {
                 String lname = StdFileTypes.JAVA.getName();
-                LanguageOptions opts = LanguageOptionsFactory.createOptions(lname);
+              // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
+              LanguageOptions opts = new LanguageOptions();
                 opts.setFileTypeOverride(LanguageOptions.USE_TEMPLATE);
                 List children = root.getChildren("option");
                 for (Object option : children)

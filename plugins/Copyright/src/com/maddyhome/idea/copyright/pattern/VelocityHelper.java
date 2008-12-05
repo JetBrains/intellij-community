@@ -54,14 +54,14 @@ public class VelocityHelper
         }
     }
 
-    public static boolean verify(String text) throws Exception
+    public static void verify(String text) throws Exception
     {
         VelocityEngine engine = getEngine();
 
         VelocityContext vc = new VelocityContext();
         vc.put("today", new DateInfo());
         StringWriter sw = new StringWriter();
-        return engine.evaluate(vc, sw, CopyrightManager.class.getName(), text);
+        engine.evaluate(vc, sw, CopyrightManager.class.getName(), text);
     }
 
     private static synchronized VelocityEngine getEngine()

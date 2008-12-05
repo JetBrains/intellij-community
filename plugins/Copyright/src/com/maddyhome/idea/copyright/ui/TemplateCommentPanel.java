@@ -283,5 +283,6 @@ public class TemplateCommentPanel implements Configurable {
   }
 
   public void disposeUIResources() {
+
   }
 }
