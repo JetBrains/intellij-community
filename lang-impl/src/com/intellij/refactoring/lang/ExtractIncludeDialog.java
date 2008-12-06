@@ -149,4 +149,9 @@ public class ExtractIncludeDialog extends DialogWrapper {
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
+
+  protected void hideTargetDirectory() {
+    myTargetDirectoryField.setVisible(false);
+    myTargetDirLabel.setVisible(false);
+  }
 }
