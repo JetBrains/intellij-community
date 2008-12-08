@@ -65,6 +65,7 @@ public class UpdateXmlFileCopyright extends UpdatePsiFileCopyright
             else if (elem instanceof XmlTag || elem instanceof XmlElementDecl || elem instanceof XmlAttributeDecl)
             {
                 root = elem;
+                break;
             }
 
             elem = elem.getNextSibling();
