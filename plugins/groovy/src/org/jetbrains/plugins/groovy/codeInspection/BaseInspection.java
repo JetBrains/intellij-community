@@ -89,7 +89,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
     }
     final GroovyFile groovyFile = (GroovyFile) psiFile;
 
-    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager);
+    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile);
     final BaseInspectionVisitor visitor = buildGroovyVisitor(problemsHolder, onTheFly);
     groovyFile.accept(visitor);
     final List<ProblemDescriptor> problems = problemsHolder.getResults();
