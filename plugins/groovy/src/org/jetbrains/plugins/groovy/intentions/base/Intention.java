@@ -35,6 +35,7 @@ public abstract class Intention implements IntentionAction {
     if (element == null) {
       return;
     }
+    assert element.isValid() : element;
     processIntention(element);
   }
 
