@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -35,7 +36,7 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
         if (p instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)p;
           final PsiMethod calledMethod = callExpression.resolveMethod();
-          if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+          if (qualifier != null && !(qualifier instanceof PsiThisExpression) && calledMethod != null) {
             if (haveCommonSuperMethod(containerMethod, calledMethod)) {
               boolean parametersDelegated = parametersDelegated(containerMethod, callExpression);
 
@@ -77,7 +78,7 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
     return true;
   }
 
-  private static boolean haveCommonSuperMethod(PsiMethod m1, PsiMethod m2) {
+  private static boolean haveCommonSuperMethod(@NotNull PsiMethod m1, @NotNull PsiMethod m2) {
     HashSet<PsiMethod> s1 = new HashSet<PsiMethod>(Arrays.asList(m1.findDeepestSuperMethods()));
     s1.add(m1);
 
