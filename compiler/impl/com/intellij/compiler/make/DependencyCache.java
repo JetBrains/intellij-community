@@ -580,6 +580,7 @@ public class DependencyCache {
       myNewClassesCache.wipe();
       myNewClassesCache = null;
     }
+    myCacheNavigator = null;
     try {
       if (myCache != null) {
         myCache.dispose();

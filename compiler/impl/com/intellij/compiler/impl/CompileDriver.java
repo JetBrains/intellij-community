@@ -763,7 +763,7 @@ public class CompileDriver {
       if (compiledSomething) {
         generatedTypes.addAll(compilerManager.getRegisteredOutputTypes(translator));
       }
-      // free memory earlier to leave other compilers more space
+      
       dropDependencyCache(context);
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
@@ -846,7 +846,7 @@ public class CompileDriver {
     return map;
   }
 
-  private void deleteAll(final CompileContext context, Set<File> outputDirectories) {
+  private void deleteAll(final CompileContextEx context, Set<File> outputDirectories) {
     context.getProgressIndicator().pushState();
     try {
       final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
@@ -983,9 +983,10 @@ public class CompileDriver {
     CompilerUtil.refreshIODirectories(outputDirectories);
   }
 
-  private void clearCompilerSystemDirectory(final CompileContext context) {
+  private void clearCompilerSystemDirectory(final CompileContextEx context) {
     CompilerCacheManager.getInstance(myProject).clearCaches(context);
-    
+    dropDependencyCache(context);
+
     for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
       final File[] outputs = {
         new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)), 
