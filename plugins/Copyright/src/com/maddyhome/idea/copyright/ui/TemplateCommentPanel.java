@@ -65,7 +65,6 @@ public class TemplateCommentPanel implements Configurable {
   private JRadioButton rbLineComment;
   private JCheckBox cbPrefixLines;
   private JRadioButton rbBlockComment;
-  private JCheckBox cbUseAlternate;
   private JPanel myCommentTypePanel;
 
   private JCheckBox cbSeparatorBefore;
@@ -118,18 +117,6 @@ public class TemplateCommentPanel implements Configurable {
 
     this.fileType = fileType != null ? fileType : StdFileTypes.JAVA;
     allowBlock = FileTypeUtil.hasBlockComment(this.fileType);
-    FileType alternate = FileTypeUtil.getInstance().getAlternate(this.fileType);
-    if (alternate != null) {
-      cbUseAlternate.setText("Use " + alternate.getName() + " Comments");
-      cbUseAlternate.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          updateOverride();
-        }
-      });
-    }
-    else {
-      cbUseAlternate.setVisible(false);
-    }
 
     if (parentPanel != null) {
       parentPanel.addOptionChangeListener(new TemplateOptionsPanelListener() {
@@ -282,7 +269,6 @@ public class TemplateCommentPanel implements Configurable {
     res.setFileTypeOverride(getOverrideChoice());
     res.setRelativeBefore(rbBefore.isSelected());
     res.setAddBlankAfter(cbAddBlank.isSelected());
-    res.setUseAlternate(cbUseAlternate.isSelected());
     if (fileLocations != null) {
       for (int i = 0; i < fileLocations.length; i++) {
         if (fileLocations[i].isSelected()) {
@@ -365,7 +351,7 @@ public class TemplateCommentPanel implements Configurable {
 
   private void showPreview(LanguageOptions options) {
     final String defaultCopyrightText = myNoCopyright.isSelected() ? "" : FileTypeUtil
-      .buildComment(fileType, cbUseAlternate.isSelected(), EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE), options);
+      .buildComment(fileType, EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE), options);
     preview.setText(defaultCopyrightText);
   }
 
@@ -436,7 +422,6 @@ public class TemplateCommentPanel implements Configurable {
       rbAfter.setSelected(true);
     }
     cbAddBlank.setSelected(options.isAddBlankAfter());
-    cbUseAlternate.setSelected(options.isUseAlternate());
 
     if (fileLocations != null) {
       int choice = options.getFileLocation() - 1;

@@ -45,7 +45,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
     relativeBefore = true;
     addBlankAfter = true;
     fileLocation = 1;
-    useAlternate = false;
   }
 
 
@@ -81,13 +80,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
     this.fileLocation = fileLocation;
   }
 
-  public boolean isUseAlternate() {
-    return useAlternate;
-  }
-
-  public void setUseAlternate(boolean useAlternate) {
-    this.useAlternate = useAlternate;
-  }
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -117,9 +109,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
       return false;
     }
     if (relativeBefore != that.relativeBefore) {
-      return false;
-    }
-    if (useAlternate != that.useAlternate) {
       return false;
     }
     if (block != that.block) {
@@ -161,7 +150,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
     result = 29 * result + (relativeBefore ? 1 : 0);
     result = 29 * result + (addBlankAfter ? 1 : 0);
     result = 29 * result + fileLocation;
-    result = 29 * result + (useAlternate ? 1 : 0);
     return result;
   }
 
@@ -173,7 +161,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
     sb.append(", relativeBefore=").append(relativeBefore);
     sb.append(", addBlankAfter=").append(addBlankAfter);
     sb.append(", fileLocation=").append(fileLocation);
-    sb.append(", useAlternate=").append(useAlternate);
     sb.append(", block=").append(block);
     sb.append(", separateBefore=").append(separateBefore);
     sb.append(", separateAfter=").append(separateAfter);
@@ -260,7 +247,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
   public boolean relativeBefore;
   public boolean addBlankAfter;
   public int fileLocation;
-  public boolean useAlternate;
+
   public boolean block;
   public boolean separateBefore;
   public boolean separateAfter;

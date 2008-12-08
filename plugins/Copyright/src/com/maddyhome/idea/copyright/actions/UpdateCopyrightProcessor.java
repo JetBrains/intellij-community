@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,24 +81,16 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor
         {
             logger.debug("process " + file);
             final UpdateCopyright update = UpdateCopyrightFactory.createUpdateCopyright(project, mod, file, opts);
-            if (update != null)
-            {
-                update.prepare();
-            }
+            if (update == null) return EmptyRunnable.getInstance();
+            update.prepare();
 
             return new Runnable() {
                 public void run()
                 {
                     try
                     {
-                        if (update != null)
-                        {
-                            update.complete();
-                        }
-                    }
-                    catch (IncorrectOperationException e)
-                    {
-                        logger.error(e);
+                        update.complete();
+
                     }
                     catch (Exception e)
                     {

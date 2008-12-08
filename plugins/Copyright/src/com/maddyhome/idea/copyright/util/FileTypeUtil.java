@@ -44,19 +44,10 @@ public class FileTypeUtil
         return instance;
     }
 
-    public static String buildComment(FileType type, boolean useAlternate, String template, LanguageOptions options)
+    public static String buildComment(FileType type, String template, LanguageOptions options)
     {
-        FileType fileType = type;
-        if (useAlternate)
-        {
-            FileType alternate = getInstance().getAlternate(type);
-            if (alternate != null)
-            {
-                fileType = alternate;
-            }
-        }
 
-        Commenter commenter = getCommenter(fileType);
+      Commenter commenter = getCommenter(type);
         if (commenter == null)
         {
             return "<No comments>";
@@ -79,7 +70,7 @@ public class FileTypeUtil
             be = ls;
         }
 
-        boolean allowSeparator = getInstance().allowSeparators(fileType);
+        boolean allowSeparator = getInstance().allowSeparators(type);
         char filler = options.getFiller();
         if (!allowSeparator)
         {
@@ -321,11 +312,6 @@ public class FileTypeUtil
         return !noSeparators.contains(type);
     }
 
-    public FileType getAlternate(FileType fileType)
-    {
-        return alternates.get(fileType);
-    }
-
     private FileTypeUtil()
     {
         createMappings();
@@ -378,7 +364,6 @@ public class FileTypeUtil
         noSeparators.add(StdFileTypes.HTML);
         noSeparators.add(StdFileTypes.JSP);
 
-        alternates.put(StdFileTypes.JSP, StdFileTypes.XML);
     }
 
     private static boolean isSupportedType(FileType type)
