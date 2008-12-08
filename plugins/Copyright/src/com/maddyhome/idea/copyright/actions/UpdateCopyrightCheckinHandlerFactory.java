@@ -20,10 +20,6 @@
 */
 package com.maddyhome.idea.copyright.actions;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -33,7 +29,6 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,15 +38,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@State(
-  name = "UpdateCopyrightCheckinHandler",
-  roamingType = RoamingType.DISABLED,
-  storages = {@Storage(
-    id = "other",
-    file = "$WORKSPACE_FILE$")})
-public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory implements PersistentStateComponent<UpdateCopyrightCheckinHandlerFactory> {
-  public boolean UPDATE_COPYRIGHT = false;
 
+public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory  {
   @NotNull
   public CheckinHandler createHandler(final CheckinProjectPanel panel) {
     return new CheckinHandler() {
@@ -69,11 +57,11 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
           }
 
           public void saveState() {
-            UPDATE_COPYRIGHT = updateCopyrightCb.isSelected();
+            UpdateCopyrightCheckinHandlerState.getInstance(panel.getProject()).UPDATE_COPYRIGHT = updateCopyrightCb.isSelected();
           }
 
           public void restoreState() {
-            updateCopyrightCb.setSelected(UPDATE_COPYRIGHT);
+            updateCopyrightCb.setSelected(UpdateCopyrightCheckinHandlerState.getInstance(panel.getProject()).UPDATE_COPYRIGHT);
           }
         };
       }
@@ -98,13 +86,5 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
         return psiFiles.toArray(new PsiFile[psiFiles.size()]);
       }
     };
-  }
-
-  public UpdateCopyrightCheckinHandlerFactory getState() {
-    return this;
-  }
-
-  public void loadState(UpdateCopyrightCheckinHandlerFactory state) {
-    XmlSerializerUtil.copyBean(state, this);
   }
 }
