@@ -55,8 +55,6 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
   @NotNull
   public CheckinHandler createHandler(final CheckinProjectPanel panel) {
     return new CheckinHandler() {
-
-
       @Override
       public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
         final JCheckBox updateCopyrightCb = new JCheckBox("Update copyright");
