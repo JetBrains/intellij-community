@@ -16,9 +16,9 @@
 
 package com.maddyhome.idea.copyright.actions;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -54,9 +54,8 @@ public abstract class AbstractFileProcessor
     private boolean subdirs = false;
     private final String message;
     private final String title;
-    private final Runnable postProcess;
 
-    protected abstract Runnable preprocessFile(PsiFile psifile) throws IncorrectOperationException;
+  protected abstract Runnable preprocessFile(PsiFile psifile) throws IncorrectOperationException;
 
     protected AbstractFileProcessor(Project project, String title, String message)
     {
@@ -66,7 +65,6 @@ public abstract class AbstractFileProcessor
         subdirs = true;
         this.title = title;
         this.message = message;
-        postProcess = null;
     }
 
     protected AbstractFileProcessor(Project project, Module module, String title, String message)
@@ -77,7 +75,6 @@ public abstract class AbstractFileProcessor
         subdirs = true;
         this.title = title;
         this.message = message;
-        postProcess = null;
     }
 
     protected AbstractFileProcessor(Project project, PsiDirectory dir, boolean subdirs, String title, String message)
@@ -88,7 +85,6 @@ public abstract class AbstractFileProcessor
         this.subdirs = subdirs;
         this.message = message;
         this.title = title;
-        postProcess = null;
     }
 
     protected AbstractFileProcessor(Project project, PsiFile file, String title, String message)
@@ -98,7 +94,6 @@ public abstract class AbstractFileProcessor
         this.file = file;
         this.message = message;
         this.title = title;
-        postProcess = null;
     }
 
     protected AbstractFileProcessor(Project project, PsiFile[] files, String title, String message, Runnable runnable)
@@ -108,7 +103,6 @@ public abstract class AbstractFileProcessor
         this.files = files;
         this.message = message;
         this.title = title;
-        postProcess = runnable;
     }
 
     public void run()
@@ -390,63 +384,25 @@ public abstract class AbstractFileProcessor
         }
     }
 
-    private void execute(final Runnable readAction, final Runnable writeAction)
-    {
-        final ProgressWindow progressWindow = new ProgressWindow(true, myProject);
-        progressWindow.setTitle(title);
-        progressWindow.setText(message);
-        final ModalityState modalityState = ModalityState.current();
-        final Runnable process = new Runnable()
-        {
-            public void run()
-            {
-                ApplicationManager.getApplication().runReadAction(readAction);
-            }
-        };
+  private void execute(final Runnable readAction, final Runnable writeAction) {
+    final ProgressWindow progressWindow = new ProgressWindow(true, myProject);
+    progressWindow.setTitle(title);
+    progressWindow.setText(message);
 
-        Runnable runnable = new Runnable()
-        {
-            public void run()
-            {
-                try
-                {
-                    ProgressManager.getInstance().runProcess(process, progressWindow);
-                }
-                catch (ProcessCanceledException processcanceledexception)
-                {
-                    return;
-                }
-
-                ApplicationManager.getApplication().invokeLater(new Runnable()
-                {
-                    public void run()
-                    {
-                        CommandProcessor.getInstance().executeCommand(myProject, new Runnable()
-                        {
-                            public void run()
-                            {
-                                CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
-                                try
-                                {
-                                    ApplicationManager.getApplication().runWriteAction(writeAction);
-                                }
-                                catch (ProcessCanceledException processcanceledexception)
-                                {
-                                    return;
-                                }
-                                if (postProcess != null)
-                                {
-                                    ApplicationManager.getApplication().invokeLater(postProcess);
-                                }
-                            }
-                        }, title, null);
-                    }
-                }, modalityState);
-            }
-        };
-
-        (new Thread(runnable, title)).start();
+    try {
+      ProgressManager.getInstance().runProcess(readAction, progressWindow);
     }
+    catch (ProcessCanceledException processcanceledexception) {
+      return;
+    }
+
+    new WriteCommandAction(myProject, title, null) {
+      protected void run(Result result) throws Throwable {
+        CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
+        writeAction.run();
+      }
+    }.execute();
+  }
 
     private static final Logger logger = Logger.getInstance(AbstractFileProcessor.class.getName());
 }
