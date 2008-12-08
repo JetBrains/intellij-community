@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction.AnalyzeDependenciesSettingPanel">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridBagLayout">
     <constraints>
       <xy x="20" y="20" width="500" height="400"/>

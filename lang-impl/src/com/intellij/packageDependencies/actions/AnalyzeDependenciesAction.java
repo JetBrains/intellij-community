@@ -13,29 +13,42 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AnalyzeDependenciesAction extends BaseAnalysisAction {
-  private JCheckBox myTransitiveCB;
-  private JPanel myWholePanel;
-  private JSpinner myBorderChooser;
-
+  private AnalyzeDependenciesSettingPanel myPanel;
+  
   public AnalyzeDependenciesAction() {
     super(AnalysisScopeBundle.message("action.forward.dependency.analysis"), AnalysisScopeBundle.message("action.analysis.noun"));
 
   }
 
   protected void analyze(@NotNull final Project project, AnalysisScope scope) {
-    new AnalyzeDependenciesHandler(project, scope, myTransitiveCB.isSelected() ? ((SpinnerNumberModel)myBorderChooser.getModel()).getNumber().intValue() : 0).analyze();
+    new AnalyzeDependenciesHandler(project, scope, myPanel.myTransitiveCB.isSelected() ? ((SpinnerNumberModel)myPanel.myBorderChooser.getModel()).getNumber().intValue() : 0).analyze();
+    myPanel = null;
   }
 
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
-    myTransitiveCB.setText("Show transitive dependencies. Do not travel deeper than");
-    myTransitiveCB.addActionListener(new ActionListener() {
+    myPanel = new AnalyzeDependenciesSettingPanel();
+    myPanel.myTransitiveCB.setText("Show transitive dependencies. Do not travel deeper than");
+    myPanel.myTransitiveCB.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        myBorderChooser.setEnabled(myTransitiveCB.isSelected());
+        myPanel.myBorderChooser.setEnabled(myPanel.myTransitiveCB.isSelected());
       }
     });
-    myBorderChooser.setModel(new SpinnerNumberModel(5, 0, Integer.MAX_VALUE, 1));
-    myBorderChooser.setEnabled(myTransitiveCB.isSelected());
-    return myWholePanel;
+    myPanel.myBorderChooser.setModel(new SpinnerNumberModel(5, 0, Integer.MAX_VALUE, 1));
+    myPanel.myBorderChooser.setEnabled(myPanel.myTransitiveCB.isSelected());
+    return myPanel.myWholePanel;
   }
+
+  @Override
+  protected void canceled() {
+    super.canceled();
+    myPanel = null;
+  }
+
+  private static class AnalyzeDependenciesSettingPanel {
+    private JCheckBox myTransitiveCB;
+    private JPanel myWholePanel;
+    private JSpinner myBorderChooser;
+  }
+
 }
