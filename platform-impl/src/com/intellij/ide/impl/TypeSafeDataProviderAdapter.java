@@ -39,4 +39,9 @@ public class TypeSafeDataProviderAdapter implements DataProvider, DataSink {
       myValue = data;
     }
   }
+
+  @Override
+  public String toString() {
+    return super.toString()+'('+ myProvider + ')';
+  }
 }
