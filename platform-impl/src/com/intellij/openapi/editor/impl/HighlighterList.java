@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.application.ApplicationManager;
 import gnu.trove.THashSet;
 
 import java.util.*;
@@ -48,6 +49,7 @@ public class HighlighterList {
   }
 
   private void sortMarkers() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myLongestHighlighterLength = 0;
     mySegmentHighlighters.clear();
     Iterator<RangeHighlighter> iterator = myHighlightersSet.iterator();
@@ -77,11 +79,13 @@ public class HighlighterList {
   }
 
   void addSegmentHighlighter(RangeHighlighter segmentHighlighter) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myIsDirtied = true;
     myHighlightersSet.add(segmentHighlighter);
   }
 
   void removeSegmentHighlighter(RangeHighlighter segmentHighlighter) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myIsDirtied = true;
     myHighlightersSet.remove(segmentHighlighter);
   }
