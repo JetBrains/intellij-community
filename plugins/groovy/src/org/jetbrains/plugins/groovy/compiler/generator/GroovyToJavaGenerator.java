@@ -471,7 +471,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
   }
 
-  private void writeConstructor(final StringBuffer text, GrConstructor constructor, boolean isEnum) {
+  private void writeConstructor(final StringBuffer text, final GrConstructor constructor, boolean isEnum) {
     text.append("\n");
     text.append("  ");
     if (!isEnum) {
@@ -516,8 +516,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           if (chainedConstructor == null) {
             final GroovyResolveResult[] results = constructorInvocation.multiResolveConstructor();
             if (results.length > 0) {
-              chainedConstructor = (PsiMethod) results[0].getElement();
-              substitutor = results[0].getSubstitutor();
+              int i = 0;
+              if (results[i].getElement() == constructor && results.length > 1) {
+                i = 1;
+              }
+              chainedConstructor = (PsiMethod) results[i].getElement();
+              substitutor = results[i].getSubstitutor();
             }
           }
 
