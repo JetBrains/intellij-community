@@ -4,10 +4,10 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.lexer.JavaLexer;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
@@ -18,9 +18,9 @@ import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.io.StringRef;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
@@ -349,11 +349,13 @@ public class ClsStubBuilder {
 
       String returnType;
       List<String> args = new ArrayList<String>();
+      boolean parsedViaGenericSignature = false;
       if (signature == null) {
         returnType = parseMethodViaDescription(desc, stub, args);
       } else {
         try {
           returnType = parseMethodViaGenericSignature(signature, stub, args);
+          parsedViaGenericSignature = true;
         }
         catch (ClsFormatException e) {
           returnType = parseMethodViaDescription(desc, stub, args);
@@ -362,7 +364,7 @@ public class ClsStubBuilder {
       stub.setReturnType(TypeInfo.fromString(returnType));
 
       boolean nonStaticInnerClassConstructor =
-        isConstructor && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+        isConstructor && !parsedViaGenericSignature && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
       final int paramCount = args.size();
