@@ -306,6 +306,7 @@ public class TemplateCommentPanel implements Configurable {
     switch (choice) {
       case LanguageOptions.NO_COPYRIGHT:
         enableFormattingOptions(false);
+        showPreview(getOptions());
         rbBefore.setEnabled(false);
         rbAfter.setEnabled(false);
         cbAddBlank.setEnabled(false);
@@ -363,7 +364,7 @@ public class TemplateCommentPanel implements Configurable {
   }
 
   private void showPreview(LanguageOptions options) {
-    final String defaultCopyrightText = FileTypeUtil
+    final String defaultCopyrightText = myNoCopyright.isSelected() ? "" : FileTypeUtil
       .buildComment(fileType, cbUseAlternate.isSelected(), EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE), options);
     preview.setText(defaultCopyrightText);
   }
