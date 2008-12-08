@@ -56,13 +56,14 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     final OfflineProblemDescriptor offlineProblemDescriptor = (OfflineProblemDescriptor)userObject;
     final RefEntity element = getElement();
     if (myTool instanceof LocalInspectionToolWrapper) {
-      final ProblemsHolder holder = new ProblemsHolder(inspectionManager);
       if (element instanceof RefElement) {
         final PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null) {
+          PsiFile containingFile = psiElement.getContainingFile();
+          final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile);
           final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)myTool).getTool();
           final PsiElementVisitor visitor = localInspectionTool.buildVisitor(holder, false);
-          final PsiElement[] elementsInRange = LocalInspectionsPass.getElementsIntersectingRange(psiElement.getContainingFile(),
+          final PsiElement[] elementsInRange = LocalInspectionsPass.getElementsIntersectingRange(containingFile,
                                                                                                  psiElement.getTextRange().getStartOffset(),
                                                                                                  psiElement.getTextRange().getEndOffset());
           for (PsiElement el : elementsInRange) {
@@ -75,7 +76,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
               int curIdx = 0;
               for (ProblemDescriptor descriptor : list) {
                 final PsiNamedElement member = localInspectionTool.getProblemElement(descriptor.getPsiElement());
-                if (psiElement instanceof PsiFile || (member != null && member.equals(psiElement))) {
+                if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
                   if (curIdx == idx) {
                     setUserObject(descriptor);
                     return descriptor;

@@ -178,7 +178,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           public void run() {
             ApplicationManager.getApplication().assertReadAccessAllowed();
 
-            ProblemsHolder holder = new ProblemsHolder(iManager);
+            ProblemsHolder holder = new ProblemsHolder(iManager, myFile);
             progressManager.checkCanceled();
             PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
             //noinspection ConstantConditions
@@ -442,7 +442,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private static void inspectInjectedPsi(PsiFile injectedPsi, List<InjectedPsiInspectionResult> result, LocalInspectionTool[] tools) {
     InspectionManager inspectionManager = InspectionManager.getInstance(injectedPsi.getProject());
-    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager);
+    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, injectedPsi);
     final PsiElement host = injectedPsi.getContext();
     for (LocalInspectionTool tool : tools) {
       if (host != null && InspectionManagerEx.inspectionResultSuppressed(host, tool)) {

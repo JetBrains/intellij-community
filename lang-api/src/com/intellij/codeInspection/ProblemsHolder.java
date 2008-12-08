@@ -16,12 +16,15 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +33,14 @@ import java.util.List;
  * @author max
  */
 public class ProblemsHolder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ProblemsHolder");
   private final InspectionManager myManager;
+  private final PsiFile myFile;
   private List<ProblemDescriptor> myProblems = null;
 
-  public ProblemsHolder(final InspectionManager manager) {
+  public ProblemsHolder(@NotNull InspectionManager manager, @NotNull PsiFile file) {
     myManager = manager;
+    myFile = file;
   }
 
   public void registerProblem(PsiElement psiElement, String descriptionTemplate, LocalQuickFix... fixes) {
@@ -52,7 +58,16 @@ public class ProblemsHolder {
     if (myProblems == null) {
       myProblems = new ArrayList<ProblemDescriptor>(1);
     }
+    PsiElement element = problemDescriptor.getPsiElement();
+    if (!isInPsiFile(element)) {
+      LOG.error("Reported element " + element + " is not from the file '"+myFile+"' the inspection was invoked for.");
+    }
     myProblems.add(problemDescriptor);
+  }
+
+  private boolean isInPsiFile(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    return ArrayUtil.indexOf(myFile.getPsiRoots(), file) != -1;
   }
 
   public void registerProblem(PsiReference reference, String descriptionTemplate, ProblemHighlightType highlightType) {
