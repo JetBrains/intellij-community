@@ -4,6 +4,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -17,6 +18,7 @@ import org.jdom.Element;
 
 @State(
   name="ProjectJdkTable",
+  roamingType = RoamingType.DISABLED,
   storages= {
     @Storage(
       id="other",
