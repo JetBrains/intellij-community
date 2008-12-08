@@ -386,6 +386,16 @@ public class TemplateImpl implements Template, SchemeElement {
 
   }
 
+  public boolean contextsEqual(TemplateImpl t){
+    final Collection<TemplateContextType> contextTypes = TemplateManagerImpl.getAllContextTypes();
+    for (TemplateContextType contextType : contextTypes) {
+      if (contextType.isEnabled(getTemplateContext()) != contextType.isEnabled(t.getTemplateContext())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {
     for (Map.Entry<TemplateOptionalProcessor, Boolean> entry : context.entrySet()) {
       entry.getKey().setEnabled(this, entry.getValue().booleanValue());

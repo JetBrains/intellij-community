@@ -104,7 +104,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
       public boolean shouldBeSaved(final TemplateGroup template) {
         for (TemplateImpl t : template.getElements()) {
-          if (!t.equals(myDefaultTemplates.get(t.getKey()))) {
+          if (differsFromDefault(t)) {
             return true;
           }
         }
@@ -116,7 +116,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         templateSetElement.setAttribute(GROUP, template.getName());
 
         for (TemplateImpl t : template.getElements()) {
-          if (!t.equals(myDefaultTemplates.get(t.getKey()))) {
+          if (differsFromDefault(t)) {
             saveTemplate(t, templateSetElement);
           }
         }
@@ -152,6 +152,12 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, myProcessor, RoamingType.PER_USER);
 
     loadTemplates();
+  }
+
+  private boolean differsFromDefault(TemplateImpl t) {
+    TemplateImpl def = myDefaultTemplates.get(t.getKey());
+    if (def == null) return true;
+    return !t.equals(def) || !t.contextsEqual(def);
   }
 
   @NotNull

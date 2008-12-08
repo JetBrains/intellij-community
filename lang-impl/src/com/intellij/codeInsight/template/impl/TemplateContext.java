@@ -62,12 +62,11 @@ public class TemplateContext implements Cloneable {
     }
   }
   public Object clone()  {
-    try {
-      return super.clone();
+    TemplateContext cloneResult = new TemplateContext();
+    for (String contextName : myAdditionalContexts.keySet()) {
+      cloneResult.setEnabled(contextName, isEnabled(contextName));
     }
-    catch(CloneNotSupportedException e) {
-      return null;
-    }
+    return cloneResult;
   }
 
   public boolean isEnabled(String contextName) {
