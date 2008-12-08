@@ -933,7 +933,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         ExternalInfo info = ((ExternalizableScheme)scheme).getExternalInfo();
         final String fileName = info.getCurrentFileName();
         if (fileName != null) {
-          if (info.getPreviouslySavedName().equals(scheme.getName())) {
+          if (Comparing.equal(info.getPreviouslySavedName(),equals(scheme.getName()))) {
             fileNameProvider.reserveFileName(fileName);
           }
           else {
