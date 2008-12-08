@@ -101,6 +101,13 @@ public class ProblemsHolder {
     return problems;
   }
 
+  @Nullable
+  public ProblemDescriptor[] getResultsArray() {
+    final List<ProblemDescriptor> problems = myProblems;
+    myProblems = null;
+    return problems == null ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
   public final InspectionManager getManager() {
     return myManager;
   }
