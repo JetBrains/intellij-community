@@ -47,6 +47,7 @@ public class UpdateCopyrightFactory
             return null;
         }
 
+
         // NOTE - any changes here require changes to LanguageOptionsFactory and ConfigTabFactory
         FileType type = FileTypeUtil.getInstance().getFileTypeByType(base);
         logger.debug("file=" + file);
