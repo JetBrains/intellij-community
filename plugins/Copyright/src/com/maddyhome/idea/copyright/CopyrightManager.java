@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.containers.HashMap;
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
+import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import com.maddyhome.idea.copyright.util.NewFileTracker;
@@ -231,7 +232,11 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable {
         if (packageSet != null) {
           if (packageSet.contains(file, validationManager)) {
             final CopyrightProfile profile = myCopyrights.get(myModule2Copyrights.get(scopeName));
-            if (profile != null) return profile;
+            if (profile != null) {
+              if (myOptions.getOptions(file.getFileType().getName()).getFileTypeOverride() != LanguageOptions.NO_COPYRIGHT) {
+                return profile;
+              }
+            }
           }
         }
       }
