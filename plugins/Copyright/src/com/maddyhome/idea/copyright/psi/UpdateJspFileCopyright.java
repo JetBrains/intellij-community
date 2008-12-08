@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
@@ -94,7 +95,7 @@ public class UpdateJspFileCopyright extends UpdatePsiFileCopyright
                     break;
                 }
             }
-            else if (elem instanceof XmlTag)
+            else if (elem instanceof XmlTag && !(elem instanceof JspDirective))
             {
                 firstTag = elem;
                 break;
