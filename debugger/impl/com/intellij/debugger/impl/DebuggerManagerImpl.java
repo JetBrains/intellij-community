@@ -395,30 +395,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       address = debugPort;
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public void run() {
-        JavaSdkUtil.addRtJar(parameters.getClassPath());
-        boolean classicVM = shouldForceClassicVM(parameters.getJdk());
-        parameters.getVMParametersList().replaceOrPrepend("-classic", classicVM ? "-classic" : "");
-
-        final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
-        if (shouldAddXdebugKey(parameters.getJdk()) || !"-Xdebug".equals(debugKey) /*the key is non-standard*/) {
-          parameters.getVMParametersList().replaceOrAppend(debugKey, debugKey);
-        }
-        else {
-          // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
-          // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
-          parameters.getVMParametersList().replaceOrAppend("-Xdebug", "");
-        }
-
-        if (shouldForceNoJIT(parameters.getJdk())) {
-          parameters.getVMParametersList().replaceOrAppend("-Xnoagent", "-Xnoagent");
-          parameters.getVMParametersList().replaceOrAppend("-Djava.compiler=", "-Djava.compiler=NONE");
-        }
-      }
-    });
-
     final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
     final String debugAddress = (debuggerInServerMode && useSockets)? ("127.0.0.1:" + address) : address;
     String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
@@ -432,7 +408,32 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     if (hasWhitespace(debuggeeRunProperties)) {
       debuggeeRunProperties = "\"" + debuggeeRunProperties + "\"";
     }
-    parameters.getVMParametersList().replaceOrAppend("-Xrunjdwp:", "-Xrunjdwp:" + debuggeeRunProperties);
+    parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "-Xrunjdwp:" + debuggeeRunProperties);
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
+      public void run() {
+        JavaSdkUtil.addRtJar(parameters.getClassPath());
+
+        if (shouldForceNoJIT(parameters.getJdk())) {
+          parameters.getVMParametersList().replaceOrPrepend("-Djava.compiler=", "-Djava.compiler=NONE");
+          parameters.getVMParametersList().replaceOrPrepend("-Xnoagent", "-Xnoagent");
+        }
+
+        final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
+        if (shouldAddXdebugKey(parameters.getJdk()) || !"-Xdebug".equals(debugKey) /*the key is non-standard*/) {
+          parameters.getVMParametersList().replaceOrPrepend(debugKey, debugKey);
+        }
+        else {
+          // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
+          // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
+          parameters.getVMParametersList().replaceOrPrepend("-Xdebug", "");
+        }
+
+        boolean classicVM = shouldForceClassicVM(parameters.getJdk());
+        parameters.getVMParametersList().replaceOrPrepend("-classic", classicVM ? "-classic" : "");
+      }
+    });
 
     return new RemoteConnection(useSockets, "127.0.0.1", address, debuggerInServerMode);
   }
