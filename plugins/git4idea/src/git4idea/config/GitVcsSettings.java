@@ -118,6 +118,12 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
     return ServiceManager.getService(project, GitVcsSettings.class);
   }
 
+  /**
+   * Get instance with checked read action
+   *
+   * @param project the project to get setting for
+   * @return the settings object
+   */
   public static GitVcsSettings getInstanceChecked(final Project project) {
     return ApplicationManager.getApplication().runReadAction(new Computable<GitVcsSettings>() {
       public GitVcsSettings compute() {
