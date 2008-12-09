@@ -112,12 +112,14 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       for (RoamingType roamingType : RoamingType.values()) {
         if (roamingType != RoamingType.DISABLED) {
           try {
-            final Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
+            if (myStreamProvider.isEnabled()) {
+              final Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
 
-            if (sharedDocument != null) {
-              filterComponentsDisabledForRoaming(sharedDocument.getRootElement(), roamingType);
+              if (sharedDocument != null) {
+                filterComponentsDisabledForRoaming(sharedDocument.getRootElement(), roamingType);
 
-              loadState(result, sharedDocument.getRootElement());
+                loadState(result, sharedDocument.getRootElement());
+              }
             }
           }
           catch (Exception e) {
