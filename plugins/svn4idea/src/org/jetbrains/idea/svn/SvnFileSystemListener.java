@@ -743,10 +743,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         else {
           singleFilePrompt = SvnBundle.message("confirmation.text.delete.file");
         }
-        filesToProcess = vcsHelper.selectFilePathsToProcess(deletedFiles, SvnBundle.message("confirmation.title.delete.multiple.files"),
+        filesToProcess = new ArrayList<FilePath>(vcsHelper.selectFilePathsToProcess(deletedFiles, SvnBundle.message("confirmation.title.delete.multiple.files"),
                                                             null,
                                                             SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt,
-                                                            vcs.getDeleteConfirmation());
+                                                            vcs.getDeleteConfirmation()));
       }
       if (filesToProcess != null) {
         deletedFiles.removeAll(filesToProcess);
