@@ -35,7 +35,6 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor;
-import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
@@ -66,8 +65,6 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
   private Options myOptions = new Options();
 
   private Project myProject;
-
-  private static final String myVersion = "1.0";
 
   public CopyrightManager(Project project) {
     myProject = project;
@@ -143,27 +140,15 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
       }
     }
     myDefaultCopyright = myCopyrights.get(element.getAttributeValue(DEFAULT));
-    if (element.getAttributeValue("version") == null) {
-      for (Object o : element.getChildren(COPYRIGHT)) {
-        final Element profileElement = (Element)o;
-        final CopyrightProfile copyrightProfile = new CopyrightProfile();
-        copyrightProfile.readExternal(profileElement);
-        ExternalOptionHelper.extractNoticeAndKeyword(copyrightProfile, profileElement);
-        myCopyrights.put(copyrightProfile.getName(), copyrightProfile);
-        myOptions.readExternal(profileElement);
-      }
-    } else {
-      for (Object o : element.getChildren(COPYRIGHT)) {
-        final CopyrightProfile copyrightProfile = new CopyrightProfile();
-        copyrightProfile.readExternal((Element)o);
-        myCopyrights.put(copyrightProfile.getName(), copyrightProfile);
-      }
-      myOptions.readExternal(element);
+    for (Object o : element.getChildren(COPYRIGHT)) {
+      final CopyrightProfile copyrightProfile = new CopyrightProfile();
+      copyrightProfile.readExternal((Element)o);
+      myCopyrights.put(copyrightProfile.getName(), copyrightProfile);
     }
+    myOptions.readExternal(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute("version", myVersion);
     for (CopyrightProfile copyright : myCopyrights.values()) {
       final Element copyrightElement = new Element(COPYRIGHT);
       copyright.writeExternal(copyrightElement);
