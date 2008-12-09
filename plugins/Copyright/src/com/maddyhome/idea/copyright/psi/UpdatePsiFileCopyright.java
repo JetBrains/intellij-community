@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
         }
       }
       for (int j = i + 1; j < comments.size(); j++) {
-        PsiElement cmt = comments.get(i);
+        PsiElement cmt = comments.get(j);
         if (cmt.getText().startsWith(lineCommentPrefix) && doc.getLineNumber(cmt.getTextRange().getStartOffset()) == eline + 1) {
           lastComment = cmt;
           eline = doc.getLineNumber(cmt.getTextRange().getEndOffset());
