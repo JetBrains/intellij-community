@@ -341,12 +341,13 @@ public class FileWatcher {
   }
 
   private void reset() {
+    final ManagingFS fs = ManagingFS.getInstance();
     synchronized (LOCK) {
       myDirtyPaths.clear();
       myDirtyDirs.clear();
       myDirtyRecursivePaths.clear();
 
-      for (VirtualFile root : ManagingFS.getInstance().getLocalRoots()) {
+      for (VirtualFile root : fs.getLocalRoots()) {
         ((NewVirtualFile)root).markDirtyRecursively();
       }
     }
