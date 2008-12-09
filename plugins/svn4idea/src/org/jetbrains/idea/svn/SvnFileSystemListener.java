@@ -36,8 +36,10 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -51,6 +53,8 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.dialogs.SelectIgnorePatternsToRemoveOnDeleteDialog;
+import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -99,6 +103,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       myDst = dst;
     }
   }
+
+  private Map<Project, Map<String, IgnoredFileInfo>> myIgnoredInfo = new HashMap<Project, Map<String, IgnoredFileInfo>>();
 
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
@@ -343,6 +349,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         status.getContentsStatus() == SVNStatusType.STATUS_MISSING ||
         status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL) {
       return false;
+    } else if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED) {
+      if (vcs != null && (file.getParent() != null)) {
+        if (! isUndoOrRedo(vcs.getProject())) {
+          putIgnoreInfo(file, vcs, ioFile);
+        }
+      }
+      return false;
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
       if (isUndo(vcs)) {
@@ -368,6 +381,29 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         }
       }
       return false;
+    }
+  }
+
+  private void putIgnoreInfo(VirtualFile file, SvnVcs vcs, File ioFile) {
+    final String key = file.getParent().getPresentableUrl();
+    Map<String, IgnoredFileInfo> map = myIgnoredInfo.get(vcs.getProject());
+    if (map != null) {
+      final IgnoredFileInfo info = map.get(key);
+      if (info != null) {
+        info.addFileName(file.getName());
+        return;
+      }
+    }
+    final Set<String> existingPatterns = SvnPropertyService.getIgnoreStringsUnder(vcs, file.getParent());
+    if (existingPatterns != null) {
+      if (map == null) {
+        map = new HashMap<String, IgnoredFileInfo>();
+        myIgnoredInfo.put(vcs.getProject(), map);
+      }
+      final File parentIo = ioFile.getParentFile();
+      final IgnoredFileInfo info = new IgnoredFileInfo(parentIo, existingPatterns);
+      info.addFileName(file.getName());
+      map.put(key, info);
     }
   }
 
@@ -481,6 +517,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     final Project project = event.getProject();
     if (project == null) return;
     myMoveExceptions.remove(project);
+    myIgnoredInfo.remove(project);
   }
 
   public void beforeCommandFinished(CommandEvent event) {
@@ -502,8 +539,56 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       AbstractVcsHelper.getInstance(project).showErrors(exceptionList, SvnBundle.message("move.files.errors.title"));
     }
 
+    dealWithIgnorePatterns(project);
+
     if (myFilesToRefresh.size() > 0) {
       refreshFiles(project);
+    }
+  }
+
+  private void dealWithIgnorePatterns(Project project) {
+    final Map<String, IgnoredFileInfo> map = myIgnoredInfo.get(project);
+    if (map != null) {
+      final SvnVcs vcs = SvnVcs.getInstance(project);
+      final ProgressManager progressManager = ProgressManager.getInstance();
+      final Runnable prepare = new Runnable() {
+        public void run() {
+          for (Iterator<String> iterator = map.keySet().iterator(); iterator.hasNext();) {
+            final String key = iterator.next();
+            final IgnoredFileInfo info = map.get(key);
+            info.calculatePatterns(vcs);
+            if (info.getPatterns().isEmpty()) {
+              iterator.remove();
+            }
+          }
+        }
+      };
+      progressManager.runProcessWithProgressSynchronously(prepare, SvnBundle.message("gather.ignore.patterns.info.progress.title"), false, project);
+
+      final SelectIgnorePatternsToRemoveOnDeleteDialog dialog = new SelectIgnorePatternsToRemoveOnDeleteDialog(project, map);
+      dialog.show();
+      final Collection<IgnoredFileInfo> result = dialog.getResult();
+      if ((dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) && (! result.isEmpty())) {
+        final List<VcsException> exceptions = new ArrayList<VcsException>(0);
+
+        final Runnable deletePatterns = new Runnable() {
+          public void run() {
+            for (IgnoredFileInfo info : result) {
+              try {
+                info.getOldPatterns().removeAll(info.getPatterns());
+                SvnPropertyService.setIgnores(vcs, info.getOldPatterns(), info.getFile());
+              }
+              catch (SVNException e) {
+                exceptions.add(new VcsException(e));
+              }
+            }
+          }
+        };
+        progressManager.runProcessWithProgressSynchronously(deletePatterns, "Removing selected 'svn:ignore' patterns", false, project);
+        if (! exceptions.isEmpty()) {
+          AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("remove.ignore.patterns.errors.title"));
+        }
+      }
     }
   }
 
@@ -758,6 +843,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     catch (SVNException e) {
       return null;
     }
+  }
+
+  private static boolean isUndoOrRedo(@NotNull final Project project) {
+    final UndoManager undoManager = UndoManager.getInstance(project);
+    return undoManager.isUndoInProgress() || undoManager.isRedoInProgress();
   }
 
   private static boolean isUndo(SvnVcs vcs) {
