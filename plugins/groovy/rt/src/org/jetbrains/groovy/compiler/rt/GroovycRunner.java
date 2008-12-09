@@ -40,6 +40,7 @@ public class GroovycRunner {
   public static final String OUTPUTPATH = "outputpath";
   public static final String TEST_OUTPUTPATH = "test_outputpath";
   public static final String TEST_FILE = "test_file";
+  public static final String END = "end";
 
   public static final String SRC_FILE = "src_file";
   public static final String COMPILED_START = "%%c";
@@ -78,6 +79,7 @@ public class GroovycRunner {
 
       List srcFiles = new ArrayList();
       List testFiles = new ArrayList();
+      Map class2File = new HashMap();
 
       BufferedReader reader = null;
       FileInputStream stream;
@@ -90,7 +92,14 @@ public class GroovycRunner {
 
         while ((line = reader.readLine()) != null && !line.equals(CLASSPATH)) {
           if (TEST_FILE.equals(line)) testFiles.add(new File(reader.readLine()));
-          else if (SRC_FILE.equals(line)) srcFiles.add(new File(reader.readLine()));
+          else if (SRC_FILE.equals(line)) {
+            final File file = new File(reader.readLine());
+            srcFiles.add(file);
+            String s;
+            while (!END.equals(s = reader.readLine())) {
+              class2File.put(s, file);
+            }
+          }
         }
 
         while (line != null) {
@@ -136,7 +145,7 @@ public class GroovycRunner {
       MyGroovyCompiler groovyCompiler = new MyGroovyCompiler();
       if (srcFiles.isEmpty() && testFiles.isEmpty()) return;
 
-      MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, moduleClasspath, moduleTestOutputPath, moduleOutputPath, isGrails,
+      MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, class2File, moduleClasspath, moduleTestOutputPath, moduleOutputPath, isGrails,
                                                                      encoding);
 
       MessageCollector messageCollector = new MessageCollector();
@@ -210,12 +219,12 @@ public class GroovycRunner {
     }
   }
 
-  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, List testFilesToCompile, String classpath, String testOutputPath,
+  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, List testFilesToCompile, Map class2File, String classpath, String testOutputPath,
                                                            String ordinaryOutputPath,
                                                            boolean isGrailsModule,
                                                            final String encoding) {
-    final CompilationUnit sourceUnit = createCompilationUnit(srcFilesToCompile, classpath, ordinaryOutputPath, isGrailsModule, encoding);
-    final CompilationUnit testUnit = createCompilationUnit(testFilesToCompile, classpath, testOutputPath, isGrailsModule, encoding);
+    final CompilationUnit sourceUnit = createCompilationUnit(class2File, classpath, ordinaryOutputPath, isGrailsModule, encoding);
+    final CompilationUnit testUnit = createCompilationUnit(Collections.EMPTY_MAP, classpath, testOutputPath, isGrailsModule, encoding);
     MyCompilationUnits myCompilationUnits = myFactory.create(sourceUnit, testUnit);
 
     for (int i = 0; i < srcFilesToCompile.size(); i++) {
@@ -232,7 +241,7 @@ public class GroovycRunner {
     return myCompilationUnits;
   }
 
-  private static CompilationUnit createCompilationUnit(List srcFiles, String classpath, String outputPath, boolean isGrailsModule,
+  private static CompilationUnit createCompilationUnit(Map class2File, String classpath, String outputPath, boolean isGrailsModule,
                                                        final String encoding) {
     CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
     compilerConfiguration.setOutput(new PrintWriter(System.err));
@@ -250,7 +259,7 @@ public class GroovycRunner {
      * @see org.codehaus.groovy.control.CompilationUnit#addPhaseOperation(org.codehaus.groovy.control.CompilationUnit.PrimaryClassNodeOperation, int)
      */
     if (isGrailsModule) {
-      PhaseOperationUtil.addGrailsAwareInjectionOperation(srcFiles, compilationUnit, compilerConfiguration);
+      PhaseOperationUtil.addGrailsAwareInjectionOperation(class2File, compilationUnit, compilerConfiguration);
     }
     return compilationUnit;
   }

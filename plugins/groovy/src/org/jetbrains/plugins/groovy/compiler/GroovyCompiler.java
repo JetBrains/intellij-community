@@ -42,6 +42,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +55,7 @@ import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.grails.module.GrailsModuleType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.*;
@@ -126,6 +130,8 @@ public class GroovyCompiler implements TranslatingCompiler {
       classPathBuilder.append(getModuleSpecificClassPath(module));
       commandLine.addParameter(classPathBuilder.toString());
       commandLine.addParameter(XMX_COMPILER_PROPERTY);
+      //commandLine.addParameter("-Xdebug");
+      //commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
       // Setting up process encoding according to locale
       final ArrayList<String> list = new ArrayList<String>();
@@ -294,7 +300,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       return;
     }
 
-    PrintStream printer = new PrintStream(stream);
+    final PrintStream printer = new PrintStream(stream);
 
 /*    filename1
 *    filname2
@@ -305,14 +311,28 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     //files
-    for (VirtualFile item : virtualFiles) {
-      if (!moduleRootManager.getFileIndex().isInTestSourceContent(item)) {
+    for (final VirtualFile item : virtualFiles) {
+      final boolean isSource = !moduleRootManager.getFileIndex().isInTestSourceContent(item);
+      if (isSource) {
         printer.println(GroovycRunner.SRC_FILE);
       }
       else {
         printer.println(GroovycRunner.TEST_FILE);
       }
       printer.println(item.getPath());
+      if (isSource) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            final PsiFile file = PsiManager.getInstance(myProject).findFile(item);
+            if (file instanceof GroovyFileBase) {
+              for (PsiClass psiClass : ((GroovyFileBase)file).getClasses()) {
+                printer.println(psiClass.getQualifiedName());
+              }
+            }
+          }
+        });
+        printer.println(GroovycRunner.END);
+      }
     }
 
     //classpath
