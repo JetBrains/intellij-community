@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.DocumentAdapter;
@@ -43,7 +43,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class TemplateCommentPanel implements Configurable {
+public class TemplateCommentPanel implements SearchableConfigurable {
   private CopyrightManager myManager;
 
   private FileType fileType;
@@ -449,4 +449,11 @@ public class TemplateCommentPanel implements Configurable {
     }
   }
 
+  public String getId() {
+    return getHelpTopic() + "." + fileType.getName();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
+  }
 }
