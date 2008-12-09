@@ -32,6 +32,7 @@ import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
+import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 
@@ -351,7 +352,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
 
   private void showPreview(LanguageOptions options) {
     final String defaultCopyrightText = myNoCopyright.isSelected() ? "" : FileTypeUtil
-      .buildComment(fileType, EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE), options);
+      .buildComment(fileType, VelocityHelper.evaluate(null, null, null, EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE)), options);
     preview.setText(defaultCopyrightText);
   }
 

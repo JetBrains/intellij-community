@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ public class VelocityHelper
 
         VelocityContext vc = new VelocityContext();
         vc.put("today", new DateInfo());
-        vc.put("file", new FileInfo(file));
-        vc.put("project", new ProjectInfo(project));
-        vc.put("module", new ModuleInfo(module));
+        if (file != null) vc.put("file", new FileInfo(file));
+        if (project != null) vc.put("project", new ProjectInfo(project));
+        if (module != null) vc.put("module", new ModuleInfo(module));
         vc.put("username", System.getProperty("user.name"));
 
         try
