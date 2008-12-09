@@ -16,30 +16,29 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public class CodeStyleSettingsManager implements ApplicationComponent, ProjectComponent, JDOMExternalizable {
+public class CodeStyleSettingsManager implements ApplicationComponent, ProjectComponent, PersistentStateComponent<Element> {
+
+  private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettingsManager.class.getName());
+
   public CodeStyleSettings PER_PROJECT_SETTINGS = null;
   public boolean USE_PER_PROJECT_SETTINGS = false;
   private CodeStyleSettings myTemporarySettings;
 
   public static CodeStyleSettingsManager getInstance(Project project) {
-    return project.getComponent(CodeStyleSettingsManager.class);
+    return project.getComponent(ProjectCodeStyleSettingsManager.class);
   }
 
   public static CodeStyleSettingsManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(CodeStyleSettingsManager.class);
+    return ApplicationManager.getApplication().getComponent(AppCodeStyleSettingsManager.class);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -64,6 +63,26 @@ public class CodeStyleSettingsManager implements ApplicationComponent, ProjectCo
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+  public Element getState() {
+    Element result = new Element("state");
+    try {
+      writeExternal(result);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return result;
+  }
+
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public void disposeComponent() {}

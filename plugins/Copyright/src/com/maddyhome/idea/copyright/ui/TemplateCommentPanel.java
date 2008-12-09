@@ -157,7 +157,7 @@ public class TemplateCommentPanel implements Configurable {
 
     preview.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
 
-    preview.setColumns(CodeStyleSettingsManager.getInstance().getCurrentSettings().RIGHT_MARGIN);
+    preview.setColumns(CodeStyleSettingsManager.getInstance(project).getCurrentSettings().RIGHT_MARGIN);
 
     myUseDefaultSettingsRadioButton.setSelected(true);
 

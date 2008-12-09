@@ -1,7 +1,7 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
+      <implementation-class>com.intellij.psi.codeStyle.AppCodeStyleSettingsManager</implementation-class>
     </component>
 
     <component>
@@ -58,7 +58,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
+      <implementation-class>com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager</implementation-class>
     </component>
 
     <component>
