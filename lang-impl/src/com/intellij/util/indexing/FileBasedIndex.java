@@ -949,10 +949,13 @@ public class FileBasedIndex implements ApplicationComponent {
       iterateIndexableFiles(event.getFile(), new Processor<VirtualFile>() {
         public boolean process(final VirtualFile file) {
           FileContent fileContent = null;
+          final boolean isTooLarge = SingleRootFileViewProvider.isTooLarge(file);
           for (ID<?, ?> indexId : myIndices.keySet()) {
             if (getInputFilter(indexId).acceptInput(file)) {
               if (myNeedContentLoading.contains(indexId)) {
-                myFilesToUpdate.add(file);
+                if (!isTooLarge) {
+                  myFilesToUpdate.add(file);
+                }
               }
               else {
                 try {
@@ -985,8 +988,8 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       else {
         cleanProcessedFlag(file);
-        if (SingleRootFileViewProvider.isTooLarge(file)) return;
 
+        final boolean isTooLarge = SingleRootFileViewProvider.isTooLarge(file);
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
         FileContent fileContent = null;
 
@@ -999,7 +1002,9 @@ public class FileBasedIndex implements ApplicationComponent {
         for (ID<?, ?> indexId : myIndices.keySet()) {
           if (shouldUpdateIndex(file, indexId)) {
             if (myNeedContentLoading.contains(indexId)) {
-              affectedIndices.add(indexId);
+              if (!isTooLarge) {
+                affectedIndices.add(indexId);
+              }
             }
             else {
               // invalidate it synchronously
@@ -1025,6 +1030,12 @@ public class FileBasedIndex implements ApplicationComponent {
         if (!affectedIndices.isEmpty()) {
           if (saveContent) {
             myFileContentAttic.offer(file);
+            iterateIndexableFiles(file, new Processor<VirtualFile>() {
+              public boolean process(final VirtualFile file) {
+                myFilesToUpdate.add(file);
+                return true;
+              }
+            });
           }
           else {
             //synchronized (myInvalidationInProgress) {
@@ -1078,13 +1089,6 @@ public class FileBasedIndex implements ApplicationComponent {
               myFutureInvalidations.offer(invalidator);
             }
           }
-
-          iterateIndexableFiles(file, new Processor<VirtualFile>() {
-            public boolean process(final VirtualFile file) {
-              myFilesToUpdate.add(file);
-              return true;
-            }
-          });
         }
       }
     }
@@ -1131,7 +1135,7 @@ public class FileBasedIndex implements ApplicationComponent {
       if (file.isDirectory()) {
         final ContentIterator iterator = new ContentIterator() {
           public boolean processFile(final VirtualFile fileOrDir) {
-            if (!fileOrDir.isDirectory() && !SingleRootFileViewProvider.isTooLarge(fileOrDir)) {
+            if (!fileOrDir.isDirectory()) {
               processor.process(fileOrDir);
             }
             return true;
@@ -1143,12 +1147,10 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
       else {
-        if (!SingleRootFileViewProvider.isTooLarge(file)) {
-          for (IndexableFileSet set : myIndexableSets) {
-            if (set.isInSet(file)) {
-              processor.process(file);
-              break;
-            }
+        for (IndexableFileSet set : myIndexableSets) {
+          if (set.isInSet(file)) {
+            processor.process(file);
+            break;
           }
         }
       }
@@ -1238,28 +1240,30 @@ public class FileBasedIndex implements ApplicationComponent {
 
     public boolean processFile(final VirtualFile file) {
       if (!file.isDirectory()) {
-        if (file instanceof NewVirtualFile) {
-          if (((NewVirtualFile)file).getFlag(ALREADY_PROCESSED)) return true;
+        if (file instanceof NewVirtualFile && ((NewVirtualFile)file).getFlag(ALREADY_PROCESSED)) {
+          return true;
         }
 
-        if (file instanceof VirtualFileWithId && !SingleRootFileViewProvider.isTooLarge(file)) {
+        if (file instanceof VirtualFileWithId) {
           boolean oldStuff = true;
-          for (ID<?, ?> indexId : myIndexIds) {
-            try {
-              if (myFileContentAttic.containsContent(file) ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
-                myFiles.add(file);
-                oldStuff = false;
-                break;
+          if (!SingleRootFileViewProvider.isTooLarge(file)) {
+            for (ID<?, ?> indexId : myIndexIds) {
+              try {
+                if (myFileContentAttic.containsContent(file) ? getInputFilter(indexId).acceptInput(file) : shouldIndexFile(file, indexId)) {
+                  myFiles.add(file);
+                  oldStuff = false;
+                  break;
+                }
               }
-            }
-            catch (RuntimeException e) {
-              final Throwable cause = e.getCause();
-              if (cause instanceof IOException || cause instanceof StorageException) {
-                LOG.info(e);
-                requestRebuild(indexId);
-              }
-              else {
-                throw e;
+              catch (RuntimeException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof IOException || cause instanceof StorageException) {
+                  LOG.info(e);
+                  requestRebuild(indexId);
+                }
+                else {
+                  throw e;
+                }
               }
             }
           }
