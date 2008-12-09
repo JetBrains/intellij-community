@@ -16,16 +16,16 @@
 
 package com.maddyhome.idea.copyright;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
@@ -33,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
@@ -44,12 +45,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
-public class CopyrightManager implements ProjectComponent, JDOMExternalizable {
+@State(
+  name = "CopyrightManager",
+  storages = {@Storage(
+    id = "default",
+    file = "$PROJECT_FILE$"), @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/copyright/", scheme = StorageScheme.DIRECTORY_BASED,
+                                       stateSplitter = CopyrightManager.CopyrightStateSplitter.class)})
+public class CopyrightManager implements ProjectComponent, JDOMExternalizable, PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance("#" + CopyrightManager.class.getName());
   private FileEditorManagerListener myListener = null;
   @Nullable
   private CopyrightProfile myDefaultCopyright = null;
@@ -177,6 +182,27 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable {
   }
 
 
+  public Element getState() {
+    try {
+      final Element e = new Element("settings");
+      writeExternal(e);
+      return e;
+    }
+    catch (WriteExternalException e1) {
+      LOG.error(e1);
+      return null;
+    }
+  }
+
+  public void loadState(Element state) {
+    try {
+      readExternal(state);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+  }
+
   public Map<String, String> getCopyrightsMapping() {
     return myModule2Copyrights;
   }
@@ -248,4 +274,48 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable {
     return myOptions;
   }
 
+  public static class CopyrightStateSplitter implements StateSplitter {
+    public List<Pair<Element, String>> splitState(Element e) {
+      final UniqueNameGenerator generator = new UniqueNameGenerator();
+      final List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
+
+      final Element[] elements = JDOMUtil.getElements(e);
+      for (Element element : elements) {
+        if (element.getName().equals("copyright")) {
+          element.detach();
+
+          String profileName = null;
+          final Element[] options = JDOMUtil.getElements(element);
+          for (Element option : options) {
+            if (option.getName().equals("option") && option.getAttributeValue("name").equals("myName")) {
+              profileName = option.getAttributeValue("value");
+            }
+          }
+
+          assert profileName != null;
+
+          final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(profileName)) + ".xml";
+          result.add(new Pair<Element, String>(element, name));
+        }
+      }
+      result.add(new Pair<Element, String>(e, generator.generateUniqueName("profiles_settings") + ".xml"));
+      return result;
+    }
+
+    public void mergeStatesInto(Element target, Element[] elements) {
+      for (Element element : elements) {
+        if (element.getName().equals("copyright")) {
+          element.detach();
+          target.addContent(element);
+        }
+        else {
+          final Element[] states = JDOMUtil.getElements(element);
+          for (Element state : states) {
+            state.detach();
+            target.addContent(state);
+          }
+        }
+      }
+    }
+  }
 }
