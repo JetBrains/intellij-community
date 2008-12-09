@@ -313,7 +313,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       result.setTrunkUrl(trunkUrl);
       result.setBranchUrls(newBranchesList);
       result.setBranchMap(newMap);
-      result.setUserinfoInUrl(withUserInfo.get());
+      result.setUserinfoInUrl(withUserInfo.isNull() ? false : withUserInfo.get());
       return result;
     }
 
