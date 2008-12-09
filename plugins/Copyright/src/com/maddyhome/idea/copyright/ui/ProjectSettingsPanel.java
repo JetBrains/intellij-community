@@ -74,7 +74,9 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         myProfilesModel = profilesModel;
         myProfilesModel.addItemsChangeListener(new Runnable(){
           public void run() {
+            final Object selectedItem = myProfilesComboBox.getSelectedItem();
             fillCopyrightProfiles();
+            myProfilesComboBox.setSelectedItem(selectedItem);
             updateButtons();
           }
         });

@@ -125,7 +125,13 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
         return profiles;
     }
 
-    @Nullable
+  @Override
+  public void disposeUIResources() {
+    super.disposeUIResources();
+    myInitialized.set(false);
+  }
+
+  @Nullable
     protected ArrayList<AnAction> createActions(boolean fromPopup) {
         ArrayList<AnAction> result = new ArrayList<AnAction>();
         result.add(new AnAction("Add", "Add", Icons.ADD_ICON) {
@@ -220,14 +226,14 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
     }
 
     private void reloadTree() {
-        myInitialized.set(true);
         myRoot.removeAllChildren();
-        Collection<CopyrightProfile> collection = myManager.getCopyrights();
-        for (CopyrightProfile profile : collection) {
-            CopyrightProfile clone = new CopyrightProfile();
-            clone.copyFrom(profile);
-            addNode(new MyNode(new CopyrightConfigurable(myProject, clone, TREE_UPDATER)), myRoot);
-        }
+      Collection<CopyrightProfile> collection = myManager.getCopyrights();
+      for (CopyrightProfile profile : collection) {
+        CopyrightProfile clone = new CopyrightProfile();
+        clone.copyFrom(profile);
+        addNode(new MyNode(new CopyrightConfigurable(myProject, clone, TREE_UPDATER)), myRoot);
+      }
+      myInitialized.set(true);
     }
 
     public void reset() {
