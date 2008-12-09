@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CopyrightProfilesPanel extends MasterDetailsComponent implements CopyrightProfilesModel{
+public class CopyrightProfilesPanel extends MasterDetailsComponent {
     private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
     private Project myProject;
@@ -234,4 +234,16 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Co
         reloadTree();
         super.reset();
     }
+
+  public void addItemsChangeListener(final Runnable runnable) {
+    addItemsChangeListener(new ItemsChangeListener() {
+      public void itemChanged(@Nullable Object deletedItem) {
+        runnable.run();
+      }
+
+      public void itemsExternallyChanged() {
+        runnable.run();
+      }
+    });
+  }
 }

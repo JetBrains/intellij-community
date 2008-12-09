@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ import java.util.Map;
 
 public class ProjectSettingsPanel extends PanelWithButtons {
     private final Project myProject;
-  private CopyrightProfilesModel myProfilesModel;
+  private CopyrightProfilesPanel myProfilesModel;
   private final CopyrightManager myManager;
 
     private final TableView<ScopeSetting> myScopeMappingTable;
@@ -69,16 +69,21 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
     private final HyperlinkLabel myScopesLink = new HyperlinkLabel();
 
-    public ProjectSettingsPanel(Project project, CopyrightProfilesModel profilesModel) {
+    public ProjectSettingsPanel(Project project, CopyrightProfilesPanel profilesModel) {
         myProject = project;
-      myProfilesModel = profilesModel;
-      myManager = CopyrightManager.getInstance(project);
+        myProfilesModel = profilesModel;
+        myProfilesModel.addItemsChangeListener(new Runnable(){
+          public void run() {
+            fillCopyrightProfiles();
+            updateButtons();
+          }
+        });
+        myManager = CopyrightManager.getInstance(project);
 
         myScopeMappingModel = new ListTableModel<ScopeSetting>(new ColumnInfo[]{SCOPE, SETTING}, new ArrayList<ScopeSetting>(), 0);
         myScopeMappingTable = new TableView<ScopeSetting>(myScopeMappingModel);
 
-        final DefaultComboBoxModel boxModel = (DefaultComboBoxModel) myProfilesComboBox.getModel();
-        fillCopyrightProfiles(boxModel);
+      fillCopyrightProfiles();
         myProfilesComboBox.setRenderer(new DefaultListCellRenderer() {
             public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -190,7 +195,9 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         return new JButton[]{myAddButton, myRemoveButton, myMoveUpButton, myMoveDownButton};
     }
 
-    private void fillCopyrightProfiles(DefaultComboBoxModel boxModel) {
+    private void fillCopyrightProfiles() {
+        final DefaultComboBoxModel boxModel = (DefaultComboBoxModel) myProfilesComboBox.getModel();
+        boxModel.removeAllElements();
         boxModel.addElement(null);
         for (CopyrightProfile profile : myProfilesModel.getAllProfiles().values()) {
             boxModel.addElement(profile);
