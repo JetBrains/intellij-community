@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.Convertor;
 import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
@@ -34,7 +35,15 @@ public class JUnitUtil {
     if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (psiMethod.isConstructor()) return false;
     final PsiType returnType = psiMethod.getReturnType();
-    if (returnType != null && !returnType.equalsToText(TEST_INTERFACE) && !returnType.equalsToText(TESTSUITE_CLASS)) return false;
+    if (returnType != null) {
+      if (!returnType.equalsToText(TEST_INTERFACE) && !returnType.equalsToText(TESTSUITE_CLASS)) {
+        final PsiType testType =
+          JavaPsiFacade.getInstance(psiMethod.getProject()).getElementFactory().createTypeFromText(TEST_INTERFACE, null);
+        if (!TypeConversionUtil.isAssignable(testType, returnType)) {
+          return false;
+        }
+      }
+    }
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     return parameters.length == 0;
   }
