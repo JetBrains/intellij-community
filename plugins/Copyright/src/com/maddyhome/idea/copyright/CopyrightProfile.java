@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,11 @@ import com.maddyhome.idea.copyright.pattern.EntityUtil;
 
 public class CopyrightProfile extends ProfileEx {
   public static final String DEFAULT_COPYRIGHT_NOTICE =
-    EntityUtil.encode("Copyright (c) $today.year, Your Corporation. All Rights Reserved.");
+    EntityUtil.encode("Copyright (c) $today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
+                      "Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan. \n" +
+                      "Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna. \n" +
+                      "Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus. \n" +
+                      "Vestibulum commodo. Ut rhoncus gravida arcu. ");
 
   public String notice = DEFAULT_COPYRIGHT_NOTICE;
   public String keyword = EntityUtil.encode("Copyright");
