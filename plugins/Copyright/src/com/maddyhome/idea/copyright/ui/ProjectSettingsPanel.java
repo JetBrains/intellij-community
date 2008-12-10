@@ -302,7 +302,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
       public CopyrightProfile getProfile() {
             if (myProfileName != null) {
-              myProfile = myProfilesModel.getAllProfiles().get(myProfileName);
+              myProfile = myProfilesModel.getAllProfiles().get(myProfile != null ? myProfile.getName() : myProfileName);
             }
             return myProfile;
         }
