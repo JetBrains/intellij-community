@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,25 +22,28 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 
 public class FileTypeCopyrightConfigurableFactory {
+  private static final String[] LOCATIONS_IN_FILE = new String[]{"Before Doctype", "Before Root Tag"};
+
+  private FileTypeCopyrightConfigurableFactory() {
+  }
+
   public static Configurable createFileTypeConfigurable(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
-    // NOTE: If any change is made here you need to update LanguageOptionsFactory and UpdateCopyrightFactory too.
     if (fileType.equals(StdFileTypes.JAVA)) {
       return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Package", "Before Imports", "Before Class"}, project);
     }
     else if (fileType.equals(StdFileTypes.XML)) {
-      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Doctype", "Before Root Tag"}, project);
+      return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
     }
     else if (fileType.equals(StdFileTypes.HTML)) {
-      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Doctype", "Before Root Tag"}, project);
+      return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
     }
     else if (fileType.equals(StdFileTypes.JSP)) {
-      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Before Doctype", "Before Root Tag"}, project);
+      return new TemplateCommentPanel(fileType, parentPanel, LOCATIONS_IN_FILE, project);
     }
     else {
-      return new TemplateCommentPanel(fileType, parentPanel, new String[]{"Top Of File"}, project);
+      return new TemplateCommentPanel(fileType, parentPanel, null, project);
     }
   }
 
-  private FileTypeCopyrightConfigurableFactory() {
-  }
+
 }
