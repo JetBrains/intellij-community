@@ -21,10 +21,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.JavaOptions;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
 {
@@ -68,6 +72,7 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
         if (imports != null && imports.getChildren().length > 0)
         {
             checkComments(first, imports, location == JavaOptions.LOCATION_BEFORE_IMPORT);
+            first = imports;
         }
         else if (location == JavaOptions.LOCATION_BEFORE_IMPORT)
         {
@@ -76,7 +81,10 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
 
         if (topclass != null)
         {
-            checkComments(topclass.getFirstChild(), topclass.getModifierList(), location == JavaOptions.LOCATION_BEFORE_CLASS);
+            final List<PsiComment> comments = new ArrayList<PsiComment>();
+            collectComments(first, topclass, comments);
+            collectComments(topclass.getFirstChild(), topclass.getModifierList(), comments);
+            checkComments(topclass.getModifierList(), location == JavaOptions.LOCATION_BEFORE_CLASS, comments);
         }
         else if (location == JavaOptions.LOCATION_BEFORE_CLASS)
         {

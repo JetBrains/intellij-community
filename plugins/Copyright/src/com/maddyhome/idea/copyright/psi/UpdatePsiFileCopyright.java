@@ -84,6 +84,11 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
   protected void checkComments(PsiElement first, PsiElement last, boolean commentHere) {
     List<PsiComment> comments = new ArrayList<PsiComment>();
+    collectComments(first, last, comments);
+    checkComments(last, commentHere, comments);
+  }
+
+  protected void collectComments(PsiElement first, PsiElement last, List<PsiComment> comments) {
     PsiElement elem = first;
     while (elem != last && elem != null) {
       if (elem instanceof PsiComment) {
@@ -93,7 +98,9 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
       elem = getNextSibling(elem);
     }
+  }
 
+  protected void checkComments(PsiElement last, boolean commentHere, List<PsiComment> comments) {
     try {
       ArrayList<CommentRange> found = new ArrayList<CommentRange>();
       Pattern pattern = Pattern.compile(myOptions.getKeyword());
