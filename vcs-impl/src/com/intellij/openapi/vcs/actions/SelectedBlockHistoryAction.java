@@ -29,7 +29,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     if (vcs == null) return false;
     VcsHistoryProvider vcsHistoryProvider = vcs.getVcsBlockHistoryProvider();
     if (vcsHistoryProvider == null) return false;
-    if (!vcs.fileExistsInVcs(new FilePathImpl(file))) return false;
+    if (! AbstractVcs.fileInVcsByFileStatus(project, new FilePathImpl(file))) return false;
 
     VcsSelection selection = VcsSelectionUtil.getSelection(context);
     if (selection == null) {

@@ -66,6 +66,6 @@ public class BrowseChangesAction extends AnAction {
       return false;
     }
     FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(vFile);
-    return vcs.fileExistsInVcs(filePath);
+    return AbstractVcs.fileInVcsByFileStatus(project, filePath);
   }
 }
