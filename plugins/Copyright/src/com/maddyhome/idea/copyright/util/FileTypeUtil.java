@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -196,9 +196,9 @@ public class FileTypeUtil
             }
         }
 
+        preview.append(leader).append(pre);
         if (options.isSeparateAfter())
         {
-            preview.append(leader).append(pre);
             for (int i = leader.length() + pre.length(); i < options.getLenAfter() - close.length(); i++)
             {
                 preview.append(filler);
@@ -208,7 +208,7 @@ public class FileTypeUtil
         }
         else if (isBlock)
         {
-            preview.append(leader).append(close).append('\n');
+          preview.append('\n');
         }
 
         return preview.substring(0, preview.length() - 1);
