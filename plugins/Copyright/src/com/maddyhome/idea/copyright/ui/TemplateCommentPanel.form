@@ -230,7 +230,8 @@
               <component id="679a0" class="javax.swing.JTextField" binding="txtFiller">
                 <constraints>
                   <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="10" height="-1"/>
+                    <minimum-size width="20" height="-1"/>
+                    <preferred-size width="20" height="-1"/>
                     <maximum-size width="20" height="-1"/>
                   </grid>
                 </constraints>
