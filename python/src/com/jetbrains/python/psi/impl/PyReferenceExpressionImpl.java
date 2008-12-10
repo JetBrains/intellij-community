@@ -260,15 +260,56 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     else return EMPTY_LIST; 
   }
 
+  // sorts and modifies results of resolveInner
   private ResolveResult[] multiResolveInner(boolean incomplete) {
     final String referencedName = getReferencedName();
     if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
 
-    // crude logic right here to see it work
-
     List<RatedResolveResult> targets = resolveInner();
     if (targets.size() == 0) return ResolveResult.EMPTY_ARRAY;
 
+    // change class results to constructor results if there are any
+    if (getParent() instanceof PyCallExpression) { // we're a call
+      ListIterator<RatedResolveResult> it = targets.listIterator();
+      while (it.hasNext()) {
+        final RatedResolveResult rrr = it.next();
+        final PsiElement elt = rrr.getElement();
+        if (elt instanceof PyClass) {
+          PyClass cls = (PyClass)elt;
+          PyFunction init = cls.findMethodByName(PyNames.INIT);
+          if (init != null) {
+            // replace
+            final PyFunction the_init = init;
+            it.set(new RatedResolveResult(){
+              public int getRate() { return rrr.getRate(); }
+
+              public PsiElement getElement() { return the_init; }
+
+              public boolean isValidResult() { return true; }
+            });
+          }
+          else { // init not found; maybe it's ancestor's
+            for (PyClass ancestor : cls.iterateAncestors()) {
+              init = ancestor.findMethodByName(PyNames.INIT);
+              if (init != null) {
+                final PyFunction the_init = init;
+                // add to resuls as low priority
+                it.add(new RatedResolveResult(){
+                  public int getRate() { return RATE_LOW; }
+
+                  public PsiElement getElement() { return the_init; }
+
+                  public boolean isValidResult() { return true; }
+                });
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // put everything in a sorting container
     List<RatedResolveResult> ret = new SortedList<RatedResolveResult>(new Comparator<RatedResolveResult>() {
       public int compare(final RatedResolveResult one, final RatedResolveResult another) {
         return another.getRate() - one.getRate();
@@ -280,7 +321,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   /**
-   * Reso   lves reference to possible referred elements.
+   * Resolves reference to possible referred elements.
    * First element is always what resolve() would return.
    * Imported module names: to module file, or {directory, '___init__.py}' for a qualifier.
    * @todo Local identifiers: a list of definitions in the most recent compound statement 
@@ -299,6 +340,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return multiResolveInner(incompleteCode);
     }
   }
+
 
   public String getCanonicalText() {
     return null;

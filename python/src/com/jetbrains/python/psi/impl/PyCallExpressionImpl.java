@@ -22,6 +22,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -82,11 +83,9 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
           //boolean is_inst = isByInstance();
           if (isByInstance()) flags.add(Flag.IMPLICIT_FIRST_ARG);
-          if (resolved instanceof PyClass) { // constructor call
-            final PyClass cls = (PyClass)resolved;
-            resolved = cls.findMethodByName("__init__");  // XXX move this name to PyNames
-            //is_inst |= true;
-            flags.add(Flag.IMPLICIT_FIRST_ARG);
+          if (resolved instanceof PyFunction) {
+            PyFunction meth = (PyFunction)resolved; // constructor call?
+            if (PyNames.INIT.equals(meth.getName())) flags.add(Flag.IMPLICIT_FIRST_ARG);
           }
           if (resolved != null) {
             // look for closest decorator

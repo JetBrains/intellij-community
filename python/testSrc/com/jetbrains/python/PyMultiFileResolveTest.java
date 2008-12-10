@@ -18,14 +18,6 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertEquals("ImportedFile.py", ((PyFile) element).getName());
   }
 
-  /*
-  public void testFromImport() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyFunction);
-    assertEquals("func", ((PyFunction) element).getName());
-  }
-  */
-
   public void testFromImport() throws Exception {
     ResolveResult[] results = doMultiResolve();
     assertTrue(results.length == 2); // func and import stmt
@@ -35,14 +27,6 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     PsiElement import_elt = results[1].getElement();
     assertTrue("is import?", import_elt instanceof PyImportElement);
   }
-
-  /*
-  public void testFromImportStar() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyFunction);
-    assertEquals("func", ((PyFunction) element).getName());
-  }
-  */
 
   public void testFromImportStar() throws Exception {
     ResolveResult[] results = doMultiResolve();
@@ -101,26 +85,12 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertTrue(element instanceof PyFunction);
   }
 
-  /*
-  public void testTransitiveImport() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyTargetExpression);
-  }
-  */
-
   public void testTransitiveImport() throws Exception {
     ResolveResult[] results = doMultiResolve();
     assertTrue(results.length == 2); // func and import stmt
     PsiElement elt = results[0].getElement();
     assertTrue("is target?", elt instanceof PyTargetExpression);
   }
-
-  /*
-  public void testResolveInPkg() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyFunction);
-  }
-  */
 
   public void testResolveInPkg() throws Exception {
     ResolveResult[] results = doMultiResolve();

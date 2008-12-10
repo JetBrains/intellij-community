@@ -7,6 +7,8 @@ package com.jetbrains.python;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ResolveTestCase;
 import com.jetbrains.python.psi.*;
@@ -15,6 +17,12 @@ public class PyResolveTest extends ResolveTestCase {
   private PsiElement resolve() throws Exception {
     PsiReference ref = configureByFile(getTestName(false) + ".py");
     return ref.resolve();
+  }
+
+  private ResolveResult[] multiResolve() throws Exception {
+    PsiReference ref = configureByFile(getTestName(false) + ".py");
+    assertTrue(ref instanceof PsiPolyVariantReference);
+    return ((PsiPolyVariantReference)ref).multiResolve(false);
   }
 
   public void testClass() throws Exception {
@@ -27,7 +35,31 @@ public class PyResolveTest extends ResolveTestCase {
     assertTrue(targetElement instanceof PyFunction);
   }
 
-  // NOTE: maybe this test does not belong exactly here; still it's the best place currently. 
+  public void testToConstructor() throws Exception {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PyFunction);
+    assertEquals(((PyFunction)target).getName(), PyNames.INIT);
+  }
+
+  public void testToConstructorInherited() throws Exception {
+    ResolveResult[] targets = multiResolve();
+    assertEquals(targets.length, 2); // to class, to init
+    PsiElement elt;
+    // class
+    elt = targets[0].getElement();
+    assertTrue(elt instanceof PyClass);
+    assertEquals(((PyClass)elt).getName(), "Bar");
+    // init
+    elt = targets[1].getElement();
+    assertTrue(elt instanceof PyFunction);
+    PyFunction fun = (PyFunction)elt;
+    assertEquals(fun.getName(), PyNames.INIT);
+    PyClass cls = fun.getContainingClass();
+    assertNotNull(cls);
+    assertEquals(cls.getName(), "Foo");
+  }
+
+  // NOTE: maybe this test does not belong exactly here; still it's the best place currently.
   public void testComplexCallee() throws Exception {
     PsiElement targetElement = resolve();
     PyExpression assigned = ((PyAssignmentStatement) targetElement.getContext()).getAssignedValue();
