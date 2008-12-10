@@ -139,12 +139,12 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
         myModule2Copyrights.put(moduleName, copyrightName);
       }
     }
-    myDefaultCopyright = myCopyrights.get(element.getAttributeValue(DEFAULT));
     for (Object o : element.getChildren(COPYRIGHT)) {
       final CopyrightProfile copyrightProfile = new CopyrightProfile();
       copyrightProfile.readExternal((Element)o);
       myCopyrights.put(copyrightProfile.getName(), copyrightProfile);
     }
+    myDefaultCopyright = myCopyrights.get(element.getAttributeValue(DEFAULT));
     myOptions.readExternal(element);
   }
 
