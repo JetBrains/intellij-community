@@ -77,6 +77,15 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             final Object selectedItem = myProfilesComboBox.getSelectedItem();
             fillCopyrightProfiles();
             myProfilesComboBox.setSelectedItem(selectedItem);
+            final ArrayList<ScopeSetting> toRemove = new ArrayList<ScopeSetting>();
+            for (ScopeSetting setting : myScopeMappingModel.getItems()) {
+              if (setting.getProfile() == null) {
+                toRemove.add(setting);
+              }
+            }
+            for (ScopeSetting setting : toRemove) {
+              myScopeMappingModel.removeRow(myScopeMappingModel.indexOf(setting));
+            }
             updateButtons();
           }
         });
@@ -292,7 +301,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
       }
 
       public CopyrightProfile getProfile() {
-            if (myProfile == null && myProfileName != null) {
+            if (myProfileName != null) {
               myProfile = myProfilesModel.getAllProfiles().get(myProfileName);
             }
             return myProfile;
