@@ -24,6 +24,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -395,6 +396,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     Set<Module> nojdkModules = new HashSet<Module>();
     for (Module module : compileScope.getAffectedModules()) {
+      if(!(module.getModuleType() instanceof JavaModuleType)) continue;
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) nojdkModules.add(module);
     }
