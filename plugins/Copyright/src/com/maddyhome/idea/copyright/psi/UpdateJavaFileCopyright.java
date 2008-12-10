@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.maddyhome.idea.copyright.CopyrightProfile;
@@ -44,8 +45,8 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
         PsiJavaFile javaFile = (PsiJavaFile)getFile();
         PsiElement pkg = javaFile.getPackageStatement();
         PsiElement imports = javaFile.getImportList();
-        PsiElement topclass = null;
-        PsiElement[] classes = javaFile.getClasses();
+        PsiClass topclass = null;
+        PsiClass[] classes = javaFile.getClasses();
         if (classes.length > 0)
         {
             topclass = classes[0];
@@ -67,7 +68,6 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
         if (imports != null && imports.getChildren().length > 0)
         {
             checkComments(first, imports, location == JavaOptions.LOCATION_BEFORE_IMPORT);
-            first = imports;
         }
         else if (location == JavaOptions.LOCATION_BEFORE_IMPORT)
         {
@@ -76,7 +76,7 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
 
         if (topclass != null)
         {
-            checkComments(first, topclass, location == JavaOptions.LOCATION_BEFORE_CLASS);
+            checkComments(topclass.getFirstChild(), topclass.getModifierList(), location == JavaOptions.LOCATION_BEFORE_CLASS);
         }
         else if (location == JavaOptions.LOCATION_BEFORE_CLASS)
         {
