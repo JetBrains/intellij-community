@@ -332,17 +332,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return mySelection.isEmpty() ? null : mySelection.get(0);
   }
 
-  public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) {
-    setSelectedContent(content, requestFocus, true);
+  public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus) {
+    return setSelectedContent(content, requestFocus, true);
   }
 
-  public void setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
+  public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
     if (isSelected(content) && requestFocus) {
-      requestFocus(content, forcedFocus);
-      return;
+      return requestFocus(content, forcedFocus);
     }
 
-    if (!checkSelectionChangeShouldBeProcessed(content)) return;
+    if (!checkSelectionChangeShouldBeProcessed(content)) return new ActionCallback.Rejected();
     if (!myContents.contains(content)) {
       throw new IllegalArgumentException("Cannot find content:" + content.getDisplayName());
     }
@@ -365,10 +364,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     };
 
     if (focused || requestFocus) {
-      getFocusManager().requestFocus(myFocusProxy, true).doWhenProcessed(selection);
+      return getFocusManager().requestFocus(myFocusProxy, true).doWhenProcessed(selection);
     }
     else {
       selection.run();
+      return new ActionCallback.Done();
     }
   }
 
@@ -385,26 +385,26 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
 
-  public void setSelectedContent(@NotNull final Content content) {
-    setSelectedContent(content, false);
+  public ActionCallback setSelectedContent(@NotNull final Content content) {
+    return setSelectedContent(content, false);
   }
 
-  public void selectPreviousContent() {
+  public ActionCallback selectPreviousContent() {
     int contentCount = getContentCount();
     LOG.assertTrue(contentCount > 1);
     Content selectedContent = getSelectedContent();
     int index = getIndexOfContent(selectedContent);
     index = (index - 1 + contentCount) % contentCount;
-    setSelectedContent(getContent(index));
+    return setSelectedContent(getContent(index));
   }
 
-  public void selectNextContent() {
+  public ActionCallback selectNextContent() {
     int contentCount = getContentCount();
     LOG.assertTrue(contentCount > 1);
     Content selectedContent = getSelectedContent();
     int index = getIndexOfContent(selectedContent);
     index = (index + 1) % contentCount;
-    setSelectedContent(getContent(index));
+    return setSelectedContent(getContent(index));
   }
 
   public void addContentManagerListener(@NotNull ContentManagerListener l) {
@@ -452,13 +452,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return true;
   }
 
-  public void requestFocus(final Content content, final boolean forced) {
+  public ActionCallback requestFocus(final Content content, final boolean forced) {
     final Content toSelect = content == null ? getSelectedContent() : content;
-    if (toSelect == null) return;
+    if (toSelect == null) return new ActionCallback.Rejected();
     assert myContents.contains(toSelect);
 
 
-    getFocusManager().requestFocus(new FocusCommand(content, toSelect.getComponent()) {
+    return getFocusManager().requestFocus(new FocusCommand(content, toSelect.getComponent()) {
       public ActionCallback run() {
         return doRequestFocus(toSelect);
       }

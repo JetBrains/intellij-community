@@ -16,6 +16,7 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +37,9 @@ public interface ContentManager extends Disposable {
 
   boolean removeContent(@NotNull Content content, final boolean dispose);
 
-  void setSelectedContent(@NotNull Content content);
-  void setSelectedContent(@NotNull Content content, boolean requestFocus);
-  void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
+  ActionCallback setSelectedContent(@NotNull Content content);
+  ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus);
+  ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
 
   void addSelectedContent(@NotNull Content content);
 
@@ -67,9 +68,9 @@ public interface ContentManager extends Disposable {
 
   boolean canCloseAllContents();
 
-  void selectPreviousContent();
+  ActionCallback selectPreviousContent();
 
-  void selectNextContent();
+  ActionCallback selectNextContent();
 
   void addContentManagerListener(@NotNull ContentManagerListener l);
 
@@ -89,7 +90,7 @@ public interface ContentManager extends Disposable {
 
   boolean isSelected(@NotNull Content content);
 
-  void requestFocus(@Nullable Content content, boolean forced);
+  ActionCallback requestFocus(@Nullable Content content, boolean forced);
 
   void addDataProvider(@NotNull DataProvider provider);
   

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -25,12 +26,12 @@ import javax.swing.*;
 import java.awt.*;
 
 public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
-   private Project myProject;
-  private RunnerLayout myLayout;
-  private JPanel myContentPanel;
-  private RunnerContentUi myContentUI;
+  private final Project myProject;
+  private final RunnerLayout myLayout;
+  private final JPanel myContentPanel;
+  private final RunnerContentUi myContentUI;
 
-  private ContentManager myViewsContentManager;
+  private final ContentManager myViewsContentManager;
   public static final Key<String> CONTENT_TYPE = Key.create("ContentType");
 
   public RunnerLayoutUiImpl(Project project, Disposable parent, String runnerType, String runnerTitle, String sessionName) {
@@ -136,14 +137,15 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
   public void dispose() {
   }
 
+  @NotNull
   public ContentManager getContentManager() {
     return myViewsContentManager;
   }
 
-  public void selectAndFocus(@Nullable final Content content, final boolean forced) {
-    if (content == null) return;
+  public ActionCallback selectAndFocus(@Nullable final Content content, final boolean forced) {
+    if (content == null) return new ActionCallback.Rejected();
 
-    getContentManager().setSelectedContent(content, true, forced);
+    return getContentManager().setSelectedContent(content, true, forced);
   }
 
   public boolean removeContent(final Content content, final boolean dispose) {

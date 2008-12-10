@@ -1,13 +1,15 @@
 package com.intellij.execution.ui;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithActions;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithActions;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +22,9 @@ public interface RunnerLayoutUi  {
 
   @NotNull
   LayoutViewOptions getOptions();
+
+  @NotNull
+  ContentManager getContentManager();
 
   @NotNull
   Content addContent(@NotNull Content content);
@@ -38,7 +43,7 @@ public interface RunnerLayoutUi  {
   @Nullable
   Content findContent(@NotNull String contentId);
 
-  void selectAndFocus(@Nullable Content content, final boolean forced);
+  ActionCallback selectAndFocus(@Nullable Content content, final boolean forced);
 
   RunnerLayoutUi addListener(@NotNull ContentManagerListener listener, @NotNull Disposable parent);
 
