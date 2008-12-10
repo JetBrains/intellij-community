@@ -133,7 +133,7 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template name="itover" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}"
+  <template name="itover" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}&#10;"
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iter" toReformat="true" toShortenFQNames="true">
     <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
     <variable name="ELEMENT_TYPE" expression="iterableComponentType(SELECTION)" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="false" />
