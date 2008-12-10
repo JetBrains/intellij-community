@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,68 +17,85 @@
 package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExternalOptionHelper {
 
 
-  public static boolean loadOptions(File file, CopyrightProfile profile) {
+  @Nullable
+  public static List<CopyrightProfile> loadOptions(File file) {
     try {
+      List<CopyrightProfile> profiles = new ArrayList<CopyrightProfile>();
       Document doc = JDOMUtil.loadDocument(file);
       Element root = doc.getRootElement();
-      List list = root.getChildren("component");
-      for (Object element : list) {
-        Element component = (Element)element;
-        String name = component.getAttributeValue("name");
-        if (name.equals("CopyrightManager")) {
-          final Element child = component.getChild("copyright");
-          if (child != null) {
-            for (Object o : child.getChildren("option")) {
-              if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "myOptions")) {
-                final Element valueElement = ((Element)o).getChild("value");
-                if (valueElement != null) {
-                  extractNoticeAndKeyword(profile, valueElement);
-                  return true;
-                }
-              }
+      if (root.getName().equals("component")) {
+        final Element copyrightElement = root.getChild("copyright");
+        if (copyrightElement != null) extractNewNoticeAndKeyword(copyrightElement, profiles);
+      } else {
+        List list = root.getChildren("component");
+        for (Object element : list) {
+          Element component = (Element)element;
+          String name = component.getAttributeValue("name");
+          if (name.equals("CopyrightManager")) {
+            for (Object o : component.getChildren("copyright")) {
+              extractNewNoticeAndKeyword((Element)o, profiles);
             }
           }
-        }
-        else if (name.equals("copyright")) {
-          extractNoticeAndKeyword(profile, component);
-          return true;
+          else if (name.equals("copyright")) {
+            extractNoticeAndKeyword(component, profiles);
+          }
         }
       }
+      return profiles.isEmpty() ? null : profiles;
     }
     catch (Exception e) {
       logger.error(e);
-
+      return null;
     }
-    return false;
   }
 
-  public static void extractNoticeAndKeyword(CopyrightProfile profile, Element valueElement) {
+  public static void extractNoticeAndKeyword(Element valueElement, List<CopyrightProfile> profiles) {
+    CopyrightProfile profile = new CopyrightProfile();
+    boolean extract = false;
     for (Object l : valueElement.getChildren()) {
       if (((Element)l).getAttributeValue("name").equals("JAVA")) {
         for (Object o1 : ((Element)l).getChildren("option")) {
-          Element opElement = (Element)o1;
-          if (opElement.getAttributeValue("name").equals("notice")) {
-            profile.setNotice(opElement.getAttributeValue("value"));
-          }
-          else if (opElement.getAttributeValue("name").equals("keyword")) {
-            profile.setKeyword(opElement.getAttributeValue("value"));
-          }
+          extract |= extract(profile, (Element)o1);
         }
         break;
       }
     }
+    if (extract) profiles.add(profile);
+  }
+
+  public static void extractNewNoticeAndKeyword(Element valueElement, List<CopyrightProfile> profiles) {
+    CopyrightProfile profile = new CopyrightProfile();
+    boolean extract = false;
+    for (Object l : valueElement.getChildren("option")) {
+      extract |= extract(profile, (Element)l);
+    }
+    if (extract) profiles.add(profile);
+  }
+
+  private static boolean extract(final CopyrightProfile profile, final Element el) {
+    if (el.getAttributeValue("name").equals("notice")) {
+      profile.setNotice(el.getAttributeValue("value"));
+      return true;
+    }
+    else if (el.getAttributeValue("name").equals("keyword")) {
+      profile.setKeyword(el.getAttributeValue("value"));
+    } else if (el.getAttributeValue("name").equals("myName")) {
+      profile.setName(el.getAttributeValue("value"));
+    }
+    return false;
   }
 
 

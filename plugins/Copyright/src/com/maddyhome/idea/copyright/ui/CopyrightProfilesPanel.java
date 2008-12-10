@@ -30,6 +30,9 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -41,6 +44,7 @@ import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -139,7 +143,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
                 registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
             }
             public void actionPerformed(AnActionEvent event) {
-                final String name = askForProfileName("Create new copyright profile");
+                final String name = askForProfileName("Create new copyright profile", "");
                 if (name == null) return;
                 final CopyrightProfile copyrightProfile = new CopyrightProfile(name);
                 addProfileNode(copyrightProfile);
@@ -153,7 +157,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
                 registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
             }
             public void actionPerformed(AnActionEvent event) {
-                final String profileName = askForProfileName("Copy copyright profile");
+                final String profileName = askForProfileName("Copy copyright profile", "");
                 if (profileName == null) return;
                 final CopyrightProfile clone = new CopyrightProfile();
                 clone.copyFrom((CopyrightProfile) getSelectedObject());
@@ -167,46 +171,66 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
             }
         });
         result.add(new AnAction("Import", "Import", Icons.ADVICE_ICON) {
-            public void actionPerformed(AnActionEvent event) {
-              final OpenProjectFileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
-                @Override
-                public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-                  return super.isFileVisible(file, showHiddenFiles) || canContainCopyright(file);
-                }
+          public void actionPerformed(AnActionEvent event) {
+            final OpenProjectFileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
+              @Override
+              public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+                return super.isFileVisible(file, showHiddenFiles) || canContainCopyright(file);
+              }
 
-                @Override
-                public boolean isFileSelectable(VirtualFile file) {
-                  return super.isFileSelectable(file) || canContainCopyright(file);
-                }
+              @Override
+              public boolean isFileSelectable(VirtualFile file) {
+                return super.isFileSelectable(file) || canContainCopyright(file);
+              }
 
-                private boolean canContainCopyright(VirtualFile file) {
-                  return !file.isDirectory() && (file.getFileType() == StdFileTypes.IDEA_MODULE || file.getFileType() == StdFileTypes.XML);
-                }
-              };
-              descriptor.setTitle("Choose file containing copyright notice");
-              final VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
-                if (files.length != 1) return;
-              final CopyrightProfile copyrightProfile = new CopyrightProfile();
-              if (ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(files[0]), copyrightProfile)) {
-                  final String profileName = askForProfileName("Import copyright profile");
-                  if (profileName == null) return;
-                    copyrightProfile.setName(profileName);
-                    addProfileNode(copyrightProfile);
-                    Messages.showInfoMessage(myProject,
-                            "The copyright settings have been successfully imported.",
-                            "Import Complete");
-                } else {
-                    Messages.showWarningDialog(myProject,
-                            "The selected file did not contain any copyright settings.",
-                            "Import Failure");
-                }
+              private boolean canContainCopyright(VirtualFile file) {
+                return !file.isDirectory() && (file.getFileType() == StdFileTypes.IDEA_MODULE || file.getFileType() == StdFileTypes.XML);
+              }
+            };
+            descriptor.setTitle("Choose file containing copyright notice");
+            final VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
+            if (files.length != 1) return;
+
+            final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(files[0]));
+            if (copyrightProfiles != null) {
+              if (copyrightProfiles.size() == 1) {
+                importProfile(copyrightProfiles.get(0));
+              } else {
+                JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
+                  @Override
+                  public PopupStep onChosen(CopyrightProfile selectedValue, boolean finalChoice) {
+                    importProfile(selectedValue);
+                    return FINAL_CHOICE;
+                  }
+
+                  @NotNull
+                  @Override
+                  public String getTextFor(CopyrightProfile value) {
+                    return value.getName();
+                  }
+                }).showUnderneathOf(myNorthPanel);
+              }
             }
+            else {
+              Messages.showWarningDialog(myProject, "The selected file did not contain any copyright settings.", "Import Failure");
+            }
+          }
+
+          private void importProfile(CopyrightProfile copyrightProfile) {
+            final String profileName = askForProfileName("Import copyright profile", copyrightProfile.getName());
+            if (profileName == null) return;
+            copyrightProfile.setName(profileName);
+            addProfileNode(copyrightProfile);
+            Messages.showInfoMessage(myProject, "The copyright settings have been successfully imported.", "Import Complete");
+          }
         });
         return result;
     }
 
-    private String askForProfileName(String title) {
-        return Messages.showInputDialog("New copyright profile name:", title, Messages.getQuestionIcon(), "", new InputValidator() {
+
+
+  private String askForProfileName(String title, String initialName) {
+        return Messages.showInputDialog("New copyright profile name:", title, Messages.getQuestionIcon(), initialName, new InputValidator() {
             public boolean checkInput(String s) {
                 return !getAllProfiles().containsKey(s) && s.length() > 0;
             }
