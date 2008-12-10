@@ -22,17 +22,16 @@ public class TransferListenerAdapter implements TransferListener {
 
   public void transferInitiated(TransferEvent event) {
     myIndicator.checkCanceled();
+    //updateProgress();
+  }
 
+  public void transferStarted(TransferEvent event) {
     myRepository = event.getWagon().getRepository().getName();
     myResource = event.getResource().getName();
     mySize = event.getResource().getContentLength();
     myProgress = 0;
 
     updateProgress();
-  }
-
-  public void transferStarted(TransferEvent event) {
-    //updateProgress();
 
     //System.out.print("Downloading " + event.getResource().getName() + " from [" + event.getWagon().getRepository().getId() + "]...");
     //started = System.currentTimeMillis();

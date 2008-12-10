@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import org.apache.maven.artifact.Artifact;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
@@ -71,7 +70,7 @@ public class MavenProjectConfigurator {
 
     List<MavenArtifact> artifacts = new ArrayList<MavenArtifact>();
     for (MavenProjectModel each : getMavenProjectsToConfigure()) {
-      artifacts.addAll(each.getJavaDependencies());
+      artifacts.addAll(each.getDependencies());
     }
 
     List<File> files = new ArrayList<File>();

@@ -900,6 +900,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>war</packaging>" +
 
                   "<dependencies>" +
                   "  <dependency>" +

@@ -82,8 +82,8 @@ public class MavenArtifactDownloader {
     for (MavenProjectModel each : myMavenProjects) {
       List<ArtifactRepository> repositories = each.getRemoteRepositories();
 
-      for (MavenArtifact eachDependency : each.getJavaDependencies()) {
-        if (!MavenConstants.JAR_TYPE.equalsIgnoreCase(eachDependency.getType())) continue;
+      for (MavenArtifact eachDependency : each.getDependencies()) {
+        if (!each.isSupportedDependency(eachDependency)) continue;
         if (Artifact.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
 

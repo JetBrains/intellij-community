@@ -39,7 +39,7 @@ public class MavenProjectsTree {
 
   private void resolveIntermoduleDependencies() {
     for (MavenProjectModel eachProject : getProjects()) {
-      for (MavenArtifact eachDependency : eachProject.getJavaDependencies()) {
+      for (MavenArtifact eachDependency : eachProject.getDependencies()) {
         MavenProjectModel project = myMavenIdToProject.get(eachDependency.getMavenId());
         if (project != null) {
           eachDependency.setResolved(new File(project.getPath()));

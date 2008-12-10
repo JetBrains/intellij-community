@@ -23,7 +23,7 @@ public class CustomWagonManager extends DefaultWagonManager {
   private boolean isOnline;
 
   private Set<MavenId> myUnresolvedIds = new HashSet<MavenId>();
-  private boolean isOpen;
+  private int myOpenCount;
   private boolean isStrict;
   private boolean isInProcess = false;
 
@@ -144,14 +144,15 @@ public class CustomWagonManager extends DefaultWagonManager {
   }
 
   private boolean isOpen() {
-    return isOnline || isOpen;
+    return isOnline || myOpenCount > 0;
   }
 
   public void open() {
-    isOpen = true;
+    myOpenCount++;
   }
 
   public void close() {
-    isOpen = false;
+    assert myOpenCount > 0;
+    myOpenCount--;
   }
 }

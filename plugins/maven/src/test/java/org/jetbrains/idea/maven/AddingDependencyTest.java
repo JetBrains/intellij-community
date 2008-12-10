@@ -24,7 +24,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     myMavenProjectsManager.addDependency(myMavenTree.findProject(myProjectPom),
                                          new MavenId("junit", "junit", "4.0"));
 
-    List<MavenArtifact> deps = myMavenTree.getProjects().get(0).getJavaDependencies();
+    List<MavenArtifact> deps = myMavenTree.getProjects().get(0).getDependencies();
     assertEquals(1, deps.size());
     assertEquals(new File(getRepositoryPath(), "junit/junit/4.0/junit-4.0.jar"),
                  deps.get(0).getFile());
@@ -41,7 +41,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     myMavenProjectsManager.addDependency(myMavenTree.findProject(myProjectPom),
                                          new MavenId("junit", "junit", "4.0"));
 
-    List<MavenArtifact> deps = myMavenTree.getProjects().get(0).getJavaDependencies();
+    List<MavenArtifact> deps = myMavenTree.getProjects().get(0).getDependencies();
     assertEquals(1, deps.size());
     assertEquals(new File(getRepositoryPath(), "junit/junit/4.0/junit-4.0.jar"),
                  deps.get(0).getFile());

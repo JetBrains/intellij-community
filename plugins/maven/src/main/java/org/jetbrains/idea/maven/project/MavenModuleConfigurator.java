@@ -74,7 +74,7 @@ public class MavenModuleConfigurator {
   }
 
   private List<FacetImporter> getSuitableFacetImporters() {
-    return FacetImporter.getSuitableFacetImporters(myMavenProject);
+    return myMavenProject.getSuitableFacetImporters();
   }
 
   private void configFolders() {
@@ -82,13 +82,13 @@ public class MavenModuleConfigurator {
   }
 
   private void configDependencies() {
-    for (MavenArtifact artifact : myMavenProject.getJavaDependencies()) {
+    for (MavenArtifact artifact : myMavenProject.getDependencies()) {
       boolean isExportable = artifact.isExportable();
       MavenProjectModel depProject = myMavenTree.findProject(artifact.getMavenId());
       if (depProject != null) {
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable);
       }
-      else {
+      else if (myMavenProject.isSupportedDependency(artifact)) {
         myRootModelAdapter.addLibraryDependency(artifact, isExportable, myTableModifiableModelProvider);
       }
     }

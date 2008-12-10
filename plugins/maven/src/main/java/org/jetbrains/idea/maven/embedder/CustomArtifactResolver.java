@@ -13,14 +13,13 @@ import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.List;
 
 public class CustomArtifactResolver extends DefaultArtifactResolver implements Contextualizable {
   public static final String MAVEN_PROJECT_MODEL_MANAGER = "MAVEN_PROJECT_MODEL_MANAGER";
 
+  private CustomWagonManagerHelper myWagonManagerHelper = new CustomWagonManagerHelper(DefaultArtifactResolver.class, this);
   private MavenProjectsTree myModelManager;
-  private CustomWagonManager myWagonManagerCache;
 
   public void contextualize(Context context) throws ContextException {
     myModelManager = (MavenProjectsTree)context.get(MAVEN_PROJECT_MODEL_MANAGER);
@@ -80,32 +79,10 @@ public class CustomArtifactResolver extends DefaultArtifactResolver implements C
   }
 
   public void open() {
-    getWagonManager().open();
+    myWagonManagerHelper.open();
   }
 
   public void close() {
-    getWagonManager().close();
-  }
-
-  private CustomWagonManager getWagonManager() {
-    if (myWagonManagerCache == null) {
-      Object wagon = getFieldValue(DefaultArtifactResolver.class, "wagonManager", this);
-      myWagonManagerCache = (CustomWagonManager)wagon;
-    }
-    return myWagonManagerCache;
-  }
-
-  private Object getFieldValue(Class c, String fieldName, Object o) {
-    try {
-      Field f = c.getDeclaredField(fieldName);
-      f.setAccessible(true);
-      return f.get(o);
-    }
-    catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
+    myWagonManagerHelper.close();
   }
 }
