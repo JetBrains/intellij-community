@@ -235,6 +235,7 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
 
   @Nullable
   public CopyrightProfile getCopyrightOptions(@NotNull PsiFile file) {
+    if (myOptions.getOptions(file.getFileType().getName()).getFileTypeOverride() == LanguageOptions.NO_COPYRIGHT) return null;
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
     for (String scopeName : myModule2Copyrights.keySet()) {
       final NamedScope namedScope = validationManager.getScope(scopeName);
@@ -244,9 +245,7 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
           if (packageSet.contains(file, validationManager)) {
             final CopyrightProfile profile = myCopyrights.get(myModule2Copyrights.get(scopeName));
             if (profile != null) {
-              if (myOptions.getOptions(file.getFileType().getName()).getFileTypeOverride() != LanguageOptions.NO_COPYRIGHT) {
-                return profile;
-              }
+              return profile;
             }
           }
         }
