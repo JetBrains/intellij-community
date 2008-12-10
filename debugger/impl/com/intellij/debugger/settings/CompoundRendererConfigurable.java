@@ -355,6 +355,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   }
 
   public void disposeUIResources() {
+    myRenderer = null;
+    myOriginalRenderer = null;
     myLabelEditor.dispose();
     myChildrenEditor.dispose();
     myChildrenExpandedEditor.dispose();

@@ -203,6 +203,7 @@ public class UserRenderersConfigurable implements Configurable{
   }
 
   public void disposeUIResources() {
+    myRendererChooser.removeAllElements();
     myRendererDataConfigurable.disposeUIResources();
   }
 
