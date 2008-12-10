@@ -183,6 +183,15 @@ public abstract class AbstractVcs {
     return true;
   }
 
+  public static boolean fileInVcsByFileStatus(final Project project, final FilePath path) {
+    final VirtualFile virtualFile = path.getVirtualFile();
+    if (virtualFile != null) {
+      final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
+      return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED && fileStatus != FileStatus.IGNORED;
+    }
+    return true;
+  }
+
   /**
    * Returns the interface for performing "check status" operations (operations which show the differences between
    * the local working copy state and the latest server state).

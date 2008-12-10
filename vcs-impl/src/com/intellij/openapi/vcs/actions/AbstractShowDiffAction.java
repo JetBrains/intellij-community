@@ -53,7 +53,7 @@ public class AbstractShowDiffAction extends AbstractVcsAction{
 
     if (diffProvider == null) return false;
 
-    return vcs.fileExistsInVcs(new FilePathImpl(selectedFile)) ;
+    return AbstractVcs.fileInVcsByFileStatus(project, new FilePathImpl(selectedFile)) ;
   }
 
 
