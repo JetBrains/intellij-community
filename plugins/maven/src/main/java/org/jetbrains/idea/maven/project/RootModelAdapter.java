@@ -13,10 +13,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 
@@ -204,7 +202,7 @@ public class RootModelAdapter {
     return ModuleManager.getInstance(myRootModel.getProject()).findModuleByName(moduleName);
   }
 
-  public void addLibraryDependency(Artifact artifact, boolean isExportable, final LibraryTableModifiableModelProvider table) {
+  public void addLibraryDependency(MavenArtifact artifact, boolean isExportable, final LibraryTableModifiableModelProvider table) {
     String libraryName = makeLibraryName(artifact);
 
     LibrariesModifiableModel modifiableModel = null;
@@ -252,7 +250,7 @@ public class RootModelAdapter {
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, normalizedPath) + JarFileSystem.JAR_SEPARATOR;
   }
 
-  private void removeOldLibraryDependency(Artifact artifact) {
+  private void removeOldLibraryDependency(MavenArtifact artifact) {
     Library lib = findLibrary(artifact, false);
     if (lib == null) return;
     LibraryOrderEntry entry = myRootModel.findLibraryOrderEntry(lib);
@@ -274,22 +272,22 @@ public class RootModelAdapter {
     }
   }
 
-  public Library findLibrary(Artifact artifact) {
+  public Library findLibrary(MavenArtifact artifact) {
     return findLibrary(artifact, true);
   }
 
-  private Library findLibrary(final Artifact artifact, final boolean newType) {
+  private Library findLibrary(final MavenArtifact artifact, final boolean newType) {
     return myRootModel.processOrder(new RootPolicy<Library>() {
       @Override
       public Library visitLibraryOrderEntry(LibraryOrderEntry e, Library result) {
-        String name = newType ? makeLibraryName(artifact) : new MavenId(artifact).toString();
+        String name = newType ? makeLibraryName(artifact) : artifact.getMavenId().toString();
         return name.equals(e.getLibraryName()) ? e.getLibrary() : result;
       }
     }, null);
   }
 
-  private String makeLibraryName(Artifact artifact) {
-    return MAVEN_LIB_PREFIX + new MavenId(artifact).toString();
+  private String makeLibraryName(MavenArtifact artifact) {
+    return MAVEN_LIB_PREFIX + artifact.getMavenId().toString();
   }
 
   public void setLanguageLevel(LanguageLevel level) {

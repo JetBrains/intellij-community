@@ -1,0 +1,156 @@
+/*
+ * Copyright 2000-2008 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jetbrains.idea.maven.project;
+
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.jetbrains.idea.maven.embedder.CustomArtifact;
+import org.jetbrains.idea.maven.utils.MavenId;
+
+import java.io.File;
+
+public class MavenArtifact {
+  private final String myGroupId;
+  private final String myArtifactId;
+  private final String myVersion;
+  private final String myBaseVersion;
+  private final String myType;
+  private final String myClassifier;
+
+  private final String myScope;
+  private final boolean myOptional;
+
+  private final String myExtension;
+
+  private volatile File myFile;
+  private volatile boolean myResolved;
+  private volatile boolean myStubbed;
+
+  public MavenArtifact(Artifact artifact) {
+    myGroupId = artifact.getGroupId();
+    myArtifactId = artifact.getArtifactId();
+    myVersion = artifact.getVersion();
+    myBaseVersion = artifact.getBaseVersion();
+    myType = artifact.getType();
+    myClassifier = artifact.getClassifier();
+
+    myScope = artifact.getScope();
+    myOptional =artifact.isOptional();
+
+    myExtension = getExtension(artifact);
+
+    myFile = artifact.getFile();
+    myResolved = artifact.isResolved();
+    myStubbed = artifact instanceof CustomArtifact && ((CustomArtifact)artifact).isStub();
+  }
+
+  private String getExtension(Artifact artifact) {
+    ArtifactHandler handler = artifact.getArtifactHandler();
+    String result = null;
+    if (handler != null) result = handler.getExtension();
+    if (result == null) result = artifact.getType();
+    return result;
+  }
+
+  public String getGroupId() {
+    return myGroupId;
+  }
+
+  public String getArtifactId() {
+    return myArtifactId;
+  }
+
+  public String getVersion() {
+    return myVersion;
+  }
+
+  public String getBaseVersion() {
+    return myBaseVersion;
+  }
+
+  public MavenId getMavenId() {
+    return new MavenId(myGroupId, myArtifactId, myVersion, myBaseVersion, myType, myClassifier);
+  }
+
+  public String getType() {
+    return myType;
+  }
+
+  public String getClassifier() {
+    return myClassifier;
+  }
+
+  public String getScope() {
+    return myScope;
+  }
+
+  public boolean isOptional() {
+    return myOptional;
+  }
+
+  public boolean isExportable() {
+    if (myOptional) return false;
+    return Artifact.SCOPE_COMPILE.equals(myScope) || Artifact.SCOPE_RUNTIME.equals(myScope);
+  }
+
+  public String getExtension() {
+    return myExtension;
+  }
+
+  public boolean isResolved() {
+    return myResolved && myFile != null && myFile.exists() && !myStubbed;
+  }
+
+  public File getFile() {
+    return myFile;
+  }
+
+  public void setResolved(File file) {
+    myFile = file;
+    myResolved = true;
+    myStubbed = false;
+  }
+
+  @Override
+  public String toString() {
+    return myGroupId + ":" + myArtifactId + ":" + myType + ":" + myVersion;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    MavenArtifact that = (MavenArtifact)o;
+
+    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
+    if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
+    if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
+    if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myGroupId != null ? myGroupId.hashCode() : 0;
+    result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
+    result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    result = 31 * result + (myType != null ? myType.hashCode() : 0);
+    return result;
+  }
+}

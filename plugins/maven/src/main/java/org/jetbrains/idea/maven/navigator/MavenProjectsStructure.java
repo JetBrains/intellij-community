@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.events.MavenEventsManager;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenId;
@@ -713,16 +714,16 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
     private void createPluginsNode() {
       pluginsNode.clear();
-      for (MavenId mavenId : myProjectModel.getPluginIds()) {
-        if (!hasPlugin(mavenId)) {
-          pluginsNode.add(new PluginNode(this, mavenId));
+      for (MavenPlugin each : myProjectModel.getPlugins()) {
+        if (!hasPlugin(each)) {
+          pluginsNode.add(new PluginNode(this, each.getMavenId()));
         }
       }
     }
 
-    public boolean hasPlugin(final MavenId id) {
+    public boolean hasPlugin(MavenPlugin plugin) {
       for (PluginNode node : pluginsNode.pluginNodes) {
-        if (node.getId().matches(id)) {
+        if (node.getId().matches(plugin.getMavenId())) {
           return true;
         }
       }

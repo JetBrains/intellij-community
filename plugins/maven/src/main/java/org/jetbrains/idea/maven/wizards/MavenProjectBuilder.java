@@ -9,8 +9,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.Profile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
@@ -127,11 +125,10 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getGeneralSettings(), new SoutMavenConsole(), process);
     try {
       for (VirtualFile f : getParameters().myFiles) {
-        MavenProjectHolder holder = MavenReader.readProject(e, f, new ArrayList<String>(), process);
-        if (!holder.isValid) continue;
+        MavenProjectState state = MavenReader.readProject(e, f, new ArrayList<String>(), process);
+        if (!state.isValid()) continue;
 
-        Set<String> profiles = new LinkedHashSet<String>();
-        collectProfileIds(holder.mavenProject.getModel(), profiles);
+        Set<String> profiles = new LinkedHashSet<String>(state.getProfilesIds());
         if (!profiles.isEmpty()) getParameters().myProfiles.addAll(profiles);
       }
     }
@@ -140,13 +137,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     finally {
       e.release();
     }
-  }
-
-  public static Set<String> collectProfileIds(Model mavenModel, Set<String> profileIds) {
-    for (Profile profile : (List<Profile>)mavenModel.getProfiles()) {
-      profileIds.add(profile.getId());
-    }
-    return profileIds;
   }
 
   public List<String> getProfiles() {

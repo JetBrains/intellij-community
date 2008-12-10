@@ -3,9 +3,8 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.openapi.util.Comparing;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 
-public class MavenId implements Comparable<MavenId>{
+public class MavenId implements Comparable<MavenId> {
   public String groupId;
   public String artifactId;
   public String version;
@@ -23,11 +22,22 @@ public class MavenId implements Comparable<MavenId>{
     this.version = version;
   }
 
+  public MavenId(String groupId, String artifactId, String version, String baseVersion, String type, String classifier) {
+    this.groupId = groupId;
+    this.artifactId = artifactId;
+    this.version = version;
+    this.baseVersion = baseVersion;
+    this.type = type;
+    this.classifier = classifier;
+  }
+
   public MavenId(Artifact artifact) {
-    this(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
-    type = artifact.getType();
-    classifier = artifact.getClassifier();
-    baseVersion = artifact.getBaseVersion();
+    this(artifact.getGroupId(),
+         artifact.getArtifactId(),
+         artifact.getVersion(),
+         artifact.getBaseVersion(),
+         artifact.getType(),
+         artifact.getClassifier());
   }
 
   public boolean equals(final Object o) {

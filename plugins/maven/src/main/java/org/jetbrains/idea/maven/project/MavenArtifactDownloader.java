@@ -41,7 +41,7 @@ public class MavenArtifactDownloader {
   private void download(boolean demand) throws MavenProcessCanceledException {
     List<File> downloadedFiles = new ArrayList<File>();
     try {
-      Map<Artifact, Set<ArtifactRepository>> artifacts = collectArtifactsToDownload();
+      Map<MavenArtifact, Set<ArtifactRepository>> artifacts = collectArtifactsToDownload();
 
       if (shouldDownload(mySettings.getDownloadSources(), demand)) {
         download(MavenConstants.SOURCES_CLASSIFIER, artifacts, downloadedFiles);
@@ -76,16 +76,16 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private Map<Artifact, Set<ArtifactRepository>> collectArtifactsToDownload() {
-    Map<Artifact, Set<ArtifactRepository>> result = new TreeMap<Artifact, Set<ArtifactRepository>>();
+  private Map<MavenArtifact, Set<ArtifactRepository>> collectArtifactsToDownload() {
+    Map<MavenArtifact, Set<ArtifactRepository>> result = new HashMap<MavenArtifact, Set<ArtifactRepository>>();
 
     for (MavenProjectModel each : myMavenProjects) {
-      List<ArtifactRepository> repositories = each.getRepositories();
+      List<ArtifactRepository> repositories = each.getRemoteRepositories();
 
-      for (Artifact eachDependency : each.getDependencies()) {
+      for (MavenArtifact eachDependency : each.getJavaDependencies()) {
         if (!MavenConstants.JAR_TYPE.equalsIgnoreCase(eachDependency.getType())) continue;
         if (Artifact.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
-        if (myProjectsTree.findProject(eachDependency) != null) continue;
+        if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
 
         Set<ArtifactRepository> registeredRepositories = result.get(eachDependency);
         if (registeredRepositories == null) {
@@ -99,13 +99,13 @@ public class MavenArtifactDownloader {
   }
 
   private void download(String classifier,
-                        Map<Artifact, Set<ArtifactRepository>> libraryArtifacts,
+                        Map<MavenArtifact, Set<ArtifactRepository>> libraryArtifacts,
                         List<File> downloadedFiles) throws MavenProcessCanceledException {
     myProgress.setText(ProjectBundle.message("maven.downloading.artifact", classifier));
 
     int step = 0;
-    for (Map.Entry<Artifact, Set<ArtifactRepository>> eachEntry : libraryArtifacts.entrySet()) {
-      Artifact eachArtifact = eachEntry.getKey();
+    for (Map.Entry<MavenArtifact, Set<ArtifactRepository>> eachEntry : libraryArtifacts.entrySet()) {
+      MavenArtifact eachArtifact = eachEntry.getKey();
 
       myProgress.checkCanceled();
       myProgress.setFraction(((double)step++) / libraryArtifacts.size());

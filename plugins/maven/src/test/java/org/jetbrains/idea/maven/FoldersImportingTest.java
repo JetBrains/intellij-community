@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.RootModelAdapter;
 import org.jetbrains.idea.maven.utils.Path;
+import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
 import java.io.File;
 
@@ -439,13 +440,12 @@ public class FoldersImportingTest extends MavenImportingTestCase {
   }
 
   public void testDownloadingNecessaryPlugins() throws Exception {
-    if (ignore()) return;
-    // maven loads plugin classes into JVM and does not len us remove the jar.
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    setRepositoryPath(helper.getTestDataPath("local1"));
 
-    String pathToPlugin = "org/codehaus/mojo/build-helper-maven-plugin";
-    removeFromLocalRepository(pathToPlugin);
-
-    assertFalse(new File(getRepositoryPath(), pathToPlugin).exists());
+    File pluginFile = new File(getRepositoryPath(),
+                               "org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar");
+    assertFalse(pluginFile.exists());
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -456,6 +456,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.codehaus.mojo</groupId>" +
                   "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <version>1.2</version>" +
                   "      <executions>" +
                   "        <execution>" +
                   "          <id>someId</id>" +
@@ -473,9 +474,10 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
+    resolveProject();
     generateSources();
 
-    assertTrue(new File(getRepositoryPath(), pathToPlugin).exists());
+    assertTrue(pluginFile.exists());
   }
 
   public void testAddingExistingGeneratedSources() throws Exception {

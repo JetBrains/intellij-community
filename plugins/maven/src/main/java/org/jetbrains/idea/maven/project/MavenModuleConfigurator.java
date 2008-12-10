@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.pom.java.LanguageLevel;
-import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facets.FacetImporter;
 
@@ -83,9 +82,9 @@ public class MavenModuleConfigurator {
   }
 
   private void configDependencies() {
-    for (Artifact artifact : myMavenProject.getDependencies()) {
-      boolean isExportable = myMavenProject.isExportableDependency(artifact);
-      MavenProjectModel depProject = myMavenTree.findProject(artifact);
+    for (MavenArtifact artifact : myMavenProject.getJavaDependencies()) {
+      boolean isExportable = artifact.isExportable();
+      MavenProjectModel depProject = myMavenTree.findProject(artifact.getMavenId());
       if (depProject != null) {
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable);
       }

@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 
 import java.io.File;
@@ -363,8 +362,8 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     assertTrue(junitDir.exists());
 
-    MavenProject parent = myMavenTree.getRootProjects().get(0).getMavenProject().getParent();
-    assertEquals(new File(junitDir, "junit-4.0.pom"), parent.getFile());
+    assertEquals("junit", myMavenTree.getRootProjects().get(0).getParentId().artifactId);
+    assertTrue(new File(junitDir, "junit-4.0.pom").exists());
   }
 
   public void testCreatingModuleGroups() throws Exception {

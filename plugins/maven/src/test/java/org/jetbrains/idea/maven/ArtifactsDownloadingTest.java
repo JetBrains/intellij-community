@@ -64,7 +64,7 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testDownloadingPluginsOnResolve() throws Exception {
+  public void testDownloadingPlugins() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -87,7 +87,7 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     assertTrue(f.exists());
   }
 
-  public void testDownloadNecessaryBuildExtensionsOnResolve() throws Exception {
+  public void testDownloadBuildExtensionsOnResolve() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +

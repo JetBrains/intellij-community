@@ -254,10 +254,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertProblems(root, true);
     assertProblems(getModules(root).get(0), true,
-                   "Unresolved dependency: 'xxx:xxx:jar:1:compile'.",
-                   "Unresolved dependency: 'yyy:yyy:jar:2:compile'.");
+                   "Unresolved dependency: 'xxx:xxx:jar:1'.",
+                   "Unresolved dependency: 'yyy:yyy:jar:2'.");
     assertProblems(getModules(root).get(1), true,
-                   "Unresolved dependency: 'zzz:zzz:jar:3:compile'.");
+                   "Unresolved dependency: 'zzz:zzz:jar:3'.");
   }
 
   public void testUnresolvedPomTypeDependency() throws Exception {
@@ -279,7 +279,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project");
 
     MavenProjectModel root = getRootProjects().get(0);
-    assertProblems(root, true, "Unresolved dependency: 'xxx:yyy:pom:4.0:compile'.");
+    assertProblems(root, true, "Unresolved dependency: 'xxx:yyy:pom:4.0'.");
   }
 
   public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws Exception {
@@ -392,7 +392,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     MavenProjectModel root = getRootProjects().get(0);
-    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1:runtime'.");
+    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1'.");
   }
 
   public void testUnresolvedExtensionsAfterResolve() throws Exception {
@@ -412,7 +412,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     resolveProject();
     MavenProjectModel root = getRootProjects().get(0);
-    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1:runtime'.");
+    assertProblems(root, true, "Unresolved build extension: 'xxx:yyy:jar:1'.");
   }
 
   public void testDoesNotReportExtensionsThatWereNotTriedToBeResolved() throws Exception {
@@ -513,10 +513,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     assertProblems(root, true);
     assertProblems(getModules(root).get(0), true,
-                   "Unresolved build extension: 'xxx:xxx:jar:1:runtime'.");
+                   "Unresolved build extension: 'xxx:xxx:jar:1'.");
     assertProblems(getModules(root).get(1), true,
-                   "Unresolved build extension: 'yyy:yyy:jar:1:runtime'.",
-                   "Unresolved build extension: 'zzz:zzz:jar:1:runtime'.");
+                   "Unresolved build extension: 'yyy:yyy:jar:1'.",
+                   "Unresolved build extension: 'zzz:zzz:jar:1'.");
   }
 
   public void testUnresolvedPlugins() throws Exception {

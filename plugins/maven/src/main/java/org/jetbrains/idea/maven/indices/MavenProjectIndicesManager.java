@@ -77,7 +77,7 @@ public class MavenProjectIndicesManager extends DummyProjectComponent {
     Set<String> result = new HashSet<String>();
 
     for (MavenProjectModel each : getMavenProjectManager().getProjects()) {
-      for (ArtifactRepository eachRepository : each.getRepositories()) {
+      for (ArtifactRepository eachRepository : each.getRemoteRepositories()) {
         String url = eachRepository.getUrl();
         if (url == null) continue;
         result.add(url);

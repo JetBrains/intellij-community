@@ -69,15 +69,14 @@ public class MavenProjectConfigurator {
     // I couldn't manage to write a test for this since behaviour of VirtualFileManager
     // and FileWatcher differs from real-life execution.
 
-    List<Artifact> artifacts = new ArrayList<Artifact>();
+    List<MavenArtifact> artifacts = new ArrayList<MavenArtifact>();
     for (MavenProjectModel each : getMavenProjectsToConfigure()) {
-      artifacts.addAll(each.getDependencies());
+      artifacts.addAll(each.getJavaDependencies());
     }
 
     List<File> files = new ArrayList<File>();
-    for (Artifact each : artifacts) {
-      if (!each.isResolved() || each.getFile() == null) continue;
-      files.add(each.getFile());
+    for (MavenArtifact each : artifacts) {
+      if (each.isResolved()) files.add(each.getFile());
     }
 
     LocalFileSystem.getInstance().refreshIoFiles(files);

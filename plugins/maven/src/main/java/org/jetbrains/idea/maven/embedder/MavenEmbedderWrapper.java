@@ -14,10 +14,10 @@ import org.apache.maven.embedder.PlexusLoggerAdapter;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.Plugin;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProcess;
 import org.jetbrains.idea.maven.project.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.project.TransferListenerAdapter;
@@ -117,7 +117,7 @@ public class MavenEmbedderWrapper {
     }, process);
   }
 
-  public boolean resolvePlugin(final Plugin plugin, final MavenProject project, MavenProcess process) throws MavenProcessCanceledException {
+  public boolean resolvePlugin(final MavenPlugin plugin, final MavenProject project, MavenProcess process) throws MavenProcessCanceledException {
     return doExecute(new Executor<Boolean>() {
       public Boolean execute() throws Exception {
         try {

@@ -71,8 +71,8 @@ public class MavenFoldersConfigurator {
     List<String> sourceFolders = new ArrayList<String>();
     List<String> testFolders = new ArrayList<String>();
 
-    sourceFolders.addAll(myMavenProject.getCompileSourceRoots());
-    testFolders.addAll(myMavenProject.getTestCompileSourceRoots());
+    sourceFolders.addAll(myMavenProject.getSources());
+    testFolders.addAll(myMavenProject.getTestSources());
 
     for (Resource each : myMavenProject.getResources()) {
       sourceFolders.add(each.getDirectory());

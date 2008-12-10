@@ -17,10 +17,10 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.runner.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.runner.MavenRunnerParameters;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenId;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 
 import javax.swing.*;
@@ -148,18 +148,18 @@ public class MavenKeymapExtension implements KeymapExtension {
     Collection<String> result = new HashSet<String>();
     result.addAll(MavenEmbedderFactory.getStandardGoalsList());
 
-    for (MavenId plugin : project.getPluginIds()) {
-      collectGoals(repository, plugin, result);
+    for (MavenPlugin each : project.getPlugins()) {
+      collectGoals(repository, each, result);
     }
 
     return result;
   }
 
-  private static void collectGoals(File repository, MavenId mavenId, Collection<String> list) {
-    MavenPluginInfo plugin = MavenArtifactUtil.readPluginInfo(repository, mavenId);
-    if (plugin == null) return;
+  private static void collectGoals(File repository, MavenPlugin plugin, Collection<String> list) {
+    MavenPluginInfo info = MavenArtifactUtil.readPluginInfo(repository, plugin.getMavenId());
+    if (info == null) return;
 
-    for (MavenPluginInfo.Mojo m : plugin.getMojos()) {
+    for (MavenPluginInfo.Mojo m : info.getMojos()) {
       list.add(m.getQualifiedGoal());
     }
   }

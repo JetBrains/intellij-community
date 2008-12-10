@@ -230,8 +230,8 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertSame(parentNode, parentNode1);
     assertSame(childNode, childNode1);
 
-    assertEquals("project1", parentNode1.getMavenProject().getArtifactId());
-    assertEquals("m1", childNode1.getMavenProject().getArtifactId());
+    assertEquals("project1", parentNode1.getMavenId().artifactId);
+    assertEquals("m1", childNode1.getMavenId().artifactId);
   }
 
   public void testUpdatingModelWithNewProfiles() throws Exception {
@@ -309,7 +309,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     update(m);
 
     MavenProjectModel n = myTree.findProject(m);
-    assertEquals("m1", n.getMavenProject().getArtifactId());
+    assertEquals("m1", n.getMavenId().artifactId);
   }
 
   public void testUpdatingInheritance() throws Exception {
@@ -333,7 +333,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
                                         "</parent>");
 
     readModel(myProjectPom, child);
-    assertEquals("child", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child", myTree.findProject(child).getMavenId().artifactId);
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -345,7 +345,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     update(myProjectPom);
 
-    assertEquals("child2", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child2", myTree.findProject(child).getMavenId().artifactId);
   }
 
   public void testUpdatingInheritanceHierarhically() throws Exception {
@@ -381,7 +381,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     readModel(myProjectPom, child, subChild);
 
-    assertEquals("subChild", myTree.findProject(subChild).getMavenProject().getArtifactId());
+    assertEquals("subChild", myTree.findProject(subChild).getMavenId().artifactId);
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -393,7 +393,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     update(myProjectPom);
 
-    assertEquals("subChild2", myTree.findProject(subChild).getMavenProject().getArtifactId());
+    assertEquals("subChild2", myTree.findProject(subChild).getMavenId().artifactId);
   }
 
   public void testAddingInheritanceParent() throws Exception {
@@ -409,7 +409,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
                                         "</parent>");
 
     readModel(child);
-    assertEquals("${childName}", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("${childName}", myTree.findProject(child).getMavenId().artifactId);
 
     VirtualFile parent = createModulePom("parent",
                                          "<groupId>test</groupId>" +
@@ -422,7 +422,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     update(parent);
 
-    assertEquals("child", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child", myTree.findProject(child).getMavenId().artifactId);
   }
 
   public void testAddingInheritanceChild() throws Exception {
@@ -450,7 +450,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     update(child);
 
-    assertEquals("child", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child", myTree.findProject(child).getMavenId().artifactId);
   }
 
   public void testAddingInheritanceChildOnParentUpdate() throws Exception {
@@ -481,7 +481,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     update(myProjectPom);
 
-    assertEquals("child", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child", myTree.findProject(child).getMavenId().artifactId);
   }
 
   public void testDoNotReAddInheritanceChildOnParentModulesRemoval() throws Exception {
@@ -556,7 +556,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
 
     readModel(parent1, parent2, child);
-    assertEquals("child1", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child1", myTree.findProject(child).getMavenId().artifactId);
 
     updateModulePom("child",
                     "<groupId>test</groupId>" +
@@ -571,7 +571,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     update(child);
 
-    assertEquals("child2", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child2", myTree.findProject(child).getMavenId().artifactId);
   }
 
   public void testChangingInheritanceParentId() throws Exception {
@@ -596,7 +596,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
 
     readModel(myProjectPom, child);
-    assertEquals("child", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child", myTree.findProject(child).getMavenId().artifactId);
 
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent2</artifactId>" +
@@ -608,7 +608,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     update(myProjectPom);
 
-    assertEquals("${childName}", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("${childName}", myTree.findProject(child).getMavenId().artifactId);
   }
 
   public void testHandlingSelfInheritance() throws Exception {
@@ -682,11 +682,11 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     readModel(parent, child);
 
-    assertEquals("child", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("child", myTree.findProject(child).getMavenId().artifactId);
 
     myTree.delete(asList(parent), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
 
-    assertEquals("${childName}", myTree.findProject(child).getMavenProject().getArtifactId());
+    assertEquals("${childName}", myTree.findProject(child).getMavenId().artifactId);
   }
 
   public void testDeletingInheritanceChild() throws Exception {
@@ -721,10 +721,10 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
                                            "</parent>");
 
     readModel(myProjectPom, child, subChild);
-    assertEquals("subChild", myTree.findProject(subChild).getMavenProject().getArtifactId());
+    assertEquals("subChild", myTree.findProject(subChild).getMavenId().artifactId);
 
     myTree.delete(asList(child), getMavenGeneralSettings(), NULL_CONSOLE, EMPTY_MAVEN_PROCESS);
-    assertEquals("${subChildName}", myTree.findProject(subChild).getMavenProject().getArtifactId());
+    assertEquals("${subChildName}", myTree.findProject(subChild).getMavenId().artifactId);
   }
 
   public void testRecursiveInheritanceAndAggregation() throws Exception {
@@ -803,7 +803,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
 
     readModel(myProjectPom);
 
-    assertEquals("m", myTree.findProject(m).getMavenProject().getArtifactId());
+    assertEquals("m", myTree.findProject(m).getMavenId().artifactId);
 
     updateModulePom("m",
                     "<groupId>test</groupId>" +
@@ -814,7 +814,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     update(files);
 
     // did not change
-    assertEquals("m", myTree.findProject(m).getMavenProject().getArtifactId());
+    assertEquals("m", myTree.findProject(m).getMavenId().artifactId);
   }
 
   public void testAddingProjectAsModuleToExistingOne() throws Exception {
@@ -932,7 +932,7 @@ public class MavenProjectsTreeTest extends MavenImportingTestCase {
     assertEquals(2, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
     assertEquals(m, roots.get(1).getFile());
-    assertEquals("m", roots.get(1).getMavenProject().getArtifactId());
+    assertEquals("m", roots.get(1).getMavenId().artifactId);
     assertEquals(0, myTree.getModules(roots.get(0)).size());
 
     updateProjectPom("<groupId>test</groupId>" +

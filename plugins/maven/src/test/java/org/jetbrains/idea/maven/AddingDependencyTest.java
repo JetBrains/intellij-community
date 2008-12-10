@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.util.io.ReadOnlyAttributeUtil;
-import org.apache.maven.artifact.Artifact;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.project.MavenArtifact;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 import java.io.File;
@@ -24,7 +24,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     myMavenProjectsManager.addDependency(myMavenTree.findProject(myProjectPom),
                                          new MavenId("junit", "junit", "4.0"));
 
-    List<Artifact> deps = myMavenTree.getProjects().get(0).getDependencies();
+    List<MavenArtifact> deps = myMavenTree.getProjects().get(0).getJavaDependencies();
     assertEquals(1, deps.size());
     assertEquals(new File(getRepositoryPath(), "junit/junit/4.0/junit-4.0.jar"),
                  deps.get(0).getFile());
@@ -41,7 +41,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
     myMavenProjectsManager.addDependency(myMavenTree.findProject(myProjectPom),
                                          new MavenId("junit", "junit", "4.0"));
 
-    List<Artifact> deps = myMavenTree.getProjects().get(0).getDependencies();
+    List<MavenArtifact> deps = myMavenTree.getProjects().get(0).getJavaDependencies();
     assertEquals(1, deps.size());
     assertEquals(new File(getRepositoryPath(), "junit/junit/4.0/junit-4.0.jar"),
                  deps.get(0).getFile());

@@ -119,11 +119,6 @@ public class CustomWagonManager extends DefaultWagonManager {
     }
   }
 
-  private void postResolve(Artifact artifact) {
-    if (!artifact.isResolved()) myUnresolvedIds.add(new MavenId(artifact));
-    if (!isStrict) artifact.setResolved(true);
-  }
-
   @Override
   public void getArtifactMetadata(ArtifactMetadata metadata, ArtifactRepository repository, File destination, String checksumPolicy)
     throws TransferFailedException, ResourceDoesNotExistException {
@@ -141,6 +136,11 @@ public class CustomWagonManager extends DefaultWagonManager {
     if (isOpen()) {
       super.getArtifactMetadataFromDeploymentRepository(metadata, repository, destination, checksumPolicy);
     }
+  }
+
+  private void postResolve(Artifact artifact) {
+    if (!artifact.isResolved()) myUnresolvedIds.add(new MavenId(artifact));
+    if (!isStrict) artifact.setResolved(true);
   }
 
   private boolean isOpen() {

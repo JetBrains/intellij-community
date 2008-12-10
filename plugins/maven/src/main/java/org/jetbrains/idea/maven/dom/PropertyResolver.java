@@ -7,7 +7,6 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.GenericDomValue;
 import org.apache.commons.beanutils.BeanAccessLanguageException;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.maven.model.Model;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.dom.model.MavenProperties;
 import org.jetbrains.idea.maven.dom.model.Profile;
@@ -56,7 +55,7 @@ public class PropertyResolver {
 
     for (Profile each : mavenModel.getProfiles().getProfiles()) {
       String id = each.getId().getStringValue();
-      if (id == null || !project.getActiveProfiles().contains(id)) continue;
+      if (id == null || !project.getActiveProfilesIds().contains(id)) continue;
       collectPropertiesFromDOM(result, each.getProperties());
     }
 
@@ -109,10 +108,9 @@ public class PropertyResolver {
     }
 
     if (propName.equals("basedir")) return project.getDirectory();
-    Model m = project.getMavenProject().getModel();
 
     try {
-      result = BeanUtils.getNestedProperty(m, propName);
+      result = BeanUtils.getNestedProperty(project.getMavenModel(), propName);
     }
     catch (IllegalAccessException e) {
     }

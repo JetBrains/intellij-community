@@ -39,11 +39,10 @@ public class MavenProjectsTree {
 
   private void resolveIntermoduleDependencies() {
     for (MavenProjectModel eachProject : getProjects()) {
-      for (Artifact eachDependency : eachProject.getDependencies()) {
-        MavenProjectModel project = myMavenIdToProject.get(new MavenId(eachDependency));
+      for (MavenArtifact eachDependency : eachProject.getJavaDependencies()) {
+        MavenProjectModel project = myMavenIdToProject.get(eachDependency.getMavenId());
         if (project != null) {
-          eachDependency.setFile(new File(project.getPath()));
-          eachDependency.setResolved(true);
+          eachDependency.setResolved(new File(project.getPath()));
         }
       }
     }
@@ -456,15 +455,15 @@ public class MavenProjectsTree {
 
   public Dependency addDependency(Project project,
                                   MavenProjectModel mavenProject,
-                                  Artifact artifact) throws MavenProcessCanceledException {
+                                  MavenArtifact artifact) throws MavenProcessCanceledException {
     return mavenProject.addDependency(project, artifact);
   }
 
-  public Artifact downloadArtifact(MavenProjectModel mavenProject,
-                                   MavenId id,
-                                   MavenGeneralSettings coreSettings,
-                                   MavenConsole console,
-                                   MavenProcess process) throws MavenProcessCanceledException {
+  public MavenArtifact downloadArtifact(MavenProjectModel mavenProject,
+                                        MavenId id,
+                                        MavenGeneralSettings coreSettings,
+                                        MavenConsole console,
+                                        MavenProcess process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForExecute(coreSettings, console, process);
     try {
       Artifact artifact = e.createArtifact(id.groupId,
@@ -473,8 +472,8 @@ public class MavenProjectsTree {
                                            MavenConstants.JAR_TYPE,
                                            null);
       artifact.setScope(Artifact.SCOPE_COMPILE);
-      e.resolve(artifact, mavenProject.getRepositories(), process);
-      return artifact;
+      e.resolve(artifact, mavenProject.getRemoteRepositories(), process);
+      return new MavenArtifact(artifact);
     }
     finally {
       e.release();
