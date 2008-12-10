@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.psi;
 
+import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -223,15 +225,14 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   private CommentRange getLineCopyrightComments(List<PsiComment> comments, Document doc, int i, PsiComment comment, String text) {
     PsiElement firstComment = comment;
     PsiElement lastComment = comment;
-    final String lineCommentPrefix =
-      LanguageCommenters.INSTANCE.forLanguage(file.getViewProvider().getRootLanguage(comment)).getLineCommentPrefix();
-    if (lineCommentPrefix != null && text.startsWith(lineCommentPrefix)) {
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getViewProvider().getRootLanguage(comment));
+    if (isLineComment(commenter, comment, doc)) {
       int sline = doc.getLineNumber(comment.getTextRange().getStartOffset());
       int eline = doc.getLineNumber(comment.getTextRange().getEndOffset());
       for (int j = i - 1; j >= 0; j--) {
-        PsiElement cmt = comments.get(j);
+        PsiComment cmt = comments.get(j);
 
-        if (cmt.getText().startsWith(lineCommentPrefix) && doc.getLineNumber(cmt.getTextRange().getEndOffset()) == sline - 1) {
+        if (isLineComment(commenter, cmt, doc) && doc.getLineNumber(cmt.getTextRange().getEndOffset()) == sline - 1) {
           firstComment = cmt;
           sline = doc.getLineNumber(cmt.getTextRange().getStartOffset());
         }
@@ -240,8 +241,8 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
         }
       }
       for (int j = i + 1; j < comments.size(); j++) {
-        PsiElement cmt = comments.get(j);
-        if (cmt.getText().startsWith(lineCommentPrefix) && doc.getLineNumber(cmt.getTextRange().getStartOffset()) == eline + 1) {
+        PsiComment cmt = comments.get(j);
+        if (isLineComment(commenter, cmt, doc) && doc.getLineNumber(cmt.getTextRange().getStartOffset()) == eline + 1) {
           lastComment = cmt;
           eline = doc.getLineNumber(cmt.getTextRange().getEndOffset());
         }
@@ -251,6 +252,15 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
       }
     }
     return new CommentRange(firstComment, lastComment);
+  }
+
+  private static boolean isLineComment(Commenter commenter, PsiComment comment, Document doc) {
+    final String lineCommentPrefix = commenter.getLineCommentPrefix();
+    if (lineCommentPrefix != null) {
+      return comment.getText().startsWith(lineCommentPrefix);
+    }
+    final TextRange textRange = comment.getTextRange();
+    return doc.getLineNumber(textRange.getStartOffset()) == doc.getLineNumber(textRange.getEndOffset());
   }
 
   protected PsiFile getFile() {
