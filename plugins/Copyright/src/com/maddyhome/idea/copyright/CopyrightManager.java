@@ -221,8 +221,8 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
     myModule2Copyrights.clear();
   }
 
-  public void mapCopyright(String scopeName, CopyrightProfile copyrightProfile) {
-    myModule2Copyrights.put(scopeName, copyrightProfile.getName());
+  public void mapCopyright(String scopeName, String copyrightProfileName) {
+    myModule2Copyrights.put(scopeName, copyrightProfileName);
   }
 
   public void unmapCopyright(String scopeName) {

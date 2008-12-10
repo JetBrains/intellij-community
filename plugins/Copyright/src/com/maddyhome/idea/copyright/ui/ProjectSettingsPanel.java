@@ -250,7 +250,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         }
         final List<ScopeSetting> settingList = myScopeMappingModel.getItems();
         for (ScopeSetting scopeSetting : settingList) {
-            myManager.mapCopyright(scopeSetting.getScope().getName(), scopeSetting.getProfile());
+            myManager.mapCopyright(scopeSetting.getScope().getName(), scopeSetting.getProfileName());
         }
         myManager.setDefaultCopyright((CopyrightProfile) myProfilesComboBox.getSelectedItem());
     }

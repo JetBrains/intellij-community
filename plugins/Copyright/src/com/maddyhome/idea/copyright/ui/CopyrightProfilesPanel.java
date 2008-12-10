@@ -244,11 +244,11 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
   public void addItemsChangeListener(final Runnable runnable) {
     addItemsChangeListener(new ItemsChangeListener() {
       public void itemChanged(@Nullable Object deletedItem) {
-        runnable.run();
+        SwingUtilities.invokeLater(runnable);
       }
 
       public void itemsExternallyChanged() {
-        runnable.run();
+        SwingUtilities.invokeLater(runnable);
       }
     });
   }
