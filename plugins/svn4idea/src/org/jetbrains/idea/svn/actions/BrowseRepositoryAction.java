@@ -42,8 +42,6 @@ public class BrowseRepositoryAction extends AnAction {
     }
     else {
       ToolWindowManager manager = ToolWindowManager.getInstance(project);
-
-
       ToolWindow w = manager.getToolWindow(REPOSITORY_BROWSER_TOOLWINDOW);
       if (w == null) {
         RepositoryToolWindowPanel component = new RepositoryToolWindowPanel(project);
@@ -59,9 +57,11 @@ public class BrowseRepositoryAction extends AnAction {
 
   private static class RepositoryToolWindowPanel extends JPanel implements Disposable {
     private RepositoryBrowserDialog myDialog;
+    private final Project myProject;
 
-    private RepositoryToolWindowPanel(Project project) {
+    private RepositoryToolWindowPanel(final Project project) {
       super(new BorderLayout());
+      myProject = project;
 
       myDialog = new RepositoryBrowserDialog(project);
       JComponent component = myDialog.createBrowserComponent(true);
@@ -72,6 +72,7 @@ public class BrowseRepositoryAction extends AnAction {
 
     public void dispose() {
       myDialog.disposeRepositoryBrowser();
+      ToolWindowManager.getInstance(myProject).unregisterToolWindow(BrowseRepositoryAction.REPOSITORY_BROWSER_TOOLWINDOW);
     }
   }
 }
