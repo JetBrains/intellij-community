@@ -13,6 +13,7 @@ public class DefaultExcludedFileIndex extends ExcludedFileIndex {
   private VirtualFile myBaseDir;
 
   public DefaultExcludedFileIndex(final Project project) {
+    super(project);
     myProject = project;
     myBaseDir = project.getBaseDir();
   }

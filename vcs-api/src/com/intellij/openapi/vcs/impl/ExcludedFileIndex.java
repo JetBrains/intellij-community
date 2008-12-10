@@ -8,8 +8,14 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author yole
  */
 public abstract class ExcludedFileIndex {
+  protected final Project myProject;
+
   public static ExcludedFileIndex getInstance(Project project) {
     return ServiceManager.getService(project, ExcludedFileIndex.class);
+  }
+
+  protected ExcludedFileIndex(final Project project) {
+    myProject = project;
   }
 
   public abstract boolean isInContent(VirtualFile file);
