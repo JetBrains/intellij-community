@@ -6,6 +6,7 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
@@ -91,10 +92,9 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     final JPanel panel = new JPanel(new GridBagLayout());
     myClassNameField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        PsiClass psiClass = DebuggerUtils.getInstance().chooseClassDialog(
-          DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
+        PsiClass psiClass = DebuggerUtils.getInstance().chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if(psiClass != null) {
-          myClassNameField.setText(psiClass.getQualifiedName());
+          myClassNameField.setText(JVMNameUtil.getNonAnonymousClassName(psiClass));
         }
       }
     });
