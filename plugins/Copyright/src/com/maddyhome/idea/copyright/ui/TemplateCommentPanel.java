@@ -41,8 +41,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.EventListenerList;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 public class TemplateCommentPanel implements SearchableConfigurable {
   private CopyrightManager myManager;
@@ -212,21 +210,14 @@ public class TemplateCommentPanel implements SearchableConfigurable {
       }
     });
 
-    final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
-        if ("value".equals(propertyChangeEvent.getPropertyName())) {
-          fireChangeEvent();
-        }
-      }
-    };
-    txtLengthBefore.addPropertyChangeListener(propertyChangeListener);
-    txtLengthAfter.addPropertyChangeListener(propertyChangeListener);
-
-    txtFiller.getDocument().addDocumentListener(new DocumentAdapter() {
+    final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         fireChangeEvent();
       }
-    });
+    };
+    txtLengthBefore.getDocument().addDocumentListener(documentAdapter);
+    txtLengthAfter.getDocument().addDocumentListener(documentAdapter);
+    txtFiller.getDocument().addDocumentListener(documentAdapter);
 
     cbBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent actionEvent) {
