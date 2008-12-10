@@ -23,6 +23,7 @@ import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -48,10 +49,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class ProjectSettingsPanel extends PanelWithButtons {
     private final Project myProject;
@@ -240,15 +239,19 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             if (defaultCopyright == null) return true;
             if (!defaultCopyright.equals(selected)) return true;
         }
-        final Map<String, String> map = new HashMap<String, String>(myManager.getCopyrightsMapping());
+        final Map<String, String> map = myManager.getCopyrightsMapping();
+        if (map.size() != myScopeMappingModel.getItems().size()) return true;
+        final Iterator<String> iterator = map.keySet().iterator();
         for (ScopeSetting setting : myScopeMappingModel.getItems()) {
             final NamedScope scope = setting.getScope();
+            if (!iterator.hasNext()) return true;
+            final String scopeName = iterator.next();
+            if (!Comparing.strEqual(scopeName, scope.getName())) return true;
             final String profileName = map.get(scope.getName());
             if (profileName == null) return true;
             if (!profileName.equals(setting.getProfileName())) return true;
-            map.remove(scope.getName());
         }
-        return !map.isEmpty();
+        return false;
     }
 
     public void apply() {
