@@ -271,6 +271,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final FileCopyPatcher patcher) {
     PsiFile oldFileCopy = createFileCopy(context.file);
     PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(oldFileCopy);
+    boolean wasInjected = hostFile != oldFileCopy;
     Project project = hostFile.getProject();
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     // is null in tests
@@ -288,7 +289,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
     }
 
-    if (oldFileCopy != fileCopy) {
+    if (oldFileCopy != fileCopy && !wasInjected) {
       // newly inserted identifier can well end up in the injected language region
       Editor oldEditor = context.editor;
       Editor editor = EditorFactory.getInstance().createEditor(document, project);
