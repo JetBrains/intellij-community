@@ -1,17 +1,5 @@
 /*
- * Copyright 2005 Sascha Weinreuter
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (c) 2008, Your Corporation. All Rights Reserved.
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
@@ -145,9 +133,9 @@ class AssociationsEditor {
 
     @Nullable
     static Object getTreeSelection(JTree tree) {
-        final TreePath selectionPath = tree.getSelectionPath();
-        if (selectionPath == null) return null;
-        final Object component = selectionPath.getLastPathComponent();
+        final TreePath[] selectionPath = tree.getSelectionPaths();
+        if (selectionPath == null || selectionPath.length != 1) return null;
+        final Object component = selectionPath[0].getLastPathComponent();
         return getObject(component);
     }
 
@@ -170,7 +158,8 @@ class AssociationsEditor {
 
     public void reset() {
         myManager.reset();
-        myListModel.update(null);
+        final Object selection = getTreeSelection(myTree);
+        myListModel.update(selection instanceof PsiFile ? ((PsiFile)selection) : null);
     }
 
     public void dispose() {
