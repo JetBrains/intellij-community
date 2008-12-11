@@ -95,6 +95,14 @@ public class BuildPropertiesImpl extends BuildProperties {
         }
       }
     }
+
+    final ChunkCustomCompilerExtension[] customCompilers = genOptions.getCustomCompilers();
+    if (customCompilers.length > 0) {
+      add(new Comment(CompilerBundle.message("generated.ant.build.custom.compilers.comment")), 1);
+      for (ChunkCustomCompilerExtension ext : customCompilers) {
+        ext.generateCustomCompilerTaskRegistration(project, genOptions, this);
+      }
+    }
   }
 
   protected void createJdkGenerators(final Project project) {

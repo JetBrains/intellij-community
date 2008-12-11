@@ -134,4 +134,10 @@ public abstract class GenerationOptions {
    * @return the chunk that contains specifid module
    */
   public abstract ModuleChunk getChunkByModule(Module module);
+
+  /**
+   * @return a set of custom compilers, each compiler is used at least once in some chunk.
+   */
+  public abstract ChunkCustomCompilerExtension[] getCustomCompilers();
+
 }

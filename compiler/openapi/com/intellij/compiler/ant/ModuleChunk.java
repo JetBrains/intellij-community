@@ -27,12 +27,27 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 /**
+ * Module chunk consists of interdependent modules.
+ *
  * @author Eugene Zhuravlev
  *         Date: Nov 19, 2004
  */
 public class ModuleChunk {
+  /**
+   * Modules in the chunk
+   */
   private final Module[] myModules;
+  /**
+   * A array of custom compilation providers.
+   */
+  private final ChunkCustomCompilerExtension[] myCustomCompilers;
+  /**
+   * The main module in the chunck (guessed by heuristic or selected by user)
+   */
   private Module myMainModule;
+  /**
+   * Chucnk dependendencies
+   */
   private ModuleChunk[] myDependentChunks;
   private File myBaseDir = null;
 
@@ -43,11 +58,19 @@ public class ModuleChunk {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
-    myMainModule = myModules[0]; 
+    myMainModule = myModules[0];
+    myCustomCompilers = ChunkCustomCompilerExtension.getCustomCompile(this);
   }
 
   public String getName() {
     return myMainModule.getName();
+  }
+
+  /**
+   * @return an array of custom compilers for the module chunk
+   */
+  public ChunkCustomCompilerExtension[] getCustomCompilers() {
+    return myCustomCompilers;
   }
 
   public Module[] getModules() {

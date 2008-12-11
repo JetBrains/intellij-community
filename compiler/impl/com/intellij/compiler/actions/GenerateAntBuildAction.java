@@ -23,26 +23,70 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class GenerateAntBuildAction extends CompileActionBase {
   @NonNls private static final String XML_EXTENSION = ".xml";
 
   protected void doAction(DataContext dataContext, final Project project) {
-    ((CompilerConfigurationImpl) CompilerConfiguration.getInstance(project)).convertPatterns();
+    ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).convertPatterns();
     final GenerateAntBuildDialog dialog = new GenerateAntBuildDialog(project);
     dialog.show();
     if (dialog.isOK()) {
       final String[] names = dialog.getRepresentativeModuleNames();
-      final GenerationOptions genOptions = new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(), names);
+      final GenerationOptionsImpl genOptions =
+        new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(),
+                                  dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(), names);
+      if (!validateGenOptions(project, genOptions)) {
+        return;
+      }
       generate(project, genOptions);
     }
   }
 
-  public void update(AnActionEvent event){
+  /**
+   * Validate generation options and notify user about possible problems
+   *
+   * @param project    a context project
+   * @param genOptions a generation optiosn
+   * @return true if the generator should proceed with current options or if there is not conflict.
+   */
+  private static boolean validateGenOptions(Project project, GenerationOptionsImpl genOptions) {
+    final Collection<String> EMPTY = Collections.emptyList();
+    Collection<String> conflicts = EMPTY;
+    for (ModuleChunk chunk : genOptions.getModuleChunks()) {
+      final ChunkCustomCompilerExtension[] customeCompilers = chunk.getCustomCompilers();
+      if (customeCompilers.length > 1) {
+        if (conflicts == EMPTY) {
+          conflicts = new LinkedList<String>();
+        }
+        conflicts.add(chunk.getName());
+      }
+    }
+    if (genOptions.enableFormCompiler && genOptions.getCustomCompilers().length != 0) {
+      int rc = Messages
+        .showOkCancelDialog(project, CompilerBundle.message("generate.ant.build.custom.compiler.conflict.form.compiler.message"),
+                            CompilerBundle.message("generate.ant.build.custom.compiler.conflict.titile"), Messages.getErrorIcon());
+      if (rc != 0) {
+        return false;
+      }
+    }
+    if (!conflicts.isEmpty()) {
+      StringBuilder msg = new StringBuilder();
+      for (String conflictingChunk : conflicts) {
+        msg.append(CompilerBundle.message("generate.ant.build.custom.compiler.conflict.message.row", conflictingChunk));
+      }
+      int rc = Messages
+        .showOkCancelDialog(project, CompilerBundle.message("generate.ant.build.custom.compiler.conflict.message", msg.toString()),
+                            CompilerBundle.message("generate.ant.build.custom.compiler.conflict.titile"), Messages.getErrorIcon());
+      if (rc != 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
@@ -51,7 +95,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   private void generate(final Project project, final GenerationOptions genOptions) {
     ApplicationManager.getApplication().saveAll();
     final List<File> filesToRefresh = new ArrayList<File>();
-    final IOException[] _ex = new IOException[] {null};
+    final IOException[] _ex = new IOException[]{null};
     final List<File> _generated = new ArrayList<File>();
 
     try {
@@ -59,16 +103,16 @@ public class GenerateAntBuildAction extends CompileActionBase {
         final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
         final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
         final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
-  
-        ensureFilesWritable(project, new File[] {destFile, propertiesFile});
+
+        ensureFilesWritable(project, new File[]{destFile, propertiesFile});
       }
       else {
         final List<File> allFiles = new ArrayList<File>();
-        
+
         final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
         allFiles.add(new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION));
         allFiles.add(new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project)));
-        
+
         final ModuleChunk[] chunks = genOptions.getModuleChunks();
         for (final ModuleChunk chunk : chunks) {
           final File chunkBaseDir = BuildProperties.getModuleChunkBaseDir(chunk);
@@ -99,18 +143,15 @@ public class GenerateAntBuildAction extends CompileActionBase {
           }
         }
       }.queue();
-      
+
     }
     catch (IOException e) {
       _ex[0] = e;
     }
 
     if (_ex[0] != null) {
-      Messages.showErrorDialog(
-          project, 
-          CompilerBundle.message("error.ant.files.generate.failed", _ex[0].getMessage()), 
-          CompilerBundle.message("generate.ant.build.title")
-      );
+      Messages.showErrorDialog(project, CompilerBundle.message("error.ant.files.generate.failed", _ex[0].getMessage()),
+                               CompilerBundle.message("generate.ant.build.title"));
     }
     else {
       StringBuffer filesString = new StringBuffer();
@@ -121,13 +162,10 @@ public class GenerateAntBuildAction extends CompileActionBase {
         }
         filesString.append(file.getPath());
       }
-      Messages.showInfoMessage(
-          project, 
-          CompilerBundle.message("message.ant.files.generated.ok", filesString.toString()),
-          CompilerBundle.message("generate.ant.build.title")
-      );
+      Messages.showInfoMessage(project, CompilerBundle.message("message.ant.files.generated.ok", filesString.toString()),
+                               CompilerBundle.message("generate.ant.build.title"));
     }
-    
+
     if (filesToRefresh.size() > 0) {
       CompilerUtil.refreshIOFiles(filesToRefresh);
     }
@@ -141,7 +179,10 @@ public class GenerateAntBuildAction extends CompileActionBase {
     final int extensionIndex = path.lastIndexOf(".");
     final String extension = path.substring(extensionIndex, path.length());
     //noinspection HardCodedStringLiteral
-    final String backupPath = path.substring(0, extensionIndex) + "_" + new Date(file.lastModified()).toString().replaceAll("\\s+", "_").replaceAll(":", "-") + extension;
+    final String backupPath = path.substring(0, extensionIndex) +
+                              "_" +
+                              new Date(file.lastModified()).toString().replaceAll("\\s+", "_").replaceAll(":", "-") +
+                              extension;
     final File backupFile = new File(backupPath);
     boolean ok;
     try {
@@ -174,7 +215,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
 
     filesToRefresh.add(destFile);
     filesToRefresh.add(propertiesFile);
-    return new File[] {destFile, propertiesFile};
+    return new File[]{destFile, propertiesFile};
   }
 
   public static void generateSingleFileBuild(final Project project,
@@ -201,11 +242,11 @@ public class GenerateAntBuildAction extends CompileActionBase {
 
   /**
    * Create print writer over file with UTF-8 encoding
-   * 
+   *
    * @param buildxmlFile a file to write to
    * @return a created print writer
    * @throws UnsupportedEncodingException if endcoding not found
-   * @throws FileNotFoundException if file not found
+   * @throws FileNotFoundException        if file not found
    */
   private static PrintWriter makeWriter(final File buildxmlFile) throws UnsupportedEncodingException, FileNotFoundException {
     return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), "UTF-8"));
@@ -220,7 +261,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
         toCheck.add(vFile);
       }
     }
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(toCheck.toArray(new VirtualFile[toCheck.size()]));
+    final ReadonlyStatusHandler.OperationStatus status =
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(toCheck.toArray(new VirtualFile[toCheck.size()]));
     if (status.hasReadonlyFiles()) {
       throw new IOException(status.getReadonlyFilesMessage());
     }

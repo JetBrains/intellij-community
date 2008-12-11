@@ -31,12 +31,11 @@ public interface ExtensionPoints {
    *   &lt;/component&gt;
    * &lt;/extensions&gt;
    * </pre>
-   *
+   * <p/>
    * Possible registration areas are IDEA_PROJECT, MODULE_PROJECT which stand for ProjectComponent and ModuleComponent correspondingly.
    * If area attribute is ommited the component will be registered in root area which corresponds to ApplicationComponent.
    */
-  @NonNls
-  String COMPONENT = "com.intellij.component";
+  @NonNls String COMPONENT = "com.intellij.component";
 
   /**
    * This extension point allows a plugin vendor to provide the user ability to report fatal errors (aka exceptions) that happened in
@@ -49,22 +48,20 @@ public interface ExtensionPoints {
    * </pre>
    * my.plugin.package.MyErrorHandler class must implement {@link com.intellij.openapi.diagnostic.ErrorReportSubmitter} abstract class.
    */
-  @NonNls
-  String ERROR_HANDLER = "com.intellij.errorHandler";
+  @NonNls String ERROR_HANDLER = "com.intellij.errorHandler";
 
   /**
-     * This extension point allows a plugin vendor to provide patches to junit run/debug configurations
-     * Extension declaration sample is as follows:
-     * <pre>
-     * &lt;extensions xmlns="com.intellij"&gt;
-     *   &lt;junitPatcher implementation="my.plugin.package.MyJUnitPatcher"/&gt;
-     * &lt;/extensions&gt;
-     * </pre>
-     * my.plugin.package.MyJUnitPatcher class must implement {@link com.intellij.execution.JUnitPatcher} abstract class.
-     */
+   * This extension point allows a plugin vendor to provide patches to junit run/debug configurations
+   * Extension declaration sample is as follows:
+   * <pre>
+   * &lt;extensions xmlns="com.intellij"&gt;
+   *   &lt;junitPatcher implementation="my.plugin.package.MyJUnitPatcher"/&gt;
+   * &lt;/extensions&gt;
+   * </pre>
+   * my.plugin.package.MyJUnitPatcher class must implement {@link com.intellij.execution.JUnitPatcher} abstract class.
+   */
 
-  @NonNls
-  String JUNIT_PATCHER = "com.intellij.junitPatcher";
+  @NonNls String JUNIT_PATCHER = "com.intellij.junitPatcher";
 
   /**
    * This extensions allows to run custom [command-line] application based on IDEA platform
@@ -75,8 +72,7 @@ public interface ExtensionPoints {
    * </pre>
    * my.plugin.package.MyApplicationStarter class must implement {@link com.intellij.openapi.application.ApplicationStarter} interface.
    */
-  @NonNls
-  String APPLICATION_STARTER = "com.intellij.appStarter";
+  @NonNls String APPLICATION_STARTER = "com.intellij.appStarter";
 
   @NonNls String INVALID_PROPERTY_KEY_INSPECTION_TOOL = "com.intellij.invalidPropertyKeyInspectionTool";
   @NonNls String I18N_INSPECTION_TOOL = "com.intellij.i18nInspectionTool";
@@ -89,7 +85,7 @@ public interface ExtensionPoints {
    *
    * @see com.intellij.psi.search.IndexPatternProvider
    * @since 5.1
-   */                                     
+   */
   @NonNls String INDEX_PATTERN_PROVIDER = "com.intellij.indexPatternProvider";
 
   @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
@@ -105,4 +101,9 @@ public interface ExtensionPoints {
   @NonNls String EMPTY_METHOD_TOOL = "com.intellij.canBeEmpty";
 
   @NonNls String ANT_BUILD_GEN = "com.intellij.antBuildGen";
+
+  /**
+   * Ant custom compiler extenstion point
+   */
+  @NonNls String ANT_CUSTOM_COMPILER = "com.intellij.antCustomCompiler";
 }

@@ -45,6 +45,10 @@ public class GenerationOptionsImpl extends GenerationOptions {
   private final Project myProject;
   private Set<String> myJdkUrls;
   /**
+   * Custom compilers used in the ant build.
+   */
+  private final Set<ChunkCustomCompilerExtension> myCustomCompilers = new HashSet<ChunkCustomCompilerExtension>();
+  /**
    * map from modules to chunks
    */
   private Map<Module, ModuleChunk> myModuleToChunkMap = new HashMap<Module, ModuleChunk>();
@@ -211,6 +215,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
         deps.add(depsIterator.next());
       }
       moduleChunk.setDependentChunks(deps.toArray(new ModuleChunk[deps.size()]));
+      myCustomCompilers.addAll(Arrays.asList(moduleChunk.getCustomCompilers()));
     }
     Arrays.sort(moduleChunks, new ChunksComparator());
     if (generateSingleFile) {
@@ -220,6 +225,15 @@ public class GenerationOptionsImpl extends GenerationOptions {
       }
     }
     return moduleChunks;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public ChunkCustomCompilerExtension[] getCustomCompilers() {
+    ChunkCustomCompilerExtension[] sorted = myCustomCompilers.toArray(new ChunkCustomCompilerExtension[myCustomCompilers.size()]);
+    Arrays.sort(sorted, ChunkCustomCompilerExtension.COMPARATOR);
+    return sorted;
   }
 
   Set<String> getAllJdkUrls() {
