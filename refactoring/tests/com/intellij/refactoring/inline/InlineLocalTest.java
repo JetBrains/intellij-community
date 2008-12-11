@@ -11,8 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 
 /**
  * @author ven
@@ -94,6 +94,25 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testUsedInInnerClass4() throws Exception {       // IDEADEV-28786
     doTest(true);
   }
+
+  public void testAnotherDefinitionUsed() throws Exception {
+    doTest(true, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one.");
+  }
+
+  public void testAnotherDefinitionUsed1() throws Exception {
+    doTest(false, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one.");
+  }
+
+  private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
+    try {
+      doTest(inlineDef);
+      fail("Conflict was not detected");
+    }
+    catch (RuntimeException e) {
+      assertEquals(e.getMessage(), conflictMessage);
+    }
+  }
+
 
   private void doTest(final boolean inlineDef) throws Exception {
     String name = getTestName(false);

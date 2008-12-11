@@ -127,7 +127,11 @@ class InlineLocalHandler {
 
     for (final PsiElement ref : refsToInline) {
       final PsiElement[] defs = DefUseUtil.getDefs(containerBlock, local, ref);
-      if (defs.length > 1 && !isSameDefinition(defs[0], defToInline)) {
+      boolean isSameDefinition = true;
+      for (PsiElement def : defs) {
+        isSameDefinition &= isSameDefinition(def, defToInline);
+      }
+      if (!isSameDefinition) {
         highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
         String message =
