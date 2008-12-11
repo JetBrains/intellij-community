@@ -75,6 +75,7 @@ public class CustomizableActionsPanel {
 
 
   private JPanel myDetailsPanel;
+  private JButton myRestoreDefaultButton;
   public static final Icon FULLISH_ICON = IconLoader.getIcon("/toolbar/unknown.png");
   private DetailsComponent myDetailsComponent;
 
@@ -83,7 +84,7 @@ public class CustomizableActionsPanel {
 
     //noinspection HardCodedStringLiteral
     Group rootGroup = new Group("root", null, null);
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
+    final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
     myActionsTree.setModel(model);
 
@@ -144,7 +145,7 @@ public class CustomizableActionsPanel {
             for (final Object o : toAdd) {
               final ActionUrl url = new ActionUrl(ActionUrl.getGroupPath(new TreePath(node.getPath())), o, ActionUrl.ADDED,
                                                   node.getParent().getIndex(node) + 1);
-              mySelectedSchema.addAction(url);
+              addCustomizedAction(url);
               ActionUrl.changePathInActionsTree(myActionsTree, url);
               if (o instanceof String) {
                 DefaultMutableTreeNode current = new DefaultMutableTreeNode(url.getComponent());
@@ -161,6 +162,7 @@ public class CustomizableActionsPanel {
 
     myEditIconButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        myRestoreDefaultButton.setEnabled(true);
         final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
         if (selectionPath != null) {
@@ -183,7 +185,7 @@ public class CustomizableActionsPanel {
           final ActionUrl url = new ActionUrl(ActionUrl.getGroupPath(selectionPath), Separator.getInstance(), ActionUrl.ADDED,
                                               node.getParent().getIndex(node) + 1);
           ActionUrl.changePathInActionsTree(myActionsTree, url);
-          mySelectedSchema.addAction(url);
+          addCustomizedAction(url);
           ((DefaultTreeModel)myActionsTree.getModel()).reload();
         }
         TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
@@ -199,7 +201,7 @@ public class CustomizableActionsPanel {
           for (TreePath treePath : selectionPath) {
             final ActionUrl url = CustomizationUtil.getActionUrl(treePath, ActionUrl.DELETED);
             ActionUrl.changePathInActionsTree(myActionsTree, url);
-            mySelectedSchema.addAction(url);
+            addCustomizedAction(url);
           }
           ((DefaultTreeModel)myActionsTree.getModel()).reload();
         }
@@ -218,7 +220,7 @@ public class CustomizableActionsPanel {
             url.setInitialPosition(absolutePosition);
             url.setAbsolutePosition(absolutePosition - 1);
             ActionUrl.changePathInActionsTree(myActionsTree, url);
-            mySelectedSchema.addAction(url);
+            addCustomizedAction(url);
           }
           ((DefaultTreeModel)myActionsTree.getModel()).reload();
           TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
@@ -241,7 +243,7 @@ public class CustomizableActionsPanel {
             url.setInitialPosition(absolutePosition);
             url.setAbsolutePosition(absolutePosition + 1);
             ActionUrl.changePathInActionsTree(myActionsTree, url);
-            mySelectedSchema.addAction(url);
+            addCustomizedAction(url);
           }
           ((DefaultTreeModel)myActionsTree.getModel()).reload();
           TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
@@ -252,11 +254,22 @@ public class CustomizableActionsPanel {
       }
     });
 
-
+    myRestoreDefaultButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        mySelectedSchema.copyFrom(new CustomActionsSchema());
+        patchActionsTreeCorrespondingToSchema(root);
+        myRestoreDefaultButton.setEnabled(false);
+      }
+    });
 
     patchActionsTreeCorrespondingToSchema(root);
 
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree);
+  }
+
+  private void addCustomizedAction(ActionUrl url) {
+    mySelectedSchema.addAction(url);
+    myRestoreDefaultButton.setEnabled(true);
   }
 
   public void initUi() {
@@ -372,6 +385,7 @@ public class CustomizableActionsPanel {
     mySelectedSchema = new CustomActionsSchema();
     mySelectedSchema.copyFrom(CustomActionsSchema.getInstance());
     patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
+    myRestoreDefaultButton.setEnabled(mySelectedSchema.isModified(new CustomActionsSchema()));
   }
 
   public boolean isModified() {
