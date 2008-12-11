@@ -31,7 +31,6 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
@@ -270,7 +269,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     public void reset() {
         myProfilesComboBox.setSelectedItem(myManager.getDefaultCopyright());
         final List<ScopeSetting> mappings = new ArrayList<ScopeSetting>();
-        final Map<String, String> copyrights = new HashMap<String, String>(myManager.getCopyrightsMapping());
+        final Map<String, String> copyrights = myManager.getCopyrightsMapping();
         final DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
         for (final String scopeName : copyrights.keySet()) {
             final NamedScope scope = manager.getScope(scopeName);
