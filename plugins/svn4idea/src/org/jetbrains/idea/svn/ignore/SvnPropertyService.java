@@ -14,6 +14,8 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.*;
@@ -53,6 +55,7 @@ public class SvnPropertyService {
     protected final SVNWCClient myClient;
     protected final Project myProject;
     protected final boolean myUseCommonExtension;
+    protected final boolean myCanUseCachedProperty;
     
     protected abstract void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data,
                                           final SVNPropertyValue propertyValue) throws SVNException;
@@ -60,8 +63,10 @@ public class SvnPropertyService {
     protected abstract void onSVNException(SVNException e);
     protected abstract boolean stopIteration();
 
-    private IgnorePropertyWorkTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
+    private IgnorePropertyWorkTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension,
+                                       final boolean canUseCachedProperty) {
       myVcs = activeVcs;
+      myCanUseCachedProperty = canUseCachedProperty;
       myClient = activeVcs.createWCClient();
       myProject = project;
       myUseCommonExtension = useCommonExtension;
@@ -75,7 +80,14 @@ public class SvnPropertyService {
         }
         final File dir = new File(entry.getKey().getPath());
         try {
-          final SVNPropertyValue value = myVcs.getPropertyWithCaching(entry.getKey(), SvnPropertyKeys.SVN_IGNORE);
+          final SVNPropertyValue value;
+          if (myCanUseCachedProperty) {
+            value = myVcs.getPropertyWithCaching(entry.getKey(), SvnPropertyKeys.SVN_IGNORE);
+          } else {
+            final SVNPropertyData data =
+              myVcs.createWCClient().doGetProperty(dir, SvnPropertyKeys.SVN_IGNORE, SVNRevision.UNDEFINED, SVNRevision.WORKING);
+            value = data == null ? null : data.getValue();
+          }
           processFolder(entry.getKey(), dir, entry.getValue(), value);
         }
         catch (SVNException e) {
@@ -89,7 +101,8 @@ public class SvnPropertyService {
   @Nullable
   public static Set<String> getIgnoreStringsUnder(final SvnVcs vcs, final VirtualFile dir) {
     try {
-      final SVNPropertyValue value = vcs.getPropertyWithCaching(dir, SvnPropertyKeys.SVN_IGNORE);
+      final SVNPropertyData data = vcs.createWCClient().doGetProperty(new File(dir.getPath()), SvnPropertyKeys.SVN_IGNORE, SVNRevision.WORKING, SVNRevision.WORKING);
+      final SVNPropertyValue value = (data == null) ? null : data.getValue();
       if (value != null) {
         final Set<String> ignorePatterns = new HashSet<String>();
         final String propAsString = SVNPropertyValue.getPropertyAsString(value);
@@ -113,7 +126,7 @@ public class SvnPropertyService {
     private boolean myExtensionOk;
 
     private IgnorePropertyChecker(final SvnVcs activeVcs, final Project project, final String extensionPattern) {
-      super(activeVcs, project, false);
+      super(activeVcs, project, false, true);
       myExtensionPattern = extensionPattern;
       myExtensionOk = true;
       myFilesOk = true;
@@ -167,7 +180,7 @@ public class SvnPropertyService {
     private final VcsDirtyScopeManager dirtyScopeManager;
 
     private IgnorePropertyAddRemoveTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
-      super(activeVcs, project, useCommonExtension);
+      super(activeVcs, project, useCommonExtension, false);
       exceptions = new ArrayList<String>();
       dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     }

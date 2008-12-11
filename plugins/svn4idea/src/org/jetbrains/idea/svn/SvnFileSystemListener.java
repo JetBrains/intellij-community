@@ -564,6 +564,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         }
       };
       progressManager.runProcessWithProgressSynchronously(prepare, SvnBundle.message("gather.ignore.patterns.info.progress.title"), false, project);
+      if (map.isEmpty()) return;
 
       final SelectIgnorePatternsToRemoveOnDeleteDialog dialog = new SelectIgnorePatternsToRemoveOnDeleteDialog(project, map);
       dialog.show();

@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -79,14 +80,12 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -108,7 +107,7 @@ public class SvnVcs extends AbstractVcs {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
   private final Map<String, SVNStatusHolder> myStatuses = new SoftHashMap<String, SVNStatusHolder>();
   private final Map<String, SVNInfoHolder> myInfos = new SoftHashMap<String, SVNInfoHolder>();
-  private final Map<String, Map<String, Pair<SVNPropertyValue, Long>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Long>>>();
+  private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
 
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
@@ -571,17 +570,31 @@ public class SvnVcs extends AbstractVcs {
     myInfos.put(keyForVf(vFile), new SVNInfoHolder(entriesFile.lastModified(), vFile.getTimeStamp(), info));
   }
 
+  private Trinity<Long, Long, Long> getTimestampForPropertiesChange(final File ioFile, final boolean isDir) {
+    final File dir = isDir ? ioFile : ioFile.getParentFile();
+    final String relPath = SVNAdminUtil.getPropPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
+    final String relPathBase = SVNAdminUtil.getPropBasePath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
+    final String relPathRevert = SVNAdminUtil.getPropRevertPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
+    return new Trinity<Long, Long, Long>(new File(dir, relPath).lastModified(), new File(dir, relPathBase).lastModified(),
+                                         new File(dir, relPathRevert).lastModified());
+  }
+
+  private boolean trinitiesEqual(final Trinity<Long, Long, Long> t1, final Trinity<Long, Long, Long> t2) {
+    if (t2.first == 0 && t2.second == 0 && t2.third == 0) return false;
+    return t1.equals(t2);
+  }
+
   @Nullable
   public SVNPropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws SVNException {
-    Map<String, Pair<SVNPropertyValue, Long>> cachedMap = myPropertyCache.get(keyForVf(file));
-    final Pair<SVNPropertyValue, Long> cachedValue = (cachedMap == null) ? null : cachedMap.get(propName);
+    Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>> cachedMap = myPropertyCache.get(keyForVf(file));
+    final Pair<SVNPropertyValue, Trinity<Long, Long, Long>> cachedValue = (cachedMap == null) ? null : cachedMap.get(propName);
 
     final File ioFile = new File(file.getPath());
-    final File dirPropsFile = getDirPropsFile(ioFile);
-    long dirPropsModified = dirPropsFile.lastModified();
+    final Trinity<Long, Long, Long> tsTrinity = getTimestampForPropertiesChange(ioFile, file.isDirectory());
 
     if (cachedValue != null) {
-      if (dirPropsModified == cachedValue.getSecond().longValue()) {
+      // zero means that a file was not found
+      if (trinitiesEqual(cachedValue.getSecond(), tsTrinity)) {
         return cachedValue.getFirst();
       }
     }
@@ -590,11 +603,11 @@ public class SvnVcs extends AbstractVcs {
     final SVNPropertyValue propValue = (value == null) ? null : value.getValue();
 
     if (cachedMap == null) {
-      cachedMap = new HashMap<String, Pair<SVNPropertyValue, Long>>();
+      cachedMap = new HashMap<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>();
       myPropertyCache.put(keyForVf(file), cachedMap);
     }
 
-    cachedMap.put(propName, new Pair<SVNPropertyValue, Long>(propValue, dirPropsModified));
+    cachedMap.put(propName, new Pair<SVNPropertyValue, Trinity<Long, Long, Long>>(propValue, tsTrinity));
 
     return propValue;
   }
