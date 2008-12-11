@@ -198,8 +198,12 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
               } else {
                 JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
                   @Override
-                  public PopupStep onChosen(CopyrightProfile selectedValue, boolean finalChoice) {
-                    importProfile(selectedValue);
+                  public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
+                    SwingUtilities.invokeLater(new Runnable(){
+                      public void run() {
+                        importProfile(selectedValue);
+                      }
+                    });
                     return FINAL_CHOICE;
                   }
 
@@ -229,6 +233,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
 
 
 
+  @Nullable
   private String askForProfileName(String title, String initialName) {
         return Messages.showInputDialog("New copyright profile name:", title, Messages.getQuestionIcon(), initialName, new InputValidator() {
             public boolean checkInput(String s) {
