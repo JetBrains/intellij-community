@@ -208,7 +208,7 @@ public class FileTypeUtil
         }
         else if (isBlock)
         {
-          preview.append('\n');
+          preview.append(close).append('\n');
         }
 
         return preview.substring(0, preview.length() - 1);
