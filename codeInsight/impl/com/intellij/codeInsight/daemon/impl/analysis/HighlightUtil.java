@@ -851,7 +851,7 @@ public class HighlightUtil {
         if (expr instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) expr;
           final PsiMethod method = methodCall.resolveMethod();
-          if (PsiType.VOID.equals(method.getReturnType())) {
+          if (method != null && PsiType.VOID.equals(method.getReturnType())) {
             QuickFixAction.registerQuickFixAction(info, new MethodReturnBooleanFix(method, PsiType.BOOLEAN));
           }
         }
