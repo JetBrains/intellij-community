@@ -23,14 +23,10 @@ public abstract class LocalVcsTestCase extends Assert {
   public void setUpEnvironment() {
     myDefaultLocale = Locale.getDefault();
     Locale.setDefault(new Locale("ru", "RU"));
-
-    Content.useCharsetRecognition(false);
   }
 
   @After
   public void restoreEnvironment() {
-    Content.useCharsetRecognition(true);
-    
     Locale.setDefault(myDefaultLocale);
   }
 

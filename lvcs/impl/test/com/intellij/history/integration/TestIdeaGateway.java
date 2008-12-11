@@ -6,7 +6,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
 import java.util.*;
 
 public class TestIdeaGateway extends IdeaGateway {
@@ -73,6 +72,16 @@ public class TestIdeaGateway extends IdeaGateway {
       result.add(d.getFile());
     }
     return result.toArray(new VirtualFile[0]);
+  }
+
+  @Override
+  protected byte[] bytesFromDocument(Document d) {
+    return d.getText().getBytes();
+  }
+
+  @Override
+  public String stringFromBytes(byte[] bytes, String path) {
+    return new String(bytes);
   }
 
   @Override

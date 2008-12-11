@@ -123,7 +123,7 @@ public abstract class HistoryDialogModel {
   }
 
   protected Change createChange(Difference d) {
-    return new Change(d.getLeftContentRevision(), d.getRightContentRevision());
+    return new Change(d.getLeftContentRevision(myGateway), d.getRightContentRevision(myGateway));
   }
 
   public void createPatch(String path, boolean isReverse) throws VcsException, IOException {

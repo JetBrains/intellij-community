@@ -43,7 +43,7 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
 
   private SelectionCalculator getCalculator() {
     if (myCalculatorCache == null) {
-      myCalculatorCache = new SelectionCalculator(getRevisions(), myFrom, myTo);
+      myCalculatorCache = new SelectionCalculator(myGateway, getRevisions(), myFrom, myTo);
     }
     return myCalculatorCache;
   }

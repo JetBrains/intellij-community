@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 
 public abstract class FileDifferenceModel {
-  private IdeaGateway myGateway;
+  protected IdeaGateway myGateway;
   private boolean isRightContentCurrent;
 
   protected FileDifferenceModel(IdeaGateway gw, boolean currentRightContent) {

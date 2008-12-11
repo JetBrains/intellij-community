@@ -38,6 +38,6 @@ public class DirectoryChangeModel {
   }
 
   public ContentRevision getContentRevision(int i) {
-    return i == 0 ? myDiff.getLeftContentRevision() : myDiff.getRightContentRevision();
+    return i == 0 ? myDiff.getLeftContentRevision(myGateway) : myDiff.getRightContentRevision(myGateway);
   }
 }

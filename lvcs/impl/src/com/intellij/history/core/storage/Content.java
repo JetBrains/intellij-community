@@ -1,18 +1,11 @@
 package com.intellij.history.core.storage;
 
-import com.intellij.openapi.vfs.CharsetToolkit;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.IdeaGateway;
 
 import java.io.IOException;
 
 public abstract class Content {
-  private static boolean ourUseCharsetRecognition = true;
-
-  @TestOnly
-  public static void useCharsetRecognition(boolean use) {
-    ourUseCharsetRecognition = use;
-  }
-
   public void write(Stream s) throws IOException {
   }
 
@@ -22,9 +15,8 @@ public abstract class Content {
     return isAvailable() ? getBytes() : null;
   }
 
-  public String getString() {
-    if (!ourUseCharsetRecognition) return new String(getBytes());
-    return CharsetToolkit.bytesToString(getBytes());
+  public String getString(Entry e, IdeaGateway gw) {
+    return gw.stringFromBytes(getBytes(), e.getPath());
   }
 
   public abstract boolean isAvailable();
@@ -33,7 +25,7 @@ public abstract class Content {
 
   @Override
   public String toString() {
-    return getString();
+    return new String(getBytes());
   }
 
   @Override

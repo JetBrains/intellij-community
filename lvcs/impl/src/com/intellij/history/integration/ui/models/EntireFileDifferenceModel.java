@@ -58,6 +58,6 @@ public class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   private String getContentOf(Entry e) {
-    return e.getContent().getString();
+    return e.getContent().getString(e, myGateway);
   }
 }

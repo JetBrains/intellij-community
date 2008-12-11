@@ -63,7 +63,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
 
   private void revertToPreviousRevision(int from, int to) throws IOException {
     List<Revision> rr = getVcsRevisionsFor(f);
-    SelectionCalculator c = new SelectionCalculator(rr, from, to);
+    SelectionCalculator c = new SelectionCalculator(gateway, rr, from, to);
     Revision leftRev = rr.get(1);
     Entry right = getVcsEntry(f);
 

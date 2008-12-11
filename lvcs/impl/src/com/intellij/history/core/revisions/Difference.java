@@ -1,6 +1,7 @@
 package com.intellij.history.core.revisions;
 
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,22 +35,22 @@ public class Difference {
     return myRight;
   }
 
-  public ContentRevision getLeftContentRevision() {
-    return createContentRevision(getLeft());
+  public ContentRevision getLeftContentRevision(IdeaGateway gw) {
+    return createContentRevision(getLeft(), gw);
   }
 
-  public ContentRevision getRightContentRevision() {
-    return createContentRevision(getRight());
+  public ContentRevision getRightContentRevision(IdeaGateway gw) {
+    return createContentRevision(getRight(), gw);
   }
 
-  private ContentRevision createContentRevision(final Entry e) {
+  private ContentRevision createContentRevision(final Entry e, final IdeaGateway gw) {
     if (e == null) return null;
 
     return new ContentRevision() {
       @Nullable
       public String getContent() throws VcsException {
         if (e.isDirectory()) return null;
-        return e.getContent().getString();
+        return e.getContent().getString(e, gw);
       }
 
       @NotNull

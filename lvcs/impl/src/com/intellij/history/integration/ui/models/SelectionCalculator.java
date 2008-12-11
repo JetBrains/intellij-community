@@ -4,18 +4,22 @@ import com.intellij.diff.Block;
 import com.intellij.diff.FindBlock;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.Content;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.IdeaGateway;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class SelectionCalculator {
+  private IdeaGateway myGateway;
   private List<Revision> myRevisions;
   private int myFromLine;
   private int myToLine;
   private Map<Integer, Block> myCache = new HashMap<Integer, Block>();
 
-  public SelectionCalculator(List<Revision> rr, int fromLine, int toLine) {
+  public SelectionCalculator(IdeaGateway gw, List<Revision> rr, int fromLine, int toLine) {
+    myGateway = gw;
     myRevisions = rr;
     myFromLine = fromLine;
     myToLine = toLine;
@@ -62,9 +66,10 @@ public class SelectionCalculator {
   }
 
   private String getRevisionContent(Revision r) {
-    Content c = r.getEntry().getContent();
+    Entry e = r.getEntry();
+    Content c = e.getContent();
     if (!c.isAvailable()) throw new ContentIsUnavailableException();
-    return c.getString();
+    return c.getString(e, myGateway);
   }
 
   private static class ContentIsUnavailableException extends RuntimeException {

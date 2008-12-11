@@ -6,18 +6,20 @@ import com.intellij.history.core.InMemoryLocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.LocalVcsTestCase;
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.integration.TestIdeaGateway;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.util.List;
 
 public class SelectionCalculatorTest extends LocalVcsTestCase {
+  TestIdeaGateway gw = new TestIdeaGateway();
   LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testSelectionWasNotChanged() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc1\ndef1\nghi1");
-    SelectionCalculator c = new SelectionCalculator(rr, 0, 2);
+    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 2);
 
     Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
     Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
@@ -29,7 +31,7 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   @Test
   public void testSelectionWasMoved() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "def\nghi");
-    SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
+    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
     Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
     Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
@@ -41,7 +43,7 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   @Test
   public void testSelectionForVeryOldRevisionTakenBackward() {
     List<Revision> rr = createRevisions("ghi\nabc\ndef", "abc\nghi\ndef", "abc\ndef\nghi");
-    SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
+    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
     Block b2 = c.getSelectionFor(rr.get(2), new NullProgress());
     Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
@@ -55,7 +57,7 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   @Test
   public void testNormailingLineEnds() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\r\ndef\r\nghi");
-    SelectionCalculator c = new SelectionCalculator(rr, 0, 1);
+    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
     Block b0 = c.getSelectionFor(rr.get(0), new NullProgress());
     Block b1 = c.getSelectionFor(rr.get(1), new NullProgress());
@@ -68,7 +70,7 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   public void testCanNotCalculateIfThereWasUnavailableContent() {
     List<Revision> rr = createRevisions(cf("one"), bigContentFactory(), cf("two"));
 
-    SelectionCalculator c = new SelectionCalculator(rr, 0, 0);
+    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
 
     assertTrue(c.canCalculateFor(rr.get(0), new NullProgress()));
     assertFalse(c.canCalculateFor(rr.get(1), new NullProgress()));
@@ -78,7 +80,7 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   @Test
   public void testProgressOnGetSelection() {
     List<Revision> rr = createRevisions("one", "two", "three", "four");
-    SelectionCalculator c = new SelectionCalculator(rr, 0, 0);
+    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
 
     Progress p = createStrictMock(Progress.class);
     p.processed(25);
@@ -95,7 +97,7 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   @Test
   public void testProgressOnCanCalculate() {
     List<Revision> rr = createRevisions("one", "two");
-    SelectionCalculator c = new SelectionCalculator(rr, 0, 0);
+    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
 
     Progress p = createMock(Progress.class);
     p.processed(50);

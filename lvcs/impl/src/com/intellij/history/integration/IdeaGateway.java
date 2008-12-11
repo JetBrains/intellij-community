@@ -4,6 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.history.Clock;
 import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.Paths;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -17,8 +18,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -137,7 +141,7 @@ public class IdeaGateway {
     return new ContentFactory() {
       @Override
       public byte[] getBytes() {
-        return d.getText().getBytes();
+        return bytesFromDocument(d);
       }
 
       @Override
@@ -145,6 +149,42 @@ public class IdeaGateway {
         return getBytes().length;
       }
     };
+  }
+
+  protected byte[] bytesFromDocument(Document d) {
+    try {
+      return d.getText().getBytes(getCharsetNameFor(getDocumentFile(d)));
+    }
+    catch (UnsupportedEncodingException e) {
+      return d.getText().getBytes();
+    }
+  }
+
+  public String stringFromBytes(byte[] bytes, String path) {
+    try {
+      return new String(bytes, getCharsetNameFor(findExistingFile(path)));
+    }
+    catch (UnsupportedEncodingException e1) {
+      return new String(bytes);
+    }
+  }
+
+  private String getCharsetNameFor(VirtualFile file) {
+    EncodingManager em = EncodingManager.getInstance();
+    Charset charset = em.getEncoding(file, true);
+    if (charset == null) charset = em.getDefaultCharset();
+    return charset.name();
+  }
+
+  private VirtualFile findExistingFile(String path) {
+    do {
+      VirtualFile result = findVirtualFile(path);
+      if (result != null) return result;
+      path = Paths.getParentOf(path);
+    }
+    while (path != null);
+
+    return null;
   }
 
   public Document getDocumentFor(String path) {
