@@ -171,7 +171,9 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       catch (CommandException e) {
         LOG.info(e);
         Exception underlyingException = e.getUnderlyingException();
-        LOG.info(underlyingException);
+        if (underlyingException != null) {
+          LOG.info(underlyingException);
+        }
         throw createVcsExceptionOn(underlyingException == null ? e : underlyingException, cvsRootProvider.getCvsRootAsString());
       }
     }
