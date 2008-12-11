@@ -3,6 +3,7 @@ package com.intellij.historyPerfTests;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.ui.models.NullProgress;
 import com.intellij.history.integration.ui.models.SelectionCalculator;
+import com.intellij.history.integration.TestIdeaGateway;
 import com.intellij.history.utils.RunnableAdapter;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -22,7 +23,7 @@ public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
       vcs.changeFileContent("root/file1", cf("content" + i), -1);
     }
     rr = vcs.getRevisionsFor("root/file1");
-    c = new SelectionCalculator(rr, 0, 0);
+    c = new SelectionCalculator(new TestIdeaGateway(), rr, 0, 0);
   }
 
   @Test
