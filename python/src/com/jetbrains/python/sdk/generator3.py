@@ -169,6 +169,8 @@ class FakeClassObj:
   "A mock class representing the old style class base."
   __module__ = None
   __class__ = None
+  def __init__(self):
+    pass
 
 
 class ModuleRedeclarator(object):
@@ -346,7 +348,7 @@ class ModuleRedeclarator(object):
 
     def seemsToHaveSelf(reqargs):
       """"
-      @param requargs a list of reuired arguments of a method
+      @param requargs a list of required arguments of a method
       @return true if param_name looks like a 'self' parameter
       """
       if not reqargs:
@@ -375,6 +377,10 @@ class ModuleRedeclarator(object):
       if kwarg:
         spec.append("**" + kwarg)
       self.out("def " + p_name + "(" + ", ".join(spec) + "): # reliably restored by inspect", indent);
+      self.outDocAttr(p_func, indent+1)
+      self.out("pass", indent+1);
+    elif doing_builtins and classname == "object" and p_modname == '__builtin__' and p_name == '__init__':
+      self.out("def " + p_name + "(self): # known special case of object constructor", indent)
       self.outDocAttr(p_func, indent+1)
       self.out("pass", indent+1);
     elif doing_builtins and classname in ('list', 'dict', 'set') and p_modname == '__builtin__' and p_name == '__init__':

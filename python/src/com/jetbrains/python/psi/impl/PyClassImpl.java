@@ -181,10 +181,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     PsiElement[] superClassElements = getSuperClassElements();
     if (superClassElements != null) {
       List<PyClass> result = new ArrayList<PyClass>();
-      for(PsiElement element: superClassElements) {
-        if (element instanceof PyClass) {
-          result.add((PyClass) element);
+      // maybe a bare old-style class?
+      // TODO: depend on language version: py3k does not do old style classes
+      PsiElement paren = PsiTreeUtil.getChildOfType(this, PyParenthesizedExpression.class).getFirstChild(); // no NPE, we always have the par expr
+      if (paren != null && "(".equals(paren.getText())) { // no, we have "()" after class name, it's new style
+        for(PsiElement element: superClassElements) {
+          if (element instanceof PyClass) {
+            result.add((PyClass) element);
+          }
         }
+      }
+      else { // old-style
+        PyClass oldstyler = PyBuiltinCache.getInstance(getProject()).getClass("___Classobj");
+        if (oldstyler != null) result.add(oldstyler);
       }
       return result;
     }

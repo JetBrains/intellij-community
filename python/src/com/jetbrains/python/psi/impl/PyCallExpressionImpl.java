@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
@@ -78,7 +79,20 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     if (calleeReference != null) {
       PsiReference cref = calleeReference.getReference();
       if (cref != null) {
-        PsiElement resolved = cref.resolve();
+        // paranoia: multi-resolve or not? must get a function out of it
+        PsiElement resolved = null;
+        if (cref instanceof PsiPolyVariantReference) {
+          PsiPolyVariantReference poly = (PsiPolyVariantReference)cref;
+          ResolveResult[] targets = poly.multiResolve(false);
+          for (ResolveResult target : targets) {
+            PsiElement elt = target.getElement();
+            if (elt instanceof PyFunction) {
+              resolved = elt;
+              break;
+            }
+          }
+        }
+        else resolved = cref.resolve();
         if (resolved != null) {
           EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
           //boolean is_inst = isByInstance();
@@ -87,27 +101,25 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             PyFunction meth = (PyFunction)resolved; // constructor call?
             if (PyNames.INIT.equals(meth.getName())) flags.add(Flag.IMPLICIT_FIRST_ARG);
           }
-          if (resolved != null) {
-            // look for closest decorator
-            // TODO: look for all decorators
-            // XXX disuse PyDecoratedFunction, use PyDecorator
-            PsiElement parent = resolved.getParent();
-            if (parent instanceof PyDecoratedFunction) {
-              final PyDecoratedFunction decorated = (PyDecoratedFunction)parent;
-              PsiElement decorator = PsiTreeUtil.getChildOfType(decorated, PyReferenceExpression.class);
-              if (decorator != null) { // just in case
-                String deco_name = decorator.getText();
-                @NonNls final String STATICMETHOD = "staticmethod"; // TODO: must go to function
-                @NonNls final String CLASSMETHOD = "classmethod";
-                if (STATICMETHOD.equals(deco_name)) {
-                  flags.add(Flag.STATICMETHOD);
-                  flags.remove(Flag.IMPLICIT_FIRST_ARG);
-                }
-                else if (CLASSMETHOD.equals(deco_name)) {
-                  flags.add(Flag.CLASSMETHOD);
-                }
-                // else could be custom decorator processing
+          // look for closest decorator
+          // TODO: look for all decorators
+          // XXX disuse PyDecoratedFunction, use PyDecorator
+          PsiElement parent = resolved.getParent();
+          if (parent instanceof PyDecoratedFunction) {
+            final PyDecoratedFunction decorated = (PyDecoratedFunction)parent;
+            PsiElement decorator = PsiTreeUtil.getChildOfType(decorated, PyReferenceExpression.class);
+            if (decorator != null) { // just in case
+              String deco_name = decorator.getText();
+              @NonNls final String STATICMETHOD = "staticmethod"; // TODO: must go to function
+              @NonNls final String CLASSMETHOD = "classmethod";
+              if (STATICMETHOD.equals(deco_name)) {
+                flags.add(Flag.STATICMETHOD);
+                flags.remove(Flag.IMPLICIT_FIRST_ARG);
               }
+              else if (CLASSMETHOD.equals(deco_name)) {
+                flags.add(Flag.CLASSMETHOD);
+              }
+              // else could be custom decorator processing
             }
           }
           if (!(resolved instanceof PyFunction)) return null; // omg, bogus __init__
