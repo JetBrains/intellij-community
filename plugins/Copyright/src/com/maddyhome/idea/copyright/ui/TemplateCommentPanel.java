@@ -213,6 +213,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         fireChangeEvent();
+        updateBox();
       }
     };
     txtLengthBefore.getDocument().addDocumentListener(documentAdapter);
