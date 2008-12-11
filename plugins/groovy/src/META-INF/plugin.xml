@@ -30,7 +30,8 @@
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor" order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor"
+                               order="first"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
 
@@ -65,7 +66,8 @@
     <codeInsight.parameterInfo language="Groovy"
                                implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
     <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
-    <codeInsight.lineMarkerProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Groovy"
+                                    implementationClass="org.jetbrains.plugins.groovy.codeInsight.GroovyLineMarkerProvider"/>
     <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyCompetionContributor"/>
@@ -123,6 +125,7 @@
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.PropertyReferencesSearcher"/>-->
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.TypeAliasReferenceSearcher"/>-->
     <!--<referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.LateBoundReferencesSearcher"/>-->
+    <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
 
     <!-- Grails and GSP -->
     <frameworkSupport implementation="org.jetbrains.plugins.grails.config.GrailsAdditionalFrameworksProvider"/>
@@ -491,8 +494,8 @@
               text="Grails TagLib" description="Create new Grails tagLib">
       </action>
       <action id="Grails.GSP" class="org.jetbrains.plugins.grails.actions.NewGspAction"
-      text="GSP" description="Create new Groovy Server Page">
-    </action>
+              text="GSP" description="Create new Groovy Server Page">
+      </action>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
@@ -506,8 +509,9 @@
 
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
-            text="Generate GroovyDoc" description="Generating Groovy Documentation" icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
-      <add-to-group group-id="ToolsMenu" anchor="last" />
+            text="Generate GroovyDoc" description="Generating Groovy Documentation"
+            icon="/org/jetbrains/plugins/groovy/images/GroovyDoc.png">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt D"/>
     </action>
 
@@ -521,7 +525,6 @@
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
     </action>
   </actions>
-
 
 
   <application-components>
