@@ -582,7 +582,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     Element map = new Element(AbstractFileType.ELEMENT_EXTENSIONMAP);
     parentNode.addContent(map);
 
-    for (FileType type : getRegisteredFileTypes()) {
+    final List<FileType> fileTypes = Arrays.asList(getRegisteredFileTypes());
+    Collections.sort(fileTypes, new Comparator<FileType>(){
+      public int compare(FileType o1, FileType o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    for (FileType type : fileTypes) {
       writeExtensionsMap(map, type, true);
     }
   }
