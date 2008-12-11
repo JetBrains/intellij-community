@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,7 +36,16 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   MarkupModelImpl(DocumentImpl document) {
     myDocument = document;
-    myHighlighterList = new HighlighterList(document);
+    myHighlighterList = new HighlighterList(document) {
+      @Override
+      protected void assertDispatchThread() {
+        MarkupModelImpl.this.assertDispatchThread();
+      }
+    };
+  }
+
+  protected void assertDispatchThread() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   public void dispose() {

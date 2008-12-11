@@ -61,7 +61,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   };
 
   @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
+
   private static int myMinMarkHeight = 3;
+
+  EditorMarkupModelImpl(@NotNull EditorImpl editor) {
+    super((DocumentImpl)editor.getDocument());
+    myEditor = editor;
+  }
+
+  @Override
+  protected void assertDispatchThread() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  }
 
   private int offsetToLine(int offset) {
     final Document document = myEditor.getDocument();
@@ -73,8 +84,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private static class MarkSpot {
+
     private final int yStart;
+
     private int yEnd;
+
     // sorted by layers from bottom to top
     private RangeHighlighter[] highlighters = RangeHighlighter.EMPTY_ARRAY;
 
@@ -88,6 +102,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final int y = e.getY();
       return 0 <= x && x < width && yStart - getMinHeight() <= y && y < yEnd + getMinHeight();
     }
+
   }
 
   public static int getMinHeight() {
@@ -95,9 +110,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private class MarkSpots {
+
     private List<MarkSpot> mySpots;
+
     private int myEditorScrollbarTop = -1;
+
     private int myEditorTargetHeight = -1;
+
     private int myEditorSourceHeight = -1;
 
     private void recalcEditorDimensions() {
@@ -132,8 +151,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private class PositionedRangeHighlighter {
+
       private final RangeHighlighter highlighter;
+
       private final int yStart;
+
       private final int yEnd;
 
       private PositionedRangeHighlighter(final RangeHighlighter highlighter, final int yStart, final int yEnd) {
@@ -146,6 +168,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       public String toString() {
         return "PR[" + yStart + "-" + yEnd + ")";
       }
+
     }
 
     private PositionedRangeHighlighter getPositionedRangeHighlighter(RangeHighlighter mark) {
@@ -311,7 +334,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         //right
         UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
 
-      }      
+      }
     }
 
     private boolean isAdjacent(MarkSpot markTop, MarkSpot markBottom) {
@@ -376,11 +399,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       return nearestSpot == null ? Collections.<MarkSpot>emptyList() : nearestSpot;
     }
-  }
 
-  EditorMarkupModelImpl(@NotNull EditorImpl editor) {
-    super((DocumentImpl)editor.getDocument());
-    myEditor = editor;
   }
 
   public void setErrorStripeVisible(boolean val) {
