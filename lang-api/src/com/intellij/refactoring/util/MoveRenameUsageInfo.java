@@ -52,10 +52,12 @@ public class MoveRenameUsageInfo extends UsageInfo{
       myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
     }
     if (reference == null) reference = element.getReference();
-    if (reference == null) reference = element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset());
+    PsiFile containingFile = element.getContainingFile();
+    if (reference == null) reference = containingFile.findReferenceAt(element.getTextRange().getStartOffset());
     myReference = reference;
     if (reference != null) {
-      Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
+      Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
+      assert document != null : containingFile;
       int elementStart = element.getTextRange().getStartOffset();
       myReferenceRangeMarker = document.createRangeMarker(elementStart + reference.getRangeInElement().getStartOffset(),
                                                           elementStart + reference.getRangeInElement().getEndOffset());
