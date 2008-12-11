@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspExprInjection;
 import org.jetbrains.plugins.grails.lang.gsp.resolve.taglib.GspTagLibUtil;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
@@ -74,7 +73,7 @@ public class CompleteReferenceExpression {
       }
     }
 
-    if (refExpr.getKind() == GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY && !(refExpr.getParent() instanceof GrGspExprInjection)) {
+    if (refExpr.getKind() == GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY) {
       ResolverProcessor classVariantsCollector = CompletionProcessor.createClassCompletionProcessor(refExpr);
       final Object[] classVariants = getVariantsImpl(refExpr, classVariantsCollector);
       return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
