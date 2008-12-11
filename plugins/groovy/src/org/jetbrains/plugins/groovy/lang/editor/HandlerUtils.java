@@ -37,12 +37,12 @@ public class HandlerUtils {
   }
 
   public static boolean isEnabled(@NotNull final Editor editor, @NotNull final DataContext dataContext,
-                                  @NotNull final EditorActionHandler originalHandler) {
+                                  @Nullable final EditorActionHandler originalHandler) {
     if (getLanguage(dataContext) == GroovyFileType.GROOVY_FILE_TYPE.getLanguage() ||
         getLanguage(dataContext) == GspFileType.GSP_FILE_TYPE.getLanguage()) {
       return true;
     }
-    return originalHandler.isEnabled(editor, dataContext);
+    return originalHandler == null || originalHandler.isEnabled(editor, dataContext);
   }
 
   public static boolean isReadOnly(@NotNull final Editor editor) {
@@ -54,10 +54,14 @@ public class HandlerUtils {
   }
 
   public static boolean canBeInvoked(final Editor editor, final DataContext dataContext) {
+    return canBeInvoked(editor, getProject(dataContext));
+  }
+
+  public static boolean canBeInvoked(final Editor editor, final Project project) {
     if (isReadOnly(editor)) {
       return false;
     }
-    if (getPsiFile(editor, dataContext) == null) {
+    if (getPsiFile(editor, project) == null) {
       return false;
     }
 
@@ -65,7 +69,11 @@ public class HandlerUtils {
   }
 
   public static PsiFile getPsiFile(@NotNull final Editor editor, @NotNull final DataContext dataContext) {
-    return PsiDocumentManager.getInstance(getProject(dataContext)).getPsiFile(editor.getDocument());
+    return getPsiFile(editor, getProject(dataContext));
+  }
+
+  public static PsiFile getPsiFile(@NotNull final Editor editor, final Project project) {
+    return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
   }
 
   @Nullable

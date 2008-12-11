@@ -18,8 +18,6 @@ package org.jetbrains.plugins.groovy.lang.editor.actions;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import org.jetbrains.plugins.groovy.lang.editor.actions.moveUpDown.GroovyMoveStatementHandler;
 
 /**
@@ -32,7 +30,6 @@ public class GroovyEditorActionsManager {
   public static void registerGroovyEditorActions() {
     EditorActionManager manager = EditorActionManager.getInstance();
     registerEnterActionHandler(manager);
-    registerTypedActionHandler(manager);
     registerMoveActionHandlers(manager);
   }
 
@@ -53,11 +50,5 @@ public class GroovyEditorActionsManager {
     return handler;
   }
 
-  private static TypedActionHandler registerTypedActionHandler(EditorActionManager manager) {
-    TypedAction originalTypedAction = manager.getTypedAction();
-    TypedActionHandler handler = new GroovyTypedHandler(originalTypedAction.getHandler());
-    originalTypedAction.setupHandler(handler);
-    return handler;
-  }
 
 }

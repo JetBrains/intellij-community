@@ -97,6 +97,8 @@
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
     <annotatedMembersSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
 
+    <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyTypedHandler"/>
+
     <!--<compiler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompiler"/>-->
 
     <facetType implementation="org.jetbrains.plugins.groovy.config.GroovyFacetType"/>
