@@ -667,7 +667,6 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   public boolean isModified() {
-    stopTableEditing();
 
     boolean isModified = isModified(myCbUseFQClassNames, mySettings.USE_FQ_CLASS_NAMES);
     isModified |= isModified(myCbUseFQClassNamesInJavaDoc, mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
