@@ -196,9 +196,10 @@ public class FileTypeUtil
             }
         }
 
-        preview.append(leader).append(pre);
+        preview.append(leader);
         if (options.isSeparateAfter())
         {
+            preview.append(pre);
             for (int i = leader.length() + pre.length(); i < options.getLenAfter() - close.length(); i++)
             {
                 preview.append(filler);
@@ -208,7 +209,11 @@ public class FileTypeUtil
         }
         else if (isBlock)
         {
-          preview.append(close).append('\n');
+          if (!allowBlock) {
+            preview.append(pre).append('\n');
+          } else {
+            preview.append(close).append('\n');
+          }
         }
 
         return preview.substring(0, preview.length() - 1);
