@@ -417,7 +417,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             LOG.error(e);
             return;
           }
-          if (type.isAssignableFrom(overrider.getReturnType())) {
+          final PsiType overriderType = overrider.getReturnType();
+          if (overriderType != null && type.isAssignableFrom(overriderType)) {
             covariantOverriderInfos.add(usageInfo);
           }
         }
