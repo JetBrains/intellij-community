@@ -1,5 +1,5 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- */
+ *
 
 package com.maddyhome.idea.copyright.psi;
 
@@ -68,6 +68,10 @@ public class UpdateCopyrightFactory
         else if (type.equals(StdFileTypes.JSP))
         {
             return new UpdateJspFileCopyright(project, module, file, options);
+        }
+        else if (type.equals(StdFileTypes.JSPX))
+        {
+            return new UpdateJspxFileCopyright(project, module, file, options);
         }
         else if (type.equals(StdFileTypes.PROPERTIES))
         {

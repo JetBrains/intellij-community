@@ -12,7 +12,7 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- */
+ *
 
 package com.maddyhome.idea.copyright.util;
 
@@ -356,13 +356,13 @@ public class FileTypeUtil
 
         maps = new HashSet<FileType>();
         maps.add(StdFileTypes.JSP);
-        maps.add(StdFileTypes.JSPX);
 
         mappings.put(StdFileTypes.JSP, maps);
 
         noSeparators.add(StdFileTypes.XML);
         noSeparators.add(StdFileTypes.HTML);
         noSeparators.add(StdFileTypes.JSP);
+        noSeparators.add(StdFileTypes.JSPX);
 
     }
 
@@ -482,7 +482,6 @@ public class FileTypeUtil
     private static FileTypeUtil instance;
     private Map<FileType, Set<FileType>> mappings = new HashMap<FileType, Set<FileType>>();
     private Set<FileType> noSeparators = new HashSet<FileType>();
-    private Map<FileType, FileType> alternates = new HashMap<FileType, FileType>();
 
     private static Logger logger = Logger.getInstance(FileTypeUtil.class.getName());
 }
