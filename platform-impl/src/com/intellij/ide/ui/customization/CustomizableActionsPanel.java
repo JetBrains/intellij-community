@@ -357,9 +357,9 @@ public class CustomizableActionsPanel {
     if (mySelectedSchema != null) {
       CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
     }
-    setCustomizationSchemaForCurrentProjects();
     restorePathsAfterTreeOptimization(treePaths);
     CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
+    setCustomizationSchemaForCurrentProjects();
   }
 
   private void restorePathsAfterTreeOptimization(final List<TreePath> treePaths) {
