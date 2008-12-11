@@ -537,7 +537,8 @@ public class TooBroadScopeInspection extends BaseInspection
                     return;
                 }
                 final PsiExpression rhs = assignmentExpression.getRExpression();
-                if (VariableAccessUtils.variableIsUsed(variable, rhs))
+                if (rhs !=  null &&
+                        VariableAccessUtils.variableIsUsed(variable, rhs))
                 {
                     return;
                 }

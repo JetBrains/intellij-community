@@ -191,8 +191,8 @@ public class VariableAccessUtils{
 
     public static boolean variableIsUsed(@NotNull PsiVariable variable,
                                          @NotNull PsiElement context){
-        final VariableUsedVisitor visitor
-                = new VariableUsedVisitor(variable);
+        final VariableUsedVisitor visitor =
+                new VariableUsedVisitor(variable);
         context.accept(visitor);
         return visitor.isUsed();
     }
