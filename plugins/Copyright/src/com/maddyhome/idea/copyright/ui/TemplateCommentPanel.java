@@ -194,18 +194,18 @@ public class TemplateCommentPanel implements SearchableConfigurable {
 
     cbSeparatorBefore.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent actionEvent) {
-        showPreview(getOptions());
         lblLengthBefore.setEnabled(cbSeparatorBefore.isSelected());
         txtLengthBefore.setEnabled(cbSeparatorBefore.isSelected());
+        fireChangeEvent();
         updateBox();
       }
     });
 
     cbSeparatorAfter.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent actionEvent) {
-        showPreview(getOptions());
         lblLengthAfter.setEnabled(cbSeparatorAfter.isSelected());
         txtLengthAfter.setEnabled(cbSeparatorAfter.isSelected());
+        fireChangeEvent();
         updateBox();
       }
     });
