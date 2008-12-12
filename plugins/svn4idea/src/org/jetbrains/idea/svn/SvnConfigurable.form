@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.SvnConfigurable">
-  <grid id="27dc6" binding="myComponent" layout-manager="GridLayoutManager" row-count="13" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myComponent" layout-manager="GridLayoutManager" row-count="14" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="528" height="400"/>
+      <xy x="20" y="20" width="688" height="400"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <vspacer id="76b6e">
         <constraints>
-          <grid row="12" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="5" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="13" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="5" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
       <component id="9b7ff" class="javax.swing.JLabel" binding="myConfigurationDirectoryLabel">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <preferred-size width="319" height="16"/>
           </grid>
         </constraints>
@@ -25,7 +25,7 @@
       </component>
       <component id="212b3" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myConfigurationDirectoryText">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <preferred-size width="319" height="28"/>
           </grid>
         </constraints>
@@ -35,7 +35,7 @@
       </component>
       <component id="df054" class="javax.swing.JCheckBox" binding="myUseDefaultCheckBox">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <preferred-size width="319" height="23"/>
           </grid>
         </constraints>
@@ -45,7 +45,7 @@
       </component>
       <component id="1283d" class="javax.swing.JCheckBox" binding="myUseCommonProxy">
         <constraints>
-          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <preferred-size width="319" height="23"/>
           </grid>
         </constraints>
@@ -55,7 +55,7 @@
       </component>
       <component id="3e7c5" class="javax.swing.JButton" binding="myEditProxiesButton">
         <constraints>
-          <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="button.text.edit.proxies"/>
@@ -63,7 +63,7 @@
       </component>
       <component id="decc5" class="javax.swing.JButton" binding="myClearAuthButton">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="button.text.clear.authentication.cache"/>
@@ -71,7 +71,7 @@
       </component>
       <component id="23675" class="javax.swing.JLabel" binding="myClearCacheLabel">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <enabled value="true"/>
@@ -82,7 +82,7 @@
       </component>
       <component id="a9606" class="javax.swing.JLabel" binding="myUseCommonProxyLabel">
         <constraints>
-          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <enabled value="true"/>
@@ -92,7 +92,7 @@
       </component>
       <component id="a353c" class="javax.swing.JLabel" binding="myEditProxyLabel">
         <constraints>
-          <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="12" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <enabled value="true"/>
@@ -102,21 +102,30 @@
       </component>
       <component id="27350" class="com.intellij.ui.TitledSeparator">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
       </component>
       <component id="b92b0" class="com.intellij.ui.TitledSeparator">
         <constraints>
-          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
       </component>
       <component id="14e00" class="com.intellij.ui.TitledSeparator">
         <constraints>
-          <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+      </component>
+      <component id="947fd" class="javax.swing.JCheckBox" binding="myLockOnDemand" custom-create="true">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="action.Subversion.update.use.locks.on.demand.text.configurable"/>
+          <toolTipText resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="action.Subversion.update.use.locks.on.demand.description"/>
+        </properties>
       </component>
     </children>
   </grid>

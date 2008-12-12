@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.MultiLineTooltipUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -66,6 +67,7 @@ public class SvnConfigurable implements Configurable {
   private JLabel myClearCacheLabel;
   private JLabel myUseCommonProxyLabel;
   private JLabel myEditProxyLabel;
+  private JCheckBox myLockOnDemand;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -168,6 +170,9 @@ public class SvnConfigurable implements Configurable {
     if (configuration.isIsUseDefaultProxy() != myUseCommonProxy.isSelected()) {
       return true;
     }
+    if (configuration.UPDATE_LOCK_ON_DEMAND != myLockOnDemand.isSelected()) {
+      return true;
+    }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
 
@@ -176,6 +181,7 @@ public class SvnConfigurable implements Configurable {
     configuration.setConfigurationDirectory(myConfigurationDirectoryText.getText());
     configuration.setUseDefaultConfiguation(myUseDefaultCheckBox.isSelected());
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
+    configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
   }
 
   public void reset() {
@@ -191,9 +197,23 @@ public class SvnConfigurable implements Configurable {
     boolean enabled = !myUseDefaultCheckBox.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);
     myConfigurationDirectoryLabel.setEnabled(enabled);
+    myLockOnDemand.setSelected(configuration.UPDATE_LOCK_ON_DEMAND);
   }
 
   public void disposeUIResources() {
+  }
+
+  private void createUIComponents() {
+    myLockOnDemand = new JCheckBox() {
+      @Override
+      public JToolTip createToolTip() {
+        JToolTip toolTip = new JToolTip(){{
+          setUI(new MultiLineTooltipUI());
+        }};
+        toolTip.setComponent(this);
+        return toolTip;
+      }
+    };
   }
 }
 
