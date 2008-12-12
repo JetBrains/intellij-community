@@ -6,10 +6,8 @@ import com.intellij.util.containers.FactoryMap;
 import java.util.Map;
 
 /**
- * @agent Putin
- *
- * @agent Dmitry Avdeev
- * @agent peter
+ * @author Dmitry Avdeev
+ * @author peter
  */
 public abstract class PerIndexDocumentMap<T> {
 
