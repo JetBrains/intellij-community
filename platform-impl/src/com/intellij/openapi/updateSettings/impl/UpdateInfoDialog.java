@@ -75,7 +75,16 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   @Override
   protected boolean doDownloadAndPrepare() {
     if (hasPatch()) {
-      return UpdateChecker.downloadAndInstallPatch(myNewVersion) || super.doDownloadAndPrepare();
+      switch (UpdateChecker.downloadAndInstallPatch(myNewVersion)) {
+        case CANCELED:
+          return false;
+        case FAILED:
+          openDownloadPage();
+          return false;
+        case SUCCESS:
+          super.doDownloadAndPrepare();
+          return true;
+      }
     }
     return super.doDownloadAndPrepare();
   }

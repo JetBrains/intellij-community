@@ -15,13 +15,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -56,6 +56,10 @@ import java.util.concurrent.TimeoutException;
  */
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
+
+  public static enum DownloadPatchResult {
+    SUCCESS, FAILED, CANCELED
+  }
 
   private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
@@ -299,12 +303,15 @@ public final class UpdateChecker {
     return installed;
   }
 
-  public static boolean downloadAndInstallPatch(final NewVersion newVersion) {
-    final boolean[] result = new boolean[1];
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+
+  public static DownloadPatchResult downloadAndInstallPatch(final NewVersion newVersion) {
+    final DownloadPatchResult[] result = new DownloadPatchResult[] { DownloadPatchResult.CANCELED };
+
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
-          result[0] = doDownloadAndInstallPatch(newVersion, ProgressManager.getInstance().getProgressIndicator());
+          doDownloadAndInstallPatch(newVersion, ProgressManager.getInstance().getProgressIndicator());
+          result[0] = DownloadPatchResult.SUCCESS;
         }
         catch (final IOException e) {
           SwingUtilities.invokeLater(new Runnable() {
@@ -313,13 +320,17 @@ public final class UpdateChecker {
             }
           });
           LOG.info(e);
+          result[0] = DownloadPatchResult.FAILED;
         }
       }
-    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null);
+    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)) {
+      return DownloadPatchResult.CANCELED;
+    }
+    
     return result[0];
   }
 
-  private static boolean doDownloadAndInstallPatch(NewVersion newVersion, ProgressIndicator i) throws IOException {
+  private static void doDownloadAndInstallPatch(NewVersion newVersion, ProgressIndicator i) throws IOException {
     PatchInfo patch = newVersion.findPatchForCurrentBuild();
     if (patch == null) throw new IOException("No patch is available for current version");
 
@@ -339,9 +350,26 @@ public final class UpdateChecker {
       in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
       out = new BufferedOutputStream(new FileOutputStream(patchFile));
 
-      StreamUtil.copyStreamContent(in, out);
+      i.setIndeterminate(false);
+
+      byte[] buffer = new byte[10 * 1024];
+      int total = connection.getContentLength();
+      int count;
+      int read = 0;
+
+      while ((count = in.read(buffer)) > 0) {
+        i.checkCanceled();
+        out.write(buffer, 0, count);
+        read += count;
+        i.setFraction(read / total);
+        i.setText2((read / 1024) + "/" + (total / 1024) + " KB");
+      }
     }
     catch (IOException e) {
+      patchFile.delete();
+      throw e;
+    }
+    catch(ProcessCanceledException e) {
       patchFile.delete();
       throw e;
     }
@@ -354,8 +382,6 @@ public final class UpdateChecker {
       if (in != null) in.close();
       if (connection instanceof HttpURLConnection) ((HttpURLConnection)connection).disconnect();
     }
-
-    return true;
   }
 
   public static class NewVersion {
