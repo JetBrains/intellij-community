@@ -2,9 +2,8 @@
  * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.freemarker.lexer;
+package com.intellij.lexer;
 
-import com.intellij.lexer.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ImmutableUserMap;
