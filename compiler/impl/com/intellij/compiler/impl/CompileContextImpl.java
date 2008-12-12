@@ -28,6 +28,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.indexing.FileBasedIndex;
+import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +54,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Set<VirtualFile> myGeneratedTestRoots = new java.util.HashSet<VirtualFile>();
   private VirtualFile[] myOutputDirectories;
   private Set<VirtualFile> myTestOutputDirectories;
+  private TIntHashSet myGeneratedSources = new TIntHashSet();
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
@@ -99,8 +102,18 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
   }
 
+  public void markGenerated(Collection<VirtualFile> files) {
+    for (final VirtualFile file : files) {
+      myGeneratedSources.add(FileBasedIndex.getFileId(file));
+    }
+  }
+
   public long getStartCompilationStamp() {
     return myStartCompilationStamp;
+  }
+
+  public boolean isGenerated(VirtualFile file) {
+    return myGeneratedSources.contains(FileBasedIndex.getFileId(file));
   }
 
   public Project getProject() {

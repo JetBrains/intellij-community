@@ -1171,22 +1171,25 @@ public class CompileDriver {
     finally {
       context.getProgressIndicator().pushState();
       CompilerUtil.refreshIOFiles(filesToRefresh);
-      if (forceGenerate && !generatedFiles.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            List<VirtualFile> vFiles = new ArrayList<VirtualFile>(generatedFiles.size());
+      if (!generatedFiles.isEmpty()) {
+        List<VirtualFile> vFiles = ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
+          public List<VirtualFile> compute() {
+            final ArrayList<VirtualFile> vFiles = new ArrayList<VirtualFile>(generatedFiles.size());
             for (File generatedFile : generatedFiles) {
               final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
               if (vFile != null) {
                 vFiles.add(vFile);
               }
             }
-            final FileSetCompileScope additionalScope = new FileSetCompileScope(
-                vFiles.toArray(new VirtualFile[vFiles.size()]), affectedModules.toArray(new Module[affectedModules.size()])
-            );
-            context.addScope(additionalScope);
+            return vFiles;
           }
         });
+        if (forceGenerate) {
+          context.addScope(new FileSetCompileScope(
+            vFiles.toArray(new VirtualFile[vFiles.size()]), affectedModules.toArray(new Module[affectedModules.size()])
+          ));
+        }
+        context.markGenerated(vFiles);
       }
     }
     return !toGenerate.isEmpty() || !filesToRefresh.isEmpty();

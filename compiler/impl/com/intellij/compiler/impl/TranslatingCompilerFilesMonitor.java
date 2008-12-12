@@ -217,7 +217,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             info.updateTimestamp(projectId, fileStamp);
             saveSourceInfo(file, info);
             removeSourceForRecompilation(projectId, getFileId(file));
-            if (fileStamp > compilationStartStamp || forceRecompile.contains(file)) {
+            if ((fileStamp > compilationStartStamp && !((CompileContextEx) context).isGenerated(file)) || forceRecompile.contains(file)) {
               // changes were made during compilation, need to re-schedule compilation
               // it is important to invoke removeSourceForRecompilation() before to make sure
               // the corresponding output paths will be scheduled for deletion

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -25,10 +26,6 @@ public class CompileContextExProxy implements CompileContextEx {
 
   public CompileContextExProxy(CompileContextEx delegate) {
     myDelegate = delegate;
-  }
-
-  public long getStartCompilationStamp() {
-    return myDelegate.getStartCompilationStamp();
   }
 
   public Project getProject() {
@@ -134,5 +131,17 @@ public class CompileContextExProxy implements CompileContextEx {
 
   public void recalculateOutputDirs() {
     myDelegate.recalculateOutputDirs();
+  }
+
+  public void markGenerated(Collection<VirtualFile> files) {
+    myDelegate.markGenerated(files);
+  }
+
+  public boolean isGenerated(VirtualFile file) {
+    return myDelegate.isGenerated(file);
+  }
+
+  public long getStartCompilationStamp() {
+    return myDelegate.getStartCompilationStamp();
   }
 }
