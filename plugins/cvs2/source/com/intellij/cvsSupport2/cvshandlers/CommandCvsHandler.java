@@ -239,10 +239,14 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     final String revision = getRevision(entry);
 
     final CheckoutFileByRevisionOperation operation = new CheckoutFileByRevisionOperation(parent, name, revision, makeNewFilesReadOnly);
+    final CommandCvsHandler cvsHandler =
+      new CommandCvsHandler(CvsBundle.message("operation.name.restore"), operation, FileSetToBeUpdated.EMPTY);
 
     operation.addFinishAction(new Runnable() {
       public void run() {
-
+        final List<VcsException> errors = cvsHandler.getErrors();
+        if (errors != null && (! errors.isEmpty())) return;
+        
         if (entry != null) {
           entry.setRevision(revision);
           entry.setConflict(CvsUtil.formatDate(new Date(ioFile.lastModified())));
@@ -258,9 +262,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       }
     });
 
-    return new CommandCvsHandler(CvsBundle.message("operation.name.restore"),
-                                 operation,
-                                 FileSetToBeUpdated.EMPTY);
+    return cvsHandler;
   }
 
   public static CvsHandler createEditHandler(VirtualFile[] selectedFiles, boolean isReservedEdit) {
