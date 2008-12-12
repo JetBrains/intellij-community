@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -60,7 +59,7 @@ public class XmlDuplicatedIdInspection extends LocalInspectionTool {
 
             if (!hasIdDeclaration) {
               final FileViewProvider viewProvider = tag.getContainingFile().getViewProvider();
-              if (viewProvider instanceof TemplateLanguageFileViewProvider) {
+              if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
                 holder.registerProblem(value, XmlErrorMessages.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                                        new XmlDeclareIdInCommentAction(idRef));
 
