@@ -52,7 +52,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -68,8 +67,18 @@ public class FileBasedIndex implements ApplicationComponent {
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNeedContentLoading = new HashSet<ID<?, ?>>();
 
-  private final Map<Document, AtomicLong> myLastIndexedDocStamps = new HashMap<Document, AtomicLong>();
-  private final Map<Document, CharSequence> myLastIndexedUnsavedContent = new HashMap<Document, CharSequence>();
+  private final PerIndexDocumentMap<Long> myLastIndexedDocStamps = new PerIndexDocumentMap<Long>() {
+    @Override
+    protected Long createDefault(Document document) {
+      return 0L;
+    }
+  };
+  private final PerIndexDocumentMap<CharSequence> myLastIndexedUnsavedContent = new PerIndexDocumentMap<CharSequence>() {
+    @Override
+    protected CharSequence createDefault(Document document) {
+      return loadContent(FileDocumentManager.getInstance().getFile(document));
+    }
+  };
 
   private final ChangedFilesUpdater myChangedFilesUpdater;
 
@@ -359,7 +368,7 @@ public class FileBasedIndex implements ApplicationComponent {
     if (isUpToDateCheckEnabled()) {
       try {
         checkRebuild(indexId);
-        indexUnsavedDocuments();
+        indexUnsavedDocuments(indexId);
       }
       catch (StorageException e) {
         scheduleRebuild(indexId, e);
@@ -584,7 +593,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return docs;
   }
 
-  private void indexUnsavedDocuments() throws StorageException {
+  private void indexUnsavedDocuments(ID<?, ?> indexId) throws StorageException {
     myChangedFilesUpdater.forceUpdate();
     
     final Set<Document> documents = getUnsavedOrTransactedDocuments();
@@ -594,7 +603,7 @@ public class FileBasedIndex implements ApplicationComponent {
       myUnsavedDataIndexingSemaphore.down();
       try {
         for (Document document : documents) {
-          indexUnsavedDocument(document);
+          indexUnsavedDocument(document, indexId);
         }
       }
       catch (StorageException e) {
@@ -661,7 +670,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void indexUnsavedDocument(final Document document) throws StorageException {
+  private void indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId) throws StorageException {
     final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
       return;
@@ -678,12 +687,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     final long currentDocStamp = content.getModificationStamp();
-    if (currentDocStamp != getLastIndexedStamp(document).getAndSet(currentDocStamp)) {
-      CharSequence lastIndexed = myLastIndexedUnsavedContent.get(document);
-      if (lastIndexed == null) {
-        lastIndexed = loadContent(vFile);
-      }
-      final FileContent oldFc = new FileContent(vFile, lastIndexed, vFile.getCharset());
+    if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp).longValue()) {
       final FileContent newFc = new FileContent(vFile, content.getText(), vFile.getCharset());
 
       if (dominantContentFile != null) {
@@ -696,18 +700,18 @@ public class FileBasedIndex implements ApplicationComponent {
                                               ? ((DocumentImpl)document).getEditorHighlighterForCachesBuilding() : null);
       }
 
-      for (ID<?, ?> indexId : myIndices.keySet()) {
-        if (getInputFilter(indexId).acceptInput(vFile)) {
-          final int inputId = Math.abs(getFileId(vFile));
-          getIndex(indexId).update(inputId, newFc, oldFc);
-        }
+      CharSequence lastIndexed = myLastIndexedUnsavedContent.get(document, requestedIndexId);
+      final FileContent oldFc = new FileContent(vFile, lastIndexed, vFile.getCharset());
+      if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
+        final int inputId = Math.abs(getFileId(vFile));
+        getIndex(requestedIndexId).update(inputId, newFc, oldFc);
       }
 
       if (dominantContentFile != null) {
         dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
       }
 
-      myLastIndexedUnsavedContent.put(document, newFc.getContentAsText());
+      myLastIndexedUnsavedContent.put(document, requestedIndexId, newFc.getContentAsText());
     }
   }
 
@@ -722,19 +726,6 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     return findLatestKnownPsiForUncomittedDocument(document);
-  }
-
-  @NotNull
-  private AtomicLong getLastIndexedStamp(final Document document) {
-    AtomicLong lastStamp;
-    synchronized (myLastIndexedDocStamps) {
-      lastStamp = myLastIndexedDocStamps.get(document);
-      if (lastStamp == null) {
-        lastStamp = new AtomicLong(0L);
-        myLastIndexedDocStamps.put(document, lastStamp);
-      }
-    }
-    return lastStamp;
   }
 
   private void setDataBufferingEnabled(final boolean enabled) {
@@ -767,14 +758,12 @@ public class FileBasedIndex implements ApplicationComponent {
     myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
 
-  @Nullable
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     //noinspection unchecked
     return pair != null? (UpdatableIndex<K,V, FileContent>)pair.getFirst() : null;
   }
 
-  @Nullable
   private InputFilter getInputFilter(ID<?, ?> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     return pair != null? pair.getSecond() : null;
