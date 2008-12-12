@@ -276,56 +276,21 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       DefaultListModel model = (DefaultListModel)myList.getModel();
       model.clear();
 
-      ArrayList<LookupElement> allItems = new ArrayList<LookupElement>();
       Set<LookupElement> firstItems = new THashSet<LookupElement>();
 
-      final boolean hasPreselectedItem = !myDirty && myPreselectedItem != EMPTY_LOOKUP_ITEM;
-      boolean addPreselected = hasPreselectedItem;
+      addExactPrefixItems(model, firstItems);
 
-      for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
-        final List<LookupElement> suitable = new SmartList<LookupElement>();
-        for (final LookupElement item : myItemsMap.get(comparable)) {
-          if (prefixMatches(item)) {
-            suitable.add(item);
-          }
-        }
+      addMostRelevantItems(model, firstItems);
 
-        if (allItems.size() + suitable.size() + (addPreselected ? 1 : 0) > MAX_PREFERRED_COUNT) break;
-        for (final LookupElement item : suitable) {
-          allItems.add(item);
-          firstItems.add(item);
-          model.addElement(item);
+      final boolean hasPreselectedItem = addPreselectedItem(model, firstItems);
 
-          if (hasPreselectedItem && item == myPreselectedItem) {
-            addPreselected = false;
-          }
-        }
-      }
-      if (addPreselected) {
-        allItems.add(myPreselectedItem);
-        firstItems.add(myPreselectedItem);
-        model.addElement(myPreselectedItem);
-      }
+      myPreferredItemsCount = firstItems.size();
 
-      myPreferredItemsCount = allItems.size();
+      addRemainingItemsLexicographically(model, firstItems);
 
-      for (LookupElement item : myItems) {
-        if (!firstItems.contains(item) && prefixMatches(item)) {
-          model.addElement(item);
-          allItems.add(item);
-        }
-      }
-      boolean isEmpty = allItems.isEmpty();
+      boolean isEmpty = model.getSize() == 0;
       if (isEmpty) {
-        LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
-        item.setPrefixMatcher(new CamelHumpMatcher(""));
-        if (!myCalculating) {
-          final int maxWidth = myCellRenderer.updateMaximumWidth(item);
-          myList.setFixedCellWidth(Math.max(maxWidth, myLookupWidth));
-        }
-
-        model.addElement(item);
-        allItems.add(item);
+        addEmptyItem(model);
       } else {
         myList.setFixedCellWidth(myLookupWidth);
       }
@@ -349,6 +314,63 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
           } else {
             selectMostPreferableItem();
           }
+        }
+      }
+    }
+  }
+
+  private void addEmptyItem(DefaultListModel model) {
+    LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
+    item.setPrefixMatcher(new CamelHumpMatcher(""));
+    if (!myCalculating) {
+      final int maxWidth = myCellRenderer.updateMaximumWidth(item);
+      myList.setFixedCellWidth(Math.max(maxWidth, myLookupWidth));
+    }
+
+    model.addElement(item);
+  }
+
+  private void addRemainingItemsLexicographically(DefaultListModel model, Set<LookupElement> firstItems) {
+    for (LookupElement item : myItems) {
+      if (!firstItems.contains(item) && prefixMatches(item)) {
+        model.addElement(item);
+      }
+    }
+  }
+
+  private boolean addPreselectedItem(DefaultListModel model, Set<LookupElement> firstItems) {
+    final boolean hasPreselectedItem = !myDirty && myPreselectedItem != EMPTY_LOOKUP_ITEM;
+    if (hasPreselectedItem && !firstItems.contains(myPreselectedItem)) {
+      firstItems.add(myPreselectedItem);
+      model.addElement(myPreselectedItem);
+    }
+    return hasPreselectedItem;
+  }
+
+  private void addMostRelevantItems(DefaultListModel model, Set<LookupElement> firstItems) {
+    for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
+      final List<LookupElement> suitable = new SmartList<LookupElement>();
+      for (final LookupElement item : myItemsMap.get(comparable)) {
+        if (!firstItems.contains(item) && prefixMatches(item)) {
+          suitable.add(item);
+        }
+      }
+
+      if (firstItems.size() + suitable.size() > MAX_PREFERRED_COUNT) break;
+      for (final LookupElement item : suitable) {
+        firstItems.add(item);
+        model.addElement(item);
+      }
+    }
+  }
+
+  private void addExactPrefixItems(DefaultListModel model, Set<LookupElement> firstItems) {
+    for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
+      for (final LookupElement item : myItemsMap.get(comparable)) {
+        final String currentPrefix = item.getPrefixMatcher().getPrefix() + myAdditionalPrefix;
+        if (item.getAllLookupStrings().contains(currentPrefix)) {
+          model.addElement(item);
+          firstItems.add(item);
         }
       }
     }
