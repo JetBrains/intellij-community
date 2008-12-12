@@ -55,6 +55,10 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
     return true;
   }
 
+  public boolean reportChangesOutsideProject() {
+    return false;
+  }
+
   public void reportWarningMessage(final String message) {
   }
 }

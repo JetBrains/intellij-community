@@ -145,4 +145,8 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public boolean isUpdatingUnversionedFiles() {
     return myUpdateUnversioned;
   }
+
+  public boolean reportChangesOutsideProject() {
+    return false;
+  }
 }
