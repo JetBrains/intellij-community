@@ -305,7 +305,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, map);
         PsiElement element = findElementAt(injectedFile, newContext.getStartOffset());
         if (element == null) {
-          LOG.assertTrue(false, "offset " + newContext.getStartOffset() + " at:\n" + injectedFile.getText());
+          LOG.assertTrue(false, "offset " + newContext.getStartOffset() + " at:\ntext=\"" + injectedFile.getText() + "\"\ninstance=" + injectedFile);
         }
         EditorFactory.getInstance().releaseEditor(editor);
         return Pair.create(newContext, element);
