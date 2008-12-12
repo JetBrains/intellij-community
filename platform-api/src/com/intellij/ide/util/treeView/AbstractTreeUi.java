@@ -1597,7 +1597,7 @@ class AbstractTreeUi {
         if (eachElement != element || !parentsOnly) {
           assert !kidsToExpand.contains(eachElement) :
             "Not a valid tree structure, walking up the structure gives many entries for element=" +
-            eachElement;
+            eachElement + ", root="+ getTreeStructure().getRootElement();
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
