@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.IdeaAPIHelper;
 import org.jetbrains.idea.maven.utils.Strings;
 
@@ -45,8 +46,8 @@ public class MavenIgnoreConfigurable implements Configurable {
 
   private void createUIComponents() {
     myFileChooser = new ElementsChooser<VirtualFile>(true) {
-      protected String getItemText(final VirtualFile virtualFile) {
-        return virtualFile != null ? virtualFile.getPath() : "";
+      protected String getItemText(@NotNull final VirtualFile virtualFile) {
+        return virtualFile.getPath();
       }
     };
   }
