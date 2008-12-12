@@ -15,26 +15,50 @@
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LookAheadLexer;
 import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
  */
-public class GroovyLexer extends MergingLexerAdapter {
+public class GroovyLexer extends LookAheadLexer {
   private static TokenSet tokensToMerge = TokenSet.create(
-      GroovyTokenTypes.mSL_COMMENT,
-      GroovyTokenTypes.mML_COMMENT,
-      GroovyTokenTypes.mREGEX_BEGIN,
-      GroovyTokenTypes.mREGEX_CONTENT,
-      GroovyTokenTypes.mREGEX_END,
-      GroovyTokenTypes.mWS,
-      GroovyTokenTypes.mWRONG_GSTRING_LITERAL
+      mSL_COMMENT,
+      mML_COMMENT,
+      mREGEX_BEGIN,
+      mREGEX_CONTENT,
+      mREGEX_END,
+      mWS,
+      mWRONG_GSTRING_LITERAL
   );
 
   public GroovyLexer() {
-    super(new GroovyFlexLexer(),
-        tokensToMerge);
+    super(new MergingLexerAdapter(new GroovyFlexLexer(), tokensToMerge));
   }
 
+  @Override
+  protected void lookAhead(Lexer baseLexer) {
+    if (baseLexer.getTokenType() == mDOT) {
+      addToken(mDOT);
+      baseLexer.advance();
+      while (baseLexer.getTokenType() == mWS) {
+        addToken(mWS);
+        baseLexer.advance();
+      }
+      final IElementType token = baseLexer.getTokenType();
+      if (token == kDEF || token == kAS || token == kIN) {
+        addToken(mIDENT);
+        baseLexer.advance();
+      } else {
+        addToken(token);
+        baseLexer.advance();
+      }
+    } else {
+      super.lookAhead(baseLexer);
+    }
+  }
 }
