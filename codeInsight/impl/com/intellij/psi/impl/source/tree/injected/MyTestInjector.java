@@ -9,9 +9,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.injection.ConcatenationAwareInjector;
-import com.intellij.lang.injection.JavaConcatenationInjectorManager;
-import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.injection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -20,6 +18,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class MyTestInjector {
   private LanguageInjector myInjector;
@@ -28,7 +30,9 @@ public class MyTestInjector {
   private ConcatenationAwareInjector mySeparatedJSInjector;
   private final PsiManager myPsiManager;
   private ConcatenationAwareInjector myQLPrefixedInjector;
+  private MultiHostInjector myMultiHostInjector;
 
+  @TestOnly
   public MyTestInjector(PsiManager psiManager) {
     myPsiManager = psiManager;
   }
@@ -82,6 +86,8 @@ public class MyTestInjector {
     assert b;
     b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myQLPrefixedInjector);
     assert b;
+    b = InjectedLanguageManager.getInstance(project).unregisterMultiHostInjector(myMultiHostInjector);
+    assert b;
   }
 
   private static Language findLanguageByID(@NonNls String id) {
@@ -92,11 +98,39 @@ public class MyTestInjector {
     return null;
   }
 
-  private static LanguageInjector injectVariousStuffEverywhere(PsiManager psiManager) {
+  private LanguageInjector injectVariousStuffEverywhere(PsiManager psiManager) {
+    final Language ql = findLanguageByID("JPAQL");
+    final Language js = findLanguageByID("JavaScript");
+    myMultiHostInjector = new MultiHostInjector() {
+      public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+        XmlAttributeValue value = (XmlAttributeValue)context;
+        PsiElement parent = value.getParent();
+        if (parent instanceof XmlAttribute) {
+          @NonNls String attrName = ((XmlAttribute)parent).getLocalName();
+          if ("jsInBraces".equals(attrName)) {
+            registrar.startInjecting(js);
+            String text = value.getText();
+            int index = 0;
+            while (text.indexOf('{', index) != -1) {
+              int lbrace = text.indexOf('{', index);
+              int rbrace = text.indexOf('}', index);
+              registrar.addPlace("", "", (PsiLanguageInjectionHost)value, new TextRange(lbrace + 1, rbrace));
+              index = rbrace + 1;
+            }
+            registrar.doneInjecting();
+          }
+        }
+      }
+
+      @NotNull
+      public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+        return Arrays.asList(XmlAttributeValue.class);
+      }
+    };
+    InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(myMultiHostInjector);
+
     LanguageInjector myInjector = new LanguageInjector() {
       public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces placesToInject) {
-        Language ql = findLanguageByID("JPAQL");
-        Language js = findLanguageByID("JavaScript");
         if (host instanceof XmlAttributeValue) {
           XmlAttributeValue value = (XmlAttributeValue)host;
           PsiElement parent = value.getParent();
@@ -108,17 +142,6 @@ public class MyTestInjector {
             }
             if ("js".equals(attrName)) {
               inject(host, placesToInject, js);
-              return;
-            }
-            if ("jsInBraces".equals(attrName)) {
-              String text = value.getText();
-              int index=0;
-              while (text.indexOf('{', index) != -1) {
-                int lbrace = text.indexOf('{', index);
-                int rbrace = text.indexOf('}', index);
-                placesToInject.addPlace(js, new TextRange(lbrace + 1, rbrace), null, null);
-                index = rbrace + 1;
-              }
               return;
             }
             if ("jsprefix".equals(attrName)) {

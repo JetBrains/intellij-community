@@ -1083,28 +1083,37 @@ public class StringUtil {
 
     return true;
   }
+
   @NotNull
   public static String commonPrefix(@NotNull String s1, @NotNull String s2) {
+    return s1.substring(0, commonPrefixLength(s1, s2));
+  }
+
+  public static int commonPrefixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     int i;
-    for (i = 0; i<s1.length() && i<s2.length(); i++) {
+    for (i = 0; i < s1.length() && i < s2.length(); i++) {
       if (s1.charAt(i) != s2.charAt(i)) {
         break;
       }
     }
-    return s1.substring(0, i);
+    return i;
   }
+
   @NotNull
   public static String commonSuffix(@NotNull String s1, @NotNull String s2) {
-    if (s1.length() == 0 || s2.length() == 0) return "";
+    return s1.substring(s1.length() - commonSuffixLength(s1, s2));
+  }
+
+  public static int commonSuffixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+    if (s1.length() == 0 || s2.length() == 0) return 0;
     int i;
-    for (i = s1.length()-1; i>=0 && i>=s1.length() - s2.length(); i--) {
-      if (s1.charAt(i) != s2.charAt(i+s2.length()-s1.length())) {
+    for (i = 0; i<s1.length() && i<s2.length(); i++) {
+      if (s1.charAt(s1.length()-i-1) != s2.charAt(s2.length()-i-1)) {
         break;
       }
     }
-    return s1.substring(i, s1.length());
+    return i;
   }
-
 
   public static int indexOf(CharSequence s, char c) {
     int l = s.length();

@@ -19,7 +19,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   private int myBufferSize;
 
   // max chars to hold, bufferSize == 0 means unbounded
-  public CharArray(int bufferSize) {
+  CharArray(int bufferSize) {
     myBufferSize = bufferSize;
     myOriginalSequence = "";
   }

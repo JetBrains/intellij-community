@@ -11,9 +11,9 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -158,26 +159,51 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public void deleteString(final int startOffset, final int endOffset) {
     assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
     assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;
-    //todo handle delete that span ranges
 
-    myDelegate.deleteString(injectedToHost(startOffset), injectedToHost(endOffset));
+    List<TextRange> hostRangesToDelete = new ArrayList<TextRange>(myRelevantRangesInHostDocument.length);
+
+    int offset = startOffset;
+    int curRangeStart = 0;
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
+      curRangeStart += myPrefixes[i].length();
+      if (offset < curRangeStart) offset = curRangeStart;
+      if (offset >= endOffset) break;
+      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
+      if (!hostRange.isValid()) continue;
+      int hostRangeLength = hostRange.getEndOffset() - hostRange.getStartOffset();
+      TextRange range = TextRange.from(curRangeStart, hostRangeLength);
+      if (range.contains(offset)) {
+        TextRange rangeToDelete = new TextRange(offset, Math.min(range.getEndOffset(), endOffset));
+        hostRangesToDelete.add(rangeToDelete.shiftRight(hostRange.getStartOffset() - curRangeStart));
+        offset = rangeToDelete.getEndOffset();
+      }
+      curRangeStart += hostRangeLength;
+      curRangeStart += mySuffixes[i].length();
+    }
+
+    int delta = 0;
+    for (TextRange hostRangeToDelete : hostRangesToDelete) {
+      myDelegate.deleteString(hostRangeToDelete.getStartOffset() + delta, hostRangeToDelete.getEndOffset() + delta);
+      delta -= hostRangeToDelete.getLength();
+    }
   }
 
-  public void replaceString(final int startOffset, final int endOffset, CharSequence s) {
-    if (intersectWithEditable(new TextRange(startOffset, startOffset)) == null
-        || intersectWithEditable(new TextRange(endOffset, endOffset)) == null) {
-      LOG.assertTrue(s.equals(getText().substring(startOffset, endOffset)));
-      return;
-    }
+  public void replaceString(int startOffset, int endOffset, CharSequence s) {
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
     }
-    //LOG.assertTrue(startOffset >= myPrefix.length());
-    //LOG.assertTrue(startOffset <= getTextLength() - mySuffix.length());
-    //LOG.assertTrue(endOffset >= myPrefix.length());
-    //LOG.assertTrue(endOffset <= getTextLength() - mySuffix.length());
-    //todo handle delete that span ranges
-    myDelegate.replaceString(injectedToHost(startOffset), injectedToHost(endOffset), s);
+
+    final CharSequence chars = getCharsSequence();
+    CharSequence toDelete = chars.subSequence(startOffset, endOffset);
+
+    int perfixLength = StringUtil.commonPrefixLength(s, toDelete);
+    int suffixLength = StringUtil.commonSuffixLength(toDelete.subSequence(perfixLength, toDelete.length()), s.subSequence(perfixLength, s.length()));
+    startOffset += perfixLength;
+    endOffset -= suffixLength;
+    s = s.subSequence(perfixLength, s.length() - suffixLength);
+    
+    deleteString(startOffset, endOffset);
+    insertString(startOffset, s);
   }
 
   public boolean isWritable() {

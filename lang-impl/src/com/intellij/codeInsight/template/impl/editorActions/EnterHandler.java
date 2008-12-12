@@ -8,9 +8,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.TemplateManager;
 
 public class EnterHandler extends EditorWriteActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public EnterHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
@@ -28,7 +29,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       return;
     }
 
-    TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManagerImpl.getInstance(project);
+    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
 
     if (!templateManager.startTemplate(templateManager, editor, TemplateSettings.ENTER_CHAR)) {
       myOriginalHandler.execute(editor, dataContext);
