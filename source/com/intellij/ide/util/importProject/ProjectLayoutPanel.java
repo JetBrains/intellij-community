@@ -11,6 +11,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -51,7 +52,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myInsight = insight;
 
     myEntriesChooser = new ElementsChooser<T>(true) {
-      public String getItemText(T element) {
+      public String getItemText(@NotNull T element) {
         return getElementText(element);
       }
     };
@@ -182,7 +183,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return Integer.MAX_VALUE;
   }
 
-  protected String getElementText(Object element) {
+  protected static String getElementText(Object element) {
     if (element instanceof LibraryDescriptor) {
       final StringBuilder builder = StringBuilderSpinAllocator.alloc();
       try {
@@ -444,7 +445,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
       myNameField = new JTextField();
       myChooser = new ElementsChooser<File>(true) {
-        protected String getItemText(final File value) {
+        protected String getItemText(@NotNull final File value) {
           return getElementText(value);
         }
       };

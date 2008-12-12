@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,7 +50,7 @@ public class ChooseLibrariesDialog extends DialogWrapper {
       return Icons.LIBRARY_ICON;
     }
 
-    protected String getItemText(final Library value) {
+    protected String getItemText(@NotNull final Library value) {
       return OrderEntryCellAppearanceUtils.forLibrary(value).getText();
     }
   }

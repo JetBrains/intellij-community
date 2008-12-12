@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -179,7 +180,7 @@ public class GotoFileAction extends GotoActionBase {
       Collections.sort(elements, FileTypeComparator.INSTANCE);
       final ElementsChooser<FileType> chooser = new ElementsChooser<FileType>(elements, true) {
         @Override
-        protected String getItemText(final FileType value) {
+        protected String getItemText(@NotNull final FileType value) {
           return value.getName();
         }
 

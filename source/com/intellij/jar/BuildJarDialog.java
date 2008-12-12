@@ -46,6 +46,7 @@ import com.intellij.util.io.FileTypeFilter;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -150,7 +151,7 @@ public class BuildJarDialog extends DialogWrapper {
 
     myElementsChooser = new ElementsChooser<Module>(true) {
       @Override
-      protected String getItemText(final Module value) {
+      protected String getItemText(@NotNull final Module value) {
         return value.getName();
       }
     };

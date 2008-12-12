@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +47,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   private void initializeDialog(final List<T> items, final String title) {
     setTitle(title);
     myChooser = new ElementsChooser<T>(false) {
-      protected String getItemText(final T item) {
+      protected String getItemText(@NotNull final T item) {
         return ChooseElementsDialog.this.getItemText(item);
       }
     };

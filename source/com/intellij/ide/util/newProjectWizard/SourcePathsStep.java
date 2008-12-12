@@ -23,6 +23,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -146,7 +147,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   private JComponent createComponentForChooseSources() {
     final JPanel panel = new JPanel(new GridBagLayout());
     mySourcePathsChooser = new ElementsChooser<Pair<String, String>>(true) {
-      public String getItemText(Pair<String, String> pair) {
+      public String getItemText(@NotNull Pair<String, String> pair) {
         if ("".equals(pair.second)) return pair.first;
         return pair.first + " (" + pair.second + ")";
       }

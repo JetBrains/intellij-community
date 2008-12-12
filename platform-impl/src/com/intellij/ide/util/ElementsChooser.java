@@ -6,6 +6,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -529,8 +530,8 @@ public class ElementsChooser<T> extends JPanel {
     }
   }
 
-  protected String getItemText(T value) {
-    return value != null ? value.toString() : "";
+  protected String getItemText(@NotNull T value) {
+    return value.toString();
   }
 
   @Nullable
@@ -546,7 +547,7 @@ public class ElementsChooser<T> extends JPanel {
       try {
         UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, table.getSelectionBackground());
         component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setText(getItemText(t));
+        setText(t != null ? getItemText(t) : "");
         if (component instanceof JLabel) {
           ((JLabel)component).setBorder(noFocusBorder);
         }
@@ -558,7 +559,7 @@ public class ElementsChooser<T> extends JPanel {
       component.setEnabled(ElementsChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));
       final ElementProperties properties = myElementToPropertiesMap.get(t);
       if (component instanceof JLabel) {
-        final Icon icon = properties != null ? properties.getIcon() : getItemIcon(t);
+        final Icon icon = properties != null ? properties.getIcon() : t != null ? getItemIcon(t) : null;
         JLabel label = (JLabel)component;
         label.setIcon(icon);
         label.setDisabledIcon(icon);

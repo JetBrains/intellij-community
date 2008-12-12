@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,7 +23,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
   public SelectImportedProjectsStep(WizardContext context) {
     super(context);
     fileChooser = new ElementsChooser<T>(true) {
-      protected String getItemText(T item) {
+      protected String getItemText(@NotNull T item) {
         return getElementText(item);
       }
 
