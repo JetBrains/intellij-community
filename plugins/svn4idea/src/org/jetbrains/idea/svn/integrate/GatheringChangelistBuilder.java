@@ -107,6 +107,10 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
     return false;
   }
 
+  public boolean reportChangesOutsideProject() {
+    return true;
+  }
+
   public void reportWarningMessage(final String message) {
     // todo maybe, use further
   }
