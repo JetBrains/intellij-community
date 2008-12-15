@@ -317,7 +317,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public List<IntentionAction> filterAvailableIntentions(@NotNull final String hint) throws Throwable {
     return ContainerUtil.findAll(getAvailableIntentions(),new Condition<IntentionAction>() {
       public boolean value(final IntentionAction intentionAction) {
-        return intentionAction.getText().contains(hint);
+        return intentionAction.getText().startsWith(hint);
       }
     });
   }
