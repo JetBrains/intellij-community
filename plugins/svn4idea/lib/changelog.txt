@@ -1,3 +1,14 @@
+== version 1.2.1
+
++ Changes made in Subversion since version 1.5.0 implemented, 
+  all Subversion 1.5.4 features are supported.
++ JNA library updated to version 3.0.9.
++ JNA-based code fixed to work properly on amd64 systems.
++ HTTP Negotiate authentication scheme support added. 
++ "Fast" update feature has been added to SVNUpdateClient API.
++ Command line client improvements.
++ Other stability and performance improvements.
+
 == version 1.2.0
 
 + Possible NPE on WC to URL copy operation fixed.
