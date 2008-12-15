@@ -17,14 +17,14 @@ public class Main {
   }
 
   public static void main(final String[] args) {
+    installPatch();
+
     isHeadless = isHeadless(args);
     if (isHeadless) {
       System.setProperty("java.awt.headless", Boolean.TRUE.toString());
     } else if (GraphicsEnvironment.isHeadless()) {
       throw new HeadlessException("Unable to detect graphics environment");
     }
-
-    installPatch();
 
     Bootstrap.main(args, Main.class.getName() + "Impl", "start");
   }
