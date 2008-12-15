@@ -19,7 +19,6 @@ package com.intellij.execution.junit;
 import com.intellij.ExtensionPoints;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
-import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -188,15 +187,7 @@ public abstract class TestObject implements JavaCommandLine {
     JavaSdkUtil.addJunit4RtJar(myJavaParameters.getClassPath());
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     if ((!(myRunnerSettings.getData() instanceof DebuggingRunnerData) || myConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) && myConfiguration.isCoverageEnabled()) {
-      final String coverageFileName = myConfiguration.getCoverageFilePath();
-      final long lastCoverageTime = System.currentTimeMillis();
-      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProject);
-      myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(
-        myConfiguration.getName(),
-        new DefaultCoverageFileProvider(coverageFileName),
-        myConfiguration.getPatterns(), lastCoverageTime,
-        myConfiguration.getSuiteToMergeWith(), myConfiguration.getCoverageRunner(), myConfiguration.isTrackPerTestCoverage() && !myConfiguration.isSampling(),
-        !myConfiguration.isSampling());
+      myCurrentCoverageSuite = CoverageDataManager.getInstance(myProject).addCoverageSuite(myConfiguration);
       myConfiguration.appendCoverageArgument(myJavaParameters);
     }
   }
