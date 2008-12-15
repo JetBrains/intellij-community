@@ -69,6 +69,8 @@ public class StatisticsPanel {
                             gotoSuiteOrParentAction,
                             myStatisticsTableView);
     // Contex menu in Table
+    // Works incorrect because sometimes action updates in one context
+    // but actionPerfomed() called in other context
     //PopupHandler.installPopupHandler(myStatisticsTableView, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
   }
 
