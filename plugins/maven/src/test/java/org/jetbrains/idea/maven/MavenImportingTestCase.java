@@ -300,6 +300,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(Collections.singletonList(myProjectPom), profiles);
   }
 
+  protected void importProject(VirtualFile file) throws MavenException {
+    importSeveralProjects(file);
+  }
+
   protected void importSeveralProjects(VirtualFile... files) throws MavenException {
     doImportProjects(Arrays.asList(files));
   }
