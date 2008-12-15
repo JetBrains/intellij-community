@@ -222,8 +222,9 @@ public class CodeEditUtil {
     }
     else if(left.getElementType() == TokenType.WHITE_SPACE && left.getTreeNext() == null && normalizeTailingWhitespace){
       // handle tailing whitespaces if element on the left has been removed
+      final ASTNode prevLeaf = TreeUtil.prevLeaf(left);
       left.getTreeParent().removeChild(left);
-      markToReformatBeforeOrInsertWhitespace(left, right, right.getTreeParent().getPsi().getManager());
+      markToReformatBeforeOrInsertWhitespace(prevLeaf, right, right.getTreeParent().getPsi().getManager());
       left = right;
     }
     else if(left.getElementType() == TokenType.WHITE_SPACE && right.getElementType() == TokenType.WHITE_SPACE) {
@@ -268,9 +269,17 @@ public class CodeEditUtil {
     right.getTreeParent().replaceChild(right, merged);
   }
 
+  private static Language getNotAnyLanguage(ASTNode node) {
+    if (node == null) return Language.ANY;
+
+    final Language lang = node.getElementType().getLanguage();
+    return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
+  }
+
   private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right, PsiManager manager) {
-    final Language leftLang = left != null ? left.getElementType().getLanguage() : null;
-    final Language rightLang = right.getElementType().getLanguage();
+    final Language leftLang = left != null ? getNotAnyLanguage(left) : null;
+    final Language rightLang = getNotAnyLanguage(right);
+    
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(rightLang);
     LeafElement generatedWhitespace = null;
     if(leftLang == rightLang && parserDefinition != null){
