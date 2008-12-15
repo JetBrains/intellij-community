@@ -120,7 +120,11 @@ public class NameSuggestionsField extends JPanel {
       oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.trim().length() == 0;
     myComboBoxModel.setSuggestions(suggestions);
     if(suggestions.length > 0 && shouldUpdateTextField) {
-      comboBox.setSelectedItem(oldSelectedItem);
+      if (oldSelectedItem != null) {
+        comboBox.setSelectedItem(oldSelectedItem);
+      } else {
+        comboBox.setSelectedIndex(0);
+      }
     }
     else {
       comboBox.getEditor().setItem(oldItemFromTextField);
