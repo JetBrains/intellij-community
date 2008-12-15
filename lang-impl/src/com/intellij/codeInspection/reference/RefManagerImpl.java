@@ -291,7 +291,7 @@ public class RefManagerImpl extends RefManager {
         extension.removeReference(refElem);
       }
 
-      if (refTable.remove(ApplicationManager.getApplication().runReadAction(
+      if (element != null && refTable.remove(ApplicationManager.getApplication().runReadAction(
           new Computable<PsiAnchor>() {
             public PsiAnchor compute() {
               return PsiAnchor.create(element);
