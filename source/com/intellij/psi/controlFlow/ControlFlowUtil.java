@@ -215,7 +215,7 @@ public class ControlFlowUtil {
   }
 
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
-    Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, true);
+    Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, false);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     for (PsiVariable variable : writtenVariables) {
       for (int exitPoint : exitPoints) {

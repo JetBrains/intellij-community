@@ -232,6 +232,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testIDEADEV33368() throws Exception {
+    doTest();
+  }
+
   public void testGuardMethodDuplicates() throws Exception {
     doDuplicatesTest();
   }
