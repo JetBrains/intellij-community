@@ -413,16 +413,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     File file = File.createTempFile(GIT_COMIT_MSG_FILE_PREFIX, GIT_COMIT_MSG_FILE_EXT);
     file.deleteOnExit();
-    @NonNls String encoding = null;
-    try {
-      encoding = GitConfigUtil.getValue(myProject, root, "i18n.commitencoding");
-    }
-    catch (VcsException e) {
-      // ignore exception
-    }
-    if (encoding == null || encoding.length() == 0) {
-      encoding = "UTF-8";
-    }
+    @NonNls String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
     Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding);
     try {
       out.write(filteredMessage.toString());

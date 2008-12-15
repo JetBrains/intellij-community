@@ -152,4 +152,47 @@ public class GitConfigUtil {
       return null;
     }
   }
+
+  /**
+   * Get commit encoding for the specified root
+   *
+   * @param project the context project
+   * @param root    the project root
+   * @return the commit encoding or UTF-8 if the encoding is note explicitly specified
+   */
+  public static String getCommitEncoding(final Project project, VirtualFile root) {
+    @NonNls String encoding = null;
+    try {
+      encoding = getValue(project, root, "i18n.commitencoding");
+    }
+    catch (VcsException e) {
+      // ignore exception
+    }
+    if (encoding == null || encoding.length() == 0) {
+      encoding = "UTF-8";
+    }
+    return encoding;
+  }
+
+  /**
+   * Get log ouput encoding for the specified root
+   *
+   * @param project the context project
+   * @param root    the project root
+   * @return the log output encoding, the commit encoding, or UTF-8 if the encoding is note explicitly specified
+   */
+  public static String getLogEncoding(final Project project, VirtualFile root) {
+    @NonNls String encoding = null;
+    try {
+      encoding = getValue(project, root, "i18n.logoutputencoding");
+    }
+    catch (VcsException e) {
+      // ignore exception
+    }
+    if (encoding == null || encoding.length() == 0) {
+      encoding = getCommitEncoding(project, root);
+    }
+    return encoding;
+  }
+
 }

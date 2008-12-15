@@ -25,6 +25,7 @@ import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.StringScanner;
+import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 
@@ -37,10 +38,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -78,6 +76,14 @@ public class GitRebaseEditor extends DialogWrapper {
    */
   private final String myFile;
   /**
+   * The project
+   */
+  private final Project myProject;
+  /**
+   * The git root
+   */
+  private final VirtualFile myGitRoot;
+  /**
    * The cygwin drive prefix
    */
   @NonNls private static final String CYGDRIVE_PREFIX = "/cygdrive/";
@@ -90,6 +96,8 @@ public class GitRebaseEditor extends DialogWrapper {
    */
   protected GitRebaseEditor(final Project project, final VirtualFile gitRoot, String file) throws IOException {
     super(project, true);
+    myProject = project;
+    myGitRoot = gitRoot;
     setTitle(GitBundle.getString("rebase.editor.title"));
     if (SystemInfo.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
       final int pfx = CYGDRIVE_PREFIX.length();
@@ -201,14 +209,14 @@ public class GitRebaseEditor extends DialogWrapper {
    * Cancel rebase
    */
   public void cancel() throws IOException {
-    MyTableModel.cancel(myFile);
+    myTableModel.cancel(myFile);
   }
 
 
   /**
    * The table model for the commits
    */
-  private static class MyTableModel extends AbstractTableModel {
+  private class MyTableModel extends AbstractTableModel {
     /**
      * The action column
      */
@@ -309,7 +317,8 @@ public class GitRebaseEditor extends DialogWrapper {
      * @param file the file to load
      */
     public void load(final String file) throws IOException {
-      final StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(file))));
+      String encoding = GitConfigUtil.getLogEncoding(myProject, myGitRoot);
+      final StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(file), encoding)));
       while (s.hasMoreData()) {
         if (s.isEol() || s.startsWith('#')) {
           s.nextLine();
@@ -330,7 +339,8 @@ public class GitRebaseEditor extends DialogWrapper {
      * @throws IOException if there is IO problem
      */
     public void save(final String file) throws IOException {
-      PrintWriter out = new PrintWriter(new FileWriter(file));
+      String encoding = GitConfigUtil.getLogEncoding(myProject, myGitRoot);
+      PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), encoding));
       try {
         for (GitRebaseEntry e : myEntries) {
           if (e.getAction() != GitRebaseEntry.Action.skip) {
@@ -349,7 +359,7 @@ public class GitRebaseEditor extends DialogWrapper {
      * @param file the file to save to
      * @throws IOException if there is IO problem
      */
-    public static void cancel(final String file) throws IOException {
+    public void cancel(final String file) throws IOException {
       PrintWriter out = new PrintWriter(new FileWriter(file));
       try {
         //noinspection HardCodedStringLiteral

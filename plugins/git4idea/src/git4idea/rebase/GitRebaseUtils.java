@@ -15,7 +15,10 @@
  */
 package git4idea.rebase;
 
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.File;
 
 /**
  * The utilities related to rebase functionality
@@ -34,6 +37,8 @@ public class GitRebaseUtils {
    * @return true if the rebase directory presents in the root
    */
   public static boolean isRebaseInTheProgress(VirtualFile root) {
-    return root.findFileByRelativePath(".git/rebase-merge") != null;
+    @SuppressWarnings({"HardCodedStringLiteral"}) File file =
+      new File(VfsUtil.virtualToIoFile(root), ".git" + File.separator + "rebase-merge");
+    return file.exists();
   }
 }
