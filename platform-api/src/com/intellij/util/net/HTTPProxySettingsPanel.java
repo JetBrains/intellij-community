@@ -18,6 +18,8 @@ package com.intellij.util.net;
 import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -43,10 +45,11 @@ public class HTTPProxySettingsPanel{
   private JLabel myProxyPasswordLabel;
   private JLabel myHostNameLabel;
   private JLabel myPortNumberLabel;
+  private final HttpConfigurable myHttpConfigurable;
 
   public boolean isModified() {
     boolean isModified = false;
-    HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+    HttpConfigurable httpConfigurable = myHttpConfigurable;
     isModified |= httpConfigurable.USE_HTTP_PROXY != myUseProxyCheckBox.isSelected();
     isModified |= httpConfigurable.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected();
     isModified |= httpConfigurable.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected();
@@ -63,7 +66,7 @@ public class HTTPProxySettingsPanel{
     return isModified;
   }
 
-  public HTTPProxySettingsPanel() {
+  public HTTPProxySettingsPanel(final HttpConfigurable httpConfigurable) {
     myProxyAuthCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         enableProxyAuthentication(myProxyAuthCheckBox.isSelected());
@@ -75,10 +78,11 @@ public class HTTPProxySettingsPanel{
         enableProxy(myUseProxyCheckBox.isSelected());
       }
     });
+    myHttpConfigurable = httpConfigurable;
   }
 
   public void reset() {
-    HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+    HttpConfigurable httpConfigurable = myHttpConfigurable;
     myUseProxyCheckBox.setSelected(httpConfigurable.USE_HTTP_PROXY);
     myProxyAuthCheckBox.setSelected(httpConfigurable.PROXY_AUTHENTICATION);
 
@@ -94,7 +98,7 @@ public class HTTPProxySettingsPanel{
   }
 
   public void apply () {
-    HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+    HttpConfigurable httpConfigurable = myHttpConfigurable;
     httpConfigurable.USE_HTTP_PROXY = myUseProxyCheckBox.isSelected();
     httpConfigurable.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
     httpConfigurable.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
@@ -132,5 +136,29 @@ public class HTTPProxySettingsPanel{
 
   public JComponent getComponent() {
     return myMainPanel;
+  }
+
+  public void addActionListener(final ActionListener actionListener) {
+    myProxyLoginTextField.addActionListener(actionListener);
+    DocumentListener docListener = new DocumentListener() {
+      public void insertUpdate(DocumentEvent e) {
+        actionListener.actionPerformed(null);
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        actionListener.actionPerformed(null);
+      }
+
+      public void changedUpdate(DocumentEvent e) {
+        actionListener.actionPerformed(null);
+      }
+    };
+    myProxyPasswordTextField.getDocument().addDocumentListener(docListener);
+    myProxyAuthCheckBox.addActionListener(actionListener);
+    myProxyPortTextField.getDocument().addDocumentListener(docListener);
+    myProxyHostTextField.getDocument().addDocumentListener(docListener);
+    myUseProxyCheckBox.addActionListener(actionListener);
+    myRememberProxyPasswordCheckBox.addActionListener(actionListener);
+
   }
 }

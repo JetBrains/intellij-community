@@ -82,7 +82,7 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
   }
 
   public String getPlainProxyPassword () {
-    return new String(new Base64().decode(HttpConfigurable.getInstance().PROXY_PASSWORD_CRYPT.getBytes()));
+    return new String(new Base64().decode(PROXY_PASSWORD_CRYPT.getBytes()));
   }
 
   public void setPlainProxyPassword (String password) {
@@ -180,7 +180,7 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
 
   public JComponent createComponent() {
     if (myPanel == null) {
-      myPanel = new HTTPProxySettingsPanel();
+      myPanel = new HTTPProxySettingsPanel(getInstance());
     }
     return myPanel.getComponent();
   }

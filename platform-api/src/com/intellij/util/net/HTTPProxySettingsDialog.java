@@ -36,7 +36,7 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
   public HTTPProxySettingsDialog() {
     super(false);
     setTitle(CommonBundle.message("title.http.proxy.settings"));
-    panel = new HTTPProxySettingsPanel();
+    panel = new HTTPProxySettingsPanel(HttpConfigurable.getInstance());
     panel.reset();
 
     okAction = new AbstractAction(CommonBundle.getOkButtonText()) {
