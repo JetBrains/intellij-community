@@ -61,13 +61,14 @@ public abstract class PassExecutorService {
     // null keys are ok
     Map<Document, List<FileEditor>> documentToEditors = new HashMap<Document, List<FileEditor>>();
     Map<FileEditor, List<TextEditorHighlightingPass>> textPasses = new HashMap<FileEditor, List<TextEditorHighlightingPass>>(passesMap.size());
-    for (FileEditor fileEditor : passesMap.keySet()) {
+    for (Map.Entry<FileEditor, HighlightingPass[]> fileEditorEntry : passesMap.entrySet()) {
       Document document = null;
+      FileEditor fileEditor = fileEditorEntry.getKey();
       if (fileEditor instanceof TextEditor) {
         Editor editor = ((TextEditor)fileEditor).getEditor();
         document = editor.getDocument();
       }
-      HighlightingPass[] passes = passesMap.get(fileEditor);
+      HighlightingPass[] passes = fileEditorEntry.getValue();
 
       for (int i = 0; i < passes.length; i++) {
         final HighlightingPass pass = passes[i];
@@ -111,8 +112,8 @@ public abstract class PassExecutorService {
 
     List<ScheduledPass> freePasses = new ArrayList<ScheduledPass>(documentToEditors.size());
     final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
-    for (Document document : documentToEditors.keySet()) {
-      List<FileEditor> fileEditors = documentToEditors.get(document);
+    for (Map.Entry<Document, List<FileEditor>> documentListEntry : documentToEditors.entrySet()) {
+      List<FileEditor> fileEditors = documentListEntry.getValue();
       List<TextEditorHighlightingPass> passes = textPasses.get(fileEditors.get(0));
       threadsToStartCountdown.addAndGet(passes.size());
 
@@ -240,7 +241,7 @@ public abstract class PassExecutorService {
     private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<ScheduledPass>();
     private final DaemonProgressIndicator myUpdateProgress;
 
-    public ScheduledPass(List<FileEditor> fileEditors,
+    private ScheduledPass(List<FileEditor> fileEditors,
                          TextEditorHighlightingPass pass,
                          DaemonProgressIndicator progressIndicator,
                          AtomicInteger threadsToStartCountdown,

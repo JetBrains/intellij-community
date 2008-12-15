@@ -346,8 +346,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   static List<HighlightInfo> getHighlights(MarkupModel markup) {
-    List<HighlightInfo> infos = markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
-    return infos;
+    return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
   }
 
   @NotNull
@@ -560,7 +559,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
         renewUpdateProgress(true);
         myAlarm.cancelAllRequests();
-        myPassExecutorService.submitPasses(passes, myUpdateProgress, Job.DEFAULT_PRIORITY);
+        DaemonProgressIndicator progress = myUpdateProgress;
+        LOG.assertTrue(progress.isRunning());
+        myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
       }
     };
   }
