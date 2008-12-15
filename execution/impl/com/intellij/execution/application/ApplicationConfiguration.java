@@ -2,7 +2,6 @@ package com.intellij.execution.application;
 
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
-import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
@@ -230,17 +229,8 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
       }
 
       if ((!(getRunnerSettings().getData() instanceof DebuggingRunnerData) || getCoverageRunner() instanceof IDEACoverageRunner) && isCoverageEnabled()) {
-        final String coverageFileName = getCoverageFilePath();
-        final long lastCoverageTime = System.currentTimeMillis();
-        String name = getName();
-        if (name == null) name = getGeneratedName();
         final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
-        myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(
-          name,
-          new DefaultCoverageFileProvider(coverageFileName),
-          getPatterns(),
-          lastCoverageTime,
-          getSuiteToMergeWith(), getCoverageRunner(), isTrackPerTestCoverage() && !isSampling(), !isSampling());
+        myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(ApplicationConfiguration.this);
         appendCoverageArgument(params);
       }
 
