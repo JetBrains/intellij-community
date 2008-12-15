@@ -41,21 +41,25 @@ public class BackgroundTaskQueue {
     myProject = project;
     myRunnerTask = new Task.Backgroundable(project, title) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        myHasActiveTask = true;
-        while(true) {
+        while (true) {
           final Task task;
+
           synchronized(myQueue) {
+            myHasActiveTask = true;
             task = myQueue.poll();
             if (task == null) {
-              break;
+              myHasActiveTask = false;
+              return;
             }
           }
+
           indicator.setText(task.getTitle());
           try {
             task.run(indicator);
           } catch (ProcessCanceledException e) {
             //ok
           }
+
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (myProject == null || !myProject.isDisposed()) {
@@ -64,7 +68,6 @@ public class BackgroundTaskQueue {
             }
           }, ModalityState.NON_MODAL);
         }
-        myHasActiveTask = false;
       }
     };
   }

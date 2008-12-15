@@ -864,7 +864,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     cancelRefreshTimer();
     if (myState.isRefreshEnabled()) {
       myRefresnRunnable = new MyRefreshRunnable(this);
-      myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(myRefresnRunnable,
+      // if "schedule with fixed rate" is used, then after waking up from stand-by mode, events are generated for inactive period
+      // it does not make sense
+      myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(myRefresnRunnable,
                                                                  myState.getRefreshInterval()*60, myState.getRefreshInterval()*60,
                                                                  TimeUnit.SECONDS);
     }
