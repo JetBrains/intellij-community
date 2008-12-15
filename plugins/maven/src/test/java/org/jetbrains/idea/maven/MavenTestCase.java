@@ -264,6 +264,12 @@ public abstract class MavenTestCase extends TestCase {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
   }
 
+  protected VirtualFile createProjectSubFile(String relativePath, String content) throws IOException {
+    VirtualFile file = createProjectSubFile(relativePath);
+    file.setBinaryContent(content.getBytes());
+    return file;
+  }
+
   protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
     assertOrderedElementsAreEqual(actual, expected.toArray());
   }

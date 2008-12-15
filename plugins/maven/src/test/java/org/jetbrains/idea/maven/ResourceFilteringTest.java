@@ -17,7 +17,7 @@ import java.util.List;
 
 public class ResourceFilteringTest extends MavenImportingTestCase {
   public void testBasic() throws Exception {
-    createProjectSubFile("resources/file.properties").setBinaryContent("value=${project.version}".getBytes());
+    createProjectSubFile("resources/file.properties", "value=${project.version}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -38,7 +38,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testPomArtifactId() throws Exception {
-    createProjectSubFile("resources/file.properties").setBinaryContent("value=${pom.artifactId}".getBytes());
+    createProjectSubFile("resources/file.properties", "value=${pom.artifactId}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -59,7 +59,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testPomVersionInModules() throws Exception {
-    createProjectSubFile("m1/resources/file.properties").setBinaryContent("value=${pom.version}".getBytes());
+    createProjectSubFile("m1/resources/file.properties", "value=${pom.version}");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -83,7 +83,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
                     "  </resources>" +
                     "</build>");
     importProject();
-    
+
     assertSources("m1", "resources");
     compileModules("project", "m1");
 
@@ -91,7 +91,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testFilteringTestResources() throws Exception {
-    createProjectSubFile("resources/file.properties").setBinaryContent("value=${project.version}".getBytes());
+    createProjectSubFile("resources/file.properties", "value=${project.version}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -112,8 +112,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testFilterWithSeveralResourceFolders() throws Exception {
-    createProjectSubFile("resources1/file1.properties").setBinaryContent("value=${project.version}".getBytes());
-    createProjectSubFile("resources2/file2.properties").setBinaryContent("value=${project.version}".getBytes());
+    createProjectSubFile("resources1/file1.properties", "value=${project.version}");
+    createProjectSubFile("resources2/file2.properties", "value=${project.version}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -139,8 +139,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testFilterWithSeveralModules() throws Exception {
-    createProjectSubFile("module1/resources/file1.properties").setBinaryContent("value=${project.version}".getBytes());
-    createProjectSubFile("module2/resources/file2.properties").setBinaryContent("value=${project.version}".getBytes());
+    createProjectSubFile("module1/resources/file1.properties", "value=${project.version}");
+    createProjectSubFile("module2/resources/file2.properties", "value=${project.version}");
 
     VirtualFile m1 = createModulePom("module1",
                                      "<groupId>test</groupId>" +
@@ -180,8 +180,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testDoNotFilterIfNotRequested() throws Exception {
-    createProjectSubFile("resources1/file1.properties").setBinaryContent("value=${project.version}".getBytes());
-    createProjectSubFile("resources2/file2.properties").setBinaryContent("value=${project.version}".getBytes());
+    createProjectSubFile("resources1/file1.properties", "value=${project.version}");
+    createProjectSubFile("resources2/file2.properties", "value=${project.version}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -207,7 +207,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testDoNotChangeFileIfPropertyIsNotResolved() throws Exception {
-    createProjectSubFile("resources/file.properties").setBinaryContent("value=${foo.bar}".getBytes());
+    createProjectSubFile("resources/file.properties", "value=${foo.bar}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -228,7 +228,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testChangingResolvedPropsBackWhenSettingsIsChange() throws Exception {
-    createProjectSubFile("resources/file.properties").setBinaryContent("value=${project.version}".getBytes());
+    createProjectSubFile("resources/file.properties", "value=${project.version}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -264,8 +264,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testSameFileInSourcesAndTestSources() throws Exception {
-    createProjectSubFile("src/main/resources/file.properties").setBinaryContent("foo=${foo.main}".getBytes());
-    createProjectSubFile("src/test/resources/file.properties").setBinaryContent("foo=${foo.test}".getBytes());
+    createProjectSubFile("src/main/resources/file.properties", "foo=${foo.main}");
+    createProjectSubFile("src/test/resources/file.properties", "foo=${foo.test}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -297,15 +297,14 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testCustomFilters() throws Exception {
-    createProjectSubFile("filters/filter1.properties").setBinaryContent(
-      ("xxx=value\n" +
-       "yyy=${project.version}\n").getBytes());
-    createProjectSubFile("filters/filter2.properties").setBinaryContent(
-      ("zzz=value2").getBytes());
-    createProjectSubFile("resources/file.properties").setBinaryContent(
-      ("value1=${xxx}\n" +
-       "value2=${yyy}\n" +
-       "value3=${zzz}\n").getBytes());
+    createProjectSubFile("filters/filter1.properties",
+                         "xxx=value\n" +
+                         "yyy=${project.version}\n");
+    createProjectSubFile("filters/filter2.properties", "zzz=value2");
+    createProjectSubFile("resources/file.properties",
+                         "value1=${xxx}\n" +
+                         "value2=${yyy}\n" +
+                         "value3=${zzz}\n");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -329,6 +328,35 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("target/classes/file.properties", "value1=value\n" +
                                                    "value2=1\n" +
                                                    "value3=value2\n");
+  }
+
+  public void testCustomFilterWithPropertyInThePath() throws Exception {
+    createProjectSubFile("filters/filter.properties", "xxx=value");
+    createProjectSubFile("resources/file.properties", "value=${xxx}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  " <some.path>" + getProjectPath() + "/filters</some.path>" +
+                  "</properties>" +
+
+                  "<build>" +
+                  "  <filters>" +
+                  "    <filter>${some.path}/filter.properties</filter>" +
+                  "  </filters>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    assertSources("project", "resources");
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "value=value");
   }
 
   private void assertResult(String relativePath, String content) throws IOException {
