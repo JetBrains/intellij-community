@@ -498,6 +498,21 @@ public class XmlUtil {
     return null;
   }
 
+  @Nullable
+    public static String getCommentText(XmlComment comment) {
+      final PsiElement firstChild = comment.getFirstChild();
+      if (firstChild != null) {
+          final PsiElement nextSibling = firstChild.getNextSibling();
+          if (nextSibling instanceof XmlToken) {
+              final XmlToken token = (XmlToken)nextSibling;
+              if (token.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
+                  return token.getText();
+              }
+          }
+      }
+      return null;
+  }
+
   private static class XmlElementProcessor {
     private PsiElementProcessor processor;
     private PsiFile targetFile;
