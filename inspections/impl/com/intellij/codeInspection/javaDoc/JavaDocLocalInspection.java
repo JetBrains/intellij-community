@@ -439,7 +439,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                                                                    final PsiTypeParameter psiTypeParameter,
                                                                    final InspectionManager manager) {
     String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@param</code>");
-    return createDescriptor(nameIdentifier, message, new AddMissingTagFix("param", "<" + psiTypeParameter.getText() + ">"), manager);
+    return createDescriptor(nameIdentifier, message, new AddMissingTagFix("param", "<" + psiTypeParameter.getName() + ">"), manager);
   }
 
   @Nullable
