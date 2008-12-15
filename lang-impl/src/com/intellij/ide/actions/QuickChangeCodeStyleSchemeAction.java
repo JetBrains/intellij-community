@@ -32,7 +32,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
     final CodeStyleScheme currentScheme = CodeStyleSchemes.getInstance().getCurrentScheme();
 
     for (final CodeStyleScheme scheme : schemes) {
-      addScheme(group, manager, currentScheme, scheme);
+      addScheme(group, manager, currentScheme, scheme, false);
     }
 
 
@@ -43,16 +43,19 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
 
 
       for (SharedScheme<CodeStyleSchemeImpl> scheme : sharedSchemes) {
-        addScheme(group, manager, currentScheme, scheme.getScheme());
+        addScheme(group, manager, currentScheme, scheme.getScheme(), true);
       }
     }
   }
 
   private void addScheme(final DefaultActionGroup group, final CodeStyleSettingsManager manager, final CodeStyleScheme currentScheme,
-                         final CodeStyleScheme scheme) {
+                         final CodeStyleScheme scheme, final boolean addScheme) {
     group.add(new AnAction(scheme.getName(), "",
                            scheme == currentScheme && !manager.USE_PER_PROJECT_SETTINGS ? ourCurrentAction : ourNotCurrentAction) {
       public void actionPerformed(AnActionEvent e) {
+        if (addScheme) {
+          CodeStyleSchemes.getInstance().addScheme(scheme);
+        }
         CodeStyleSchemes.getInstance().setCurrentScheme(scheme);
         manager.USE_PER_PROJECT_SETTINGS = false;
         EditorFactory.getInstance().refreshAllEditors();

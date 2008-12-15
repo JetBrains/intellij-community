@@ -383,7 +383,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
                   filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
 
                   if (copy.getRootElement().getChildren().size() > 0) {
-                    StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType);
+                    StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
                   }
                 }
                 catch (IOException e) {

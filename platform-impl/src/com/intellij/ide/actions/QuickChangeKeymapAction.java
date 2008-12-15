@@ -22,7 +22,7 @@ public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
     final Keymap current = manager.getActiveKeymap();
 
     for (final Keymap keymap : manager.getAllKeymaps()) {
-      addKeymapAction(group, manager, current, keymap);
+      addKeymapAction(group, manager, current, keymap, false);
     }
 
     Collection<SharedScheme<KeymapImpl>> sharedSchemes = ((KeymapManagerEx)KeymapManagerEx.getInstance()).getSchemesManager().loadSharedSchemes();
@@ -30,15 +30,18 @@ public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
     if (!sharedSchemes.isEmpty()) {
       group.add(Separator.getInstance());
       for (SharedScheme<KeymapImpl> sharedScheme : sharedSchemes) {
-        addKeymapAction(group, manager,current, sharedScheme.getScheme());
+        addKeymapAction(group, manager,current, sharedScheme.getScheme(), true);
       }
     }
 
   }
 
-  private void addKeymapAction(final DefaultActionGroup group, final KeymapManagerEx manager, final Keymap current, final Keymap keymap) {
+  private void addKeymapAction(final DefaultActionGroup group, final KeymapManagerEx manager, final Keymap current, final Keymap keymap, final boolean addScheme) {
     group.add(new AnAction(keymap.getPresentableName(), "", keymap == current ? ourCurrentAction : ourNotCurrentAction) {
       public void actionPerformed(AnActionEvent e) {
+        if (addScheme) {
+          manager.getSchemesManager().addNewScheme(keymap, false);
+        }
         manager.setActiveKeymap(keymap);
       }
     });

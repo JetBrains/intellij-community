@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.io.File;
+import java.io.IOException;
 
 public interface SchemesManager <T extends Scheme, E extends ExternalizableScheme>{
   SchemesManager EMPTY = new SchemesManager(){
@@ -81,8 +82,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
   Collection<SharedScheme<E>> loadSharedSchemes();
   Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList);
 
-  void exportScheme(final E scheme, final String name, final String description)
-      throws WriteExternalException;
+  void exportScheme(final E scheme, final String name, final String description) throws WriteExternalException, IOException;
 
   boolean isImportAvailable();
 

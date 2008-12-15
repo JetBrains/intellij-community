@@ -181,11 +181,11 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     };
   }
 
-  public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType) {
+  public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) {
 
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
-        streamProvider.saveContent(fileSpec, content, size, roamingType);
+        streamProvider.saveContent(fileSpec, content, size, roamingType, async);
       }
       catch (ConnectException e) {
         LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());

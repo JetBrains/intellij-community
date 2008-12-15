@@ -9,7 +9,7 @@ import java.io.InputStream;
 
 public interface StreamProvider {
   StreamProvider DEFAULT = new StreamProvider(){
-    public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType) throws IOException {
+    public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException {
 
     }
 
@@ -30,7 +30,7 @@ public interface StreamProvider {
     }
   };
 
-  void saveContent(String fileSpec, InputStream content, final long size, final RoamingType roamingType) throws IOException;
+  void saveContent(String fileSpec, InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException;
 
   @Nullable
   InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException;

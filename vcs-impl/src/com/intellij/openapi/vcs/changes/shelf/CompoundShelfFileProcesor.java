@@ -144,7 +144,7 @@ public class CompoundShelfFileProcesor {
       throws IOException {
     FileInputStream input = new FileInputStream(file);
     try {
-      serverStreamProvider.saveContent(newFilePath, input, file.length(), PER_USER);
+      serverStreamProvider.saveContent(newFilePath, input, file.length(), PER_USER, true);
     }
     finally {
       input.close();

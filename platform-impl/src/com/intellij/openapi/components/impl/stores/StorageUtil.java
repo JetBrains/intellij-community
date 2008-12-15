@@ -170,12 +170,12 @@ public class StorageUtil {
     }
   }
 
-  public static void sendContent(final StreamProvider streamProvider, final String fileSpec, final Document copy, final RoamingType roamingType)
+  public static void sendContent(final StreamProvider streamProvider, final String fileSpec, final Document copy, final RoamingType roamingType, boolean async)
       throws IOException {
     byte[] content = printDocument(copy);
     ByteArrayInputStream in = new ByteArrayInputStream(content);
     try {
-      streamProvider.saveContent(fileSpec, in, content.length, roamingType);
+      streamProvider.saveContent(fileSpec, in, content.length, roamingType, async);
     }
     finally {
       in.close();

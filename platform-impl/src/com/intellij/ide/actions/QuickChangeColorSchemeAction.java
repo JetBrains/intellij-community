@@ -24,7 +24,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     final EditorColorsScheme[] schemes = EditorColorsManager.getInstance().getAllSchemes();
     EditorColorsScheme current = EditorColorsManager.getInstance().getGlobalScheme();
     for (final EditorColorsScheme scheme : schemes) {
-      addScheme(group, current, scheme);
+      addScheme(group, current, scheme, false);
     }
 
 
@@ -34,15 +34,18 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
       group.add(Separator.getInstance());
 
       for (SharedScheme<EditorColorsSchemeImpl> sharedScheme : sharedSchemes) {
-        addScheme(group, current, sharedScheme.getScheme());
+        addScheme(group, current, sharedScheme.getScheme(), true);
       }
     }
 
   }
 
-  private void addScheme(final DefaultActionGroup group, final EditorColorsScheme current, final EditorColorsScheme scheme) {
+  private void addScheme(final DefaultActionGroup group, final EditorColorsScheme current, final EditorColorsScheme scheme, final boolean addScheme) {
     group.add(new AnAction(scheme.getName(), "", scheme == current ? ourCurrentAction : ourNotCurrentAction) {
       public void actionPerformed(AnActionEvent e) {
+        if (addScheme) {
+          EditorColorsManager.getInstance().addColorsScheme(scheme);
+        }
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
         Editor[] editors = EditorFactory.getInstance().getAllEditors();
         for (Editor editor : editors) {

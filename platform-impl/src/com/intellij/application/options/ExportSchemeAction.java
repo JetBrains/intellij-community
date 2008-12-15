@@ -10,6 +10,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.WriteExternalException;
 
+import java.io.IOException;
+
 public abstract class ExportSchemeAction<T extends Scheme, E extends ExternalizableScheme> extends AnAction {
   protected final SchemesManager<T, E> mySchemesManager;
 
@@ -44,15 +46,20 @@ public abstract class ExportSchemeAction<T extends Scheme, E extends Externaliza
         dialog.show();
 
         if (dialog.isOK()) {
-          manager.exportScheme(scheme, dialog.getName(), dialog.getDescription());
+          try {
+            manager.exportScheme(scheme, dialog.getName(), dialog.getDescription());
+            Messages.showMessageDialog("Scheme '" + scheme.getName() + "' was shared successfully as '" + dialog.getName() + " '", "Share Scheme",
+                                       Messages.getInformationIcon());            
+          }
+          catch (IOException e) {
+            Messages.showErrorDialog("Cannot share scheme '" + scheme.getName() + "': " + e.getLocalizedMessage(), "Share Shceme");
+          }
 
-          Messages.showMessageDialog("Scheme '" + scheme.getName() + "' was shared successfully as '" + dialog.getName() + " '", "Share Scheme",
-                                     Messages.getInformationIcon());
         }
 
       }
       catch (WriteExternalException e1) {
-        Messages.showErrorDialog("Cannot export profile: " + e1.getLocalizedMessage(), "Export Profile");
+        Messages.showErrorDialog("Cannot share scheme: " + e1.getLocalizedMessage(), "Share Scheme");
       }
     }
   }
