@@ -6,8 +6,8 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
 import com.intellij.application.options.colors.ColorAndFontOptions;
-import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
+import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
@@ -129,6 +130,8 @@ public class SeverityEditorDialog extends DialogWrapper {
               }
             }
           });
+        } else {
+          ShowSettingsUtil.getInstance().editConfigurable(PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), javaPage);
         }
       }
     });
