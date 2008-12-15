@@ -58,7 +58,7 @@ import java.util.Map;
  */
 public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogConsoleManager, TestResultsViewer,
                                                 SMTRunnerEventsListener {
-  @NonNls private static final String SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
+  @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   private JPanel myContentPane;
   private JSplitPane splitPane;
@@ -103,14 +103,26 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   private int myTestsFailuresCount;
   private long myStartTime;
   private long myEndTime;
+  private final String mySplitterPropertyName;
 
 
   public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
                               final TestConsoleProperties consoleProperties,
                               final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationSettings) {
+    this(runConfiguration, consoleProperties, runnerSettings, configurationSettings, null);
+  }
+
+  public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
+                              final TestConsoleProperties consoleProperties,
+                              final RunnerSettings runnerSettings,
+                              final ConfigurationPerRunnerSettings configurationSettings,
+                              final String splitterPropertyName) {
     myConsoleProperties = consoleProperties;
     myRunConfiguration = runConfiguration;
+    mySplitterPropertyName = splitterPropertyName == null
+                             ? DEFAULT_SM_RUNNER_SPLITTER_PROPERTY
+                             : splitterPropertyName;
 
     final Project project = runConfiguration.getProject();
     myProject = project;
@@ -560,7 +572,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   }
 
   protected String getSplitterPropertyName() {
-    return SM_RUNNER_SPLITTER_PROPERTY;
+    return mySplitterPropertyName;
   }
 
   private void updateStatusLabel() {
