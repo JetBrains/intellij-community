@@ -271,7 +271,8 @@
   <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.OpenedInEditorWeigher" id="openedInEditor"/>
-  <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameModuleWeigher" id="sameModule" order="after openedInEditor"/>
+  <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameLogicalRootWeigher" id="sameLogicalRoot" order="after openedInEditor"/>
+  <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameModuleWeigher" id="sameModule" order="after sameLogicalRoot"/>
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameProjectWeigher" id="sameProject" order="after sameModule"/>
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary" order="after sameProject"/>
 
