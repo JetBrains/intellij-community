@@ -80,8 +80,8 @@ public class FileStatusMap {
     }
 
     private void markWholeFile(PsiFile file, Document document, Project project) {
-      TextRange range = file == null ? null : file.getTextRange();
-      RangeMarker marker = range == null ? null : document.createRangeMarker(range);
+      int length = file == null ? -1 : Math.min(file.getTextLength(), document.getTextLength());
+      RangeMarker marker = length == -1 ? null : document.createRangeMarker(0, length);
       dirtyScopes.put(Pass.UPDATE_ALL, marker);
       dirtyScopes.put(Pass.EXTERNAL_TOOLS, marker);
       dirtyScopes.put(Pass.LOCAL_INSPECTIONS, marker);
