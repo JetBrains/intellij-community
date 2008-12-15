@@ -69,7 +69,6 @@ public class IElementType {
    * @param p the predicate which should be matched by the element types.
    * @return the array of matching element types.
    */
-
   public static IElementType[] enumerate(Predicate p) {
     List<IElementType> matches = new ArrayList<IElementType>();
     for (IElementType value : ourRegistry) {

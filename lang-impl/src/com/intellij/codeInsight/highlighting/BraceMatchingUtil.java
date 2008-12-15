@@ -94,33 +94,34 @@ public class BraceMatchingUtil {
 
         IElementType tokenType = iterator.getTokenType();
 
-        if (getTokenGroup(tokenType, fileType) == group) {
-          String tagName = myMatcher == null ? null : getTagName(myMatcher,fileText, iterator);
-          if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
-          if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)){
-            ourBraceStack.push(tokenType);
-            if (isStrict){
-              ourTagNameStack.push(tagName);
-            }
+        if (getTokenGroup(tokenType, fileType) != group) {
+          continue;
+        }
+        String tagName = myMatcher == null ? null : getTagName(myMatcher,fileText, iterator);
+        if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
+        if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)){
+          ourBraceStack.push(tokenType);
+          if (isStrict){
+            ourTagNameStack.push(tagName);
           }
-          else if (forward ? isRBraceToken(iterator, fileText,fileType) : isLBraceToken(iterator, fileText, fileType)){
-            IElementType topTokenType = ourBraceStack.pop();
-            String topTagName = null;
-            if (isStrict){
-              topTagName = ourTagNameStack.pop();
-            }
+        }
+        else if (forward ? isRBraceToken(iterator, fileText,fileType) : isLBraceToken(iterator, fileText, fileType)){
+          IElementType topTokenType = ourBraceStack.pop();
+          String topTagName = null;
+          if (isStrict){
+            topTagName = ourTagNameStack.pop();
+          }
 
-            if (!isPairBraces(topTokenType, tokenType, fileType)
-              || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)
-            ){
-              matched = false;
-              break;
-            }
+          if (!isPairBraces(topTokenType, tokenType, fileType)
+            || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)
+          ){
+            matched = false;
+            break;
+          }
 
-            if (ourBraceStack.isEmpty()){
-              matched = true;
-              break;
-            }
+          if (ourBraceStack.isEmpty()){
+            matched = true;
+            break;
           }
         }
       }

@@ -16,6 +16,7 @@ import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.ide.highlighter.XmlLikeFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,6 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
 
   public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
-    final boolean result;
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
@@ -71,10 +71,9 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
         if (pair.getLeftBraceType() == tokenType) return true;
       }
     }
-    result = tokenType == XmlTokenType.XML_START_TAG_START ||
+    return tokenType == XmlTokenType.XML_START_TAG_START ||
            tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
            tokenType == XmlTokenType.XML_CDATA_START;
-    return result;
   }
 
   public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
@@ -140,18 +139,11 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
             pair.isStructural()) return true;
       }
     }
-    if (fileType == StdFileTypes.HTML ||
-             fileType == StdFileTypes.XML ||
-             fileType == StdFileTypes.XHTML
-            ) {
+    if (fileType instanceof XmlLikeFileType) {
       return tokenType == XmlTokenType.XML_START_TAG_START ||
              tokenType == XmlTokenType.XML_TAG_END ||
              tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
-             ( tokenType == XmlTokenType.XML_TAG_END &&
-               ( isFileTypeWithSingleHtmlTags(fileType)
-               ) &&
-               isEndOfSingleHtmlTag(text, iterator)
-             );
+             tokenType == XmlTokenType.XML_TAG_END && isFileTypeWithSingleHtmlTags(fileType) && isEndOfSingleHtmlTag(text, iterator);
     }
     return false;
   }
@@ -214,45 +206,46 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     final IElementType tokenType = iterator.getTokenType();
     String name = null;
     if (tokenType == XmlTokenType.XML_START_TAG_START) {
-      {
-        boolean wasWhiteSpace = false;
+      iterator.advance();
+      IElementType tokenType1 = iterator.atEnd() ? null : iterator.getTokenType();
+
+      boolean wasWhiteSpace = false;
+      if (isWhitespace(tokenType1)) {
+        wasWhiteSpace = true;
         iterator.advance();
-        IElementType tokenType1 = (!iterator.atEnd() ? iterator.getTokenType() :null);
-
-        if (isWhitespace(tokenType1)) {
-          wasWhiteSpace = true;
-          iterator.advance();
-          tokenType1 = (!iterator.atEnd() ? iterator.getTokenType() :null);
-        }
-
-        if (tokenType1 == XmlTokenType.XML_TAG_NAME ||
-            tokenType1 == XmlTokenType.XML_NAME
-           ) {
-          name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
-        }
-
-        if (wasWhiteSpace) iterator.retreat();
-        iterator.retreat();
+        tokenType1 = iterator.atEnd() ? null : iterator.getTokenType();
       }
+
+      if (tokenType1 == XmlTokenType.XML_TAG_NAME ||
+          tokenType1 == XmlTokenType.XML_NAME
+         ) {
+        name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
+      }
+
+      if (wasWhiteSpace) iterator.retreat();
+      iterator.retreat();
     }
     else if (tokenType == XmlTokenType.XML_TAG_END || tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
-      {
-        int balance = 0;
-        int count = 0;
-        IElementType tokenType1 = iterator.getTokenType();
-        while (balance >=0) {
-          iterator.retreat();
-          count++;
-          if (iterator.atEnd()) break;
-          tokenType1 = iterator.getTokenType();
+      int balance = 0;
+      int count = 0;
+      IElementType tokenType1 = iterator.getTokenType();
+      while (balance >=0) {
+        iterator.retreat();
+        count++;
+        if (iterator.atEnd()) break;
+        tokenType1 = iterator.getTokenType();
 
-          if(tokenType1 == XmlTokenType.XML_TAG_END || tokenType1 == XmlTokenType.XML_EMPTY_ELEMENT_END) balance++;
-          else if(tokenType1 == XmlTokenType.XML_TAG_NAME)
-            balance--;
+        if (tokenType1 == XmlTokenType.XML_TAG_END || tokenType1 == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+          balance++;
         }
-        if(tokenType1 == XmlTokenType.XML_TAG_NAME) name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
-        while (count-- > 0) iterator.advance();
+        else if (tokenType1 == XmlTokenType.XML_TAG_NAME) {
+          balance--;
+        }
       }
+      if (tokenType1 == XmlTokenType.XML_TAG_NAME) {
+        name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
+      }
+      while (count-- > 0) iterator.advance();
     }
 
     return name;
