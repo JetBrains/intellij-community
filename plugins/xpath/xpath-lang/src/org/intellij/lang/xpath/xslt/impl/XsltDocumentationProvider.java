@@ -30,6 +30,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,6 @@ import org.intellij.lang.xpath.psi.XPathFunction;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -112,7 +112,7 @@ class XsltDocumentationProvider implements DocumentationProvider {
                 p = p.getPrevSibling();
             }
             if (p instanceof XmlComment) {
-                final String commentText = XsltCodeInsightUtil.getCommentText((XmlComment)p);
+                final String commentText = XmlUtil.getCommentText((XmlComment)p);
                 return commentText != null ? commentText.replaceAll("&", "&amp;").replaceAll("<", "&lt;") : null;
             } else {
                 return null;

@@ -28,10 +28,9 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
 abstract class SuppressInspectionAction extends SuppressIntentionAction {
     private final String myToolId;
@@ -75,7 +74,7 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
         }
         if (prevSibling instanceof XmlComment) {
             final XmlComment comment = (XmlComment)prevSibling;
-            final String text = XsltCodeInsightUtil.getCommentText(comment);
+            final String text = XmlUtil.getCommentText(comment);
             if (text != null && InspectionUtil.SUPPRESSION_PATTERN.matcher(text).matches()) {
                 final String s = text.trim() + ", " + myToolId;
                 final XmlComment newComment = createComment(project, s);

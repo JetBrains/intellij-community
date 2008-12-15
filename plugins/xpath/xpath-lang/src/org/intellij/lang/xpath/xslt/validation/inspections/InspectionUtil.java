@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlProlog;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
@@ -84,7 +85,7 @@ public class InspectionUtil {
         }
         if (prevSibling instanceof XmlComment) {
             final XmlComment comment = (XmlComment)prevSibling;
-            final String text = XsltCodeInsightUtil.getCommentText(comment);
+            final String text = XmlUtil.getCommentText(comment);
             if (text != null) {
                 final Matcher matcher = SUPPRESSION_PATTERN.matcher(text);
                 if (matcher.matches()) {

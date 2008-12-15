@@ -118,22 +118,7 @@ public class XsltCodeInsightUtil {
         return list.size() > 0 ? list.get(list.size() - 1) : null;
     }
 
-    @Nullable
-    public static String getCommentText(XmlComment comment) {
-        final PsiElement firstChild = comment.getFirstChild();
-        if (firstChild != null) {
-            final PsiElement nextSibling = firstChild.getNextSibling();
-            if (nextSibling instanceof XmlToken) {
-                final XmlToken token = (XmlToken)nextSibling;
-                if (token.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
-                    return token.getText();
-                }
-            }
-        }
-        return null;
-    }
-
-    @NotNull
+  @NotNull
     public static TextRange getRangeInsideHostingFile(XPathElement expr) {
         final PsiLanguageInjectionHost host = PsiTreeUtil.getContextOfType(expr, PsiLanguageInjectionHost.class, true);
         assert host != null;
