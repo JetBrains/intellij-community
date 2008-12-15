@@ -103,7 +103,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   protected void checkComments(PsiElement last, boolean commentHere, List<PsiComment> comments) {
     try {
       ArrayList<CommentRange> found = new ArrayList<CommentRange>();
-      Pattern pattern = Pattern.compile(myOptions.getKeyword());
+      Pattern pattern = Pattern.compile(myOptions.getKeyword(), Pattern.CASE_INSENSITIVE);
       Document doc = FileDocumentManager.getInstance().getDocument(getFile().getVirtualFile());
       for (int i = 0; i < comments.size(); i++) {
         PsiComment comment = comments.get(i);
