@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven;
 
+import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectModelProblem;
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,7 +122,9 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     MavenProjectModel root = getRootProjects().get(0);
     assertProblems(root, true);
 
-    assertProblems(getModules(root).get(0), false, "end tag name </project> must be the same as start tag <version> from line 1 (position: TEXT seen ...</artifactId><version>1</project>... @1:348) ");
+    assertProblems(getModules(root).get(0),
+                   false,
+                   "end tag name </project> must be the same as start tag <version> from line 1 (position: TEXT seen ...</artifactId><version>1</project>... @1:348) ");
   }
 
   public void testSeveratInvalidModulesAndWithSameName() throws Exception {
@@ -206,6 +208,47 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     MavenProjectModel root = getRootProjects().get(0);
     assertProblems(root, false, "Cannot find ArtifactRepositoryLayout instance for: nothing");
+  }
+
+  public void testDoNotFailIfRepositoryHasEmptyLayout() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<repositories>" +
+                  " <repository>" +
+                  "   <id>foo1</id>" +
+                  "   <url>bar1</url>" +
+                  "   <layout/>" +
+                  " </repository>" +
+                  "</repositories>" +
+                  "<pluginRepositories>" +
+                  " <pluginRepository>" +
+                  "   <id>foo2</id>" +
+                  "   <url>bar2</url>" +
+                  "   <layout/>" +
+                  " </pluginRepository>" +
+                  "</pluginRepositories>");
+
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true);
+  }
+
+  public void testDoNotFailIfDistributionRepositoryHasEmptyValues() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<distributionManagement>" +
+                  "  <repository>" +
+                  "   <id/>" +
+                  "   <url/>" +
+                  "   <layout/>" +
+                  "  </repository>" +
+                  "</distributionManagement>");
+
+    MavenProjectModel root = getRootProjects().get(0);
+    assertProblems(root, true);
   }
 
   public void testUnresolvedDependencies() throws Exception {
@@ -583,12 +626,12 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   private void assertProblems(MavenProjectModel project, boolean isValid, String... expectedProblems) {
-    assertEquals(isValid, project.isValid());
 
     List<String> actualProblems = new ArrayList<String>();
     for (MavenProjectModelProblem each : project.getProblems()) {
       actualProblems.add(each.getDescription());
     }
+    assertEquals(actualProblems.toString(), isValid, project.isValid());
     assertOrderedElementsAreEqual(actualProblems, expectedProblems);
   }
 

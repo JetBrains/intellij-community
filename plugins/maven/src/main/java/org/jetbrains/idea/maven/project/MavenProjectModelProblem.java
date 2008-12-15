@@ -16,4 +16,9 @@ public class MavenProjectModelProblem {
   public boolean isCritical() {
     return isCritical;
   }
+
+  @Override
+  public String toString() {
+    return (isCritical ? "!!!" : "") + myDescription;
+  }
 }

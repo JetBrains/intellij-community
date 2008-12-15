@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.apache.maven.MavenTools;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
@@ -168,7 +169,7 @@ public class MavenEmbedderFactory {
                                                            MavenConsole console,
                                                            MavenProcess process,
                                                            MavenProjectsTree projectsTree) {
-    return createEmbedder(settings, console, process,  new MyCustomizer(projectsTree, false, false));
+    return createEmbedder(settings, console, process,  new MyReadResolveCustomizer(projectsTree, false, false));
   }
 
   public static MavenEmbedderWrapper createEmbedderForResolve(MavenGeneralSettings settings,
@@ -183,13 +184,13 @@ public class MavenEmbedderFactory {
                                                               MavenProcess process,
                                                               MavenProjectsTree projectsTree,
                                                               boolean strictResolve) {
-    return createEmbedder(settings, console, process, new MyCustomizer(projectsTree, true, strictResolve));
+    return createEmbedder(settings, console, process, new MyReadResolveCustomizer(projectsTree, true, strictResolve));
   }
 
   public static MavenEmbedderWrapper createEmbedderForExecute(MavenGeneralSettings settings,
                                                               MavenConsole console,
                                                               MavenProcess process) {
-    return createEmbedder(settings, console, process, null);
+    return createEmbedder(settings, console, process, new MyBasicCustomizer());
   }
 
   private static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings settings,
@@ -267,18 +268,28 @@ public class MavenEmbedderFactory {
     }
   }
 
-  public static class MyCustomizer implements ContainerCustomizer {
+  private static class MyBasicCustomizer implements ContainerCustomizer {
+    public void customize(PlexusContainer c) {
+      ComponentDescriptor d;
+
+      d = c.getComponentDescriptor(MavenTools.ROLE);
+      d.setImplementation(CustomMavenTools.class.getName());
+    }
+  }
+
+  private static class MyReadResolveCustomizer extends MyBasicCustomizer {
     private MavenProjectsTree myProjectsTree;
     private boolean isOnline;
     private boolean isStrict;
 
-    public MyCustomizer(MavenProjectsTree projectsTree, boolean online, boolean strict) {
+    public MyReadResolveCustomizer(MavenProjectsTree projectsTree, boolean online, boolean strict) {
       myProjectsTree = projectsTree;
       isOnline = online;
       isStrict = strict;
     }
 
     public void customize(PlexusContainer c) {
+      super.customize(c);
       ComponentDescriptor d;
 
       d = c.getComponentDescriptor(ArtifactFactory.ROLE);
