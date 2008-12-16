@@ -17,4 +17,8 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
   public void testConstructor() throws Exception {
     doTest();
   }
+
+  public void testIgnored() throws Exception {
+    doTest();
+  }
 }

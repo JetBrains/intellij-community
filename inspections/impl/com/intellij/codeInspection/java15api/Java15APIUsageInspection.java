@@ -8,6 +8,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +28,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   private static final THashSet<String> ourForbidden15API = new THashSet<String>(1500);
   private static final THashSet<String> ourForbidden16API = new THashSet<String>(200);
+  private static final THashSet<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
 
   public boolean FORBID_15_API = true;
 
@@ -37,6 +40,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   static {
     initForbiddenApi("apiList.txt", ourForbidden15API);
     initForbiddenApi("api16List.txt", ourForbidden16API);
+    initForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
   private static void initForbiddenApi(@NonNls String list, THashSet<String> set) {
@@ -164,9 +168,29 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
         if (isJava15ApiUsage((PsiMember)resolved)) {
           register15Error(reference);
         } else if (isJava16ApiUsage(((PsiMember)resolved))) {
+          PsiClass psiClass = null;
+          final PsiElement qualifier = reference.getQualifier();
+          if (qualifier != null) {
+            if (qualifier instanceof PsiExpression) {
+              psiClass = PsiUtil.resolveClassInType(((PsiExpression)qualifier).getType());
+            }
+          } else {
+            psiClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+          }
+          if (psiClass != null) {
+            if (isIgnored(psiClass)) return;
+            for (PsiClass superClass : psiClass.getSupers()) {
+              if (isIgnored(superClass)) return;
+            }
+          }
           register16Error(reference);
         }
       }
+    }
+
+    private boolean isIgnored(PsiClass psiClass) {
+      final String qualifiedName = psiClass.getQualifiedName();
+      return qualifiedName != null && ourIgnored16ClassesAPI.contains(qualifiedName);
     }
 
     @Override public void visitNewExpression(final PsiNewExpression expression) {
