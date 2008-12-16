@@ -57,5 +57,5 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   public abstract boolean isInjectedFragment(PsiFile file);
 
   @Nullable
-  public abstract PsiFile findInjectedPsi(@NotNull PsiFile hostFile, int hostDocumentOffset);
+  public abstract PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset);
 }

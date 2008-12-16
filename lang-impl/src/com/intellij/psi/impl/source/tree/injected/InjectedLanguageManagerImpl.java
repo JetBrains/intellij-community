@@ -322,9 +322,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   @Override
-  public PsiFile findInjectedPsi(@NotNull PsiFile hostFile, int hostDocumentOffset) {
-    PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(hostFile, hostDocumentOffset);
-    return injectedElement == null ? null : injectedElement.getContainingFile();
+  public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
+    return InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(hostFile, hostDocumentOffset);
   }
 
   public interface InjProcessor {
