@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="svn4idea" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="ExtendedApi" />
-    <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module-library">
       <library>
