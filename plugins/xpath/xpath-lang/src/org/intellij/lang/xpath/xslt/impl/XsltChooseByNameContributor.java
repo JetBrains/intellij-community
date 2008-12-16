@@ -19,12 +19,15 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 
+import java.util.Collection;
+
 class XsltChooseByNameContributor implements ChooseByNameContributor {
     public String[] getNames(Project project, boolean includeNonProjectItems) {
-        return XsltIndex.getInstance(project).getSymbolNames();
+        final Collection<String> symbols = XsltSymbolIndex.getSymbolNames(project, includeNonProjectItems);
+        return symbols.toArray(new String[symbols.size()]);
     }
 
     public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-        return XsltIndex.getInstance(project).getSymbolsByName(name);
+        return XsltSymbolIndex.getSymbolsByName(name, project, includeNonProjectItems);
     }
 }

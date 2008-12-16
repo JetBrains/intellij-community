@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.impl.XsltIndex;
+import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
 import org.intellij.lang.xpath.xslt.psi.XsltApplyTemplates;
 import org.intellij.lang.xpath.xslt.psi.XsltCallTemplate;
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
@@ -193,8 +193,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
                 final XmlFile myFile = (XmlFile)myParam.getContainingFile();
                 if (myFile == xmlFile) return true;
 
-                final XsltIndex index = XsltIndex.getInstance(element.getProject());
-                return index.isReachableFrom(myFile, xmlFile);
+                return XsltIncludeIndex.isReachableFrom(myFile, xmlFile);
             }
         }
     }

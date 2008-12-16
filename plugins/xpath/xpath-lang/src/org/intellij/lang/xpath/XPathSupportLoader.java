@@ -22,6 +22,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.filters.TrueFilter;
 import org.intellij.lang.xpath.completion.XPathCompletionData;
 import org.intellij.lang.xpath.psi.XPathElement;
@@ -58,6 +59,8 @@ public class XPathSupportLoader extends FileTypeFactory implements ApplicationCo
     }
 
     public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-        if (DBG_MODE) consumer.consume(XPathFileType.XPATH, XPathFileType.XPATH.getDefaultExtension());
+        if (DBG_MODE || ApplicationManager.getApplication().isUnitTestMode()) {
+            consumer.consume(XPathFileType.XPATH, XPathFileType.XPATH.getDefaultExtension());
+        }
     }
 }

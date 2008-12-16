@@ -82,6 +82,9 @@
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
     <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />
 
+    <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
+    <psi.includeHandler implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex" />
+
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
       <category>XSLT</category>
@@ -156,9 +159,6 @@
     <component>
       <interface-class>org.intellij.lang.xpath.xslt.XsltSupport</interface-class>
       <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltSupportImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltIndex</implementation-class>
     </component>
   </project-components>
 

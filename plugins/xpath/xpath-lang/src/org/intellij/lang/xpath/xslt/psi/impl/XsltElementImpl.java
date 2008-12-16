@@ -89,7 +89,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, Navigat
 
     @Nullable
     public String getLocationString() {
-        return null;
+        return "(in " + getContainingFile().getName() + ")";
     }
 
     @SuppressWarnings({"ConstantConditions"})
