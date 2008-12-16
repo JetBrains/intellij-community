@@ -8,6 +8,9 @@ import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
@@ -33,10 +36,20 @@ public class PatchBuilder {
   private PatchBuilder() {
   }
 
+  private static void checkCanceled(final ProgressIndicator ind) {
+    if (ind != null && ind.isCanceled()) {
+      throw new ProcessCanceledException();
+    }
+  }
+
   public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath, final boolean allowRename,
                                            final boolean reversePatch) throws VcsException {
+    final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
+    
     List<FilePatch> result = new ArrayList<FilePatch>();
     for(Change c: changes) {
+      checkCanceled(ind);
+
       final ContentRevision beforeRevision;
       final ContentRevision afterRevision;
       if (reversePatch) {
@@ -60,11 +73,11 @@ public class PatchBuilder {
       }
 
       if (beforeRevision == null) {
-        result.add(buildAddedFile(basePath, afterRevision));
+        result.add(buildAddedFile(basePath, afterRevision, ind));
         continue;
       }
       if (afterRevision == null) {
-        result.add(buildDeletedFile(basePath, beforeRevision));
+        result.add(buildDeletedFile(basePath, beforeRevision, ind));
         continue;
       }
 
@@ -91,6 +104,8 @@ public class PatchBuilder {
         int lastLine2 = 0;
 
         while(fragments.size() > 0) {
+          checkCanceled(ind);
+
           List<LineFragment> adjacentFragments = getAdjacentFragments(fragments);
           if (adjacentFragments.size() > 0) {
             LineFragment first = adjacentFragments.get(0);
@@ -109,6 +124,8 @@ public class PatchBuilder {
             patch.addHunk(hunk);
 
             for(LineFragment fragment: adjacentFragments) {
+              checkCanceled(ind);
+              
               for(int i=contextStart1; i<fragment.getStartingLine1(); i++) {
                 addLineToHunk(hunk, beforeLines [i], PatchLine.Type.CONTEXT);
               }
@@ -166,7 +183,7 @@ public class PatchBuilder {
     return result;
   }
 
-  private static TextFilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) throws VcsException {
+  private static TextFilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision, final ProgressIndicator ind) throws VcsException {
     final String content = afterRevision.getContent();
     if (content == null) {
       throw new VcsException("Failed to fetch content for added file " + afterRevision.getFile().getPath());
@@ -175,13 +192,14 @@ public class PatchBuilder {
     TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
+      checkCanceled(ind);
       addLineToHunk(hunk, line, PatchLine.Type.ADD);
     }
     result.addHunk(hunk);
     return result;
   }
 
-  private static TextFilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision) throws VcsException {
+  private static TextFilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision, final ProgressIndicator ind) throws VcsException {
     final String content = beforeRevision.getContent();
     if (content == null) {
       throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getFile().getPath());
@@ -190,6 +208,7 @@ public class PatchBuilder {
     TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {
+      checkCanceled(ind);
       addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
     }
     result.addHunk(hunk);

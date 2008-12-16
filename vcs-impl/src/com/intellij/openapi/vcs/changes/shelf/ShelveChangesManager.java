@@ -18,6 +18,9 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -148,22 +151,41 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       }
     }
 
-    File patchPath = getPatchPath(commitMessage);
-    final List<FilePatch> patches = PatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), true, false);
+    final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
+    final ShelvedChangeList changeList;
+    try {
+      File patchPath = getPatchPath(commitMessage);
+      if (ind != null && ind.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
+      final List<FilePatch> patches = PatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), true, false);
+      if (ind != null && ind.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
 
-    myFileProcessor.savePathFile(
+      myFileProcessor.savePathFile(
         new CompoundShelfFileProcesor.ContentProvider(){
-          public void writeContentTo(final Writer writer) throws IOException {
-            UnifiedDiffWriter.write(patches, writer, "\n");
-          }
-        },
-        patchPath);
+            public void writeContentTo(final Writer writer) throws IOException {
+              UnifiedDiffWriter.write(patches, writer, "\n");
+            }
+          },
+          patchPath);
 
-    new RollbackWorker(myProject, false).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
+      changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
+      myShelvedChangeLists.add(changeList);
+      if (ind != null && ind.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
 
-    final ShelvedChangeList changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
-    myShelvedChangeLists.add(changeList);
-    notifyStateChanged();
+      new RollbackWorker(myProject, false).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    finally {
+      notifyStateChanged();
+    }
+
     return changeList;
   }
 
