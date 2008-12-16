@@ -153,6 +153,8 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
       Authenticator.setDefault(getAuthenticator());
     } else {
       System.setProperty("proxySet", "false");
+      System.clearProperty("http.proxyHost");
+      System.clearProperty("http.proxyPort");
       Authenticator.setDefault(null);
     }
   }
