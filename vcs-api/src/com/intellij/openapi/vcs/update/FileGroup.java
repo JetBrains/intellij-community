@@ -114,6 +114,10 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
+  public int getImmediateFilesSize() {
+    return myFiles.size();
+  }
+
   public Collection<String> getFiles() {
     ArrayList<String> files = new ArrayList<String>();
     for(UpdatedFile file: myFiles) {

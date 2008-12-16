@@ -57,7 +57,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
@@ -336,9 +335,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     public void run(@NotNull final ProgressIndicator indicator) {
       ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
       myProjectLevelVcsManager.startBackgroundVcsOperation();
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
       try {
-        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;
         for (AbstractVcs vcs : myVcsToVirtualFiles.keySet()) {
@@ -358,13 +357,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           myVcsExceptions.addAll(updateSession.getExceptions());
           myUpdateSessions.add(updateSession);
         }
-
-        if (progressIndicator != null) {
-          progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
-          progressIndicator.setText2("");
-        }
       } finally {
         try {
+          if (progressIndicator != null) {
+            progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
+            progressIndicator.setText2("");
+          }
           doVfsRefresh();
         } finally {
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
@@ -376,20 +374,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       final String actionName = VcsBundle.message("local.history.update.from.vcs");
       final LocalHistoryAction action = LocalHistory.startAction(myProject, actionName);
       try {
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
-            VcsUtil.refreshFiles(myRoots, new Runnable() {
-              public void run() {
-                semaphore.up();
-              }
-            });
-          }
-        });
-        semaphore.waitFor();
+        LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
+        RefreshVFsSynchronously.updateAllChanged(myUpdatedFiles);
       }
       finally {
         action.finish();
