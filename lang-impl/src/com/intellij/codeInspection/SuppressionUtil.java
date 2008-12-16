@@ -19,16 +19,16 @@ import java.util.regex.Pattern;
 public class SuppressionUtil {
   @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
-    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(s*,\\w+)*)");
+    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+((\\s*,\\s*|\\s*)\\w+)*)");
 
   private SuppressionUtil() {
   }
 
   public static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
-    Iterable<String> ids = StringUtil.tokenize(inspectionsList, "[,]");
+    Iterable<String> ids = StringUtil.tokenize(inspectionsList, "[, ]");
 
     for (@NonNls String id : ids) {
-      if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
+      if (id.trim().equals(inspectionToolID) || id.trim().equals("ALL")) return true;
     }
     return false;
   }

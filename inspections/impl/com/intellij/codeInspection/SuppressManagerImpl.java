@@ -110,7 +110,7 @@ public class SuppressManagerImpl extends SuppressManager {
       String text = element.getText();
       Matcher matcher = SuppressionUtil.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
       if (matcher.matches()) {
-        return matcher.group(1);
+        return matcher.group(1).trim();
       }
     }
     if (element instanceof PsiDocCommentOwner) {
