@@ -55,7 +55,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 
-class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
+public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   private GroovyScriptConfigurationFactory factory;
   public String vmParams;
   public boolean isDebugEnabled;
@@ -65,7 +65,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
 
-  @NonNls private static final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";
+  @NonNls public static final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";
 
   // JVM parameters
   @NonNls private static final String DGROOVY_STARTER_CONF = "-Dgroovy.starter.conf=";

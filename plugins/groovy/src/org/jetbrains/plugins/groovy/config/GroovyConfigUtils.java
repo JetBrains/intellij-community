@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
-import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -68,7 +67,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @NonNls private static final String CLOSURE_CLASS_PATH = "groovy/lang/Closure.class";
 
   private static GroovyConfigUtils myGroovyConfigUtils;
-  @NonNls private static final String GROOVY_JAR_PATTERN = "groovy-\\d.*\\.jar";
+  @NonNls private static final String GROOVY_JAR_PATTERN = "groovy-(\\d.*)\\.jar";
 
   private GroovyConfigUtils() {
   }
@@ -102,7 +101,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
         @NonNls String name = file.getName();
         if (isGroovyAllJar(name) || name.matches(GROOVY_LIB_PATTERN)) {
           File realFile = new File(path);
-          if (realFile.exists()) {
+          if (realFile.exists()/* && new File(realFile, "../../" + GroovyScriptRunConfiguration.GROOVY_STARTER_CONF).exists()*/) {
             try {
               JarFile jarFile = new JarFile(realFile);
               return isSDKJar(jarFile) && !GrailsConfigUtils.getInstance().isSDKLibrary(library);

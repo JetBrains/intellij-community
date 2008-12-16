@@ -32,6 +32,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * @author ilyas
@@ -114,7 +116,16 @@ public abstract class AbstractConfigUtils {
         return null;
       }
       Manifest manifest = new Manifest(jarFile.getInputStream(jarEntry));
-      return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+      final String version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+      if (version != null) {
+        return version;
+      }
+
+      final Matcher matcher = Pattern.compile(jarRegex).matcher(jars[0].getName());
+      if (matcher.matches() && matcher.groupCount() == 1) {
+        return matcher.group(1);
+      }
+      return null;
     }
     catch (Exception e) {
       return null;
