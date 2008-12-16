@@ -17,9 +17,15 @@ package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Processor;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +35,7 @@ import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltParameter;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
@@ -43,6 +50,13 @@ import java.util.List;
 
 public class XsltVariableContext implements VariableContext<XsltVariable> {
     public static final XsltVariableContext INSTANCE = new XsltVariableContext();
+    
+    private static final ResolveCache.Resolver RESOLVER = new ResolveCache.Resolver() {
+        public PsiElement resolve(PsiReference psiReference, boolean incompleteCode) {
+            return resolveInner((XPathVariableReference)psiReference);
+        }
+    };
+    private static final Key<Boolean> RESOLVING = Key.create("RESOLVING");
 
     @NotNull
     public XsltVariable[] getVariablesInScope(XPathElement element) {
@@ -53,15 +67,41 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         return processor.getResult();
     }
 
-    public XPathVariable resolve(XPathVariableReference reference) {
+    public XPathVariable resolve(final XPathVariableReference reference) {
+        final PsiManager mgr = reference.getManager();
+        if (mgr instanceof PsiManagerEx) {
+            if (reference.getUserData(RESOLVING) != Boolean.TRUE) { // XPVRI calls this from equals(), needToPreventRecursion below won't work 
+                reference.putUserData(RESOLVING, Boolean.TRUE);
+                try {
+                    return (XPathVariable)((PsiManagerEx)mgr).getResolveCache().resolveWithCaching(reference, RESOLVER, true, false);
+                } finally {
+                    reference.putUserData(RESOLVING, null);
+                }
+            }
+        }
+        return resolveInner(reference);
+    }
+
+    private static XPathVariable resolveInner(XPathVariableReference reference) {
         final XmlTag context = getContextTag(reference);
         final ResolveProcessor processor = new ResolveProcessor(reference.getReferencedName(), context);
-        
-        return (XPathVariable)ResolveUtil.treeWalkUp(processor, context);
+
+        final XPathVariable variable = (XPathVariable)ResolveUtil.treeWalkUp(processor, context);
+        if (variable == null) {
+            final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
+            XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
+                public boolean process(XmlFile xmlFile) {
+                    processor.processExternalFile(xmlFile, context);
+                    return processor.shouldContinue();
+                }
+            });
+            return (XPathVariable)processor.getResult();
+        }
+        return variable;
     }
 
     @Nullable
-    protected XmlTag getContextTag(XPathElement element) {
+    protected static XmlTag getContextTag(XPathElement element) {
         return PsiTreeUtil.getContextOfType(element, XmlTag.class, true);
     }
 
@@ -78,9 +118,10 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
             final XsltTemplate template = XsltCodeInsightUtil.getTemplate(element, false);
             if (template == null || template.getMatchExpression() == null) return false;
 
+            final XPathVariable t = reference.resolve();
             final PsiReference[] references = element.getReferences();
             for (PsiReference r : references) {
-                if (r.isReferenceTo(element)) return true;
+                if (r.isReferenceTo(t)) return true;
             }
         }
         return false;

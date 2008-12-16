@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.xml.namespace.QName;
 
 public class XPathVariableReferenceImpl extends XPathElementImpl implements XPathVariableReference {
-  private static final Object[] EMPTY_ARRAY = ArrayUtil.EMPTY_OBJECT_ARRAY;
     private static final TokenSet QNAME_FILTER = TokenSet.create(XPathTokenTypes.VARIABLE_PREFIX, XPathTokenTypes.VARIABLE_NAME);
 
     private final VariableContext resolver;
@@ -115,16 +114,19 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         if (element instanceof XPathVariable) {
             final XPathVariable resolved = resolve();
             if (getReferencedName().equals(((XPathVariable)element).getName())) {
-                return element.equals(resolved);
+                if (element.equals(resolved)) {
+                    return true;
+                }
             }
-        } else if (resolver != null) {
+        }
+        if (resolver != null) {
             return resolver.isReferenceTo(element, this);
         }
         return false;
     }
 
     public Object[] getVariants() {
-        return EMPTY_ARRAY;
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     public boolean isSoft() {
@@ -148,17 +150,21 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
     }
 
     public boolean equals(Object obj) {
+        if (obj == this) return true;
         if (obj == null) return false;
         if (obj.getClass() != getClass()) return false;
 
         final XPathVariableReference ref = (XPathVariableReference)obj;
-        final XPathVariable variable = resolve();
-        if (variable != null) return variable == ref.resolve();
-
         final QName name = ContextProvider.getContextProvider(this).getQName(this);
-        if (name != null) {
-            return Comparing.equal(name, ContextProvider.getContextProvider(ref).getQName(ref));
+        if (name == null) {
+            return Comparing.equal(getReferencedName(), ref.getReferencedName());
         }
-        return Comparing.equal(getReferencedName(), ref.getReferencedName());
+
+        if (!Comparing.equal(name, ContextProvider.getContextProvider(ref).getQName(ref))) {
+            return false;
+        }
+
+        final XPathVariable variable = resolve();
+        return Comparing.equal(variable, ref.resolve());
     }
 }

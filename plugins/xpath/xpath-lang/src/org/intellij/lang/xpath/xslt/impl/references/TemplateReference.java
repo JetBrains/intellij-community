@@ -23,6 +23,7 @@
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
 import org.intellij.lang.xpath.xslt.quickfix.CreateTemplateFix;
 import org.intellij.lang.xpath.xslt.util.NamedTemplateMatcher;
 
@@ -30,14 +31,21 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class TemplateReference extends AttributeReference implements EmptyResolveMessageProvider, QuickFixProvider<TemplateReference> {
+class TemplateReference extends AttributeReference implements EmptyResolveMessageProvider, QuickFixProvider<TemplateReference>, PsiPolyVariantReference {
     private final String myName;
 
     public TemplateReference(XmlAttribute attribute) {
@@ -49,8 +57,28 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
         return new NamedTemplateMatcher(PsiTreeUtil.getParentOfType(attribute, XmlDocument.class), attribute.getValue());
     }
 
+    @NotNull
+    public ResolveResult[] multiResolve(boolean incompleteCode) {
+        final PsiElement element = resolve();
+        if (element != null) {
+            return new ResolveResult[]{ new PsiElementResolveResult(element) };
+        }
+
+        final List<PsiElementResolveResult> targets = new SmartList<PsiElementResolveResult>();
+        XsltIncludeIndex.processBackwardDependencies((XmlFile)getElement().getContainingFile(), new Processor<XmlFile>() {
+            public boolean process(XmlFile xmlFile) {
+                final PsiElement e = ResolveUtil.resolve(new NamedTemplateMatcher(xmlFile.getDocument(), myName));
+                if (e != null) {
+                    targets.add(new PsiElementResolveResult(e));
+                }
+                return true;
+            }
+        });
+        return targets.toArray(new ResolveResult[targets.size()]);
+    }
+
     public void registerQuickfix(HighlightInfo highlightInfo, TemplateReference psiReference) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateTemplateFix(myAttribute.getParent(), myName), (List<IntentionAction>)null, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateTemplateFix(myAttribute.getParent(), myName), null, null);
     }
 
     public String getUnresolvedMessagePattern() {

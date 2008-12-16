@@ -77,27 +77,31 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
 
             final PsiFile psiFile = ResolveUtil.resolveFile(tag.getAttribute("href", null), file);
             if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {
-                final XmlDocument document = ((XmlFile)psiFile).getDocument();
-                assert document != null;
-                
-                final XmlTag rootTag = document.getRootTag();
-                assert rootTag != null;
-
-                myInclude = true;
-                try {
-                    rootTag.processElements(new PsiElementProcessor() {
-                        public boolean execute(PsiElement element) {
-                            if (element instanceof XmlTag) {
-                                return process((XmlTag)element);
-                            }
-                            return shouldContinue();
-                        }
-                    }, tag);
-                } finally {
-                    myInclude = false;
-                }
+                processExternalFile(psiFile, tag);
             }
         }
         return shouldContinue();
+    }
+
+    public void processExternalFile(PsiFile psiFile, XmlTag place) {
+        final XmlDocument document = ((XmlFile)psiFile).getDocument();
+        assert document != null;
+
+        final XmlTag rootTag = document.getRootTag();
+        assert rootTag != null;
+
+        myInclude = true;
+        try {
+            rootTag.processElements(new PsiElementProcessor() {
+                public boolean execute(PsiElement element) {
+                    if (element instanceof XmlTag) {
+                        return process((XmlTag)element);
+                    }
+                    return shouldContinue();
+                }
+            }, place);
+        } finally {
+            myInclude = false;
+        }
     }
 }
