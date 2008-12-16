@@ -64,7 +64,6 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
           final ArrayList<Object> list = new ArrayList<Object>();
           final ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
                                element instanceof ASTNode? (ASTNode)element : null;
-          assert root != null;
           if (root instanceof CompositeElement) {
             ChameleonTransforming.transformChildren(root);
             ASTNode child = root.getFirstChildNode();
