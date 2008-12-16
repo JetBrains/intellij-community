@@ -1,5 +1,6 @@
 package com.intellij.psi.filters.getters;
 
+import com.intellij.codeInsight.completion.AnalyzingJavaSmartCompletionContributor;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.JavaAwareCompletionData;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -24,7 +25,7 @@ public class MembersGetter {
   public static void addMembers(PsiElement position, PsiType expectedType, CompletionResultSet results) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(expectedType);
     if (psiClass != null) {
-      processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null);
+      processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, expectedType);
     }
 
     if (expectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(expectedType)) {
@@ -34,7 +35,7 @@ public class MembersGetter {
         if (refParent instanceof PsiExpressionList) {
           final PsiClass aClass = getCalledClass(refParent.getParent());
           if (aClass != null) {
-            processMembers(position, results, aClass, false);
+            processMembers(position, results, aClass, false, expectedType);
           }
         }
         else if (refParent instanceof PsiBinaryExpression) {
@@ -43,7 +44,7 @@ public class MembersGetter {
               JavaTokenType.EQEQ == binaryExpression.getOperationSign().getTokenType()) {
             final PsiClass aClass = getCalledClass(binaryExpression.getLOperand());
             if (aClass != null) {
-              processMembers(position, results, aClass, false);
+              processMembers(position, results, aClass, false, expectedType);
             }
           }
         }
@@ -79,7 +80,7 @@ public class MembersGetter {
   }
 
   private static void processMembers(final PsiElement context, final CompletionResultSet results, final PsiClass where,
-                                     final boolean acceptMethods) {
+                                     final boolean acceptMethods, PsiType expectedType) {
     final FilterScopeProcessor<PsiElement> processor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
     where.processDeclarations(processor, ResolveState.initial(), null, context);
 
@@ -95,6 +96,9 @@ public class MembersGetter {
           final LookupItem item = LookupItemUtil.objectToLookupItem(result);
           item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
           JavaAwareCompletionData.qualify(item);
+          if (member instanceof PsiMethod) {
+            item.setAttribute(LookupItem.SUBSTITUTOR, AnalyzingJavaSmartCompletionContributor.calculateMethodReturnTypeSubstitutor((PsiMethod) member, expectedType));
+          }
           results.addElement(item);
         }
       }

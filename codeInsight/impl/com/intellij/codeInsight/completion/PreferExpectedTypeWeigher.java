@@ -6,11 +6,13 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.NullableFunction;
@@ -52,8 +54,16 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
     ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     if (expectedInfos == null) return MyResult.normal;
 
-    final PsiType itemType = JavaCompletionUtil.getPsiType(object);
+    PsiType itemType = JavaCompletionUtil.getPsiType(object);
     if (itemType == null) return MyResult.normal;
+
+    if (item instanceof LookupItem) {
+      final LookupItem lookupItem = (LookupItem)item;
+      final PsiSubstitutor substitutor = (PsiSubstitutor)lookupItem.getAttribute(LookupItem.SUBSTITUTOR);
+      if (substitutor != null) {
+        itemType = substitutor.substitute(itemType);
+      }
+    }
 
     if (object instanceof PsiClass) {
       for (final ExpectedTypeInfo info : expectedInfos) {
