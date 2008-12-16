@@ -1167,7 +1167,7 @@ public class FileBasedIndex implements ApplicationComponent {
       ensureAllInvalidateTasksCompleted();
 
       final Boolean alreadyAquired = myAlreadyAquired.get();
-      assert !alreadyAquired : "forceUpdate() is not reentrant!";
+      //assert !alreadyAquired : "forceUpdate() is not reentrant!";
 
       if (alreadyAquired) {
         return;
