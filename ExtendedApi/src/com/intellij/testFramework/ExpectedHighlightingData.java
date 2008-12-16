@@ -169,7 +169,7 @@ public class ExpectedHighlightingData {
 
     // er...
     // any code then <marker> (with optional descr="...") then any code then </marker> then any code
-    @NonNls String pat = ".*?(<(" + typesRegex + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)";
+    @NonNls String pat = ".*?(<(" + typesRegex + ")(?: descr=\"((?:[^\"\\\\]|\\\\\"|\\\\\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)";
                  //"(.+?)</" + marker + ">).*";
     Pattern p = Pattern.compile(pat, Pattern.DOTALL);
     Out:
@@ -195,6 +195,11 @@ public class ExpectedHighlightingData {
       else if (descr.equals("null")) {
         // explicit "null" descr
         descr = null;
+      }
+
+      // replace: \\" to ", doesn't check symbol before sequence \\"
+      if (descr != null) {
+        descr = descr.replaceAll("\\\\\\\\\"", "\"");
       }
 
       String typeString = m.group(pos++);
