@@ -134,5 +134,6 @@
   <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler"/>
   <ComponentRoamingType component="ChangeListManager" type="DISABLED"/>
   <ComponentRoamingType component="RestoreUpdateTree" type="DISABLED"/>
-  
+  <ComponentRoamingType component="PropertiesComponent" type="DISABLED"/>
+
 </extensions>
