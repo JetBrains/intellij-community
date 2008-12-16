@@ -58,7 +58,7 @@ public class XsltIncludeIndex implements PsiIncludeManager.PsiIncludeHandler {
             NanoXmlUtil.parse(virtualFile.getInputStream(), new NanoXmlUtil.IXMLBuilderAdapter() {
                 @Override
                 public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
-                    if (XsltSupport.XSLT_NS.equals(nsURI) && ("template".equals(name) || "stylesheet".equals(name))) {
+                    if (XsltSupport.XSLT_NS.equals(nsURI) && ("stylesheet".equals(name) || "transform".equals(name))) {
                         ref[0] = true;
                         stop();
                     }
