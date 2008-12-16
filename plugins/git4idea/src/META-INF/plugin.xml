@@ -29,7 +29,6 @@
       <reference ref="Compare.LastVersion"/>
       <reference ref="Compare.Selected"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
-      <action id="Git.RevisionGraph" class="git4idea.actions.GitRevisionGraph" text="Show Revision Graph"/>
       <!-- <reference id="Vcs.ShowHistoryForBlock"/>  -->
       <!-- <reference id="ChangesView.Browse"/>   -->
       <separator/>
