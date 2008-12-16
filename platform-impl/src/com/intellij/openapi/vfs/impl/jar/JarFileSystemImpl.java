@@ -32,12 +32,15 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
 
-  private static final class JarFileSystemImplLock {}
+  private static final class JarFileSystemImplLock {
+  }
+
   private static final Object LOCK = new JarFileSystemImplLock();
 
   public JarFileSystemImpl(MessageBus bus) {
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      public void before(final List<? extends VFileEvent> events) { }
+      public void before(final List<? extends VFileEvent> events) {
+      }
 
       public void after(final List<? extends VFileEvent> events) {
         final List<VirtualFile> rootsToRefresh = new ArrayList<VirtualFile>();
@@ -51,7 +54,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             }
 
             for (String jarPath : jarPaths) {
-              if (FileUtil .startsWith(jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length()), path, SystemInfo.isFileSystemCaseSensitive)) {
+              if (FileUtil.startsWith(jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length()),
+                                      path,
+                                      SystemInfo.isFileSystemCaseSensitive)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
                   rootsToRefresh.add(jarRootToRefresh);
@@ -63,7 +68,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
         if (!rootsToRefresh.isEmpty()) {
           final Application app = ApplicationManager.getApplication();
-          app.invokeLater(new Runnable() {
+          Runnable runnable = new Runnable() {
             public void run() {
               if (app.isDisposed()) return;
               for (VirtualFile root : rootsToRefresh) {
@@ -75,7 +80,13 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
               VirtualFile[] roots = rootsToRefresh.toArray(new VirtualFile[rootsToRefresh.size()]);
               RefreshQueue.getInstance().refresh(false, true, null, roots);
             }
-          }, ModalityState.NON_MODAL);
+          };
+          if (app.isUnitTestMode()) {
+            runnable.run();
+          }
+          else {
+            app.invokeLater(runnable, ModalityState.NON_MODAL);
+          }
         }
       }
     });
@@ -113,10 +124,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     path = path.replace('/', File.separatorChar);
     if (!SystemInfo.isFileSystemCaseSensitive) {
       path = path.toLowerCase();
-  }
+    }
     myNoCopyJarPaths.add(path);
   }
-
 
   @Nullable
   public VirtualFile getVirtualFileForJar(VirtualFile entryVFile) {
@@ -140,7 +150,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
     JarHandler handler;
     final JarHandler freshHanlder;
-    
+
     synchronized (LOCK) {
       handler = myHandlers.get(jarRootPath);
       if (handler == null) {
@@ -178,7 +188,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   public String extractRootPath(@NotNull final String path) {
     final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
-    assert jarSeparatorIndex >=0 : "Path passed to JarFileSystem must have jar separator '!/': " + path;
+    assert jarSeparatorIndex >= 0 : "Path passed to JarFileSystem must have jar separator '!/': " + path;
     return path.substring(0, jarSeparatorIndex + JAR_SEPARATOR.length());
   }
 
@@ -205,7 +215,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @NotNull
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
+    throws IOException {
     return getHandler(file).getOutputStream(file, requestor, modStamp, timeStamp);
   }
 
