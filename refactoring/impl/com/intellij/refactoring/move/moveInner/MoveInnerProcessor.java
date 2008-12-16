@@ -259,6 +259,22 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
 
       if (field != null) {
+        final PsiExpression paramAccessExpression = factory.createExpressionFromText(myParameterNameOuterClass, null);
+        for (final PsiMethod constructor : newClass.getConstructors()) {
+          final PsiStatement[] statements = constructor.getBody().getStatements();
+          if (statements.length > 0) {
+            if (statements[0] instanceof PsiExpressionStatement) {
+              PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+              if (expression instanceof PsiMethodCallExpression) {
+                @NonNls String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
+                if ("this".equals(text) || "super".equals(text)) {
+                  ChangeContextUtil.decodeContextInfo(expression, myOuterClass, paramAccessExpression);
+                }
+              }
+            }
+          }
+        }
+
         PsiExpression accessExpression = factory.createExpressionFromText(myFieldNameOuterClass, null);
         ChangeContextUtil.decodeContextInfo(newClass, myOuterClass, accessExpression);
       }
