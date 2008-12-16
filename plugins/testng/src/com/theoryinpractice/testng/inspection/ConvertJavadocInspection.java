@@ -76,8 +76,8 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiDocTag tag = (PsiDocTag)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(tag)) return;
-      final PsiMethod method = PsiTreeUtil.getParentOfType(tag, PsiMethod.class);
-      LOG.assertTrue(method != null);
+      final PsiMember member = PsiTreeUtil.getParentOfType(tag, PsiMember.class);
+      LOG.assertTrue(member != null);
       @NonNls String annotationName = StringUtil.capitalize(tag.getName().substring(TESTNG_PREFIX.length()));
       int dash = annotationName.indexOf('-');
       if (dash > -1) {
@@ -87,7 +87,7 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
       annotationName = "org.testng.annotations." + annotationName;
       final StringBuffer annotationText = new StringBuffer("@");
       annotationText.append(annotationName);
-      final PsiClass annotationClass = JavaPsiFacade.getInstance(method.getProject()).findClass(annotationName, method.getResolveScope());
+      final PsiClass annotationClass = JavaPsiFacade.getInstance(member.getProject()).findClass(annotationName, member.getResolveScope());
       PsiElement[] dataElements = tag.getDataElements();
       if (dataElements.length > 1) {
         annotationText.append('(');
@@ -142,9 +142,9 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
       }
 
       try {
-        final PsiElement inserted = method.getModifierList().addBefore(
-          JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createAnnotationFromText(annotationText.toString(), method),
-          method.getModifierList().getFirstChild());
+        final PsiElement inserted = member.getModifierList().addBefore(
+          JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createAnnotationFromText(annotationText.toString(), member),
+          member.getModifierList().getFirstChild());
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
 
 

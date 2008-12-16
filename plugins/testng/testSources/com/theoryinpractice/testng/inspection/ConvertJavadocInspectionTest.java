@@ -5,8 +5,8 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest{
   protected String getSourceRoot() {
@@ -19,7 +19,7 @@ public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest{
 
   @DataProvider
   public Object[][] data() {
-    return new String[][]{new String[]{"1"}, new String[]{"2"},};
+    return new String[][]{new String[]{"1"}, new String[]{"2"}, new String[]{"3"}};
   }
 
   @Test (dataProvider = "data")
