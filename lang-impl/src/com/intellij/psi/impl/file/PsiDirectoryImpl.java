@@ -23,6 +23,7 @@ import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -176,6 +177,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     checkValid();
 
     for (VirtualFile vFile : myFile.getChildren()) {
+      if (processor instanceof PsiFileSystemItemProcessor &&
+          !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), vFile.isDirectory())) {
+        continue;
+      }
       if (vFile.isDirectory()) {
         PsiDirectory dir = myManager.findDirectory(vFile);
         if (dir != null) {

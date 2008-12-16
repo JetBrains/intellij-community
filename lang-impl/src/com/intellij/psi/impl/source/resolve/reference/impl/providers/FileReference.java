@@ -18,6 +18,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.util.*;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import gnu.trove.THashSet;
@@ -138,16 +139,14 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       else {
         final String decoded = decode(text);
         if (decoded != null) {
-          processVariants(context,new Processor<PsiElement>() {
-            public boolean process(final PsiElement element) {
-              final String name = ((PsiNamedElement)element).getName();
-              if (name != null) {
-                if (caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0) {
-                  result.add(new PsiElementResolveResult(element));
-                  return false;
-                }
-              }
-              return true;
+          processVariants(context, new PsiFileSystemItemProcessor() {
+            public boolean acceptItem(String name, boolean isDirectory) {
+              return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
+            }
+
+            public boolean execute(PsiFileSystemItem element) {
+              result.add(new PsiElementResolveResult(getOriginalFile(element)));
+              return false;
             }
           });
         }
@@ -175,8 +174,11 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     }
 
     final CommonProcessors.CollectUniquesProcessor<PsiElement> collector = new CommonProcessors.CollectUniquesProcessor<PsiElement>();
-    final PsiElementProcessor<PsiFileSystemItem> processor = createChildrenProcessor(new FilteringProcessor<PsiElement>(myFileReferenceSet.createCondition(),
-                                                                                                                        collector));
+    final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
+      public boolean execute(PsiFileSystemItem fileSystemItem) {
+        return new FilteringProcessor<PsiElement>(myFileReferenceSet.createCondition(), collector).process(getOriginalFile(fileSystemItem));
+      }
+    };
     for (PsiFileSystemItem context : getContexts()) {
       for (final PsiElement child : context.getChildren()) {
         if (child instanceof PsiFileSystemItem) {
@@ -224,6 +226,20 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return variants;
   }
 
+  protected static PsiFileSystemItem getOriginalFile(PsiFileSystemItem fileSystemItem) {
+    final VirtualFile file = fileSystemItem.getVirtualFile();
+    if (file != null && !file.isDirectory()) {
+      final PsiManager psiManager = fileSystemItem.getManager();
+      if (psiManager != null) {
+        final PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile != null) {
+          fileSystemItem = psiFile;
+        }
+      }
+    }
+    return fileSystemItem;
+  }
+
   private static String encode(final String name) {
     try {
       return new URI(null, null, name, null).toString();
@@ -233,26 +249,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     }
   }
 
-  protected final void processVariants(final PsiFileSystemItem context, final Processor<PsiElement> processor) {
-    context.processChildren(createChildrenProcessor(processor));
-  }
-
-  private PsiElementProcessor<PsiFileSystemItem> createChildrenProcessor(final Processor<PsiElement> processor) {
-    return new PsiElementProcessor<PsiFileSystemItem>() {
-      public boolean execute(PsiFileSystemItem element) {
-        final VirtualFile file = element.getVirtualFile();
-        if (file != null && !file.isDirectory()) {
-          final PsiManager psiManager = getElement().getManager();
-          if (psiManager != null) {
-            final PsiFile psiFile = psiManager.findFile(file);
-            if (psiFile != null) {
-              element = psiFile;
-            }
-          }
-        }
-        return processor.process(element);
-      }
-    };
+  protected static void processVariants(final PsiFileSystemItem context, final PsiFileSystemItemProcessor processor) {
+    context.processChildren(processor);
   }
 
   @Nullable
