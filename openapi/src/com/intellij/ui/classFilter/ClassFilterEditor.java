@@ -63,7 +63,7 @@ public class ClassFilterEditor extends JPanel {
 
   public ClassFilterEditor(Project project, TreeClassChooser.ClassFilter classFilter) {
     super(new GridBagLayout());
-    myAddClassButton = new JButton(UIBundle.message("button.add.class"));
+    myAddClassButton = new JButton(getAddButtonText());
     myAddPatternButton = new JButton(getAddPatternButtonText());
     myRemoveButton = new JButton(UIBundle.message("button.remove"));
     myTable = new Table();
@@ -134,6 +134,10 @@ public class ClassFilterEditor extends JPanel {
 
     myRemoveButton.addActionListener(new RemoveAction());
     myRemoveButton.setEnabled(false);
+  }
+
+  protected String getAddButtonText() {
+    return UIBundle.message("button.add.class");
   }
 
   protected String getAddPatternButtonText() {

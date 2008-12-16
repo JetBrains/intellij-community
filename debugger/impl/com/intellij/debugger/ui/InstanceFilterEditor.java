@@ -1,9 +1,9 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 
 /**
@@ -30,6 +30,10 @@ public class InstanceFilterEditor extends ClassFilterEditor {
       }
       myTable.requestFocus();
     }
+  }
+
+  protected String getAddButtonText() {
+    return DebuggerBundle.message("button.add");
   }
 
   protected ClassFilter createFilter(String pattern) {
