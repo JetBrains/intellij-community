@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -391,11 +392,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void assertValidSeparators(final CharSequence s) {
     if (myAcceptSlashR) return;
-    for (int i = 0; i < s.length(); i++) {
-      if (s.charAt(i) == '\r') {
-        LOG.error("Wrong line separators in Document");
-      }
-    }
+    StringUtil.assertValidSeparators(s);
   }
 
   private void throwGuardedFragment(RangeMarker guard, int offset, String oldString, String newString) {

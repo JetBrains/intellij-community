@@ -4,7 +4,10 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.DeprecatedVirtualFile;
+import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,14 +59,14 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   public LightVirtualFile(final String name, final FileType fileType, final CharSequence text, Charset charset, final long modificationStamp) {
     myName = name;
     myFileType = fileType;
-    myContent = text;
+    setContent(text);
     myModStamp = modificationStamp;
     setCharset(charset);
   }
 
   public LightVirtualFile(final String name, final Language language, final CharSequence text) {
     myName = name;
-    myContent = text;
+    setContent(text);
     myModStamp = LocalTimeCounter.currentTime();
     setLanguage(language);
   }
@@ -80,6 +83,11 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
 
   public void setFileType(final FileType fileType) {
     myFileType = fileType;
+  }
+
+  private void setContent(CharSequence content) {
+    //StringUtil.assertValidSeparators(content);
+    myContent = content;
   }
 
   private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {
@@ -174,7 +182,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     return new ByteArrayOutputStream() {
       public void close() {
         myModStamp = newModificationStamp;
-        myContent = toString();
+        setContent(toString());
       }
     };
   }
@@ -209,7 +217,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   }
 
   public void setContent(Object requestor, CharSequence content, boolean fireEvent) {
-    myContent = content;
+    setContent(content);
     myModStamp = LocalTimeCounter.currentTime();
   }
 

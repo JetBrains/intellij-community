@@ -13,8 +13,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassFileDecompiler implements BinaryFileDecompiler {
+  @NotNull
   public CharSequence decompile(final VirtualFile file) {
     assert file.getFileType() == StdFileTypes.CLASS;
 

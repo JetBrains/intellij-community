@@ -112,7 +112,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
                 final Document document = e.getDocument();
                 myUnsavedDocuments.add(document);
                 final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
-                Project project = currentCommand != null ? CommandProcessor.getInstance().getCurrentCommandProject() : null;
+                Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
                 String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
                 document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
               }

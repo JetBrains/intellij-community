@@ -47,7 +47,12 @@ public class TypedHandler implements TypedActionHandler {
   private final TypedActionHandler myOriginalHandler;
 
   private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<FileType, QuoteHandler>();
+
   private static final Map<Class<? extends Language>, QuoteHandler> ourBaseLanguageQuoteHandlers = new HashMap<Class<? extends Language>, QuoteHandler>();
+
+  public TypedHandler(TypedActionHandler originalHandler){
+    myOriginalHandler = originalHandler;
+  }
 
   @Nullable
   public static QuoteHandler getQuoteHandler(@NotNull PsiFile file) {
@@ -84,10 +89,6 @@ public class TypedHandler implements TypedActionHandler {
 
   public static void registerQuoteHandler(FileType fileType, QuoteHandler quoteHandler) {
     quoteHandlers.put(fileType, quoteHandler);
-  }
-
-  public TypedHandler(TypedActionHandler originalHandler){
-    myOriginalHandler = originalHandler;
   }
 
   public void execute(Editor editor, char charTyped, DataContext dataContext) {
@@ -152,14 +153,7 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     final VirtualFile virtualFile = file.getVirtualFile();
-    FileType fileType;
-
-    if (virtualFile != null){
-      fileType = virtualFile.getFileType();
-    }
-    else {
-      fileType = file.getFileType();
-    }
+    FileType fileType = virtualFile == null ? file.getFileType() : virtualFile.getFileType();
 
     for(TypedHandlerDelegate delegate: delegates) {
       final TypedHandlerDelegate.Result result = delegate.beforeCharTyped(charTyped, project, editor, file, fileType);
@@ -276,7 +270,7 @@ public class TypedHandler implements TypedActionHandler {
     iterator = ((EditorEx)editor).getHighlighter().createIterator(lparenOffset);
     boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true);
 
-    if (!matched){
+    if (!matched) {
       String text;
       if (lparenChar == '(') {
         text = ")";
@@ -288,8 +282,7 @@ public class TypedHandler implements TypedActionHandler {
         text = ">";
       }
       else {
-        LOG.assertTrue(false);
-
+        LOG.error("Unknown char "+lparenChar);
         return;
       }
       editor.getDocument().insertString(offset, text);
@@ -438,9 +431,10 @@ public class TypedHandler implements TypedActionHandler {
 
     int spaceStart = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
     if (spaceStart < 0 || chars.charAt(spaceStart) == '\n' || chars.charAt(spaceStart) == '\r'){
-      PsiDocumentManager.getInstance(project).commitDocument(document);
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      documentManager.commitDocument(document);
 
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      final PsiFile file = documentManager.getPsiFile(document);
       if (file == null || !file.isWritable()) return;
       PsiElement element = file.findElementAt(offset);
       if (element == null) return;

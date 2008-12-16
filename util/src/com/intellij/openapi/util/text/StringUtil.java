@@ -450,12 +450,11 @@ public class StringUtil {
     return buffer.toString();
   }
 
-  @NotNull public static String unquoteString( @NotNull String s )
-  {
-    if( s.length() > 1 && s.charAt( 0 ) == '"' && s.charAt( s.length() - 1) == '"' )
-      return s.substring( 1, s.length() - 1 );
-    else
-    return s;
+  @NotNull public static String unquoteString( @NotNull String s ) {
+    if (s.length() <= 1 || s.charAt(0) != '"' || s.charAt(s.length() - 1) != '"') {
+      return s;
+    }
+    return s.substring(1, s.length() - 1);
   }
 
   private static void unescapeStringCharacters(int length, String s, StringBuilder buffer) {
@@ -1124,8 +1123,14 @@ public class StringUtil {
     return -1;
   }
 
-  public static String first(final String text, final int length, final boolean appendEllipsis) {
+  public static String first(@NotNull String text, final int length, final boolean appendEllipsis) {
     return text.length() > length ? text.substring(0, length) + (appendEllipsis ? "..." : "") : text;
+  }
+  public static CharSequence first(@NotNull CharSequence text, final int length, final boolean appendEllipsis) {
+    return text.length() > length ? text.subSequence(0, length) + (appendEllipsis ? "..." : "") : text;
+  }
+  public static CharSequence last(@NotNull CharSequence text, final int length, boolean prependEllipsis) {
+    return text.length() > length ? (prependEllipsis ? "..." : "") + text.subSequence(text.length()-length, text.length()) : text;
   }
 
   public static String escapeQuotes(@NotNull final String str) {
@@ -1424,5 +1429,15 @@ public class StringUtil {
       return "an" + Character.toUpperCase(c) + name.substring(1);
     }
     return "a" + Character.toUpperCase(c) + name.substring(1);
+  }
+
+  public static void assertValidSeparators(@NotNull CharSequence s) {
+    for (int i = 0; i < s.length(); i++) {
+      if (s.charAt(i) == '\r') {
+        String context = String.valueOf(last(s.subSequence(0, i), 10, true)) + first(s.subSequence(i, s.length()), 10, true);
+        context = escapeStringCharacters(context);
+        LOG.error("Wrong line separators: '"+context+"' at offset "+i);
+      }
+    }
   }
 }

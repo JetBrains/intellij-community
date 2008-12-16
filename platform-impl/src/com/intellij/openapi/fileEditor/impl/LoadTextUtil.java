@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -212,7 +213,12 @@ public final class LoadTextUtil {
 
   public static CharSequence loadText(@NotNull VirtualFile file, final boolean allowMissingDecompiler) {
     if (file instanceof LightVirtualFile) {
-      return ((LightVirtualFile)file).getContent();
+      CharSequence content = ((LightVirtualFile)file).getContent();
+      if (StringUtil.indexOf(content, '\r') == -1) return content;
+
+      CharBuffer buffer = CharBuffer.wrap(content);
+      convertLineSeparators(buffer);
+      return buffer;
     }
 
     assert !file.isDirectory() : "'"+file.getPresentableUrl() + "' is directory";
@@ -221,7 +227,9 @@ public final class LoadTextUtil {
     if (fileType.isBinary()) {
       final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType);
       if (decompiler != null) {
-        return decompiler.decompile(file);
+        CharSequence text = decompiler.decompile(file);
+        StringUtil.assertValidSeparators(text);
+        return text;
       }
 
       if (allowMissingDecompiler) return null;
