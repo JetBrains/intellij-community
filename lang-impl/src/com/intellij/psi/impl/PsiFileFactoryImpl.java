@@ -66,10 +66,10 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   private PsiFile trySetupPsiForFile(final boolean useLanguage, final LightVirtualFile virtualFile, Language language,
                                      final boolean physical, final boolean markAsCopy) {
     FileViewProvider viewProvider = null;
-    if (!useLanguage) {
+    //if (!useLanguage) {
       final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
       viewProvider = factory != null? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
-    }
+    //}
     // todo[shrago]: try to create file for language = JSP (uselanguage = true) and got an exception
     if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
 
