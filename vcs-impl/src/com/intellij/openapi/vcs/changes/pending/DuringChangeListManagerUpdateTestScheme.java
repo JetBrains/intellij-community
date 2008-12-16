@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Assert;
 
 import java.io.File;
 import java.util.Collection;
@@ -38,7 +37,7 @@ public class DuringChangeListManagerUpdateTestScheme {
     projectLevelVcsManager.updateActiveVcss();
 
     AbstractVcs vcsFound = projectLevelVcsManager.findVcsByName(vcs.getName());
-    Assert.assertEquals(1, projectLevelVcsManager.getRootsUnderVcs(vcsFound).length);
+    assert projectLevelVcsManager.getRootsUnderVcs(vcsFound).length == 1;
 
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     myClManager = ChangeListManager.getInstance(project);
