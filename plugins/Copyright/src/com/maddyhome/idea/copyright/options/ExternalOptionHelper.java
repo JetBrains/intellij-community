@@ -65,7 +65,7 @@ public class ExternalOptionHelper {
   public static void extractNoticeAndKeyword(Element valueElement, List<CopyrightProfile> profiles) {
     CopyrightProfile profile = new CopyrightProfile();
     boolean extract = false;
-    for (Object l : valueElement.getChildren()) {
+    for (Object l : valueElement.getChildren("LanguageOptions")) {
       if (((Element)l).getAttributeValue("name").equals("JAVA")) {
         for (Object o1 : ((Element)l).getChildren("option")) {
           extract |= extract(profile, (Element)o1);
