@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.util.*;
@@ -66,7 +67,7 @@ public class RollbackWorker {
                                 final Runnable runAfter, final String localHistoryActionName) {
     final String actionName = VcsBundle.message("changes.action.rollback.text");
     final LocalHistoryAction action = LocalHistory.startAction(project, actionName);
-    RefreshSession session = RefreshQueue.getInstance().createSession(asynchronous, true, new Runnable() {
+    RefreshSession session = RefreshQueue.getInstance().createSession(asynchronous, false, new Runnable() {
       public void run() {
         action.finish();
         LocalHistory.putSystemLabel(project, (localHistoryActionName == null) ? actionName : localHistoryActionName);
@@ -84,7 +85,10 @@ public class RollbackWorker {
       }
     });
     for(FilePath path: pathsToRefresh) {
-      session.addFile(ChangesUtil.findValidParent(path));
+      final VirtualFile vf = path.getVirtualFile();
+      if (vf != null) {
+        session.addFile(vf);
+      }
     }
     session.launch();
   }
