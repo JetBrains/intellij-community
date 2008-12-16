@@ -181,7 +181,20 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
         processDestinations(processedItems);
       }
     }.execute();
+    refreshProcessedItems(processedItems);
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
+  }
+
+  private static void refreshProcessedItems(List<PackagingProcessingItem> processedItems) {
+    final Iterator<PackagingProcessingItem> iterator = processedItems.iterator();
+    while (iterator.hasNext()) {
+      PackagingProcessingItem item = iterator.next();
+      final VirtualFile file = item.getFile();
+      file.refresh(false, false);
+      if (!file.isValid()) {
+        iterator.remove();
+      }
+    }
   }
 
   private static boolean doBuild(final CompileContext context, final ProcessingItem[] items, final List<PackagingProcessingItem> processedItems,
@@ -211,7 +224,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
           if (destination instanceof ExplodedDestinationInfo) {
             final ExplodedDestinationInfo explodedDestination = (ExplodedDestinationInfo)destination;
             File toFile = new File(FileUtil.toSystemDependentName(explodedDestination.getOutputPath()));
-            if (DeploymentUtil.checkFileExists(fromFile, context)) {
+            if (fromFile.exists()) {
               deploymentUtil.copyFile(fromFile, toFile, context, writtenPaths, fileFilter);
             }
             affectedParticipants.add(destinationOwners.get(explodedDestination));
