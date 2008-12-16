@@ -17,6 +17,6 @@ package org.intellij.lang.xpath.xslt.psi;
 
 import org.intellij.lang.xpath.psi.XPathVariable;
 
-public interface XsltVariable extends XsltNamedElement, XPathVariable {
+public interface XsltVariable extends XsltNamedElement, XPathVariable, com.intellij.psi.PsiNameIdentifierOwner {
     public boolean isVoid();
 }

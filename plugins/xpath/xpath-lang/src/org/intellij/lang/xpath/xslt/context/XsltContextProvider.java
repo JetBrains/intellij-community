@@ -373,17 +373,6 @@ public class XsltContextProvider extends ContextProvider {
     @Override
     @Nullable
     public RefactoringSupportProvider getRefactoringSupportProvider() {
-        return new DefaultRefactoringSupportProvider() {
-            @Override
-            public boolean isSafeDeleteAvailable(PsiElement element) {
-                return LanguageRefactoringSupport.INSTANCE.forLanguage(XsltLanguage.INSTANCE).isSafeDeleteAvailable(element);
-            }
-
-            @Override
-            @Nullable
-            public RefactoringActionHandler getIntroduceVariableHandler() {
-                return new XsltIntroduceVariableAction();
-            }
-        };
+        return LanguageRefactoringSupport.INSTANCE.forLanguage(XsltLanguage.INSTANCE);
     }
 }

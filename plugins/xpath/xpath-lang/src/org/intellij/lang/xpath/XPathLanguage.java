@@ -161,8 +161,16 @@ public final class XPathLanguage extends Language {
     public static class XPathRefactoringSupportProvider extends DefaultRefactoringSupportProvider {
         @Override
         public boolean isSafeDeleteAvailable(PsiElement element) {
+            if (!element.isWritable() || element.getContainingFile() == null) return false;
             final RefactoringSupportProvider realProvider = ContextProvider.getContextProvider(element).getRefactoringSupportProvider();
             return realProvider != null && realProvider.isSafeDeleteAvailable(element);
+        }
+
+        @Override
+        public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+            if (!element.isWritable() || element.getContainingFile() == null) return false;
+            final RefactoringSupportProvider realProvider = ContextProvider.getContextProvider(element).getRefactoringSupportProvider();
+            return realProvider != null && realProvider.doInplaceRenameFor(element, context);
         }
 
         @Override

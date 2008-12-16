@@ -25,6 +25,8 @@ import org.intellij.lang.xpath.xslt.util.QNameUtil;
 
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +64,12 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
     @Nullable
     public XPathExpression getValue() {
         return XsltCodeInsightUtil.getXPathExpression(this, "select");
+    }
+
+    @NotNull
+    @Override
+    public SearchScope getUseScope() {
+        return XsltSupport.isTopLevelElement(getTag()) ? super.getUseScope() : new LocalSearchScope(getTag().getParentTag());
     }
 
     @Override

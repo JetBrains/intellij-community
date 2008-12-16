@@ -15,6 +15,14 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
+import org.intellij.lang.xpath.XPathElementTypes;
+import org.intellij.lang.xpath.XPathFileType;
+import org.intellij.lang.xpath.XPathLanguage;
+import org.intellij.lang.xpath.XPathTokenTypes;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.functions.Function;
+import org.intellij.lang.xpath.psi.*;
+
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
@@ -27,18 +35,6 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.intellij.lang.xpath.XPathElementTypes;
-import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.XPathLanguage;
-import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.context.ContextProvider;
-import org.intellij.lang.xpath.context.functions.Function;
-import org.intellij.lang.xpath.psi.PrefixedName;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathFunction;
-import org.intellij.lang.xpath.psi.XPathFunctionCall;
-import org.intellij.lang.xpath.psi.XPathType;
 
 import javax.swing.*;
 import javax.xml.namespace.QName;
@@ -252,6 +248,20 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
 
             public Function getDeclaration() {
                 return myFunctionDecl;
+            }
+
+            @Override
+            public boolean isWritable() {
+                return false;
+            }
+
+            @Override
+            public boolean isPhysical() {
+                // hack
+                // required to prevent renaming of functions. Shouldn't IDEA check for isWritable()?
+                // com.intellij.refactoring.rename.PsiElementRenameHandler:
+                // if (!PsiManager.getInstance(project).isInProject(element) && element.isPhysical()) { ... }
+                return true;
             }
         }
     }
