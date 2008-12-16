@@ -16,7 +16,7 @@ import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.update.RefreshVFsSynchronously;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import org.jetbrains.idea.svn.update.SvnStatusWorker;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
