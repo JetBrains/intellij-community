@@ -68,13 +68,11 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
           if (REPORT_NOT_ANNOTATED_GETTER) {
             final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
-            if (getter != null) {
-              if (!AnnotationUtil.isAnnotated(getter, AnnotationUtil.ALL_ANNOTATIONS)) {
-                holder.registerProblem(getter.getNameIdentifier(),
-                                 InspectionsBundle.message("inspection.nullable.problems.annotated.field.getter.not.annotated", simpleName),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new AnnotateMethodFix(anno, annoToRemove));
-              }
+            if (getter != null && !AnnotationUtil.isAnnotated(getter, AnnotationUtil.ALL_ANNOTATIONS) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
+              holder.registerProblem(getter.getNameIdentifier(),
+                                     InspectionsBundle.message("inspection.nullable.problems.annotated.field.getter.not.annotated", simpleName),
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                     new AnnotateMethodFix(anno, annoToRemove));
             }
           }
 
@@ -84,7 +82,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
               final PsiParameter[] parameters = setter.getParameterList().getParameters();
               assert parameters.length == 1;
               final PsiParameter parameter = parameters[0];
-              if (!AnnotationUtil.isAnnotated(parameter, AnnotationUtil.ALL_ANNOTATIONS)) {
+              if (!AnnotationUtil.isAnnotated(parameter, AnnotationUtil.ALL_ANNOTATIONS) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
                 holder.registerProblem(parameter.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated", simpleName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,

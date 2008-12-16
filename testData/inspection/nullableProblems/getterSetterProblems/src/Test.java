@@ -11,4 +11,11 @@ class B {
     public void setB(B b) {
         this.b = b;
     }
+
+        @NotNull
+        private String bug = "true";
+
+        public boolean getBug() {
+            return Boolean.valueOf(bug);
+        }
 }
