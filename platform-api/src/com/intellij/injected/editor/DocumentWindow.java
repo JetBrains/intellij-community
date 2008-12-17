@@ -34,4 +34,6 @@ public interface DocumentWindow extends Document {
   boolean areRangesEqual(@NotNull DocumentWindow documentWindow);
 
   boolean isValid();
+
+  boolean containsRange(int start, int end);
 }

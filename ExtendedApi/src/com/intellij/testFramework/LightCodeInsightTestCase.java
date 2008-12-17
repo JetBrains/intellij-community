@@ -51,8 +51,8 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   protected static VirtualFile myVFile;
 
   private static final String CARET_MARKER = "<caret>";
-  private static final String SELECTION_START_MARKER = "<selection>";
-  private static final String SELECTION_END_MARKER = "</selection>";
+  @NonNls private static final String SELECTION_START_MARKER = "<selection>";
+  @NonNls private static final String SELECTION_END_MARKER = "</selection>";
 
   protected void runTest() throws Throwable {
     final Throwable[] throwable = {null};
@@ -414,9 +414,11 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
       myVFile = myFile.getVirtualFile();
     }
   }
+
   protected static void type(char c) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     TypedAction action = actionManager.getTypedAction();
+
     action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
   }
 
@@ -428,7 +430,6 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   protected static void backspace() {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
-
     actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
   }
 

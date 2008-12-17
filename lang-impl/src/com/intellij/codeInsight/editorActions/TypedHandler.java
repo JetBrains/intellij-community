@@ -35,11 +35,13 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 public class TypedHandler implements TypedActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
@@ -165,10 +167,7 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
-    if (')' == charTyped){
-      if (handleRParen(editor, fileType)) return;
-    }
-    else if (']' == charTyped){
+    if (')' == charTyped || ']' == charTyped){
       if (handleRParen(editor, fileType)) return;
     }
     else if ('"' == charTyped || '\'' == charTyped){
@@ -177,13 +176,10 @@ public class TypedHandler implements TypedActionHandler {
 
     myOriginalHandler.execute(editor, charTyped, dataContext);
 
-    if ('(' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
-      handleAfterLParen(editor, fileType, '(');
+    if (('(' == charTyped || '[' == charTyped) && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+      handleAfterLParen(editor, fileType, charTyped);
     }
-    else if ('[' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
-      handleAfterLParen(editor, fileType, '[');
-    }
-    else if ('}' == charTyped){
+    else if ('}' == charTyped) {
       indentClosingBrace(project, editor);
     }
 
@@ -235,10 +231,20 @@ public class TypedHandler implements TypedActionHandler {
     if (!significant) {
       return editor;
     }
-    if (PsiDocumentManager.getInstance(oldFile.getProject()).isUncommited(editor.getDocument())) {
-      return editor;
+
+    int offset = editor.getCaretModel().getOffset();
+    // even for uncommitted document try to retrieve injected fragment that has been there recently
+    // we are assuming here that when user is (even furiously) typing, injected language would not change
+    // and thus we can use its lexer to insert closing braces etc
+    List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(oldFile);
+    for (DocumentWindow documentWindow : injected) {
+      if (documentWindow.containsRange(offset, offset)) {
+        PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
+        return InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+      }
     }
-    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, oldFile);
+
+    return editor;
   }
 
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){

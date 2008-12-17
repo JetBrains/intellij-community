@@ -480,7 +480,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public boolean containsRange(int start, int end) {
     if (end - start > myRelevantRangesInHostDocument[0].getEndOffset() - myRelevantRangesInHostDocument[0].getStartOffset()) return false;
     for (RangeMarker hostRange : myRelevantRangesInHostDocument) {
-      if (InjectedLanguageUtil.toTextRange(hostRange).contains(new ProperTextRange(start, end))) return true;
+      if (!hostRange.isValid()) continue;
+      TextRange textRange = InjectedLanguageUtil.toTextRange(hostRange);
+      if (textRange.contains(new ProperTextRange(start, end))) return true;
     }
     return false;
   }

@@ -79,12 +79,18 @@ public interface PsiLanguageInjectionHost extends PsiElement {
       return relevantRangeInHost;
     }
 
+    //@Nullable
     public TextRange getRangeInsideHost() {
-      return new ProperTextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset()).shiftRight(-host.getTextRange().getStartOffset());
+      //if (!relevantRangeInHost.isValid()) return null;
+      ProperTextRange textRange = new ProperTextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset());
+      return textRange.shiftRight(-host.getTextRange().getStartOffset());
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
-      return "Shred: "+ host+"("+ relevantRangeInHost.getStartOffset()+","+relevantRangeInHost.getEndOffset()+"); PSI range:"+range;
+      return "Shred: "+ host+
+             (relevantRangeInHost.isValid() ? "" : "!") + "(" + relevantRangeInHost.getStartOffset()+","+relevantRangeInHost.getEndOffset()+");" +
+             " PSI range:"+range;
     }
   }
 }
