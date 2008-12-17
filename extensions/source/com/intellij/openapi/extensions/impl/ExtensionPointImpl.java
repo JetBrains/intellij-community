@@ -33,7 +33,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author AKireyev
  */
 public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
   private final LogProvider myLogger;
@@ -309,23 +308,23 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   public Class<T> getExtensionClass() {
-    if (myExtensionClass == null) {
+    // racy single-check: we don't care whether the access to 'myExtensionClass' is thread-safe
+    // but initial store in a local variable is crucial to prevent instruction reordering
+    // see Item 71 in Effective Java or http://jeremymanson.blogspot.com/2008/12/benign-data-races-in-java.html
+    Class<T> extensionClass = myExtensionClass;
+    if (extensionClass == null) {
       try {
         ClassLoader pluginClassLoader = myDescriptor.getPluginClassLoader();
-        if (pluginClassLoader == null) {
-          //noinspection unchecked
-          myExtensionClass = (Class<T>)Class.forName(myBeanClassName);
-        }
-        else {
-          //noinspection unchecked
-          myExtensionClass = (Class<T>)Class.forName(myBeanClassName, true, pluginClassLoader);
-        }
+        //noinspection unchecked
+        myExtensionClass = extensionClass = pluginClassLoader == null
+                                            ? (Class<T>)Class.forName(myBeanClassName)
+                                            : (Class<T>)Class.forName(myBeanClassName, true, pluginClassLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
       }
     }
-    return myExtensionClass;
+    return extensionClass;
   }
 
   public String toString() {

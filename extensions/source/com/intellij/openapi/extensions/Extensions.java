@@ -58,10 +58,11 @@ public class Extensions {
 
   @NotNull
   public static ExtensionsArea getArea(@Nullable AreaInstance areaInstance) {
-    if (!ourAreaInstance2area.containsKey(areaInstance)) {
+    ExtensionsAreaImpl area = ourAreaInstance2area.get(areaInstance);
+    if (area == null) {
       throw new IllegalArgumentException("No area instantiated for: " + areaInstance);
     }
-    return ourAreaInstance2area.get(areaInstance);
+    return area;
   }
 
   @TestOnly
