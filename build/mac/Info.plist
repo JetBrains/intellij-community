@@ -60,7 +60,7 @@
         <key>idea.system.path</key>
         <string>~/Library/Caches/IntelliJIDEA8x/</string>
         <key>idea.plugins.path</key>
-        <string>~/Library/Application Support/IntelliJIDEA8x/</string>
+        <string>~/Library/Application Support/IntelliJIDEA80/</string>
         <key>java.endorsed.dirs</key>
         <string></string>
         <key>idea.smooth.progress</key>
