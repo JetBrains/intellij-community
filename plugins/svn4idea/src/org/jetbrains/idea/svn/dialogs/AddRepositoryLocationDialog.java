@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -56,7 +57,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
 
     ++ gb.gridy;
 
-    myCombo = new JComboBox(myPreviousLocations.toArray(new Object[myPreviousLocations.size()]));
+    myCombo = new JComboBox(ArrayUtil.toObjectArray(myPreviousLocations));
     myCombo.setEditable(true);
     myCombo.setMinimumSize(new Dimension(250, 20));
     gb.fill = GridBagConstraints.HORIZONTAL;

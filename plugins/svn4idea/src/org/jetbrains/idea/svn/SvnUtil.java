@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +37,8 @@ import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNCapability;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -300,7 +301,7 @@ public class SvnUtil {
 
     public String[] getLocations() {
       final Set<String> set = myLocations.keySet();
-      return set.toArray(new String[set.size()]);
+      return ArrayUtil.toStringArray(set);
     }
 
     public Map<String, File> getLocationInfos() {

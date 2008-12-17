@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
@@ -190,7 +191,7 @@ public class CopyDialog extends DialogWrapper {
   private void updateBranchTagBases() {
     try {
       myBranchConfiguration = SvnBranchConfigurationManager.getInstance(myProject).get(mySrcVirtualFile);
-      final String[] strings = myBranchConfiguration.getBranchUrls().toArray(new String[myBranchConfiguration.getBranchUrls().size()]);
+      final String[] strings = ArrayUtil.toStringArray(myBranchConfiguration.getBranchUrls());
       myBranchTagBaseComboBox.getComboBox().setModel(new DefaultComboBoxModel(strings));
     }
     catch (VcsException e) {

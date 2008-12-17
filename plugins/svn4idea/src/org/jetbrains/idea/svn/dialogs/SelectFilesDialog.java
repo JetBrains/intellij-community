@@ -15,21 +15,20 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.OrderPanelListener;
-import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.svn.SvnBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -180,7 +179,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
           selected.add(path);
         }
       }
-      return (String[])selected.toArray(new String[selected.size()]);
+      return (String[])ArrayUtil.toStringArray(selected);
     }
   }
 }

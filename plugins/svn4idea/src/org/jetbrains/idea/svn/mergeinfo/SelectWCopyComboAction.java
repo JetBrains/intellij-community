@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.mergeinfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.changes.committed.LabeledComboBoxAction;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.idea.svn.SvnBranchMapperManager;
@@ -79,7 +80,7 @@ public class SelectWCopyComboAction extends LabeledComboBoxAction implements Con
     if (items == null) {
       return SelectBranchAction.EMPTY;
     }
-    final String[] itemsArray = items.toArray(new String[items.size()]);
+    final String[] itemsArray = ArrayUtil.toStringArray(items);
     Arrays.sort(itemsArray);
     return new DefaultComboBoxModel(itemsArray);
   }
