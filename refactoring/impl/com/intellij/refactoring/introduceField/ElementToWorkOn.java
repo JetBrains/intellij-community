@@ -60,31 +60,32 @@ public class ElementToWorkOn {
           expr = (PsiExpression) elementAt.getParent();
         }
       } else {
-        final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-        final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(elementAt, PsiLocalVariable.class);
-        if (variable != null) {
-          localVar = variable;
+        final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class);
+
+        final int offset = editor.getCaretModel().getOffset();
+        final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
+        if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
+          editor.getSelectionModel().selectLineAtCaret();
         } else {
-          final int offset = editor.getCaretModel().getOffset();
-          final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
-          if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
+          final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
+          if (expressions.isEmpty()) {
             editor.getSelectionModel().selectLineAtCaret();
-          } else {
-            final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
-            if (expressions.isEmpty()) {
-              editor.getSelectionModel().selectLineAtCaret();
-            } else if (expressions.size() == 1) {
-              expr = expressions.get(0);
-            }
-            else {
-              IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
-                @Override
-                public void pass(final PsiExpression selectedValue) {
-                  processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, null, selectedValue));
+          }
+          else if (expressions.size() == 1) {
+            expr = expressions.get(0);
+          }
+          else {
+            IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
+              @Override
+              public void pass(final PsiExpression selectedValue) {
+                PsiLocalVariable var = null; //replace var if selected expression == var initializer
+                if (variable != null && variable.getInitializer() == selectedValue) {
+                  var = variable;
                 }
-              });
-              return;
-            }
+                processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, var, selectedValue));
+              }
+            });
+            return;
           }
         }
       }
