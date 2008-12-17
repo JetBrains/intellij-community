@@ -212,6 +212,8 @@ public class XDebugSessionTab implements Disposable {
 
     myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
 
+    rebuildViews();
+
     return myRunContentDescriptor;
   }
 

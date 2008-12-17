@@ -19,7 +19,10 @@ public class XDebuggerTreeState {
   private XDebuggerTreeState(@NotNull XDebuggerTree tree) {
     myRootInfo = new NodeInfo("", "");
     ApplicationManager.getApplication().assertIsDispatchThread();
-    addChildren(tree, myRootInfo, ((XDebuggerTreeNode)tree.getTreeModel().getRoot()));
+    final XDebuggerTreeNode root = (XDebuggerTreeNode)tree.getTreeModel().getRoot();
+    if (root != null) {
+      addChildren(tree, myRootInfo, root);
+    }
   }
 
   public XDebuggerTreeRestorer restoreState(@NotNull XDebuggerTree tree) {
