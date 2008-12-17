@@ -52,7 +52,7 @@ public class DefaultFunctionContext implements FunctionContext {
         addFunction(decls, "count", new Function(XPathType.NUMBER,
                 new Parameter(XPathType.NODESET, Parameter.Kind.REQUIRED)
         ));
-        addFunction(decls, "id", new Function(XPathType.STRING,
+        addFunction(decls, "id", new Function(XPathType.NODESET,
                 new Parameter(XPathType.ANY, Parameter.Kind.REQUIRED)
         ));
         addFunction(decls, "local-name", new Function(XPathType.STRING,
