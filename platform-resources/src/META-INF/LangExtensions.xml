@@ -399,4 +399,8 @@
                   serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphSettingsProviderImpl"/>
   <projectService serviceInterface="com.intellij.openapi.graph.impl.builder.GraphEditModeFactory"
                   serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphEditModeFactoryImpl"/>
+
+  <!-- SM Test runner tests locations -->
+  <testSrcLocator implementation="com.intellij.execution.testframework.sm.FileUrlProvider"/>
+
 </extensions>
