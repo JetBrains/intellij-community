@@ -18,6 +18,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiFileFactoryImpl extends PsiFileFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiFileFactoryImpl");
@@ -39,7 +40,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text, boolean physical,
                                     final boolean markAsCopy) {
-    return trySetupPsiForFile(true, new LightVirtualFile(name, language, text), language, physical, markAsCopy);
+    return trySetupPsiForFile(new LightVirtualFile(name, language, text), language, physical, markAsCopy);
   }
 
   @NotNull
@@ -53,7 +54,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     if(fileType instanceof LanguageFileType){
       final Language language =
           LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), virtualFile, myManager.getProject());
-      final PsiFile file = trySetupPsiForFile(false, virtualFile, language, physical, markAsCopy);
+      final PsiFile file = trySetupPsiForFile(virtualFile, language, physical, markAsCopy);
       if (file != null) return file;
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
@@ -63,27 +64,17 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return plainTextFile;
   }
 
-  private PsiFile trySetupPsiForFile(final boolean useLanguage, final LightVirtualFile virtualFile, Language language,
+  @Nullable
+  private PsiFile trySetupPsiForFile(final LightVirtualFile virtualFile, Language language,
                                      final boolean physical, final boolean markAsCopy) {
-    FileViewProvider viewProvider = null;
-    //if (!useLanguage) {
-      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-      viewProvider = factory != null? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
-    //}
-    // todo[shrago]: try to create file for language = JSP (uselanguage = true) and got an exception
+    final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+    FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
     if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
 
     language = viewProvider.getBaseLanguage();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition != null) {
-      final PsiFile psiFile;
-      if (useLanguage) {
-        psiFile = parserDefinition.createFile(viewProvider);
-        ((SingleRootFileViewProvider)viewProvider).forceCachedPsi(psiFile);
-      }
-      else {
-        psiFile = viewProvider.getPsi(language);
-      }
+      final PsiFile psiFile = viewProvider.getPsi(language);
       if (psiFile != null) {
         if (markAsCopy) {
           final TreeElement node = (TreeElement)psiFile.getNode();
@@ -92,9 +83,6 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
         }
         return psiFile;
       }
-    }
-    else if (useLanguage) {
-      throw new AssertionError("parser definition not found for "+language);
     }
     return null;
   }
