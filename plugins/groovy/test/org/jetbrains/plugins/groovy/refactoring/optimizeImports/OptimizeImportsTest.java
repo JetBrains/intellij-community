@@ -17,156 +17,111 @@ package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.annotations.NonNls;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 
 /**
  * @author ilyas
  */
-public class OptimizeImportsTest extends IdeaTestCase {
-
-  protected Sdk getTestProjectJdk() {
-    return JavaSdk.getInstance().createJdk("java sdk", TestUtils.getMockJdkHome(), false);
+public class OptimizeImportsTest extends CodeInsightFixtureTestCase {
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.addJdk(TestUtils.getMockJdkHome());
   }
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(TestUtils.getTestDataPath() + "/optimizeImports");
-    assertNotNull(root);
-    final VirtualFile testRoot = root.findChild(getTestName(true));
-    assertNotNull(testRoot);
-    ContentEntry contentEntry = rootModel.addContentEntry(testRoot);
-    contentEntry.addSourceFolder(testRoot, false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        rootModel.commit();
-      }
-    });
+  @Override
+  protected String getBasePath() {
+    return "/svnPlugins/groovy/testdata/optimizeImports/" + getTestName(true);
   }
 
   public void testNewline() throws Throwable {
-    doTest("newline", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testAliased() throws Throwable {
-    doTest("aliased", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testSimpleOptimize() throws Throwable {
-    doTest("simpleOptimize", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testCommented() throws Throwable {
-    doTest("commented", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testOptimizeExists() throws Throwable {
-    doTest("optimizeExists", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testOptimizeAlias() throws Throwable {
-    doTest("optimizeAlias", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testFoldImports() throws Throwable {
-    doTest("foldImports", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testFoldImports2() throws Throwable {
-    doTest("foldImports2", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testUntypedCall() throws Throwable {
-    doTest("untypedCall", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testFoldImports3() throws Throwable {
-    doTest("foldImports3", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testFoldImports4() throws Throwable {
-    doTest("foldImports4", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testFoldImports5() throws Throwable {
-    doTest("foldImports5", "A.groovy");
+    doTest("A.groovy");
   }
 
   public void testFixPoint() throws Throwable {
-    doTest("fixPoint", "A.groovy");
+    doTest("A.groovy");
+  }
+
+  public void testUtilListMasked() throws Throwable {
+    myFixture.addClass("package java.awt; public class List {}");
+    doTest(getTestName(false) + ".groovy");
   }
 
   public void testSemicolons() throws Throwable {
-    doTest("semicolons", "A.groovy");
+    doTest("A.groovy");
   }
 
-  private void doTest(@NonNls String folder, @NonNls String filePath) throws Throwable {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject).clone();
+  private void doTest(@NonNls String filePath) throws Throwable {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
     try {
-      String basePath = TestUtils.getTestDataPath() + "/optimizeImports/";
-      String resultText = getResultFromFile(basePath + folder);
-      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + basePath + folder + "/" + filePath);
-
-      assertNotNull("Virtual file points to null", virtualFile);
-
-      PsiManager manager = PsiManager.getInstance(myProject);
-      PsiFile file = manager.findFile(virtualFile);
-
-      assertNotNull("PsiFile points to null", file);
+      myFixture.configureByFile(filePath);
 
       GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
-      final Runnable runnable = optimizer.processFile(file);
+      final Runnable runnable = optimizer.processFile(myFixture.getFile());
 
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(runnable);
         }
       }, "Optimize imports", null);
 
-      String text = file.getText();
-      //System.out.println("---------------------------- " + folder + " ----------------------------");
-      //System.out.println(text);
-      assertEquals("Results are not equal", resultText, text);
+      myFixture.checkResultByFile("result.test");
+
     }
     finally {
       CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     }
-  }
-
-  private static String getResultFromFile(String basePath) throws IOException {
-    StringBuilder contents = new StringBuilder();
-    String line;
-    File aFile = new File(basePath + "/" + "result.test");
-    BufferedReader input = new BufferedReader(new FileReader(aFile));
-    while ((line = input.readLine()) != null) {
-      if (contents.length() != 0) {
-        contents.append("\n");
-      }
-      contents.append(line);
-    }
-    return contents.toString();
   }
 
 }
