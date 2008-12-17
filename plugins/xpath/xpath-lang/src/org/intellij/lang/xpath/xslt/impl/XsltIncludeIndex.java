@@ -32,6 +32,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +101,19 @@ public class XsltIncludeIndex implements PsiIncludeManager.PsiIncludeHandler {
         for (int i = 0; i < info.length; i++) {
             final XmlTag directive = includes.get(i);
             final PsiFile target = resolve(psiFile, directive);
-            info[i] = new PsiIncludeManager.IncludeInfo(target, directive, new String[]{ target.getName() }, this);
+            final String[] fileNames;
+            if (target != null) {
+                fileNames = new String[]{ target.getName() };
+            } else {
+                final String href = directive.getAttributeValue("href");
+                if (href != null && href.length() > 0) {
+                    final String[] parts = href.split("[/\\\\]");
+                    fileNames = new String[]{ parts[parts.length - 1] };
+                } else {
+                    fileNames = ArrayUtil.EMPTY_STRING_ARRAY;
+                }
+            }
+            info[i] = new PsiIncludeManager.IncludeInfo(target, directive, fileNames, this);
         }
         return info;
     }
