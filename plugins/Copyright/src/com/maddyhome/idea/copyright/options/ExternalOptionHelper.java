@@ -66,7 +66,7 @@ public class ExternalOptionHelper {
     CopyrightProfile profile = new CopyrightProfile();
     boolean extract = false;
     for (Object l : valueElement.getChildren("LanguageOptions")) {
-      if (((Element)l).getAttributeValue("name").equals("JAVA")) {
+      if (((Element)l).getAttributeValue("name").equals("__TEMPLATE__")) {
         for (Object o1 : ((Element)l).getChildren("option")) {
           extract |= extract(profile, (Element)o1);
         }
