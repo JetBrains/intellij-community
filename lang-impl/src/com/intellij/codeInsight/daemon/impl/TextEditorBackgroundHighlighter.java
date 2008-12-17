@@ -92,15 +92,15 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
 
   private TextEditorHighlightingPass[] getPasses(int[] passesToIgnore) {
     if (myProject.isDisposed()) return TextEditorHighlightingPass.EMPTY_ARRAY;
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    renewFile();
+    if (myFile == null || !myFile.isPhysical()) return TextEditorHighlightingPass.EMPTY_ARRAY;
     if (myCompiled) {
       passesToIgnore = EXCEPT_OVERRIDDEN;
     }
     else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
       return TextEditorHighlightingPass.EMPTY_ARRAY;
     }
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    renewFile();
-    if (myFile == null) return TextEditorHighlightingPass.EMPTY_ARRAY;
 
     TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
 
