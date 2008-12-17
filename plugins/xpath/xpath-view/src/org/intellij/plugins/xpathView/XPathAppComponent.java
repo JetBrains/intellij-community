@@ -15,6 +15,9 @@
  */
 package org.intellij.plugins.xpathView;
 
+import org.intellij.plugins.xpathView.ui.ConfigUI;
+import org.intellij.plugins.xpathView.util.HighlighterUtil;
+
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +25,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -31,11 +33,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.LightweightHint;
-import org.intellij.plugins.xpathView.ui.ConfigUI;
-import org.intellij.plugins.xpathView.util.HighlighterUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import org.jdom.Element;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -50,7 +51,6 @@ import java.util.List;
  * Also used to manage highlighters.
  */
 public class XPathAppComponent implements ApplicationComponent, JDOMExternalizable, Configurable {
-    private static final ExtensionPointName<Configurable> EXTENSION_POINT_NAME = ExtensionPointName.create("XPathView.configurationProvider");
 
     private static final String ACTION_FIND_NEXT = "FindNext";
     private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
