@@ -105,29 +105,30 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     if (owner != null && owner == c) {
       myManager.getFocusManager().requestFocus(new FocusCommand() {
         public ActionCallback run() {
-          if (c.isFocusOwner()) {
-            myFocusWatcher.setFocusedComponentImpl(c);
-          }
           return new ActionCallback.Done();
         }
-      }, myForced).doWhenDone(new Runnable() {
+      }, myForced).doWhenProcessed(new Runnable() {
         public void run() {
-          updateFocusedComponentForWatcher(c);
-          if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
-            myToolWindow.activate(null);
-          }
+          updateToolWindow(c);
         }
       });
     }
     else {
-      myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent()), myForced).doWhenDone(new Runnable() {
+      myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent()), myForced).doWhenProcessed(new Runnable() {
         public void run() {
-          updateFocusedComponentForWatcher(c);
-          if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
-            myToolWindow.activate(null);
-          }
+          updateToolWindow(c);
         }
       });
+    }
+  }
+
+  private void updateToolWindow(Component c) {
+    if (c.isFocusOwner()) {
+      myFocusWatcher.setFocusedComponentImpl(c);
+    }
+    updateFocusedComponentForWatcher(c);
+    if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
+      myToolWindow.activate(null);
     }
   }
 

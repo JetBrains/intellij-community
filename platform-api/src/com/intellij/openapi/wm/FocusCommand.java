@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 public abstract class FocusCommand extends ActiveRunnable {
 
@@ -55,6 +56,12 @@ public abstract class FocusCommand extends ActiveRunnable {
     }
 
     return false;
+  }
+
+  @Override
+  public String toString() {
+    final Object[] objects = getEqualityObjects();
+    return "FocusCommand objectCount=" + objects.length + " objects=" + Arrays.asList(objects);
   }
 
   public static class ByComponent extends FocusCommand {

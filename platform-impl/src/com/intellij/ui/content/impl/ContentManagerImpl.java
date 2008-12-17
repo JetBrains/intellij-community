@@ -359,7 +359,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         }
 
         addSelectedContent(content);
-        requestFocus(content, forcedFocus);
+
+        if (requestFocus) {
+          requestFocus(content, forcedFocus);
+        }
       }
     };
 
@@ -458,7 +461,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     assert myContents.contains(toSelect);
 
 
-    return getFocusManager().requestFocus(new FocusCommand(content, toSelect.getComponent()) {
+    return getFocusManager().requestFocus(new FocusCommand(content, toSelect.getPreferredFocusableComponent()) {
       public ActionCallback run() {
         return doRequestFocus(toSelect);
       }
