@@ -518,4 +518,7 @@ public class ContainerUtil {
     return items.subList(0, items.size()-1);
   }
 
+  public static <T> List<T> list(T... items) {
+    return Arrays.asList(items);
+  }
 }
