@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,20 +31,25 @@ public class CommandLineBuilder {
   private static final Logger LOG = Logger.getInstance("#" + CommandLineBuilder.class.getName());
 
   public static GeneralCommandLine createFromJavaParameters(final JavaParameters javaParameters) throws CantRunException {
-    return createFromJavaParameters(javaParameters, null, false);
+    return createFromJavaParameters(javaParameters, false);
   }
 
   /**
    * In order to avoid too long cmd problem dynamic classpath can be used
+   * @param dynamicClasspath whether system properties and project settings will be able to cause using dynamic classpath. If false,
+   * classpath will always be passed through the command line.
    */
-  public static GeneralCommandLine createFromJavaParameters(final JavaParameters javaParameters, final boolean dynamicClasspath) throws CantRunException {
-    return createFromJavaParameters(javaParameters, null, dynamicClasspath);
+  public static GeneralCommandLine createFromJavaParameters(final JavaParameters javaParameters, final Project project, final boolean dynamicClasspath) throws CantRunException {
+    return createFromJavaParameters(javaParameters, project, dynamicClasspath && useDynamicClasspath(project));
   }
 
   /**
-   * In order to avoid too long cmd problem dynamic classpath can be used 
+   * @param javaParameters parameters
+   * @param forceDynamicClasspath whether dynamic classpath will be used for this execution, to prevent problems caused by too long command line
+   * @return command line
+   * @throws CantRunException if there are problems with JDK setup
    */
-  public static GeneralCommandLine createFromJavaParameters(final JavaParameters javaParameters, final Project project, final boolean dynamicClasspath) throws CantRunException {
+  public static GeneralCommandLine createFromJavaParameters(final JavaParameters javaParameters, final boolean forceDynamicClasspath) throws CantRunException {
     try {
       return ApplicationManager.getApplication().runReadAction(new Computable<GeneralCommandLine>() {
         public GeneralCommandLine compute() {
@@ -72,41 +78,33 @@ public class CommandLineBuilder {
               if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
               commandLine.setCharset(charset);
             }
-            if (dynamicClasspath) {
-              final String hasDynamicProperty = System.getProperty("idea.dynamic.classpath", "false");
-              if (Boolean.valueOf(project != null
-                                  ? PropertiesComponent.getInstance(project).getOrInit("dynamic.classpath", hasDynamicProperty)
-                                  : hasDynamicProperty).booleanValue()) {
-                File classpathFile = null;
-                if(!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
+            if (forceDynamicClasspath) {
+              File classpathFile = null;
+              if(!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
+                try {
+                  classpathFile = FileUtil.createTempFile("classpath", null);
+                  final PrintWriter writer = new PrintWriter(classpathFile);
                   try {
-                    classpathFile = FileUtil.createTempFile("classpath", null);
-                    final PrintWriter writer = new PrintWriter(classpathFile);
-                    try {
-                      for (String path : javaParameters.getClassPath().getPathList()) {
-                        writer.println(path);
-                      }
+                    for (String path : javaParameters.getClassPath().getPathList()) {
+                      writer.println(path);
                     }
-                    finally {
-                      writer.close();
-                    }
-
-                    commandLine.addParameter("-classpath");
-                    commandLine.addParameter(PathUtil.getJarPathForClass(CommandLineWrapper.class) + File.pathSeparator +
-                                             PathUtil.getJarPathForClass(UrlClassLoader.class));
                   }
-                  catch (IOException e) {
-                    LOG.error(e);
+                  finally {
+                    writer.close();
                   }
-                }
 
-                if (classpathFile != null) {
-                  commandLine.addParameter(CommandLineWrapper.class.getName());
-                  commandLine.addParameter(classpathFile.getAbsolutePath());
+                  commandLine.addParameter("-classpath");
+                  commandLine.addParameter(PathUtil.getJarPathForClass(CommandLineWrapper.class) + File.pathSeparator +
+                                           PathUtil.getJarPathForClass(UrlClassLoader.class));
                 }
-              } else if(!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
-                commandLine.addParameter("-classpath");
-                commandLine.addParameter(javaParameters.getClassPath().getPathsString());
+                catch (IOException e) {
+                  LOG.error(e);
+                }
+              }
+
+              if (classpathFile != null) {
+                commandLine.addParameter(CommandLineWrapper.class.getName());
+                commandLine.addParameter(classpathFile.getAbsolutePath());
               }
             }
             else if(!parametersList.hasParameter("-classpath") && !parametersList.hasParameter("-cp")){
@@ -141,4 +139,12 @@ public class CommandLineBuilder {
         throw e;
     }
   }
+
+  private static boolean useDynamicClasspath(@Nullable Project project) {
+    final String hasDynamicProperty = System.getProperty("idea.dynamic.classpath", "false");
+    return Boolean.valueOf(project != null
+                           ? PropertiesComponent.getInstance(project).getOrInit("dynamic.classpath", hasDynamicProperty)
+                           : hasDynamicProperty).booleanValue();
+  }
+
 }
