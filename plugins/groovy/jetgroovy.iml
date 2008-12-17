@@ -27,6 +27,10 @@
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="web-openapi" />
+    <orderEntry type="module" module-name="web-impl" />
+    <orderEntry type="module" module-name="spring-core" />
+    <orderEntry type="module" module-name="J2EE" />
   </component>
 </module>
 
