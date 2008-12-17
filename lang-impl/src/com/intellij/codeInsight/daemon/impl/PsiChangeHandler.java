@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.codeInspection.SuppressionUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +178,8 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
 
     // optimization
     if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
-      if (child instanceof PsiWhiteSpace || child instanceof PsiComment) {
+      if (child instanceof PsiWhiteSpace ||
+          child instanceof PsiComment && !child.getText().contains(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
         myFileStatusMap.markFileScopeDirty(document, child.getTextRange(), fileLength);
         return;
       }
