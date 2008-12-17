@@ -28,6 +28,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return false;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement exprList = getExpressionList(editor, project);
