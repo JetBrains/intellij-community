@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
@@ -46,6 +47,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
@@ -169,7 +171,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.setMainClass(GROOVY_STARTER);
   }
 
-  private void configureGroovyStarter(JavaParameters params, final Module module) throws CantRunException {
+  private void configureGroovyStarter(JavaParameters params, final Module module, boolean isTests) throws CantRunException {
     // add GroovyStarter parameters
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(GROOVY_MAIN);
@@ -186,7 +188,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     // Clear module libraries from JDK's occurrences
     final JavaParameters tmp = new JavaParameters();
-    tmp.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
+    tmp.configureByModule(module, isTests ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES);
     StringBuffer buffer = RunnerUtil.getClearClassPathString(tmp, module);
 
     params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
@@ -200,7 +202,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     //Setting up script charset
     // MUST be last parameter
     Charset charset;
-    final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl("file://" + scriptPath);
+    final VirtualFile fileByUrl = findScriptFile();
     charset = EncodingProjectManager.getInstance(getProject()).getEncoding(fileByUrl, true);
     if (charset == null) {
       charset = EncodingManager.getInstance().getDefaultCharset();
@@ -247,12 +249,15 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       throw CantRunException.noJdkForModule(getModule());
     }
 
+    final VirtualFile script = findScriptFile();
+    final boolean isTests = script != null && ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
+
     final JavaCommandLineState state = new JavaCommandLineState(environment) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = new JavaParameters();
 
         configureJavaParams(params, module);
-        configureGroovyStarter(params, module);
+        configureGroovyStarter(params, module, isTests);
         configureScript(params);
 
         return params;
@@ -262,5 +267,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     return state;
 
+  }
+
+  @Nullable
+  private VirtualFile findScriptFile() {
+    return VirtualFileManager.getInstance().findFileByUrl("file://" + scriptPath);
   }
 }
