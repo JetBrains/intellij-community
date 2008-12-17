@@ -72,7 +72,7 @@ public class FileWatcher {
           isShuttingDown = true;
           shutdownProcess();
         }
-      }));
+      }, "FileWatcher shutdown hook"));
     }
     else {
       LOG.info("Native file watcher failed to startup.");
