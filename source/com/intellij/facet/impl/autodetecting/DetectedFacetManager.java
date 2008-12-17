@@ -121,12 +121,7 @@ public class DetectedFacetManager implements Disposable {
           }
         }
       };
-      if (ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().getCurrentModalityState() == ModalityState.NON_MODAL) {
-        runnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
-      }
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
     }
   }
 
