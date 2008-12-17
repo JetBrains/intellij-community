@@ -707,6 +707,9 @@ public class ExpectedTypesProvider {
       if (myForCompletion) {
         myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(this);
+        for (final ExpectedTypeInfo info : myResult) {
+          ((ExpectedTypeInfoImpl)info).myTailType = TailType.NONE;
+        }
         return;
       }
 
