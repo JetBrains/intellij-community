@@ -57,6 +57,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private int myInitialOffset;
+  private long myShownStamp = -1;
   private String myInitialPrefix;
   @Nullable private final LookupItemPreferencePolicy myItemPreferencePolicy;
 
@@ -420,18 +421,23 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void finishLookup(final char completionChar) {
+    if (myShownStamp > 0 && System.currentTimeMillis() - myShownStamp < 239 && !ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     final LookupElement item = (LookupElement)myList.getSelectedValue();
     doHide(false);
     if (item == null ||
         item instanceof EmptyLookupItem ||
-        item.getObject() instanceof DeferredUserLookupValue && item instanceof LookupItem &&
+        item.getObject() instanceof DeferredUserLookupValue &&
+        item instanceof LookupItem &&
         !((DeferredUserLookupValue)item.getObject()).handleUserSelection((LookupItem)item, myProject)) {
       fireItemSelected(null, completionChar);
       return;
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run(){
+      public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
         final int caretOffset = myEditor.getCaretModel().getOffset();
         final String prefix = item.getPrefixMatcher().getPrefix();
@@ -529,6 +535,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Point p = calculatePosition();
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
+
+    myShownStamp = System.currentTimeMillis();
   }
 
   private int calcLookupStart() {
