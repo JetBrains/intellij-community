@@ -394,7 +394,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-// Keyword completion in returns
+// Keyword completion in returns  !!!!
       final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(new TextFilter(PsiKeyword.RETURN)));
       variant.addCompletion(PsiKeyword.THIS, TailType.NONE);
       variant.addCompletion(PsiKeyword.SUPER, TailType.NONE);
@@ -611,14 +611,14 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-      // null completion
+      // null completion !!!!!!
       final CompletionVariant variant = new CompletionVariant(and(
           psiElement().inside(or(
               psiElement(PsiExpressionList.class),
               psiElement(PsiExpression.class).withParent(or(psiElement(PsiIfStatement.class), psiElement(PsiLocalVariable.class))),
               psiElement(PsiAssignmentExpression.class))
           ),
-          not(psiElement().afterLeaf(".")),
+          not(psiElement().afterLeaf(".", PsiKeyword.RETURN)),
           not(psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiTypeCastExpression.class)))
       ));
       variant.addCompletion(PsiKeyword.NULL, TailType.NONE);
