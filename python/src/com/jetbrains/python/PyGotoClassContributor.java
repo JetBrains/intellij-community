@@ -5,6 +5,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 
@@ -16,7 +17,7 @@ import java.util.Collection;
 public class PyGotoClassContributor implements ChooseByNameContributor {
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
     final Collection<String> classNames = StubIndex.getInstance().getAllKeys(PyClassNameIndex.KEY);
-    return classNames.toArray(new String[classNames.size()]);
+    return ArrayUtil.toStringArray(classNames);
   }
 
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, final boolean includeNonProjectItems) {

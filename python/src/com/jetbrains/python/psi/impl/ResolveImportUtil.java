@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -405,7 +406,7 @@ public class ResolveImportUtil {
    * @return an array of names ready for getVariants().
    */
   public static Object[] suggestImportVariants(final PyReferenceExpression partial_ref) {
-    List<Object> variants = new ArrayList<Object>();
+    List<String> variants = new ArrayList<String>();
     // are we in "import _" or "from foo import _"?
     PyFromImportStatement maybe_from_import = PsiTreeUtil.getParentOfType(partial_ref, PyFromImportStatement.class);
     if (maybe_from_import != null) {
@@ -466,7 +467,7 @@ public class ResolveImportUtil {
       variants.addAll(visitor.getResult());
     }
 
-    return variants.toArray(new String[variants.size()]);
+    return ArrayUtil.toStringArray(variants);
   }
 
 }
