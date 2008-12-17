@@ -243,7 +243,7 @@ public class QuickListPanel {
         }
       }
     }
-    return actions.toArray(new String[actions.size()]);
+    return ArrayUtil.toStringArray(actions);
   }
 
   public JPanel getPanel() {

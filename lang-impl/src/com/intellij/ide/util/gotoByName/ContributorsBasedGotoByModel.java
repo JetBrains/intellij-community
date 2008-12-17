@@ -74,7 +74,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
       }
     }
 
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   /**
@@ -107,7 +107,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         LOG.error(ex);
       }
     }
-    return items == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : items.toArray(new Object[items.size()]);
+    return items == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : ArrayUtil.toObjectArray(items);
   }
 
   public String getElementName(Object element) {

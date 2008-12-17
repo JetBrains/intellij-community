@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +85,7 @@ public class DirectoryChooser extends DialogWrapper {
       index = nextSeparator + 1;
     }
     list.add(path.substring(index, path.length()));
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   private void buildFragments() {

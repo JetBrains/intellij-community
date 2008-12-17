@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -43,11 +44,8 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
     }, true);
 
     CreateNSDeclarationIntentionFix.runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
-      schemaLocations.toArray(new String[schemaLocations.size()]),
-      file.getProject(),
-      new CreateNSDeclarationIntentionFix.StringToAttributeProcessor() {
-        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName)
-        throws IncorrectOperationException {
+      ArrayUtil.toStringArray(schemaLocations), file.getProject(), new CreateNSDeclarationIntentionFix.StringToAttributeProcessor() {
+        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
           doIt(file, editor, uri, tag, attrName);
         }
       }, XmlErrorMessages.message("select.namespace.location.title"), this, editor);

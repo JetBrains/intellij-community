@@ -8,9 +8,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -123,7 +124,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
     for(PaletteGroup group: groups) {
       result.add(group.getTabName());
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private ArrayList<PaletteGroup> collectCurrentGroups(@Nullable VirtualFile selectedFile) {

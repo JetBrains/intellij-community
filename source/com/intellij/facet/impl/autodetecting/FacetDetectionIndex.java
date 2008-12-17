@@ -14,10 +14,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.BidirectionalMultiMap;
 import com.intellij.util.fileIndex.AbstractFileIndex;
@@ -185,7 +186,7 @@ public class FacetDetectionIndex extends AbstractFileIndex<FacetDetectionIndexEn
     FacetPointer<Facet> pointer = FacetPointersManager.getInstance(facet.getModule().getProject()).create(facet);
     Set<String> urls = myDetectedFacetIds.getKeys(info.getId());
     if (urls != null) {
-      String[] urlsArray = urls.toArray(new String[urls.size()]);
+      String[] urlsArray = ArrayUtil.toStringArray(urls);
       for (String url : urlsArray) {
         myDetectedFacetIds.remove(url, info.getId());
         myFacets.put(url, pointer);

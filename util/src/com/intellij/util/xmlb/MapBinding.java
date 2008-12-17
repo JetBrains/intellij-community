@@ -19,6 +19,7 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.JDOMUtil;
 import static com.intellij.util.xmlb.Constants.*;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -71,7 +72,7 @@ class MapBinding implements Binding {
     }
 
     final Set keySet = map.keySet();
-    final Object[] keys = keySet.toArray(new Object[keySet.size()]);
+    final Object[] keys = ArrayUtil.toObjectArray(keySet);
     Arrays.sort(keys, KEY_COMPARATOR);
     for (Object k : keys) {
       Object v = map.get(k);

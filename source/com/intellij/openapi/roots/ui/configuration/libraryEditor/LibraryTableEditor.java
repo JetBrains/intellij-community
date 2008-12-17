@@ -321,7 +321,7 @@ public class LibraryTableEditor implements Disposable {
         elements.add(pathElement);
       }
     }
-    return elements.toArray(new Object[elements.size()]);
+    return ArrayUtil.toObjectArray(elements);
   }
 
   @Nullable

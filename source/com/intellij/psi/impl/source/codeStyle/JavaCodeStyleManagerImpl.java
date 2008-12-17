@@ -226,7 +226,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     addNamesFromStatistics(names, kind, _propertyName, type);
 
-    String[] namesArray = names.toArray(new String[names.size()]);
+    String[] namesArray = ArrayUtil.toStringArray(names);
     sortVariableNameSuggestions(namesArray, kind, _propertyName, type);
 
     final PsiType _type = type;
@@ -294,7 +294,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       suggestions.addAll(Arrays.asList(getSuggestionsByName(typeName, variableKind, type instanceof PsiArrayType)));
     }
 
-    return suggestions.toArray(new String[suggestions.size()]);
+    return ArrayUtil.toStringArray(suggestions);
   }
 
   private void suggestNamesFromGenericParameters(final PsiType type,
@@ -531,7 +531,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (names3 != null) {
       names.addAll(Arrays.asList(names3));
     }
-    String[] namesArray = names.toArray(new String[names.size()]);
+    String[] namesArray = ArrayUtil.toStringArray(names);
     String propertyName = names1.propertyName != null ? names1.propertyName : names2.propertyName;
     return new NamesByExprInfo(propertyName, namesArray);
   }
@@ -643,7 +643,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (currentWord.length() > 0) {
       result.add(currentWord.toString());
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private NamesByExprInfo suggestVariableNameByExpressionPlace(PsiExpression expr, final VariableKind variableKind) {
@@ -842,7 +842,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
 
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   public String suggestUniqueVariableName(String baseName, PsiElement place, boolean lookForward) {
@@ -894,7 +894,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       uniqueNames.add(suggestUniqueVariableName(name, place, lookForward));
     }
 
-    return new SuggestedNameInfo(uniqueNames.toArray(new String[uniqueNames.size()])) {
+    return new SuggestedNameInfo(ArrayUtil.toStringArray(uniqueNames)) {
       public void nameChoosen(String name) {
         baseNameInfo.nameChoosen(name);
       }

@@ -206,7 +206,7 @@ public class TagNameReference implements PsiReference {
         return descriptor instanceof AnyXmlElementDescriptor ? null : descriptor.getName(element);
       }
     });
-    return l.toArray(new String[l.size()]);
+    return ArrayUtil.toStringArray(l);
   }
 
   private static void processVariantsInNamespace(final String namespace,

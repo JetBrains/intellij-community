@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionListener;
@@ -20,7 +21,7 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
     super(new EditorComboBox(createDocument(text, manager, toAcceptClasses), manager.getProject(), StdFileTypes.JAVA), browseActionListener);
     final List<String> recentEntries = RecentsManager.getInstance(manager.getProject()).getRecentEntries(recentsKey);
     if (recentEntries != null) {
-      setHistory(recentEntries.toArray(new String[recentEntries.size()]));
+      setHistory(ArrayUtil.toStringArray(recentEntries));
     }
     if (text != null && text.length() > 0) {
       prependItem(text);

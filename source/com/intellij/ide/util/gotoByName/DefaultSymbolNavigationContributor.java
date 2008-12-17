@@ -35,11 +35,13 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 
 import java.util.*;
@@ -53,7 +55,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     cache.getAllMethodNames(set);
     cache.getAllFieldNames(set);
     cache.getAllClassNames(set);
-    return set.toArray(new String[set.size()]);
+    return ArrayUtil.toStringArray(set);
   }
 
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
@@ -90,8 +92,10 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   }
 
   private static PsiMethod[] filterInheritedMethods(PsiMethod[] methods) {
-    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(methods.length);
+    ProgressManager progressManager = ProgressManager.getInstance();
     for (PsiMethod method : methods) {
+      progressManager.checkCanceled();
       if (method.isConstructor()) continue;
       PsiMethod[] supers = method.findSuperMethods();
       if (supers.length > 0) continue;

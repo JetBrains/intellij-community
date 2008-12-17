@@ -10,6 +10,7 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 
@@ -29,7 +30,7 @@ public class ModuleGroupUtil {
     final String[] groupPath = group.getGroupPath();
     for (String pathElement : groupPath) {
       path.add(pathElement);
-      final ModuleGroup moduleGroup = new ModuleGroup(path.toArray(new String[path.size()]));
+      final ModuleGroup moduleGroup = new ModuleGroup(ArrayUtil.toStringArray(path));
       T moduleGroupNode = map.get(moduleGroup);
       if (moduleGroupNode == null) {
         moduleGroupNode = createNewNode.fun(moduleGroup);
@@ -50,7 +51,7 @@ public class ModuleGroupUtil {
     final String[] groupPath = group.getGroupPath();
     for (String pathElement : groupPath) {
       path.add(pathElement);
-      final ModuleGroup moduleGroup = new ModuleGroup(path.toArray(new String[path.size()]));
+      final ModuleGroup moduleGroup = new ModuleGroup(ArrayUtil.toStringArray(path));
       T moduleGroupNode = needToCreateNode.fun(moduleGroup);
       if (moduleGroupNode == null) {
         moduleGroupNode = createNewNode.fun(moduleGroup);

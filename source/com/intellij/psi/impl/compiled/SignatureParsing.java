@@ -11,6 +11,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class SignatureParsing {
       }
     }
 
-    String[] sbounds = bounds.toArray(new String[bounds.size()]);
+    String[] sbounds = ArrayUtil.toStringArray(bounds);
     new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, sbounds, PsiReferenceList.Role.EXTENDS_BOUNDS_LIST);
 
     return parameterStub;

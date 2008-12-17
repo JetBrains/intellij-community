@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.util.ArrayUtil;
+
 import java.util.ArrayList;
 
 public class LineTokenizer {
@@ -46,7 +48,7 @@ public class LineTokenizer {
       if (appendNewLine) line += "\n";
       lines.add(line);
     }
-    return lines.toArray(new String[lines.size()]);
+    return ArrayUtil.toStringArray(lines);
   }
 
   private void skipEOL() {

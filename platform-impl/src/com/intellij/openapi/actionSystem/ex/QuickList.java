@@ -1,23 +1,15 @@
 package com.intellij.openapi.actionSystem.ex;
 
 
-
-import com.intellij.openapi.options.ExternalizableScheme;
-
 import com.intellij.openapi.options.ExternalInfo;
-
+import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
-
 import org.jetbrains.annotations.NonNls;
-
 import org.jetbrains.annotations.NotNull;
 
-
-
 import java.util.ArrayList;
-
 import java.util.Arrays;
-
 import java.util.List;
 
 
@@ -208,7 +200,7 @@ public class QuickList implements ExternalizableScheme {
 
     }
 
-    myActionIds = ids.toArray(new String[ids.size()]);
+    myActionIds = ArrayUtil.toStringArray(ids);
 
   }
 

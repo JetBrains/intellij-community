@@ -92,17 +92,22 @@ public class ArrayUtil {
     return result;
   }
 
-  public static<T> T[] toObjectArray(Collection<T> collection, Class<T> aClass) {
+  @NotNull
+  public static<T> T[] toObjectArray(@NotNull Collection<T> collection, @NotNull Class<T> aClass) {
     T[] array = (T[]) Array.newInstance(aClass, collection.size());
     return collection.toArray(array);
   }
 
-  public static Object[] toObjectArray(Collection collection) {
-    return toObjectArray(collection, Object.class);
+  @NotNull
+  public static Object[] toObjectArray(@NotNull Collection<?> collection) {
+    if (collection.isEmpty()) return EMPTY_OBJECT_ARRAY;
+    return collection.toArray(new Object[collection.size()]);
   }
 
-  public static String[] toStringArray(Collection<String> collection) {
-    return toObjectArray(collection, String.class);
+  @NotNull
+  public static String[] toStringArray(@NotNull Collection<String> collection) {
+    if (collection.isEmpty()) return EMPTY_STRING_ARRAY;
+    return collection.toArray(new String[collection.size()]);
   }
 
   public static <T> T[] mergeArrays(T[] a1, T[] a2, Class<T> aClass) {

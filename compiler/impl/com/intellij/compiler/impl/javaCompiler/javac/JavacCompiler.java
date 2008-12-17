@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -150,7 +151,7 @@ public class JavacCompiler extends ExternalCompiler {
         LOG.error(ex[0]);
       }
     }
-    return commandLine.toArray(new String[commandLine.size()]);
+    return ArrayUtil.toStringArray(commandLine);
   }
 
   private void createStartupCommand(final ModuleChunk chunk, @NonNls final List<String> commandLine, final String outputPath) throws IOException {

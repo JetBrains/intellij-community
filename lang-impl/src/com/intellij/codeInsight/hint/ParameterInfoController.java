@@ -107,7 +107,7 @@ public class ParameterInfoController {
       }
     }
 
-    return params.isEmpty() ? ArrayUtil.EMPTY_OBJECT_ARRAY : params.toArray(new Object[params.size()]);
+    return ArrayUtil.toObjectArray(params);
   }
 
   private static ArrayList<ParameterInfoController> getAllControllers(Editor editor) {

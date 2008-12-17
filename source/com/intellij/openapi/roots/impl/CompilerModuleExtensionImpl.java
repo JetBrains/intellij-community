@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -301,7 +302,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
         result.add(outputPathForTests);
       }
-      return result.toArray(new String[result.size()]);
+      return ArrayUtil.toStringArray(result);
     }
     return null;
   }

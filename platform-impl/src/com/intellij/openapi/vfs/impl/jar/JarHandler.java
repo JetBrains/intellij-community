@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +134,7 @@ public class JarHandler implements FileSystemInterface {
         }
       }
 
-      return names.toArray(new String[names.size()]);
+      return ArrayUtil.toStringArray(names);
     }
   }
 

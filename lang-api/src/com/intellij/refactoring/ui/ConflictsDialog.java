@@ -23,6 +23,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ public class ConflictsDialog extends DialogWrapper{
   private String[] myConflictDescriptions;
 
   public ConflictsDialog(Project project, Collection<String> conflictDescriptions) {
-    this(project, conflictDescriptions.toArray(new String[conflictDescriptions.size()]));
+    this(project, ArrayUtil.toStringArray(conflictDescriptions));
   }
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);

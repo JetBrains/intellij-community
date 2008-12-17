@@ -76,7 +76,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   @NotNull public String[] getAvailableFavoritesLists(){
     final Set<String> keys = myName2FavoritesRoots.keySet();
-    return keys.toArray(new String[keys.size()]);
+    return ArrayUtil.toStringArray(keys);
   }
 
   public synchronized void createNewList(@NotNull String name){

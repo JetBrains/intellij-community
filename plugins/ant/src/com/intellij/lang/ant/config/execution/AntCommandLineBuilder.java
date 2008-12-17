@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
 import com.intellij.rt.ant.execution.IdeaInputHandler;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.config.AbstractProperty;
 import org.jetbrains.annotations.NonNls;
@@ -146,6 +147,6 @@ public class AntCommandLineBuilder {
   }
 
   public String[] getTargets() {
-    return myTargets.toArray(new String[myTargets.size()]);
+    return ArrayUtil.toStringArray(myTargets);
   }
 }

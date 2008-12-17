@@ -73,7 +73,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
         ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), ValuePatternCondition.class);
       if (valueCondition != null) {
         final Collection<String> strings = valueCondition.getValues();
-        registerNamedReferenceProvider(strings.toArray(new String[strings.size()]), new NamedObjectProviderBinding() {
+        registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), new NamedObjectProviderBinding() {
           protected String getName(final PsiElement position) {
             return nameCondition.getPropertyValue(position);
           }

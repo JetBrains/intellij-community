@@ -168,7 +168,7 @@ public class MethodInfo extends MemberInfo {
       signature = signature.substring(paramSignature.length());
       paramSignature = parseFieldType(signature);
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   private @NonNls String parseFieldType(@NonNls String signature) {

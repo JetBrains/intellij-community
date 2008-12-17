@@ -23,10 +23,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
 import java.util.*;
@@ -327,7 +328,7 @@ public class PropertyUtil {
       }
     }
 
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   public static String[] getWritableProperties(PsiClass aClass, boolean includeSuperClass) {
@@ -350,7 +351,7 @@ public class PropertyUtil {
       }
     }
 
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   public static PsiMethod generateGetterPrototype(PsiField field) {

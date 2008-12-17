@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -250,7 +251,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
         messages.add(descriptor.getDescriptionTemplate());
       }
     }
-    myCollectionPanel.setErrorMessages(messages.toArray(new String[messages.size()]));
+    myCollectionPanel.setErrorMessages(ArrayUtil.toStringArray(messages));
     myCollectionPanel.repaint();
   }
 

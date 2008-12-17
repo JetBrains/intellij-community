@@ -75,7 +75,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
               child = child.getTreeNext();
             }
           }
-          result = list.toArray(new Object[list.size()]);
+          result = ArrayUtil.toObjectArray(list);
         }
         else {
           final PsiElement[] elementChildren = ((PsiElement)element).getChildren();

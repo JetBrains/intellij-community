@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -261,7 +262,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       result.add(getResourceBundleText());
     }
 
-    myRBEditorTextField.setHistory(result.toArray(new String[result.size()]));
+    myRBEditorTextField.setHistory(ArrayUtil.toStringArray(result));
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         myRBEditorTextField.setSelectedIndex(0);

@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
@@ -270,15 +271,15 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public static String[] getPathsToDelete() {
-    return ourDeletedPaths.toArray(new String[ourDeletedPaths.size()]);
+    return ArrayUtil.toStringArray(ourDeletedPaths);
   }
 
   public static String[] getPathsToRecompile() {
-    return ourRecompiledPaths.toArray(new String[ourRecompiledPaths.size()]);
+    return ArrayUtil.toStringArray(ourRecompiledPaths);
   }
 
   public static String[] getPathsToCompile() {
-    return ourCompiledPaths.toArray(new String[ourCompiledPaths.size()]);
+    return ArrayUtil.toStringArray(ourCompiledPaths);
   }
 
   public static void clearPathsToCompile() {

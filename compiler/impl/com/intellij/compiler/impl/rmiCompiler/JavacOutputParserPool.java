@@ -30,6 +30,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.compiler.JavacResourcesReader;
+import com.intellij.util.ArrayUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,7 +112,7 @@ public class JavacOutputParserPool {
 
     commandLine.add(JavacResourcesReader.class.getName());
 
-    return commandLine.toArray(new String[commandLine.size()]);
+    return ArrayUtil.toStringArray(commandLine);
   }
 
 }

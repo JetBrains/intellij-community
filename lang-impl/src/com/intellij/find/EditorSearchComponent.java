@@ -658,7 +658,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       ArrayList<String> sortedWords = new ArrayList<String>(words);
       Collections.sort(sortedWords);
 
-      return sortedWords.toArray(new String[sortedWords.size()]);
+      return ArrayUtil.toStringArray(sortedWords);
     }
   }
 

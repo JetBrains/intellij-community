@@ -24,7 +24,6 @@ public class BraceHighlighter implements ProjectComponent {
   private SelectionListener mySelectionListener;
   private DocumentListener myDocumentListener;
   private FocusChangeListener myFocusChangeListener;
-  private boolean myIsDisposed = false;
 
   public BraceHighlighter(Project project) {
     myProject = project;
@@ -38,7 +37,6 @@ public class BraceHighlighter implements ProjectComponent {
   public void initComponent() { }
 
   public void disposeComponent() {
-    myIsDisposed = true;
   }
 
   public void projectOpened() {

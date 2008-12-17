@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +124,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
       public int waitFor() {
         try {
           commandLine.remove("-verbose");
-          String[] finalCmds = commandLine.toArray(new String[commandLine.size()]);
+          String[] finalCmds = ArrayUtil.toStringArray(commandLine);
           myEclipseCompilerDriver.parseCommandLineAndCompile(finalCmds,compileContext);
           myExitCode = 0;
           return myExitCode;

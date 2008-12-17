@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlDeclareIdInCommentAction;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,7 +162,7 @@ public class IdRefReference extends BasicAttributeValueReference {
       }
     });
 
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   public boolean isSoft() {

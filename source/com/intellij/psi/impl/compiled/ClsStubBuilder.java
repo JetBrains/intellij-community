@@ -150,7 +150,7 @@ public class ClsStubBuilder {
         }
       }
 
-      String[] interfacesArray = convertedInterfaces.toArray(new String[convertedInterfaces.size()]);
+      String[] interfacesArray = ArrayUtil.toStringArray(convertedInterfaces);
       if (isInterface) {
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY,

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.fs.IFile;
@@ -387,7 +388,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
       final StateStorageManager.ExternalizationSession session = storageManager.startExternalization();
 
-      final String[] names = myComponents.keySet().toArray(new String[myComponents.keySet().size()]);
+      final String[] names = ArrayUtil.toStringArray(myComponents.keySet());
 
       for (String name : names) {
         Object component = myComponents.get(name);

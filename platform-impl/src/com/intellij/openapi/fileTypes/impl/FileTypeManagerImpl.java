@@ -15,8 +15,8 @@ import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PatternUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -24,14 +24,12 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -68,8 +66,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
 
   private static class StandardFileType {
-    FileType fileType;
-    List<FileNameMatcher> matchers;
+    private final FileType fileType;
+    private final List<FileNameMatcher> matchers;
 
     private StandardFileType(final FileType fileType, final List<FileNameMatcher> matchers) {
       this.fileType = fileType;
@@ -81,15 +79,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static final Map<String, StandardFileType> ourStandardFileTypes = new LinkedHashMap<String, StandardFileType>();
   @NonNls private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
   private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/filetypes";
+  @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/filetypes";
 
   static {
     final FileTypeConsumer consumer = new FileTypeConsumer() {
-      public void consume(final @NotNull FileType fileType, final String extensions) {
+      public void consume(@NotNull final FileType fileType, final String extensions) {
         register(fileType, parse(extensions));
       }
 
-      public void consume(final @NotNull FileType fileType, final FileNameMatcher... matchers) {
+      public void consume(@NotNull final FileType fileType, final FileNameMatcher... matchers) {
         register(fileType, Arrays.asList(matchers));
       }
 
@@ -130,7 +128,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new SchemeProcessor<AbstractFileType>() {
-      public AbstractFileType readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
+      public AbstractFileType readScheme(final Document document) throws InvalidDataException {
         if (document == null) {
           throw new InvalidDataException();
         }
@@ -214,7 +212,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myMessageBus = bus;
   }
 
-  private void writeImportedExtensionsMap(final Element map, final ImportedFileType type) {
+  private static void writeImportedExtensionsMap(final Element map, final ImportedFileType type) {
     for (FileNameMatcher matcher : type.getOriginalPatterns()) {
       Element content = AbstractFileType.writeMapping(type, matcher, false);
       if (content != null) {
@@ -790,7 +788,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return type;
   }
 
-  private void setFileTypeAttributes(final String fileTypeName, final String fileTypeDescr, final String iconPath, final UserFileType ft) {
+  private static void setFileTypeAttributes(final String fileTypeName, final String fileTypeDescr, final String iconPath, final UserFileType ft) {
     if (iconPath != null && !"".equals(iconPath.trim())) {
       Icon icon = IconLoader.getIcon(iconPath);
       ft.setIcon(icon);

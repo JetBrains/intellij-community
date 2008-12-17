@@ -383,7 +383,7 @@ public class JavaCompletionUtil {
           .add(((PsiNamedElement)element).getName());
       }
     }
-    return overides.toArray(new String[overides.size()]);
+    return ArrayUtil.toStringArray(overides);
   }
 
   public static String[] getImplements(final PsiClass parent, final PsiType typeByPsiElement) {
@@ -396,7 +396,7 @@ public class JavaCompletionUtil {
           .add(((PsiNamedElement)element).getName());
       }
     }
-    return overides.toArray(new String[overides.size()]);
+    return ArrayUtil.toStringArray(overides);
   }
 
   public static String[] getPropertiesHandlersNames(final PsiClass psiClass,
@@ -431,7 +431,7 @@ public class JavaCompletionUtil {
             }
           }
         }
-        result = propertyHandlers.toArray(new String[propertyHandlers.size()]);
+        result = ArrayUtil.toStringArray(propertyHandlers);
       }
     }
     final Change result = new Change();
@@ -536,7 +536,7 @@ public class JavaCompletionUtil {
         }
       });
     }
-    return unresolvedRefs.toArray(new String[unresolvedRefs.size()]);
+    return ArrayUtil.toStringArray(unresolvedRefs);
   }
 
   public static void initOffsets(final PsiFile file, final Project project, final OffsetMap offsetMap){

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -250,15 +251,15 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   }
 
   public String[] getRecentFindStrings(){
-    return RECENT_FIND_STRINGS.toArray(new String[RECENT_FIND_STRINGS.size()]);
+    return ArrayUtil.toStringArray(RECENT_FIND_STRINGS);
   }
 
   public String[] getRecentReplaceStrings(){
-    return RECENT_REPLACE_STRINGS.toArray(new String[RECENT_REPLACE_STRINGS.size()]);
+    return ArrayUtil.toStringArray(RECENT_REPLACE_STRINGS);
   }
 
   public String[] getRecentFileMasks() {
-    return RECENT_FILE_MASKS.toArray(new String[RECENT_FILE_MASKS.size()]);
+    return ArrayUtil.toStringArray(RECENT_FILE_MASKS);
   }
 
   public ArrayList<String> getRecentDirectories(){

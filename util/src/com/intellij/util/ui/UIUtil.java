@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
@@ -505,7 +506,7 @@ public class UIUtil {
         // JRE has problems working with the font. Just skip.
       }
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   public static String[] getStandardFontSizes() {
@@ -523,7 +524,7 @@ public class UIUtil {
   }
 
   public static String displayPropertiesToCSS(Font font, Color fg) {
-    @NonNls StringBuffer rule = new StringBuffer("body {");
+    @NonNls StringBuilder rule = new StringBuilder("body {");
     if (font != null) {
       rule.append(" font-family: ");
       rule.append(font.getFamily());

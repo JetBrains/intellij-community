@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,7 @@ public class JikesCompiler extends ExternalCompiler {
     if (ex[0] != null) {
       throw ex[0];
     }
-    return commandLine.toArray(new String[commandLine.size()]);
+    return ArrayUtil.toStringArray(commandLine);
   }
 
   private void _createStartupCommand(final ModuleChunk chunk, final ArrayList<String> commandLine, @NotNull final String outputPath) throws IOException {

@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -77,7 +78,7 @@ public class NameUtil {
       String word = name.substring(wordStart, index);
       array.add(word);
     }
-    return array.toArray(new String[array.size()]);
+    return ArrayUtil.toStringArray(array);
   }
 
   private static boolean containsOnlyUppercaseLetters(String s) {
@@ -221,7 +222,7 @@ public class NameUtil {
     for (String word : underlineDelimited) {
       addAllWords(word, result);
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private enum WordState { NO_WORD, PREV_UC, WORD }

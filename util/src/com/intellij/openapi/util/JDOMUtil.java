@@ -121,7 +121,7 @@ public class JDOMUtil {
     ArrayList<Object> result = new ArrayList<Object>();
     result.addAll(e.getContent());
     result.addAll(e.getAttributes());
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   @SuppressWarnings({"unchecked"})

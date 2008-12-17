@@ -193,7 +193,7 @@ methods:
             result.add(method);
           }
 
-          return result.toArray(new Object[result.size()]);
+          return ArrayUtil.toObjectArray(result);
         } else {
           return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }

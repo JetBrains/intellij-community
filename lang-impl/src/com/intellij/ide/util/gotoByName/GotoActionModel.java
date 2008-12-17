@@ -142,7 +142,7 @@ public class GotoActionModel implements ChooseByNameModel {
         }
       }
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private void collectActionIds(Collection<String> result, ActionGroup group){

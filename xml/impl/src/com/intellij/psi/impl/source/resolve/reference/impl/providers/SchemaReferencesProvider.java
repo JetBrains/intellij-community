@@ -482,7 +482,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
         );
       }
 
-      return processor.myElements.toArray(new String[processor.myElements.size()]);
+      return ArrayUtil.toStringArray(processor.myElements);
     }
 
     private static void processNamespace(final String namespace,

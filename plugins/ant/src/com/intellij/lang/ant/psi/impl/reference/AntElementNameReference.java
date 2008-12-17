@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,7 @@ public class AntElementNameReference extends AntGenericReference {
           }
         }.walkFiles(antFile);
       }
-      return ids.toArray(new Object[ids.size()]);
+      return ArrayUtil.toObjectArray(ids);
     }
     finally {
       PsiElementSetSpinAllocator.dispose(ids);

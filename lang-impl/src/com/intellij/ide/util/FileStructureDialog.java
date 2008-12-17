@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -380,7 +381,7 @@ public class FileStructureDialog extends DialogWrapper {
         }
         filteredElements.add(child);
       }
-      return filteredElements.toArray(new Object[filteredElements.size()]);
+      return ArrayUtil.toObjectArray(filteredElements);
     }
 
     public void rebuildTree() {

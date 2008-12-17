@@ -16,6 +16,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -226,7 +227,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
       for (ProjectRoot rootFile : rootFiles) {
         result.addAll(Arrays.asList(rootFile.getUrls()));
       }
-      return result.toArray(new String[result.size()]);
+      return ArrayUtil.toStringArray(result);
     }
 
     public VirtualFile[] getFiles(final OrderRootType rootType) {

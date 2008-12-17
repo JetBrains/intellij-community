@@ -423,7 +423,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       }
     }
     if (list == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return sortInOrderOfRegistration(list.toArray(new String[list.size()]));
+    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list));
   }
 
   public String[] getActionIds(KeyStroke firstKeyStroke) {
@@ -449,7 +449,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       }
     }
     if (list == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return sortInOrderOfRegistration(list.toArray(new String[list.size()]));
+    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list));
   }
 
   public String[] getActionIds(KeyStroke firstKeyStroke, KeyStroke secondKeyStroke) {
@@ -468,7 +468,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         }
       }
     }
-    return actualBindings.toArray(new String[actualBindings.size()]);
+    return ArrayUtil.toStringArray(actualBindings);
   }
 
   public String[] getActionIds(final Shortcut shortcut) {
@@ -516,7 +516,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     if (list == null){
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    return sortInOrderOfRegistration(list.toArray(new String[list.size()]));
+    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list));
   }
 
   private static String[] sortInOrderOfRegistration(String[] ids) {
@@ -856,7 +856,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         ids.add(id);
       }
     }
-    return ids.toArray(new String[ids.size()]);
+    return ArrayUtil.toStringArray(ids);
   }
 
   protected String[] getParentActionIds() {

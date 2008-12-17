@@ -504,7 +504,7 @@ public class ClassFileReader {
         array.add(exceptionClass);
       }
     }
-    return array.toArray(new String[array.size()]);
+    return ArrayUtil.toStringArray(array);
   }
 
   private String readSourceFileAttribute(BytePointer p) throws ClsFormatException {

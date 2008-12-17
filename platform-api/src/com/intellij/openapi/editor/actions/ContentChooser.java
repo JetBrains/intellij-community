@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -23,9 +24,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.CommonBundle;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -35,7 +36,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
@@ -203,7 +204,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
 
     myAllContents = allContents;
-    myList.setListData(shortened.toArray(new String[shortened.size()]));
+    myList.setListData(ArrayUtil.toStringArray(shortened));
   }
 
   protected abstract String getStringRepresentationFor(final Data content);

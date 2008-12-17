@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,7 +119,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
 
       private String createStringOn(final ArrayList<String> data) {
-        return StringUtil.join(data.toArray(new String[data.size()]), ",");
+        return StringUtil.join(ArrayUtil.toStringArray(data), ",");
       }
 
       private ArrayList<String> createCollectionOn(final String data) {

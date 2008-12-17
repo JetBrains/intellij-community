@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -192,6 +193,6 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
         addVariantsFromFile(propFile, variants);
       }
     }
-    return variants.toArray(new Object[variants.size()]);
+    return ArrayUtil.toObjectArray(variants);
   }
 }

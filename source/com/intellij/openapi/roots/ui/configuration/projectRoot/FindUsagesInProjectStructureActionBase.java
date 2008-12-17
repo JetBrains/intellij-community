@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,8 +62,8 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction {
       return;
     }
     RelativePoint point = getPointToShowResults();
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(
-      ProjectBundle.message("dependencies.used.in.popup.title"), dependencies.toArray(new String[dependencies.size()])) {
+    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(ProjectBundle.message("dependencies.used.in.popup.title"),
+                                                                               ArrayUtil.toStringArray(dependencies)) {
 
       public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
         navigateToObject(nameToSelect, selectedObject);

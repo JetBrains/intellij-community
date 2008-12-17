@@ -8,11 +8,14 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 
 public class ToolManager implements ExportableApplicationComponent {
 
@@ -83,7 +86,7 @@ public class ToolManager implements ExportableApplicationComponent {
         list.add(tool.getGroup());
       }
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   public String getGroupByActionId(String actionId) {

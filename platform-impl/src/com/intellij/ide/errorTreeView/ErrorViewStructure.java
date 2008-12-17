@@ -64,7 +64,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
           children.add(groupingElement);
         }
       }
-      return children.toArray(new Object[children.size()]);
+      return ArrayUtil.toObjectArray(children);
     }
     else if (element instanceof GroupingElement) {
       synchronized (myGroupNameToMessagesMap) {

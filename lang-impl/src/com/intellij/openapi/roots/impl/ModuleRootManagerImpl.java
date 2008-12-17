@@ -242,7 +242,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
       result.addAll(Arrays.asList(urls));
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   void commitModel(RootModelImpl rootModel) {
@@ -352,11 +352,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     List<String> result = new ArrayList<String>();
     if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)) {
       myRootModel.addExportedUrs(rootType, result, processed);
-      return result.toArray(new String[result.size()]);
+      return ArrayUtil.toStringArray(result);
     }
     else if (OrderRootType.CLASSES.equals(rootType)) {
       myRootModel.addExportedUrs(rootType, result, processed);
-      return result.toArray(new String[result.size()]);
+      return ArrayUtil.toStringArray(result);
     }
     else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
       return getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
@@ -525,7 +525,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
               }
             }, new ArrayList<String>());
 
-            final String[] names = names1.toArray(new String[names1.size()]);
+            final String[] names = ArrayUtil.toStringArray(names1);
             List<RootModelImpl> result = new ArrayList<RootModelImpl>();
             for (String name : names) {
               final RootModelImpl depRootModel = nameToModel.get(name);

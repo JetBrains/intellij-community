@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -146,7 +147,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       names.add(scheme.getName());
     }
 
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   public Collection<EditorColorsScheme> getSchemes() {

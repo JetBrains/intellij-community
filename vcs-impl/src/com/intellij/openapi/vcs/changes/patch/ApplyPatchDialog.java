@@ -41,6 +41,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -163,7 +164,7 @@ public class ApplyPatchDialog extends DialogWrapper {
     Object[] selection = myPatchContentsList.getSelectedValues();
     if (selection.length == 0) {
       if (myPatches == null) return;
-      selection = myPatches.toArray(new Object[myPatches.size()]);
+      selection = ArrayUtil.toObjectArray(myPatches);
     }
     for(Object o: selection) {
       final TextFilePatch patch = (TextFilePatch) o;

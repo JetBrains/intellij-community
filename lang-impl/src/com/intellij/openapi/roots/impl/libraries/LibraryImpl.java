@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -510,7 +511,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       for (VirtualFile file : getFiles(rootType)) { // Add those expanded with jar directories.
         originalUrls.add(file.getUrl());
       }
-      return originalUrls.toArray(new String[originalUrls.size()]);
+      return ArrayUtil.toStringArray(originalUrls);
     }
 
     public VirtualFile[] getFiles(final OrderRootType rootType) {

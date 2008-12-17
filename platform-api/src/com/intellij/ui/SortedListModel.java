@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.util.*;
@@ -60,7 +61,7 @@ public class SortedListModel<T> extends AbstractListModel {
   }
 
   public int[] addAll(Collection<T> items) {
-    return addAll(items.toArray(new Object[items.size()]));
+    return addAll(ArrayUtil.toObjectArray(items));
   }
 
   public void remove(int index) {

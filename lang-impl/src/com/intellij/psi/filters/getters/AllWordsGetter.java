@@ -31,6 +31,6 @@ public class AllWordsGetter implements ContextGetter {
         }
       }
     }, chars, 0, chars.length());
-    return objs.toArray(new String[objs.size()]);
+    return ArrayUtil.toStringArray(objs);
   }
 }

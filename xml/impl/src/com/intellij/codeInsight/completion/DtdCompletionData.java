@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.codeInsight.TailType;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
@@ -108,7 +109,7 @@ public class DtdCompletionData extends CompletionData {
       };
 
       XmlUtil.processXmlElements((XmlFile)context.getContainingFile().getOriginalFile(), processor, true);
-      return results.toArray(new Object[results.size()]);
+      return ArrayUtil.toObjectArray(results);
     }
   }
   static class MyInsertHandler extends BasicInsertHandler {

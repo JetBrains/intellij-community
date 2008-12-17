@@ -54,7 +54,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
             result.add(method);
           }
         }
-        return result.toArray(new Object[result.size()]);
+        return ArrayUtil.toObjectArray(result);
       } else if (token.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN && place.getParent() instanceof PsiDocMethodOrFieldRef) {
         return getPossibleMethodsAndFields(context, place, prefix);
       }
@@ -78,7 +78,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
       result.add(variable);
     }
 
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   private PsiElement getTargetContext(PsiElement context, PsiElement place) {

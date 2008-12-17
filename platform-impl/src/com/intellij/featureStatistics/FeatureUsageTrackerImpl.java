@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.ProgressFunComponentProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
         result.add(id);
       }
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   public boolean isToBeShown(String featureId, Project project) {

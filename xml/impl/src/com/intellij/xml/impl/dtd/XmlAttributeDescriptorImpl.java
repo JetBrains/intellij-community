@@ -6,8 +6,9 @@ import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,7 +92,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
       result.add(value.getText());
     }
 
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   public String getQualifiedName() {

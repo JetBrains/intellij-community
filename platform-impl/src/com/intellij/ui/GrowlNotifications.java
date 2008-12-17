@@ -5,6 +5,7 @@ import com.apple.cocoa.foundation.NSArray;
 import com.growl.Growl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -33,7 +34,7 @@ class GrowlNotifications {
   }
 
   private String[] getAllNotifications() {
-    return myNotifications.toArray(new String[myNotifications.size()]);
+    return ArrayUtil.toStringArray(myNotifications);
   }
 
   public static synchronized GrowlNotifications getNofications() {

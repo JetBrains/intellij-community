@@ -1,13 +1,14 @@
 package com.intellij.ide.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -47,15 +48,8 @@ public class SuperMethodWarningUtil {
     }
 
     SuperMethodWarningDialog dialog =
-        new SuperMethodWarningDialog(
-            method.getProject(),
-            UsageViewUtil.getDescriptiveName(method),
-            actionString,
-            superAbstract,
-            parentInterface,
-            aClass.isInterface(),
-            superClasses.toArray(new String[superClasses.size()])
-    );
+        new SuperMethodWarningDialog(method.getProject(), UsageViewUtil.getDescriptiveName(method), actionString, superAbstract,
+                                     parentInterface, aClass.isInterface(), ArrayUtil.toStringArray(superClasses));
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

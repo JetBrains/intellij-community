@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -171,7 +172,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     Map<String, ArrayList<KeyboardShortcut>> conflicts = myKeymap.getConflicts(myActionId, keyboardShortcut);
 
     Set<String> keys = conflicts.keySet();
-    String[] actionIds = keys.toArray(new String[keys.size()]);
+    String[] actionIds = ArrayUtil.toStringArray(keys);
     for (String actionId : actionIds) {
       String actionPath = myMainGroup.getActionQualifiedPath(actionId);
       // actionPath == null for editor actions having corresponding $-actions

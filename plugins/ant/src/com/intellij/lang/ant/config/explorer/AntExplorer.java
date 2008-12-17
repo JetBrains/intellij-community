@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -291,7 +292,7 @@ public class AntExplorer extends JPanel implements DataProvider {
         targets.add(target.getName());
       }
     }
-    return targets.toArray(new String[targets.size()]);
+    return ArrayUtil.toStringArray(targets);
   }
 
   private static AntBuildTarget[] getTargetObjectsFromPaths(TreePath[] paths) {

@@ -40,6 +40,7 @@ import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -361,7 +362,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public String[] getAvailableProfileNames() {
     final Collection<String> names = mySchemesManager.getAllSchemeNames();
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   public Profile getProfile(@NotNull final String name) {

@@ -19,6 +19,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -197,7 +198,7 @@ public class DetailsComponent {
       strings.addAll(Arrays.asList(myText));
     }
 
-    myBannerText = strings.toArray(new String[strings.size()]);
+    myBannerText = ArrayUtil.toStringArray(strings);
 
     updateBanner();
   }

@@ -63,7 +63,7 @@ public class GenericMethodSignature {
         SignatureParser.INSTANCE.parseTypeSignature(it, typeSignature);
         params.add(typeSignature.toString());
       }
-      paramSignatures = params.toArray(new String[params.size()]);
+      paramSignatures = ArrayUtil.toStringArray(params);
     }
     else {
       paramSignatures = ArrayUtil.EMPTY_STRING_ARRAY;

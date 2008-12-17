@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ public class EclipseCompiler extends ExternalCompiler {
     if (ex[0] != null) {
       throw ex[0];
     }
-    return commandLine.toArray(new String[commandLine.size()]);
+    return ArrayUtil.toStringArray(commandLine);
   }
 
   private void createStartupCommand(final ModuleChunk chunk,

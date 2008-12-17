@@ -207,7 +207,7 @@ public class XmlUtil {
       if ("xmlns".equals(attribute.getName()) && attribute.getValue().equals(uri)) result.add("");
     }
 
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   @Nullable

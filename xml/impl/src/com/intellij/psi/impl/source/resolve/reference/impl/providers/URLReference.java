@@ -186,7 +186,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
     if (provider != null) {
       final Set<String> strings = provider.getAvailableNamespaces(file, null);
-      return strings.toArray(new Object[strings.size()]);
+      return ArrayUtil.toObjectArray(strings);
     }
     String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
     final XmlDocument document = file.getDocument();
@@ -200,7 +200,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
         return true;
       }
     });
-    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, additionalNs.toArray(new String[additionalNs.size()]), String.class);
+    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtil.toStringArray(additionalNs), String.class);
     return resourceUrls;
   }
 

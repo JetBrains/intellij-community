@@ -16,6 +16,7 @@ import com.intellij.ui.LoadingNode;
 import com.intellij.util.Alarm;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Time;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakList;
@@ -1159,7 +1160,7 @@ class AbstractTreeUi {
         eachParent = eachParent.getParent();
       }
 
-      return new TreePath(nodes.toArray(new Object[nodes.size()]));
+      return new TreePath(ArrayUtil.toObjectArray(nodes));
     }
   }
 
@@ -1452,7 +1453,7 @@ class AbstractTreeUi {
       }
     }
 
-    final Object[] elementsToSelect = toSelect.toArray(new Object[toSelect.size()]);
+    final Object[] elementsToSelect = ArrayUtil.toObjectArray(toSelect);
 
     if (wasRootNodeInitialized()) {
       final int[] originalRows = myTree.getSelectionRows();

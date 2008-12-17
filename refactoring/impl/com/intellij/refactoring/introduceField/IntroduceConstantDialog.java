@@ -27,6 +27,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -196,7 +197,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       myTargetClassNamePanel.setLayout(new BorderLayout());
       myTargetClassNamePanel.add(targetClassName, BorderLayout.CENTER);
       myTargetClassNameLabel.setLabelFor(targetClassName);
-      targetClassName.setHistory(possibleClassNames.toArray(new String[possibleClassNames.size()]));
+      targetClassName.setHistory(ArrayUtil.toStringArray(possibleClassNames));
       myTfTargetClassName = targetClassName;
       targetClassName.getChildComponent().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {

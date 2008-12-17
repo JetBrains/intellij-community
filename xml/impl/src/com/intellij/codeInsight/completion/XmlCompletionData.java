@@ -296,7 +296,7 @@ public class XmlCompletionData extends CompletionData {
           if (element != null) XmlUtil.processXmlElements(element, processor, true);
         }
 
-        return results.toArray(new Object[results.size()]);
+        return ArrayUtil.toObjectArray(results);
       }
 
       return ArrayUtil.EMPTY_OBJECT_ARRAY;

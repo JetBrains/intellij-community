@@ -19,6 +19,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,7 @@ public class RenameDialog extends RefactoringDialog {
         if (info != null) mySuggestedNameInfo = info;
       }
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private void completeVariable(Editor editor) {

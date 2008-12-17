@@ -7,6 +7,7 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -50,8 +51,7 @@ public class RequiredLibrariesInfo {
     if (infos.isEmpty()) {
       return null;
     }
-    return new RequiredClassesNotFoundInfo(classes.toArray(new String[classes.size()]),
-                                           infos.toArray(new LibraryInfo[infos.size()]));
+    return new RequiredClassesNotFoundInfo(ArrayUtil.toStringArray(classes), infos.toArray(new LibraryInfo[infos.size()]));
   }
 
   public static String getLibrariesPresentableText(final LibraryInfo[] libraryInfos) {

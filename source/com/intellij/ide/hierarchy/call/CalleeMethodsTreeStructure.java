@@ -77,7 +77,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
       result.add(new CallHierarchyNodeDescriptor(myProject, descriptor, ejbImplementation, false));
     }
 */
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   private boolean isInScope(final PsiClass baseClass, final PsiMethod calledMethod) {

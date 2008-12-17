@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
@@ -145,7 +146,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
         result.add(baseName);
       }
     });
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   interface PropertiesFileProcessor {

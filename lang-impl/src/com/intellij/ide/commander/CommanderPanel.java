@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -609,7 +610,7 @@ public class CommanderPanel extends JPanel {
     }
 
     public Object[] toArray() {
-      return myElements.toArray(new Object[myElements.size()]);
+      return ArrayUtil.toObjectArray(myElements);
     }
 
     public int indexOf(final Object o) {

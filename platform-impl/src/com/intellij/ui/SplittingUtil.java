@@ -1,11 +1,13 @@
 package com.intellij.ui;
 
+import com.intellij.util.ArrayUtil;
+
 import java.awt.*;
 import java.util.ArrayList;
 
 public class SplittingUtil {
   public static String[] splitText(String text, FontMetrics fontMetrics, int widthLimit, char separator){
-    ArrayList lines = new ArrayList();
+    ArrayList<String> lines = new ArrayList<String>();
     String currentLine = "";
     StringBuffer currentAtom = new StringBuffer();
 
@@ -38,6 +40,6 @@ public class SplittingUtil {
       lines.add(s);
     }
 
-    return (String[])lines.toArray(new String[lines.size()]);
+    return ArrayUtil.toStringArray(lines);
   }
 }

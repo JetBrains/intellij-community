@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +78,7 @@ public class FileTypeAssocTable {
   public boolean removeAllAssociations(FileType type) {
     boolean changed = false;
     Set<String> exts = myExtensionMappings.keySet();
-    String[] extsStrings = exts.toArray(new String[exts.size()]);
+    String[] extsStrings = ArrayUtil.toStringArray(exts);
     for (String s : extsStrings) {
       if (myExtensionMappings.get(s) == type) {
         myExtensionMappings.remove(s);
@@ -135,7 +136,7 @@ public class FileTypeAssocTable {
         exts.add(ext);
       }
     }
-    return exts.toArray(new String[exts.size()]);
+    return ArrayUtil.toStringArray(exts);
   }
 
   @NotNull

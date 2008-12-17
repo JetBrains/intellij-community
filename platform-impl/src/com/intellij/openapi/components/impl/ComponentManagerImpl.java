@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -271,7 +272,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       Object component = getComponent(interfaceClass);
       if (component != null) components.add(component);
     }
-    return components.toArray(new Object[components.size()]);
+    return ArrayUtil.toObjectArray(components);
   }
 
   @SuppressWarnings({"unchecked"})

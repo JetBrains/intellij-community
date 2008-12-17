@@ -10,6 +10,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -80,7 +81,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   @NotNull
   public String[] getAllClassNames() {
     final Collection<String> names = JavaShortClassNameIndex.getInstance().getAllKeys();
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   public void getAllClassNames(@NotNull HashSet<String> set) {
@@ -106,7 +107,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   @NotNull
   public String[] getAllMethodNames() {
     final Collection<String> names = JavaMethodNameIndex.getInstance().getAllKeys();
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   public void getAllMethodNames(@NotNull HashSet<String> set) {
@@ -126,7 +127,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   @NotNull
   public String[] getAllFieldNames() {
     final Collection<String> names = JavaFieldNameIndex.getInstance().getAllKeys();
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   public void getAllFieldNames(@NotNull HashSet<String> set) {

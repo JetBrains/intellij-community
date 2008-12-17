@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,7 @@ public class ParametersList implements Cloneable{
   }
 
   public String[] getArray() {
-    return myParameters.toArray(new String[myParameters.size()]);
+    return ArrayUtil.toStringArray(myParameters);
   }
 
   public void addParametersString(final String parameters) {
@@ -237,7 +238,7 @@ public class ParametersList implements Cloneable{
         }
       }
       tokenFinished();
-      return myArray.toArray(new String[myArray.size()]);
+      return ArrayUtil.toStringArray(myArray);
     }
 
     private boolean processNotQuoted(final char c) {

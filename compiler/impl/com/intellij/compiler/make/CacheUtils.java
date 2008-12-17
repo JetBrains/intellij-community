@@ -4,6 +4,7 @@ import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.MethodInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public class CacheUtils {
       signature = signature.substring(paramSignature.length());
       paramSignature = parseParameterSignature(signature);
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

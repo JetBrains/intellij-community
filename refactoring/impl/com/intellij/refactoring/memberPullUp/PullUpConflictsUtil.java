@@ -9,16 +9,20 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.MethodSignature;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
@@ -83,7 +87,7 @@ public class PullUpConflictsUtil {
     }
     RefactoringUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflictsList);
-    return conflictsList.toArray(new String[conflictsList.size()]);
+    return ArrayUtil.toStringArray(conflictsList);
   }
 
   private static void checkInterfaceTarget(MemberInfo[] infos, LinkedHashSet<String> conflictsList) {

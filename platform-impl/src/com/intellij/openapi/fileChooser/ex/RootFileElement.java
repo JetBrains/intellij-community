@@ -4,6 +4,7 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class RootFileElement extends FileElement {
         roots.add(new FileElement(file, file.getPresentableUrl()));
       }
     }
-    return roots.toArray(new Object[roots.size()]);
+    return ArrayUtil.toObjectArray(roots);
   }
 
   private static Object[] getFileSystemRoots() {
@@ -56,7 +57,7 @@ public class RootFileElement extends FileElement {
       if (file == null) continue;
       rootChildren.add(new FileElement(file, file.getPresentableUrl()));
     }
-    return rootChildren.toArray(new Object[rootChildren.size()]);
+    return ArrayUtil.toObjectArray(rootChildren);
   }
 
   public Object getParentFor(final VirtualFile parent) {

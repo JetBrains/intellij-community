@@ -44,6 +44,7 @@ import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
@@ -279,7 +280,7 @@ public class CompilerTask extends Task.Backgroundable {
     while (tokenizer.hasMoreTokens()) {
       lines.add(tokenizer.nextToken());
     }
-    return lines.toArray(new String[lines.size()]);
+    return ArrayUtil.toStringArray(lines);
   }
 
   public static int translateCategory(CompilerMessageCategory category) {

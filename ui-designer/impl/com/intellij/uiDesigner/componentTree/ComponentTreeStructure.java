@@ -73,7 +73,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
           result.add(suppression);
         }
       }
-      return result.toArray(new Object[result.size()]);
+      return ArrayUtil.toObjectArray(result);
     }
     else if (element instanceof RadButtonGroup[]) {
       return (RadButtonGroup[]) element;

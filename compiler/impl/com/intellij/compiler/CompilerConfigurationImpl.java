@@ -226,7 +226,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private String[] getWildcardPatterns() {
-    return myWildcardPatterns.toArray(new String[myWildcardPatterns.size()]);
+    return ArrayUtil.toStringArray(myWildcardPatterns);
   }
 
   public void addResourceFilePattern(String namePattern) throws MalformedPatternException {

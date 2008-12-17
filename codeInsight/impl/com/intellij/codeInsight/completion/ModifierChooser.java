@@ -6,6 +6,7 @@ import com.intellij.psi.filters.classes.InterfaceFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ scopes:
       }
     }
     catch(Exception e){}
-    return ret.toArray(new String[ret.size()]);
+    return ArrayUtil.toStringArray(ret);
   }
 
   private static PsiModifierList getModifierList(PsiElement element)

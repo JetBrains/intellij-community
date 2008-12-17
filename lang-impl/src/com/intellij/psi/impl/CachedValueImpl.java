@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.TimedReference;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
@@ -190,7 +191,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
     myLastPsiTimeStamp = myManager.getModificationTracker().getModificationCount();
 
-    return  new Data<T>(value, deps.toArray(new Object[deps.size()]), timeStamps.toNativeArray());
+    return  new Data<T>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
   }
 
   private void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {

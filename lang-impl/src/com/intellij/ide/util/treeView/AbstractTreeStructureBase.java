@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
       node.setParent(treeNode);
     }
 
-    return modified.toArray(new Object[modified.size()]);
+    return ArrayUtil.toObjectArray(modified);
   }
 
   public Object getParentElement(Object element) {

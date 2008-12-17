@@ -269,7 +269,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           idList.add(id);
         }
       }
-      return idList.toArray(new String[idList.size()]);
+      return ArrayUtil.toStringArray(idList);
     }
   }
 
@@ -869,7 +869,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   public String[] getPluginActions(PluginId pluginName) {
     if (myPlugin2Id.containsKey(pluginName)){
       final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
-      return pluginActions.toArray(new String[pluginActions.size()]);
+      return ArrayUtil.toStringArray(pluginActions);
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }

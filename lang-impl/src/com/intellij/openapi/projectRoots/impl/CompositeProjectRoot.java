@@ -4,6 +4,7 @@ import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ class CompositeProjectRoot implements ProjectRoot {
     for (ProjectRoot root : myRoots) {
       result.addAll(Arrays.asList(root.getUrls()));
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   public boolean isValid() {

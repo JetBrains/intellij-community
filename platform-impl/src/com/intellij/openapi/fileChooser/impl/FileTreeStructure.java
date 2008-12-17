@@ -104,7 +104,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
         childrenSet.add(childElement);
       }
     }
-    return childrenSet.toArray(new Object[childrenSet.size()]);
+    return ArrayUtil.toObjectArray(childrenSet);
   }
 
 

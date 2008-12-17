@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -223,7 +224,7 @@ public class LaterInvocator {
     //TODO!
     //LOG.assertTrue(IdeEventQueue.getInstance().isInInputEvent() || isInMyRunnable());
 
-    return ourModalEntities.toArray(new Object[ourModalEntities.size()]);
+    return ArrayUtil.toObjectArray(ourModalEntities);
   }
 
   public static boolean isInModalContext() {

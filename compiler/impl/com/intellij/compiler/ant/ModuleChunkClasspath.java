@@ -12,6 +12,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -172,7 +173,7 @@ public class ModuleChunkClasspath extends Path {
     final OrderedSet<String> urls = new OrderedSet<String>();
     urls.addAll(Arrays.asList(orderEntry.getUrls(OrderRootType.CLASSES_AND_OUTPUT)));
     urls.removeAll(jdkUrls);
-    return urls.toArray(new String[urls.size()]);
+    return ArrayUtil.toStringArray(urls);
   }
 
   /**

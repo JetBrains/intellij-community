@@ -68,7 +68,7 @@ public class BraceHighlightingHandler {
     myFileType = myPsiFile == null ? null : myPsiFile.getFileType();
   }
 
-  public static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor, @NotNull final Alarm alarm, final Processor<BraceHighlightingHandler> processor) {
+  static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor, @NotNull final Alarm alarm, @NotNull final Processor<BraceHighlightingHandler> processor) {
     final Project project = editor.getProject();
     if (project == null) return;
     final int offset = editor.getCaretModel().getOffset();
@@ -97,7 +97,7 @@ public class BraceHighlightingHandler {
     job.schedule();
   }
 
-  public static PsiFile getInjectedFileIfAny(final Editor editor, final Project project, int offset, PsiFile psiFile, final Alarm alarm) {
+  static PsiFile getInjectedFileIfAny(final Editor editor, final Project project, int offset, PsiFile psiFile, final Alarm alarm) {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
     if (!PsiDocumentManager.getInstance(project).isUncommited(document)) {
@@ -249,14 +249,7 @@ public class BraceHighlightingHandler {
 
     boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), myFileType, iterator, false);
 
-    int brace2Start;
-
-    if (!iterator.atEnd()) {
-      brace2Start = iterator.getStart();
-    }
-    else {
-      brace2Start = -1;
-    }
+    int brace2Start = iterator.atEnd() ? -1 : iterator.getStart();
 
     highlightBraces(brace2Start, brace1End - 1, matched, false);
   }
@@ -265,13 +258,7 @@ public class BraceHighlightingHandler {
     int brace1Start = iterator.getStart();
     boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), myFileType, iterator, true);
 
-    int brace2End;
-    if (!iterator.atEnd()) {
-      brace2End = iterator.getEnd() - 1;
-    }
-    else {
-      brace2End = -1;
-    }
+    int brace2End = iterator.atEnd() ? -1 : iterator.getEnd() - 1;
 
     highlightBraces(brace1Start, brace2End, matched, scopeHighlighting);
   }

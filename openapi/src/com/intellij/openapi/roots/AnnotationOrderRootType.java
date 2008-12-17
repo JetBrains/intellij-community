@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,6 +69,6 @@ public class AnnotationOrderRootType extends OrderRootType {
       }
     };
     entry.accept(policy, result);
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 }

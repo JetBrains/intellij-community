@@ -200,7 +200,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           result.add(value);
         }
       }
-      return result.toArray(new Object[result.size()]);
+      return ArrayUtil.toObjectArray(result);
     }
     else {
       return null;

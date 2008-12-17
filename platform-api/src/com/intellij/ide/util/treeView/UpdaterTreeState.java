@@ -3,6 +3,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -194,7 +195,7 @@ public class UpdaterTreeState {
       }
     }
 
-    final Object[] newSelection = toSelect.toArray(new Object[toSelect.size()]);
+    final Object[] newSelection = ArrayUtil.toObjectArray(toSelect);
 
     myUi._select(newSelection, new Runnable() {
       public void run() {

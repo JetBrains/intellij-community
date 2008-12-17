@@ -13,7 +13,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -42,7 +41,7 @@ public class TemplateSurrounder implements Surrounder {
   public boolean isApplicableForFileType(FileType fileType) {
     final TemplateContext templateContext = myTemplate.getTemplateContext();
 
-    if (fileType instanceof XmlLikeFileType || fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
+    if (fileType instanceof XmlLikeFileType) {
       for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
         if (contextType.isInContext(fileType)) {
           if (contextType.isEnabled(templateContext)) return true;

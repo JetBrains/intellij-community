@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -203,7 +204,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   public String[] getAvailableProfileNames() {
     return USE_PROJECT_LEVEL_SETTINGS
-           ? myProfiles.keySet().toArray(new String[myProfiles.keySet().size()])
+           ? ArrayUtil.toStringArray(myProfiles.keySet())
            : myApplicationProfileManager.getAvailableProfileNames();
   }
 

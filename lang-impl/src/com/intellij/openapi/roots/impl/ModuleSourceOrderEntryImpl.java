@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
           result.add(url);
         }
       }
-      return result.toArray(new String[result.size()]);
+      return ArrayUtil.toStringArray(result);
     }
     return getRootModel().getRootUrls(type);
   }

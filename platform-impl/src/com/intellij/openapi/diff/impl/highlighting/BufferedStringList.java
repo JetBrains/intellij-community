@@ -1,5 +1,7 @@
 package com.intellij.openapi.diff.impl.highlighting;
 
+import com.intellij.util.ArrayUtil;
+
 import java.util.ArrayList;
 
 class BufferedStringList {
@@ -24,6 +26,6 @@ class BufferedStringList {
 
   public String[] toArray() {
     flushLast();
-    return myStrings.toArray(new String[myStrings.size()]);
+    return ArrayUtil.toStringArray(myStrings);
   }
 }

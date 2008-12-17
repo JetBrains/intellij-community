@@ -4,6 +4,7 @@
 
 package com.intellij.facet.impl.autodetecting;
 
+import com.intellij.ProjectTopics;
 import com.intellij.facet.*;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsDialog;
@@ -14,8 +15,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -30,7 +31,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.Alarm;
-import com.intellij.ProjectTopics;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -189,7 +190,7 @@ public class DetectedFacetManager implements Disposable {
   public void disableDetectionInFile(final DetectedFacetInfo<Module> detectedFacet) {
     Collection<String> urls = myAutodetectingManager.getFileIndex().getFiles(detectedFacet.getId());
     if (urls != null && !urls.isEmpty()) {
-      myAutodetectingManager.disableAutodetectionInFiles(detectedFacet.getFacetType(), detectedFacet.getModule(), urls.toArray(new String[urls.size()]));
+      myAutodetectingManager.disableAutodetectionInFiles(detectedFacet.getFacetType(), detectedFacet.getModule(), ArrayUtil.toStringArray(urls));
     }
     myAutodetectingManager.getDetectedFacetSet().removeFacetInfo(detectedFacet);
   }
@@ -334,7 +335,7 @@ public class DetectedFacetManager implements Disposable {
     public void beforeFacetRemoved(final F facet) {
       Set<String> files = myAutodetectingManager.getFiles(facet);
       if (files != null) {
-        myAutodetectingManager.disableAutodetectionInFiles(facet.getType(), facet.getModule(), files.toArray(new String[files.size()]));
+        myAutodetectingManager.disableAutodetectionInFiles(facet.getType(), facet.getModule(), ArrayUtil.toStringArray(files));
       }
       myAutodetectingManager.removeFacetFromCache(facet);
     }

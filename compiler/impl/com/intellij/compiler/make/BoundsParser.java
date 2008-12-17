@@ -2,6 +2,7 @@ package com.intellij.compiler.make;
 
 import com.intellij.compiler.classParsing.SignatureParser;
 import com.intellij.compiler.classParsing.SignatureParsingException;
+import com.intellij.util.ArrayUtil;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -56,7 +57,7 @@ public class BoundsParser extends SignatureParser{
   }
 
   public String[] getBounds() {
-    return myInterfaceBounds.toArray(new String[myInterfaceBounds.size()]);
+    return ArrayUtil.toStringArray(myInterfaceBounds);
   }
 
   public static String[] getBounds(String classSignature) throws SignatureParsingException {

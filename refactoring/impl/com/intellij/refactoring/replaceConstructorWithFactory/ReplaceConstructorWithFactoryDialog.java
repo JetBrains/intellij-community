@@ -11,8 +11,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.JavaReferenceEditorUtil;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -133,7 +134,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
         parent = parent.getParent();
       }
 
-      myTargetClassNameCombo = new JComboBox(list.toArray(new String[list.size()]));
+      myTargetClassNameCombo = new JComboBox(ArrayUtil.toStringArray(list));
       JLabel label = new JLabel(RefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
       label.setLabelFor(myTargetClassNameCombo.getEditor().getEditorComponent());
       targetClassPanel.add(label, BorderLayout.NORTH);

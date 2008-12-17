@@ -2,8 +2,9 @@ package com.intellij.psi.statistics;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +169,7 @@ public abstract class JavaStatisticsManager {
       list.add(name);
     }
 
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   public enum NameContext{
@@ -191,7 +192,7 @@ public abstract class JavaStatisticsManager {
       if(name == null || !name.startsWith(prefix)) continue;
       suggestions.add(name);
     }
-    return suggestions.toArray(new String[suggestions.size()]);
+    return ArrayUtil.toStringArray(suggestions);
   }
 
   public static void incNameUseCount(PsiType type, NameContext context, String name) {

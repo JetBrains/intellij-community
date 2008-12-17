@@ -17,14 +17,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.ArrayUtil;
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.exception.VelocityException;
+import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
-import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.LogSystem;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.ASTReference;
@@ -55,7 +56,7 @@ public class FileTemplateUtil{
     final Set<String> unsetAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
     addAttributesToVector(unsetAttributes, RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate"), properties, includeDummies);
-    return unsetAttributes.toArray(new String[unsetAttributes.size()]);
+    return ArrayUtil.toStringArray(unsetAttributes);
   }
 
   private static void addAttributesToVector(Set<String> references, Node apacheNode, Properties properties, boolean includeDummies){

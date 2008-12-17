@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -49,7 +50,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   public static String[] getAllFilenames() {
     final Collection<String> allKeys = FileBasedIndex.getInstance().getAllKeys(NAME);
-    return allKeys.toArray(new String[allKeys.size()]);
+    return ArrayUtil.toStringArray(allKeys);
   }
 
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {

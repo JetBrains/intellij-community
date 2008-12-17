@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
 
@@ -55,7 +56,7 @@ public class ProjectBaseDirNavigationContributor implements ChooseByNameContribu
         list.add(file.getName());
       }
     }
-    return list.toArray(new String[list.size()]);
+    return ArrayUtil.toStringArray(list);
   }
 
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {

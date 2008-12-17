@@ -689,7 +689,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         known.addAll(Arrays.asList(rootTag.knownNamespaces()));
       }
     }
-    return known.toArray(new String[known.size()]);
+    return ArrayUtil.toStringArray(known);
   }
 
   @Nullable

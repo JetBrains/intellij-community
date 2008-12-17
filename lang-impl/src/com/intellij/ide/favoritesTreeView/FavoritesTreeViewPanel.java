@@ -34,6 +34,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -343,7 +344,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         result.add(value);
       }
     }
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   @NotNull

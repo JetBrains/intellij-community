@@ -27,6 +27,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -457,7 +458,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    return conflicts.toArray(new String[conflicts.size()]);
+    return ArrayUtil.toStringArray(conflicts);
   }
 
   private static void checkUsedElements(PsiMember member, PsiElement scope, @NotNull Set<PsiMember> membersToMove, PsiClass newContext, LinkedHashSet<String> conflicts) {

@@ -358,7 +358,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
       list.add(st.nextToken());
     }
 
-    myLines = (String[])list.toArray(new String[list.size()]);
+    myLines = (String[])ArrayUtil.toStringArray(list);
     return myLines;
   }
 

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.HashMap;
@@ -305,7 +306,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
       addResourcesFromMap(fileType, result,version, myStdResources);
     }
 
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   private static void addResourcesFromMap(final FileType fileType, final List<String> result, String version, Map<String, Map<String, String>> resourcesMap) {
@@ -362,7 +363,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     for (Map<String, String> map : myResources.values()) {
       urls.addAll(map.keySet());
     }
-    return urls.toArray(new String[urls.size()]);
+    return ArrayUtil.toStringArray(urls);
   }
 
   public void clearAllResources() {
@@ -390,7 +391,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public String[] getIgnoredResources() {
-    return myIgnoredResources.toArray(new String[myIgnoredResources.size()]);
+    return ArrayUtil.toStringArray(myIgnoredResources);
   }
 
   public long getModificationCount() {

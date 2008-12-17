@@ -47,7 +47,7 @@ class StatisticsUnit {
     if (list == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     final HashSet<String> keys = new HashSet<String>(list);
-    return keys.toArray(new String[keys.size()]);
+    return ArrayUtil.toStringArray(keys);
   }
 
   public int getNumber() {

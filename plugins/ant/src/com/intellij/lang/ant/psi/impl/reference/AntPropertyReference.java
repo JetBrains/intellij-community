@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.StringSetSpinAllocator;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,7 +121,7 @@ public class AntPropertyReference extends AntGenericReference {
           }
         }
       }
-      return variants.toArray(new Object[variants.size()]);
+      return ArrayUtil.toObjectArray(variants);
     }
     finally {
       PsiElementSetSpinAllocator.dispose(variants);

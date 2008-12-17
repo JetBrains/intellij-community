@@ -74,7 +74,7 @@ public class ImportHelper{
     for (String name : names) {
       if (name != null) namesList.add(name);
     }
-    names = namesList.toArray(new String[namesList.size()]);
+    names = ArrayUtil.toStringArray(namesList);
 
     TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<String>();
     TObjectIntHashMap<String> classToCountMap = new TObjectIntHashMap<String>();
@@ -542,7 +542,7 @@ public class ImportHelper{
 
     addUnresolvedImportNames(names, file, namesToImportStaticly);
 
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   private static void collectNamesToImport(final Set<String> names, final PsiJavaFile file, final Set<String> namesToImportStaticly) {

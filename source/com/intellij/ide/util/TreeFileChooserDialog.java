@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -361,7 +362,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         }
       }
 
-      final String[] result = array.toArray(new String[array.size()]);
+      final String[] result = ArrayUtil.toStringArray(array);
       Arrays.sort(result);
       return result;
     }
@@ -428,6 +429,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       }
       result.add(o);
     }
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 }

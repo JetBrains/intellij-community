@@ -41,6 +41,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -630,8 +631,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       }
       final HashSet<String> set = new HashSet<String>(urls);
       if (set.size() > 1) {
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose javadoc root",
-                                                                                   set.toArray(new String[set.size()])) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose javadoc root", ArrayUtil.toStringArray(set)) {
           public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
             BrowserUtil.launchBrowser(selectedValue);
             return PopupStep.FINAL_CHOICE;

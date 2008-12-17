@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.application.options.XmlSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
@@ -30,13 +31,13 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.application.options.XmlSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +112,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (!myElement.isValid() || !CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     final Set<String> set = XmlExtension.getExtension((XmlFile)file).guessUnboundNamespaces(myElement, (XmlFile)file);
-    final String[] namespaces = set.toArray(new String[set.size()]);
+    final String[] namespaces = ArrayUtil.toStringArray(set);
     Arrays.sort(namespaces);
 
     runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(

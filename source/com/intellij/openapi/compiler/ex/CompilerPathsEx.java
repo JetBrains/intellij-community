@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -102,7 +103,7 @@ public class CompilerPathsEx extends CompilerPaths {
         outputPaths.add(VirtualFileManager.extractPath(outputPathForTestsUrl).replace('/', File.separatorChar));
       }
     }
-    return outputPaths.toArray(new String[outputPaths.size()]);
+    return ArrayUtil.toStringArray(outputPaths);
   }
 
   public static VirtualFile[] getOutputDirectories(final Module[] modules) {

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ public class AntRefIdReference extends AntGenericReference {
       final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
       try {
         getVariants(getElement().getAntProject(), variants, elementsDepthStack);
-        return variants.toArray(new Object[variants.size()]);
+        return ArrayUtil.toObjectArray(variants);
       }
       finally {
         PsiElementSetSpinAllocator.dispose(elementsDepthStack);

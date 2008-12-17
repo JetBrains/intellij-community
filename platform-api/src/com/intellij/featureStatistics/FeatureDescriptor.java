@@ -182,7 +182,7 @@ public class FeatureDescriptor{
 
   public String[] getDependencyFeatures() {
     if (myDependencies == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return myDependencies.toArray(new String[myDependencies.size()]);
+    return ArrayUtil.toStringArray(myDependencies);
   }
 
   void triggerShown() {

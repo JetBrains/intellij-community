@@ -6,6 +6,7 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -149,7 +150,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   }
 
   public String[] getWatchExpressions() {
-    return myWatchExpressions.toArray(new String[myWatchExpressions.size()]);
+    return ArrayUtil.toStringArray(myWatchExpressions);
   }
 
   public void removeWatchExpression(final int index) {

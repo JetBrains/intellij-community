@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -159,7 +160,7 @@ class BeanBinding implements Binding {
     for (Object o1 : data.keySet()) {
       Binding binding = (Binding)o1;
       Collection<Object> nn = data.get(binding);
-      binding.deserialize(result, nn.toArray(new Object[nn.size()]));
+      binding.deserialize(result, ArrayUtil.toObjectArray(nn));
     }
 
     return result;
