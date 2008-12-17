@@ -49,7 +49,8 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
   }
 
   /**
-   * Return relative path to the test data.
+   * Return relative path to the test data. Path is relative to the
+   * {@link com.intellij.openapi.application.PathManager#getHomePath()}
    *
    * @return relative path to the test data.
    */

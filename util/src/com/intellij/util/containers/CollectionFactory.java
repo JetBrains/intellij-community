@@ -7,9 +7,7 @@ package com.intellij.util.containers;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -32,5 +30,9 @@ public class CollectionFactory {
 
   public static <T,V> THashMap<T, V> newTroveMap() {
     return new THashMap<T,V>();
+  }
+
+  public static <T> List<T> arrayList() {
+    return new ArrayList<T>();
   }
 }
