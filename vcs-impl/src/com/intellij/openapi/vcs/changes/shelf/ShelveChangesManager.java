@@ -179,9 +179,6 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
       new RollbackWorker(myProject, false).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
     finally {
       notifyStateChanged();
     }

@@ -122,10 +122,12 @@ public class RollbackWorker {
               if (myIndicator != null) {
                 myIndicator.setText(vcs.getDisplayName() + ": doing rollback...");
                 myIndicator.setIndeterminate(false);
+                myIndicator.checkCanceled();
               }
               environment.rollbackChanges(changes, myExceptions, new RollbackProgressModifier(changes.size(), myIndicator));
               if (myIndicator != null) {
                 myIndicator.setText2("");
+                myIndicator.checkCanceled();
               }
 
               if (myExceptions.isEmpty() && myDeleteLocallyAddedFiles) {

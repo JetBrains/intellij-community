@@ -32,6 +32,7 @@ public class RollbackProgressModifier implements RollbackProgressListener {
       myIndicator.setText2(VcsBundle.message("rolling.back.file", name));
       checkName(name);
       myIndicator.setFraction(myCnt / myTotal);
+      myIndicator.checkCanceled();
     }
   }
 
