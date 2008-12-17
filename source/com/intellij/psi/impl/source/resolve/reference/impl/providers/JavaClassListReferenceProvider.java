@@ -1,16 +1,15 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,7 +19,6 @@ import java.util.regex.Pattern;
  * To change this template use Options | File Templates.
  */
 public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
-  @NonNls private static final Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*([\\.\\$]\\s*[A-Za-z]\\w*\\s*)+)");
 
   public JavaClassListReferenceProvider(final Project project) {
     super(GlobalSearchScope.allScope(project), project);
@@ -29,26 +27,48 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition){
-    final Set<String> knownTopLevelPackages = new HashSet<String>();
-    final List<PsiElement> defaultPackages = getDefaultPackages();
-    for (final PsiElement pack : defaultPackages) {
-      if (pack instanceof PsiPackage) {
-        knownTopLevelPackages.add(((PsiPackage)pack).getName());
-      }
+    if (str.length() < 2) {
+      return PsiReference.EMPTY_ARRAY;
     }
+    NotNullLazyValue<Set<String>> topLevelPackages = new NotNullLazyValue<Set<String>>() {
+      @NotNull
+      @Override
+      protected Set<String> compute() {
+        final Set<String> knownTopLevelPackages = new HashSet<String>();
+        final List<PsiElement> defaultPackages = getDefaultPackages();
+        for (final PsiElement pack : defaultPackages) {
+          if (pack instanceof PsiPackage) {
+            knownTopLevelPackages.add(((PsiPackage)pack).getName());
+          }
+        }
+        return knownTopLevelPackages;
+      }
+    };
     final List<PsiReference> results = new ArrayList<PsiReference>();
 
-    final Matcher matcher = PATTERN.matcher(str);
-
-    while(matcher.find()){
-      final String identifier = matcher.group().trim();
-      final int pos = identifier.indexOf('.');
-      if(pos >= 0 && knownTopLevelPackages.contains(identifier.substring(0, pos))){
-        results.addAll(Arrays.asList(new JavaClassReferenceSet(identifier, position, offsetInPosition + matcher.start(), false, this){
+    for(int dot = str.indexOf('.'); dot > 0; dot = str.indexOf('.', dot + 1)) {
+      int start = dot;
+      while (start > 0 && Character.isLetterOrDigit(str.charAt(start - 1))) start--;
+      if (dot == start) {
+        continue;
+      }
+      String candidate = str.substring(start, dot);
+      if (topLevelPackages.getValue().contains(candidate)) {
+        int end = dot;
+        while (end < str.length() - 1) {
+          end++;
+          char ch = str.charAt(end);
+          if (ch != '.' && !Character.isJavaIdentifierPart(ch)) {
+            break;
+          }
+        }
+        String s = str.substring(start, end + 1);
+        results.addAll(Arrays.asList(new JavaClassReferenceSet(s, position, offsetInPosition + start, false, this){
           public boolean isSoft(){
             return true;
           }
         }.getAllReferences()));
+        ProgressManager.getInstance().checkCanceled();
       }
     }
     return results.toArray(new PsiReference[results.size()]);
