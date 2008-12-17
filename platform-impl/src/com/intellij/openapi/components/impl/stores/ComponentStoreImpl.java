@@ -90,7 +90,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
       catch (Throwable e) {
         session.reset();
         LOG.info(e);
-        throw new IOException(e.getMessage());
+        IOException ioException = new IOException();
+        ioException.initCause(e);
+        throw ioException;
       }
       mySession = session;
       return mySession;
