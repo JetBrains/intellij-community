@@ -37,22 +37,23 @@ public class SkipAbstractExpectedTypeWeigher extends CompletionWeigher {
     final PsiExpression expression = PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiExpression.class);
     if (!(expression instanceof PsiNewExpression)) return Result.ACCEPT;
 
-    final Object object = ((MutableLookupElement)item).getObject();
+    final Object object = item.getObject();
     if (!(object instanceof PsiClass)) return Result.ACCEPT;
 
     if (StatisticsManager.getInstance().getUseCount(CompletionService.STATISTICS_KEY, item, location) > 1) return Result.ACCEPT;
 
     PsiClass psiClass = (PsiClass)object;
 
-    int toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(psiClass).size();
-    if (toImplement > 2) return Result.ABSTRACT;
-
+    int toImplement = 0;
     for (final PsiMethod method : psiClass.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         toImplement++;
         if (toImplement > 2) return Result.ABSTRACT;
       }
     }
+
+    toImplement += OverrideImplementUtil.getMethodSignaturesToImplement(psiClass).size();
+    if (toImplement > 2) return Result.ABSTRACT;
 
     final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     boolean isDefaultType = false;

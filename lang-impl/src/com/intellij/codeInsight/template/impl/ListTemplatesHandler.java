@@ -52,7 +52,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
       return;
     }
 
-    final LookupImpl lookup = (LookupImpl) LookupManager.getInstance(project).createLookup(editor, items, prefix, null, null);
+    final LookupImpl lookup = (LookupImpl) LookupManager.getInstance(project).createLookup(editor, items, prefix, null);
     lookup.addLookupListener(
       new LookupAdapter() {
         public void itemSelected(LookupEvent event) {

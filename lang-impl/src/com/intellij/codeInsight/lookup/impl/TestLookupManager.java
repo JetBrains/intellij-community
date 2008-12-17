@@ -23,13 +23,13 @@ public class TestLookupManager extends LookupManagerImpl{
     myProject = project;
   }
 
-  public Lookup showLookup(final Editor editor, LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText) {
+  public Lookup showLookup(final Editor editor, LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy) {
     hideActiveLookup();
 
     for (final LookupElement item : items) {
       item.setPrefixMatcher(new CamelHumpMatcher(""));
     }
-    myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy, bottomText);
+    myActiveLookup = new LookupImpl(myProject, editor, items, itemPreferencePolicy);
     myActiveLookupEditor = editor;
     myActiveLookup.show();
     return myActiveLookup;

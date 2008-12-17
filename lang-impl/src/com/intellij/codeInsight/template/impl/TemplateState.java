@@ -411,7 +411,7 @@ public class TemplateState implements Disposable {
 
     final CompletionParameters parameters =
         new CompletionParameters(psiFile, psiFile, CompletionType.BASIC, myEditor.getCaretModel().getOffset(), 1);
-    final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, new CompletionPreferencePolicy(parameters), null);
+    final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, new CompletionPreferencePolicy(parameters));
     toProcessTab = false;
     lookup.addLookupListener(new LookupAdapter() {
       public void lookupCanceled(LookupEvent event) {

@@ -58,7 +58,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private int myPreferredItemsCount;
   private int myInitialOffset;
   private String myInitialPrefix;
-  private final LookupItemPreferencePolicy myItemPreferencePolicy;
+  @Nullable private final LookupItemPreferencePolicy myItemPreferencePolicy;
 
   private RangeMarker myLookupStartMarker;
   private final JList myList;
@@ -84,9 +84,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private volatile String myAdText;
   private volatile int myLookupWidth = 50;
 
-  public LookupImpl(Project project,
-                    Editor editor,
-                    LookupElement[] items, LookupItemPreferencePolicy itemPreferencePolicy, final String bottomText){
+  public LookupImpl(Project project, Editor editor, LookupElement[] items, @Nullable LookupItemPreferencePolicy itemPreferencePolicy){
     super(new JPanel(new BorderLayout()));
     myProject = project;
     myEditor = editor;
@@ -211,6 +209,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     list.add(item);
   }
 
+  @Nullable
   public LookupItemPreferencePolicy getItemPreferencePolicy() {
     return myItemPreferencePolicy;
   }
@@ -802,7 +801,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  public static int doSelectMostPreferableItem(final LookupItemPreferencePolicy itemPreferencePolicy, Object[] items) {
+  private static int doSelectMostPreferableItem(final LookupItemPreferencePolicy itemPreferencePolicy, Object[] items) {
     if (itemPreferencePolicy == null){
       return -1;
     }
