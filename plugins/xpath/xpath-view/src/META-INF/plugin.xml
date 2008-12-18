@@ -122,11 +122,6 @@
       <implementation-class>org.intellij.plugins.xpathView.XPathAppComponent</implementation-class>
     </component>
 
-    <!-- XPathLang components -->
-    <component>
-      <implementation-class>org.intellij.lang.xpath.XPathSupportLoader</implementation-class>
-    </component>
-
     <!-- XSLT-Support components -->
     <component>
       <interface-class>org.intellij.lang.xpath.xslt.XsltConfig</interface-class>
