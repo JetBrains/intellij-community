@@ -76,7 +76,7 @@ class XsltPatternValidator {
             PsiElement child = skipWhitespace(locationPath.getFirstChild());
             if (child == null) return true;
 
-            if (!checkIdKeyPattern(child)) {
+            if (steps.length > 0 && !checkIdKeyPattern(steps[0])) {
                 return checkRelativePath(steps, 0);
             }
 
@@ -89,6 +89,8 @@ class XsltPatternValidator {
             if (!(child instanceof XPathStep)) return false;
 
             return checkRelativePath(steps, 1);
+        } else if (element instanceof XPathFunctionCall) {
+            return checkIdKeyPattern(element);
         }
         return false;
     }
