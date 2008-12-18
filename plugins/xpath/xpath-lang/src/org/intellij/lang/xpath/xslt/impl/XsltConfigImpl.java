@@ -69,8 +69,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
     private static final String XSLT_TEMPLATE_NAME = "XSLT Stylesheet";
     private static final String XSLT_TEMPLATE_LOCATION = "resources/" + XSLT_TEMPLATE_NAME + ".xsl";
 
-    private static final String[] CATEGORY = { "XSLT" };
-
     public boolean ENABLED = true;
     public boolean REGISTER_SCHEMA = true;
     public boolean REGISTER_TEMPLATE = true;

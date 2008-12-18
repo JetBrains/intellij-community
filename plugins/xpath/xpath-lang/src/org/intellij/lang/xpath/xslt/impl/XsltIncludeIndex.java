@@ -54,35 +54,14 @@ public class XsltIncludeIndex implements PsiIncludeManager.PsiIncludeHandler {
             return false;
         }
 
-        final boolean[] ref = new boolean[1];
         try {
-            NanoXmlUtil.parse(virtualFile.getInputStream(), new NanoXmlUtil.IXMLBuilderAdapter() {
-                @Override
-                public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
-                    if (XsltSupport.XSLT_NS.equals(nsURI) && ("stylesheet".equals(name) || "transform".equals(name))) {
-                        ref[0] = true;
-                        stop();
-                    }
-                }
-
-                @Override
-                public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
-                    if ("version".equals(key) && nsURI.equals(XsltSupport.XSLT_NS)) {
-                        ref[0] = true;
-                        stop();
-                    }
-                }
-
-                @Override
-                public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
-                    stop();  // the first element (or its attrs) decides - stop here
-                }
-            });
+            final XsltChecker checker = new XsltChecker();
+            NanoXmlUtil.parse(virtualFile.getInputStream(), checker);
+            return checker.isSupportedXsltFile();
         } catch (IOException e) {
             LOG.info("Cannot parse " + virtualFile.getUrl(), e);
             return false;
         }
-        return ref[0];
     }
 
     public PsiIncludeManager.IncludeInfo[] findIncludes(PsiFile psiFile) {

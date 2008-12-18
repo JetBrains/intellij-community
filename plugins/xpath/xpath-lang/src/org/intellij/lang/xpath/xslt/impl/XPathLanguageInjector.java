@@ -75,10 +75,7 @@ class XPathLanguageInjector implements LanguageInjector {
     }
 
     @NotNull
-    public TextRange[] getInjectionRanges(final XmlAttribute attribute) {
-        if (!XsltSupport.isXsltFile(attribute.getContainingFile())) return EMPTY_ARRAY;
-        if (!XsltSupport.isXPathAttribute(attribute)) return EMPTY_ARRAY;
-
+    private synchronized TextRange[] getInjectionRanges(final XmlAttribute attribute) {
         final TextRange[] cachedFiles = getCachedRanges(attribute);
         if (cachedFiles != null) {
             return cachedFiles;
@@ -128,11 +125,14 @@ class XPathLanguageInjector implements LanguageInjector {
         return ranges;
     }
 
-    public synchronized void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
+    public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
         if (host instanceof XmlAttributeValue) {
             final PsiElement parent = host.getParent();
             if (parent instanceof XmlAttribute) {
                 final XmlAttribute attribute = (XmlAttribute)parent;
+                if (!XsltSupport.isXsltFile(attribute.getContainingFile())) return;
+                if (!XsltSupport.isXPathAttribute(attribute)) return;
+
                 final TextRange[] ranges = getInjectionRanges(attribute);
                 for (TextRange range : ranges) {
                     // workaround for http://www.jetbrains.net/jira/browse/IDEA-10096

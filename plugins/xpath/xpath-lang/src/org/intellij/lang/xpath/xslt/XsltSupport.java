@@ -15,22 +15,22 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import org.intellij.lang.xpath.xslt.dom.Stylesheet;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public abstract class XsltSupport implements ProjectComponent {
     public static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
     public static final String XSLT_NS = "http://www.w3.org/1999/XSL/Transform";
     public static final String PLUGIN_EXTENSIONS_NS = "urn:idea:xslt-plugin#extensions";
-    public static final Key<Boolean> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
+    public static final Key<ParameterizedCachedValue<Boolean, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
 
     private static final Icon XSLT_OVERLAY = IconLoader.getIcon("/icons/xslt-filetype-overlay.png");
     private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<String, String>(10);
@@ -178,43 +178,7 @@ public abstract class XsltSupport implements ProjectComponent {
 
         if (!(psiFile instanceof XmlFile)) return false;
 
-        final Boolean cached = psiFile.getUserData(FORCE_XSLT_KEY);
-        if (cached != null) {
-            return cached == Boolean.TRUE;
-        }
-
-        final DomManager manager = DomManager.getDomManager(psiFile.getProject());
-        final DomFileElement<Stylesheet> element = manager.getFileElement((XmlFile)psiFile, Stylesheet.class);
-
-        if (element == null) {
-            return false;
-        } else {
-            final GenericAttributeValue<String> version = element.getRootElement().getVersion();
-            if (version == null || version.getValue() == null) {
-                final VirtualFile vFile = psiFile.getVirtualFile();
-                final String name = vFile != null ? vFile.getPresentableUrl() : psiFile.getName();
-                Logger.getInstance(XsltSupport.class.getName()).info("Unsupported XSLT file: Attribute 'version' is missing. (" + name + ")");
-                return false;
-            } else {
-                final String value = version.getValue();
-                if (!("1.0".equals(value) || "1.1".equals(value))) {
-                    Logger.getInstance(XsltSupport.class.getName()).info("Unsupported XSLT version: " + value);
-                    return false;
-                }
-            }
-        }
-
-        final XmlDocument document = ((XmlFile)psiFile).getDocument();
-        if (document == null) {
-            return false;
-        }
-        final XmlTag rootTag = document.getRootTag();
-        final boolean _b = rootTag != null && XSLT_NS.equals(rootTag.getNamespace());
-
-        if (_b) {
-            psiFile.putUserData(FORCE_XSLT_KEY, Boolean.TRUE);
-        }
-        return _b;
+        return psiFile.getManager().getCachedValuesManager().getParameterizedCachedValue(psiFile, FORCE_XSLT_KEY, XsltSupportProvider.INSTANCE, false, psiFile);
     }
 
     public static boolean isXsltRootTag(@NotNull XmlTag tag) {
@@ -321,5 +285,36 @@ public abstract class XsltSupport implements ProjectComponent {
 
     public static Icon createXsltIcon(Icon icon) {
         return LayeredIcon.create(icon, XSLT_OVERLAY);
+    }
+
+    private static class XsltSupportProvider implements ParameterizedCachedValueProvider<Boolean, PsiFile> {
+        public static final ParameterizedCachedValueProvider<Boolean, PsiFile> INSTANCE = new XsltSupportProvider();
+
+        public CachedValueProvider.Result<Boolean> compute(PsiFile psiFile) {
+            if (psiFile instanceof PsiFileEx) {
+                if (((PsiFileEx)psiFile).isContentsLoaded()) {
+                    final XmlDocument doc = ((XmlFile)psiFile).getDocument();
+                    if (doc != null) {
+                        final XmlTag rootTag = doc.getRootTag();
+                        if (rootTag != null) {
+                            final boolean supported;
+                            XmlAttribute v;
+                            if (isXsltRootTag(rootTag)) {
+                                v = rootTag.getAttribute("version");
+                                supported = v != null && XsltChecker.isSupportedVersion(v.getValue());
+                            } else {
+                                v = rootTag.getAttribute("version", XSLT_NS);
+                                supported = v != null && XsltChecker.isSupportedVersion(v.getValue());
+                            }
+                            return CachedValueProvider.Result.create(supported, rootTag);
+                        }
+                    }
+                }
+            }
+
+            final XsltChecker xsltChecker = new XsltChecker();
+            NanoXmlUtil.parseFile(psiFile, xsltChecker);
+            return CachedValueProvider.Result.create(xsltChecker.isSupportedXsltFile(), psiFile);
+        }
     }
 }
