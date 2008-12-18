@@ -15,37 +15,16 @@
  */
 package org.intellij.lang.xpath;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
-import com.intellij.codeInsight.editorActions.TypedHandler;
+import org.intellij.lang.xpath.validation.inspections.*;
+
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.filters.TrueFilter;
-import org.intellij.lang.xpath.completion.XPathCompletionData;
-import org.intellij.lang.xpath.psi.XPathElement;
-import org.intellij.lang.xpath.validation.inspections.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class XPathSupportLoader extends FileTypeFactory implements ApplicationComponent, InspectionToolProvider {
+public class XPathSupportLoader extends FileTypeFactory implements InspectionToolProvider {
     private static final boolean DBG_MODE = Boolean.getBoolean("xpath-lang.register-file-type");
-
-    @NotNull
-    @NonNls
-    public String getComponentName() {
-        return "XPath Support Loader";
-    }
-    
-    public void initComponent() {
-        CompletionUtil.registerCompletionData(XPathFileType.XPATH, new XPathCompletionData(TrueFilter.INSTANCE, XPathElement.class));
-        TypedHandler.registerQuoteHandler(XPathFileType.XPATH, new SimpleTokenSetQuoteHandler(XPathTokenTypes.STRING_LITERAL));
-    }
-
-    public void disposeComponent() {
-    }
 
     public Class<? extends XPathInspection>[] getInspectionClasses() {
         //noinspection unchecked

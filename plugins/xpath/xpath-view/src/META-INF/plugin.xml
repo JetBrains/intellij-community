@@ -37,9 +37,6 @@
   <!--<depends>XPathLanguage</depends>-->
 
   <extensionPoints>
-    <!-- XPathView -->
-    <extensionPoint name="configurationProvider" interface="com.intellij.openapi.options.Configurable"/>
-
     <!-- XPath Language -->
     <extensionPoint name="xpath.contextProviderExtension" interface="org.intellij.lang.xpath.context.ContextProviderExtension"/>
     <extensionPoint name="xpath.functionProvider" interface="org.intellij.lang.xpath.context.functions.XPathFunctionProvider"/>
@@ -81,9 +78,15 @@
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
     <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />
+    <inspectionToolProvider implementation="org.intellij.lang.xpath.XPathSupportLoader"/>
+    <quoteHandler fileType="XPath" className="org.intellij.lang.xpath.XPathQuoteHandler" />
+    <completion.contributor implementation="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <psi.includeHandler implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex" />
+    
+    <inspectionToolProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
+    <usageGroupingRuleProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
 
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
@@ -131,14 +134,6 @@
     </component>
     <component>
       <implementation-class>org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport</implementation-class>
-    </component>
-<!--
-    <component>
-      <implementation-class>org.intellij.lang.xpath.xslt.run.XsltRunConfigType</implementation-class>
-    </component>
--->
-    <component>
-      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltStuffProvider</implementation-class>
     </component>
   </application-components>
 

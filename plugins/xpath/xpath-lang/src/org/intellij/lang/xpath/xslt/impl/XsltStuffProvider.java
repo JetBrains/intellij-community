@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.xml.namespace.QName;
 
-class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionToolProvider {
+public class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionToolProvider {
 
   private final XsltConfig myConfig;
 
@@ -72,17 +72,6 @@ class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionToolProv
     @NotNull
     public AnAction[] createGroupingActions(UsageView view) {
         return AnAction.EMPTY_ARRAY;
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return "XsltStuffProvider";
     }
 
     private static class TemplateUsageGroup implements UsageGroup {

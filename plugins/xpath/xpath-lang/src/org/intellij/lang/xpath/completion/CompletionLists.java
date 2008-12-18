@@ -290,8 +290,8 @@ public class CompletionLists {
         return lookups;
     }
 
-    public static Collection<AxisLookup> getAxisCompletions() {
-        final ArrayList<AxisLookup> lookups = new ArrayList<AxisLookup>(AXIS_NAMES.size());
+    public static Collection<Lookup> getAxisCompletions() {
+        final ArrayList<Lookup> lookups = new ArrayList<Lookup>(AXIS_NAMES.size());
         for (String s : AXIS_NAMES) {
             lookups.add(new AxisLookup(s));
         }
