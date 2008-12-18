@@ -40,7 +40,7 @@ public class CommandLineBuilder {
    * classpath will always be passed through the command line.
    */
   public static GeneralCommandLine createFromJavaParameters(final JavaParameters javaParameters, final Project project, final boolean dynamicClasspath) throws CantRunException {
-    return createFromJavaParameters(javaParameters, project, dynamicClasspath && useDynamicClasspath(project));
+    return createFromJavaParameters(javaParameters, dynamicClasspath && useDynamicClasspath(project));
   }
 
   /**
