@@ -482,17 +482,15 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return null;
     }
     final PluginId pluginId = findPluginId(throwable);
-    final ExtensionPoint point;
+    final ErrorReportSubmitter[] reporters;
     try {
-      point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER);
+      reporters = Extensions.getExtensions(ExtensionPoints.ERROR_HANDLER_EP);
     }
-    catch (IllegalArgumentException e) {
+    catch (Throwable t) {
       return null;
     }
-    final Object[] reporters = point.getExtensions();
     ErrorReportSubmitter submitter = null;
-    for (Object reporter1 : reporters) {
-      ErrorReportSubmitter reporter = (ErrorReportSubmitter)reporter1;
+    for (ErrorReportSubmitter reporter : reporters) {
       final PluginDescriptor descriptor = reporter.getPluginDescriptor();
       if (pluginId == null && (descriptor == null || PluginId.getId("com.intellij") == descriptor.getPluginId())
           || descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {

@@ -15,6 +15,8 @@
  */
 package com.intellij;
 
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -49,6 +51,8 @@ public interface ExtensionPoints {
    * my.plugin.package.MyErrorHandler class must implement {@link com.intellij.openapi.diagnostic.ErrorReportSubmitter} abstract class.
    */
   @NonNls String ERROR_HANDLER = "com.intellij.errorHandler";
+
+  ExtensionPointName<ErrorReportSubmitter> ERROR_HANDLER_EP = ExtensionPointName.create(ERROR_HANDLER);
 
   /**
    * This extension point allows a plugin vendor to provide patches to junit run/debug configurations
