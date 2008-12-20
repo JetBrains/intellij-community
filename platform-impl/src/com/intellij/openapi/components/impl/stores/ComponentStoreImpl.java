@@ -6,10 +6,13 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.fs.IFile;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.diagnostic.PluginException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -279,7 +282,13 @@ abstract class ComponentStoreImpl implements IComponentStore {
   private static <T> State getStateSpec(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
     final Class<? extends PersistentStateComponent> aClass = persistentStateComponent.getClass();
     final State stateSpec = aClass.getAnnotation(State.class);
-    assert stateSpec != null : "No @State annotation found in " + aClass;
+    if (stateSpec == null) {
+      final PluginId pluginId = PluginManager.getPluginByClassName(aClass.getName());
+      if (pluginId != null) {
+        throw new PluginException("No @State annotation found in " + aClass, pluginId);
+      }
+      throw new RuntimeException("No @State annotation found in " + aClass);
+    }
     return stateSpec;
   }
 

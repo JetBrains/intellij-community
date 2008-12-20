@@ -23,6 +23,11 @@ public class PluginException extends RuntimeException {
     myPluginId = pluginId;
   }
 
+  public PluginException(final String message, final PluginId pluginId) {
+    super(message);
+    myPluginId = pluginId;
+  }
+
   public PluginId getPluginId() {
     return myPluginId;
   }
