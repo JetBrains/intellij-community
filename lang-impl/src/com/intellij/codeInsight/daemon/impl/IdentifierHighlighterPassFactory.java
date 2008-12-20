@@ -8,7 +8,6 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.CodeInsightSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,9 +22,8 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
   }
 
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
-      return null;
-    }
+    // the highlighting pass must always be created, otherwise the last highlight will stick forever after turning the option off
+    // (see IDEADEV-31007)
     return new IdentifierHighlighterPass(file.getProject(), file, editor);
   }
 }

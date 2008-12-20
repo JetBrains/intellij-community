@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -44,6 +45,11 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(final ProgressIndicator progress) {
+    // this check must be made here rather than in IdentifierHighlighterPassFactory because otherwise the highlighting will remain
+    // forever after the option is turned off (see IDEADEV-31007) 
+    if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
+      return;
+    }
     myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor,
                                                                      TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
                                                                      TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED,
