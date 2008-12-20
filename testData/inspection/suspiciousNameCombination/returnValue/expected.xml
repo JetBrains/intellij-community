@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ReturnValue.java</file>
+    <line>4</line>
+    <description>'y' should probably not be returned from method 'getX'</description>
+  </problem>
+</problems>

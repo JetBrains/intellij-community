@@ -16,6 +16,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.AddDeleteListPanel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -150,6 +151,16 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
             }
           }
         }
+      }
+    }
+
+    @Override
+    public void visitReturnStatement(final PsiReturnStatement statement) {
+      final PsiExpression returnValue = statement.getReturnValue();
+      PsiMethod containingMethod = PsiTreeUtil.getParentOfType(returnValue, PsiMethod.class);
+      if (returnValue instanceof PsiReferenceExpression && containingMethod != null) {
+        final String refName = ((PsiReferenceExpression)returnValue).getReferenceName();
+        checkCombination(returnValue, containingMethod.getName(), refName, "suspicious.name.return");
       }
     }
 

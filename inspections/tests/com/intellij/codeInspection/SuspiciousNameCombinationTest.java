@@ -26,4 +26,8 @@ public class SuspiciousNameCombinationTest extends InspectionTestCase {
   public void testParameter() throws Exception {
     doTest();
   }
+
+  public void testReturnValue() throws Exception {
+    doTest();
+  }
 }
