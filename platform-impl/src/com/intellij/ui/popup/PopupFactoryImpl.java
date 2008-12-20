@@ -521,6 +521,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private boolean myPrependWithSeparator;
     private String mySeparatorText;
     private final boolean myHonorActionMnemonics;
+    private Icon myEmptyIcon;
+    private int myMaxIconWidth = -1;
+    private int myMaxIconHeight = -1;
 
     private ActionStepBuilder(final DataContext dataContext,
                              final boolean showNumbers,
@@ -544,30 +547,48 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public void buildGroup(ActionGroup actionGroup) {
+      calcMaxIconSize(actionGroup);
+      myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? new EmptyIcon(myMaxIconWidth, myMaxIconHeight) : null;
+
+      appendActionsFromGroup(actionGroup);
+    }
+
+    private void calcMaxIconSize(final ActionGroup actionGroup) {
       AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
                                                                      ActionPlaces.UNKNOWN,
                                                                      getPresentation(actionGroup),
                                                                      ActionManager.getInstance(),
                                                                      0));
-      int maxWidth = -1;
-      int maxHeight = -1;
       for (AnAction action : actions) {
         if (action == null) continue;
+        if (action instanceof ActionGroup) {
+          final ActionGroup group = (ActionGroup)action;
+          if (!group.isPopup()) {
+            calcMaxIconSize(group);
+            continue;
+          }
+        }
 
         Icon icon = action.getTemplatePresentation().getIcon();
         if (icon != null) {
           final int width = icon.getIconWidth();
           final int height = icon.getIconHeight();
-          if (maxWidth < width) {
-            maxWidth = width;
+          if (myMaxIconWidth < width) {
+            myMaxIconWidth = width;
           }
-          if (maxHeight < height) {
-            maxHeight = height;
+          if (myMaxIconHeight < height) {
+            myMaxIconHeight = height;
           }
         }
       }
-      Icon emptyIcon = maxHeight != -1 && maxWidth != -1 ? new EmptyIcon(maxWidth, maxHeight) : null;
+    }
 
+    private void appendActionsFromGroup(final ActionGroup actionGroup) {
+      AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
+                                                                     ActionPlaces.UNKNOWN,
+                                                                     getPresentation(actionGroup),
+                                                                     ActionManager.getInstance(),
+                                                                     0));
       for (AnAction action : actions) {
         if (action instanceof Separator) {
           myPrependWithSeparator = true;
@@ -577,20 +598,20 @@ public class PopupFactoryImpl extends JBPopupFactory {
           if (action instanceof ActionGroup) {
             ActionGroup group = (ActionGroup)action;
             if (group.isPopup()) {
-              appendAction(group, emptyIcon);
+              appendAction(group);
             }
             else {
-              buildGroup(group);
+              appendActionsFromGroup(group);
             }
           }
           else {
-            appendAction(action, emptyIcon);
+            appendAction(action);
           }
         }
       }
     }
 
-    private void appendAction(AnAction action, Icon emptyIcon) {
+    private void appendAction(AnAction action) {
       Presentation presentation = getPresentation(action);
       AnActionEvent event = new AnActionEvent(null, myDataContext,
                                               ActionPlaces.UNKNOWN,
@@ -620,7 +641,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         Icon icon = presentation.getIcon();
         if (icon == null) {
           @NonNls final String actionId = ActionManager.getInstance().getId(action);
-          icon = actionId != null && actionId.startsWith("QuickList.") ? QUICK_LIST_ICON : emptyIcon;
+          icon = actionId != null && actionId.startsWith("QuickList.") ? QUICK_LIST_ICON : myEmptyIcon;
 
         }
         boolean prependSeparator = !myListModel.isEmpty() && myPrependWithSeparator;
