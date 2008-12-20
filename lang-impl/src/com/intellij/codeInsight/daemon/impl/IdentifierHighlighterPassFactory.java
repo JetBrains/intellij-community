@@ -22,6 +22,8 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
   }
 
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
+    if (editor.isOneLineMode()) return null;
+
     // the highlighting pass must always be created, otherwise the last highlight will stick forever after turning the option off
     // (see IDEADEV-31007)
     return new IdentifierHighlighterPass(file.getProject(), file, editor);
