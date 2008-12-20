@@ -20,7 +20,7 @@ public class JavaCodeContextType extends AbstractContextType {
     FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.JAVA) {
       PsiElement element = file.findElementAt(offset);
-      return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class) == null &&
+      return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) == null &&
              !(element instanceof PsiJavaToken && ((PsiJavaToken) element).getTokenType() == JavaTokenType.STRING_LITERAL);
     }
     if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
