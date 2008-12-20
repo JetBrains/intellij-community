@@ -55,7 +55,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     FilePath fromPath = fromRevision.getFile();
     FilePath toPath = toRevision.getFile();
 
-    if (fromPath == null || toPath == null || (fromPath.getParentPath() == null) || (toPath.getParentPath() == null)) {
+    if ((fromPath.getParentPath() == null) || (toPath.getParentPath() == null)) {
       return null;
     }
 
@@ -67,9 +67,6 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
       if (oldModule != newModule) {
         return getPresentableRelativePathFor(oldFile);
       }
-    }
-    if (toPath.getIOFile() == null || fromPath.getIOFile() == null) {
-      return null;
     }
     final RelativePathCalculator calculator =
       new RelativePathCalculator(toPath.getIOFile().getAbsolutePath(), fromPath.getIOFile().getAbsolutePath());

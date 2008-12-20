@@ -45,6 +45,8 @@
                     serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
     <applicationService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
@@ -64,6 +66,7 @@
     <applicationConfigurable implementation="com.intellij.profile.codeInspection.ui.PlatformInspectionsConfigurable" order="before intentions"/>
 
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener"/>
+
   </extensions>
   <project-components>
     <component>
