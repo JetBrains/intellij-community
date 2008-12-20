@@ -15,14 +15,11 @@
  */
 package org.jetbrains.generate.tostring.view;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.HyperlinkLabel;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.ParseErrorException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.generate.tostring.GenerateToStringUtils;
 import org.jetbrains.generate.tostring.config.Config;
 import org.jetbrains.generate.tostring.config.DuplicatonPolicy;
 import org.jetbrains.generate.tostring.config.InsertWhere;
@@ -34,8 +31,6 @@ import org.jetbrains.generate.tostring.velocity.VelocityFactory;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -52,7 +47,6 @@ public class ConfigUI extends JPanel {
     private JCheckBox fullyQualifiedName = new JCheckBox("Use fully qualified classname in code generation ($classname)");
     private JCheckBox enableMethods = new JCheckBox("Enable getters in code generation ($methods)");
     private JCheckBox moveCaretToMethod = new JCheckBox("Move caret to generated method");
-    private HyperlinkLabel hyperlinkDoc = new HyperlinkLabel("Plugin Documentation");
 
     private JRadioButton[] initialValueForReplaceDialog;
     private JRadioButton[] initialValueForNewMethodDialog;
@@ -220,9 +214,6 @@ public class ConfigUI extends JPanel {
         constraint.gridx = 0;
         constraint.gridy = 3;
         outer.add(panel, constraint);
-
-        hyperlinkDoc.addHyperlinkListener(new OnClickHyperlink());
-        outer.add(hyperlinkDoc);
 
         return outer;
     }
@@ -397,17 +388,5 @@ public class ConfigUI extends JPanel {
             }
         }
     }
-
-    /**
-     * Action when user clicks homepage hyperlinkVelocity
-     */
-    private static class OnClickHyperlink implements HyperlinkListener {
-
-        public void hyperlinkUpdate(HyperlinkEvent e) {
-            String filename = "file://" + GenerateToStringUtils.getDocumentationFilename();
-            BrowserUtil.launchBrowser(filename);
-        }
-    }
-
 
 }
