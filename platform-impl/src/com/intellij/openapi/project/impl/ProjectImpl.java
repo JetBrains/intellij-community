@@ -1,12 +1,14 @@
 package com.intellij.openapi.project.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
@@ -259,6 +261,12 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
     catch (IComponentStore.SaveCancelledException e) {
       LOG.info(e);
+    }
+    catch (PluginException e) {
+      LOG.info(e);
+      PluginManager.disablePlugin(e.getPluginId().getIdString());
+      MessagesEx.error(this, "The plugin " + e.getPluginId() + " failed to save settings and has been disabled. Please restart " +
+                             ApplicationNamesInfo.getInstance().getFullProductName());
     }
     catch (IOException e) {
       LOG.info(e);

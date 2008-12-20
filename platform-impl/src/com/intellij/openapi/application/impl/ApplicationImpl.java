@@ -2,6 +2,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.ApplicationLoadListener;
 import com.intellij.ide.IdeEventQueue;
@@ -34,6 +35,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
@@ -921,8 +923,18 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         LOG.info("Saving application settings failed", ex);
         invokeLater(new Runnable() {
           public void run() {
-            Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
-                                       CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+            if (ex instanceof PluginException) {
+              final PluginException pluginException = (PluginException)ex;
+              PluginManager.disablePlugin(pluginException.getPluginId().getIdString());
+              Messages.showMessageDialog("The plugin " + pluginException.getPluginId() + " failed to save settings and has been disabled. Please restart " +
+                                           ApplicationNamesInfo.getInstance().getFullProductName(),
+                                         CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+            }
+            else {
+              Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
+                                         CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+
+            }
           }
         });
       }

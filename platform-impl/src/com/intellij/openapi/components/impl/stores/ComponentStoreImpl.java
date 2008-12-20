@@ -13,6 +13,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.IdeErrorsDialog;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,6 +92,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
         session.commit();
       }
       catch (Throwable e) {
+        PluginId pluginId = IdeErrorsDialog.findPluginId(e);
+        if (pluginId != null) {
+          throw new PluginException(e, pluginId);
+        }
         session.reset();
         LOG.info(e);
         IOException ioException = new IOException();
