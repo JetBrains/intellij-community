@@ -3,6 +3,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
@@ -47,6 +48,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     ButtonGroup bg = new ButtonGroup();
     bg.add(myRbInlineAll);
     bg.add(myRbInlineThisOnly);
+    new RadioUpDownListener(myRbInlineAll, myRbInlineThisOnly);
 
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
     final boolean writable = myElement.isWritable();
@@ -92,5 +94,10 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   protected abstract boolean isInlineThis();
   protected boolean canInlineThisOnly() {
     return false;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myRbInlineThisOnly.isSelected() ? myRbInlineThisOnly : myRbInlineAll;
   }
 }

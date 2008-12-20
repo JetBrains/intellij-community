@@ -21,13 +21,18 @@ public class RadioUpDownListener extends KeyAdapter {
   public void keyPressed(final KeyEvent e) {
     if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
       if (myRadioButton1.isSelected()) {
-        myRadioButton2.requestFocus();
-        myRadioButton2.doClick();
+        click(myRadioButton2);
       }
       else {
-        myRadioButton1.requestFocus();
-        myRadioButton1.doClick();
+        click(myRadioButton1);
       }
+    }
+  }
+
+  private static void click(final JRadioButton button) {
+    if (button.isEnabled()) {
+      button.requestFocus();
+      button.doClick();
     }
   }
 }
