@@ -54,8 +54,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return;
     }
 
-    for(HighlightUsagesHandlerDelegate delegate: Extensions.getExtensions(HighlightUsagesHandlerDelegate.EP_NAME)) {
-      if (delegate.highlightUsages(editor, file)) return;
+    for(HighlightUsagesHandlerFactory factory: Extensions.getExtensions(HighlightUsagesHandlerFactory.EP_NAME)) {
+      final HighlightUsagesHandlerBase handler = factory.createHighlightUsagesHandler(editor, file);
+      if (handler != null) {
+        handler.highlightUsages();
+        return;
+      }
     }
 
     PsiElement target = getTargetElement(editor, file);

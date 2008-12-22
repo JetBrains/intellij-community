@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -18,30 +17,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegate {
-  public boolean highlightUsages(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
-    PsiElement target = file.findElementAt(offset);
-    if (target instanceof PsiKeyword) {
-      if (PsiKeyword.RETURN.equals(target.getText()) || PsiKeyword.THROW.equals(target.getText())) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.return");
+public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase {
+  private PsiElement myTarget;
 
-        PsiElement parent = target.getParent();
-        if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return true;
+  public HighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
+    super(editor, file);
+    myTarget = target;
+  }
 
-        PsiMethod method = PsiTreeUtil.getParentOfType(target, PsiMethod.class);
-        if (method == null) return true;
+  public void highlightUsages() {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.return");
 
-        PsiCodeBlock body = method.getBody();
-        try {
-          return highlightExitPoints(target, (PsiStatement)parent, body, editor);
-        }
-        catch (AnalysisCanceledException e) {
-          return true;
-        }
-      }
+    PsiElement parent = myTarget.getParent();
+    if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return;
+
+    PsiMethod method = PsiTreeUtil.getParentOfType(myTarget, PsiMethod.class);
+    if (method == null) return;
+
+    PsiCodeBlock body = method.getBody();
+    try {
+      highlightExitPoints((PsiStatement)parent, body);
     }
-    return false;
+    catch (AnalysisCanceledException e) {
+      // ignore
+    }
   }
 
   @Nullable
@@ -84,14 +83,13 @@ public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegat
     return null;
   }
 
-  private static boolean highlightExitPoints(final PsiElement target, final PsiStatement parent, final PsiCodeBlock body,
-                                             final Editor editor) throws AnalysisCanceledException {
-    final Project project = target.getProject();
+  private boolean highlightExitPoints(final PsiStatement parent, final PsiCodeBlock body) throws AnalysisCanceledException {
+    final Project project = myTarget.getProject();
     ControlFlow flow = ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
 
-    Collection<PsiStatement> exitStatements = ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize(), new IntArrayList(), 
-                                                                                          new Class[]{PsiReturnStatement.class, PsiBreakStatement.class,
-                                                                                              PsiContinueStatement.class, PsiThrowStatement.class});
+    Collection<PsiStatement> exitStatements = ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize(), new IntArrayList(),
+                                                                                          PsiReturnStatement.class, PsiBreakStatement.class,
+                                                                                          PsiContinueStatement.class, PsiThrowStatement.class);
     if (!exitStatements.contains(parent)) return false;
 
     PsiElement originalTarget = getExitTarget(parent);
@@ -106,8 +104,8 @@ public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegat
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     HighlightManager highlightManager = HighlightManager.getInstance(project);
-    final boolean clearHighlights = HighlightUsagesHandler.isClearHighlights(editor, highlightManager);
-    HighlightUsagesHandler.doHighlightElements(editor, exitStatements.toArray(new PsiElement[exitStatements.size()]),
+    final boolean clearHighlights = HighlightUsagesHandler.isClearHighlights(myEditor, highlightManager);
+    HighlightUsagesHandler.doHighlightElements(myEditor, exitStatements.toArray(new PsiElement[exitStatements.size()]),
                                                attributes, clearHighlights);
 
     HighlightUsagesHandler.setupFindModel(project);
