@@ -28,7 +28,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionCache;
@@ -110,19 +109,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     }
     return getPsiInner(target);
-  }
-
-  @NotNull
-  public Language getRootLanguage(final PsiElement elt) {
-    if (elt instanceof LeafPsiElement) {
-      final LeafPsiElement element = (LeafPsiElement)elt;
-      final PsiElement parent = element.getParent();
-      if (parent != null) {
-        return parent.getLanguage();
-      }
-    }
-
-    return elt.getLanguage();
   }
 
   @NotNull

@@ -321,12 +321,19 @@ public class PsiUtilBase {
         return getLanguageAtOffset(file, decremented);
       }
     }
-    return findLanguageFromElement(elt, file);
+    return findLanguageFromElement(elt);
   }
 
   @NotNull
-  private static Language findLanguageFromElement(final PsiElement elt, final PsiFile file) {
-    return file.getViewProvider().getRootLanguage(elt);
+  public static Language findLanguageFromElement(final PsiElement elt) {
+    if (elt.getFirstChild() == null) { //is leaf
+      final PsiElement parent = elt.getParent();
+      if (parent != null) {
+        return parent.getLanguage();
+      }
+    }
+
+    return elt.getLanguage();
   }
 
   public static PsiFile getTemplateLanguageFile(final PsiElement element) {
@@ -391,7 +398,7 @@ public class PsiUtilBase {
                                             ? selectionModel.getSelectionStart()
                                             : caretOffset;
     PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
-    Language lang = elt != null ? findLanguageFromElement(elt, file): null;
+    Language lang = elt != null ? findLanguageFromElement(elt): null;
     if (lang == null) return null;
 
     if (selectionModel.hasSelection()) {
@@ -448,7 +455,7 @@ public class PsiUtilBase {
       PsiElement elt = getElementAtOffset(file, curOffset);
       if (elt == null) break;
       if (!(elt instanceof PsiWhiteSpace)) {
-        final Language language = findLanguageFromElement(elt, file);
+        final Language language = findLanguageFromElement(elt);
         if (lang == null) {
           lang = language;
         } else if (lang != language) {

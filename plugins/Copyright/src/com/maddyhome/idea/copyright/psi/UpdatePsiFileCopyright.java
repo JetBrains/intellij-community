@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
@@ -229,10 +230,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
   }
 
-  private CommentRange getLineCopyrightComments(List<PsiComment> comments, Document doc, int i, PsiComment comment, String text) {
+  private static CommentRange getLineCopyrightComments(List<PsiComment> comments, Document doc, int i, PsiComment comment, String text) {
     PsiElement firstComment = comment;
     PsiElement lastComment = comment;
-    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getViewProvider().getRootLanguage(comment));
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilBase.findLanguageFromElement(comment));
     if (isLineComment(commenter, comment, doc)) {
       int sline = doc.getLineNumber(comment.getTextRange().getStartOffset());
       int eline = doc.getLineNumber(comment.getTextRange().getEndOffset());
