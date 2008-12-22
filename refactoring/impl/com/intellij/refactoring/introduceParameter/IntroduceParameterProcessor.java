@@ -316,7 +316,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
-
       PsiType initializerType = getInitializerType(myForcedType, myParameterInitializer, myLocalVariable);
 
       // Converting myParameterInitializer
@@ -801,15 +800,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     PsiManager manager = methodToReplaceIn.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
-    PsiParameter parameter = factory.createParameter(myParameterName, initializerType);
-    parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, myDeclareFinal);
-    final PsiParameter anchorParameter = getAnchorParameter(methodToReplaceIn);
-    final PsiParameterList parameterList = methodToReplaceIn.getParameterList();
-    parameter = (PsiParameter)parameterList.addAfter(parameter, anchorParameter);
-    JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(parameter);
-    final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
-    javaDocHelper.addParameterAfter(myParameterName, tagForAnchorParameter);
-
     final PsiParameter[] parameters = methodToReplaceIn.getParameterList().getParameters();
     myParametersToRemove.forEachDescending(new TIntProcedure() {
       public boolean execute(final int paramNum) {
@@ -827,6 +817,15 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return true;
       }
     });
+
+    PsiParameter parameter = factory.createParameter(myParameterName, initializerType);
+    parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, myDeclareFinal);
+    final PsiParameter anchorParameter = getAnchorParameter(methodToReplaceIn);
+    final PsiParameterList parameterList = methodToReplaceIn.getParameterList();
+    parameter = (PsiParameter)parameterList.addAfter(parameter, anchorParameter);
+    JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(parameter);
+    final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
+    javaDocHelper.addParameterAfter(myParameterName, tagForAnchorParameter);
   }
 
   @Nullable

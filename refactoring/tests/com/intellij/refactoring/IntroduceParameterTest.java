@@ -188,6 +188,10 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false);
   }
 
+  public void testVarargs1() throws Exception {   // IDEADEV-33555
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
+  }
+
   public void testUseInInnerClass() throws Exception {
     doTestThroughHandler();
   }
