@@ -79,7 +79,8 @@ public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandler
       if (filter.value(type)) filtered.add(type);
     }
 
-    return new HighlightExceptionsHandler(editor, file, target, filtered.toArray(new PsiClassType[filtered.size()]), catchSection, filter);
+    return new HighlightExceptionsHandler(editor, file, target, filtered.toArray(new PsiClassType[filtered.size()]),
+                                          tryStatement.getTryBlock(), filter);
   }
 
   @Nullable
