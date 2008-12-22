@@ -215,7 +215,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   @NotNull
-  public EditorWindow [] getWindows() {
+  public EditorWindow[] getWindows() {
     return mySplitters.getWindows();
   }
 

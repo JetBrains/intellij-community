@@ -4,10 +4,12 @@ import com.intellij.application.options.OptionId;
 import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.Configurable;
@@ -16,6 +18,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,7 +54,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbRenameLocalVariablesInplace;
   private JCheckBox myCbHighlightIdentifierUnderCaret;
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
-  private MyConfigurable myConfigurable;
+  private final MyConfigurable myConfigurable;
 
 
   public EditorOptionsPanel(){
@@ -142,6 +147,7 @@ public class EditorOptionsPanel {
     codeInsightSettings.HIGHLIGHT_BRACES = myCbHighlightBraces.isSelected();
     codeInsightSettings.HIGHLIGHT_SCOPE = myCbHighlightScope.isSelected();
     codeInsightSettings.HIGHLIGHT_IDENTIFIER_UNDER_CARET = myCbHighlightIdentifierUnderCaret.isSelected();
+    clearAllIdentifierHighlighters();
 
     // Virtual space
 
@@ -203,6 +209,17 @@ public class EditorOptionsPanel {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
+    }
+  }
+
+  private static void clearAllIdentifierHighlighters() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+        if (fileEditor instanceof TextEditor) {
+          Document document = ((TextEditor)fileEditor).getEditor().getDocument();
+          IdentifierHighlighterPass.clearMyHighlights(document, project);
+        }
+      }
     }
   }
 

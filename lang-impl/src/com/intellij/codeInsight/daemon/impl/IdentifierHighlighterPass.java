@@ -6,8 +6,11 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -22,6 +25,7 @@ import com.intellij.util.Processor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,7 +36,6 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private final Collection<TextRange> myReadAccessRanges = new ArrayList<TextRange>();
   private final Collection<TextRange> myWriteAccessRanges = new ArrayList<TextRange>();
   private final int myCaretOffset;
-  private PsiElement myTarget;
 
   private static final HighlightInfoType ourReadHighlightInfoType = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES);
   private static final HighlightInfoType ourWriteHighlightInfoType = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES);
@@ -45,15 +48,10 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(final ProgressIndicator progress) {
-    // this check must be made here rather than in IdentifierHighlighterPassFactory because otherwise the highlighting will remain
-    // forever after the option is turned off (see IDEADEV-31007) 
     if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
       return;
     }
-    myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor,
-                                                                     TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
-                                                                     TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED,
-                                                                     myCaretOffset);
+    final PsiElement myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, myCaretOffset);
     if (myTarget != null) {
       final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(myTarget);
       ReferencesSearch.search(myTarget, new LocalSearchScope(myFile)).forEach(new Processor<PsiReference>() {
@@ -85,10 +83,10 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   private Collection<HighlightInfo> getHighlights() {
-    if (myTarget == null) {
+    if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty()) {
       return Collections.emptyList();
     }
-    Collection<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    Collection<HighlightInfo> result = new ArrayList<HighlightInfo>(myReadAccessRanges.size() + myWriteAccessRanges.size());
     for (TextRange range: myReadAccessRanges) {
       result.add(HighlightInfo.createHighlightInfo(ourReadHighlightInfoType, range, null));
     }
@@ -96,5 +94,23 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       result.add(HighlightInfo.createHighlightInfo(ourWriteHighlightInfoType, range, null));
     }
     return result;
+  }
+
+  public static void clearMyHighlights(Document document, Project project) {
+    MarkupModel markupModel = document.getMarkupModel(project);
+    List<HighlightInfo> old = DaemonCodeAnalyzerImpl.getHighlights(document, project);
+    List<HighlightInfo> result = new ArrayList<HighlightInfo>(old == null ? Collections.<HighlightInfo>emptyList() : old);
+    for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
+      Object tooltip = highlighter.getErrorStripeTooltip();
+      if (!(tooltip instanceof HighlightInfo)) {
+        continue;
+      }
+      HighlightInfo info = (HighlightInfo)tooltip;
+      if (info.type == ourReadHighlightInfoType || info.type == ourWriteHighlightInfoType) {
+        result.remove(info);
+        markupModel.removeHighlighter(highlighter);
+      }
+    }
+    DaemonCodeAnalyzerImpl.setHighlights(markupModel, project, result, Collections.<HighlightInfo>emptyList());
   }
 }
