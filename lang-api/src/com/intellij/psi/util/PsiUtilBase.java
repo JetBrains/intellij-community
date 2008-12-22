@@ -481,14 +481,14 @@ public class PsiUtilBase {
       elt = elt.getParent();
       TextRange range = elt.getTextRange();
       assert range != null : "Range is null for " + elt + "; " + elt.getClass();
-      while(!range.contains(selectionRange)) {
+      while(!range.contains(selectionRange) && !(elt instanceof PsiFile)) {
         elt = elt.getParent();
         if (elt == null) break;
         range = elt.getTextRange();
         assert range != null : "Range is null for " + elt + "; " + elt.getClass();
       }
       
-      if (range.contains(selectionRange) && elt != null) {
+      if (elt != null) {
         return elt.getLanguage();
       }
     }
