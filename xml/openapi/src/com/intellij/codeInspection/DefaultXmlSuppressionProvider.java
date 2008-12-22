@@ -26,10 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlProlog;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -87,7 +84,7 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
   @Nullable
   protected PsiElement findSuppressionLeaf(PsiElement leaf, @Nullable final String id, int offset) {
     while (leaf != null && leaf.getTextOffset() >= offset) {
-      if (leaf instanceof PsiComment || leaf instanceof XmlProlog) {
+      if (leaf instanceof PsiComment || leaf instanceof XmlProlog || leaf instanceof XmlText) {
         @NonNls String text = leaf.getText();
         if (isSuppressedFor(text, id)) return leaf;
       }
