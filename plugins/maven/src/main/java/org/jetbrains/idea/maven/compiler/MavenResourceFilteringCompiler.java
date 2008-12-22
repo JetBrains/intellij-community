@@ -75,7 +75,8 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
         }
       }
       catch (IOException e) {
-        context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot read the filter. " + e.getMessage(), each, -1, -1);
+        String url = VfsUtil.pathToUrl(mavenProject.getFile().getPath());
+        context.addMessage(CompilerMessageCategory.ERROR, "Maven: Cannot read the filter. " + e.getMessage(), url, -1, -1);
       }
     }
     return properties;
