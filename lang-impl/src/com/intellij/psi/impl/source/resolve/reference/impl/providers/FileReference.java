@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.LangBundle;
@@ -19,8 +18,11 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
-import com.intellij.util.*;
 import com.intellij.refactoring.rename.BindablePsiReference;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.FilteringProcessor;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -207,7 +209,10 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     final PsiElement[] candidates = set.toArray(new PsiElement[set.size()]);
 
     final Object[] variants = new Object[candidates.length];
-    System.arraycopy(candidates, 0, variants, 0, candidates.length);
+    for (int i = 0; i < candidates.length; i++) {
+      variants[i] = FileInfoManager.getFileLookupItem(candidates[i]);
+    }
+
     if (myFileReferenceSet.isUrlEncoded()) {
       for (int i = 0; i < candidates.length; i++) {
         final PsiElement element = candidates[i];
@@ -217,7 +222,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
           final String encoded = encode(name);
           if (!encoded.equals(name)) {
             final Icon icon = psiElement.getIcon(Iconable.ICON_FLAG_READ_STATUS | Iconable.ICON_FLAG_VISIBILITY);
-            final Object lookupValue = LookupValueFactory.createLookupValue(encoded, icon);
+            final Object lookupValue = FileInfoManager.getFileLookupItem(candidates[i], encoded, icon);
             variants[i] = lookupValue;
           }
         }

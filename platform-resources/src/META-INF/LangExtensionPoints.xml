@@ -358,4 +358,6 @@
   <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover"/>
+
+  <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
 </extensionPoints>

@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -164,6 +165,30 @@ public class JavaDocInfoGenerator {
   }
 
   @Nullable
+  public String generateFileInfo() {
+    StringBuilder buffer = new StringBuilder();
+    if (myElement instanceof PsiFile) {
+      generateFileJavaDoc(buffer, (PsiFile)myElement); //used for Ctrl-Click
+    }
+
+    return fixupDoc(buffer);
+  }
+
+  @Nullable
+  private static String fixupDoc(@NotNull final StringBuilder buffer) {
+    String text = buffer.toString();
+    if (text.length() == 0) {
+      return null;
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Generated JavaDoc:");
+      LOG.debug(text);
+    }
+
+    return StringUtil.replace(text, "/>", ">");
+  }
+
+  @Nullable
   public String generateDocInfo() {
     StringBuilder buffer = new StringBuilder();
     if (myElement instanceof PsiClass) {
@@ -180,24 +205,11 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiVariable) {
       generateVariableJavaDoc(buffer, (PsiVariable)myElement);
     }
-    else if (myElement instanceof PsiFile) {
-      generateFileJavaDoc(buffer, (PsiFile)myElement); //used for Ctrl-Click
-    }
     else if (myElement instanceof PsiPackage) {
       generatePackageJavaDoc(buffer, (PsiPackage) myElement);
     }
-    String text = buffer.toString();
-    if (text.length() == 0) {
-      return null;
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Generated JavaDoc:");
-      LOG.debug(text);
-    }
 
-    text = StringUtil.replace(text, "/>", ">");
-
-    return text;
+    return fixupDoc(buffer);
   }
 
   private void generateClassJavaDoc(@NonNls StringBuilder buffer, PsiClass aClass) {

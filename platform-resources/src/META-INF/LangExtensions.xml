@@ -98,6 +98,9 @@
   <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
                         serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
 
+  <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
+                      serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
@@ -287,6 +290,8 @@
   <completion.contributor implementation="com.intellij.codeInsight.completion.ComboEditorCompletionContributor" id="comboEditor" order="first"/>
   <completion.contributor implementation="com.intellij.codeInsight.completion.WordCompletionContributor" id="wordCompletion" order="last"/>
   <completion.contributor implementation="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
+  <completion.contributor implementation="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="last"/>
+
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>
 
