@@ -3,21 +3,20 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
-public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase {
+public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
   private PsiElement myTarget;
 
   public HighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
@@ -25,7 +24,15 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase {
     myTarget = target;
   }
 
-  public void highlightUsages() {
+  protected List<PsiElement> getTargets() {
+    return Collections.singletonList(myTarget);
+  }
+
+  protected void selectTargets(final List<PsiElement> targets, final Consumer<List<PsiElement>> selectionConsumer) {
+    selectionConsumer.consume(targets);
+  }
+
+  protected void computeUsages(final List<PsiElement> targets) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.return");
 
     PsiElement parent = myTarget.getParent();
@@ -83,14 +90,14 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase {
     return null;
   }
 
-  private boolean highlightExitPoints(final PsiStatement parent, final PsiCodeBlock body) throws AnalysisCanceledException {
+  private void highlightExitPoints(final PsiStatement parent, final PsiCodeBlock body) throws AnalysisCanceledException {
     final Project project = myTarget.getProject();
     ControlFlow flow = ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
 
     Collection<PsiStatement> exitStatements = ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize(), new IntArrayList(),
                                                                                           PsiReturnStatement.class, PsiBreakStatement.class,
                                                                                           PsiContinueStatement.class, PsiThrowStatement.class);
-    if (!exitStatements.contains(parent)) return false;
+    if (!exitStatements.contains(parent)) return;
 
     PsiElement originalTarget = getExitTarget(parent);
 
@@ -102,16 +109,10 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase {
       }
     }
 
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    HighlightManager highlightManager = HighlightManager.getInstance(project);
-    final boolean clearHighlights = HighlightUsagesHandler.isClearHighlights(myEditor, highlightManager);
-    HighlightUsagesHandler.doHighlightElements(myEditor, exitStatements.toArray(new PsiElement[exitStatements.size()]),
-                                               attributes, clearHighlights);
-
-    HighlightUsagesHandler.setupFindModel(project);
-    String message = clearHighlights ? "" : CodeInsightBundle.message("status.bar.exit.points.highlighted.message", exitStatements.size(),
+    for (PsiElement e : exitStatements) {
+      addOccurrence(e);
+    }
+    myStatusText = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", exitStatements.size(),
                                                                       HighlightUsagesHandler.getShortcutText());
-    WindowManager.getInstance().getStatusBar(project).setInfo(message);
-    return true;
   }
 }

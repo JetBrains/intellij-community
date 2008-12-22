@@ -175,8 +175,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static Runnable createHighlightAction(final Project project, PsiFile file, PsiElement[] targets, final Editor editor) {
     if (file instanceof PsiCompiledElement) file = (PsiFile)((PsiCompiledElement)file).getMirror();
     PsiElement target = targets[0];
-    HighlightManager highlightManager = HighlightManager.getInstance(project);
-    boolean clearHighlights = isClearHighlights(editor, highlightManager);
+    boolean clearHighlights = isClearHighlights(editor);
 
     // in case of injected file, use host file to highlight all occurences of the target in each injected file
     PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
@@ -256,7 +255,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
   }
 
-  private static void highlightRanges(HighlightManager highlightManager, Editor editor, TextAttributes attributes,
+  public static void highlightRanges(HighlightManager highlightManager, Editor editor, TextAttributes attributes,
                                       boolean clearHighlights,
                                       List<TextRange> textRanges) {
     if (clearHighlights) {
@@ -272,10 +271,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  public static boolean isClearHighlights(Editor editor, Object highlightManager) {
+  public static boolean isClearHighlights(Editor editor) {
     if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
     
-    RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
+    RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(editor.getProject())).getHighlighters(editor);
     int caretOffset = editor.getCaretModel().getOffset();
     for (RangeHighlighter highlighter : highlighters) {
       if (new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()).grown(1).contains(caretOffset)) {

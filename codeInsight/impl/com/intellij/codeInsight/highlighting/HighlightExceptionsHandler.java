@@ -2,20 +2,17 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.util.Consumer;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase {
+public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   private PsiElement myTarget;
   private PsiClassType[] myClassTypes;
   private PsiElement myPlace;
@@ -30,57 +27,51 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase {
     myTypeFilter = typeFilter;
   }
 
-  public void highlightUsages() {
-    final Project project = myEditor.getProject();
-    final boolean clearHighlights = HighlightUsagesHandler.isClearHighlights(myEditor, HighlightManager.getInstance(project));
-    if (myClassTypes == null || myClassTypes.length == 0) {
-      String text = CodeInsightBundle.message("highlight.exceptions.thrown.notfound");
-      HintManager.getInstance().showInformationHint(myEditor, text);
-      return;
-    }
+  protected List<PsiClass> getTargets() {
+    return ChooseClassAndDoHighlightRunnable.resolveClasses(myClassTypes);
+  }
+
+  protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(myClassTypes, myEditor, CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")) {
       protected void selected(PsiClass... classes) {
-        List<PsiReference> refs = new ArrayList<PsiReference>();
-        final ArrayList<PsiElement> otherOccurrences = new ArrayList<PsiElement>();
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-
-        for (PsiClass aClass : classes) {
-          addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(aClass), myPlace, myTypeFilter);
-        }
-
-        HighlightUsagesHandler.highlightReferences(project, myTarget, refs, myEditor, myFile, clearHighlights);
-        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        HighlightUsagesHandler.doHighlightElements(myEditor, new PsiElement[]{myTarget}, attributes, clearHighlights);
-        HighlightUsagesHandler.highlightOtherOccurrences(otherOccurrences, myEditor, clearHighlights);
-        HighlightUsagesHandler.setStatusText(project, LangBundle.message("java.terms.exception"), refs.size(), clearHighlights);
+        selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();
   }
 
-  private static void addExceptionThrownPlaces(final List<PsiReference> refs, final List<PsiElement> otherOccurrences, final PsiType type,
-                                               final PsiElement block, final Condition<PsiType> typeFilter) {
+  protected void computeUsages(final List<PsiClass> targets) {
+    final Project project = myEditor.getProject();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+
+    addOccurrence(myTarget);
+    for (PsiClass aClass : targets) {
+      addExceptionThrownPlaces(factory.createType(aClass));
+    }
+    buildStatusText(LangBundle.message("java.terms.exception"), myReadUsages.size()-1 /* exclude target */);
+  }
+
+  private void addExceptionThrownPlaces(final PsiType type) {
     if (type instanceof PsiClassType) {
-      block.accept(new JavaRecursiveElementVisitor() {
+      myPlace.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
         }
 
         @Override public void visitThrowStatement(PsiThrowStatement statement) {
           super.visitThrowStatement(statement);
-          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(statement, block);
+          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(statement, myPlace);
           for (final PsiClassType actualType : exceptionTypes) {
-            if (type.isAssignableFrom(actualType) && typeFilter.value(actualType)) {
+            if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
               PsiExpression psiExpression = statement.getException();
               if (psiExpression instanceof PsiReferenceExpression) {
-                PsiReferenceExpression referenceExpression = (PsiReferenceExpression)psiExpression;
-                if (!refs.contains(referenceExpression)) refs.add(referenceExpression);
+                addOccurrence(psiExpression);
               }
               else if (psiExpression instanceof PsiNewExpression) {
                 PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
-                if (ref != null && !refs.contains(ref)) refs.add(ref);
+                addOccurrence(ref);
               }
               else {
-                otherOccurrences.add(statement.getException());
+                addOccurrence(statement.getException());
               }
             }
           }
@@ -89,11 +80,11 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase {
         @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           PsiReference reference = expression.getMethodExpression().getReference();
-          if (reference == null || refs.contains(reference)) return;
-          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, block);
+          if (reference == null) return;
+          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, myPlace);
           for (final PsiClassType actualType : exceptionTypes) {
-            if (type.isAssignableFrom(actualType) && typeFilter.value(actualType)) {
-              refs.add(reference);
+            if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+              addOccurrence(expression.getMethodExpression());
               break;
             }
           }
@@ -102,11 +93,11 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase {
         @Override public void visitNewExpression(PsiNewExpression expression) {
           super.visitNewExpression(expression);
           PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-          if (classReference == null || refs.contains(classReference)) return;
-          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, block);
+          if (classReference == null) return;
+          PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, myPlace);
           for (PsiClassType actualType : exceptionTypes) {
-            if (type.isAssignableFrom(actualType) && typeFilter.value(actualType)) {
-              refs.add(classReference);
+            if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+              addOccurrence(classReference);
               break;
             }
           }

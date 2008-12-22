@@ -21,14 +21,25 @@ public abstract class ChooseClassAndDoHighlightRunnable implements Runnable {
   private final String myTitle;
 
   public ChooseClassAndDoHighlightRunnable(PsiClassType[] classTypes, Editor editor, String title) {
+    List<PsiClass> classes = resolveClasses(classTypes);
+    myClasses = classes.toArray(new PsiClass[classes.size()]);
+    myEditor = editor;
+    myTitle = title;
+  }
+
+  protected ChooseClassAndDoHighlightRunnable(final List<PsiClass> classes, final Editor editor, final String title) {
+    myClasses = classes.toArray(new PsiClass[classes.size()]);
+    myEditor = editor;
+    myTitle = title;
+  }
+
+  public static List<PsiClass> resolveClasses(final PsiClassType[] classTypes) {
     List<PsiClass> classes = new ArrayList<PsiClass>();
     for (PsiClassType classType : classTypes) {
       PsiClass aClass = classType.resolve();
       if (aClass != null) classes.add(aClass);
     }
-    myClasses = classes.toArray(new PsiClass[classes.size()]);
-    myEditor = editor;
-    myTitle = title;
+    return classes;
   }
 
   protected abstract void selected(PsiClass... classes);
