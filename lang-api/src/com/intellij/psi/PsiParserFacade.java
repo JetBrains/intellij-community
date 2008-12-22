@@ -1,5 +1,6 @@
 package com.intellij.psi;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,12 @@ public interface PsiParserFacade {
    */
   @NotNull
   PsiComment createLineCommentFromText(@NotNull LanguageFileType fileType, @NotNull String text) throws IncorrectOperationException;
+
+  /**
+   * Creates a line comment for the specified language or block comment if language doesn't support line ones
+   */
+  @NotNull
+  PsiComment createLineOrBlockCommentFromText(@NotNull Language lang, @NotNull String text) throws IncorrectOperationException;
 
   class SERVICE {
     private SERVICE() {

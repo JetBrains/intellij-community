@@ -97,10 +97,9 @@ public class AddNoInspectionCommentFix extends SuppressIntentionAction {
                                  final Editor editor,
                                  final PsiElement element,
                                  final PsiElement container) throws IncorrectOperationException {
-    final LanguageFileType fileType = (LanguageFileType) element.getContainingFile().getFileType();
     final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
     final String text = SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
-    PsiComment comment = parserFacade.createLineCommentFromText(fileType, text);
+    PsiComment comment = parserFacade.createLineOrBlockCommentFromText(element.getLanguage(), text);
     container.getParent().addBefore(comment, container);
   }
 

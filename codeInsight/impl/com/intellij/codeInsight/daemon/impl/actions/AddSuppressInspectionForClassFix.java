@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public class AddSuppressInspectionForClassFix extends AddSuppressInspectionFix {
     }
     while (container != null ) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(container, PsiClass.class);
-      if (parentClass == null && container instanceof PsiClass){
+      if ((parentClass == null || parentClass instanceof JspClass) && container instanceof PsiClass){
         return container;
       }
       container = parentClass;

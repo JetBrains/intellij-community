@@ -2,6 +2,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.*;
@@ -42,6 +43,28 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     assert prefix != null;
 
     PsiFile aFile = createDummyFile(prefix + text, fileType);
+    PsiElement[] children = aFile.getChildren();
+    for (PsiElement aChildren : children) {
+      if (aChildren instanceof PsiComment) {
+        PsiComment comment = (PsiComment)aChildren;
+        DummyHolderFactory.createHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), null);
+        return comment;
+      }
+    }
+    throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
+  }
+
+  @NotNull
+  public PsiComment createLineOrBlockCommentFromText(@NotNull Language lang, @NotNull String text)
+    throws IncorrectOperationException {
+    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(lang);
+    assert commenter != null;
+    String prefix = commenter.getLineCommentPrefix();
+    final String blockCommentPrefix = commenter.getBlockCommentPrefix();
+    final String blockCommentSuffix = commenter.getBlockCommentSuffix();
+    assert prefix != null || (blockCommentPrefix != null && blockCommentSuffix != null);
+
+    PsiFile aFile = PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("_Dummy_", lang, prefix != null ? (prefix + text) : (blockCommentPrefix + text + blockCommentSuffix));
     PsiElement[] children = aFile.getChildren();
     for (PsiElement aChildren : children) {
       if (aChildren instanceof PsiComment) {
