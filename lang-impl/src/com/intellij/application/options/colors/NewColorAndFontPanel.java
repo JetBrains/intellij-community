@@ -1,6 +1,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -59,7 +60,9 @@ public class NewColorAndFontPanel extends JPanel {
       }
 
       public void selectedOptionChanged(final Object selected) {
-        myPreviewPanel.blinkSelectedHighlightType(selected);
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          myPreviewPanel.blinkSelectedHighlightType(selected);
+        }
       }
 
     });
