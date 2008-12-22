@@ -77,9 +77,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (PsiTreeUtil.isAncestor(ancestor, place, false)) return true;
-
-    return false;
+    return PsiTreeUtil.isAncestor(ancestor, place, false);
   }
 
   @NotNull
@@ -275,9 +273,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElements.length);
-    for (int i = 0; i < elements.length; i++) {
-      myElements[i] = elements[i];
-    }
+    System.arraycopy(elements, 0, myElements, 0, elements.length);
   }
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {

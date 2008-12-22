@@ -3,19 +3,20 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements PsiAssignmentExpression, Constants {
+public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements PsiAssignmentExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAssignmentExpressionImpl");
 
   public PsiAssignmentExpressionImpl() {
-    super(ASSIGNMENT_EXPRESSION);
+    super(JavaElementType.ASSIGNMENT_EXPRESSION);
   }
 
   @NotNull
@@ -51,7 +52,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
         return getFirstChildNode();
 
       case ChildRole.ROPERAND:
-        return EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+        return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
 
       case ChildRole.OPERATION_SIGN:
         return TreeUtil.findChild(this, OUR_OPERATIONS_BIT_SET);
@@ -60,7 +61,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
+    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       if (child == getFirstChildNode()) return ChildRole.LOPERAND;
       if (child == getLastChildNode()) return ChildRole.ROPERAND;
       return ChildRoleBase.NONE;
@@ -73,11 +74,10 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
-  private static final TokenSet OUR_OPERATIONS_BIT_SET = TokenSet.create(new IElementType[]{
-    EQ, ASTERISKEQ, DIVEQ, PERCEQ,
-    PLUSEQ, MINUSEQ, LTLTEQ, GTGTEQ,
-    GTGTGTEQ, ANDEQ, OREQ, XOREQ
-  });
+  private static final TokenSet OUR_OPERATIONS_BIT_SET = TokenSet.create(JavaTokenType.EQ, JavaTokenType.ASTERISKEQ, JavaTokenType.DIVEQ,
+                                                                         JavaTokenType.PERCEQ, JavaTokenType.PLUSEQ, JavaTokenType.MINUSEQ,
+                                                                         JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ, JavaTokenType.GTGTGTEQ,
+                                                                         JavaTokenType.ANDEQ, JavaTokenType.OREQ, JavaTokenType.XOREQ);
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {

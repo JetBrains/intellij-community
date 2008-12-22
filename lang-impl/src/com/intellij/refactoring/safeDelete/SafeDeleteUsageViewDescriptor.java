@@ -12,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class SafeDeleteUsageViewDescriptor extends UsageViewDescriptorAdapter {
   private final PsiElement[] myElementsToDelete;
 
-  public SafeDeleteUsageViewDescriptor(
-    PsiElement[] elementsToDelete
-  ) {
-    super();
+  public SafeDeleteUsageViewDescriptor(PsiElement[] elementsToDelete) {
     myElementsToDelete = elementsToDelete;
   }
 
