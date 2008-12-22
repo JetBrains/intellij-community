@@ -78,15 +78,23 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     }
   }
 
-  protected abstract List<T> getTargets();
+  public abstract List<T> getTargets();
 
   protected abstract void selectTargets(List<T> targets, Consumer<List<T>> selectionConsumer);
 
-  protected abstract void computeUsages(List<T> targets);
+  public abstract void computeUsages(List<T> targets);
 
   protected void addOccurrence(final PsiElement element) {
     TextRange range = element.getTextRange();
     range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
     myReadUsages.add(range);
+  }
+
+  public List<TextRange> getReadUsages() {
+    return myReadUsages;
+  }
+
+  public List<TextRange> getWriteUsages() {
+    return myWriteUsages;
   }
 }

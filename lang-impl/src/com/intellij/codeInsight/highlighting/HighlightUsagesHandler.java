@@ -54,12 +54,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return;
     }
 
-    for(HighlightUsagesHandlerFactory factory: Extensions.getExtensions(HighlightUsagesHandlerFactory.EP_NAME)) {
-      final HighlightUsagesHandlerBase handler = factory.createHighlightUsagesHandler(editor, file);
-      if (handler != null) {
-        handler.highlightUsages();
-        return;
-      }
+    final HighlightUsagesHandlerBase handler = createCustomHandler(editor, file);
+    if (handler != null) {
+      handler.highlightUsages();
+      return;
     }
 
     PsiElement target = getTargetElement(editor, file);
@@ -101,6 +99,17 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     createHighlightAction(project, file, targets, editor).run();
+  }
+
+  @Nullable
+  public static HighlightUsagesHandlerBase createCustomHandler(final Editor editor, final PsiFile file) {
+    for(HighlightUsagesHandlerFactory factory: Extensions.getExtensions(HighlightUsagesHandlerFactory.EP_NAME)) {
+      final HighlightUsagesHandlerBase handler = factory.createHighlightUsagesHandler(editor, file);
+      if (handler != null) {
+        return handler;
+      }
+    }
+    return null;
   }
 
   @Nullable

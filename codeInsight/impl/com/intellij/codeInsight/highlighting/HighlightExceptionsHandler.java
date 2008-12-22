@@ -27,7 +27,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
     myTypeFilter = typeFilter;
   }
 
-  protected List<PsiClass> getTargets() {
+  public List<PsiClass> getTargets() {
     return ChooseClassAndDoHighlightRunnable.resolveClasses(myClassTypes);
   }
 
@@ -39,7 +39,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
     }.run();
   }
 
-  protected void computeUsages(final List<PsiClass> targets) {
+  public void computeUsages(final List<PsiClass> targets) {
     final Project project = myEditor.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 

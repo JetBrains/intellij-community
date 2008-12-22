@@ -24,7 +24,7 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
     myTarget = target;
   }
 
-  protected List<PsiElement> getTargets() {
+  public List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
@@ -32,7 +32,7 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
     selectionConsumer.consume(targets);
   }
 
-  protected void computeUsages(final List<PsiElement> targets) {
+  public void computeUsages(final List<PsiElement> targets) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.return");
 
     PsiElement parent = myTarget.getParent();

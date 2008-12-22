@@ -22,7 +22,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
     myClass = psiClass;
   }
 
-  protected List<PsiClass> getTargets() {
+  public List<PsiClass> getTargets() {
     PsiReferenceList list = PsiKeyword.EXTENDS.equals(myTarget.getText()) ? myClass.getExtendsList() : myClass.getImplementsList();
     if (list == null) return Collections.emptyList();
     final PsiClassType[] classTypes = list.getReferencedTypes();
@@ -37,7 +37,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
     }.run();
   }
 
-  protected void computeUsages(final List<PsiClass> classes) {
+  public void computeUsages(final List<PsiClass> classes) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.implements");
     for (PsiMethod method : myClass.getMethods()) {
       List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();

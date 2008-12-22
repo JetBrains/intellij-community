@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -51,6 +52,16 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
       return;
     }
+
+    final HighlightUsagesHandlerBase handler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
+    if (handler != null) {
+      final List targets = handler.getTargets();
+      handler.computeUsages(targets);
+      myReadAccessRanges.addAll(handler.getReadUsages());
+      myWriteAccessRanges.addAll(handler.getWriteUsages());
+      return;
+    }
+
     final PsiElement myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, myCaretOffset);
     if (myTarget != null) {
       final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(myTarget);
