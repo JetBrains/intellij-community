@@ -47,7 +47,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   public FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
     myProject = project;
     myFilePointerManager = filePointerManager;
-    myAssociations = new HashMap<VirtualFilePointer, VirtualFilePointerContainer>();
+    myAssociations = new LinkedHashMap<VirtualFilePointer, VirtualFilePointerContainer>();
   }
 
   @SuppressWarnings({"unchecked"})
@@ -120,7 +120,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   }
 
   private static HashMap<VirtualFilePointer, VirtualFilePointerContainer> copy(FileAssociationsManagerImpl other) {
-    final HashMap<VirtualFilePointer, VirtualFilePointerContainer> hashMap = new HashMap<VirtualFilePointer, VirtualFilePointerContainer>();
+    final HashMap<VirtualFilePointer, VirtualFilePointerContainer> hashMap = new LinkedHashMap<VirtualFilePointer, VirtualFilePointerContainer>();
 
     final Set<VirtualFilePointer> virtualFilePointers = other.myAssociations.keySet();
     for (VirtualFilePointer pointer : virtualFilePointers) {
@@ -199,7 +199,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   }
 
   public Map<VirtualFile, VirtualFile[]> getAssociations() {
-    final HashMap<VirtualFile, VirtualFile[]> map = new HashMap<VirtualFile, VirtualFile[]>();
+    final HashMap<VirtualFile, VirtualFile[]> map = new LinkedHashMap<VirtualFile, VirtualFile[]>();
     final Set<VirtualFilePointer> set = myAssociations.keySet();
     for (VirtualFilePointer pointer : set) {
       if (pointer.isValid()) {
