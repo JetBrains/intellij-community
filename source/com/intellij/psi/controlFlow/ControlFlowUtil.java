@@ -235,7 +235,7 @@ public class ControlFlowUtil {
   }
 
   public static Collection<PsiStatement> findExitPointsAndStatements(final ControlFlow flow, final int start, final int end, final IntArrayList exitPoints,
-                                                                     final Class[] classesFilter) {
+                                                                     final Class... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
       return Collections.emptyList();
