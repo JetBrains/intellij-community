@@ -188,18 +188,21 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         final AnAction action = renderer.getClickAction();
         if (action != null) {
           final String text = renderer.getTooltipText();
-          final IntentionAction actionAdapter = new AbstractIntentionAction() {
-            public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-              final RelativePoint relativePoint = PopupFactoryImpl.getInstance().guessBestPopupLocation(editor);
-              action.actionPerformed(new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(), ActionManager.getInstance(), 0));
-            }
+          final IntentionAction actionAdapter;
+          if (text != null) {
+            actionAdapter = new AbstractIntentionAction() {
+              public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+                final RelativePoint relativePoint = PopupFactoryImpl.getInstance().guessBestPopupLocation(editor);
+                action.actionPerformed(new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(), ActionManager.getInstance(), 0));
+              }
 
-            @NotNull
-            public String getText() {
-              return text;
-            }
-          };
-          guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+              @NotNull
+              public String getText() {
+                return text;
+              }
+            };
+            guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+          }
         }
       }
     }
