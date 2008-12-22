@@ -115,8 +115,15 @@ public class PropertyUtil {
 
   @NotNull
   public static Map<String, PsiMethod> getAllProperties(@NotNull final PsiClass psiClass, final boolean acceptSetters, final boolean acceptGetters) {
+    return getAllProperties(psiClass, acceptSetters, acceptGetters, true);
+  }
+
+  @NotNull
+  public static Map<String, PsiMethod> getAllProperties(@NotNull final PsiClass psiClass, final boolean acceptSetters, final boolean acceptGetters, final boolean includeSuperClass) {
     final Map<String, PsiMethod> map = new HashMap<String, PsiMethod>();
-    for (PsiMethod method : psiClass.getAllMethods()) {
+    final PsiMethod[] methods = includeSuperClass ? psiClass.getAllMethods() : psiClass.getMethods();
+
+    for (PsiMethod method : methods) {
       if (filterMethods(method)) continue;
       if (acceptSetters && PropertyUtil.isSimplePropertySetter(method)||
           acceptGetters && PropertyUtil.isSimplePropertyGetter(method)) {
@@ -125,6 +132,7 @@ public class PropertyUtil {
     }
     return map;
   }
+
 
   private static boolean filterMethods(final PsiMethod method) {
     if(method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return true;
