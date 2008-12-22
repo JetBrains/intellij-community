@@ -33,12 +33,6 @@ import java.util.TreeMap;
  */
 public class Options implements JDOMExternalizable, Cloneable
 {
-    public Options()
-    {
-        logger.info("Options()");
-    }
-
-
     public LanguageOptions getOptions(String name)
     {
         String lang = FileTypeUtil.getInstance().getFileTypeNameByName(name);
