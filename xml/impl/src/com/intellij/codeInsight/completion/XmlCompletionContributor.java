@@ -43,7 +43,11 @@ public class XmlCompletionContributor extends CompletionContributor {
         return false;
       }
       final XmlTag parent = (XmlTag)element.getParent();
-      final String namespace = parent.getNamespace();
+      final String namespace = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          return parent.getNamespace();
+        }
+      });
       final XmlElementDescriptor parentDescriptor = ApplicationManager.getApplication().runReadAction(new Computable<XmlElementDescriptor>() {
         public XmlElementDescriptor compute() {
           return parent.getDescriptor();
