@@ -61,6 +61,9 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_DOUBLE = "java.lang.Double";
   @NonNls String JAVA_LANG_CHARACTER = "java.lang.Character";
 
+  @NonNls String JAVA_LANG_STRING_BUFFER = "java.lang.StringBuffer";
+  @NonNls String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";
+
 
   @NonNls String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
   @NonNls String CLASS_FILE_EXTENSION = ".class";

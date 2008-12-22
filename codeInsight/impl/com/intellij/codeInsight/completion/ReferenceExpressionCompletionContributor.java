@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -127,7 +128,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
                   final PsiElement qualifier = getQualifier(reference.getElement());
                   if (!OBJECT_METHOD_PATTERN.accepts(object) || allowGetClass(object, parameters)) {
                     if (!stringType.equals(itemType)) {
-                      addChainedCallVariants(element, originalFile, tailType, getReferenceFilter(element, true, true).first, prefix, substitutor, qualifier, result, parameters);
+                      addChainedCallVariants(element, originalFile, tailType, getReferenceFilter(element, true, true).first, prefix, substitutor, qualifier, result, parameters, itemType);
                     }
                   }
 
@@ -323,7 +324,8 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
   private static void addChainedCallVariants(final PsiElement element, final PsiFile originalFile, final TailType tailType,
                                              final ElementFilter qualifierFilter, final String prefix, final PsiSubstitutor substitutor,
                                              final PsiElement qualifier,
-                                             final CompletionResultSet result, JavaSmartCompletionParameters parameters) throws IncorrectOperationException {
+                                             final CompletionResultSet result, JavaSmartCompletionParameters parameters,
+                                             PsiType qualifierType) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     final PsiExpression ref = elementFactory.createExpressionFromText(getQualifierText(qualifier) + prefix + ".xxx", element);
     String beautifulPrefix = prefix.endsWith(" )") ? prefix.substring(0, prefix.length() - 2) + ")" : prefix;
@@ -335,8 +337,7 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
           continue;
         }
         final PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-        if (OBJECT_METHOD_PATTERN.accepts(method) &&
-            !(OBJECT_METHOD_PATTERN.accepts(parentMethod) && parentMethod != null && method.getName().equals(parentMethod.getName()))) {
+        if (isUselessObjectMethod(method, parentMethod, qualifierType)) {
           continue;
         }
 
@@ -364,6 +365,24 @@ public class ReferenceExpressionCompletionContributor extends ExpressionSmartCom
         result.addElement(item);
       }
     }
+  }
+
+  private static boolean isUselessObjectMethod(PsiMethod method, PsiMethod parentMethod, PsiType qualifierType) {
+    if (!OBJECT_METHOD_PATTERN.accepts(method)) {
+      return false;
+    }
+
+    if (OBJECT_METHOD_PATTERN.accepts(parentMethod) && method.getName().equals(parentMethod.getName())) {
+      return false;
+    }
+
+    if ("toString".equals(method.getName())) {
+      if (qualifierType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) || InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static void addToArrayConversion(final PsiElement element, final String prefix, @NonNls final String expressionString, @NonNls String presentableString, final CompletionResultSet result, PsiElement qualifier) {

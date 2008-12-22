@@ -16,9 +16,12 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,5 +70,26 @@ public class InheritanceUtil {
       if (!superProcessor.process(superClass) || !processSupers(superClass, superProcessor, visited)) return false;
     }
     return true;
+  }
+
+  public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
+    if (type instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass psiClass = classType.resolve();
+      if (psiClass == null) {
+        return false;
+      }
+
+      return !processSupers(psiClass, true, new Processor<PsiClass>() {
+        public boolean process(PsiClass psiClass) {
+          if (baseClassName.equals(psiClass.getQualifiedName())) {
+            return false;
+          }
+          return true;
+        }
+      });
+    }
+
+    return false;
   }
 }
