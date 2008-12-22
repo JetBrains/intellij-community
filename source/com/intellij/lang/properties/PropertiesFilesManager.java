@@ -43,7 +43,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
     myFileTypeManager = fileTypeManager;
     myVirtualFileListener = new VirtualFileAdapter() {
       public void fileCreated(VirtualFileEvent event) {
-        addNewFile(event);
+        addNewFile(event.getFile());
       }
 
       public void fileDeleted(VirtualFileEvent event) {
@@ -52,7 +52,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
 
       public void fileMoved(VirtualFileMoveEvent event) {
         removeOldFile(event);
-        addNewFile(event);
+        addNewFile(event.getFile());
       }
 
       public void propertyChanged(VirtualFilePropertyEvent event) {
@@ -96,20 +96,11 @@ public class PropertiesFilesManager implements ApplicationComponent {
     myPropertiesFiles.remove(file);
   }
 
-  private void addNewFile(final VirtualFileEvent event) {
-    addNewFile(event.getFile());
-  }
-
-  // returns true if file is of properties file type
-  boolean addNewFile(final VirtualFile file) {
+  void addNewFile(final VirtualFile file) {
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
-    if (fileType == StdFileTypes.PROPERTIES) {
-      if (myPropertiesFiles.add(file)) {
-        firePropertiesFileAdded(file);
-      }
-      return true;
+    if (fileType == StdFileTypes.PROPERTIES && file.isValid() && myPropertiesFiles.add(file)) {
+      firePropertiesFileAdded(file);
     }
-    return false;
   }
 
   public Collection<VirtualFile> getAllPropertiesFiles() {
@@ -144,6 +135,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run() {
+            if (ApplicationManager.getApplication().isDisposed()) return;
             Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(getAllPropertiesFiles());
             VirtualFile[] virtualFiles = filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]);
             FileDocumentManager.getInstance().saveAllDocuments();
@@ -184,7 +176,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
     }
   }
 
-  public static interface PropertiesFileListener {
+  public interface PropertiesFileListener {
     void fileAdded(VirtualFile propertiesFile);
     void fileRemoved(VirtualFile propertiesFile);
     void fileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event);
