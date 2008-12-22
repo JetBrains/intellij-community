@@ -35,53 +35,56 @@ import java.util.Set;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements ApplicationComponent {
-    @NonNls private static final String NAME = "ImagesFileTypeManager";
+  @NonNls private static final String NAME = "ImagesFileTypeManager";
 
   @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
-    private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
-    private UserFileType imageFileType;
+  private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
+  private static UserFileType imageFileType;
 
-    public ImageFileTypeManagerImpl() {
-        imageFileType = new ImageFileType();
-        imageFileType.setIcon(IconLoader.getIcon("/org/intellij/images/icons/ImagesFileType.png"));
-        imageFileType.setName(IMAGE_FILE_TYPE_NAME);
-        imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
+  static {
+    imageFileType = new ImageFileType();
+    imageFileType.setIcon(IconLoader.getIcon("/org/intellij/images/icons/ImagesFileType.png"));
+    imageFileType.setName(IMAGE_FILE_TYPE_NAME);
+    imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
+  }
+
+  public ImageFileTypeManagerImpl() {
+  }
+
+  public boolean isImage(VirtualFile file) {
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    FileType fileTypeByFile = fileTypeManager.getFileTypeByFile(file);
+    return fileTypeByFile instanceof ImageFileType;
+  }
+
+  public FileType getImageFileType() {
+    return imageFileType;
+  }
+
+  @NotNull
+  public String getComponentName() {
+    return NAME;
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  public static final class ImageFileType extends UserBinaryFileType {
+  }
+
+  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
+    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
+    final Set<String> processed = new THashSet<String>();
+
+    for (String format : readerFormatNames) {
+      final String s = format.toLowerCase();
+      if (processed.contains(s)) continue;
+      processed.add(s);
     }
 
-    public boolean isImage(VirtualFile file) {
-        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        FileType fileTypeByFile = fileTypeManager.getFileTypeByFile(file);
-        return fileTypeByFile instanceof ImageFileType;
-    }
-
-    public FileType getImageFileType() {
-        return imageFileType;
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return NAME;
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
-    }
-
-    public static final class ImageFileType extends UserBinaryFileType {
-    }
-
-    public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-        final String[] readerFormatNames = ImageIO.getReaderFormatNames();
-        final Set<String> processed = new THashSet<String>();
-
-        for (String format : readerFormatNames) {
-            final String s = format.toLowerCase();
-            if (processed.contains(s)) continue;
-            processed.add(s);
-        }
-
-        consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
-    }
+    consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
+  }
 }
