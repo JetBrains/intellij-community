@@ -36,7 +36,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 )
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
 
-  public boolean COMPILE_IN_BACKGROUND = false;
+  public boolean COMPILE_IN_BACKGROUND = true;
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
   @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
   public boolean COMPILE_DEPENDENT_FILES = false;
