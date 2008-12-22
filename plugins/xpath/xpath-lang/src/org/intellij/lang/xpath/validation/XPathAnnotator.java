@@ -118,7 +118,10 @@ public final class XPathAnnotator implements Annotator {
             if (nodeTest != null) {
                 final XPathNodeTest.PrincipalType principalType = nodeTest.getPrincipalType();
                 if (principalType != XPathNodeTest.PrincipalType.ELEMENT) {
-                    holder.createWarningAnnotation(step.getNodeTest(), "Silly location step on " + principalType.getType() + " axis");
+                    XPathNodeTest test = step.getNodeTest();
+                    if (test != null) {
+                        holder.createWarningAnnotation(test, "Silly location step on " + principalType.getType() + " axis");
+                    }
                 }
             }
         }

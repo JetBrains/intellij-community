@@ -29,6 +29,14 @@ public class XPathHighlightingTest extends TestBase {
         doXPathHighlighting();
     }
 
+    public void testSillyStep() throws Throwable {
+        doXPathHighlighting();
+    }
+
+    public void testNonSillyStepIDEADEV33539() throws Throwable {
+        doXPathHighlighting();
+    }
+
     public void testHardwiredPrefix() throws Throwable {
         doXPathHighlighting();
     }
