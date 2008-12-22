@@ -77,13 +77,13 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
         final Document document = editor.getDocument();
         //Do not save/restore folding for code fragments
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file == null || !file.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
-            if (project.isDisposed() || editor.isDisposed()) return;
+            if (project.isDisposed() || editor.isDisposed() || !file.isValid()) return;
 
             PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
