@@ -338,12 +338,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     final boolean appStarted = commandProcessor != null;
 
     if (myDialog.isModal() && !isProgressDialog()) {
+      /*
       if (ApplicationManager.getApplication() != null) {
         if (ApplicationManager.getApplication().getCurrentWriteAction(null) != null) {
           LOG.warn(
             "Showing of a modal dialog inside write-action may be dangerous and resulting in unpredictable behavior! Current modalityState=" + ModalityState.current(), new Exception());
         }
       }
+      */
       if (appStarted) {
         commandProcessor.enterModal();
         LaterInvocator.enterModal(myDialog);
