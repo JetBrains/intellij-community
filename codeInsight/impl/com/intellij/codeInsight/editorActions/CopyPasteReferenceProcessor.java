@@ -71,9 +71,9 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
       try {
         referenceData = (ReferenceTransferableData)content.getTransferData(ReferenceTransferableData.ReferenceData.FLAVOR);
       }
-      catch (UnsupportedFlavorException e) {
+      catch (UnsupportedFlavorException ignored) {
       }
-      catch (IOException e) {
+      catch (IOException ignored) {
       }
     }
 
@@ -89,14 +89,15 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final ReferenceTransferableData.ReferenceData[] referenceData1 = ((ReferenceTransferableData) value).getData();
-    final PsiJavaCodeReferenceElement[] refs = findReferencesToRestore(file, bounds, referenceData1);
+    final ReferenceTransferableData.ReferenceData[] referenceData = ((ReferenceTransferableData) value).getData();
+    final PsiJavaCodeReferenceElement[] refs = findReferencesToRestore(file, bounds, referenceData);
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK) {
-      askReferencesToRestore(project, refs, referenceData1);
+      askReferencesToRestore(project, refs, referenceData);
     }
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        restoreReferences(referenceData1, refs);
+        restoreReferences(referenceData, refs);
       }
     });
   }
@@ -139,7 +140,8 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
             if (refClass1 == null || !manager.areElementsEquivalent(refClass, refClass1)) {
               refs[i] = reference;
             }
-          } else {
+          }
+          else {
             if (reference instanceof PsiReferenceExpression) {
               PsiElement referent = reference.resolve();
               if (!(referent instanceof PsiNamedElement)
@@ -161,24 +163,23 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
                                         PsiJavaCodeReferenceElement[] refs) {
     for (int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement reference = refs[i];
-      if (reference != null) {
-        try {
-          PsiManager manager = reference.getManager();
-          ReferenceTransferableData.ReferenceData refData = referenceData[i];
-          PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
-          if (refClass != null) {
-            if (refData.staticMemberName == null) {
-              reference.bindToElement(refClass);
-            }
-            else {
-              LOG.assertTrue(reference instanceof PsiReferenceExpression);
-              ((PsiReferenceExpression)reference).bindToElementViaStaticImport(refClass);
-            }
+      if (reference == null) continue;
+      try {
+        PsiManager manager = reference.getManager();
+        ReferenceTransferableData.ReferenceData refData = referenceData[i];
+        PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
+        if (refClass != null) {
+          if (refData.staticMemberName == null) {
+            reference.bindToElement(refClass);
+          }
+          else {
+            LOG.assertTrue(reference instanceof PsiReferenceExpression);
+            ((PsiReferenceExpression)reference).bindToElementViaStaticImport(refClass);
           }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     }
   }
