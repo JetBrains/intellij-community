@@ -150,6 +150,7 @@ public class Storage {
   private void store(String fileName, Storer storer) {
     File f = new File(myDir, fileName);
     try {
+      myDir.mkdirs();
       f.createNewFile();
       OutputStream fs = new BufferedOutputStream(new FileOutputStream(f));
       try {
@@ -193,6 +194,7 @@ public class Storage {
 
     isBroken = true;
     try {
+      myDir.mkdirs();
       new File(myDir, BROKEN_MARK_FILE).createNewFile();
     }
     catch (IOException e) {
