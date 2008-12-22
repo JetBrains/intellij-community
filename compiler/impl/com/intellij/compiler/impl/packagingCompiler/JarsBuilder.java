@@ -99,7 +99,7 @@ public class JarsBuilder {
           myJarsDestinations.add((ExplodedDestinationInfo)destination);
           File toFile = new File(FileUtil.toSystemDependentName(destination.getOutputPath()));
 
-          if (first ) {
+          if (first) {
             first = false;
             renameFile(fromFile, toFile, writtenPaths);
             fromFile = toFile;

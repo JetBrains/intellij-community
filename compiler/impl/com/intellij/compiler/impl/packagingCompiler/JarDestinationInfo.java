@@ -17,7 +17,7 @@ public class JarDestinationInfo extends DestinationInfo {
   private JarInfo myJarInfo;
 
   public JarDestinationInfo(final String pathInJar, final JarInfo jarInfo, DestinationInfo jarDestination) {
-    super(DeploymentUtil.appendToPath(jarDestination.getOutputPath(), pathInJar), jarDestination.getOutputFile(), jarDestination.getOutputPath());
+    super(DeploymentUtil.appendToPath(jarDestination.getOutputPath(), pathInJar), jarDestination.getOutputFile(), jarDestination.getOutputFilePath());
     LOG.assertTrue(!pathInJar.startsWith(".."), pathInJar);
     myPathInJar = StringUtil.startsWithChar(pathInJar, '/') ? pathInJar : "/" + pathInJar;
     myJarInfo = jarInfo;

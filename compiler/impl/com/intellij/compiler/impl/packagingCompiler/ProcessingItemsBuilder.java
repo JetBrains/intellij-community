@@ -200,6 +200,10 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     }
 
     jarInfo.addDestination(destination);
+    if (destination instanceof ExplodedDestinationInfo) {
+      myContext.registerJarFile(jarInfo, destination.getOutputFilePath());
+    }
+
     addItemsToJarRecursively(sourceFile, "", destination, jarInfo, addToJarInfo, fileFilter);
   }
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -26,6 +27,7 @@ public class ProcessingItemsBuilderContext {
   private final Map<VirtualFile, JarInfo> myCachedJarForDir;
   private final Map<ExplodedDestinationInfo, BuildParticipant> myDestinationOwners;
   private MultiValuesMap<Module, PackagingProcessingItem> myItemsByModule;
+  private MultiValuesMap<String, JarInfo> myJarsByPath;
   private final CompileContext myCompileContext;
   private final List<ManifestFileInfo> myManifestFiles;
 
@@ -38,6 +40,7 @@ public class ProcessingItemsBuilderContext {
     myCachedJarForConfiguration = new HashMap<BuildConfiguration, JarInfo>();
     myDestinationOwners = new HashMap<ExplodedDestinationInfo, BuildParticipant>();
     myItemsByModule = new MultiValuesMap<Module, PackagingProcessingItem>();
+    myJarsByPath = new MultiValuesMap<String, JarInfo>();
   }
 
   public List<ManifestFileInfo> getManifestFiles() {
@@ -70,8 +73,17 @@ public class ProcessingItemsBuilderContext {
     return false;
   }
 
-  public Map<VirtualFile, PackagingProcessingItem> getItemsBySourceMap() {
-    return myItemsBySource;
+  public PackagingProcessingItem getItemBySource(VirtualFile source) {
+    return myItemsBySource.get(source);
+  }
+
+  public void registerJarFile(@NotNull JarInfo jarInfo, @NotNull String outputPath) {
+    myJarsByPath.put(outputPath, jarInfo);
+  }
+
+  @Nullable
+  public Collection<JarInfo> getJarInfos(String outputPath) {
+    return myJarsByPath.get(outputPath);
   }
 
   @Nullable
@@ -105,6 +117,8 @@ public class ProcessingItemsBuilderContext {
     myCachedJarForConfiguration.put(configuration, info);
   }
 
+
+
   public ProcessingItemsBuilder.NestedJarInfo createNestedJarInfo(final DestinationInfo destinationInfo, final BuildConfiguration buildConfiguration,
                                                                   BuildRecipe buildRecipe) {
     JarInfo jarInfo = getCachedJar(buildConfiguration);
@@ -115,15 +129,14 @@ public class ProcessingItemsBuilderContext {
       putCachedJar(buildConfiguration, jarInfo);
     }
     jarInfo.addDestination(destinationInfo);
+    if (destinationInfo instanceof ExplodedDestinationInfo) {
+      registerJarFile(jarInfo, destinationInfo.getOutputFilePath());
+    }
     return new ProcessingItemsBuilder.NestedJarInfo(jarInfo, destinationInfo, addJarContent);
   }
 
   public void registerDestination(final BuildParticipant buildParticipant, final ExplodedDestinationInfo destinationInfo) {
     myDestinationOwners.put(destinationInfo, buildParticipant);
-  }
-
-  public Map<ExplodedDestinationInfo, BuildParticipant> getDestinationOwners() {
-    return myDestinationOwners;
   }
 
   public CompileContext getCompileContext() {
@@ -132,5 +145,9 @@ public class ProcessingItemsBuilderContext {
 
   public void addManifestFile(final ManifestFileInfo manifestFileInfo) {
     myManifestFiles.add(manifestFileInfo);
+  }
+
+  public BuildParticipant getDestinationOwner(ExplodedDestinationInfo destination) {
+    return myDestinationOwners.get(destination);
   }
 }

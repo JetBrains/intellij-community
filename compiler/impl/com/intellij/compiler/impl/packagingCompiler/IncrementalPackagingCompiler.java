@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -45,9 +45,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   public static final Key<BuildParticipant[]> AFFECTED_PARTICIPANTS_KEY = Key.create("AFFECTED_PARTICIPANTS");
   @NonNls private static final String INCREMENTAL_PACKAGING_CACHE_ID = "incremental_packaging";
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create("files_to_delete");
-  private static final Key<List<ManifestFileInfo>> MANIFEST_FILES_KEY = Key.create("manifest_files");
-  private static final Key<Map<ExplodedDestinationInfo, BuildParticipant>> DESTINATION_OWNERS_KEY = Key.create("exploded_destination_owners");
-  private static final Key<Map<VirtualFile, PackagingProcessingItem>> ITEMS_BY_SOURCE_KEY = Key.create("items_by_source");
+  private static final Key<ProcessingItemsBuilderContext> BUILDER_CONTEXT_KEY = Key.create("processing_items_builder");
   @Nullable private PackagingCompilerCache myOutputItemsCache;
   private final Project myProject;
 
@@ -82,9 +80,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
         for (BuildParticipantProvider<?> provider : providers) {
           addItemsForProvider(provider, allModules, builderContext);
         }
-        context.putUserData(DESTINATION_OWNERS_KEY, builderContext.getDestinationOwners());
-        context.putUserData(MANIFEST_FILES_KEY, builderContext.getManifestFiles());
-        context.putUserData(ITEMS_BY_SOURCE_KEY, builderContext.getItemsBySourceMap());
+        context.putUserData(BUILDER_CONTEXT_KEY, builderContext);
         PackagingProcessingItem[] allProcessingItems = builderContext.getProcessingItems(affectedModules);
 
         if (LOG.isDebugEnabled()) {
@@ -112,7 +108,8 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
     Set<String> outputPaths = createPathsHashSet();
     for (PackagingProcessingItem item : allProcessingItems) {
       for (DestinationInfo destinationInfo : item.getDestinations()) {
-        outputPaths.add(destinationInfo.getOutputFilePath());
+        String outputPath = getOutputPathWithJarSeparator(destinationInfo);
+        outputPaths.add(outputPath);
       }
     }
 
@@ -138,6 +135,18 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
     return true;
   }
 
+  private static String getOutputPathWithJarSeparator(DestinationInfo destinationInfo) {
+    String outputPath = destinationInfo.getOutputFilePath();
+    if (destinationInfo instanceof JarDestinationInfo) {
+      final String fullOutputPath = destinationInfo.getOutputPath();
+      final String fileOutputPath = destinationInfo.getOutputFilePath();
+      if (fullOutputPath.startsWith(fileOutputPath)) {
+        outputPath += JarFileSystem.JAR_SEPARATOR + DeploymentUtil.trimForwardSlashes(fullOutputPath.substring(fileOutputPath.length()));
+      }
+    }
+    return outputPath;
+  }
+
   private static THashSet<String> createPathsHashSet() {
     return SystemInfo.isFileSystemCaseSensitive ? new THashSet<String>() : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
@@ -159,14 +168,13 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   }
 
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
-    deleteOutdatedFiles(context);
-
+    final Set<String> deletedJars = deleteOutdatedFiles(context);
 
     final List<PackagingProcessingItem> processedItems = new ArrayList<PackagingProcessingItem>();
     final Set<String> writtenPaths = createPathsHashSet();
     Boolean built = new ReadAction<Boolean>() {
       protected void run(final Result<Boolean> result) {
-        boolean built = doBuild(context, items, processedItems, writtenPaths);
+        boolean built = doBuild(context, items, processedItems, writtenPaths, deletedJars);
         result.setResult(built);
       }
     }.execute().getResultObject();
@@ -175,17 +183,18 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
     }
 
     context.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.updating.caches"));
-    processOutputFiles(writtenPaths);
+    refreshOutputFiles(writtenPaths);
     new ReadAction() {
       protected void run(final Result result) {
         processDestinations(processedItems);
       }
     }.execute();
-    refreshProcessedItems(processedItems);
+    removeInvalidItems(processedItems);
+    updateOutputCache(processedItems);
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
   }
 
-  private static void refreshProcessedItems(List<PackagingProcessingItem> processedItems) {
+  private static void removeInvalidItems(List<PackagingProcessingItem> processedItems) {
     final Iterator<PackagingProcessingItem> iterator = processedItems.iterator();
     while (iterator.hasNext()) {
       PackagingProcessingItem item = iterator.next();
@@ -198,7 +207,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   }
 
   private static boolean doBuild(final CompileContext context, final ProcessingItem[] items, final List<PackagingProcessingItem> processedItems,
-                          final Set<String> writtenPaths) {
+                                 final Set<String> writtenPaths, final Set<String> deletedJars) {
     if (LOG.isDebugEnabled()) {
       int num = Math.min(100, items.length);
       LOG.debug("Files to process (" + num + " of " + items.length + "):");
@@ -208,11 +217,17 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
     }
     final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
     final FileFilter fileFilter = new IgnoredFileFilter();
-    Map<ExplodedDestinationInfo, BuildParticipant> destinationOwners = context.getUserData(DESTINATION_OWNERS_KEY);
+    final ProcessingItemsBuilderContext builderContext = context.getUserData(BUILDER_CONTEXT_KEY);
+    Set<JarInfo> changedJars = new THashSet<JarInfo>();
+    for (String deletedJar : deletedJars) {
+      final Collection<JarInfo> infos = builderContext.getJarInfos(deletedJar);
+      if (infos != null) {
+        changedJars.addAll(infos);
+      }
+    }
     Set<BuildParticipant> affectedParticipants = new HashSet<BuildParticipant>();
 
     try {
-      Set<JarInfo> changedJars = new HashSet<JarInfo>();
 
       for (ProcessingItem item0 : items) {
         if (item0 instanceof MockProcessingItem) continue;
@@ -227,7 +242,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
             if (fromFile.exists()) {
               deploymentUtil.copyFile(fromFile, toFile, context, writtenPaths, fileFilter);
             }
-            affectedParticipants.add(destinationOwners.get(explodedDestination));
+            affectedParticipants.add(builderContext.getDestinationOwner(explodedDestination));
           }
           else {
             changedJars.add(((JarDestinationInfo)destination).getJarInfo());
@@ -236,7 +251,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
         processedItems.add(item);
       }
 
-      createManifestFiles(context.getUserData(MANIFEST_FILES_KEY));
+      createManifestFiles(builderContext.getManifestFiles());
 
       JarsBuilder builder = new JarsBuilder(changedJars, fileFilter, context);
       final boolean processed = builder.buildJars(writtenPaths);
@@ -244,7 +259,6 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
         return false;
       }
 
-      Map<VirtualFile, PackagingProcessingItem> itemsBySource = context.getUserData(ITEMS_BY_SOURCE_KEY);
       Set<VirtualFile> recompiledSources = new HashSet<VirtualFile>();
       for (JarInfo info : builder.getJarsToBuild()) {
         for (Pair<String, VirtualFile> pair : info.getPackedFiles()) {
@@ -255,13 +269,13 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
         recompiledSources.remove(processedItem.getFile());
       }
       for (VirtualFile source : recompiledSources) {
-        PackagingProcessingItem item = itemsBySource.get(source);
+        PackagingProcessingItem item = builderContext.getItemBySource(source);
         LOG.assertTrue(item != null, source);
         processedItems.add(item);
       }
 
       for (ExplodedDestinationInfo destination : builder.getJarsDestinations()) {
-        affectedParticipants.add(destinationOwners.get(destination));
+        affectedParticipants.add(builderContext.getDestinationOwner(destination));
       }
 
       context.putUserData(AFFECTED_PARTICIPANTS_KEY, affectedParticipants.toArray(new BuildParticipant[affectedParticipants.size()]));
@@ -330,52 +344,68 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
     }
   }
 
-  private void deleteOutdatedFiles(final CompileContext context) {
+  private Set<String> deleteOutdatedFiles(final CompileContext context) {
     context.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.deleting.outdated.files"));
     final List<String> filesToDelete = context.getUserData(FILES_TO_DELETE_KEY);
+    final Set<String> deletedJars;
     if (filesToDelete != null) {
-      deleteFiles(filesToDelete);
+      deletedJars = deleteFiles(filesToDelete);
+    }
+    else {
+      deletedJars = Collections.emptySet();
     }
     context.getProgressIndicator().checkCanceled();
+    return deletedJars;
   }
 
-  protected void deleteFiles(final List<String> files) {
+  protected Set<String> deleteFiles(final List<String> paths) {
+    final THashSet<String> deletedJars = new THashSet<String>();
     LOG.debug("Deleting outdated files...");
     List<File> filesToRefresh = new ArrayList<File>();
-    for (String path : files) {
-      File file = new File(FileUtil.toSystemDependentName(path));
+    for (String fullPath : paths) {
+      int end = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
+      String filePath = end != -1 ? fullPath.substring(0, end) : fullPath;
+      if (end != -1) {
+        deletedJars.add(filePath);
+      }
+      File file = new File(FileUtil.toSystemDependentName(filePath));
       filesToRefresh.add(file);
       boolean deleted = FileUtil.delete(file);
-      if (LOG.isDebugEnabled() && !deleted) {
+      if (!deleted && LOG.isDebugEnabled()) {
         LOG.debug("Cannot delete file " + file);
       }
 
       if (deleted) {
-        getOutputItemsCache().remove(path);
+        getOutputItemsCache().remove(fullPath);
       }
     }
 
     CompilerUtil.refreshIOFiles(filesToRefresh);
+    return deletedJars;
   }
 
-  private void processOutputFiles(final Set<String> writtenPaths) {
+  private void updateOutputCache(final List<PackagingProcessingItem> processedItems) {
+    for (PackagingProcessingItem processedItem : processedItems) {
+      for (DestinationInfo destinationInfo : processedItem.getDestinations()) {
+        final VirtualFile virtualFile = destinationInfo.getOutputFile();
+        if (virtualFile != null) {
+          final String path = getOutputPathWithJarSeparator(destinationInfo);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("update output cache: file " + path);
+          }
+          getOutputItemsCache().update(path, virtualFile.getTimeStamp());
+        }
+      }
+    }
+    saveCacheIfDirty();
+  }
+
+  private static void refreshOutputFiles(Set<String> writtenPaths) {
     final ArrayList<File> filesToRefresh = new ArrayList<File>();
     for (String path : writtenPaths) {
       filesToRefresh.add(new File(path));
     }
     CompilerUtil.refreshIOFiles(filesToRefresh);
-
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    for (File file : filesToRefresh) {
-      final VirtualFile virtualFile = localFileSystem.findFileByIoFile(file);
-      if (virtualFile != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("update output cache: file " + virtualFile.getPath());
-        }
-        getOutputItemsCache().update(virtualFile.getPath(), virtualFile.getTimeStamp());
-      }
-    }
-    saveCacheIfDirty();
   }
 
   private void saveCacheIfDirty() {
