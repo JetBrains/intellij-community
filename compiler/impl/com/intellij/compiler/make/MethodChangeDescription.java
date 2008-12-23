@@ -24,8 +24,6 @@ class MethodChangeDescription extends ChangeDescription {
   public final boolean becameAbstract;
   public final boolean removedAnnotationDefault;
 
-  // TODO: handle changes of parameters?
-
   public MethodChangeDescription(final MethodInfo oldMethod, final MethodInfo newMethod, SymbolTable symbolTable) throws CacheCorruptedException {
     final String oldRtDescriptor = oldMethod.getReturnTypeDescriptor(symbolTable);
     final String newRtDescriptor = newMethod.getReturnTypeDescriptor(symbolTable);
