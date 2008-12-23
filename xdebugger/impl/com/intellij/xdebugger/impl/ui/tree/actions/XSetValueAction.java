@@ -2,10 +2,10 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.SetValueInplaceEditor;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,6 +24,11 @@ public class XSetValueAction extends XDebuggerTreeActionBase {
     else {
       presentation.setVisible(true);
     }
+  }
+
+  @Override
+  protected boolean isEnabled(XValueNodeImpl node) {
+    return super.isEnabled(node) && node.getValueContainer().getModifier() != null;
   }
 
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {

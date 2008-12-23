@@ -40,6 +40,8 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   }
 
   public void doOKAction() {
+    if (myModifier == null) return;
+    
     myExpressionEditor.saveTextInHistory();
     final XDebuggerTreeState treeState = XDebuggerTreeState.saveState(myTree);
     myValueNode.setValueModificationStarted();
