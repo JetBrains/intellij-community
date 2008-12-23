@@ -39,6 +39,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -148,7 +149,7 @@ public class ViewOfflineResultsAction extends AnAction {
           return resMap.containsKey(key.toString());
         }
 
-        public HighlightDisplayLevel getErrorLevel(final HighlightDisplayKey key) {
+        public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key) {
           return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key);
         }
 

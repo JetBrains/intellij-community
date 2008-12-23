@@ -9,6 +9,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -20,7 +21,10 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -125,6 +129,12 @@ public abstract class InspectionTestCase extends PsiTestCase {
                               final AnalysisScope scope,
                               final GlobalInspectionContextImpl globalContext,
                               final InspectionManagerEx inspectionManager) {
+    final String shortName = tool.getShortName();
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null){
+      HighlightDisplayKey.register(shortName);
+    }
+
     tool.initialize(globalContext);
     ((RefManagerImpl)globalContext.getRefManager()).initializeAnnotators();
     if (tool.isGraphNeeded()){

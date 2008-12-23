@@ -45,6 +45,7 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,11 +64,13 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
+      @NotNull
       public ModifiableModel getModifiableModel() {
         mySource = this;
         return this;
       }
 
+      @NotNull
       public InspectionProfileEntry[] getInspectionTools() {
         final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
         return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
@@ -77,12 +80,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         return key != null && myAvailableTools.containsKey(key.toString());
       }
 
-      public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
+      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key) {
         final LocalInspectionTool localInspectionTool = key == null ? null : myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
-      public InspectionTool getInspectionTool(String shortName) {
+      public InspectionTool getInspectionTool(@NotNull String shortName) {
         return myAvailableLocalTools.get(shortName);
       }
     };

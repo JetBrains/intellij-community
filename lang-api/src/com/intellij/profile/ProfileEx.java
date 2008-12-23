@@ -21,6 +21,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -32,20 +33,19 @@ public class ProfileEx implements Profile {
   public boolean myLocal = true;
   protected ProfileManager myProfileMananger;
 
-
-  public ProfileEx(String name) {
+  public ProfileEx(@NotNull String name) {
     myName = name;
   }
 
   public ProfileEx(final String name, final Element element) {
-    myName = name;
+    this(name);
   }
 
   public String getName() {
     return myName;
   }
 
-  public void copyFrom(Profile profile) {
+  public void copyFrom(@NotNull Profile profile) {
     try {
       @NonNls final Element config = new Element("config");
       profile.writeExternal(config);
@@ -71,11 +71,12 @@ public class ProfileEx implements Profile {
     myName = name;
   }
 
-  public void setProfileManager(ProfileManager profileManager) {
+  public void setProfileManager(@NotNull ProfileManager profileManager) {
     myProfileMananger = profileManager;
   }
 
-  public ProfileManager getProfileManager() {    
+  @NotNull
+  public ProfileManager getProfileManager() {
     return myProfileMananger;
   }
 

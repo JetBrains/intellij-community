@@ -33,7 +33,8 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     myTool = tool;
   }
 
-  @NotNull public LocalInspectionTool getTool() {
+  @NotNull
+  public LocalInspectionTool getTool() {
     return myTool;
   }
 
@@ -102,10 +103,6 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         processFile(file, true, manager);
       }
     });
-  }
-
-  public boolean isGraphNeeded() {
-    return false;
   }
 
   @NotNull

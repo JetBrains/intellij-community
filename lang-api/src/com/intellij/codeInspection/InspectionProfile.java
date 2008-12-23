@@ -19,6 +19,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.Profile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -26,14 +27,16 @@ import com.intellij.profile.Profile;
  */
 public interface InspectionProfile extends Profile {
 
-  HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey);
+  HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey);
 
-  InspectionProfileEntry getInspectionTool(String shortName);
+  InspectionProfileEntry getInspectionTool(@NotNull String shortName);
 
+  @NotNull
   InspectionProfileEntry[] getInspectionTools();
 
   void cleanup();
 
+  @NotNull
   ModifiableModel getModifiableModel();
 
   boolean isToolEnabled(HighlightDisplayKey key);
@@ -42,5 +45,6 @@ public interface InspectionProfile extends Profile {
 
   boolean isEditable();  
 
+  @NotNull
   String getDisplayName();
 }

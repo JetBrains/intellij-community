@@ -64,6 +64,7 @@ import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -297,6 +298,7 @@ import java.util.Map;
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
+      @NotNull
       public InspectionProfileEntry[] getInspectionTools() {
         if (availableLocalTools != null){
           final Collection<LocalInspectionToolWrapper> tools = availableLocalTools.values();
@@ -309,13 +311,13 @@ import java.util.Map;
         return key != null && availableToolsMap.containsKey(key.toString());
       }
 
-      public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
+      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key) {
         final LocalInspectionTool localInspectionTool = key != null ? availableToolsMap.get(key.toString()) : null;
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
 
-      public InspectionTool getInspectionTool(String shortName) {
+      public InspectionTool getInspectionTool(@NotNull String shortName) {
         if (availableToolsMap.containsKey(shortName)) {
           return new LocalInspectionToolWrapper(availableToolsMap.get(shortName));
         }
