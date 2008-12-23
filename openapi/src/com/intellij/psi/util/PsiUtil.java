@@ -249,11 +249,7 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   public static boolean isInJspFile(@Nullable final PsiElement element) {
-    if(element == null) return false;
-    final PsiFile psiFile = element.getContainingFile();
-    if(psiFile == null) return false;
-    final Language language = psiFile.getViewProvider().getBaseLanguage();
-    return language == StdLanguages.JSP || language == StdLanguages.JSPX;
+    return getJspFile(element) != null;
   }
 
   public static boolean isLocalOrAnonymousClass(PsiClass psiClass) {

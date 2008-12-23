@@ -337,6 +337,7 @@ public class PsiUtilBase {
   }
 
   public static PsiFile getTemplateLanguageFile(final PsiElement element) {
+    if (element == null) return null;
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 
