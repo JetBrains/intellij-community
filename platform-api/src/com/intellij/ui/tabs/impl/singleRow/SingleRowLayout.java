@@ -131,7 +131,9 @@ public class SingleRowLayout extends TabLayout {
     if (selected != null) {
       final JComponent comp = selected.getComponent();
       Point point = getStrategy().getCompPoint(data);
-      myTabs.layoutComp(point.x, point.y, comp);
+      Dimension sizeDelta = getStrategy().getCompSizeDelta(data);
+
+      myTabs.layoutComp(point.x, point.y, comp, sizeDelta.width, sizeDelta.height);
     }
 
 

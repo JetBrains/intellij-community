@@ -1013,11 +1013,13 @@ public class JBTabsImpl extends JComponent
     applyResetComponents();
   }
 
-  public void layoutComp(int componentX, int componentY, final JComponent comp) {
+  public void layoutComp(int componentX, int componentY, final JComponent comp, int deltaWidth, int deltaHeight) {
     final Insets insets = getLayoutInsets();
 
     final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : myBorder.getEffectiveBorder();
-    if (isStealthModeEffective() || isHideTabs()) {
+    final boolean noTabsVisible = isStealthModeEffective() || isHideTabs();
+
+    if (noTabsVisible) {
       border.top = getBorder(-1);
       border.bottom = getBorder(-1);
       border.left = getBorder(-1);
@@ -1030,9 +1032,17 @@ public class JBTabsImpl extends JComponent
     border.left += inner.left;
     border.right += inner.right;
 
-    layout(comp, insets.left + componentX + border.left, componentY + border.top,
-           getWidth() - insets.left - insets.right - componentX - border.left - border.right,
-           getHeight() - insets.bottom - componentY - border.top - border.bottom);
+    int x = insets.left + componentX + border.left;
+    int y = componentY + border.top;
+    int width = getWidth() - insets.left - insets.right - componentX - border.left - border.right;
+    int height = getHeight() - insets.bottom - componentY - border.top - border.bottom;
+
+    if (!noTabsVisible) {
+      width += deltaWidth;
+      height += deltaHeight;
+    }
+
+    layout(comp, x, y, width, height);
   }
 
 

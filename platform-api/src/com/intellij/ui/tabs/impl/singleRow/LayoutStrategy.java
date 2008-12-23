@@ -43,6 +43,8 @@ public abstract class LayoutStrategy {
 
   public abstract boolean isToCenterTextWhenStretched();
 
+  public abstract Dimension getCompSizeDelta(SingleRowPassInfo data);
+
   abstract static class Horizontal extends LayoutStrategy {
     protected Horizontal(final SingleRowLayout layout) {
       super(layout);
@@ -106,6 +108,11 @@ public abstract class LayoutStrategy {
                                             data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height - 1);
     }
 
+
+    public Dimension getCompSizeDelta(SingleRowPassInfo data) {
+      return new Dimension();
+    }
+
     public int getComponentPosition(final SingleRowPassInfo data) {
       return myTabs.isHideTabs() ? data.insets.top : myTabs.myHeaderFitSize.height + data.insets.top + (myTabs.isStealthModeEffective() ? 0 : 1);
     }
@@ -134,7 +141,7 @@ public abstract class LayoutStrategy {
     }
 
     public int getFixedPosition(final SingleRowPassInfo data) {
-      return myTabs.getSize().height - data.insets.bottom;
+      return myTabs.getSize().height - data.insets.bottom - myTabs.myHeaderFitSize.height - 1;
     }
 
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
@@ -148,6 +155,10 @@ public abstract class LayoutStrategy {
 
     public Rectangle getToolbarRec(final SingleRowPassInfo data, final JComponent selectedToolbar) {
       return null;
+    }
+
+    public Dimension getCompSizeDelta(SingleRowPassInfo data) {
+      return new Dimension(0, -myTabs.myHeaderFitSize.height);
     }
   }
 
@@ -164,6 +175,9 @@ public abstract class LayoutStrategy {
       return myLayout.myMoreIcon.getIconHeight() + 6;
     }
 
+    public Dimension getCompSizeDelta(SingleRowPassInfo data) {
+      return new Dimension();
+    }
 
     public int getStartPosition(final SingleRowPassInfo data) {
       return data.insets.top;
