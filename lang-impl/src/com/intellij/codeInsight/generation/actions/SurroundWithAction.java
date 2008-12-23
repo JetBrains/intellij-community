@@ -8,6 +8,7 @@ import com.intellij.lang.LanguageSurrounders;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 
 public class SurroundWithAction extends BaseCodeInsightAction{
   public SurroundWithAction() {
@@ -20,6 +21,13 @@ public class SurroundWithAction extends BaseCodeInsightAction{
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final Language language = file.getLanguage();
-    return !LanguageSurrounders.INSTANCE.allForLanguage(language).isEmpty();
+    if (!LanguageSurrounders.INSTANCE.allForLanguage(language).isEmpty()) {
+      return true;
+    }
+    final PsiFile baseFile = PsiUtilBase.getTemplateLanguageFile(file);
+    if (baseFile != null && baseFile != file) {
+      return !LanguageSurrounders.INSTANCE.allForLanguage(baseFile.getLanguage()).isEmpty();
+    }
+    return false;
   }
 }
