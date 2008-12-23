@@ -704,21 +704,18 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitArrayAccessExpression(PsiArrayAccessExpression expr) {
-      if (myForCompletion) {
-        myExpr = (PsiExpression)myExpr.getParent();
-        expr.getParent().accept(this);
-        for (final ExpectedTypeInfo info : myResult) {
-          ((ExpectedTypeInfoImpl)info).myTailType = TailType.NONE;
-        }
-        return;
-      }
-
       if (myExpr.equals(expr.getIndexExpression())) {
         ExpectedTypeInfoImpl info = createInfoImpl(PsiType.INT, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, TailType.NONE)
             ; //todo: special tail type
         myResult = new ExpectedTypeInfo[]{info};
       }
       else if (myExpr.equals(expr.getArrayExpression())) {
+        if (myForCompletion) {
+          myExpr = (PsiExpression)myExpr.getParent();
+          expr.getParent().accept(this);
+          return;
+        }
+
         PsiElement parent = expr.getParent();
         MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider);
         myExpr = (PsiExpression)myExpr.getParent();
