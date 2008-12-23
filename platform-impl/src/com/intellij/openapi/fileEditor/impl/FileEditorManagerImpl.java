@@ -85,7 +85,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final MyUISettingsListener myUISettingsListener;
 
   private final EditorsSplitters mySplitters;
-  private boolean myDoNotTransferFocus = false;
 
   private final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
   private MessageBusConnection myConnection;
@@ -535,8 +534,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     // Transfer focus into editor
     if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
-      if ((focusEditor || ToolWindowManager.getInstance(myProject).isEditorComponentActive()) &&
-          !myDoNotTransferFocus) {
+      if (focusEditor) {
         //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
         window.setAsCurrentWindow(false);
         ToolWindowManager.getInstance(myProject).activateEditorComponent();
@@ -1064,10 +1062,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return null;
   }
 
-  public boolean isFocusingBlocked() {
-    return myDoNotTransferFocus;
-  }
-
   public void runChange(Runnable runnable) {
     mySplitters.runChange(runnable);
   }
@@ -1278,15 +1272,6 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
   }
 
-  public Editor openTextEditorEnsureNoFocus(@NotNull OpenFileDescriptor descriptor) {
-    myDoNotTransferFocus = true;
-    try {
-      return openTextEditor(descriptor, false);
-    }
-    finally {
-      myDoNotTransferFocus = false;
-    }
-  }
 
   @NotNull
   public VirtualFile[] getSiblings(VirtualFile file) {

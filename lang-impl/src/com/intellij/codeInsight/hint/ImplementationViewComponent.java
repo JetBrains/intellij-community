@@ -416,18 +416,6 @@ public class ImplementationViewComponent extends JPanel {
     public ShowSourceAction() {
       super(false, IconLoader.getIcon("/actions/showSource.png"), CodeInsightBundle.message("quick.definition.show.source"));
     }
-
-    @Override public void actionPerformed(AnActionEvent e) {
-      super.actionPerformed(e);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (myHint == null) return;
-          Component content = myHint.getContent();
-          if (content == null) return;
-          content.requestFocusInWindow();
-        }
-      });
-    }
   }
 
   private class EditSourceActionBase extends AnAction {
@@ -452,12 +440,7 @@ public class ImplementationViewComponent extends JPanel {
       Project project = element.getProject();
       FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, navigationElement.getTextOffset());
-      if (myFocusEditor) {
-        fileEditorManager.openTextEditor(descriptor, true);
-      }
-      else {
-        fileEditorManager.openTextEditorEnsureNoFocus(descriptor);
-      }
+      fileEditorManager.openTextEditor(descriptor, myFocusEditor);
     }
   }
 

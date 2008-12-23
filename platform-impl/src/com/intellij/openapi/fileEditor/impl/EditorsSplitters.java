@@ -11,7 +11,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
@@ -432,10 +431,6 @@ public final class EditorsSplitters extends JPanel {
     if (window != null) {
       final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
       if (selectedEditor != null) {
-        final boolean shouldAssureFocus = ToolWindowManager.getInstance(myManager.getProject()).isEditorComponentActive() &&
-                                    !window.getManager().isFocusingBlocked();
-
-
         boolean alreadyFocused = false;
         final JComponent comp = selectedEditor.getComponent();
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -443,7 +438,7 @@ public final class EditorsSplitters extends JPanel {
           alreadyFocused = owner == comp || SwingUtilities.isDescendingFrom(owner, comp);
         }
 
-        if (shouldAssureFocus && !alreadyFocused) {
+        if (requestFocus && !alreadyFocused) {
           IdeFocusManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus);
         }
       }
