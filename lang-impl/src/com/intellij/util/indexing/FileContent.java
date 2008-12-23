@@ -88,4 +88,9 @@ public final class FileContent extends UserDataHolderBase {
     }
     return myContentAsText;
   }
+
+  @Override
+  public String toString() {
+    return fileName;
+  }
 }
