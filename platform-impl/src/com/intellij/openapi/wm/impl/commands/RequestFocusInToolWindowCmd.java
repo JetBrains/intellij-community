@@ -125,11 +125,12 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private void updateToolWindow(Component c) {
     if (c.isFocusOwner()) {
       myFocusWatcher.setFocusedComponentImpl(c);
+      if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
+        myToolWindow.activate(null);
+      }
     }
+
     updateFocusedComponentForWatcher(c);
-    if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
-      myToolWindow.activate(null);
-    }
   }
 
   private void updateFocusedComponentForWatcher(final Component c) {
