@@ -515,6 +515,7 @@ class JavaDependencyProcessor {
           final MethodChangeDescription changeDescription = (MethodChangeDescription)myChangeDescriptions.get(usedMember);
           if (changeDescription.returnTypeDescriptorChanged ||
               changeDescription.returnTypeGenericSignatureChanged ||
+              changeDescription.paramsGenericSignatureChanged ||
               changeDescription.throwsListChanged ||
               changeDescription.staticPropertyChanged ||
               changeDescription.accessRestricted) {

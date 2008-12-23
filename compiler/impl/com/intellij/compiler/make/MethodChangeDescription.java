@@ -7,6 +7,8 @@ import com.intellij.compiler.classParsing.MethodInfo;
 import com.intellij.compiler.classParsing.SignatureParsingException;
 import com.intellij.util.cls.ClsUtil;
 
+import java.util.Arrays;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 7, 2004
@@ -14,6 +16,7 @@ import com.intellij.util.cls.ClsUtil;
 class MethodChangeDescription extends ChangeDescription {
   public final boolean returnTypeDescriptorChanged;
   public final boolean returnTypeGenericSignatureChanged;
+  public final boolean paramsGenericSignatureChanged;
   public final boolean throwsListChanged;
   public final boolean flagsChanged;
   public final boolean staticPropertyChanged;
@@ -32,6 +35,7 @@ class MethodChangeDescription extends ChangeDescription {
     final int newGenericSignature = newMethod.getGenericSignature();
     if (oldGenericSignature == newGenericSignature) {
       returnTypeGenericSignatureChanged = false;
+      paramsGenericSignatureChanged = false;
     }
     else {
       if (oldGenericSignature != -1 && newGenericSignature != -1) {
@@ -39,6 +43,8 @@ class MethodChangeDescription extends ChangeDescription {
           final GenericMethodSignature _oldGenericMethodSignature = GenericMethodSignature.parse(symbolTable.getSymbol(oldGenericSignature));
           final GenericMethodSignature _newGenericMethodSignature = GenericMethodSignature.parse(symbolTable.getSymbol(newGenericSignature));
           returnTypeGenericSignatureChanged = !_oldGenericMethodSignature.getReturnTypeSignature().equals(_newGenericMethodSignature.getReturnTypeSignature());
+          paramsGenericSignatureChanged = !_oldGenericMethodSignature.getFormalTypeParams().equals(_newGenericMethodSignature.getFormalTypeParams()) ||
+                                          !Arrays.equals(_oldGenericMethodSignature.getParamSignatures(), _newGenericMethodSignature.getParamSignatures());
         }
         catch (SignatureParsingException e) {
           throw new CacheCorruptedException(e);
@@ -46,6 +52,7 @@ class MethodChangeDescription extends ChangeDescription {
       }
       else {
         returnTypeGenericSignatureChanged = true;
+        paramsGenericSignatureChanged = true;
       }
     }
 
@@ -65,6 +72,6 @@ class MethodChangeDescription extends ChangeDescription {
   }
 
   public boolean isChanged() {
-    return returnTypeDescriptorChanged || throwsListChanged || flagsChanged || returnTypeGenericSignatureChanged || removedAnnotationDefault;
+    return returnTypeDescriptorChanged || throwsListChanged || flagsChanged || returnTypeGenericSignatureChanged || paramsGenericSignatureChanged || removedAnnotationDefault;
   }
 }

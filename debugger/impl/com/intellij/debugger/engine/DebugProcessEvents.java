@@ -335,7 +335,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
 
     ThreadReference thread = event.thread();
-    LOG.assertTrue(thread.isSuspended());
+    //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
     //we use invokeLater to allow processing other events during processing this one
