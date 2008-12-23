@@ -11,7 +11,9 @@ public class GenericsTest extends Jdk15CompilerTestCase {
   }
 
   public void testReturnType() throws Exception {doTest();}
-  
+
+  public void testParamTypes() throws Exception {doTest();}
+
   public void testFieldTypeChange() throws Exception {doTest();}
 
   public void testChangeExtends() throws Exception {doTest();}
