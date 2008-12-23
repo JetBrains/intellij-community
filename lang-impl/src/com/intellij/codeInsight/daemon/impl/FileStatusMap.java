@@ -80,15 +80,18 @@ public class FileStatusMap {
     }
 
     private void markWholeFile(PsiFile file, Document document, Project project) {
-      int length = file == null ? -1 : Math.min(file.getTextLength(), document.getTextLength());
-      RangeMarker marker = length == -1 ? null : document.createRangeMarker(0, length);
-      dirtyScopes.put(Pass.UPDATE_ALL, marker);
-      dirtyScopes.put(Pass.EXTERNAL_TOOLS, marker);
-      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, marker);
+      dirtyScopes.put(Pass.UPDATE_ALL, createWholeFileMarker(file, document));
+      dirtyScopes.put(Pass.EXTERNAL_TOOLS, createWholeFileMarker(file, document));
+      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, createWholeFileMarker(file, document));
       TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-        dirtyScopes.put(factory.getPassId(), marker);
+        dirtyScopes.put(factory.getPassId(), createWholeFileMarker(file, document));
       }
+    }
+
+    private static RangeMarker createWholeFileMarker(PsiFile file, Document document) {
+      int length = file == null ? -1 : Math.min(file.getTextLength(), document.getTextLength());
+      return length == -1 ? null : document.createRangeMarker(0, length);
     }
 
     public boolean allDirtyScopesAreNull() {
@@ -131,7 +134,11 @@ public class FileStatusMap {
         status.wolfPassFinfished = true;
       }
       else if (status.dirtyScopes.containsKey(passId)) {
-        status.dirtyScopes.put(passId, null);
+        RangeMarker marker = status.dirtyScopes.get(passId);
+        if (marker != null) {
+          ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)marker);
+          status.dirtyScopes.put(passId, null);
+        }
       }
     }
   }
@@ -156,7 +163,7 @@ public class FileStatusMap {
       }
       LOG.assertTrue(status.dirtyScopes.containsKey(passId), "Unknown pass " + passId);
       RangeMarker marker = status.dirtyScopes.get(passId);
-      return marker == null ? null : new TextRange(marker.getStartOffset(), marker.getEndOffset());
+      return marker == null ? null : marker.isValid() ? new TextRange(marker.getStartOffset(), marker.getEndOffset()) : new TextRange(0, document.getTextLength());
     }
   }
 
@@ -189,18 +196,14 @@ public class FileStatusMap {
     }
   }
 
-  private static RangeMarker combineScopes(RangeMarker old, TextRange scope, int textLength, Document document) {
+  private static RangeMarker combineScopes(RangeMarker old, TextRange scope, int textLength, @NotNull Document document) {
     if (scope == null) return old;
     if (old == null) {
       return document.createRangeMarker(scope);
     }
-    if (scope.getEndOffset() >= textLength) {
-      ((DocumentEx)document).removeRangeMarker((RangeMarkerEx)old);
-      return document.createRangeMarker(0, textLength);
-    }
-    TextRange oldRange = new TextRange(old.getStartOffset(), old.getEndOffset());
+    TextRange oldRange = !old.isValid() || scope.getEndOffset() >= textLength ? new TextRange(0, textLength) : new TextRange(old.getStartOffset(), old.getEndOffset());
     TextRange union = scope.union(oldRange);
-    if (union.equals(oldRange)) {
+    if (old.isValid() && union.equals(oldRange)) {
       return old;
     }
     else {
