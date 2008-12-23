@@ -54,7 +54,7 @@ public class SuppressManagerImpl extends SuppressManager {
     if (element != null) return element;
     element = getAnnotationMemberSuppressedIn(owner, inspectionToolID);
     if (element != null) return element;
-    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiClass.class);
+    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiDocCommentOwner.class);
     while (classContainer != null) {
       element = getDocCommentToolSuppressedIn(classContainer, inspectionToolID);
       if (element != null) return element;
@@ -62,7 +62,7 @@ public class SuppressManagerImpl extends SuppressManager {
       element = getAnnotationMemberSuppressedIn(classContainer, inspectionToolID);
       if (element != null) return element;
 
-      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiClass.class);
+      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiDocCommentOwner.class);
     }
     return null;
   }
@@ -82,6 +82,12 @@ public class SuppressManagerImpl extends SuppressManager {
   @Nullable
   public PsiElement getDocCommentToolSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
+    if (docComment == null && owner.getParent() instanceof PsiDeclarationStatement) {
+      final PsiElement el = PsiTreeUtil.skipSiblingsBackward(owner.getParent(), PsiWhiteSpace.class);
+      if (el instanceof PsiDocComment) {
+        docComment = (PsiDocComment)el;
+      }
+    }
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (inspectionTag != null) {
