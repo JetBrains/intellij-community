@@ -103,8 +103,6 @@ public class JBTabsImpl extends JComponent
   IdeFocusManager myFocusManager;
   boolean myAdjustBorders = true;
 
-
-  private Insets myBorderSize = new Insets(0, 0, 0, 0);
   boolean myAddNavigationGroup = true;
 
   boolean myGhostsAlwaysVisible = false;
@@ -124,6 +122,8 @@ public class JBTabsImpl extends JComponent
   private boolean myTestMode;
 
   JBTabsPosition myPosition = JBTabsPosition.top;
+
+  private TabsBorder myBorder = new TabsBorder(this);
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
@@ -607,6 +607,11 @@ public class JBTabsImpl extends JComponent
   private ActionCallback requestFocus(final JComponent toFocus) {
     if (toFocus == null) return new ActionCallback.Done();
 
+    if (myTestMode && myFocusManager == null && toFocus != null) {
+      toFocus.requestFocus();
+      return new ActionCallback.Done();
+    }
+
     return myFocusManager.requestFocus(new FocusCommand.ByComponent(toFocus), true);
   }
 
@@ -1011,7 +1016,7 @@ public class JBTabsImpl extends JComponent
   public void layoutComp(int componentX, int componentY, final JComponent comp) {
     final Insets insets = getLayoutInsets();
 
-    final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : (Insets)myBorderSize.clone();
+    final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : myBorder.getEffectiveBorder();
     if (isStealthModeEffective() || isHideTabs()) {
       border.top = getBorder(-1);
       border.bottom = getBorder(-1);
@@ -1140,6 +1145,24 @@ public class JBTabsImpl extends JComponent
         final Rectangle bounds = label.getBounds();
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
+
+      g.setColor(Color.blue);
+      if (leftGhostExists) {
+        g2d.draw(mySingleRowLayout.myLastSingRowLayout.firstGhost);
+      }
+
+      if (rightGhostExists) {
+        g2d.draw(mySingleRowLayout.myLastSingRowLayout.lastGhost);
+      }
+
+      g.setColor(Color.black);
+      final Rectangle more = mySingleRowLayout.myLastSingRowLayout.moreRect;
+      if (more != null) {
+        g2d.draw(more);
+      }
+
+
+      return;
     }
 
 
@@ -1455,11 +1478,14 @@ public class JBTabsImpl extends JComponent
                            final Color fillFrom,
                            final Color fillTo,
                            boolean isFocused) {
+    final Insets border = myBorder.getEffectiveBorder();
+
+
     int topY = y + 1;
-    int bottomY = y + myBorderSize.top - 2;
+    int bottomY = y + border.top - 2;
     int middleY = topY + (bottomY - topY) / 2;
 
-    if (myBorderSize.top > 0) {
+    if (border.top > 0) {
       if (isHideTabs()) {
         if (isToDrawBorderIfTabsHidden()) {
           g2d.setColor(borderColor);
@@ -1471,7 +1497,7 @@ public class JBTabsImpl extends JComponent
         g2d.drawLine(x, y - 1, x + width - 1, y - 1);
       }
       else if (getActiveTabFillIn() == null) {
-        if (myBorderSize.top > 1) {
+        if (border.top > 1) {
           g2d.setColor(Color.white);
           g2d.fillRect(x, topY, width, bottomY - topY);
 
@@ -1490,27 +1516,27 @@ public class JBTabsImpl extends JComponent
           g2d.setColor(Color.lightGray);
           g2d.drawLine(x, bottomY, x + width - 1, bottomY);
         }
-        else if (myBorderSize.top == 1) {
+        else if (border.top == 1) {
           g2d.setColor(borderColor);
           g2d.drawLine(x, y, x + width - 1, y);
         }
       }
       else {
         g2d.setColor(getActiveTabFillIn());
-        g2d.fillRect(x, topY, width, myBorderSize.top);
-        if (myBorderSize.top > 1) {
+        g2d.fillRect(x, topY, width, border.top);
+        if (border.top > 1) {
           g2d.setColor(borderColor);
-          final int topLine = topY + myBorderSize.top - 2;
+          final int topLine = topY + border.top - 2;
           g2d.drawLine(x, topLine, x + width - 1, topLine);
         }
       }
     }
 
     g2d.setColor(borderColor);
-    g2d.fillRect(x, y + height - myBorderSize.bottom, width, myBorderSize.bottom);
+    g2d.fillRect(x, y + height - border.bottom, width, border.bottom);
 
-    g2d.fillRect(x, y, myBorderSize.left, height);
-    g2d.fillRect(x + width - myBorderSize.right, y, myBorderSize.right, height);
+    g2d.fillRect(x, y, border.left, height);
+    g2d.fillRect(x + width - border.right, y, border.right, height);
   }
 
   public boolean isStealthModeEffective() {
@@ -1941,17 +1967,14 @@ public class JBTabsImpl extends JComponent
   }
 
   public JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom) {
-    final Insets newBorder = new Insets(getBorder(top), getBorder(left), getBorder(bottom), getBorder(right));
-    if (newBorder.equals(myBorderSize)) return this;
-
-    myBorderSize = newBorder;
-
-    revalidateAndRepaint(false);
-
-    return this;
+    return myBorder.setPaintBorder(top, left, right, bottom);
   }
 
-  private static int getBorder(int size) {
+  public JBTabsPresentation setTabSidePaintBorder(int size) {
+    return myBorder.setTabSidePaintBorder(size);
+  }
+
+  static int getBorder(int size) {
     return size == -1 ? 1 : size;
   }
 

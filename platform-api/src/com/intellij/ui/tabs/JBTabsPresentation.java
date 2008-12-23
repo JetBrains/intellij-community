@@ -13,6 +13,7 @@ public interface JBTabsPresentation {
   void setHideTabs(boolean hideTabs);
 
   JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom);
+  JBTabsPresentation setTabSidePaintBorder(int size);
 
   boolean isPaintFocus();
 

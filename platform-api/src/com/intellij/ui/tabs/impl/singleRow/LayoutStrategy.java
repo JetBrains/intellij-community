@@ -41,20 +41,15 @@ public abstract class LayoutStrategy {
 
   public abstract Point getCompPoint(final SingleRowPassInfo data);
 
-  static class Top extends LayoutStrategy {
+  public abstract boolean isToCenterTextWhenStretched();
 
-    Top(final SingleRowLayout layout) {
+  abstract static class Horizontal extends LayoutStrategy {
+    protected Horizontal(final SingleRowLayout layout) {
       super(layout);
     }
 
-    void setComponentAddins(final SingleRowPassInfo data, final JComponent toolbar, final boolean toolbarVertical) {
-      if (myTabs.isSideComponentVertical()) {
-        data.componentFixedPosition = toolbar.getPreferredSize().width + 1;
-      }
-    }
-
-    public int getStartPosition(final SingleRowPassInfo data) {
-      return data.insets.left;
+    public boolean isToCenterTextWhenStretched() {
+      return true;
     }
 
     public int getMoreRectAxisSize() {
@@ -79,6 +74,27 @@ public abstract class LayoutStrategy {
 
     public Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength) {
       return new Rectangle(position, fixedPos, length, fixedFitLength);
+    }
+
+    public int getStartPosition(final SingleRowPassInfo data) {
+      return data.insets.left;
+    }
+
+    void setComponentAddins(final SingleRowPassInfo data, final JComponent toolbar, final boolean toolbarVertical) {
+      if (myTabs.isSideComponentVertical()) {
+        data.componentFixedPosition = toolbar.getPreferredSize().width + 1;
+      }
+    }
+
+    public Point getCompPoint(final SingleRowPassInfo data) {
+      return new Point(data.componentFixedPosition, data.compPosition);
+    }
+  }
+
+  static class Top extends Horizontal {
+
+    Top(final SingleRowLayout layout) {
+      super(layout);
     }
 
     public int getFixedPosition(final SingleRowPassInfo data) {
@@ -110,23 +126,44 @@ public abstract class LayoutStrategy {
       return null;
     }
 
-    public Point getCompPoint(final SingleRowPassInfo data) {
-      return new Point(data.componentFixedPosition, data.compPosition);
+  }
+
+  static class Bottom extends Horizontal {
+    Bottom(final SingleRowLayout layout) {
+      super(layout);
+    }
+
+    public int getFixedPosition(final SingleRowPassInfo data) {
+      return myTabs.getSize().height - data.insets.bottom;
+    }
+
+    public Rectangle getMoreRect(final SingleRowPassInfo data) {
+      return new Rectangle(myTabs.getWidth() - data.insets.right - data.moreRectAxisSize, getFixedPosition(data) + myTabs.getSelectionTabVShift(),
+                                            data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height - 1);
+    }
+
+    public int getComponentPosition(final SingleRowPassInfo data) {
+      return data.insets.top;
+    }
+
+    public Rectangle getToolbarRec(final SingleRowPassInfo data, final JComponent selectedToolbar) {
+      return null;
     }
   }
 
-  static class Left extends LayoutStrategy {
-    Left(final SingleRowLayout layout) {
+  abstract static class Vertical extends LayoutStrategy {
+    protected Vertical(SingleRowLayout layout) {
       super(layout);
+    }
+
+    public boolean isToCenterTextWhenStretched() {
+      return false;
     }
 
     int getMoreRectAxisSize() {
       return myLayout.myMoreIcon.getIconHeight() + 6;
     }
 
-    void setComponentAddins(final SingleRowPassInfo data, final JComponent toolbar, final boolean toolbarVertical) {
-
-    }
 
     public int getStartPosition(final SingleRowPassInfo data) {
       return data.insets.top;
@@ -148,6 +185,18 @@ public abstract class LayoutStrategy {
       return myTabs.myHeaderFitSize.width;
     }
 
+  }
+
+  static class Left extends Vertical {
+    Left(final SingleRowLayout layout) {
+      super(layout);
+    }
+
+
+    void setComponentAddins(final SingleRowPassInfo data, final JComponent toolbar, final boolean toolbarVertical) {
+
+    }
+
     public Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength) {
       return new Rectangle(fixedPos, position, fixedFitLength, length);
     }
@@ -157,7 +206,10 @@ public abstract class LayoutStrategy {
     }
 
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
-      return new Rectangle(myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize, data.insets.left + myTabs.getSelectionTabVShift(), myTabs.myHeaderFitSize.width - 1, data.moreRectAxisSize - 1);
+      return new Rectangle(data.insets.left + myTabs.getSelectionTabVShift(),
+                           myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize,
+                           myTabs.myHeaderFitSize.width - 1,
+                           data.moreRectAxisSize - 1);
     }
 
     public int getComponentPosition(final SingleRowPassInfo data) {

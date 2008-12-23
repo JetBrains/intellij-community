@@ -18,6 +18,7 @@ public class SingleRowLayout extends TabLayout {
 
   final LayoutStrategy myTop;
   final LayoutStrategy myLeft;
+  final LayoutStrategy myBottom;
 
   public MoreIcon myMoreIcon = new MoreIcon() {
     protected boolean isActive() {
@@ -45,6 +46,7 @@ public class SingleRowLayout extends TabLayout {
     myTabs = tabs;
     myTop = new LayoutStrategy.Top(this);
     myLeft = new LayoutStrategy.Left(this);
+    myBottom = new LayoutStrategy.Bottom(this);
   }
 
   LayoutStrategy getStrategy() {
@@ -53,6 +55,8 @@ public class SingleRowLayout extends TabLayout {
         return myTop;
       case left:
         return myLeft;
+      case bottom:
+        return myBottom;
     }
 
     return null;
@@ -181,7 +185,7 @@ public class SingleRowLayout extends TabLayout {
         myTabs.layout(label, rec);
       }
 
-      label.setAligmentToCenter(deltaToFit > 0);
+      label.setAligmentToCenter(deltaToFit > 0 && getStrategy().isToCenterTextWhenStretched());
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
       data.position++;

@@ -154,7 +154,7 @@ final class EditorTabbedContainer implements Disposable {
 
     myTabs.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
     final List<String> rightIds = ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
-    myTabs.getPresentation().setPaintBorder(5, -1, rightIds.size() > 0 ? 1 : 0, -1);
+    myTabs.getPresentation().setPaintBorder(-1, -1, rightIds.size() > 0 ? 1 : 0, -1).setTabSidePaintBorder(5);
   }
 
   public Component getComponent() {

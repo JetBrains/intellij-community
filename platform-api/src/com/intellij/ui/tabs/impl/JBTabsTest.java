@@ -4,13 +4,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.JBTabsPosition;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -197,11 +197,11 @@ public class JBTabsTest {
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.setPaintBorder(5, -1, -1, -1);
+    tabs.setTabSidePaintBorder(5);
     tabs.getPresentation().setActiveTabFillIn(Color.white);
     tabs.setGhostsAlwaysVisible(true);
 
-    tabs.setBorder(new EmptyBorder(10, 10, 10, 10));
+    tabs.setBorder(new LineBorder(Color.CYAN));
 
     tabs.setUiDecorator(new UiDecorator() {
       public UiDecoration getDecoration() {
