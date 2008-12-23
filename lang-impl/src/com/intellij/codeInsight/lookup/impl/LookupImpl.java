@@ -280,6 +280,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
       addExactPrefixItems(model, firstItems);
 
+      boolean hasExactPrefixes = !firstItems.isEmpty();
+
       addMostRelevantItems(model, firstItems);
 
       final boolean hasPreselectedItem = addPreselectedItem(model, firstItems);
@@ -309,7 +311,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
           if (myPreselectedItem == EMPTY_LOOKUP_ITEM) {
             selectMostPreferableItem();
             myPreselectedItem = getCurrentItem();
-          } else if (hasPreselectedItem) {
+          } else if (hasPreselectedItem && !hasExactPrefixes) {
             ListScrollingUtil.selectItem(myList, myPreselectedItem);
           } else {
             selectMostPreferableItem();
@@ -367,8 +369,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private void addExactPrefixItems(DefaultListModel model, Set<LookupElement> firstItems) {
     for (final LookupItemWeightComparable comparable : myItemsMap.keySet()) {
       for (final LookupElement item : myItemsMap.get(comparable)) {
-        final String currentPrefix = item.getPrefixMatcher().getPrefix() + myAdditionalPrefix;
-        if (item.getAllLookupStrings().contains(currentPrefix)) {
+        if (isExactPrefixItem(item)) {
           model.addElement(item);
           firstItems.add(item);
         }
@@ -547,7 +548,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void selectMostPreferableItem(){
-    final int index = doSelectMostPreferableItem(myItemPreferencePolicy, ((DefaultListModel)myList.getModel()).toArray());
+    final int index = doSelectMostPreferableItem(((DefaultListModel)myList.getModel()).toArray());
     myList.setSelectedIndex(index);
 
     if (index >= 0 && index < myList.getModel().getSize()){
@@ -809,32 +810,36 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private static int doSelectMostPreferableItem(final LookupItemPreferencePolicy itemPreferencePolicy, Object[] items) {
-    if (itemPreferencePolicy == null){
+  private int doSelectMostPreferableItem(Object[] items) {
+    if (myItemPreferencePolicy == null){
       return -1;
     }
-    else{
-      LookupElement prefItem = null;
-      int prefItemIndex = -1;
 
-      for(int i = 0; i < items.length; i++){
-        LookupElement item = (LookupElement)items[i];
-        final Object obj = item.getObject();
-        if (obj instanceof PsiElement && !((PsiElement)obj).isValid()) continue;
-        if (prefItem == null){
-          prefItem = item;
+    int prefItemIndex = -1;
+
+    for(int i = 0; i < items.length; i++){
+      LookupElement item = (LookupElement)items[i];
+      final Object obj = item.getObject();
+      if (obj instanceof PsiElement && !((PsiElement)obj).isValid()) continue;
+
+      if (prefItemIndex == -1) {
+        prefItemIndex = i;
+      }
+      else {
+        int d = myItemPreferencePolicy.compare(item, (LookupElement)items[prefItemIndex]);
+        if (d < 0) {
           prefItemIndex = i;
         }
-        else{
-          int d = itemPreferencePolicy.compare(item, prefItem);
-          if (d < 0){
-            prefItem = item;
-            prefItemIndex = i;
-          }
-        }
       }
-      return prefItem != null ? prefItemIndex : -1;
+      if (isExactPrefixItem(item)) {
+        break;
+      }
     }
+    return prefItemIndex;
+  }
+
+  private boolean isExactPrefixItem(LookupElement item) {
+    return item.getAllLookupStrings().contains(item.getPrefixMatcher().getPrefix() + myAdditionalPrefix);
   }
 
   public void adaptSize() {

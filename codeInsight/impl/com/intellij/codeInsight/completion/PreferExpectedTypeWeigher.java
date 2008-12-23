@@ -35,8 +35,8 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
 
   private enum MyResult {
     normal,
-    ofDefaultType,
     expected,
+    ofDefaultType,
     expectedNoSelect
   }
 
