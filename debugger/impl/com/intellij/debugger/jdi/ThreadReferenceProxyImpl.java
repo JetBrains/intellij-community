@@ -170,7 +170,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ThreadReference threadRef = getThreadReference();
     try {
-      LOG.assertTrue(threadRef.isSuspended());
+      //LOG.assertTrue(threadRef.isSuspended());
       checkValid();
 
       if(myFrames == null) {
