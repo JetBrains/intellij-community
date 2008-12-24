@@ -27,7 +27,7 @@ public class JavaMethodMergingContributor extends CompletionContributor {
 
     final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
     ProgressManager.getInstance().checkCanceled();
-    if (!process.willAutoInsert(AutoCompletionPolicy.SETTINGS_DEPENDENT, result.getPrefixMatcher())) return true;
+    if (process == null || !process.willAutoInsert(AutoCompletionPolicy.SETTINGS_DEPENDENT, result.getPrefixMatcher())) return true;
 
     final Ref<Boolean> wereNonGrouped = Ref.create(false);
     final Map<String, LookupItem<PsiMethod>> methodNameToItem = new LinkedHashMap<String, LookupItem<PsiMethod>>();
