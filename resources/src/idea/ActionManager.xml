@@ -19,7 +19,7 @@
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/component/*)"/>
 
   <actions>
-
+    <action id="RerunFailedTests" class="com.intellij.execution.actions.AbstractRerunFailedTestsAction" icon="/runConfigurations/rerunFailedTests.png"/>
     <group id="JavaGenerateGroup1">
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
