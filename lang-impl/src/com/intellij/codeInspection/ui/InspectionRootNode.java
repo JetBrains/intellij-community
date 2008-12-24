@@ -1,9 +1,9 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.Icons;
 
 import javax.swing.*;
 
@@ -12,6 +12,7 @@ import javax.swing.*;
  */
 public class InspectionRootNode extends InspectionTreeNode {
   private static final Icon INFO = IconLoader.getIcon("/general/ijLogo.png");
+  private static final Icon APP_ICON = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl()); 
   private Project myProject;
 
   public InspectionRootNode(Project project) {
@@ -29,6 +30,6 @@ public class InspectionRootNode extends InspectionTreeNode {
   }
 
   public Icon getIcon(boolean expanded) {
-    return isEmpty() ? INFO : Icons.PROJECT_ICON;
+    return isEmpty() ? INFO : APP_ICON;
   }
 }
