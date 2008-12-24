@@ -1697,5 +1697,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
     readExternal(element);
     myAdditionalIndentOptions.clear(); //hack
+    myLoadedAdditionalIndentOptions = false;
   }
 }
