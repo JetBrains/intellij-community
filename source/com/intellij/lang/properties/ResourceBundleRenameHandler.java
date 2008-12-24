@@ -66,7 +66,10 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile instanceof PropertiesFile) {
-        return ((PropertiesFile)psiFile).getResourceBundle();
+        final ResourceBundle resourceBundle = ((PropertiesFile)psiFile).getResourceBundle();
+        if (resourceBundle.getPropertiesFiles(project).size() > 1) {
+          return resourceBundle;
+        }
       }
     }
     return null;
