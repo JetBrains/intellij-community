@@ -27,8 +27,14 @@ import java.io.File;
 import java.util.List;
 
 public class ResourceBundleRenameHandler implements RenameHandler {
+
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    return getResourceBundleFromDataContext(dataContext) != null;
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return false;
+    }
+    final ResourceBundle bundle = getResourceBundleFromDataContext(dataContext);
+    return bundle != null && bundle.getPropertiesFiles(project).size() > 1;
   }
 
   public boolean isRenaming(DataContext dataContext) {
@@ -66,10 +72,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile instanceof PropertiesFile) {
-        final ResourceBundle resourceBundle = ((PropertiesFile)psiFile).getResourceBundle();
-        if (resourceBundle.getPropertiesFiles(project).size() > 1) {
-          return resourceBundle;
-        }
+        return ((PropertiesFile)psiFile).getResourceBundle();
       }
     }
     return null;
