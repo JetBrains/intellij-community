@@ -60,6 +60,10 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     final boolean hasParams = placeCaretInsideParentheses(context, item);
 
     final char completionChar = context.getCompletionChar();
+    if (completionChar == '(') {
+      context.setAddCompletionChar(false);
+    }
+
     if (isToken(element, "(")) {
       int lparenthOffset = element.getTextRange().getStartOffset();
       if (mySpaceBeforeParentheses && lparenthOffset == context.getTailOffset()) {
@@ -68,7 +72,6 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
       }
 
       if (completionChar == '(' || completionChar == '\t') {
-        context.setAddCompletionChar(false);
         editor.getCaretModel().moveToOffset(lparenthOffset + 1);
       } else {
         editor.getCaretModel().moveToOffset(context.getTailOffset());
