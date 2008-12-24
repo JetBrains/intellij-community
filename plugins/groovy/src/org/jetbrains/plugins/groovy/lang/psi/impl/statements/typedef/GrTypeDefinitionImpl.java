@@ -21,6 +21,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -33,12 +34,14 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -59,10 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -79,6 +78,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -93,6 +93,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   private PsiMethod[] myMethods;
   private GrMethod[] myGroovyMethods;
   private GrMethod[] myConstructors;
+  private static final Condition<PsiClassType> IS_GROOVY_OBJECT = new Condition<PsiClassType>() {
+    public boolean value(PsiClassType psiClassType) {
+      return InheritanceUtil.isInheritor(psiClassType, DEFAULT_BASE_CLASS_NAME);
+    }
+  };
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -383,47 +388,36 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    GrExtendsClause extendsClause = getExtendsClause();
-
-    if (extendsClause != null) {
-      GrCodeReferenceElement[] extendsRefElements = extendsClause.getReferenceElements();
-
-
-      if (extendsRefElements.length > 0) {
-        PsiClassType[] result = new PsiClassType[extendsRefElements.length];
-        for (int j = 0; j < extendsRefElements.length; j++) {
-          result[j] = new GrClassReferenceType(extendsRefElements[j]);
-        }
-
-        return result;
-      }
+    final List<PsiClassType> extendsTypes = getReferenceListTypes(getExtendsClause());
+    if (isInterface() && !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
+      extendsTypes.add(getDefaultBaseType());
     }
-
-    if (!isInterface()) {
-      return new PsiClassType[]{
-        JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport",
-                                                                                            getResolveScope())};
-    }
-
-    return PsiClassType.EMPTY_ARRAY;
+    return extendsTypes.toArray(new PsiClassType[extendsTypes.size()]);
   }
 
-  @NotNull
-  public PsiClassType[] getImplementsListTypes() {
-    GrImplementsClause implementsClause = getImplementsClause();
-
-    PsiClassType[] result = PsiClassType.EMPTY_ARRAY;
-    if (implementsClause != null) {
-      GrCodeReferenceElement[] implementsRefElements = implementsClause.getReferenceElements();
-
-      result = new PsiClassType[implementsRefElements.length];
-
-      for (int j = 0; j < implementsRefElements.length; j++) {
-        result[j] = new GrClassReferenceType(implementsRefElements[j]);
+  private static List<PsiClassType> getReferenceListTypes(@Nullable GrReferenceList list) {
+    final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
+    if (list != null) {
+      for (GrCodeReferenceElement ref : list.getReferenceElements()) {
+        types.add(new GrClassReferenceType(ref));
       }
     }
+    return types;
+  }
+  
+  @NotNull
+  public PsiClassType[] getImplementsListTypes() {
+    final List<PsiClassType> implementsTypes = getReferenceListTypes(getImplementsClause());
+    if (!isInterface() &&
+        !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) &&
+        !ContainerUtil.or(getReferenceListTypes(getExtendsClause()), IS_GROOVY_OBJECT)) {
+      implementsTypes.add(getDefaultBaseType());
+    }
+    return implementsTypes.toArray(new PsiClassType[implementsTypes.size()]);
+  }
 
-    return result;
+  private PsiClassType getDefaultBaseType() {
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(DEFAULT_BASE_CLASS_NAME, getResolveScope());
   }
 
   @Nullable
@@ -897,7 +891,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
     ASTNode node = element.getNode();
     assert node != null;
-    body.getNode().addChild(node, anchor.getNode());
+    final ASTNode bodyNode = body.getNode();
+    final ASTNode anchorNode = anchor.getNode();
+    bodyNode.addChild(node, anchorNode);
+    //bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
     return element;
   }
 

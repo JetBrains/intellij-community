@@ -118,7 +118,7 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
     JavaModuleFixtureBuilder fixtureBuilder = builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome());
-    fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), "groovy-all.jar");
+    fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), "groovy-all.jar");
     return builder.getFixture();
   }
 

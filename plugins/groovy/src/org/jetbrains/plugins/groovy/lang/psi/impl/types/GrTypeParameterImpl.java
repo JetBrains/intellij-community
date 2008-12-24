@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -107,7 +108,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   public PsiClassType[] getSuperTypes() {
     final PsiClassType[] extendsTypes = getExtendsListTypes();
     if (extendsTypes.length > 0) return extendsTypes;
-    return new PsiClassType[]{JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObject", getResolveScope())};
+    return new PsiClassType[]{JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, getResolveScope())};
   }
 
   @NotNull

@@ -14,7 +14,7 @@ class StringMethodName {
     def "a b" = 0 //does not have a java image
 }
 -----
-public class StringMethodName extends groovy.lang.GroovyObjectSupport {
+public class StringMethodName implements groovy.lang.GroovyObject {
   public java.lang.Object foo0() {
     return null;
   }
@@ -45,6 +45,26 @@ public class StringMethodName extends groovy.lang.GroovyObjectSupport {
 
   public java.lang.Object fooDef() {
     return null;
+  }
+
+  public groovy.lang.MetaClass getMetaClass() {
+    return null;
+  }
+
+  public void setMetaClass(groovy.lang.MetaClass mc) {
+    return ;
+  }
+
+  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+    return null;
+  }
+
+  public java.lang.Object getProperty(java.lang.String propertyName) {
+    return null;
+  }
+
+  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+    return ;
   }
 }
 ---

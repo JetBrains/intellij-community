@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -330,14 +331,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         text.append("extends ");
         text.append(computeTypeText(extendsClassesTypes[0]));
         text.append(" ");
-      } else {
-        if (isClassDef) {
-          text.append("extends ");
-          text.append(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME);
-          text.append(" ");
-        }
       }
-
       PsiClassType[] implementsTypes = typeDefinition.getImplementsListTypes();
 
       if (implementsTypes.length > 0) {
@@ -360,7 +354,21 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
 
-    PsiMethod[] methods = typeDefinition == null ? PsiMethod.EMPTY_ARRAY : typeDefinition.getMethods();
+
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    methods.addAll(Arrays.asList(typeDefinition.getMethods()));
+    if (isClassDef &&
+        !(typeDefinition.getSuperClass() instanceof GrClassDefinition) &&
+        !InheritanceUtil.isInheritor(typeDefinition, "groovy.lang.GroovyObjectSupport")) {
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+      methods.add(factory.createMethodFromText("public groovy.lang.MetaClass getMetaClass() {}", null));
+      methods.add(factory.createMethodFromText("public void setMetaClass(groovy.lang.MetaClass mc) {}", null));
+      methods.add(factory.createMethodFromText("public Object invokeMethod(String name, Object args) {}", null));
+      methods.add(factory.createMethodFromText("public Object getProperty(String propertyName) {}", null));
+      methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));
+    }
+
+
     for (PsiMethod method : methods) {
       if (method instanceof GrConstructor) {
         writeConstructor(text, (GrConstructor) method, isEnum);

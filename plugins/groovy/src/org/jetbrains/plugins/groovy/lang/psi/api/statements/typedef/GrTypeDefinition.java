@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
  * @date: 18.03.2007
  */
 public interface GrTypeDefinition extends GrTopStatement, NavigatablePsiElement, PsiClass, GrTopLevelDefintion, GrMemberOwner, StubBasedPsiElement<GrTypeDefinitionStub> {
-  String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObjectSupport";
+  String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObject";
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
 

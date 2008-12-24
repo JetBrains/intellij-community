@@ -24,6 +24,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -31,6 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
@@ -204,8 +206,12 @@ public class GroovyAnnotator implements Annotator {
     if (typeDefinition.hasModifierProperty(PsiModifier.ABSTRACT)) return;
     if (typeDefinition.isEnum() || typeDefinition.isAnnotationType()) return;
 
-    final Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
-
+    Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
+    methodsToImplement = ContainerUtil.findAll(methodsToImplement, new Condition<CandidateInfo>() {
+      public boolean value(CandidateInfo candidateInfo) {
+        return !GrTypeDefinition.DEFAULT_BASE_CLASS_NAME.equals(((PsiMethod)candidateInfo.getElement()).getContainingClass().getQualifiedName());
+      }
+    });
     if (methodsToImplement.isEmpty()) return;
 
     final PsiElement methodCandidateInfo = methodsToImplement.toArray(CandidateInfo.EMPTY_ARRAY)[0].getElement();

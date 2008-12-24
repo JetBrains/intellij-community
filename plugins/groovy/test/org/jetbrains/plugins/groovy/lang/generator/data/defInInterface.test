@@ -2,7 +2,7 @@ interface Foo {
   def bar
 }
 -----
-public interface Foo {
+public interface Foo extends groovy.lang.GroovyObject {
   public static final java.lang.Object bar = null;
 }
 ---
