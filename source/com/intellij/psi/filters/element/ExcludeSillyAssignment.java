@@ -21,7 +21,13 @@ public class ExcludeSillyAssignment implements ElementFilter {
     if (PsiTreeUtil.getParentOfType(context, PsiExpressionList.class, false, PsiAssignmentExpression.class) != null) return true;
 
     final PsiExpression left = expression.getLExpression();
-    return !(left instanceof PsiReference) || !((PsiReference)left).isReferenceTo((PsiElement)element);
+    if (left instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)left;
+      if (referenceExpression.isQualified()) return true;
+
+      return !referenceExpression.isReferenceTo((PsiElement)element);
+    }
+    return true;
   }
 
   public boolean isClassAcceptable(Class hintClass) {
