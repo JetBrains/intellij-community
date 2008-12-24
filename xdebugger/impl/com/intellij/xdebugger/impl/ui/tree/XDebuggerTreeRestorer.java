@@ -5,21 +5,29 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.awt.*;
 
 /**
  * @author nik
  */
-public class XDebuggerTreeRestorer implements XDebuggerTreeListener {
+public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelectionListener {
   private final XDebuggerTree myTree;
+  private Rectangle myLastVisibleNodeRect;
   private Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo>();
   private Map<XValueNodeImpl, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<XValueNodeImpl, XDebuggerTreeState.NodeInfo>();
+  private boolean myStopRestoringSelection;
+  private boolean myInsideRestoring;
 
-  public XDebuggerTreeRestorer(final XDebuggerTree tree) {
+  public XDebuggerTreeRestorer(final XDebuggerTree tree, Rectangle lastVisibleNodeRect) {
     myTree = tree;
+    myLastVisibleNodeRect = lastVisibleNodeRect;
     tree.addTreeListener(this);
+    tree.addTreeSelectionListener(this);
   }
 
   public void restoreChildren(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
@@ -56,6 +64,16 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener {
       if (!childInfo.getValue().equals(nodeValue)) {
         treeNode.markChanged();
       }
+      if (!myStopRestoringSelection && childInfo.isSelected()) {
+        try {
+          myInsideRestoring = true;
+          myTree.addSelectionPath(treeNode.getPath());
+        }
+        finally {
+          myInsideRestoring = false;
+        }
+      }
+
       restoreChildren(treeNode, childInfo);
     }
   }
@@ -70,6 +88,9 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener {
 
   private void disposeIfFinished() {
     if (myNode2ParentState.isEmpty() && myNode2State.isEmpty()) {
+      if (myLastVisibleNodeRect != null) {
+        myTree.scrollRectToVisible(myLastVisibleNodeRect);
+      }
       dispose();
     }
   }
@@ -91,6 +112,12 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener {
     myNode2ParentState.clear();
     myNode2State.clear();
     myTree.removeTreeListener(this);
+    myTree.removeTreeSelectionListener(this);
   }
 
+  public void valueChanged(TreeSelectionEvent e) {
+    if (!myInsideRestoring) {
+      myStopRestoringSelection = true;
+    }
+  }
 }
