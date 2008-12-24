@@ -74,22 +74,24 @@ public class InheritanceUtil {
 
   public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
     if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass psiClass = classType.resolve();
-      if (psiClass == null) {
-        return false;
-      }
-
-      return !processSupers(psiClass, true, new Processor<PsiClass>() {
-        public boolean process(PsiClass psiClass) {
-          if (baseClassName.equals(psiClass.getQualifiedName())) {
-            return false;
-          }
-          return true;
-        }
-      });
+      return isInheritor(((PsiClassType)type).resolve(), baseClassName);
     }
 
     return false;
+  }
+
+  public static boolean isInheritor(PsiClass psiClass, final String baseClassName) {
+    if (psiClass == null) {
+      return false;
+    }
+
+    return !processSupers(psiClass, true, new Processor<PsiClass>() {
+      public boolean process(PsiClass psiClass) {
+        if (baseClassName.equals(psiClass.getQualifiedName())) {
+          return false;
+        }
+        return true;
+      }
+    });
   }
 }
