@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -29,18 +30,45 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static Sdk addSdk(final Project project, final SdkType sdkType) {
-    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+  public static Sdk addSdk(final Project project, final SdkType... sdkTypes) {
+    if (sdkTypes.length == 0) return null;
+    final FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
     final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
-    String suggestedPath = sdkType.suggestHomePath();
+    String suggestedPath = sdkTypes [0].suggestHomePath();
     VirtualFile suggestedDir = suggestedPath == null
                                ? null
                                :  LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
     final VirtualFile[] selection = dialog.choose(suggestedDir, project);
     if (selection.length > 0) {
-      return setupSdk(selection [0], sdkType);
+      for (SdkType sdkType : sdkTypes) {
+        if (sdkType.isValidSdkHome(selection[0].getPath())) {
+          return setupSdk(selection[0], sdkType);
+        }
+      }
     }
     return null;
+  }
+
+  private static FileChooserDescriptor createCompositeDescriptor(final SdkType... sdkTypes) {
+    FileChooserDescriptor descriptor0 = sdkTypes [0].getHomeChooserDescriptor();
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(descriptor0.isChooseFiles(), descriptor0.isChooseFolders(),
+                                                                 descriptor0.isChooseJars(), descriptor0.isChooseJarsAsFiles(),
+                                                                 descriptor0.isChooseJarContents(), descriptor0.isChooseMultiple()) {
+
+      @Override
+      public void validateSelectedFiles(final VirtualFile[] files) throws Exception {
+        if (files.length > 0) {
+          for (SdkType type : sdkTypes) {
+            if (type.isValidSdkHome(files[0].getPath())) {
+              return;
+            }
+          }
+        }
+        throw new Exception(ProjectBundle.message("sdk.configure.home.invalid.error", sdkTypes [0].getPresentableName()));
+      }
+    };
+    descriptor.setTitle(descriptor0.getTitle());
+    return descriptor;
   }
 
   public static void removeSdk(final Sdk sdk) {
