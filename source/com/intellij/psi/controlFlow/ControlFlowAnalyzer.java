@@ -1,9 +1,11 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
@@ -192,9 +194,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void startElement(PsiElement element) {
-    if (PsiUtil.hasErrorElementChild(element)) {
-      // do not perform control flow analysis for incomplete code
-      throw new AnalysisCanceledSoftException(element);
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiErrorElement && !(Comparing.strEqual(((PsiErrorElement)child).getErrorDescription(), JavaErrorMessages.message("expected.semicolon")))) {
+        // do not perform control flow analysis for incomplete code
+        throw new AnalysisCanceledSoftException(element);
+      }
     }
     ProgressManager.getInstance().checkCanceled();
     myCurrentFlow.startElement(element);
