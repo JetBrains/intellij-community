@@ -1107,6 +1107,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   //----------------------------------------------------------------------------------------
 
   private CodeStyleSettings myParentSettings;
+  private boolean myLoadedAdditionalIndentOptions;
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -1224,6 +1225,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public IndentOptions getIndentOptions(FileType fileType) {
     if (USE_SAME_INDENTS || fileType == null) return OTHER_INDENT_OPTIONS;
 
+    if (!myLoadedAdditionalIndentOptions) {
+      loadAdditionalIndentOptions();
+    }
     final IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
     if (indentOptions != null) return indentOptions;
 
@@ -1670,18 +1674,19 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   }
 
   public IndentOptions getAdditionalIndentOptions(FileType fileType) {
-    IndentOptions result = myAdditionalIndentOptions.get(fileType);
-    if (result == null) {
-      final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
-        Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-      for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
-        if (fileType == provider.getFileType()) {
-          result = provider.createIndentOptions();
-          registerAdditionalIndentOptions(provider.getFileType(), result);
-        }
-      }
+    if (!myLoadedAdditionalIndentOptions) {
+      loadAdditionalIndentOptions();
     }
-    return result;
+    return myAdditionalIndentOptions.get(fileType);
+  }
+
+  private void loadAdditionalIndentOptions() {
+    myLoadedAdditionalIndentOptions = true;
+    final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
+      Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+    for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
+      registerAdditionalIndentOptions(provider.getFileType(), provider.createIndentOptions());
+    }
   }
 
   @TestOnly
