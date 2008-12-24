@@ -55,7 +55,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
     if (myReadUsages.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       String name = classes.size() == 1 ? classes.get(0).getPresentation().getPresentableText() : "";
-      myHintText = CodeInsightBundle.message("no.methods.overriding.0.are.found", classes.get(0), name);
+      myHintText = CodeInsightBundle.message("no.methods.overriding.0.are.found", classes.size(), name);
     }
     else {
       addOccurrence(myTarget);
