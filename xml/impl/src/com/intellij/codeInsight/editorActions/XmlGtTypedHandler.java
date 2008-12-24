@@ -140,22 +140,19 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), editedFile.getFileType(), iterator, true,true)) return Result.CONTINUE;
 
       boolean insertedCData = false;
+      final XmlElementDescriptor descriptor = tag.getDescriptor();
 
-      if (name.indexOf(':') != -1) {  // optimization
-        final XmlElementDescriptor descriptor = tag.getDescriptor();
+      if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
+        final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
 
-        if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
-          final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
-
-          if (cDataContainer.requiresCdataBracesInContext(tag)) {
-            @NonNls final String cDataStart = "><![CDATA[\n";
-            final String inserted = cDataStart + "\n]]>";
-            editor.getDocument().insertString(offset, inserted);
-            final int newoffset = offset + cDataStart.length();
-            editor.getCaretModel().moveToOffset(newoffset);
-            offset += inserted.length();
-            insertedCData = true;
-          }
+        if (cDataContainer.requiresCdataBracesInContext(tag)) {
+          @NonNls final String cDataStart = "><![CDATA[\n";
+          final String inserted = cDataStart + "\n]]>";
+          editor.getDocument().insertString(offset, inserted);
+          final int newoffset = offset + cDataStart.length();
+          editor.getCaretModel().moveToOffset(newoffset);
+          offset += inserted.length();
+          insertedCData = true;
         }
       }
 
