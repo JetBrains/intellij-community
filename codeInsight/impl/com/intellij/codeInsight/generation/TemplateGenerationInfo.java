@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-abstract class TemplateGenerationInfo implements GenerationInfo {
+abstract class TemplateGenerationInfo extends GenerationInfo {
   private final Expression myExpression;
   private SmartPsiElementPointer<PsiMethod> myElement;
 

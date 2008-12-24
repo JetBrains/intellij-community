@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class PsiGenerationInfo<T extends PsiMember> implements GenerationInfo {
+public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfo {
   private T myMember;
   private final boolean myMergeIfExists;
 

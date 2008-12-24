@@ -4,20 +4,45 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public interface GenerationInfo {
-  GenerationInfo[] EMPTY_ARRAY = new GenerationInfo[0];
+public abstract class GenerationInfo {
+  public static final GenerationInfo[] EMPTY_ARRAY = new GenerationInfo[0];
   
-  void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException;
+  public abstract void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException;
 
   @NotNull
-  PsiMember getPsiMember();
+  public abstract PsiMember getPsiMember();
+
+  /**
+   * @param aClass
+   * @param leaf leaf element. Is guaranteed to be a tree descendant of aClass.
+   * @return the value that will be passed to the {@link #insert(com.intellij.psi.PsiClass, com.intellij.psi.PsiElement, boolean)} method later.
+   */
+  @Nullable
+  public PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf) {
+    PsiElement element = leaf;
+    while (element.getParent() != aClass) {
+      element = element.getParent();
+    }
+
+    PsiJavaToken lBrace = aClass.getLBrace();
+    if (lBrace == null) {
+      return null;
+    }
+    else {
+      PsiJavaToken rBrace = aClass.getRBrace();
+      if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
+        return null;
+      }
+    }
+    return element;
+  }
+
 }

@@ -35,25 +35,18 @@ public class GenerateMembersUtil {
   @NotNull
   public static <T extends GenerationInfo> List<T> insertMembersAtOffset(PsiFile file, int offset, @NotNull List<T> memberPrototypes) throws IncorrectOperationException {
     if (memberPrototypes.isEmpty()) return memberPrototypes;
-    PsiElement anchor = findAnchor(file, offset);
-    if (anchor == null) return Collections.emptyList();
-    PsiClass aClass = (PsiClass) anchor.getParent();
+    final PsiElement leaf = file.findElementAt(offset);
+    if (leaf == null) return Collections.emptyList();
 
-    PsiJavaToken lBrace = aClass.getLBrace();
-    if (lBrace == null) {
-      anchor = null;
-    }
-    else {
-      PsiJavaToken rBrace = aClass.getRBrace();
-      if (!isChildInRange(anchor, lBrace.getNextSibling(), rBrace)) {
-        anchor = null;
-      }
-    }
+    PsiClass aClass = findClassAtOffset(file, leaf);
+    if (aClass == null) return Collections.emptyList();
+    PsiElement anchor = memberPrototypes.get(0).findInsertionAnchor(aClass, leaf);
 
     if (anchor instanceof PsiWhiteSpace) {
       final ASTNode spaceNode = anchor.getNode();
       anchor = anchor.getNextSibling();
 
+      assert spaceNode != null;
       if (spaceNode.getStartOffset() <= offset && spaceNode.getStartOffset() + spaceNode.getTextLength() >= offset) {
         final ASTNode singleNewLineWhitespace = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createWhiteSpaceFromText(spaceNode.getText().substring(0, offset - spaceNode.getStartOffset())).getNode();
         spaceNode.getTreeParent().replaceChild(spaceNode, singleNewLineWhitespace); // See http://jetbrains.net/jira/browse/IDEADEV-12837
@@ -76,16 +69,6 @@ public class GenerateMembersUtil {
     }
 
     return insertMembersBeforeAnchor(aClass, anchor, memberPrototypes);
-  }
-
-  private static boolean isChildInRange(PsiElement child, PsiElement first, PsiJavaToken last) {
-    if (child.equals(first)) return true;
-    while (true) {
-      if (child.equals(first)) return false; // before first
-      if (child.equals(last)) return true;
-      child = child.getNextSibling();
-      if (child == null) return false;
-    }
   }
 
   @NotNull
@@ -168,17 +151,14 @@ public class GenerateMembersUtil {
   }
 
   @Nullable
-  private static PsiElement findAnchor(PsiFile file, int offset) {
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
-    while (true) {
-      if (element instanceof PsiFile) return null;
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiClass && !(parent instanceof PsiTypeParameter)) {
-        if (((PsiClass)parent).isEnum()) {
+  private static PsiClass findClassAtOffset(PsiFile file, PsiElement leaf) {
+    PsiElement element = leaf;
+    while (element != null && !(element instanceof PsiFile)) {
+      if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+        final PsiClass psiClass = (PsiClass)element;
+        if (psiClass.isEnum()) {
           PsiElement lastChild = null;
-          PsiElement[] children = parent.getChildren();
-          for (PsiElement child : children) {
+          for (PsiElement child : psiClass.getChildren()) {
             if (child instanceof PsiJavaToken && ";".equals(child.getText())) {
               lastChild = child;
               break;
@@ -189,14 +169,14 @@ public class GenerateMembersUtil {
           }
           if (lastChild != null) {
             int adjustedOffset = lastChild.getTextRange().getEndOffset();
-            if (offset < adjustedOffset) return findAnchor(file, adjustedOffset);
+            if (leaf.getTextRange().getEndOffset() <= adjustedOffset) return findClassAtOffset(file, file.findElementAt(adjustedOffset));
           }
         }
-        break;
+        return psiClass;
       }
-      element = parent;
+      element = element.getParent();
     }
-    return element;
+    return null;
   }
 
   public static PsiMethod substituteGenericMethod(PsiMethod method, PsiSubstitutor substitutor) {
@@ -295,5 +275,15 @@ public class GenerateMembersUtil {
       }
     }
     return substitutor;
+  }
+
+  public static boolean isChildInRange(PsiElement child, PsiElement first, PsiElement last) {
+    if (child.equals(first)) return true;
+    while (true) {
+      if (child.equals(first)) return false; // before first
+      if (child.equals(last)) return true;
+      child = child.getNextSibling();
+      if (child == null) return false;
+    }
   }
 }
