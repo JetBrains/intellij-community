@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1102,7 +1103,7 @@ public abstract class ChooseByNameBase{
   }
 
   private void sortByProximity(final List<Object> sameNameElements) {
-    Collections.sort(sameNameElements, new PsiProximityComparator(myContext.get()));
+    Collections.sort(sameNameElements, new PathProximityComparator(myModel, myContext.get()));
   }
 
   private List<String> split(String s) {
@@ -1185,4 +1186,20 @@ patterns:
     void run(Set<?> elements);
   }
 
+  private static class PathProximityComparator implements Comparator<Object> {
+    private final ChooseByNameModel myModel;
+    private final PsiProximityComparator myProximityComparator;
+
+    private PathProximityComparator(final ChooseByNameModel model, final PsiElement context) {
+      myModel = model;
+      myProximityComparator = new PsiProximityComparator(context);
+    }
+
+    public int compare(final Object o1, final Object o2) {
+      int rc = myProximityComparator.compare(o1, o2);
+      if (rc != 0) return rc;
+
+      return Comparing.compare(myModel.getFullName(o1), myModel.getFullName(o2));
+    }
+  }
 }
