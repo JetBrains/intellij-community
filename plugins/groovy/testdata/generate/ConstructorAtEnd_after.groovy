@@ -1,9 +1,9 @@
 class ConstructorAtEnd {
 
-    def foo() {
+  def foo() {
 
-    }
+  }
 
-    <caret>def ConstructorAtEnd() {
-    }
+  <caret>def ConstructorAtEnd() {
+  }
 }

@@ -1,13 +1,13 @@
 class ConstructorAtOffset {
 
-    def foo() {
+  def foo() {
 
-    }
+  }
 
-    <caret>def ConstructorAtOffset() {
-    }
+  <caret>def ConstructorAtOffset() {
+  }
 
-    def bar() {
+  def bar() {
 
-    }
+  }
 }
