@@ -46,6 +46,11 @@
       <interface-class>com.intellij.openapi.roots.libraries.LibraryTablesRegistrar</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.openapi.roots.libraries.LibraryTable</interface-class>
+      <implementation-class>com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
