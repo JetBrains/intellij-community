@@ -332,7 +332,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
     final Project project = element.getProject();
 
-    final String newName;
+    String newName;
     if (myFileReferenceSet.isAbsolutePathReference()) {
       PsiFileSystemItem root = null;
       PsiFileSystemItem dstItem = null;
@@ -397,6 +397,10 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       if (newName == null) {
         return element;
       }
+    }
+
+    if (myFileReferenceSet.isUrlEncoded()) {
+      newName = encode(newName);
     }
 
     return rename(newName);

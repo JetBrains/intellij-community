@@ -290,7 +290,7 @@
   <completion.contributor implementation="com.intellij.codeInsight.completion.ComboEditorCompletionContributor" id="comboEditor" order="first"/>
   <completion.contributor implementation="com.intellij.codeInsight.completion.WordCompletionContributor" id="wordCompletion" order="last"/>
   <completion.contributor implementation="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
-  <!--<completion.contributor implementation="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="last"/>-->
+  <completion.contributor implementation="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="last"/>
 
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>

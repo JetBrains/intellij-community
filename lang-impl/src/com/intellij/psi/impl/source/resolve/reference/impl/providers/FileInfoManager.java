@@ -47,6 +47,30 @@ public class FileInfoManager implements Disposable {
   }
 
   @Nullable
+  public static String getFileAdditionalInfo(PsiElement psiElement) {
+    return getFileInfoManager()._getInfo(psiElement);
+  }
+
+  @Nullable
+  private String _getInfo(PsiElement psiElement) {
+    if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
+      return null;
+    }
+
+    final PsiFile psiFile = (PsiFile)psiElement;
+    final FileLookupInfoProvider provider = myFileType2InfoProvider.get(psiFile.getFileType());
+    if (provider != null) {
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null) {
+        final Pair<String, String> info = provider.getLookupInfo(virtualFile);
+        return info == null ? null : info.second;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
   public static Object getFileLookupItem(PsiElement psiElement, String encoded, Icon icon) {
     if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
       final LookupItem result = new LookupItem(psiElement, encoded);
@@ -59,17 +83,12 @@ public class FileInfoManager implements Disposable {
 
   @Nullable
   public Object _getLookupItem(@NotNull final PsiFile file, String name, Icon icon) {
-    final FileLookupInfoProvider provider = myFileType2InfoProvider.get(file.getFileType());
     final LookupItem result = new LookupItem(file, name);
     result.setIcon(icon);
-    if (provider != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        final Pair<String, String> info = provider.getLookupInfo(virtualFile);
-        if (info != null) {
-          result.setTailText(info.second, true);
-        }
-      }
+
+    final String info = _getInfo(file);
+    if (info != null) {
+      result.setTailText(String.format(" (%s)", info), true);
     }
 
     return result;
