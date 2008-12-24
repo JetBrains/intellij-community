@@ -239,4 +239,45 @@ public abstract class LayoutStrategy {
     }
   }
 
+  static class Right extends Vertical {
+    Right(SingleRowLayout layout) {
+      super(layout);
+    }
+
+    void setComponentAddins(SingleRowPassInfo data, JComponent toolbar, boolean toolbarVertical) {
+    }
+
+    public Rectangle getLayoutRec(int position, int fixedPos, int length, int fixedFitLength) {
+      return new Rectangle(fixedPos, position, fixedFitLength - 1, length);
+    }
+
+    public int getFixedPosition(SingleRowPassInfo data) {
+      return data.laayoutSize.width - myTabs.myHeaderFitSize.width - data.insets.right;
+    }
+
+    public Rectangle getMoreRect(SingleRowPassInfo data) {
+      return new Rectangle(data.laayoutSize.width - myTabs.myHeaderFitSize.width,
+                        myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize,
+                        myTabs.myHeaderFitSize.width - 1,
+                        data.moreRectAxisSize - 1);
+    }
+
+    public int getComponentPosition(SingleRowPassInfo data) {
+      return data.insets.left;
+    }
+
+    public Rectangle getToolbarRec(SingleRowPassInfo data, JComponent selectedToolbar) {
+      return null;
+    }
+
+    public Point getCompPoint(SingleRowPassInfo data) {
+      return new Point(data.compPosition, data.componentFixedPosition);
+    }
+
+    @Override
+    public Dimension getCompSizeDelta(SingleRowPassInfo data) {
+      return new Dimension(-myTabs.myHeaderFitSize.width, 0);
+    }
+  }
+
 }

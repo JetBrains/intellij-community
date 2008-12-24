@@ -95,12 +95,16 @@ public class TabLabel extends JPanel {
 
     switch (pos) {
       case bottom:
+        dY = -plain;
+        dYs = -selected;
         break;
       case left:
         dX = plain;
         dXs = selected;
         break;
       case right:
+        dX = -plain;
+        dXs = -selected;
         break;
       case top:
         dY = plain;

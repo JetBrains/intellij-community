@@ -19,6 +19,7 @@ public class SingleRowLayout extends TabLayout {
   final LayoutStrategy myTop;
   final LayoutStrategy myLeft;
   final LayoutStrategy myBottom;
+  final LayoutStrategy myRight;
 
   public MoreIcon myMoreIcon = new MoreIcon() {
     protected boolean isActive() {
@@ -47,6 +48,7 @@ public class SingleRowLayout extends TabLayout {
     myTop = new LayoutStrategy.Top(this);
     myLeft = new LayoutStrategy.Left(this);
     myBottom = new LayoutStrategy.Bottom(this);
+    myRight = new LayoutStrategy.Right(this);
   }
 
   LayoutStrategy getStrategy() {
@@ -57,6 +59,8 @@ public class SingleRowLayout extends TabLayout {
         return myLeft;
       case bottom:
         return myBottom;
+      case right:
+        return myRight;
     }
 
     return null;
