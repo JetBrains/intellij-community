@@ -8,8 +8,10 @@ import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.ant.validation.AntDuplicateImportedTargetsInspection;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -127,7 +129,11 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
     if (vFile == null) {
       return null;
     }
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-    return psiFile != null? getAntFile(psiFile) : null;
+    final FileType fileType = vFile.getFileType();
+    if (fileType instanceof AntFileType || XMLLanguage.INSTANCE.getAssociatedFileType() == fileType) {
+      final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+      return psiFile != null? getAntFile(psiFile) : null;
+    }
+    return null;
   }
 }
