@@ -19,7 +19,7 @@ public class ImageLookupInfoProvider extends FileLookupInfoProvider {
     ImageInfoIndex.processValues(file, new FileBasedIndex.ValueProcessor<ImageInfoIndex.ImageInfo>() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void process(VirtualFile file, ImageInfoIndex.ImageInfo value) {
-        s[0] = String.format(" (%sx%s)", value.width, value.height);
+        s[0] = String.format("%sx%s", value.width, value.height);
       }
     });
 
