@@ -32,6 +32,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -444,7 +445,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
       try {
         if (!isInsideCodeBlock(parent)) {
-          if (parent != null && parent.getContainingFile() instanceof PsiClassOwner) {
+          if (parent != null && parent.getContainingFile() instanceof PsiClassOwner && !(parent.getContainingFile() instanceof XmlFile)) {
             myModificationTracker.incCounter();
           }
           else {
