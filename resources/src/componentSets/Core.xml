@@ -19,10 +19,6 @@
       <implementation-class>com.intellij.refactoring.migration.MigrationMapSet</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.roots.libraries.LibraryTablesRegistrar</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.OpenFileXmlRpcHandler</implementation-class>
     </component>
     <component>

@@ -41,6 +41,11 @@
       <interface-class>com.intellij.psi.stubs.SerializationManager</interface-class>
       <implementation-class>com.intellij.psi.stubs.SerializationManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.openapi.roots.libraries.LibraryTablesRegistrar</interface-class>
+      <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
