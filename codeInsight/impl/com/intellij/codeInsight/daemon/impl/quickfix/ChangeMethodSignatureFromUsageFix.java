@@ -7,8 +7,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -180,6 +180,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   }
 
   public String getNewParameterNameByOldIndex(int oldIndex) {
+    if (myNewParametersInfo == null) return null;
     for (ParameterInfoImpl info : myNewParametersInfo) {
       if (info.oldParameterIndex == oldIndex) {
         return info.getName();
