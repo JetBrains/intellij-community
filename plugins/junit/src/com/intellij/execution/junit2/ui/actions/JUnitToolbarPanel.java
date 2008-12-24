@@ -23,11 +23,7 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
-import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.TestsUIUtil;
-import com.intellij.execution.testframework.ToolbarPanel;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -51,7 +47,8 @@ public class JUnitToolbarPanel extends ToolbarPanel {
                                          final ConfigurationPerRunnerSettings configurationSettings) {
     myTrackCoverageAction = new TrackCoverageAction(properties);
     actionGroup.add(myTrackCoverageAction);
-    myRerunFailedTestsAction = new RerunFailedTestsAction((JUnitConsoleProperties)properties, runnerSettings, configurationSettings);
+    myRerunFailedTestsAction = new RerunFailedTestsAction();
+    myRerunFailedTestsAction.init((JavaAwareTestConsoleProperties)properties, runnerSettings, configurationSettings);
     actionGroup.add(myRerunFailedTestsAction);
   }
 

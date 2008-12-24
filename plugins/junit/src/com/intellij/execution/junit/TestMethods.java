@@ -17,7 +17,6 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
@@ -25,6 +24,7 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -101,6 +101,6 @@ public class TestMethods extends TestMethod {
   }
 
   public String suggestActionName() {
-    return ExecutionBundle.message("rerun.failed.tests.action.name");
+    return ActionsBundle.message("action.RerunFailedTests.text");
   }
 }
