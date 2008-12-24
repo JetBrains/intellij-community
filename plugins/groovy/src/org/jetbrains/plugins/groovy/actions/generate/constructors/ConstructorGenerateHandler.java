@@ -91,7 +91,7 @@ public class ConstructorGenerateHandler extends GenerateConstructorHandler {
 
       PsiUtil.shortenReferences(grConstructor);
 
-      final PsiGenerationInfo<GrMethod> psiGenerationInfo = new PsiGenerationInfo<GrMethod>(grConstructor);
+      final PsiGenerationInfo<GrMethod> psiGenerationInfo = new GroovyGenerationInfo<GrMethod>(grConstructor);
       grConstructors.add(psiGenerationInfo);
     }
 
