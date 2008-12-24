@@ -903,6 +903,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               addSourceForRecompilation(projectId, file, srcInfo);
             }
           }
+          else {
+            processNewFile(file);
+          }
         }
       });
     }
