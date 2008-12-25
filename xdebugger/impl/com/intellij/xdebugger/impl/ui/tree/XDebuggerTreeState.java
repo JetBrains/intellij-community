@@ -1,7 +1,6 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,6 @@ public class XDebuggerTreeState {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final XDebuggerTreeNode root = (XDebuggerTreeNode)tree.getTreeModel().getRoot();
-    Ref<Boolean> foundVisibleNode = Ref.create(false);
     if (root != null) {
       addChildren(tree, myRootInfo, root);
     }
