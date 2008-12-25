@@ -102,13 +102,12 @@ public abstract class AddDomElementAction extends AnAction {
   }
 
   protected void showPopup(final ListPopup groupPopup, final AnActionEvent e) {
-    Component component = (Component)e.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
-    if (component == null) component = e.getInputEvent().getComponent();
+    final Component component = e.getInputEvent().getComponent();
 
-    if (component instanceof JMenuItem) {
-      groupPopup.showInBestPositionFor(e.getDataContext());
-    } else {
+    if (component instanceof ActionButtonComponent) {
       groupPopup.showUnderneathOf(component);
+    } else {
+      groupPopup.showInBestPositionFor(e.getDataContext());
     }
   }
 
