@@ -64,6 +64,10 @@ public class ImageInfoIndex implements FileBasedIndexExtension {
 
   @Nullable
   private static ImageInfo fetchImageInfo(@NotNull final VirtualFile file) {
+    if (!file.isValid()) {
+      return null;
+    }
+
     final ImageInfoReader.Info info = ImageInfoReader.getInfo(file.getPath());
     if (info != null) {
       return new ImageInfo(info.width, info.height, info.bpp);
