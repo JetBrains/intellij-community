@@ -8,7 +8,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
-import com.jetbrains.python.psi.types.PyDecorator;
+import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

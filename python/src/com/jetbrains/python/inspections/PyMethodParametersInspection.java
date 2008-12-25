@@ -10,7 +10,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameToSelfQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyDecorator;
+import com.jetbrains.python.psi.PyDecorator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

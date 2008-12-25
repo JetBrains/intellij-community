@@ -19,7 +19,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyClassStub;
-import com.jetbrains.python.psi.types.PyDecorator;
+import com.jetbrains.python.psi.PyDecorator;
 
 import java.util.List;
 

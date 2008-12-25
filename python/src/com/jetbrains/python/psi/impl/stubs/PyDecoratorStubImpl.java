@@ -4,7 +4,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
-import com.jetbrains.python.psi.types.PyDecorator;
+import com.jetbrains.python.psi.PyDecorator;
 
 /**
  * Decorator stub storage.

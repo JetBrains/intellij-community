@@ -10,7 +10,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyDecorator;
+import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 

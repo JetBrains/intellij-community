@@ -1,7 +1,7 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.psi.types.PyDecorator;
+import com.jetbrains.python.psi.PyDecorator;
 
 /**
  * Created by IntelliJ IDEA.

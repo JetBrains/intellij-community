@@ -2,7 +2,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
-import com.jetbrains.python.psi.types.PyDecorator;
+import com.jetbrains.python.psi.PyDecorator;
 import org.jetbrains.annotations.NotNull;
 
 /**

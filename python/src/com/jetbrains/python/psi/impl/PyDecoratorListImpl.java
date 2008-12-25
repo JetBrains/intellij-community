@@ -4,7 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
-import com.jetbrains.python.psi.types.PyDecorator;
+import com.jetbrains.python.psi.PyDecorator;
 import org.jetbrains.annotations.NotNull;
 
 /**
