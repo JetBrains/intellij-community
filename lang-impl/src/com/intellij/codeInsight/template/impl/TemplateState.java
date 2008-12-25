@@ -334,6 +334,7 @@ public class TemplateState implements Disposable {
       } else {
         calcResults(true);
       }
+      myDocumentChanged = false;
     }
   }
 
@@ -595,6 +596,9 @@ public class TemplateState implements Disposable {
     if (isFinished()) {
       return;
     }
+
+    myDocumentChangesTerminateTemplate = false;
+
     int previousVariableNumber = getPreviousVariableNumber(myCurrentVariableNumber);
     if (previousVariableNumber >= 0) {
       focusCurrentHighlighter(false);
@@ -612,6 +616,8 @@ public class TemplateState implements Disposable {
 
     //some psi operations may block the document, unblock here
     unblockDocument();
+
+    myDocumentChangesTerminateTemplate = false;
 
     int nextVariableNumber = getNextVariableNumber(myCurrentVariableNumber);
     if (nextVariableNumber == -1) {
