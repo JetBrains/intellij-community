@@ -174,16 +174,19 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     if (myHideTimer != null && myHideTimer.isRunning()) {
       return;
     }
-    
+
     myHideTimer = new Timer(1500, new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if (myDisposed) return;
 
         if (myComponent.isVisible()) {
-          final Point location = MouseInfo.getPointerInfo().getLocation();
-          SwingUtilities.convertPointFromScreen(location,  myComponent);
-          if (!myComponent.getBounds().contains(location)) {
-            toggleContextToolbar(false);
+          final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+          if (pointerInfo != null) {
+            final Point location = pointerInfo.getLocation();
+            SwingUtilities.convertPointFromScreen(location, myComponent);
+            if (!myComponent.getBounds().contains(location)) {
+              toggleContextToolbar(false);
+            }
           }
         }
       }
