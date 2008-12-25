@@ -2,17 +2,22 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,6 +113,15 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       myShowTimer = null;
     }
 
+  }
+
+  public static boolean mayShowToolbar(@Nullable final Document document) {
+    if (document == null) {
+      return false;
+    }
+
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    return file != null && file.isValid() && file.getFileSystem() == LocalFileSystem.getInstance();
   }
 
   @SuppressWarnings({"deprecation"})

@@ -521,8 +521,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myLayeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
     myPanel.add(myLayeredPane);
 
-    final JComponent contextMenu = new ContextMenuImpl(myScrollPane, this);
-    myLayeredPane.add(contextMenu, JLayeredPane.POPUP_LAYER);
+    if (ContextMenuImpl.mayShowToolbar(myDocument)) {
+      final JComponent contextMenu = new ContextMenuImpl(myScrollPane, this);
+      myLayeredPane.add(contextMenu, JLayeredPane.POPUP_LAYER);
+    }
 
     //myPanel.add(myScrollPane);
 
