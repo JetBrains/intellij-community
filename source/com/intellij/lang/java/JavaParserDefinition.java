@@ -80,6 +80,7 @@ public class JavaParserDefinition implements ParserDefinition {
       return new PsiJavaFileImpl(viewProvider);
     }
     else {
+        //todo not used? see JavaLanguageSubstitutor
       return new PsiPlainTextFileImpl(viewProvider);
     }
   }
