@@ -13,12 +13,14 @@ public class PyNames {
   private PyNames() {
   }
 
+  @NonNls public static final String INIT = "__init__";
+  @NonNls public static final String DOT_PY = ".py";
+
+  @NonNls public static final String OBJECT = "object";
   @NonNls public static final String NONE = "None";
 
-  @NonNls public static final String INIT = "__init__";
-  @NonNls public static final String OBJECT = "object";
-
-  @NonNls public static final String DOT_PY = ".py";
+  @NonNls public static final String CLASSMETHOD = "classmethod";
+  @NonNls public static final String STATICMETHOD = "staticmethod";
 
   @NonNls private static Set<String> _UnderscoredNames = new HashSet<String>();
   static {

@@ -114,4 +114,12 @@ public class PyBuiltinCache {
     return _getObjectType("___Classobj");
   }
 
+
+  /**
+   * @param target an element to check.
+   * @return true iff target is inside the __builtins__.py 
+   */
+  public static boolean hasInBuiltins(@Nullable PsiElement target) {
+    return target != null && PyBuiltinCache.BUILTIN_FILE.equals(target.getContainingFile().getName());
+  }
 }

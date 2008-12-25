@@ -22,14 +22,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 13:39:13
- * To change this template use File | Settings | File Templates.
+ * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
  */
 public interface PyCallExpression extends PyExpression {
+
+  /**
+   * @return the expression representing the object being called (reference to a function).
+   */
   PyExpression getCallee();
+
+  /**
+   * @return ArgumentList used in the call.
+   */
+  @Nullable
   PyArgumentList getArgumentList();
 
   void addArgument(PyExpression expression);
@@ -43,10 +48,6 @@ public interface PyCallExpression extends PyExpression {
   @Nullable
   PyMarkedFunction resolveCallee();
 
-  /**
-   * @return true if the call is a method call qualified by class instance. <b>Note:</b> Constructor calls return false.
-   */
-  //boolean isByInstance();
 
   enum Flag {
     /**
@@ -64,16 +65,14 @@ public interface PyCallExpression extends PyExpression {
   }
 
   /**
-   * Couples function with a flag showing if it is being called as an instance method.
+   * Couples function with a flag describing the way it is called.
    */
   class PyMarkedFunction {
     PyFunction myFunction;
-    boolean myIsInstanceCall;
     EnumSet<Flag> myFlags;
 
     public PyMarkedFunction(@NotNull PyFunction function, EnumSet<Flag> flags) {
       myFunction = function;
-      //myIsInstanceCall = instance;
       myFlags = flags;
     }
 
@@ -85,11 +84,6 @@ public interface PyCallExpression extends PyExpression {
       return myFlags;
     }
 
-    /*
-    public boolean isInstanceCall() {
-      return myIsInstanceCall;
-    }
-    */
   }
 
 }

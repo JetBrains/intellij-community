@@ -18,19 +18,12 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.EnumSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -59,11 +52,12 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @PsiCached
   public PyArgumentList getArgumentList() {
-    PyArgumentList arglist = PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
-    return arglist;
+    return PyCallExpressionHelper.getArgumentList(this);
   }
 
   public void addArgument(PyExpression expression) {
+    PyCallExpressionHelper.addArgument(this, getLanguage(), expression);
+    /*
     PyExpression[] arguments = getArgumentList().getArguments();
     try {
       getLanguage().getElementGenerator()
@@ -72,87 +66,21 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     catch (IncorrectOperationException e1) {
       throw new IllegalArgumentException(e1);
     }
+    */
   }
 
   public PyMarkedFunction resolveCallee() {
-    PyExpression calleeReference = getCallee();
-    if (calleeReference != null) {
-      PsiReference cref = calleeReference.getReference();
-      if (cref != null) {
-        // paranoia: multi-resolve or not? must get a function out of it
-        PsiElement resolved = null;
-        if (cref instanceof PsiPolyVariantReference) {
-          PsiPolyVariantReference poly = (PsiPolyVariantReference)cref;
-          ResolveResult[] targets = poly.multiResolve(false);
-          for (ResolveResult target : targets) {
-            PsiElement elt = target.getElement();
-            if (elt instanceof PyFunction) {
-              resolved = elt;
-              break;
-            }
-          }
-        }
-        else resolved = cref.resolve();
-        if (resolved != null) {
-          EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
-          //boolean is_inst = isByInstance();
-          if (isByInstance()) flags.add(Flag.IMPLICIT_FIRST_ARG);
-          if (resolved instanceof PyFunction) {
-            PyFunction meth = (PyFunction)resolved; // constructor call?
-            if (PyNames.INIT.equals(meth.getName())) flags.add(Flag.IMPLICIT_FIRST_ARG);
-          }
-          // look for closest decorator
-          // TODO: look for all decorators
-          // XXX disuse PyDecoratedFunction, use PyDecorator
-          PsiElement parent = resolved.getParent();
-          if (parent instanceof PyDecoratedFunction) {
-            final PyDecoratedFunction decorated = (PyDecoratedFunction)parent;
-            PsiElement decorator = PsiTreeUtil.getChildOfType(decorated, PyReferenceExpression.class);
-            if (decorator != null) { // just in case
-              String deco_name = decorator.getText();
-              @NonNls final String STATICMETHOD = "staticmethod"; // TODO: must go to function
-              @NonNls final String CLASSMETHOD = "classmethod";
-              if (STATICMETHOD.equals(deco_name)) {
-                flags.add(Flag.STATICMETHOD);
-                flags.remove(Flag.IMPLICIT_FIRST_ARG);
-              }
-              else if (CLASSMETHOD.equals(deco_name)) {
-                flags.add(Flag.CLASSMETHOD);
-              }
-              // else could be custom decorator processing
-            }
-          }
-          if (!(resolved instanceof PyFunction)) return null; // omg, bogus __init__
-          return new PyMarkedFunction((PyFunction) resolved, flags);
-        }
-      }
-    }
-    return null;
+    return PyCallExpressionHelper.resolveCallee(this);
   }
 
+  @Nullable
   public PyElement resolveCallee2() {
-    PyExpression calleeReference = getCallee();
-    return (PyElement) calleeReference.getReference().resolve();
-  }
-
-  protected boolean isByInstance() {
-    PyExpression callee = getCallee();
-    if (callee instanceof PyReferenceExpression) {
-      PyExpression qualifier = ((PyReferenceExpression)callee).getQualifier();
-      if (qualifier != null) {
-        PyType type = qualifier.getType();
-        if ((type instanceof PyClassType) && (!((PyClassType)type).isDefinition())) {
-          // we're calling an instance method of qualifier
-          return true;
-        }
-      }
-    }
-    return false;
+    return PyCallExpressionHelper.resolveCallee2(this);
   }
 
   @Override
   public String toString() {
-    return "PyCallExpression: " + PyUtil.getReadableRepr(getCallee(), true); //getCalledFunctionReference().getReferencedName();
+    return "PyCallExpression: " + PyUtil.getReadableRepr(getCallee(), true); //or: getCalledFunctionReference().getReferencedName();
   }
 
   public PyType getType() {
@@ -164,10 +92,14 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         if (target instanceof PyClass) {
           return new PyClassType((PyClass) target, false); // we call a class name, that is, the constructor, we get an instance.
         }
+        else if (target instanceof PyFunction && PyNames.INIT.equals(((PyFunction)target).getName())) {
+          return new PyClassType(((PyFunction)target).getContainingClass(), false); // resolved to __init__, back to class
+        }
         // TODO: look at well-known functions and their return types
         return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target);
       }
     }
-    return callee.getType();
+    if (callee == null) return null;
+    else return callee.getType();
   }
 }

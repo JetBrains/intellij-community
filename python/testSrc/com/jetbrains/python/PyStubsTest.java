@@ -19,11 +19,13 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.types.PyDecorator;
 
 import java.util.List;
 
 public class PyStubsTest extends CodeInsightTestCase {
   private VirtualFile myRootDir;
+  private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
   protected void setUp() throws Exception {
     myRunCommandForTest = false;
@@ -31,7 +33,9 @@ public class PyStubsTest extends CodeInsightTestCase {
     prepareRoots();
   }
 
-
+  private void assertNotParsed(PyFile file) {
+    assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
+  }
 
   private void prepareRoots() throws Exception {
     new WriteAction() {
@@ -60,6 +64,26 @@ public class PyStubsTest extends CodeInsightTestCase {
     assertEquals("__init__", methods [0].getName());
     assertEquals("fooFunction", methods [1].getName());
 
+    // decorators
+    PyFunction decorated = methods[1];
+    PyDecoratorList decos = decorated.getDecoratorList();
+    assertNotNull(decos);
+    assertNotParsed(file);
+    PyDecorator[] da = decos.getDecorators();
+    assertNotNull(da);
+    assertEquals(1, da.length);
+    assertNotParsed(file);
+    PyDecorator deco = da[0];
+    assertNotNull(deco);
+    /*
+    assertEquals(deco.getTarget(), decorated);
+    assertNotParsed(file);
+    assertEquals(deco.getName(), "staticmethod");
+    */
+    assertEquals(deco.getName(), "staticmethod");
+    assertNotParsed(file);
+    //assertNotNull(deco.getCallee());
+
     final PyTargetExpression[] instanceAttrs = pyClass.getInstanceAttributes();
     assertEquals(1, instanceAttrs.length);
     assertEquals("instanceField", instanceAttrs [0].getName());
@@ -75,7 +99,7 @@ public class PyStubsTest extends CodeInsightTestCase {
     assertEquals("top1", exprs.get(0).getName());
     assertEquals("top2", exprs.get(1).getName());
 
-    assertNull("Operations should have been performed on stubs but caused file to be parsed", ((PyFileImpl)file).getTreeElement());
+    assertNotParsed(file);
   }
   
   public void testLoadingDeeperTreeRemainsKnownPsiElement() throws Exception {
@@ -86,7 +110,7 @@ public class PyStubsTest extends CodeInsightTestCase {
 
     assertEquals("SomeClass", pyClass.getName());
 
-    assertNull("Operations should have been performed on stubs but caused file to be parsed", ((PyFileImpl)file).getTreeElement());
+    assertNotParsed(file);
 
     // load the tree now
     final PyStatementList statements = pyClass.getStatementList();
@@ -106,7 +130,7 @@ public class PyStubsTest extends CodeInsightTestCase {
 
     assertEquals("SomeClass", pyClass.getName());
 
-    assertNull("Operations should have been performed on stubs but caused file to be parsed", ((PyFileImpl)file).getTreeElement());
+    assertNotParsed(file);
 
     final PsiElement[] children = file.getChildren(); // Load the tree
 

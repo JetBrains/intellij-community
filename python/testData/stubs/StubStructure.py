@@ -3,6 +3,7 @@ class FooClass:
   def __init__(self):
     self.instanceField = 2
 
+  @staticmethod
   def fooFunction(fooParam1, fooParam2) :
     pass
 
