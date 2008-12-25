@@ -286,6 +286,7 @@ import java.util.Map;
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
       editor = EditorFactory.getInstance().createEditor(document, myProject);
       ((EditorEx) editor).setHighlighter(HighlighterFactory.createHighlighter(myProject, file));
+      ((EditorEx) editor).setFile(file);
 
       myVirtualFile2Editor.put(file, editor);
     }
