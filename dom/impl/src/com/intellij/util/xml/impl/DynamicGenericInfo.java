@@ -55,7 +55,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
     myStaticGenericInfo.buildMethodMaps();
     final XmlElement element = myInvocationHandler.getXmlElement();
-    assert element != null;
+    if (element == null) return true;
 
     myComputing.set(Boolean.TRUE);
     try {
