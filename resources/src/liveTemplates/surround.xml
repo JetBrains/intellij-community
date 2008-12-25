@@ -28,38 +28,6 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.tag"
-    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;&#13;&#10;">
-    <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
-    <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
-    <variable name="TAGNAME" expression="firstWord(TAG)" defaultValue="&quot;&quot;" alwaysStopAt="false" />
-    <context>
-      <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="true" />
-      <option name="HTML" value="false" />
-      <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
-      <option name="OTHER" value="false" />
-    </context>
-  </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.tag.in.htmlorjsp"
-    name="T2" toReformat="false" toShortenFQNames="false" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;">
-    <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
-    <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
-    <variable name="TAGNAME" expression="firstWord(TAG)" defaultValue="&quot;&quot;" alwaysStopAt="false" />
-    <context>
-      <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="false" />
-      <option name="HTML" value="true" />
-      <option name="JSP" value="true" />
-      <option name="COMPLETION" value="false" />
-      <option name="OTHER" value="false" />
-    </context>
-  </template>
   <template name="C" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.callable"
             value="java.util.concurrent.Callable&lt;$RET$&gt; callable = new java.util.concurrent.Callable&lt;$RET$&gt;() {&#10;  public $RET$ call() throws Exception {&#10;    $SELECTION$&#10;    $END$ &#10;  }&#10;};" toReformat="true" toShortenFQNames="true">
     <variable name="RET" expression="" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="true" />
@@ -115,20 +83,6 @@
       <option name="XML" value="false" />
       <option name="HTML" value="false" />
       <option name="JSP" value="false" />
-      <option name="COMPLETION" value="false" />
-      <option name="OTHER" value="false" />
-    </context>
-  </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.cdata.in.xmlorhtmlorjsp"
-    name="CD" toReformat="false" toShortenFQNames="false" value="&lt;![CDATA[&#10;$SELECTION$&#10;]]&gt;">
-    <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
-    <context>
-      <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_COMMENT" value="false" />
-      <option name="JAVA_STRING" value="false" />
-      <option name="XML" value="true" />
-      <option name="HTML" value="true" />
-      <option name="JSP" value="true" />
       <option name="COMPLETION" value="false" />
       <option name="OTHER" value="false" />
     </context>

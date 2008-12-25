@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NonNls;
  */
 public class JavaDefaultLiveTemplatesProvider implements DefaultLiveTemplatesProvider {
   private static final @NonNls String[] DEFAULT_TEMPLATES = new String[]{
-    "/liveTemplates/html_xml",
     "/liveTemplates/iterations",
     "/liveTemplates/other",
     "/liveTemplates/output",
