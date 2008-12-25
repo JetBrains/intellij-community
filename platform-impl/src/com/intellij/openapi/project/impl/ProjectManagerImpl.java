@@ -36,8 +36,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.HashMap;
@@ -301,8 +301,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @NotNull
   public Project[] getOpenProjects() {
-    if (ApplicationManager.getApplication().isUnitTestMode() && myOpenProjects.isEmpty() && myCurrentTestProject != null) {
-      return new Project[] {myCurrentTestProject};
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final Project currentTestProject = myCurrentTestProject;
+      if (myOpenProjects.isEmpty() && currentTestProject != null && !currentTestProject.isDisposed()) {
+        return new Project[] {currentTestProject};
+      }
     }
     return myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }

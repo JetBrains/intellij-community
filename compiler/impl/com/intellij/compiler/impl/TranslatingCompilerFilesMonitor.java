@@ -910,40 +910,44 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       });
     }
 
-    private void processNewFile(VirtualFile file) {
-      for (final Project project : myProjectManager.getOpenProjects()) {
-        final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-        if (rootManager.getFileIndex().isInSourceContent(file)) {
-          final int projectId = getProjectId(project);
-          final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
-          processRecursively(file, new FileProcessor() {
-            public void execute(final VirtualFile file) {
-              if (isCompilable(file)) {
-                addSourceForRecompilation(projectId, file, null);
-              }
-            }
-
-            boolean isCompilable(VirtualFile file) {
-              for (TranslatingCompiler translator : translators) {
-                if (translator.isCompilableFile(file, DummyCompileContext.getInstance())) {
-                  return true;
-                }
-              }
-              return false;
-            }
-          });
-        }
-        else {
-          if (belongsToIntermediateSources(file, project)) {
+    private void processNewFile(final VirtualFile file) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        // need read action to ensure that the project was not disposed during the iteration over the project list
+        public void run() {
+          for (final Project project : myProjectManager.getOpenProjects()) {
+            final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
             final int projectId = getProjectId(project);
-            processRecursively(file, new FileProcessor() {
-              public void execute(final VirtualFile file) {
-                addSourceForRecompilation(projectId, file, null);
+            if (rootManager.getFileIndex().isInSourceContent(file)) {
+              final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
+              processRecursively(file, new FileProcessor() {
+                public void execute(final VirtualFile file) {
+                  if (isCompilable(file)) {
+                    addSourceForRecompilation(projectId, file, null);
+                  }
+                }
+
+                boolean isCompilable(VirtualFile file) {
+                  for (TranslatingCompiler translator : translators) {
+                    if (translator.isCompilableFile(file, DummyCompileContext.getInstance())) {
+                      return true;
+                    }
+                  }
+                  return false;
+                }
+              });
+            }
+            else {
+              if (belongsToIntermediateSources(file, project)) {
+                processRecursively(file, new FileProcessor() {
+                  public void execute(final VirtualFile file) {
+                    addSourceForRecompilation(projectId, file, null);
+                  }
+                });
               }
-            });
+            }
           }
         }
-      }
+      });
     }
   }
 
