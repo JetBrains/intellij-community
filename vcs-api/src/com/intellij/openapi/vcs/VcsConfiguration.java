@@ -54,8 +54,8 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
-  public boolean PERFORM_UPDATE_IN_BACKGROUND = false;
-  public boolean PERFORM_COMMIT_IN_BACKGROUND = false;
+  public boolean PERFORM_UPDATE_IN_BACKGROUND = true;
+  public boolean PERFORM_COMMIT_IN_BACKGROUND = true;
   public boolean PERFORM_EDIT_IN_BACKGROUND = true;
   public boolean PERFORM_CHECKOUT_IN_BACKGROUND = true;
   public boolean PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
