@@ -81,6 +81,12 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       if (userObject instanceof AbstractTreeNode) {
         simpleTextAttributes = getSimpleTextAttributes(((AbstractTreeNode)userObject).getPresentation());
       }
+      else if (userObject instanceof NodeDescriptor) {
+        final Object element = ((NodeDescriptor)userObject).getElement();
+        if (element instanceof AbstractTreeNode) {
+          simpleTextAttributes = getSimpleTextAttributes(((AbstractTreeNode)element).getPresentation());
+        }
+      }
     }
     if (color != null) {
       final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
