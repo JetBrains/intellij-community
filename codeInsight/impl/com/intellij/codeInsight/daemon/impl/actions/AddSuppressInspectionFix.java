@@ -46,7 +46,7 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
       return null;
     }
     PsiElement container = context;
-    while (!(container instanceof PsiDocCommentOwner) || container instanceof PsiTypeParameter) {
+    while (container instanceof PsiAnonymousClass || !(container instanceof PsiDocCommentOwner) || container instanceof PsiTypeParameter) {
       container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
       if (container == null) return null;
     }
