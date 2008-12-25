@@ -19,6 +19,7 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import static com.jetbrains.python.PyBundle.message;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 
@@ -35,44 +36,56 @@ public class FunctionParsing extends Parsing {
   public void parseFunctionDeclaration() {
     assertCurrentToken(PyTokenTypes.DEF_KEYWORD);
     final PsiBuilder.Marker functionMarker = myBuilder.mark();
+    parseFunctionInnards(functionMarker);
+  }
+
+  protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
     myBuilder.advanceLexer();
     if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
       myBuilder.advanceLexer();
     }
     else {
-      myBuilder.error("function name expected");
+      myBuilder.error(message("PARSE.expected.func.name"));
     }
 
     parseParameterList();
-    checkMatches(PyTokenTypes.COLON, "colon expected");
+    checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
     getStatementParser().parseSuite(functionMarker, PyElementTypes.FUNCTION_DECLARATION);
   }
 
   public void parseDecoratedFunctionDeclaration() {
-    assertCurrentToken(PyTokenTypes.AT);
+    assertCurrentToken(PyTokenTypes.AT); // ??? need this?
     final PsiBuilder.Marker functionMarker = myBuilder.mark();
-    myBuilder.advanceLexer();
-    getStatementParser().parseDottedName();
-    if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-      getExpressionParser().parseArgumentList(myBuilder);
+    final PsiBuilder.Marker decoListMarker = myBuilder.mark();
+    boolean decorated = false;
+    while (myBuilder.getTokenType() == PyTokenTypes.AT) {
+      PsiBuilder.Marker decoratorMarker = myBuilder.mark();
+      myBuilder.advanceLexer();
+      getStatementParser().parseDottedName();
+      if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
+        getExpressionParser().parseArgumentList(myBuilder);
+      }
+      checkMatches(PyTokenTypes.STATEMENT_BREAK, message("PARSE.expected.statement.break"));
+      decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
+      decorated = true;
     }
-    checkMatches(PyTokenTypes.STATEMENT_BREAK, "statement break expected");
-    if (myBuilder.getTokenType() == PyTokenTypes.AT) {
-      parseDecoratedFunctionDeclaration();
-    }
-    else if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
-      parseFunctionDeclaration();
+    if (decorated) decoListMarker.done(PyElementTypes.DECORATOR_LIST);
+    //else decoListMarker.rollbackTo(); 
+    if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
+      parseFunctionInnards(functionMarker); // it calls functionMarker.done()
     }
     else {
-      myBuilder.error("'def' or '@' expected");
+      myBuilder.error(message("PARSE.expected.@.or.def"));
+      PsiBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
+      parameterList.done(PyElementTypes.PARAMETER_LIST);
+      functionMarker.done(PyElementTypes.FUNCTION_DECLARATION);
     }
-    functionMarker.done(PyElementTypes.DECORATED_FUNCTION_DECLARATION);
   }
 
   private void parseParameterList() {
     final PsiBuilder.Marker parameterList;
     if (myBuilder.getTokenType() != PyTokenTypes.LPAR) {
-      myBuilder.error("( expected");
+      myBuilder.error(message("PARSE.expected.lpar"));
       parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
       parameterList.done(PyElementTypes.PARAMETER_LIST);
       return;
@@ -100,7 +113,7 @@ public class FunctionParsing extends Parsing {
           parseParameterSubList();
         }
         else {
-          myBuilder.error(", or ( or ) expected");
+          myBuilder.error(message("PARSE.expected.comma.lpar.rpar"));
           break;
         }
       }
@@ -120,7 +133,7 @@ public class FunctionParsing extends Parsing {
         parameter.done(PyElementTypes.FORMAL_PARAMETER);
       }
       else {
-        myBuilder.error("formal parameter name expected");
+        myBuilder.error(message("PARSE.expected.formal.param.name"));
         parameter.rollbackTo();
       }
     }
@@ -149,7 +162,7 @@ public class FunctionParsing extends Parsing {
         break;
       }
       if (myBuilder.getTokenType() != PyTokenTypes.COMMA) {
-        myBuilder.error(", or ( or ) expected");
+        myBuilder.error(message("PARSE.expected.comma.lpar.rpar"));
         break;
       }
       myBuilder.advanceLexer();

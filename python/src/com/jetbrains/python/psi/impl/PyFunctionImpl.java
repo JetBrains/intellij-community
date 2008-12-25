@@ -80,7 +80,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @NotNull
   public PyParameterList getParameterList() {
-    return (PyParameterList) getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
+    return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST); 
   }
 
   @NotNull
@@ -107,6 +107,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     return null;
+  }
+
+  @Nullable
+  public PyDecoratorList getDecoratorList() {
+    return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
   }
 
   @Override

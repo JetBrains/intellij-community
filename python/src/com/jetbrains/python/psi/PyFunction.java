@@ -50,4 +50,7 @@ public interface PyFunction extends PsiNamedElement, PyElement, NameDefiner, PyD
 
   @Nullable
   PyClass getContainingClass();
+
+  @Nullable
+  PyDecoratorList getDecoratorList();
 }
