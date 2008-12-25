@@ -542,7 +542,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   public boolean isValid() {
-    return !myDisposed;
+    return !myDisposed && !myProject.isDisposed();
   }
 
   public void selectNotify() {
