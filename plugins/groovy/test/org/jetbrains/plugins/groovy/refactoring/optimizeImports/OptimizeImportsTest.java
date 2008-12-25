@@ -96,6 +96,15 @@ public class OptimizeImportsTest extends CodeInsightFixtureTestCase {
     doTest(getTestName(false) + ".groovy");
   }
 
+  public void testExtraLineFeed() throws Throwable {
+    myFixture.addClass("package groovy.io; public class EncodingAwareBufferedWriter {}");
+    myFixture.addClass("package groovy.io; public class PlatformLineWriter {}");
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/bar.groovy"));
+    doOptimizeImports();
+    doOptimizeImports();
+    myFixture.checkResultByFile(getTestName(false) + ".groovy");
+  }
+
   public void testSemicolons() throws Throwable {
     doTest("A.groovy");
   }
@@ -107,14 +116,7 @@ public class OptimizeImportsTest extends CodeInsightFixtureTestCase {
     try {
       myFixture.configureByFile(filePath);
 
-      GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
-      final Runnable runnable = optimizer.processFile(myFixture.getFile());
-
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(runnable);
-        }
-      }, "Optimize imports", null);
+      doOptimizeImports();
 
       myFixture.checkResultByFile("result.test");
 
@@ -122,6 +124,17 @@ public class OptimizeImportsTest extends CodeInsightFixtureTestCase {
     finally {
       CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     }
+  }
+
+  private void doOptimizeImports() {
+    GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
+    final Runnable runnable = optimizer.processFile(myFixture.getFile());
+
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(runnable);
+      }
+    }, "Optimize imports", null);
   }
 
 }

@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -221,8 +222,21 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                         ((GrImportStatement)anchor).isAliasedImport() && !statement.isAliasedImport();
     }
 
-    if (anchor != null && (!(anchor instanceof GrImportStatement) || isAliasedImport)) {
-      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
+    if (anchor != null) {
+      int lineFeedCount = 0;
+      if (!(anchor instanceof GrImportStatement) || isAliasedImport) {
+        lineFeedCount++;
+      }
+      final PsiElement prev = result.getPrevSibling();
+      if (prev instanceof PsiWhiteSpace) {
+        lineFeedCount += StringUtil.getOccurenceCount(prev.getText(), '\n');
+      }
+      if (lineFeedCount > 0) {
+        getNode().addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeatSymbol('\n', lineFeedCount), result.getNode());
+      }
+      if (prev instanceof PsiWhiteSpace) {
+        prev.delete();
+      }
     }
 
     GrImportStatement importStatement = (GrImportStatement)result;
@@ -230,8 +244,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (next != null) {
       ASTNode node = next.getNode();
       if (node != null && GroovyTokenTypes.mNLS == node.getElementType()) {
-        GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
-        next.replace(factory.createLineTerminator(2));
+        next.replace(GroovyPsiElementFactory.getInstance(statement.getProject()).createLineTerminator(2));
       }
     }
     return importStatement;
