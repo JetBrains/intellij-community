@@ -18,6 +18,7 @@ package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.GenerationOptions;
+import com.intellij.compiler.ant.ModuleChunk;
 import com.intellij.compiler.ant.Tag;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
@@ -32,32 +33,38 @@ import java.util.List;
  */
 public class Javac extends Tag {
 
-  public Javac(GenerationOptions genOptions, String moduleName, final String outputDir) {
-    super(genOptions.enableFormCompiler ? "javac2" : "javac",
-          getAttributes(genOptions, outputDir, moduleName));
-  }
-
-  private static Pair[] getAttributes(GenerationOptions genOptions, String outputDir, String moduleName) {
-    final List<Pair> pairs = new ArrayList<Pair>();
-    pairs.add(pair("destdir", outputDir));
-    pairs
-      .add(pair("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
-    pairs.add(
-      pair("nowarn", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_NO_WARNINGS)));
-    pairs.add(
-      pair("memorymaximumsize", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_MAX_MEMORY)));
-    pairs.add(pair("fork", "true"));
-    if (genOptions.forceTargetJdk) {
-      pairs.add(pair("executable", getExecutable(moduleName)));
+    public Javac(GenerationOptions genOptions, ModuleChunk moduleChunk, final String outputDir) {
+        super(getTagName(genOptions, moduleChunk), getAttributes(genOptions, outputDir, moduleChunk));
     }
-    return pairs.toArray(new Pair[pairs.size()]);
-  }
 
-  @Nullable
-  @NonNls private static String getExecutable(String moduleName) {
-    if (moduleName == null) {
-      return null;
+    private static String getTagName(GenerationOptions genOptions, ModuleChunk moduleChunk) {
+        if (moduleChunk.getCustomCompilers().length > 0) {
+            return "instrumentIdeaExtensions";
+        }
+        return genOptions.enableFormCompiler ? "javac2" : "javac";
     }
-    return BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkBinProperty(moduleName)) + "/javac";
-  }
+
+    private static Pair[] getAttributes(GenerationOptions genOptions, String outputDir, ModuleChunk moduleChunk) {
+        final List<Pair> pairs = new ArrayList<Pair>();
+        pairs.add(pair("destdir", outputDir));
+        if (moduleChunk.getCustomCompilers().length == 0) {
+            pairs.add(pair("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
+            pairs.add(pair("nowarn", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_NO_WARNINGS)));
+            pairs.add(pair("memorymaximumsize", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_MAX_MEMORY)));
+            pairs.add(pair("fork", "true"));
+            if (genOptions.forceTargetJdk) {
+                pairs.add(pair("executable", getExecutable(moduleChunk.getName())));
+            }
+        }
+        return pairs.toArray(new Pair[pairs.size()]);
+    }
+
+    @Nullable
+    @NonNls
+    private static String getExecutable(String moduleName) {
+        if (moduleName == null) {
+            return null;
+        }
+        return BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkBinProperty(moduleName)) + "/javac";
+    }
 }

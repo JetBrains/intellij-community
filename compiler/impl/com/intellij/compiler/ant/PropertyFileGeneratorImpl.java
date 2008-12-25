@@ -5,6 +5,7 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
@@ -26,60 +27,63 @@ import java.util.Set;
  *         Date: Nov 27, 2004
  */
 public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
-  /**
-   * List of the properties
-   */
-  private List<Pair<String, String>> myProperties = new ArrayList<Pair<String, String>>();
+    /**
+     * List of the properties
+     */
+    private List<Pair<String, String>> myProperties = new ArrayList<Pair<String, String>>();
 
-  /**
-   * A constctor that extracts all neeed properties for ant build from the project.
-   *
-   * @param project a project to examine
-   * @param genOptions generation options
-   */
-  public PropertyFileGeneratorImpl(Project project, GenerationOptions genOptions) {
-    // path variables
-    final PathMacros pathMacros = PathMacros.getInstance();
-    final Set<String> macroNamesSet = pathMacros.getUserMacroNames();
-    if (macroNamesSet.size() > 0) {
-      final String[] macroNames = macroNamesSet.toArray(new String[macroNamesSet.size()]);
-      Arrays.sort(macroNames);
-      for (final String macroName : macroNames) {
-        addProperty(BuildProperties.getPathMacroProperty(macroName), pathMacros.getValue(macroName));
-      }
-    }
-    // jdk homes
-    if (genOptions.forceTargetJdk) {
-      final Sdk[] usedJdks = BuildProperties.getUsedJdks(project);
-      for (Sdk jdk : usedJdks) {
-        if (jdk.getHomeDirectory() == null) {
-          continue;
+    /**
+     * A constctor that extracts all neeed properties for ant build from the project.
+     *
+     * @param project    a project to examine
+     * @param genOptions generation options
+     */
+    public PropertyFileGeneratorImpl(Project project, GenerationOptions genOptions) {
+        // path variables
+        final PathMacros pathMacros = PathMacros.getInstance();
+        final Set<String> macroNamesSet = pathMacros.getUserMacroNames();
+        if (macroNamesSet.size() > 0) {
+            final String[] macroNames = macroNamesSet.toArray(new String[macroNamesSet.size()]);
+            Arrays.sort(macroNames);
+            for (final String macroName : macroNames) {
+                addProperty(BuildProperties.getPathMacroProperty(macroName), pathMacros.getValue(macroName));
+            }
         }
-        final File homeDir = BuildProperties.toCanonicalFile(VfsUtil.virtualToIoFile(jdk.getHomeDirectory()));
-        addProperty(BuildProperties.getJdkHomeProperty(jdk.getName()), homeDir.getPath().replace(File.separatorChar, '/'));
-      }
+        // jdk homes
+        if (genOptions.forceTargetJdk) {
+            final Sdk[] usedJdks = BuildProperties.getUsedJdks(project);
+            for (Sdk jdk : usedJdks) {
+                if (jdk.getHomeDirectory() == null) {
+                    continue;
+                }
+                final File homeDir = BuildProperties.toCanonicalFile(VfsUtil.virtualToIoFile(jdk.getHomeDirectory()));
+                addProperty(BuildProperties.getJdkHomeProperty(jdk.getName()), homeDir.getPath().replace(File.separatorChar, '/'));
+            }
+        }
+        // generate idea.home property
+        if (genOptions.isIdeaHomeGenerated()) {
+            addProperty(BuildProperties.PROPERTY_IDEA_HOME, PathManager.getHomePath());
+        }
+        ChunkBuildExtension.generateAllProperties(this, project, genOptions);
     }
 
-    ChunkBuildExtension.generateAllProperties(this, project, genOptions);
-  }
-
-  public void addProperty(String name, String value) {
-    myProperties.add(new Pair<String, String>(name, value));
-  }
-
-  @Override
-  public void generate(PrintWriter out) throws IOException {
-    boolean isFirst = true;
-    for (final Pair<String, String> pair : myProperties) {
-      if (!isFirst) {
-        crlf(out);
-      }
-      else {
-        isFirst = false;
-      }
-      out.print(StringUtil.escapeProperty(pair.getFirst(), true));
-      out.print("=");
-      out.print(StringUtil.escapeProperty(pair.getSecond(), false));
+    public void addProperty(String name, String value) {
+        myProperties.add(new Pair<String, String>(name, value));
     }
-  }
+
+    @Override
+    public void generate(PrintWriter out) throws IOException {
+        boolean isFirst = true;
+        for (final Pair<String, String> pair : myProperties) {
+            if (!isFirst) {
+                crlf(out);
+            }
+            else {
+                isFirst = false;
+            }
+            out.print(StringUtil.escapeProperty(pair.getFirst(), true));
+            out.print("=");
+            out.print(StringUtil.escapeProperty(pair.getSecond(), false));
+        }
+    }
 }

@@ -32,93 +32,104 @@ import java.io.IOException;
  *         Date: Mar 19, 2004
  */
 public class GenerationUtils {
-  private GenerationUtils() {
-  }
-
-  /**
-   * Get relative file
-   *
-   * @param file       a valid file (must be either belong to {@link com.intellij.openapi.vfs.LocalFileSystem}  or to point to the root entry on
-   *                   {@link com.intellij.openapi.vfs.JarFileSystem}.
-   * @param chunk      a module chunk.
-   * @param genOptions generation options
-   * @return a relative path
-   */
-  @Nullable
-  public static String toRelativePath(final VirtualFile file, final ModuleChunk chunk, final GenerationOptions genOptions) {
-    final Module module = chunk.getModules()[0];
-    final File moduleBaseDir = chunk.getBaseDir();
-    return toRelativePath(file, moduleBaseDir, BuildProperties.getModuleBasedirProperty(module), genOptions, !chunk.isSavePathsRelative());
-  }
-
-  public static String toRelativePath(final String file, final File baseDir, final Module module, final GenerationOptions genOptions) {
-    return toRelativePath(file, baseDir, BuildProperties.getModuleBasedirProperty(module), genOptions, !module.isSavePathsRelative());
-  }
-
-  public static String toRelativePath(final String path, final ModuleChunk chunk, final GenerationOptions genOptions) {
-    return GenerationUtils.toRelativePath(path, chunk.getBaseDir(), BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions,
-                                          !chunk.isSavePathsRelative());
-  }
-
-  /**
-   * Get relative file
-   *
-   * @param file                          a valid file (must be either belong to {@link com.intellij.openapi.vfs.LocalFileSystem}  or to point to the root entry on
-   *                                      {@link com.intellij.openapi.vfs.JarFileSystem}.
-   * @param baseDir                       base director for relative path calculation
-   * @param baseDirPropertyName           property name for the base directory
-   * @param genOptions                    generation options
-   * @param useAbsolutePathsForOuterPaths if true absolute paths will be used for outer paths.
-   * @return a relative path
-   */
-  @Nullable
-  public static String toRelativePath(final VirtualFile file,
-                                      final File baseDir,
-                                      final String baseDirPropertyName,
-                                      final GenerationOptions genOptions,
-                                      final boolean useAbsolutePathsForOuterPaths) {
-    final String localPath = PathUtil.getLocalPath(file);
-    if (localPath == null) {
-      return null;
+    private GenerationUtils() {
     }
-    return toRelativePath(localPath, baseDir, baseDirPropertyName, genOptions, useAbsolutePathsForOuterPaths);
-  }
 
-  public static String toRelativePath(String path,
-                                      File baseDir,
-                                      @NonNls final String baseDirPropertyName,
-                                      GenerationOptions genOptions,
-                                      boolean useAbsolutePathsForOuterPaths) {
-    path = path.replace(File.separatorChar, '/');
-    final String substitutedPath = genOptions.subsitutePathWithMacros(path);
-    if (!substitutedPath.equals(path)) {
-      // path variable substitution has highest priority
-      return substitutedPath;
+    /**
+     * Get relative file
+     *
+     * @param file       a valid file (must be either belong to {@link com.intellij.openapi.vfs.LocalFileSystem}  or to point to the root entry on
+     *                   {@link com.intellij.openapi.vfs.JarFileSystem}.
+     * @param chunk      a module chunk.
+     * @param genOptions generation options
+     * @return a relative path
+     */
+    @Nullable
+    public static String toRelativePath(final VirtualFile file, final ModuleChunk chunk, final GenerationOptions genOptions) {
+        final Module module = chunk.getModules()[0];
+        final File moduleBaseDir = chunk.getBaseDir();
+        return toRelativePath(file, moduleBaseDir, BuildProperties.getModuleBasedirProperty(module), genOptions,
+                              !chunk.isSavePathsRelative());
     }
-    if (baseDir != null) {
-      File base;
-      try {
-        // use canonical paths in order to resolve symlinks
-        base = baseDir.getCanonicalFile();
-      }
-      catch (IOException e) {
-        base = baseDir;
-      }
-      final String relativepath = FileUtil.getRelativePath(base, new File(path));
-      if (relativepath != null) {
-        final boolean shouldUseAbsolutePath = useAbsolutePathsForOuterPaths && relativepath.indexOf("..") >= 0;
-        if (!shouldUseAbsolutePath) {
-          final String _relativePath = relativepath.replace(File.separatorChar, '/');
-          final String root = BuildProperties.propertyRef(baseDirPropertyName);
-          return ".".equals(_relativePath) ? root : root + "/" + _relativePath;
+
+    public static String toRelativePath(final String file, final File baseDir, final Module module, final GenerationOptions genOptions) {
+        return toRelativePath(file, baseDir, BuildProperties.getModuleBasedirProperty(module), genOptions, !module.isSavePathsRelative());
+    }
+
+    public static String toRelativePath(final String path, final ModuleChunk chunk, final GenerationOptions genOptions) {
+        return GenerationUtils.toRelativePath(path, chunk.getBaseDir(), BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions,
+                                              !chunk.isSavePathsRelative());
+    }
+
+    /**
+     * Get relative file
+     *
+     * @param file                          a valid file (must be either belong to {@link com.intellij.openapi.vfs.LocalFileSystem}  or to point to the root entry on
+     *                                      {@link com.intellij.openapi.vfs.JarFileSystem}.
+     * @param baseDir                       base director for relative path calculation
+     * @param baseDirPropertyName           property name for the base directory
+     * @param genOptions                    generation options
+     * @param useAbsolutePathsForOuterPaths if true absolute paths will be used for outer paths.
+     * @return a relative path
+     */
+    @Nullable
+    public static String toRelativePath(final VirtualFile file,
+                                        final File baseDir,
+                                        final String baseDirPropertyName,
+                                        final GenerationOptions genOptions,
+                                        final boolean useAbsolutePathsForOuterPaths) {
+        final String localPath = PathUtil.getLocalPath(file);
+        if (localPath == null) {
+            return null;
         }
-      }
+        return toRelativePath(localPath, baseDir, baseDirPropertyName, genOptions, useAbsolutePathsForOuterPaths);
     }
-    return substitutedPath;
-  }
 
-  public static String trimJarSeparator(final String path) {
-    return path.endsWith(JarFileSystem.JAR_SEPARATOR) ? path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length()) : path;
-  }
+    public static String toRelativePath(String path,
+                                        File baseDir,
+                                        @NonNls final String baseDirPropertyName,
+                                        GenerationOptions genOptions,
+                                        boolean useAbsolutePathsForOuterPaths) {
+        path = normalizePath(path);
+        final String substitutedPath = genOptions.subsitutePathWithMacros(path);
+        if (!substitutedPath.equals(path)) {
+            // path variable substitution has highest priority
+            return substitutedPath;
+        }
+        if (baseDir != null) {
+            File base;
+            try {
+                // use canonical paths in order to resolve symlinks
+                base = baseDir.getCanonicalFile();
+            }
+            catch (IOException e) {
+                base = baseDir;
+            }
+            final String relativepath = FileUtil.getRelativePath(base, new File(path));
+            if (relativepath != null) {
+                final boolean shouldUseAbsolutePath = useAbsolutePathsForOuterPaths && relativepath.indexOf("..") >= 0;
+                if (!shouldUseAbsolutePath) {
+                    final String _relativePath = relativepath.replace(File.separatorChar, '/');
+                    final String root = BuildProperties.propertyRef(baseDirPropertyName);
+                    return ".".equals(_relativePath) ? root : root + "/" + _relativePath;
+                }
+            }
+        }
+        return substitutedPath;
+    }
+
+    /**
+     * Normalize path by ensuring that only "/" is used as file name separator.
+     *
+     * @param path the path to normalize
+     * @return the normalized path
+     */
+    public static String normalizePath(String path) {
+        return path.replace(File.separatorChar, '/');
+    }
+
+    public static String trimJarSeparator(final String path) {
+        return path.endsWith(JarFileSystem.JAR_SEPARATOR) ? path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length()) : path;
+    }
 
 }
