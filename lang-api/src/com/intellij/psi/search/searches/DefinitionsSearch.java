@@ -18,6 +18,7 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Query;
+import com.intellij.util.UniqueResultsQuery;
 
 /**
  * The search is used in two IDE navigation functions namely Go To Implementation (Ctrl+Alt+B) and
@@ -30,6 +31,6 @@ public class DefinitionsSearch extends ExtensibleQueryFactory<PsiElement, PsiEle
   public static DefinitionsSearch INSTANCE = new DefinitionsSearch();
 
   public static Query<PsiElement> search(PsiElement definitionsOf) {
-    return INSTANCE.createQuery(definitionsOf);
+    return new UniqueResultsQuery<PsiElement>(INSTANCE.createQuery(definitionsOf));
   }
 }
