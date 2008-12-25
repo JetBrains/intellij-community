@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -106,13 +107,13 @@ public class SdkConfigurationUtil {
     });
   }
 
-  public static void configureDirectoryProjectSdk(final Project project, final SdkType sdkType) {
+  public static void configureDirectoryProjectSdk(final Project project, final SdkType... sdkTypes) {
     Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectJdk();
-    if (existingSdk != null && existingSdk.getSdkType() == sdkType) {
+    if (existingSdk != null && ArrayUtil.contains(existingSdk.getSdkType(), sdkTypes)) {
       return;
     }
 
-    Sdk sdk = findOrCreateSdk(sdkType);
+    Sdk sdk = findOrCreateSdk(sdkTypes [0]);
     if (sdk != null) {
       setDirectoryProjectSdk(project, sdk);
     }
