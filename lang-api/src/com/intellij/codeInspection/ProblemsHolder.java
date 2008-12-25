@@ -60,7 +60,7 @@ public class ProblemsHolder {
     }
     PsiElement element = problemDescriptor.getPsiElement();
     if (!isInPsiFile(element)) {
-      LOG.error("Reported element " + element + " is not from the file '"+myFile+"' the inspection was invoked for.");
+      LOG.error("Reported element " + element + " is not from the file '" + myFile + "' the inspection was invoked for. Message:" + problemDescriptor.getDescriptionTemplate());
     }
     myProblems.add(problemDescriptor);
   }
