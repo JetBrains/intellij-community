@@ -91,6 +91,7 @@ public abstract class CompletionService {
    */
   public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<LookupElement> consumer);
 
+  @Nullable
   public abstract CompletionProcess getCurrentCompletion();
 
   /**
