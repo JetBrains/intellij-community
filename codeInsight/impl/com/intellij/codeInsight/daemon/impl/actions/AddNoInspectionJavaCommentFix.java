@@ -21,7 +21,7 @@ public class AddNoInspectionJavaCommentFix extends AddNoInspectionCommentFix {
   @Nullable
   protected PsiElement getContainer(PsiElement context) {
     if (context == null || PsiTreeUtil.getParentOfType(context, JspMethodCall.class) != null) return null;
-    return PsiTreeUtil.getParentOfType(context, PsiStatement.class);
+    return PsiTreeUtil.getParentOfType(context, PsiStatement.class, false);
   }
 
   @Override
