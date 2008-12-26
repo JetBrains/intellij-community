@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILeafElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -833,7 +834,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     while (curToken < lastIdx) {
       final int start = myLexStarts[curToken];
       final int end = myLexEnds[curToken];
-      if (start < end) { // Empty token. Most probably a parser directive like indent/dedent in phyton
+      if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in phyton
         final IElementType type = myLexTypes[curToken];
         final LeafElement leaf = createLeaf(type, start, end);
         TreeUtil.addChildren(curToken == myLexemCount - 1 && whitespaceOrComment(type) ? getRoot(curNode) : curNode, leaf);

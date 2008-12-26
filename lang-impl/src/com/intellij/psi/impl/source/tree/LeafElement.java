@@ -24,7 +24,7 @@ public abstract class LeafElement extends TreeElement {
     myType = type;
   }
 
-  public final LeafElement findLeafElementAt(int offset) {
+  public LeafElement findLeafElementAt(int offset) {
     return this;
   }
 

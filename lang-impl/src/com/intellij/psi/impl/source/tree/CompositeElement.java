@@ -161,9 +161,14 @@ public class CompositeElement extends TreeElement {
     while (child != null) {
       final int textLength = child.getTextLength();
       if (textLength > offset) {
-        if (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
-          child = (TreeElement)ChameleonTransforming.transform((LeafElement)child);
-          continue;
+        if (child instanceof LeafElement) {
+          if (((LeafElement)child).isChameleon()) {
+            child = (TreeElement)ChameleonTransforming.transform((LeafElement)child);
+            continue;
+          }
+          else if (child instanceof ForeignLeafPsiElement) {
+            continue;
+          }
         }
         return child.findLeafElementAt(offset);
       }
