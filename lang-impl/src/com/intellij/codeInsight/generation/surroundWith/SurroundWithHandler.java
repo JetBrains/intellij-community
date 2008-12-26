@@ -80,7 +80,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
           if (surroundDescriptors.size() == 1) {
             doSurround(project, editor, surrounder, elements);
           } else {
-            invokeSurrondInTestMode(project, editor, surrounder, descriptor, elements);
+            if (invokeSurroundInTestMode(project, editor, surrounder, descriptor, elements)) break;
           }
         }
       }
@@ -88,14 +88,15 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
   }
 
   @TestOnly
-  private static void invokeSurrondInTestMode(final Project project, final Editor editor, final Surrounder surrounder,
-                                              final SurroundDescriptor descriptor, final PsiElement[] elements) {
+  private static boolean invokeSurroundInTestMode(final Project project, final Editor editor, final Surrounder surrounder,
+                                                  final SurroundDescriptor descriptor, final PsiElement[] elements) {
     for (final Surrounder surrounder1 : descriptor.getSurrounders()) {
       if (surrounder1.getClass().equals(surrounder.getClass())) {
         doSurround(project, editor, surrounder, elements);
-        return;
+        return true;
       }
     }
+    return false;
   }
 
   static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
