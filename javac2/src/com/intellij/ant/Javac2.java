@@ -210,7 +210,7 @@ public class Javac2 extends Javac {
             log("compiling form " + formFile.getAbsolutePath(), Project.MSG_VERBOSE);
             final LwRootContainer rootContainer;
             try {
-                rootContainer = Utils.getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(loader));
+                rootContainer = Utils.getRootContainer(formFile.toURL(), new CompiledClassPropertiesProvider(loader));
             }
             catch (AlienFormFileException e) {
                 // ignore non-IDEA forms
@@ -440,7 +440,7 @@ public class Javac2 extends Javac {
         final ArrayList urls = new ArrayList();
         for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
             final String s = tokenizer.nextToken();
-            urls.add(new File(s).toURI().toURL());
+            urls.add(new File(s).toURL());
         }
         final URL[] urlsArr = (URL[])urls.toArray(new URL[urls.size()]);
         return new URLClassLoader(urlsArr, null);
