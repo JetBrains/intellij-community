@@ -4,54 +4,35 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 
 /**
  * @author spleaner
  */
 public class ImageInfoReader {
   private static final Logger LOG = Logger.getInstance("#org.intellij.images.util.ImageInfoReader");
-  private String myFile;
 
-  private ImageInfoReader(@NotNull final String file) {
-    myFile = file;
+  private ImageInfoReader() {
   }
 
   @Nullable
   public static Info getInfo(@NotNull final String file) {
-    return new ImageInfoReader(file).read();
+    return read(file);
   }
 
   @Nullable
-  private Info read() {
-    RandomAccessFile raf;
+  public static Info getInfo(@NotNull final byte[] data) {
+    return read(data);
+  }
+
+  @Nullable
+  private static Info read(@NotNull final String file) {
+    final RandomAccessFile raf;
     try {
       //noinspection HardCodedStringLiteral
-      raf = new RandomAccessFile(myFile, "r");
+      raf = new RandomAccessFile(file, "r");
       try {
-        final int b1 = raf.read();
-        final int b2 = raf.read();
-
-        if (b1 == 0x47 && b2 == 0x49) {
-          return readGif(raf);
-        }
-
-        if (b1 == 0x89 && b2 == 0x50) {
-          return readPng(raf);
-        }
-
-        if (b1 == 0xff && b2 == 0xd8) {
-          return readJpeg(raf);
-        }
-
-        //if (b1 == 0x42 && b2 == 0x4d) {
-        //  return readBmp(raf);
-        //}
-      }
-      catch (IOException e) {
-        LOG.error(e);
+        return readFileData(raf);
       }
       finally {
         try {
@@ -62,22 +43,62 @@ public class ImageInfoReader {
         }
       }
     }
-    catch (FileNotFoundException e) {
-      // nothing
+    catch (IOException e) {
+      return null;
     }
+  }
+
+  @Nullable
+  private static Info read(@NotNull final byte[] data) {
+    final DataInputStream is = new DataInputStream(new ByteArrayInputStream(data));
+    try {
+      return readFileData(is);
+    }
+    catch (IOException e) {
+      return null;
+    }
+    finally {
+      try {
+        is.close();
+      }
+      catch (IOException e) {
+        // nothing
+      }
+    }
+  }
+
+
+  @Nullable
+  private static Info readFileData(@NotNull final DataInput di) throws IOException {
+    final int b1 = di.readUnsignedByte();
+    final int b2 = di.readUnsignedByte();
+
+    if (b1 == 0x47 && b2 == 0x49) {
+      return readGif(di);
+    }
+
+    if (b1 == 0x89 && b2 == 0x50) {
+      return readPng(di);
+    }
+
+    if (b1 == 0xff && b2 == 0xd8) {
+      return readJpeg(di);
+    }
+
+    //if (b1 == 0x42 && b2 == 0x4d) {
+    //  return readBmp(raf);
+    //}
 
     return null;
   }
 
-  private static Info readGif(RandomAccessFile raf) throws IOException {
+  @Nullable
+  private static Info readGif(DataInput di) throws IOException {
     final byte[] GIF_MAGIC_87A = {0x46, 0x38, 0x37, 0x61};
     final byte[] GIF_MAGIC_89A = {0x46, 0x38, 0x39, 0x61};
     byte[] a = new byte[11]; // 4 from the GIF signature + 7 from the global header
 
-    if (raf.read(a) != 11) {
-      return null;
-    }
-
+    di.readFully(a);
     if ((!eq(a, 0, GIF_MAGIC_89A, 0, 4)) && (!eq(a, 0, GIF_MAGIC_87A, 0, 4))) {
       return null;
     }
@@ -112,12 +133,11 @@ public class ImageInfoReader {
     return new Info(width, height, bpp);
   }
 
-  private static Info readJpeg(RandomAccessFile raf) throws IOException {
+  @Nullable
+  private static Info readJpeg(DataInput di) throws IOException {
     byte[] a = new byte[13];
     while (true) {
-      if (raf.read(a, 0, 4) != 4) {
-        return null;
-      }
+      di.readFully(a, 0, 4);
 
       int marker = getShortBigEndian(a, 0);
       final int size = getShortBigEndian(a, 2);
@@ -128,20 +148,15 @@ public class ImageInfoReader {
 
       if (marker == 0xffe0) {
         if (size < 14) {
-          raf.skipBytes(size - 2);
+          di.skipBytes(size - 2);
           continue;
         }
 
-        if (raf.read(a, 0, 12) != 12) {
-          return null;
-        }
-
-        raf.skipBytes(size - 14);
+        di.readFully(a, 0, 12);
+        di.skipBytes(size - 14);
       }
       else if (marker >= 0xffc0 && marker <= 0xffcf && marker != 0xffc4 && marker != 0xffc8) {
-        if (raf.read(a, 0, 6) != 6) {
-          return null;
-        }
+        di.readFully(a, 0, 6);
 
         final int bpp = (a[0] & 0xff) * (a[5] & 0xff);
         final int width = getShortBigEndian(a, 3);
@@ -150,19 +165,17 @@ public class ImageInfoReader {
         return new Info(width, height, bpp);
       }
       else {
-        raf.skipBytes(size - 2);
+        di.skipBytes(size - 2);
       }
     }
   }
 
-  private static Info readPng(RandomAccessFile raf) throws IOException {
+  @Nullable
+  private static Info readPng(DataInput di) throws IOException {
     final byte[] PNG_MAGIC = {0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
     byte[] a = new byte[27];
 
-    if (raf.read(a) != 27) {
-      return null;
-    }
-
+    di.readFully(a);
     if (!eq(a, 0, PNG_MAGIC, 0, 6)) {
       return null;
     }
