@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,8 +106,11 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
       getField(panel).reset();
     }
     myEditCopy.copyFrom(myOrigInjection);
-
-    resetImpl();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      public void run() {
+        resetImpl();
+      }
+    });
   }
 
   protected abstract void resetImpl();
