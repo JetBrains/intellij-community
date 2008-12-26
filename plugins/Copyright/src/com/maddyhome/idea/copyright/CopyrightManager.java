@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -92,13 +93,16 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
         public void fileOpened(FileEditorManager fileEditorManager, VirtualFile virtualFile) {
           if (NewFileTracker.getInstance().contains(virtualFile)) {
             NewFileTracker.getInstance().remove(virtualFile);
-
             if (FileTypeUtil.getInstance().isSupportedFile(virtualFile)) {
-              Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(virtualFile);
+              final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(virtualFile);
               if (module != null) {
-                PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
+                final PsiFile file = PsiManager.getInstance(myProject).findFile(virtualFile);
                 if (file != null) {
-                  (new UpdateCopyrightProcessor(myProject, module, file)).run();
+                  ApplicationManager.getApplication().invokeLater(new Runnable(){
+                    public void run() {
+                      new UpdateCopyrightProcessor(myProject, module, file).run();
+                    }
+                  });
                 }
               }
             }
