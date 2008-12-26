@@ -185,22 +185,31 @@ public abstract class JspSpiUtil {
   }
 
   public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module) {
+    return buildUrls(virtualFile, module, OrderRootType.CLASSES_AND_OUTPUT);
+  }
+
+  public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module, OrderRootType rootType) {
     final List<URL> urls = new ArrayList<URL>();
     processClassPathItems(virtualFile, module, new Consumer<VirtualFile>() {
       public void consume(final VirtualFile file) {
         addUrl(urls, file);
       }
-    });
+    }, rootType);
     return urls;
   }
 
   public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<VirtualFile> consumer) {
+    processClassPathItems(virtualFile, module, consumer, OrderRootType.CLASSES_AND_OUTPUT);
+  }
+
+  public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<VirtualFile> consumer,
+                                           OrderRootType rootType) {
     if (isJarFile(virtualFile)){
       consumer.consume(virtualFile);
     }
 
     if (module != null) {
-      for (VirtualFile file1 : ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES_AND_OUTPUT)) {
+      for (VirtualFile file1 : ModuleRootManager.getInstance(module).getFiles(rootType)) {
         final VirtualFile file;
         if (file1.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL)) {
           file = JarFileSystem.getInstance().getVirtualFileForJar(file1);

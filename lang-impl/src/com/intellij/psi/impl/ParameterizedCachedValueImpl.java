@@ -237,6 +237,9 @@ public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedVal
     else if (dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT) {
       return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
     }
+    else if (dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT) {
+      return myManager.getModificationTracker().getJavaStructureModificationCount();
+    }
     else if (dependency instanceof Document) {
       return ((Document)dependency).getModificationStamp();
     }
