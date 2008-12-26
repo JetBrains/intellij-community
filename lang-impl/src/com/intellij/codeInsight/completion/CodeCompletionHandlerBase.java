@@ -3,12 +3,12 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
@@ -381,6 +382,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
         item.handleInsert(context1);
+        PostprocessReformattingAspect.getInstance(context.project).doPostponedFormatting();
 
         if (context1.shouldAddCompletionChar() &&
             completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
