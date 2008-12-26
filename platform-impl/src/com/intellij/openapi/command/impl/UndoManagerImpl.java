@@ -501,6 +501,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     disposeCurrentMerger();
   }
 
+  @TestOnly
+  public void clearHistory() {
+    if (myCurrentMerger != null) myCurrentMerger.flushCurrentCommand();
+    if (myMerger != null) myMerger.flushCurrentCommand();
+  }
+
   private void disposeCurrentMerger() {
     LOG.assertTrue(myCommandLevel == 0);
     if (myCurrentMerger != null) {
