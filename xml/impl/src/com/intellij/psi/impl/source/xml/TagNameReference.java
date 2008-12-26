@@ -99,18 +99,20 @@ public class TagNameReference implements PsiReference {
   @Nullable
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final XmlTag element = getTagElement();
-    if (element == null) return null;
+    if (element == null || !myStartTagFlag) return element;
 
     if (newElementName.indexOf(':') == -1) {
       final String namespacePrefix = element.getNamespacePrefix();
-      if (namespacePrefix.length() > 0) {
+      final int index = newElementName.lastIndexOf('.');
+
+      if (index != -1) {
         final PsiElement psiElement = resolve();
+        
         if (psiElement instanceof PsiFile) {
-          final int index = newElementName.lastIndexOf('.');
-          if (index != -1) newElementName = newElementName.substring(0, index);
+          newElementName = newElementName.substring(0, index);
         }
-        newElementName = namespacePrefix + ":" + newElementName;
       }
+      newElementName = (namespacePrefix.length() > 0 ? namespacePrefix + ":":namespacePrefix) + newElementName;
     }
     element.setName(newElementName);
     return element;
