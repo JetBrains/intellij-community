@@ -40,4 +40,9 @@ public class ForeignLeafPsiElement extends LeafPsiElement {
   public int getStartOffset() {
     return 0;
   }
+
+  @Override
+  public String toString() {
+    return "ForeignLeaf(" + getElementType() + ": " + getText() + ")";
+  }
 }

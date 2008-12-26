@@ -309,13 +309,21 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public int hc() {
       if (myHC == -1) {
         int hc = 0;
-        final int start = myTokenStart;
-        final int end = myTokenEnd;
-        final CharSequence buf = myText;
-        final char[] bufArray = myTextArray;
+        if (myTokenType instanceof TokenWrapper){
+          final String value = ((TokenWrapper)myTokenType).getValue();
+          for (int i = 0; i < value.length(); i++) {
+            hc += value.charAt(i);
+          }
+        }
+        else {
+          final int start = myTokenStart;
+          final int end = myTokenEnd;
+          final CharSequence buf = myText;
+          final char[] bufArray = myTextArray;
 
-        for (int i = start; i < end; i++) {
-          hc += bufArray != null ? bufArray[i] : buf.charAt(i);
+          for (int i = start; i < end; i++) {
+            hc += bufArray != null ? bufArray[i] : buf.charAt(i);
+          }
         }
 
         myHC = hc;
@@ -333,6 +341,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public CharSequence getText() {
+      if (myTokenType instanceof TokenWrapper) {
+        return ((TokenWrapper)myTokenType).getValue();
+      }
+
       return myText.subSequence(myTokenStart, myTokenEnd);
     }
 
@@ -469,6 +481,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Nullable
   public String getTokenText() {
     if (eof()) return null;
+    final IElementType type = getTokenType();
+    if (type instanceof TokenWrapper) {
+      return ((TokenWrapper)type).getValue();
+    }
     return myText.subSequence(myLexStarts[myCurrentLexem], myLexEnds[myCurrentLexem]).toString();
   }
 
@@ -873,12 +889,24 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
     public ThreeState deepEqual(final ASTNode oldNode, final LighterASTNode newNode) {
       if (newNode instanceof Token) {
+        if (oldNode instanceof ForeignLeafPsiElement) {
+          final IElementType type = newNode.getTokenType();
+          if (type instanceof TokenWrapper) {
+            return ((TokenWrapper)type).getValue().equals(oldNode.getText()) ? ThreeState.YES : ThreeState.NO;
+          }
+          return ThreeState.NO;
+        }
+
         if (oldNode instanceof LeafElement) {
-          return ((LeafElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd) ? ThreeState.YES : ThreeState.NO;
+          return ((LeafElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd)
+                 ? ThreeState.YES
+                 : ThreeState.NO;
         }
 
         if (oldNode.getElementType() instanceof IChameleonElementType && newNode.getTokenType() instanceof IChameleonElementType) {
-          return ((TreeElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd) ? ThreeState.YES : ThreeState.NO;
+          return ((TreeElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd)
+                 ? ThreeState.YES
+                 : ThreeState.NO;
         }
       }
 
@@ -903,11 +931,22 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return ourAnyLanguageWhitespaceTokens.contains(n2.getTokenType()) || myWhitespaces.contains(n2.getTokenType());
       }
 
-      return n1.getElementType() == n2.getTokenType();
+      return derefToken(n1.getElementType()) == derefToken(n2.getTokenType());
+    }
+
+    public IElementType derefToken(IElementType probablyWrapper) {
+      if (probablyWrapper instanceof TokenWrapper) {
+        return derefToken(((TokenWrapper)probablyWrapper).getDelegate());
+      }
+      return probablyWrapper;
     }
 
     public boolean hashcodesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof LeafElement && n2 instanceof Token) {
+        if (n1 instanceof ForeignLeafPsiElement && n2.getTokenType() instanceof TokenWrapper) {
+          return n1.getText().equals(((TokenWrapper)n2.getTokenType()).getValue());
+        }
+
         return ((LeafElement)n1).textMatches(myText, ((Token)n2).myTokenStart, ((Token)n2).myTokenEnd);
       }
 
@@ -996,10 +1035,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       while (curToken < lastIdx) {
         final int start = myLexStarts[curToken];
         final int end = myLexEnds[curToken];
-        if (start < end) { // Empty token. Most probably a parser directive like indent/dedent in phyton
+        final IElementType type = myLexTypes[curToken];        
+        if (start < end || type instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in phyton
           Token lexem = myPool.alloc();
 
-          lexem.myTokenType = myLexTypes[curToken];
+          lexem.myTokenType = type;
           lexem.myTokenStart = start;
           lexem.myTokenEnd = end;
           ensureCapacity(into);
