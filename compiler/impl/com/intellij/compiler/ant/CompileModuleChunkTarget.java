@@ -80,8 +80,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
             final Tag srcTag = new Tag("src", Pair.create("refid", BuildProperties.getTestSourcepathProperty(moduleChunkName)));
             final Tag testClassPath = new Tag("classpath");
             testClassPath.add(new Tag("path", classpathRef));
-            testClassPath.add(new Tag("path", Pair.create("location", BuildProperties.propertyRef(
-                    BuildProperties.getOutputPathProperty(moduleChunkName)))));
+            testClassPath.add(new PathElement(BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(moduleChunkName))));
             myTestsTarget.add(new Mkdir(testOutputPathRef));
             createCustomCompilerTasks(project, moduleChunk, genOptions, true, customCompilers, compilerArgs, bootclasspathTag,
                                       testClassPath, compilerExcludes, srcTag, testOutputPathRef);
