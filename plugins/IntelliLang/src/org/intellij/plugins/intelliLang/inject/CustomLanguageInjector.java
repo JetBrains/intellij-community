@@ -21,17 +21,16 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
@@ -85,7 +84,6 @@ public final class CustomLanguageInjector implements ProjectComponent {
     ReferenceProvidersRegistry.getInstance(myProject)
         .registerReferenceProvider(TrueFilter.INSTANCE, PsiLiteralExpression.class, new LanguageReferenceProvider());
   }
-
 
   private void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     // optimization
@@ -221,8 +219,8 @@ public final class CustomLanguageInjector implements ProjectComponent {
     final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock? topBlock : firstLiteral.getContainingFile()}, "", true);
     final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
     final LinkedList<PsiExpression> places = new LinkedList<PsiExpression>();
-    boolean unparsable = false;
     places.add(firstLiteral);
+    boolean unparsable = false;
     while (!places.isEmpty()) {
       final PsiExpression curPlace = places.removeFirst();
       final PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(curPlace, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
@@ -311,7 +309,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
     return tmpMap;
   }
 
-  private boolean processAnnotationInjections(final PsiLiteralExpression firstLiteral, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+  private boolean processAnnotationInjections(@NotNull PsiLiteralExpression firstLiteral, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     final PsiAnnotation[] annotations =
       AnnotationUtilEx.getAnnotationFrom(annoElement, myInjectionConfiguration.getLanguageAnnotationPair(), true);
     if (annotations.length > 0) {
@@ -324,7 +322,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
     return false;
   }
 
-  private static void processInjectionWithContext(@Nullable final PsiLiteralExpression place, final boolean unparsable, final String langId,
+  private static void processInjectionWithContext(@NotNull final PsiLiteralExpression place, final boolean unparsable, final String langId,
                                                   final String prefix,
                                                   final String suffix,
                                                   final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
@@ -332,7 +330,6 @@ public final class CustomLanguageInjector implements ProjectComponent {
     final List<Object> objects = ContextComputationProcessor.collectOperands(place, prefix, suffix, unparsableRef);
     if (objects.isEmpty()) return;
     final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
-    final boolean dynamic = !objects.isEmpty();
     final int len = objects.size();
     for (int i = 0; i < len; i++) {
       String curPrefix = null;
@@ -354,8 +351,13 @@ public final class CustomLanguageInjector implements ProjectComponent {
           }
         }
       }
-      if (curHost == null) unparsableRef.set(Boolean.TRUE);
-      else list.add(Trinity.create(curHost, InjectedLanguage.create(langId, curPrefix, curSuffix, dynamic), ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
+      if (curHost == null) {
+        unparsableRef.set(Boolean.TRUE);
+      }
+      else {
+        list.add(Trinity.create(curHost, InjectedLanguage.create(langId, curPrefix, curSuffix, true),
+                                ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
+      }
     }
     for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
       trinity.first.putUserData(HAS_UNPARSABLE_FRAGMENTS, unparsableRef.get());
@@ -388,7 +390,6 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
   private static class MyLanguageInjector implements MultiHostInjector {
     private CustomLanguageInjector myInjector;
-    private static final Logger LOG = Logger.getInstance(CustomLanguageInjector.class.getName());
 
     MyLanguageInjector(CustomLanguageInjector injector) {
       myInjector = injector;
