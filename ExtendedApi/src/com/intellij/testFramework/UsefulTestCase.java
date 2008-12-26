@@ -283,6 +283,11 @@ public abstract class UsefulTestCase extends TestCase {
     return name;
   }
 
+  protected String getTestDirectoryName() {
+    final String testName = getTestName(true);
+    return testName.replaceAll("_.*", "");
+  }
+
   protected static void assertSameLinesWithFile(final String filePath, final String actualText) {
     String fileText;
     try {
