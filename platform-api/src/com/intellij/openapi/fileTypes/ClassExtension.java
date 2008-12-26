@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
   public ClassExtension(@NonNls final String epName) {
@@ -20,7 +21,7 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
   }
 
   protected List<T> buildExtensions(final String key, final Class classKey) {
-    final List<T> ts = super.buildExtensions(key, classKey);
+    final List<T> ts = new ArrayList<T>(super.buildExtensions(key, classKey));
 
     final Class[] interfaces = ReflectionCache.getInterfaces(classKey);
     for (final Class anInterface : interfaces) {

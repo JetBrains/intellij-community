@@ -291,7 +291,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public void setVirtualFile(final VirtualFile file) {
     myVirtualFile = file;
-    myDocument.clear();
+    if (myDocument != null) myDocument.clear();
     myPsiFile.set(null);
     myBaseLanguage = calcBaseLanguage(file, getManager().getProject());
     calcPhysical();

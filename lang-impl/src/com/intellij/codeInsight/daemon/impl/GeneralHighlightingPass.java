@@ -198,13 +198,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }, false);
     }
     if (injectedFiles.isEmpty()) return;
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
 
     JobUtil.invokeConcurrentlyForAll(injectedFiles, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
 
         AnnotationHolderImpl annotationHolder = createAnnotationHolder();
-        InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
-        highlightInjectedIn(injectedPsi, annotationHolder, errorFilters);
+        highlightInjectedIn(injectedPsi, annotationHolder, errorFilters, injectedLanguageManager);
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
         for (Annotation annotation : annotationHolder) {
           final TextRange fixedTextRange;
@@ -262,20 +262,20 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return textRange;
   }
 
-  private static void highlightInjectedIn(final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final HighlightErrorFilter[] errorFilters) {
-    final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
+  private static void highlightInjectedIn(final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final HighlightErrorFilter[] errorFilters,
+                                          final InjectedLanguageManager injectedLanguageManager) {
+    final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
     Language injectedLanguage = injectedPsi.getLanguage();
     final List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(injectedLanguage);
-    final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(injectedPsi.getProject());
     final AnnotationHolderImpl fixingOffsetsHolder = new AnnotationHolderImpl() {
       public boolean add(final Annotation annotation) {
         return true; // we are going to hand off the annotation to the annotationHolder anyway
       }
 
       protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-        List<TextRange> editables = ilManager.intersectWithAllEditableFragments(injectedPsi, range);
+        List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, range);
         Annotation firstAnnotation = null;
         for (TextRange editable : editables) {
           final TextRange patched = documentRange.injectedToHost(editable);
@@ -310,7 +310,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         error.setTooltip(info.toolTip);
         if (info.quickFixActionRanges != null) {
           for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> o : info.quickFixActionRanges) {
-            List<TextRange> editables = ilManager.intersectWithAllEditableFragments(injectedPsi, o.second);
+            List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, o.second);
             for (TextRange fixEditable : editables) {
               error.registerFix(o.first.getAction(), documentRange.injectedToHost(fixEditable));
             }

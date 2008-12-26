@@ -657,8 +657,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     if (isPhysical) {
       runRunnables(myRunnablesOnChange);
 
-      WeakReference[] refs = myWeakRunnablesOnChange.toArray(
-        new WeakReference[myWeakRunnablesOnChange.size()]);
+      WeakReference[] refs = myWeakRunnablesOnChange.toArray(new WeakReference[myWeakRunnablesOnChange.size()]);
       myWeakRunnablesOnChange.clear();
       for (WeakReference ref : refs) {
         Runnable runnable = ref != null ? (Runnable)ref.get() : null;

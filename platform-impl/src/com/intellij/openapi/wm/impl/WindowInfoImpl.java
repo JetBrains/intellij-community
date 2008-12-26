@@ -23,7 +23,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   /**
    * Default window weight.
    */
-  static final float DEFAULT_WEIGHT=.33f;
+  static final float DEFAULT_WEIGHT= 0.33f;
   static final float DEFAULT_SIDE_WEIGHT = 0.5f;
 
   private boolean myActive;
@@ -46,21 +46,21 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * The default value is <code>-1</code>.
    */
   private int myOrder;
-  @NonNls protected static final String ID_ATTR = "id";
-  @NonNls protected static final String ACTIVE_ATTR = "active";
-  @NonNls protected static final String ANCHOR_ATTR = "anchor";
-  @NonNls protected static final String AUTOHIDE_ATTR = "auto_hide";
-  @NonNls protected static final String INTERNAL_TYPE_ATTR = "internal_type";
-  @NonNls protected static final String TYPE_ATTR = "type";
-  @NonNls protected static final String VISIBLE_ATTR = "visible";
-  @NonNls protected static final String WEIGHT_ATTR = "weight";
-  @NonNls protected static final String SIDE_WEIGHT_ATTR = "sideWeight";
-  @NonNls protected static final String ORDER_ATTR = "order";
-  @NonNls protected static final String X_ATTR = "x";
-  @NonNls protected static final String Y_ATTR = "y";
-  @NonNls protected static final String WIDTH_ATTR = "width";
-  @NonNls protected static final String HEIGHT_ATTR = "height";
-  @NonNls protected static final String SIDE_TOOL_ATTR = "side_tool";
+  @NonNls static final String ID_ATTR = "id";
+  @NonNls static final String ACTIVE_ATTR = "active";
+  @NonNls static final String ANCHOR_ATTR = "anchor";
+  @NonNls static final String AUTOHIDE_ATTR = "auto_hide";
+  @NonNls static final String INTERNAL_TYPE_ATTR = "internal_type";
+  @NonNls static final String TYPE_ATTR = "type";
+  @NonNls static final String VISIBLE_ATTR = "visible";
+  @NonNls static final String WEIGHT_ATTR = "weight";
+  @NonNls static final String SIDE_WEIGHT_ATTR = "sideWeight";
+  @NonNls static final String ORDER_ATTR = "order";
+  @NonNls static final String X_ATTR = "x";
+  @NonNls static final String Y_ATTR = "y";
+  @NonNls static final String WIDTH_ATTR = "width";
+  @NonNls static final String HEIGHT_ATTR = "height";
+  @NonNls static final String SIDE_TOOL_ATTR = "side_tool";
 
 
   private boolean myWasRead;
@@ -101,22 +101,18 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * Copies all data from the passed <code>WindowInfo</code> into itself.
    */
   void copyFrom(final WindowInfoImpl info){
-    myActive=info.myActive;
-    myAnchor=info.myAnchor;
-    myAutoHide=info.myAutoHide;
-    if(info.myFloatingBounds!=null){
-      myFloatingBounds=(Rectangle)info.myFloatingBounds.clone();
-    }else{
-      myFloatingBounds=null;
-    }
-    myId=info.myId;
-    myType=info.myType;
-    myInternalType=info.myInternalType;
-    myVisible=info.myVisible;
-    myWeight=info.myWeight;
+    myActive = info.myActive;
+    myAnchor = info.myAnchor;
+    myAutoHide = info.myAutoHide;
+    myFloatingBounds = info.myFloatingBounds == null ? null : (Rectangle)info.myFloatingBounds.clone();
+    myId = info.myId;
+    myType = info.myType;
+    myInternalType = info.myInternalType;
+    myVisible = info.myVisible;
+    myWeight = info.myWeight;
     mySideWeight = info.mySideWeight;
-    myOrder=info.myOrder;
-    mySplitMode =info.mySplitMode;
+    myOrder = info.myOrder;
+    mySplitMode = info.mySplitMode;
   }
 
   /**
@@ -313,8 +309,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * Sets window weight and adjust it to [0..1] range if necessary.
    */
   void setWeight(float weight){
-    if(weight<.0f){
-      weight=.0f;
+    if(weight< 0.0f){
+      weight= 0.0f;
     }else if(weight>1.0f){
       weight=1.0f;
     }
@@ -322,8 +318,8 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   }
 
   void setSideWeight(float weight){
-    if(weight < .0f){
-      weight = .0f;
+    if(weight < 0.0f){
+      weight = 0.0f;
     }
     else if (weight > 1.0f){
       weight = 1.0f;
@@ -356,24 +352,18 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
       return false;
     }
     final WindowInfoImpl info=(WindowInfoImpl)obj;
-    if(
-      myActive!=info.myActive||
-      myAnchor!=info.myAnchor||
-      !myId.equals(info.myId)||
-      myAutoHide!=info.myAutoHide||
-      !Comparing.equal(myFloatingBounds,info.myFloatingBounds)||
-      myInternalType!=info.myInternalType||
-      myType!=info.myType||
-      myVisible!=info.myVisible||
-      myWeight!=info.myWeight||
-      mySideWeight != info.mySideWeight ||
-      myOrder!=info.myOrder ||
-      mySplitMode != info.mySplitMode
-    ){
-      return false;
-    }else{
-      return true;
-    }
+    return myActive == info.myActive &&
+           myAnchor == info.myAnchor &&
+           myId.equals(info.myId) &&
+           myAutoHide == info.myAutoHide &&
+           Comparing.equal(myFloatingBounds, info.myFloatingBounds) &&
+           myInternalType == info.myInternalType &&
+           myType == info.myType &&
+           myVisible == info.myVisible &&
+           myWeight == info.myWeight &&
+           mySideWeight == info.mySideWeight &&
+           myOrder == info.myOrder &&
+           mySplitMode == info.mySplitMode;
   }
 
   public int hashCode(){
@@ -382,7 +372,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
-    final StringBuffer buffer=new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     buffer.append(getClass().getName()).append('[');
     buffer.append("myId=").append(myId).append("; ");
     buffer.append("myVisible=").append(myVisible).append("; ");

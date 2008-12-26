@@ -200,7 +200,7 @@ public class BlockSupportImpl extends BlockSupport {
         hasErrorElementChild(leafElement.getTreePrev())) {
       return false;
     }
-    if (!leafElement.getTextRange().contains(new TextRange(startOffset, endOffset))) return false;
+    if (!leafElement.getTextRange().containsRange(startOffset, endOffset)) return false;
     final LeafElement leafElementToChange = treeFileElement.findLeafElementAt(changedOffset);
     if (leafElementToChange == null) return false;
     TextRange leafRangeToChange = leafElementToChange.getTextRange();

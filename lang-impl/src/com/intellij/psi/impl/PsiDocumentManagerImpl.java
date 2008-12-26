@@ -537,7 +537,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     int documentLength = document.getTextLength();
     if (psiFile.textMatches(editorText)) {
       LOG.assertTrue(psiFile.getTextLength() == documentLength);
-      LOG.debug("Consistent OK: length=" + documentLength + "; file=" + psiFile.getName() + ":" + psiFile.getClass());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Consistent OK: length=" + documentLength + "; file=" + psiFile.getName() + ":" + psiFile.getClass());
+      }
       return true;
     }
 

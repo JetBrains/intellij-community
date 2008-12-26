@@ -13,6 +13,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Calendar;
@@ -25,7 +26,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ApplicationInfoImpl");
 
-  @NonNls private final static String BUILD_STUB = "__BUILD_NUMBER__";
+  @NonNls private static final String BUILD_STUB = "__BUILD_NUMBER__";
   private String myCodeName = null;
   private String myMajorVersion = null;
   private String myMinorVersion = null;
@@ -194,7 +195,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   public String getFullApplicationName() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(getVersionName());
     buffer.append(" ");
     if (getMajorVersion() != null && !isEAP()) {
@@ -257,9 +258,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       int month = 0;
       int day = 0;
       try {
-        year = new Integer(dateString.substring(0, 4)).intValue();
-        month = new Integer(dateString.substring(4, 6)).intValue();
-        day = new Integer(dateString.substring(6, 8)).intValue();
+        year = Integer.parseInt(dateString.substring(0, 4));
+        month = Integer.parseInt(dateString.substring(4, 6));
+        day = Integer.parseInt(dateString.substring(6, 8));
       }
       catch (Exception ex) {
         //ignore
@@ -347,6 +348,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
 
+  @NotNull
   public String getComponentName() {
     return ApplicationNamesInfo.getComponentName();
   }
@@ -359,7 +361,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     @NonNls private static final String PATCHES_ATTR = "patches";
     @NonNls private static final String DOWNLOAD_ATTR = "download";
 
-    public UpdateUrlsImpl(Element element) {
+    private UpdateUrlsImpl(Element element) {
       if (element != null) {
         myCheckingUrl = element.getAttributeValue(CHECK_ATTR);
         myPatchesUrl = element.getAttributeValue(PATCHES_ATTR);

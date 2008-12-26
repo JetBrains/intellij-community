@@ -286,7 +286,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       return myTargetElement.isValid() &&
              myTargetElement != myElementAtPointer &&
              myTargetElement != myElementAtPointer.getParent() &&
-             new TextRange(0, document.getTextLength()).contains(new TextRange(myStartOffset, myEndOffset))
+             new TextRange(0, document.getTextLength()).containsRange(myStartOffset, myEndOffset)
           /* && targetNavigateable(myTargetElement)*/;
     }
   }
@@ -302,7 +302,7 @@ public class CtrlMouseHandler implements ProjectComponent {
     }
 
     public boolean isValid(Document document) {
-      return new TextRange(0, document.getTextLength()).contains(new TextRange(myStartOffset, myEndOffset));
+      return new TextRange(0, document.getTextLength()).containsRange(myStartOffset, myEndOffset);
     }
   }
 

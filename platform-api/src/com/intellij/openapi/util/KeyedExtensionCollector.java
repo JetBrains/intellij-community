@@ -11,10 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class KeyedExtensionCollector<T, KeyT> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.KeyedExtensionCollector");
@@ -84,7 +81,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
 
   protected List<T> buildExtensions(final String stringKey, final KeyT key) {
     final List<T> explicit = myExplicitExtensions.get(stringKey);
-    List<T> result = explicit != null ? new ArrayList<T>(explicit) : new ArrayList<T>();
+    List<T> result = null;
     final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
     if (point != null) {
       final KeyedLazyInstance<T>[] beans = point.getExtensions();
@@ -98,11 +95,14 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
             LOG.error(e);
             continue;
           }
+          if (result == null) {
+            result = explicit == null ? new ArrayList<T>() : new ArrayList<T>(explicit);
+          }
           result.add(instance);
         }
       }
     }
-    return result;
+    return result == null ? explicit == null ? Collections.<T>emptyList() : explicit : result;
   }
 
   @Nullable

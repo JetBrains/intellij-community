@@ -50,7 +50,11 @@ public class TextRange {
   }
 
   public boolean contains(@NotNull TextRange range) {
-    return myStartOffset <= range.getStartOffset() && myEndOffset >= range.getEndOffset();
+    return containsRange(range.getStartOffset(), range.getEndOffset());
+  }
+
+  public boolean containsRange(int startOffset, int endOffset) {
+    return myStartOffset <= startOffset && myEndOffset >= endOffset;
   }
 
   public String toString() {
@@ -97,7 +101,10 @@ public class TextRange {
   }
 
   public boolean intersects(@NotNull TextRange textRange) {
-    return Math.max(myStartOffset, textRange.getStartOffset()) <= Math.min(myEndOffset, textRange.getEndOffset());
+    return intersects(textRange.getStartOffset(), textRange.getEndOffset());
+  }
+  public boolean intersects(int startOffset, int endOffset) {
+    return Math.max(myStartOffset, startOffset) <= Math.min(myEndOffset, endOffset);
   }
   public boolean intersectsStrict(@NotNull TextRange textRange) {
     return Math.max(myStartOffset, textRange.getStartOffset()) < Math.min(myEndOffset, textRange.getEndOffset());
