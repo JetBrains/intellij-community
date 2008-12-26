@@ -219,8 +219,10 @@ public class CompileDriver {
 
   private void writeStatus(CompileStatus status, CompileContext context) {
     final File statusFile = new File(myCachesDirectoryPath, VERSION_FILE_NAME);
+
     final File lockFile = getLockFile();
     try {
+      FileUtil.createParentDirs(statusFile);
       statusFile.createNewFile();
       DataOutputStream out = new DataOutputStream(new FileOutputStream(statusFile));
       try {
@@ -230,6 +232,7 @@ public class CompileDriver {
         out.close();
       }
       if (status.COMPILATION_IN_PROGRESS) {
+        FileUtil.createParentDirs(lockFile);
         lockFile.createNewFile();
       }
       else {

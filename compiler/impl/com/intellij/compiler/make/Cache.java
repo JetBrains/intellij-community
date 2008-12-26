@@ -37,6 +37,7 @@ public class Cache {
 
   public Cache(@NonNls final String storePath, final int cacheSize) throws IOException {
     myStorePath = storePath;
+    new File(storePath).mkdirs();
     myQNameToClassInfoMap = new CachedPersistentHashMap<StorageClassId, ClassInfo>(new File(storePath, "classes"), ClassIdKeyDescriptor.INSTANCE, new DataExternalizer<ClassInfo>() {
       public void save(DataOutput out, ClassInfo value) throws IOException {
         value.save(out);

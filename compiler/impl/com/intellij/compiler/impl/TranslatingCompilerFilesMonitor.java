@@ -293,16 +293,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     catch (IOException e) {
       LOG.info(e);
       myOutputsToDelete.clear();
-      file.delete();
+      FileUtil.delete(file);
     }
   }
 
   public void disposeComponent() {
     final File file = new File(CompilerPaths.getCompilerSystemDirectory(), PATHS_TO_DELETE_FILENAME);
     try {
-      if (!file.exists()) {
-        file.createNewFile();
-      }
+      file.getParentFile().mkdirs();
       final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
       try {
         synchronized (myOutputsToDelete) {

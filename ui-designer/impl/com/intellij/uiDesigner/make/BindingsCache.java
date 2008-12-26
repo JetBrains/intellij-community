@@ -28,7 +28,13 @@ final class BindingsCache {
   public BindingsCache(final Project project) {
     final File cacheStoreDirectory = CompilerPaths.getCacheStoreDirectory(project);
     try {
-      myCache = cacheStoreDirectory != null ? createCache(cacheStoreDirectory) : null;
+      if (cacheStoreDirectory != null) {
+        FileUtil.createParentDirs(cacheStoreDirectory);
+        myCache = createCache(cacheStoreDirectory);
+      }
+      else {
+        myCache = null;
+      }
     }
     catch (IOException e) {
       LOG.info(e);

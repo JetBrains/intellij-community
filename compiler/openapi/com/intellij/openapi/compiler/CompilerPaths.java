@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -28,7 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
-import com.intellij.ide.highlighter.ProjectFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,11 +50,7 @@ public class CompilerPaths {
    */
   public static File getGeneratedDataDirectory(Project project, Compiler compiler) {
     //noinspection HardCodedStringLiteral
-    File dir = new File(getGeneratedDataDirectory(project), compiler.getDescription().replaceAll("\\s+", "_"));
-    if (!project.isDefault()) {
-      dir.mkdirs();
-    }
-    return dir;
+    return new File(getGeneratedDataDirectory(project), compiler.getDescription().replaceAll("\\s+", "_"));
   }
 
   /**
@@ -63,11 +59,7 @@ public class CompilerPaths {
    */
   public static File getGeneratedDataDirectory(Project project) {
     //noinspection HardCodedStringLiteral
-    File dir = new File(getCompilerSystemDirectory(project), ".generated");
-    if (!project.isDefault()) {
-      dir.mkdirs();
-    }
-    return dir;
+    return new File(getCompilerSystemDirectory(project), ".generated");
   }
 
   /**
@@ -76,11 +68,7 @@ public class CompilerPaths {
    */
   public static File getCacheStoreDirectory(final Project project) {
     //noinspection HardCodedStringLiteral
-    final File cacheStoreDirectory = new File(getCompilerSystemDirectory(project), ".caches");
-    if (!project.isDefault()) {
-      cacheStoreDirectory.mkdirs();
-    }
-    return cacheStoreDirectory;
+    return new File(getCompilerSystemDirectory(project), ".caches");
   }
 
   /**
@@ -90,11 +78,7 @@ public class CompilerPaths {
   public static File getCompilerSystemDirectory(Project project) {
     //noinspection HardCodedStringLiteral
     String projectName = getPresentableName(project);
-    final File compilerProjectSystemDir = new File(getCompilerSystemDirectory(), projectName + "." + project.getLocationHash());
-    if (!project.isDefault()) {
-      compilerProjectSystemDir.mkdirs();
-    }
-    return compilerProjectSystemDir;
+    return new File(getCompilerSystemDirectory(), projectName + "." + project.getLocationHash());
   }
 
   private static String getPresentableName(final Project project) {
@@ -123,9 +107,7 @@ public class CompilerPaths {
   public static File getCompilerSystemDirectory() {
     //noinspection HardCodedStringLiteral
     final String systemPath = ourSystemPath != null? ourSystemPath : (ourSystemPath = PathUtil.getCanonicalPath(PathManager.getSystemPath()));
-    final File compilerSystemDir = new File(systemPath, "compiler");
-    compilerSystemDir.mkdirs();
-    return compilerSystemDir;
+    return new File(systemPath, "compiler");
   }
 
   /**
