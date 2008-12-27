@@ -841,7 +841,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     final PsiFile file = getContainingFile();
     if (!(file instanceof GroovyFile)) return false;
     final GroovyFile groovyFile = (GroovyFile)file;
-    if (groovyFile.isScript()) return false;
+    if (groovyFile.isScript()) return false; 
     final GrTypeDefinition[] typeDefinitions = groovyFile.getTypeDefinitions();
     if (typeDefinitions.length > 1) return false;
     final String name = getName();

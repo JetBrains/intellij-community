@@ -53,6 +53,8 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 
 import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -152,7 +154,9 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getVMParametersList().addParametersString(DGROOVY_HOME + "\"" + groovyHome + "\"");
 
     // -Dgroovy.starter.conf
-    final String confpath = groovyHome + GROOVY_STARTER_CONF;
+
+    String confpath = getConfPath(groovyHome);
+
     params.getVMParametersList().add(DGROOVY_STARTER_CONF + confpath);
 
     // -Dtools.jar
@@ -171,6 +175,18 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.setMainClass(GROOVY_STARTER);
   }
 
+  private String getConfPath(String groovyHome) {
+    String confpath = "";
+    URL resource = getClass().getClassLoader().getResource("conf/groovy-starter.conf");
+    try {
+      confpath = new File(resource.toURI()).getPath().replace(File.separatorChar, '/');
+    }
+    catch (URISyntaxException e) {
+      confpath = groovyHome + GROOVY_STARTER_CONF;
+    }
+    return confpath;
+  }
+
   private void configureGroovyStarter(JavaParameters params, final Module module, boolean isTests) throws CantRunException {
     // add GroovyStarter parameters
     params.getProgramParametersList().add("--main");
@@ -178,10 +194,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     params.getProgramParametersList().add("--conf");
     String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
-    if (groovyHome.length() == 0) {
-      groovyHome = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
-    }
-    final String confpath = groovyHome + GROOVY_STARTER_CONF;
+    String confpath = getConfPath(groovyHome);
     params.getProgramParametersList().add(confpath);
 
     params.getProgramParametersList().add("--classpath");

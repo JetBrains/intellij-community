@@ -51,7 +51,7 @@ public abstract class LibrariesUtil {
         ModuleRootManager manager = ModuleRootManager.getInstance(module);
         for (OrderEntry entry : manager.getOrderEntries()) {
           if (entry instanceof LibraryOrderEntry) {
-            LibraryOrderEntry libEntry = (LibraryOrderEntry) entry;
+            LibraryOrderEntry libEntry = (LibraryOrderEntry)entry;
             Library library = libEntry.getLibrary();
             if (condition.value(library)) {
               libraries.add(library);
@@ -88,9 +88,14 @@ public abstract class LibrariesUtil {
         if (realFile.exists()) {
           File parentFile = realFile.getParentFile();
           if (parentFile != null) {
-            File libHome = parentFile.getParentFile();
-            if (libHome != null) {
-              path = libHome.getPath();
+            if (parentFile.isDirectory() && !"lib".equals(parentFile.getName()) /*for non-traditional distributions*/) {
+              path = parentFile.getPath();
+            }
+            else {
+              File libHome = parentFile.getParentFile();
+              if (libHome != null) {
+                path = libHome.getPath();
+              }
             }
           }
         }
@@ -128,12 +133,13 @@ public abstract class LibrariesUtil {
   }
 
   public static void addLibraryToReferringModules(FacetTypeId<?> facetID, Library library) {
-    for (Project prj : ProjectManager.getInstance().getOpenProjects())
+    for (Project prj : ProjectManager.getInstance().getOpenProjects()) {
       for (Module module : ModuleManager.getInstance(prj).getModules()) {
         if (FacetManager.getInstance(module).getFacetByType(facetID) != null) {
           addLibrary(library, module);
         }
       }
+    }
   }
 
   public static String generateNewLibraryName(String version, String prefix, final Project project) {
@@ -182,7 +188,7 @@ public abstract class LibrariesUtil {
   public static boolean libraryReferenced(ModuleRootManager rootManager, Library library) {
     final OrderEntry[] entries = rootManager.getOrderEntries();
     for (OrderEntry entry : entries) {
-      if (entry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry) entry).getLibrary())) return true;
+      if (entry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)entry).getLibrary())) return true;
     }
     return false;
   }
