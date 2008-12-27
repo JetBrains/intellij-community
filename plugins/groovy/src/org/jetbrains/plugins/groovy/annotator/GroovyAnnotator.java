@@ -94,61 +94,78 @@ public class GroovyAnnotator implements Annotator {
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (element instanceof GrCodeReferenceElement) {
-      checkReferenceElement(holder, (GrCodeReferenceElement) element);
-    } else if (element instanceof GrReferenceExpression) {
-      checkReferenceExpression(holder, (GrReferenceExpression) element);
-    } else if (element instanceof GrTypeDefinition) {
-      final GrTypeDefinition typeDefinition = (GrTypeDefinition) element;
+      checkReferenceElement(holder, (GrCodeReferenceElement)element);
+    }
+    else if (element instanceof GrReferenceExpression) {
+      checkReferenceExpression(holder, (GrReferenceExpression)element);
+    }
+    else if (element instanceof GrTypeDefinition) {
+      final GrTypeDefinition typeDefinition = (GrTypeDefinition)element;
       checkTypeDefinition(holder, typeDefinition);
       checkTypeDefinitionModifiers(holder, typeDefinition);
       final GrTypeDefinitionBody body = typeDefinition.getBody();
       if (body != null) checkDuplicateMethod(body.getGroovyMethods(), holder);
       checkImplementedMethodsOfClass(holder, typeDefinition);
-    } else if (element instanceof GrMethod) {
-      final GrMethod method = (GrMethod) element;
+    }
+    else if (element instanceof GrMethod) {
+      final GrMethod method = (GrMethod)element;
       checkMethodDefinitionModifiers(holder, method);
       checkInnerMethod(holder, method);
       checkMethodReturnExpression(holder, method);
       addOverrideGutter(holder, method);
-    } else if (element instanceof GrVariableDeclaration) {
-      checkVariableDeclaration(holder, (GrVariableDeclaration) element);
-    } else if (element instanceof GrVariable) {
-      if (element instanceof GrMember) highlightMember(holder, ((GrMember) element));
-      checkVariable(holder, (GrVariable) element);
-    } else if (element instanceof GrAssignmentExpression) {
-      checkAssignmentExpression((GrAssignmentExpression) element, holder);
-    } else if (element instanceof GrNamedArgument) {
-      checkCommandArgument((GrNamedArgument) element, holder);
-    } else if (element instanceof GrReturnStatement) {
-      checkReturnStatement((GrReturnStatement) element, holder);
-    } else if (element instanceof GrListOrMap) {
-      checkMap(((GrListOrMap) element).getNamedArguments(), holder);
-    } else if (element instanceof GrNewExpression) {
-      checkNewExpression(holder, (GrNewExpression) element);
-    } else if (element instanceof GrDocMemberReference) {
-      checkGrDocMemberReference((GrDocMemberReference) element, holder);
-    } else if (element instanceof GrConstructorInvocation) {
-      checkConstructorInvocation(holder, (GrConstructorInvocation) element);
-    } else if (element.getParent() instanceof GrDocReferenceElement) {
+    }
+    else if (element instanceof GrVariableDeclaration) {
+      checkVariableDeclaration(holder, (GrVariableDeclaration)element);
+    }
+    else if (element instanceof GrVariable) {
+      if (element instanceof GrMember) highlightMember(holder, ((GrMember)element));
+      checkVariable(holder, (GrVariable)element);
+    }
+    else if (element instanceof GrAssignmentExpression) {
+      checkAssignmentExpression((GrAssignmentExpression)element, holder);
+    }
+    else if (element instanceof GrNamedArgument) {
+      checkCommandArgument((GrNamedArgument)element, holder);
+    }
+    else if (element instanceof GrReturnStatement) {
+      checkReturnStatement((GrReturnStatement)element, holder);
+    }
+    else if (element instanceof GrListOrMap) {
+      checkMap(((GrListOrMap)element).getNamedArguments(), holder);
+    }
+    else if (element instanceof GrNewExpression) {
+      checkNewExpression(holder, (GrNewExpression)element);
+    }
+    else if (element instanceof GrDocMemberReference) {
+      checkGrDocMemberReference((GrDocMemberReference)element, holder);
+    }
+    else if (element instanceof GrConstructorInvocation) {
+      checkConstructorInvocation(holder, (GrConstructorInvocation)element);
+    }
+    else if (element.getParent() instanceof GrDocReferenceElement) {
       checkGrDocReferenceElement(holder, element);
-    } else if (element instanceof GrPackageDefinition) {
+    }
+    else if (element instanceof GrPackageDefinition) {
       //todo: if reference isn't resolved it construct package definition 
-      checkPackageReference(holder, (GrPackageDefinition) element);
-    } else if (element instanceof GroovyFile) {
-      final GroovyFile file = (GroovyFile) element;
+      checkPackageReference(holder, (GrPackageDefinition)element);
+    }
+    else if (element instanceof GroovyFile) {
+      final GroovyFile file = (GroovyFile)element;
       if (file.isScript()) {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
       if (DomainClassUtils.isDomainClassFile(element.getContainingFile().getVirtualFile(), element.getProject())) {
-        checkDomainClass((GroovyFile) element, holder);
+        checkDomainClass((GroovyFile)element, holder);
       }
-    } else {
+    }
+    else {
       final ASTNode node = element.getNode();
-      if (node != null && !(element instanceof PsiWhiteSpace) &&
-              !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
-              element.getContainingFile() instanceof GroovyFile &&
-              !isDocCommentElement(element)) {
-        GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
+      if (node != null &&
+          !(element instanceof PsiWhiteSpace) &&
+          !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
+          element.getContainingFile() instanceof GroovyFile &&
+          !isDocCommentElement(element)) {
+        GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile)element.getContainingFile());
       }
     }
   }
@@ -156,8 +173,7 @@ public class GroovyAnnotator implements Annotator {
   private static boolean isDocCommentElement(PsiElement element) {
     if (element == null) return false;
     ASTNode node = element.getNode();
-    return node != null && PsiTreeUtil.getParentOfType(element, GrDocComment.class) != null ||
-            element instanceof GrDocComment;
+    return node != null && PsiTreeUtil.getParentOfType(element, GrDocComment.class) != null || element instanceof GrDocComment;
   }
 
   private static void checkGrDocReferenceElement(AnnotationHolder holder, PsiElement element) {
@@ -179,7 +195,7 @@ public class GroovyAnnotator implements Annotator {
         String packageName = aPackage.getQualifiedName();
         if (!packageDefinition.getPackageName().equals(packageName)) {
           final Annotation annotation = holder.createWarningAnnotation(packageDefinition, "wrong package name");
-          annotation.registerFix(new ChangePackageQuickFix((GroovyFile) packageDefinition.getContainingFile(), packageName));
+          annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
         }
       }
     }
@@ -193,7 +209,7 @@ public class GroovyAnnotator implements Annotator {
         final GrStatement lastStatement = statements[statements.length - 1];
         if (lastStatement instanceof GrExpression) {
           final PsiType methodType = method.getReturnType();
-          final PsiType returnType = ((GrExpression) lastStatement).getType();
+          final PsiType returnType = ((GrExpression)lastStatement).getType();
           if (returnType != null && methodType != null && !PsiType.VOID.equals(methodType)) {
             checkAssignability(holder, methodType, returnType, lastStatement);
           }
@@ -209,7 +225,8 @@ public class GroovyAnnotator implements Annotator {
     Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
     methodsToImplement = ContainerUtil.findAll(methodsToImplement, new Condition<CandidateInfo>() {
       public boolean value(CandidateInfo candidateInfo) {
-        return !GrTypeDefinition.DEFAULT_BASE_CLASS_NAME.equals(((PsiMethod)candidateInfo.getElement()).getContainingClass().getQualifiedName());
+        return !GrTypeDefinition.DEFAULT_BASE_CLASS_NAME
+          .equals(((PsiMethod)candidateInfo.getElement()).getContainingClass().getQualifiedName());
       }
     });
     if (methodsToImplement.isEmpty()) return;
@@ -217,12 +234,13 @@ public class GroovyAnnotator implements Annotator {
     final PsiElement methodCandidateInfo = methodsToImplement.toArray(CandidateInfo.EMPTY_ARRAY)[0].getElement();
     assert methodCandidateInfo instanceof PsiMethod;
 
-    String notImplementedMethodName = ((PsiMethod) methodCandidateInfo).getName();
+    String notImplementedMethodName = ((PsiMethod)methodCandidateInfo).getName();
 
     final int startOffset = typeDefinition.getTextRange().getStartOffset();
     final GrTypeDefinitionBody body = typeDefinition.getBody();
     int endOffset = body != null ? body.getTextRange().getStartOffset() : typeDefinition.getTextRange().getEndOffset();
-    final Annotation annotation = holder.createErrorAnnotation(new TextRange(startOffset, endOffset), GroovyBundle.message("method.is.not.implemented", notImplementedMethodName));
+    final Annotation annotation = holder.createErrorAnnotation(new TextRange(startOffset, endOffset),
+                                                               GroovyBundle.message("method.is.not.implemented", notImplementedMethodName));
     registerImplementsMethodsFix(typeDefinition, annotation);
   }
 
@@ -244,13 +262,15 @@ public class GroovyAnnotator implements Annotator {
     final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
     if (resolveResult != null) {
       checkMethodApplicability(resolveResult, invocation.getThisOrSuperKeyword(), holder);
-    } else {
+    }
+    else {
       final GroovyResolveResult[] results = invocation.multiResolveConstructor();
       final GrArgumentList argList = invocation.getArgumentList();
       if (results.length > 0) {
         String message = GroovyBundle.message("ambiguous.constructor.call");
         holder.createWarningAnnotation(argList, message);
-      } else {
+      }
+      else {
         final PsiClass clazz = invocation.getDelegatedClass();
         if (clazz != null) {
           //default constructor invocation
@@ -265,8 +285,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {
-    if (grMethod.getParent() instanceof GrOpenBlock)
+    if (grMethod.getParent() instanceof GrOpenBlock) {
       holder.createErrorAnnotation(grMethod, GroovyBundle.message("Inner.methods.are.not.supported"));
+    }
   }
 
   private void checkDomainClass(GroovyFile file, AnnotationHolder holder) {
@@ -315,8 +336,7 @@ public class GroovyAnnotator implements Annotator {
       PsiModifierList modifiersList = variableDeclaration.getModifierList();
       checkAccessModifiers(holder, modifiersList);
 
-      if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE)
-              && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
+      if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE) && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.volatile.and.final"));
       }
 
@@ -344,9 +364,10 @@ public class GroovyAnnotator implements Annotator {
       if (modifiersList.hasExplicitModifier(PsiModifier.NATIVE)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.native"));
       }
-    } else  //type definition methods
+    }
+    else  //type definition methods
       if (method.getParent() != null && method.getParent().getParent() instanceof GrTypeDefinition) {
-        GrTypeDefinition containingTypeDef = ((GrTypeDefinition) method.getParent().getParent());
+        GrTypeDefinition containingTypeDef = ((GrTypeDefinition)method.getParent().getParent());
 
         //interface
         if (containingTypeDef.isInterface()) {
@@ -358,13 +379,16 @@ public class GroovyAnnotator implements Annotator {
             holder.createErrorAnnotation(modifiersList, GroovyBundle.message("interface.must.have.no.private.method"));
           }
 
-        } else if (containingTypeDef.isEnum()) {
+        }
+        else if (containingTypeDef.isEnum()) {
           //enumeration
           //todo
-        } else if (containingTypeDef.isAnnotationType()) {
+        }
+        else if (containingTypeDef.isAnnotationType()) {
           //annotation
           //todo
-        } else {
+        }
+        else {
           //class
           PsiModifierList typeDefModifiersList = containingTypeDef.getModifierList();
           LOG.assertTrue(typeDefModifiersList != null, "modifiers list must be not null");
@@ -408,8 +432,7 @@ public class GroovyAnnotator implements Annotator {
       }
     }
 
-    if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)
-            && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
+    if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT) && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
       holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
     }
 
@@ -441,9 +464,7 @@ public class GroovyAnnotator implements Annotator {
     boolean hasPublic = modifierList.hasExplicitModifier(PsiModifier.PUBLIC);
     boolean hasProtected = modifierList.hasExplicitModifier(PsiModifier.PROTECTED);
 
-    if (hasPrivate && hasPublic
-            || hasPrivate && hasProtected
-            || hasPublic && hasProtected) {
+    if (hasPrivate && hasPublic || hasPrivate && hasProtected || hasPublic && hasProtected) {
       holder.createErrorAnnotation(modifierList, GroovyBundle.message("illegal.combination.of.modifiers"));
     }
   }
@@ -453,7 +474,7 @@ public class GroovyAnnotator implements Annotator {
 
     for (GrTopLevelDefintion topLevelDefinition : topLevelDefinitions) {
       if (topLevelDefinition instanceof GrMethod) {
-        methods.add(((GrMethod) topLevelDefinition));
+        methods.add(((GrMethod)topLevelDefinition));
       }
     }
 
@@ -480,7 +501,8 @@ public class GroovyAnnotator implements Annotator {
     DuplicatesUtil.collectMethodDuplicates(map, duplicateMethodsWarning, duplicateMethodsErrors);
 
     for (GrMethod duplicateMethod : duplicateMethodsErrors) {
-      holder.createErrorAnnotation(duplicateMethod.getNameIdentifierGroovy(), GroovyBundle.message("repetitive.method.name.signature.and.return.type"));
+      holder.createErrorAnnotation(duplicateMethod.getNameIdentifierGroovy(),
+                                   GroovyBundle.message("repetitive.method.name.signature.and.return.type"));
     }
 
     for (GrMethod duplicateMethod : duplicateMethodsWarning) {
@@ -496,16 +518,18 @@ public class GroovyAnnotator implements Annotator {
       if (type != null) {
         final GrParametersOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
         if (owner instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod) owner;
+          final PsiMethod method = (PsiMethod)owner;
           if (method.isConstructor()) {
             holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.constructor"));
-          } else {
+          }
+          else {
             final PsiType methodType = method.getReturnType();
             final PsiType returnType = value.getType();
             if (methodType != null) {
               if (PsiType.VOID.equals(methodType)) {
                 holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.void.method"));
-              } else if (returnType != null) {
+              }
+              else if (returnType != null) {
                 checkAssignability(holder, methodType, returnType, value);
               }
             }
@@ -525,7 +549,8 @@ public class GroovyAnnotator implements Annotator {
         if (expr != null) {
           final PsiType argType = expr.getType();
           if (argType != null) {
-            final PsiClassType listType = JavaPsiFacade.getInstance(namedArgument.getProject()).getElementFactory().createTypeByFQClassName("java.util.List", namedArgument.getResolveScope());
+            final PsiClassType listType = JavaPsiFacade.getInstance(namedArgument.getProject()).getElementFactory()
+              .createTypeByFQClassName("java.util.List", namedArgument.getResolveScope());
             if (listType.isAssignableFrom(argType)) return; //this is constructor arguments list
             checkAssignability(holder, expectedType, argType, namedArgument);
           }
@@ -538,19 +563,47 @@ public class GroovyAnnotator implements Annotator {
     GrExpression lValue = assignment.getLValue();
     if (!PsiUtil.mightBeLVlaue(lValue)) {
       holder.createErrorAnnotation(lValue, GroovyBundle.message("invalid.lvalue"));
-    } else {
+    }
+    else {
       IElementType opToken = assignment.getOperationToken();
       if (opToken == GroovyTokenTypes.mASSIGN) {
         GrExpression rValue = assignment.getRValue();
         if (rValue != null) {
           PsiType lType = lValue.getNominalType();
           PsiType rType = rValue.getType();
+          // For assignments with spread dot
+          if (isListAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
+            final PsiClassType pct = (PsiClassType)lType;
+            final PsiClass clazz = pct.resolve();
+            if (clazz != null && "java.util.List".equals(clazz.getQualifiedName())) {
+              final PsiType[] types = pct.getParameters();
+              if (types.length == 1 && types[0] != null && rType != null) {
+                checkAssignability(holder, types[0], rType, rValue);
+              }
+            }
+            return;
+          }
           if (lType != null && rType != null) {
             checkAssignability(holder, lType, rType, rValue);
           }
         }
       }
     }
+  }
+
+  private static boolean isListAssignment(GrExpression lValue) {
+    if (lValue instanceof GrReferenceExpression) {
+      GrReferenceExpression expression = (GrReferenceExpression)lValue;
+      final PsiElement dot = expression.getDotToken();
+      if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
+        return true;
+      }
+      else {
+        final GrExpression qual = expression.getQualifierExpression();
+        if (qual != null) return isListAssignment(qual);
+      }
+    }
+    return false;
   }
 
   private void checkVariable(AnnotationHolder holder, GrVariable variable) {
@@ -607,44 +660,54 @@ public class GroovyAnnotator implements Annotator {
   private void checkDuplicateClass(GrTypeDefinition typeDefinition, AnnotationHolder holder) {
     final String qName = typeDefinition.getQualifiedName();
     if (qName != null) {
-      final PsiClass[] classes = JavaPsiFacade.getInstance(typeDefinition.getProject()).findClasses(qName, typeDefinition.getResolveScope());
+      final PsiClass[] classes =
+        JavaPsiFacade.getInstance(typeDefinition.getProject()).findClasses(qName, typeDefinition.getResolveScope());
       if (classes.length > 1) {
         final PsiFile file = typeDefinition.getContainingFile();
         String packageName = "<default package>";
         if (file instanceof GroovyFile) {
-          final String name = ((GroovyFile) file).getPackageName();
+          final String name = ((GroovyFile)file).getPackageName();
           if (name.length() > 0) packageName = name;
         }
 
         if (!isScriptGeneratedClass(classes)) {
-          holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("duplicate.class", typeDefinition.getName(), packageName));
-        } else {
-          holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("script.generated.with.same.name", qName));
+          holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+                                       GroovyBundle.message("duplicate.class", typeDefinition.getName(), packageName));
+        }
+        else {
+          holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+                                       GroovyBundle.message("script.generated.with.same.name", qName));
         }
       }
     }
   }
 
   private boolean isScriptGeneratedClass(PsiClass[] allClasses) {
-    return allClasses.length == 2 &&
-            (allClasses[0] instanceof GroovyScriptClass || allClasses[1] instanceof GroovyScriptClass);
+    return allClasses.length == 2 && (allClasses[0] instanceof GroovyScriptClass || allClasses[1] instanceof GroovyScriptClass);
   }
 
-  private void checkForExtendingInterface(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause, GrTypeDefinition myClass) {
+  private void checkForExtendingInterface(AnnotationHolder holder,
+                                          GrExtendsClause extendsClause,
+                                          GrImplementsClause implementsClause,
+                                          GrTypeDefinition myClass) {
     for (GrCodeReferenceElement ref : extendsClause.getReferenceElements()) {
       final PsiElement clazz = ref.resolve();
       if (clazz == null) continue;
 
-      if (myClass.isInterface() && clazz instanceof PsiClass && !((PsiClass) clazz).isInterface()) {
+      if (myClass.isInterface() && clazz instanceof PsiClass && !((PsiClass)clazz).isInterface()) {
         final Annotation annotation = holder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.expected.here"));
         annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
       }
     }
   }
 
-  private void checkForImplementingClass(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause, GrTypeDefinition myClass) {
+  private void checkForImplementingClass(AnnotationHolder holder,
+                                         GrExtendsClause extendsClause,
+                                         GrImplementsClause implementsClause,
+                                         GrTypeDefinition myClass) {
     if (myClass.isInterface()) {
-      final Annotation annotation = holder.createErrorAnnotation(implementsClause, GroovyBundle.message("interface.cannot.contain.implements.clause"));
+      final Annotation annotation =
+        holder.createErrorAnnotation(implementsClause, GroovyBundle.message("interface.cannot.contain.implements.clause"));
       annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
       return;
     }
@@ -653,7 +716,7 @@ public class GroovyAnnotator implements Annotator {
       final PsiElement clazz = ref.resolve();
       if (clazz == null) continue;
 
-      if (!((PsiClass) clazz).isInterface()) {
+      if (!((PsiClass)clazz).isInterface()) {
         final Annotation annotation = holder.createErrorAnnotation(ref, GroovyBundle.message("interface.expected.here"));
         annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
       }
@@ -678,27 +741,30 @@ public class GroovyAnnotator implements Annotator {
     PsiElement resolved = resolveResult.getElement();
     if (resolved != null) {
       if (resolved instanceof PsiMember) {
-        highlightMemberResolved(holder, refExpr, ((PsiMember) resolved));
+        highlightMemberResolved(holder, refExpr, ((PsiMember)resolved));
       }
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr.getReferenceNameElement(), message);
       }
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
-        final String key = ((PsiModifierListOwner) resolved).hasModifierProperty(PsiModifier.STATIC) ?
-                "cannot.reference.static" :
-                "cannot.reference.nonstatic";
+        final String key = ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)
+                           ? "cannot.reference.static"
+                           : "cannot.reference.nonstatic";
         String message = GroovyBundle.message(key, refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
-      } else if (refExpr.getParent() instanceof GrCall) {
+      }
+      else if (refExpr.getParent() instanceof GrCall) {
         if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
           checkMethodApplicability(resolveResult, refExpr, holder);
-        } else {
+        }
+        else {
           checkClosureApplicability(resolveResult, refExpr.getType(), refExpr, holder);
         }
       }
       if (isAssignmentLHS(refExpr) || resolved instanceof PsiPackage) return;
-    } else {
+    }
+    else {
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null && isAssignmentLHS(refExpr)) return;
     }
@@ -720,7 +786,8 @@ public class GroovyAnnotator implements Annotator {
       }
 
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
-    } else if (refExprType instanceof PsiClassType && ((PsiClassType) refExprType).resolve() == null) {
+    }
+    else if (refExprType instanceof PsiClassType && ((PsiClassType)refExprType).resolve() == null) {
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     }
   }
@@ -732,17 +799,17 @@ public class GroovyAnnotator implements Annotator {
     addDynamicAnnotation(annotation, refExpr);
     if (targetClass instanceof GrMemberOwner) {
       if (!(targetClass instanceof GroovyScriptClass)) {
-        annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner) targetClass));
+        annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner)targetClass));
       }
 
       if (refExpr.getParent() instanceof GrCallExpression) {
-        annotation.registerFix(new CreateMethodFromUsageFix(refExpr, (GrMemberOwner) targetClass));
+        annotation.registerFix(new CreateMethodFromUsageFix(refExpr, (GrMemberOwner)targetClass));
       }
     }
 
     if (!refExpr.isQualified()) {
       GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(refExpr, GrVariableDeclarationOwner.class);
-      if (!(owner instanceof GroovyFileBase) || ((GroovyFileBase) owner).isScript()) {
+      if (!(owner instanceof GroovyFileBase) || ((GroovyFileBase)owner).isScript()) {
         annotation.registerFix(new CreateLocalVariableFromUsageFix(refExpr, owner));
       }
     }
@@ -754,25 +821,26 @@ public class GroovyAnnotator implements Annotator {
     if (containingFile != null) {
       file = containingFile.getVirtualFile();
       if (file == null) return;
-    } else return;
+    }
+    else {
+      return;
+    }
 
-    annotation.registerFix(new DynamicFix(QuickfixUtil.isCall(referenceExpression), referenceExpression), referenceExpression.getTextRange());
+    annotation
+      .registerFix(new DynamicFix(QuickfixUtil.isCall(referenceExpression), referenceExpression), referenceExpression.getTextRange());
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
     boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
     Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
-    if (member instanceof GrAccessorMethod) member = ((GrAccessorMethod) member).getProperty();
+    if (member instanceof GrAccessorMethod) member = ((GrAccessorMethod)member).getProperty();
 
     if (member instanceof PsiField && isStatic) {
       annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
       return;
     }
     if (member instanceof PsiMethod) {
-      annotation.setTextAttributes(!isStatic ?
-              DefaultHighlighter.METHOD_CALL :
-              DefaultHighlighter.STATIC_METHOD_ACCESS
-      );
+      annotation.setTextAttributes(!isStatic ? DefaultHighlighter.METHOD_CALL : DefaultHighlighter.STATIC_METHOD_ACCESS);
     }
   }
 
@@ -783,7 +851,7 @@ public class GroovyAnnotator implements Annotator {
       PsiFile file = referenceElement.getContainingFile();
       if (file instanceof GroovyFile) {
         GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(referenceElement.getProject());
-        importsTracker.registerImportUsed((GrImportStatement) context);
+        importsTracker.registerImportUsed((GrImportStatement)context);
       }
     }
   }
@@ -791,9 +859,11 @@ public class GroovyAnnotator implements Annotator {
   private void checkMethodApplicability(GroovyResolveResult methodResolveResult, PsiElement place, AnnotationHolder holder) {
     final PsiElement element = methodResolveResult.getElement();
     if (!(element instanceof PsiMethod)) return;
-    final PsiMethod method = (PsiMethod) element;
+    final PsiMethod method = (PsiMethod)element;
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor(), true);
-    if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(), methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+    if (argumentTypes != null &&
+        !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
+                              methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
       PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
       if (elementToHighlight == null) {
         elementToHighlight = place;
@@ -803,9 +873,11 @@ public class GroovyAnnotator implements Annotator {
       String message;
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
-        final PsiClassType containingType = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createType(containingClass, methodResolveResult.getSubstitutor());
+        final PsiClassType containingType = JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
+          .createType(containingClass, methodResolveResult.getSubstitutor());
         message = GroovyBundle.message("cannot.apply.method1", method.getName(), containingType.getInternalCanonicalText(), typesString);
-      } else {
+      }
+      else {
         message = GroovyBundle.message("cannot.apply.method.or.closure", method.getName(), typesString);
       }
       holder.createWarningAnnotation(elementToHighlight, message);
@@ -814,7 +886,7 @@ public class GroovyAnnotator implements Annotator {
 
   private boolean isAssignmentLHS(GrReferenceExpression refExpr) {
     return refExpr.getParent() instanceof GrAssignmentExpression &&
-            refExpr.equals(((GrAssignmentExpression) refExpr.getParent()).getLValue());
+           refExpr.equals(((GrAssignmentExpression)refExpr.getParent()).getLValue());
   }
 
   private void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {
@@ -825,9 +897,7 @@ public class GroovyAnnotator implements Annotator {
     highlightAnnotation(holder, refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
 
-      if (parent instanceof GrImportStatement &&
-              ((GrImportStatement) parent).isStatic() &&
-              refElement.multiResolve(false).length > 0) {
+      if (parent instanceof GrImportStatement && ((GrImportStatement)parent).isStatic() && refElement.multiResolve(false).length > 0) {
         return;
       }
 
@@ -851,7 +921,8 @@ public class GroovyAnnotator implements Annotator {
         registerAddImportFixes(refElement, annotation);
       }
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-    } else if (!resolveResult.isAccessible()) {
+    }
+    else if (!resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
       holder.createWarningAnnotation(refElement.getReferenceNameElement(), message);
     }
@@ -863,10 +934,11 @@ public class GroovyAnnotator implements Annotator {
     if (refElement == null) return;
     final PsiElement element = refElement.resolve();
     if (element instanceof PsiClass) {
-      PsiClass clazz = (PsiClass) element;
+      PsiClass clazz = (PsiClass)element;
       if (clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        String message = clazz.isInterface() ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName()) :
-                GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
+        String message = clazz.isInterface()
+                         ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName())
+                         : GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
         holder.createErrorAnnotation(refElement, message);
         if (clazz.isInterface()) {
           Annotation annotation = holder.createInfoAnnotation(newExpression, null);
@@ -880,7 +952,8 @@ public class GroovyAnnotator implements Annotator {
     final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
     if (constructorResolveResult.getElement() != null) {
       checkMethodApplicability(constructorResolveResult, refElement, holder);
-    } else {
+    }
+    else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
       final GrArgumentList argList = newExpression.getArgumentList();
       PsiElement toHighlight = argList != null ? argList : refElement.getReferenceNameElement();
@@ -888,12 +961,13 @@ public class GroovyAnnotator implements Annotator {
       if (results.length > 0) {
         String message = GroovyBundle.message("ambiguous.constructor.call");
         holder.createWarningAnnotation(toHighlight, message);
-      } else {
+      }
+      else {
         if (element instanceof PsiClass) {
           //default constructor invocation
           PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true, true);
           if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) element).getName());
+            String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass)element).getName());
             holder.createWarningAnnotation(toHighlight, message);
           }
         }
@@ -905,11 +979,11 @@ public class GroovyAnnotator implements Annotator {
     final PsiElement element = resolveResult.getElement();
     if (!(element instanceof GrVariable)) return;
     if (!(type instanceof GrClosureType)) return;
-    final GrVariable variable = (GrVariable) element;
+    final GrVariable variable = (GrVariable)element;
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false, true);
     if (argumentTypes == null) return;
 
-    final PsiType[] paramTypes = PsiUtil.skipOptionalClosureParameters(argumentTypes.length, (GrClosureType) type);
+    final PsiType[] paramTypes = PsiUtil.skipOptionalClosureParameters(argumentTypes.length, (GrClosureType)type);
     if (!areTypesCompatibleForCallingClosure(argumentTypes, paramTypes, place.getManager(), place.getResolveScope())) {
       final String typesString = buildArgTypesList(argumentTypes);
       String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
@@ -919,7 +993,10 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private boolean areTypesCompatibleForCallingClosure(PsiType[] argumentTypes, PsiType[] paramTypes, PsiManager manager, GlobalSearchScope resolveScope) {
+  private boolean areTypesCompatibleForCallingClosure(PsiType[] argumentTypes,
+                                                      PsiType[] paramTypes,
+                                                      PsiManager manager,
+                                                      GlobalSearchScope resolveScope) {
     if (argumentTypes.length != paramTypes.length) return false;
     for (int i = 0; i < argumentTypes.length; i++) {
       final PsiType paramType = TypesUtil.boxPrimitiveType(paramTypes[i], manager, resolveScope);
@@ -942,19 +1019,17 @@ public class GroovyAnnotator implements Annotator {
     if (packageDefinition == null && refElement.getQualifier() == null) {
       PsiElement parent = refElement.getParent();
       if (parent instanceof GrNewExpression) {
-        annotation.registerFix(CreateClassFix.createClassFromNewAction((GrNewExpression) parent));
-      } else {
+        annotation.registerFix(CreateClassFix.createClassFromNewAction((GrNewExpression)parent));
+      }
+      else {
         annotation.registerFix(CreateClassFix.createClassFixAction(refElement));
       }
     }
   }
 
-  private void highlightMember
-          (AnnotationHolder
-                  holder, GrMember
-                  member) {
+  private void highlightMember(AnnotationHolder holder, GrMember member) {
     if (member instanceof PsiField) {
-      GrField field = (GrField) member;
+      GrField field = (GrField)member;
       PsiElement identifier = field.getNameIdentifierGroovy();
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         Annotation annotation = holder.createInfoAnnotation(identifier, null);
@@ -966,14 +1041,12 @@ public class GroovyAnnotator implements Annotator {
   private void highlightAnnotation(AnnotationHolder holder, PsiElement refElement, GroovyResolveResult result) {
     PsiElement element = result.getElement();
     PsiElement parent = refElement.getParent();
-    if (element instanceof PsiClass &&
-            ((PsiClass) element).isAnnotationType() &&
-            !(parent instanceof GrImportStatement)) {
+    if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType() && !(parent instanceof GrImportStatement)) {
       Annotation annotation = holder.createInfoAnnotation(parent, null);
       annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
       GroovyPsiElement context = result.getCurrentFileResolveContext();
       if (context instanceof GrImportStatement) {
-        annotation = holder.createInfoAnnotation(((GrImportStatement) context).getImportReference(), null);
+        annotation = holder.createInfoAnnotation(((GrImportStatement)context).getImportReference(), null);
         annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
       }
     }
