@@ -48,6 +48,12 @@ public abstract class CompletionResultSet {
    */
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull String prefix);
 
+  /**
+   * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
+   * remain as they are though, so upon insertion the prefix case will be changed.
+   */
+  @NotNull public abstract CompletionResultSet caseInsensitive();
+
   @NotNull
   public PrefixMatcher getPrefixMatcher() {
     return myPrefixMatcher;

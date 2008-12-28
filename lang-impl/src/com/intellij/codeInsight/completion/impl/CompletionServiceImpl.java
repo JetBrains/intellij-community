@@ -93,5 +93,11 @@ public class CompletionServiceImpl extends CompletionService{
     public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
       return withPrefixMatcher(new CamelHumpMatcher(prefix));
     }
+
+    @NotNull
+    @Override
+    public CompletionResultSet caseInsensitive() {
+      return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false));
+    }
   }
 }

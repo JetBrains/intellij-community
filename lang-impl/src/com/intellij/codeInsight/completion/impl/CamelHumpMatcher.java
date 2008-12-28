@@ -4,15 +4,17 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,14 +25,20 @@ public class CamelHumpMatcher extends PrefixMatcher {
   private Pattern myPattern;
   private Perl5Matcher myMatcher;
   private final String myPrefix;
+  private final boolean myCaseSensitive;
 
   public CamelHumpMatcher(@NotNull final String prefix) {
+    this(prefix, true);
+  }
+
+  public CamelHumpMatcher(String prefix, boolean caseSensitive) {
     myPrefix = prefix;
+    myCaseSensitive = caseSensitive;
   }
 
   public synchronized boolean prefixMatches(@NotNull final String name) {
     if (myPattern == null) {
-      myPattern = CompletionUtil.createCamelHumpsMatcher(myPrefix);
+      myPattern = createCamelHumpsMatcher();
       myMatcher = new Perl5Matcher();
     }
 
@@ -104,5 +112,31 @@ public class CamelHumpMatcher extends PrefixMatcher {
     if (isAllLower) return uniqueText.toLowerCase();
     if (isAllUpper) return uniqueText.toUpperCase();
     return uniqueText;
+  }
+
+  private Pattern createCamelHumpsMatcher() {
+    Perl5Compiler compiler = new Perl5Compiler();
+    try {
+      if (!myCaseSensitive) {
+        return compiler.compile(NameUtil.buildRegexp(myPrefix, 0, true, true));
+      }
+
+      final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+      int variant = settings.COMPLETION_CASE_SENSITIVE;
+
+      switch (variant) {
+        case CodeInsightSettings.NONE:
+          return compiler.compile(NameUtil.buildRegexp(myPrefix, 0, true, true));
+        case CodeInsightSettings.FIRST_LETTER:
+          return compiler.compile(NameUtil.buildRegexp(myPrefix, 1, true, true));
+        case CodeInsightSettings.ALL:
+          return compiler.compile(NameUtil.buildRegexp(myPrefix, 0, false, false));
+        default:
+          return compiler.compile(NameUtil.buildRegexp(myPrefix, 1, true, false));
+      }
+    }
+    catch (MalformedPatternException me) {
+      throw new RuntimeException(me);
+    }
   }
 }

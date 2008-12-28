@@ -12,12 +12,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.util.containers.HashMap;
-import org.apache.oro.text.regex.MalformedPatternException;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.Perl5Compiler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,33 +91,6 @@ public class CompletionUtil {
     }
     final NotNullLazyValue<CompletionData> lazyValue = ourCustomCompletionDatas.get(fileType);
     return lazyValue == null ? null : lazyValue.getValue();
-  }
-
-
-  public static Pattern createCamelHumpsMatcher(String pattern) {
-    Pattern pat = null;
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    int variant = settings.COMPLETION_CASE_SENSITIVE;
-    Perl5Compiler compiler = new Perl5Compiler();
-
-    try {
-      switch (variant) {
-        case CodeInsightSettings.NONE:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, true, true));
-          break;
-        case CodeInsightSettings.FIRST_LETTER:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 1, true, true));
-          break;
-        case CodeInsightSettings.ALL:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, false, false));
-          break;
-        default:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 1, true, false));
-      }
-    }
-    catch (MalformedPatternException me) {
-    }
-    return pat;
   }
 
 

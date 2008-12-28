@@ -67,11 +67,13 @@ public class FilePathCompletionContributor extends CompletionContributor {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
-        final String prefix = result.getPrefixMatcher().getPrefix();
+                                    @NotNull final CompletionResultSet _result) {
+        final String prefix = _result.getPrefixMatcher().getPrefix();
         if (prefix.length() == 0) { // todo[spL]: no prefix no completion
           return;
         }
+
+        @NotNull final CompletionResultSet result = _result.caseInsensitive();
 
         final PsiElement e = parameters.getPosition();
 

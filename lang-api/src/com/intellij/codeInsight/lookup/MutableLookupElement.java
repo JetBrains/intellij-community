@@ -43,6 +43,12 @@ public abstract class MutableLookupElement<T> extends LookupElement{
   @NotNull
   public abstract MutableLookupElement<T> setTailType(@NotNull TailType type);
 
+  /**
+   * Use {@link com.intellij.codeInsight.completion.CompletionResultSet#caseInsensitive()} instead
+   * @param caseSensitive
+   * @return
+   */
+  @Deprecated
   @NotNull
   public abstract MutableLookupElement<T> setCaseSensitive(boolean caseSensitive);
 
