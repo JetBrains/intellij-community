@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import com.sun.java.swing.SwingUtilities2;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -220,12 +219,17 @@ public class DnDEnabler implements Activatable, Disposable {
             }
           }
 
-          if (myOriginalDragGestureRecognizer != null && !SwingUtilities2.shouldIgnore(e, (JComponent) comp)) {
+          if (myOriginalDragGestureRecognizer != null && !shouldIgnore(e, comp)) {
             dispatchMouseEvent(myOriginalDragGestureRecognizer, e);
           }
         }
       }
     }
+  }
+
+  private static boolean shouldIgnore(MouseEvent event, Component c) {
+    return c == null || !c.isEnabled()
+                         || !SwingUtilities.isLeftMouseButton(event);
   }
 
 }
