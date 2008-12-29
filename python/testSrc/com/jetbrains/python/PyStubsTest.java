@@ -75,23 +75,20 @@ public class PyStubsTest extends CodeInsightTestCase {
     assertNotParsed(file);
     PyDecorator deco = da[0];
     assertNotNull(deco);
-    /*
-    assertEquals(deco.getTarget(), decorated);
+    assertEquals("deco", deco.getName());
     assertNotParsed(file);
-    assertEquals(deco.getName(), "staticmethod");
-    */
-    assertEquals(deco.getName(), "staticmethod");
-    assertNotParsed(file);
-    //assertNotNull(deco.getCallee());
+    assertFalse(deco.isBuiltin());
 
     final PyTargetExpression[] instanceAttrs = pyClass.getInstanceAttributes();
     assertEquals(1, instanceAttrs.length);
     assertEquals("instanceField", instanceAttrs [0].getName());
 
     final List<PyFunction> functions = file.getTopLevelFunctions();
-    assertEquals(1, functions.size());
+    assertEquals(2, functions.size()); // "deco" and "topLevelFunction"
     PyFunction func = functions.get(0);
+    assertEquals("deco", func.getName());
 
+    func = functions.get(1);
     assertEquals("topLevelFunction", func.getName());
 
     final List<PyTargetExpression> exprs = file.getTopLevelAttributes();

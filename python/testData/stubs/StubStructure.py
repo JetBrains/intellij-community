@@ -1,9 +1,12 @@
+def deco(fun):
+  return fun # valid
+
 class FooClass:
   staticField = 1
   def __init__(self):
     self.instanceField = 2
 
-  @staticmethod
+  @deco
   def fooFunction(fooParam1, fooParam2) :
     pass
 

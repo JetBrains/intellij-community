@@ -33,6 +33,18 @@ public class PyResolveCalleeTest extends ResolveTestCase {
     assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyCallExpression.Flag.class)));
   }
 
+  public void testDecoCall() throws Exception {
+    PyCallExpression.PyMarkedFunction resolved = resolveCallee();
+    assertNotNull(resolved.getFunction());
+    assertTrue(resolved.getFlags().equals(EnumSet.of(PyCallExpression.Flag.IMPLICIT_FIRST_ARG)));
+  }
+
+  public void testDecoParamCall() throws Exception {
+    PyCallExpression.PyMarkedFunction resolved = resolveCallee();
+    assertNotNull(resolved.getFunction());
+    assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyCallExpression.Flag.class)));
+  }
+
   @Override
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/python/testData/resolve/callee/";

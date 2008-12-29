@@ -71,6 +71,10 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     }
   }
 
+  public boolean hasArgumentList() {
+    return getNode().findChildByType(PyElementTypes.ARGUMENT_LIST) != null;
+  }
+
   public PyExpression getCallee() {
     try {
       return (PyExpression)getFirstChild().getNextSibling(); // skip the @ before call
@@ -93,7 +97,12 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   }
 
   public PyMarkedFunction resolveCallee() {
-    return PyCallExpressionHelper.resolveCallee(this);
+    PyMarkedFunction callee = PyCallExpressionHelper.resolveCallee(this);
+    if (callee == null) return null;
+    if (! hasArgumentList()) {
+      callee.getFlags().add(Flag.IMPLICIT_FIRST_ARG); // NOTE: assumes mutability
+    }
+    return callee;
   }
 
   @Override

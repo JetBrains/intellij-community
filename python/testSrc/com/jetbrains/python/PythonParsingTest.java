@@ -77,4 +77,7 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
+  public void testDecoratedFunction() throws Exception {
+    doTest(true);
+  }
 }
