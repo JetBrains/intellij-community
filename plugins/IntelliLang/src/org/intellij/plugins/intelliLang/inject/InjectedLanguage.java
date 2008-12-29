@@ -15,10 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.lang.DependentLanguage;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +112,7 @@ public final class InjectedLanguage {
     if (language.getID().startsWith("$")) {
       return false;
     }
-    if (language.getID().equals("InjectedFreeMarker") && "true".equals(System.getProperty("inject.freemarker"))) {
+    if (language instanceof InjectableLanguage) {
       return true;
     }                                    
     if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
