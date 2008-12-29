@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -46,18 +47,23 @@ public class AllClassesGetter {
       final PsiFile file = context.getFile();
       if (file.findElementAt(endOffset - 1) == null) return;
 
+      boolean checkReference = true;
       if (file.getLanguage() == StdLanguages.JAVA) {
-        final OffsetKey key = OffsetKey.create("endOffset");
-        context.getOffsetMap().addOffset(key, endOffset - 1);
-        JavaPsiClassReferenceElement.JAVA_CLASS_INSERT_HANDLER.handleInsert(context, item);
-        endOffset = context.getOffsetMap().getOffset(key) + 1;
+        if (PsiTreeUtil.findElementOfClassAtOffset(file, endOffset - 1, PsiImportStatementBase.class, false) != null) {
+          checkReference = false;
+        } else {
+          final OffsetKey key = OffsetKey.create("endOffset", false);
+          context.getOffsetMap().addOffset(key, endOffset);
+          JavaPsiClassReferenceElement.JAVA_CLASS_INSERT_HANDLER.handleInsert(context, item);
+          endOffset = context.getOffsetMap().getOffset(key);
+        }
       }
 
       final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
       boolean insertFqn = true;
-      if (psiReference != null) {
+      if (checkReference && psiReference != null) {
         final PsiManager psiManager = file.getManager();
         if (psiManager.areElementsEquivalent(psiClass, DefaultInsertHandler.resolveReference(psiReference))) {
           insertFqn = false;

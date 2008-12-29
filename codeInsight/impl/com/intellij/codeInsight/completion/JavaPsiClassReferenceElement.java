@@ -21,6 +21,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final PsiJavaCodeReferenceElement element =
           PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
+
       final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
       if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
         ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.getProject()).getExpectedTypes((PsiExpression) prevElement.getParent(), true);
