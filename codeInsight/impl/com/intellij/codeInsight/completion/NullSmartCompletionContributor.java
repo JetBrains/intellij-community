@@ -8,6 +8,9 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.Ref;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.and;
+import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -21,7 +24,8 @@ import java.util.Collection;
  */
 public class NullSmartCompletionContributor extends CompletionContributor{
   public NullSmartCompletionContributor() {
-    extend(CompletionType.SMART, JavaSmartCompletionContributor.INSIDE_EXPRESSION, new ExpectedTypeBasedCompletionProvider(false) {
+    extend(CompletionType.SMART, and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
+                                                      not(psiElement().afterLeaf("."))), new ExpectedTypeBasedCompletionProvider(false) {
       protected void addCompletions(final CompletionParameters parameters,
                                     final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
         final Ref<Boolean> empty = Ref.create(true);
