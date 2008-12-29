@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.sun.java.swing.SwingUtilities2;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EventListener;
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class DnDEnabler implements Activatable, Disposable {
   @NonNls public static final String KEY = "DragAndDropMultipleSelectionEnabler";
 
   private AWTEventListener myAwtListener = new MyAwtListener();
-  private List<EventListener[]> myMouseListeners;
+  private List<EventListener> myMouseListeners;
   //private List<MouseListener> myMousePreprocessors = new ArrayList<MouseListener>();
   private DnDAware myDnDSource;
   private MouseListener myOriginalDragGestureRecognizer;
@@ -79,16 +81,16 @@ public class DnDEnabler implements Activatable, Disposable {
   }
 
   public void onSetUI() {
-    myMouseListeners = new ArrayList<EventListener[]>();
+    myMouseListeners = new ArrayList<EventListener>();
     new AwtVisitor(myDnDSource.getComponent()) {
       public boolean visit(Component component) {
         EventListener[] mouseListeners = component.getListeners(MouseListener.class);
         if (mouseListeners.length > 0) {
-          myMouseListeners.add(mouseListeners);
+          myMouseListeners.addAll(Arrays.asList(mouseListeners));
           for (EventListener each : mouseListeners) {
-
             if (each instanceof MouseDragGestureRecognizer) {
-              myOriginalDragGestureRecognizer = (MouseListener) each;
+              myOriginalDragGestureRecognizer = (MouseListener)each;
+              myMouseListeners.remove(each);
             }
 
             component.removeMouseListener((MouseListener)each);
@@ -194,24 +196,22 @@ public class DnDEnabler implements Activatable, Disposable {
             final boolean popupToSelection = isPopupToSelection(e);
             if (!e.isConsumed()) {
               assert e.getComponent() != null : "component is null! IDEADEV-6339";
-              final EventListener[][] eventListeners = myMouseListeners.toArray(new EventListener[myMouseListeners.size()][]);
-              for (EventListener[] listeners : eventListeners) {
-                for (EventListener each : listeners) {
-                  if (!shouldProcessTooltipManager) {
-                    if (each == myTooltipListener1 || each == myTooltipListener2) continue;
-                  }
-
-                  if (popupToSelection) {
-                    if (each != null && each.getClass().getName().indexOf("BasicTreeUI$DragFixHandler") >= 0) continue;
-                  }
-
-                  if (isToSelection(e) && e.getID() == MouseEvent.MOUSE_RELEASED) {
-                    myDnDSource.dropSelectionButUnderPoint(e.getPoint());
-                  }
-
-                  dispatchMouseEvent((MouseListener)each, e);
-                  if (e.isConsumed()) break;
+              final EventListener[] eventListeners = myMouseListeners.toArray(new EventListener[myMouseListeners.size()]);
+              for (EventListener each : eventListeners) {
+                if (!shouldProcessTooltipManager) {
+                  if (each == myTooltipListener1 || each == myTooltipListener2) continue;
                 }
+
+                if (popupToSelection) {
+                  if (each != null && each.getClass().getName().indexOf("BasicTreeUI$DragFixHandler") >= 0) continue;
+                }
+
+                if (isToSelection(e) && e.getID() == MouseEvent.MOUSE_RELEASED) {
+                  myDnDSource.dropSelectionButUnderPoint(e.getPoint());
+                }
+
+                dispatchMouseEvent((MouseListener)each, e);
+                if (e.isConsumed()) break;
               }
 
               if (shouldProcessTooltipManager) {
@@ -220,7 +220,7 @@ public class DnDEnabler implements Activatable, Disposable {
             }
           }
 
-          if (myOriginalDragGestureRecognizer != null) {
+          if (myOriginalDragGestureRecognizer != null && !SwingUtilities2.shouldIgnore(e, (JComponent) comp)) {
             dispatchMouseEvent(myOriginalDragGestureRecognizer, e);
           }
         }
