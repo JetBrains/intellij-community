@@ -81,7 +81,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public int MAX_CLIPBOARD_CONTENTS = 5;
   public boolean OVERRIDE_NONIDEA_LAF_FONTS = false;
   public boolean SHOW_ICONS_IN_MENUS = true; // Only makes sense on MacOS
-  public boolean DISABLE_MNEMONICS = false;
+  public boolean DISABLE_MNEMONICS = SystemInfo.isMac; // IDEADEV-33409, should be disabled by default on MacOS
 
   /**
    * Defines whether asterisk is shown on modified editor tab or not
