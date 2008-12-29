@@ -2,19 +2,16 @@ package com.intellij.packageDependencies;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.content.Content;
@@ -244,6 +241,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       if (packageSet != null) {
         return new NamedScope.UnnamedScope(packageSet);
       }
+    }
+    //compatibility for predefined scopes: rename Project -> All
+    if (scope == null && Comparing.strEqual(name, "Project")) {
+      return super.getScope("All");
     }
     return scope;
   }
