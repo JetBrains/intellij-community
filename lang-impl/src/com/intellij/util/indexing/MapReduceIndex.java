@@ -187,6 +187,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     if (allKeys.size() > 0) {
       final Lock writeLock = getWriteLock();
       for (Key key : allKeys) {
+        assert key != null : "Null keys are not allowed. Index: " + myIndexId; 
         // remove outdated values
         try {
           writeLock.lock();
