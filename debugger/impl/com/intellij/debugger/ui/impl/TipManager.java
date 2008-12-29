@@ -26,6 +26,7 @@ public class TipManager implements Disposable, PopupMenuListener {
 
   private volatile boolean myIsDisposed = false;
   private boolean myPopupShown;
+  private TipManager.myHideCanceller myHideCanceller;
 
   public static interface TipFactory {
     JComponent createToolTip (MouseEvent e);
@@ -142,7 +143,7 @@ public class TipManager implements Disposable, PopupMenuListener {
   private void showTooltip(MouseEvent e) {
     final MouseEvent me = SwingUtilities.convertMouseEvent(e.getComponent(), e, myComponent);
 
-    JComponent newTip = myTipFactory.createToolTip(me);
+    final JComponent newTip = myTipFactory.createToolTip(me);
 
     if (newTip == null) {
       hideTooltip(false);
@@ -162,6 +163,7 @@ public class TipManager implements Disposable, PopupMenuListener {
       if (sourceComponent != null) {
         SwingUtilities.convertPointToScreen(location, sourceComponent);
       }
+
       myTipPopup = popupFactory.getPopup(myComponent, newTip, location.x, location.y);
       myInsideComponent = false;
       myTipPopup.show();
@@ -188,7 +190,7 @@ public class TipManager implements Disposable, PopupMenuListener {
             hideTooltip(true);
           }
         }
-      }, 250);
+      }, 100);
     }
   }
 
@@ -227,6 +229,9 @@ public class TipManager implements Disposable, PopupMenuListener {
 
     myGP.addMousePreprocessor(myMouseListener, this);
     myGP.addMouseMotionPreprocessor(myMouseMotionListener, this);
+
+    myHideCanceller = new myHideCanceller();
+    Toolkit.getDefaultToolkit().addAWTEventListener(myHideCanceller, MouseEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
   public void dispose() {
@@ -234,10 +239,25 @@ public class TipManager implements Disposable, PopupMenuListener {
 
     hideTooltip(true);
 
+    Toolkit.getDefaultToolkit().removeAWTEventListener(myHideCanceller);
+
     myIsDisposed = true;
     myShowAlarm.cancelAllRequests();
     myMouseListener = null;
     myMouseMotionListener = null;
   }
 
+  private class myHideCanceller implements AWTEventListener {
+
+    public void eventDispatched(AWTEvent event) {
+      if (myCurrentTooltip == null) return;
+
+      if (event.getID() == MouseEvent.MOUSE_MOVED) {
+        final MouseEvent me = (MouseEvent)event;
+        if (myCurrentTooltip == me.getComponent() || SwingUtilities.isDescendingFrom(me.getComponent(), myCurrentTooltip)) {
+          myHideAlarm.cancelAllRequests();
+        }
+      }
+    }
+  }
 }

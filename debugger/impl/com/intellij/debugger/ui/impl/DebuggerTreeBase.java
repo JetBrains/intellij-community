@@ -10,16 +10,12 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jdom.Element;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,12 +24,16 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
 
 
 public class DebuggerTreeBase extends DnDAwareTree {
   private Project myProject;
   private DebuggerTreeNodeImpl myCurrentTooltipNode;
+
   private JComponent myCurrentTooltip;
+  private Point myCurrentPosition;
+
   protected final TipManager myTipManager;
 
   public DebuggerTreeBase(TreeModel model, Project project) {
@@ -84,41 +84,20 @@ public class DebuggerTreeBase extends DnDAwareTree {
       rootSize.height -= (borderInsets.top + borderInsets.bottom) * 2;
 
       //noinspection HardCodedStringLiteral
-      final Element html = new Element("html");
-
-      final StringBuilder tipBuilder = StringBuilderSpinAllocator.alloc();
+      final StringBuffer tipBuilder = new StringBuffer();
       try {
         final StringTokenizer tokenizer = new StringTokenizer(tipText, "\n");
-        final FontMetrics metrics = tooltip.getFontMetrics(tooltip.getFont());
-        while(tokenizer.hasMoreElements()) {
-          String line = tokenizer.nextToken();
-          while (line.length() > 0) {
-            final int maxChars = Math.max(1, getMaximumChars(line, metrics, rootSize.width));
-            if(maxChars == line.length()) {
-              tipBuilder.append(line).append('\n');
-              break;
-            }
-            else { // maxChars < line.length()
-              final String delimiterString = "\\\n";
-              tipBuilder.append(line.substring(0, maxChars));
-              tipBuilder.append(delimiterString);
-              line = line.substring(maxChars);
-            }
-          }
+
+        while (tokenizer.hasMoreElements()) {
+          final String each = tokenizer.nextElement();
+          tipBuilder.append(each);
+          tipBuilder.append("<br>");
         }
-        //noinspection HardCodedStringLiteral
-        Element p = new Element("pre");
-        html.addContent(p);
-        p.setText(JDOMUtil.legalizeText(tipBuilder.toString()));
+
+        tooltip.setTipText(UIUtil.toHtml(tipBuilder.toString(), 0));
       }
       finally {
-        StringBuilderSpinAllocator.dispose(tipBuilder);
       }
-
-      XMLOutputter outputter = JDOMUtil.createOutputter("\n");
-      Format format = outputter.getFormat().setTextMode(Format.TextMode.PRESERVE);
-      outputter.setFormat(format);
-      tooltip.setTipText(outputter.outputString(html));
     }
 
     tooltip.setBorder(null);
@@ -150,36 +129,57 @@ public class DebuggerTreeBase extends DnDAwareTree {
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-    final JToolTip toolTip = new JToolTip();
-    toolTip.setLayout(new BorderLayout());
-    toolTip.add(scrollPane, BorderLayout.CENTER);
-
     final Point point = e.getPoint();
-    Rectangle tipRectangle = getTipBounds(point, tipContent.getPreferredSize());
+    SwingUtilities.convertPointToScreen(point, e.getComponent());
+    Rectangle tipRectangle = new Rectangle(point, tipContent.getPreferredSize());
+
+    final Rectangle screen = ScreenUtil.getScreenRectangle(point.x, point.y);
+
+    final JToolTip toolTip = new JToolTip();
+
+    tipContent.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        if (UIUtil.isActionClick(e)) {
+          final Window wnd = SwingUtilities.getWindowAncestor(toolTip);
+          if (wnd instanceof JWindow) {
+            wnd.setVisible(false);
+          }
+        }
+      }
+    });
+
     final Border tooltipBorder = toolTip.getBorder();
-    if(tooltipBorder != null) {
+    if (tooltipBorder != null) {
       final Insets borderInsets = tooltipBorder.getBorderInsets(this);
       tipRectangle.setSize(tipRectangle.width  + borderInsets.left + borderInsets.right, tipRectangle.height + borderInsets.top  + borderInsets.bottom);
     }
-    final Dimension tipSize = new Dimension(tipRectangle.getSize());
 
-    if(tipRectangle.getWidth() < tipContent.getPreferredSize().getWidth()) {
-      tipSize.height += scrollPane.getHorizontalScrollBar().getPreferredSize().height;
+    boolean addScrollers = false;
+    if (tipRectangle.height > screen.height / 4) {
+      tipRectangle.height = screen.height / 4;
+      addScrollers = true;
     }
 
-    if(tipRectangle.getHeight() < tipContent.getPreferredSize().getHeight()) {
-      tipSize.width += scrollPane.getVerticalScrollBar().getPreferredSize().width;
+    toolTip.setLayout(new BorderLayout());
+    toolTip.add(scrollPane, BorderLayout.CENTER);
+
+
+    if(addScrollers) {
+      tipRectangle.height += scrollPane.getHorizontalScrollBar().getPreferredSize().height;
+      tipRectangle.width += scrollPane.getVerticalScrollBar().getPreferredSize().width;
     }
 
-    if(!tipSize.equals(tipRectangle.getSize())) {
-      tipRectangle = getTipBounds(point, tipSize);
-    }
+
+
+    ScreenUtil.cropRectangleToFitTheScreen(tipRectangle);
 
     toolTip.setPreferredSize(tipRectangle.getSize());
 
     myCurrentTooltip = toolTip;
+    myCurrentPosition = tipRectangle.getLocation();
 
-    return toolTip;
+    return myCurrentTooltip;
   }
 
   @Nullable
@@ -229,6 +229,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
     }
 
     Rectangle contentRect = getVisibleRect();
+    System.out.println("contentRect = " + contentRect);
 
     int vgap = nodeBounds.height;
     int width = Math.min(tipContentSize.width, contentRect.width);
@@ -261,7 +262,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
     if (tabSize < 0) {
       tabSize = 0;
     }
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    final StringBuffer buf = new StringBuffer();
     try {
       boolean special = false;
       for(int idx = 0; idx < text.length(); idx++) {
@@ -296,7 +297,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
       return buf.toString();
     }
     finally {
-      StringBuilderSpinAllocator.dispose(buf);
+
     }
   }
 
