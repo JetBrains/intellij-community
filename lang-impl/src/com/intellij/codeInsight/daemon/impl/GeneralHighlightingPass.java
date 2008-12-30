@@ -183,17 +183,19 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Collection<PsiFile> injectedFiles = new THashSet<PsiFile>();
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes injectedAttributes = scheme.getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
+
     for (PsiElement element : hosts) {
       InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          for (PsiLanguageInjectionHost.Shred place : places) {
-            TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
-            if (textRange.isEmpty()) continue;
-            String desc = injectedPsi.getText();
-            HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
-            addHighlightInfo(textRange, highlightInfo);
+          if (injectedFiles.add(injectedPsi)) { // for concatenations there can be many injection hosts with only one injected PSI
+            for (PsiLanguageInjectionHost.Shred place : places) {
+              TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
+              if (textRange.isEmpty()) continue;
+              String desc = injectedPsi.getText();
+              HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
+              addHighlightInfo(textRange, info);
+            }
           }
-          injectedFiles.add(injectedPsi);
         }
       }, false);
     }
