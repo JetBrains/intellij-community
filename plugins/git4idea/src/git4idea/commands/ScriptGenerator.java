@@ -17,7 +17,6 @@ package git4idea.commands;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -40,7 +39,7 @@ public class ScriptGenerator {
 
   static {
     if (SystemInfo.isWindows) {
-      SCRIPT_EXT = ".cmd";
+      SCRIPT_EXT = ".bat";
     }
     else {
       SCRIPT_EXT = ".sh";
@@ -142,35 +141,48 @@ public class ScriptGenerator {
       else {
         out.println("#!/bin/sh");
       }
-      out.print(System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + "java -cp \"");
-      boolean first = true;
-      for (String p : myPaths) {
-        if (!first) {
-          out.print(File.pathSeparatorChar);
-        }
-        else {
-          first = false;
-        }
-        out.print(p);
-      }
-      out.print("\" ");
-      out.print(myMainClass.getName());
-      for (String p : myInternalParameters) {
-        out.print(' ');
-        out.print(p);
-      }
+      String line = commandLine();
       if (SystemInfo.isWindows) {
-        out.println(" %1 %2 %3 %4 %5 %6 %7 %8 %9");
+        line += " %1 %2 %3 %4 %5 %6 %7 %8 %9";
       }
       else {
-        out.println(" \"$@\"");
+        line += " \"$@\"";
       }
+      out.println(line);
     }
     finally {
       out.close();
     }
-    FileUtil.setExectuableAttribute(scriptPath.getAbsolutePath(), true);
     return scriptPath;
+  }
+
+  /**
+   * @return a command line for the the executable program
+   */
+  public String commandLine() {
+    StringBuilder cmd = new StringBuilder();
+    cmd.append(System.getProperty("java.home")).append(File.separatorChar).append("bin").append(File.separatorChar).append("java -cp \"");
+    boolean first = true;
+    for (String p : myPaths) {
+      if (!first) {
+        cmd.append(File.pathSeparatorChar);
+      }
+      else {
+        first = false;
+      }
+      cmd.append(p);
+    }
+    cmd.append("\" ");
+    cmd.append(myMainClass.getName());
+    for (String p : myInternalParameters) {
+      cmd.append(' ');
+      cmd.append(p);
+    }
+    String line = cmd.toString();
+    if (SystemInfo.isWindows) {
+      line = line.replace('\\', '/');
+    }
+    return line;
   }
 
   /**

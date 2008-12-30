@@ -165,6 +165,15 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
+  public String getRevisionPattern() {
+    // return the full commit hash pattern, possibly other revision formats should be supported as well
+    return "[0-9a-fA-F]{40}";
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public String getName() {
     return NAME;
   }

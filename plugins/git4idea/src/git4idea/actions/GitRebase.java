@@ -1,7 +1,6 @@
 package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandler;
@@ -48,11 +47,7 @@ public class GitRebase extends GitRepositoryAction {
     GitRebaseEditorHandler editor = service.getHandler(project, dialog.gitRoot());
     affectedRoots.add(dialog.gitRoot());
     try {
-      String editorPath = service.getScriptPath().getPath();
-      if (SystemInfo.isWindows) {
-        editorPath = editorPath.replace('\\', '/');
-      }
-      h.setenv(GitHandler.GIT_EDITOR_ENV, editorPath);
+      h.setenv(GitHandler.GIT_EDITOR_ENV, service.getEditorCommand());
       h.setenv(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, Integer.toString(editor.getHandlerNo()));
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("rebasing.title"), h.printableCommandLine());
     }
