@@ -139,7 +139,7 @@
       <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="after"/>
     </group>
 
-    <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingGroup" popup="true">
+    <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingActionGroup" popup="true">
       <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
       <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
       <separator/>

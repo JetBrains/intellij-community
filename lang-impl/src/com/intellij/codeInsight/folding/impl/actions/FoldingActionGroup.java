@@ -4,8 +4,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 
-public class FoldingGroup extends DefaultActionGroup {
-  public FoldingGroup() {
+public class FoldingActionGroup extends DefaultActionGroup {
+  public FoldingActionGroup() {
     super();
   }
 
