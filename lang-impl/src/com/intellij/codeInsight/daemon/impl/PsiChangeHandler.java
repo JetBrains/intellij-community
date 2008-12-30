@@ -23,6 +23,7 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,8 +92,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   public void childRemoved(PsiTreeChangeEvent event) {
-    PsiElement element = event.getParent();
-    queueElement(element, true, event);
+    queueElement(event.getParent(), true, event);
   }
 
   public void childReplaced(PsiTreeChangeEvent event) {
@@ -138,6 +138,9 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     }
 
     if (!child.isValid()) return;
+    if (file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) { // must filter out non-physical elements and do not forget that tests can reside in TempFileSystem
+      return;
+    }
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document != null) {
       List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
