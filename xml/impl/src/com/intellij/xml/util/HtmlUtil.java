@@ -7,9 +7,12 @@ import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
@@ -387,5 +390,40 @@ public class HtmlUtil {
       return true;
     }
     return false;
+  }
+
+  public static boolean isHtmlTagContainingFile(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null) {
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+      if (tag instanceof HtmlTag) {
+        return true;
+      }
+      else {
+        final FileViewProvider provider = containingFile.getViewProvider();
+        Language language;
+        if (provider instanceof TemplateLanguageFileViewProvider) {
+          language = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
+        }
+        else {
+          language = provider.getBaseLanguage();
+        }
+
+        return language == XHTMLLanguage.INSTANCE;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isHtmlTagContainingFile(final Editor editor, final PsiFile file) {
+    if (editor == null || file == null || !(file instanceof XmlFile)) {
+      return false;
+    }
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiElement element = file.findElementAt(offset);
+    return isHtmlTagContainingFile(element);
   }
 }
