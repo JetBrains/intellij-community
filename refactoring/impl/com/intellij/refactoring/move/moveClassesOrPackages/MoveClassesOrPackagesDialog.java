@@ -270,11 +270,11 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return JavaPsiFacade.getInstance(myManager.getProject()).findClass(name, ProjectScope.getProjectScope(myProject));
   }
 
-  private boolean isMoveToPackage() {
+  protected boolean isMoveToPackage() {
     return myHavePackages || myToPackageRadioButton.isSelected();
   }
 
-  private String getTargetPackage() {
+  protected String getTargetPackage() {
     return myHavePackages ? myWithBrowseButtonReference.getText() : myClassPackageChooser.getText();
   }
 
