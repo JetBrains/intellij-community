@@ -189,7 +189,7 @@ public class CompletionData {
     });
     if (prefix != null) return prefix;
 
-    if (insertedElement instanceof PsiPlainText) {
+    if (insertedElement instanceof PsiPlainText || insertedElement instanceof PsiComment) {
       return CompletionUtil.findJavaIdentifierPrefix(insertedElement, offsetInFile);
     }
 
