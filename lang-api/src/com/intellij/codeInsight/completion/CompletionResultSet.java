@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CompletionResultSet {
   private final PrefixMatcher myPrefixMatcher;
   private final Consumer<LookupElement> myConsumer;
+  private final CompletionService myCompletionService = CompletionService.getCompletionService();
 
   protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<LookupElement> consumer) {
     myPrefixMatcher = prefixMatcher;
@@ -34,9 +35,13 @@ public abstract class CompletionResultSet {
     return myConsumer;
   }
 
-  public void addElement(@NotNull final LookupElement result) {
-    if (result.isPrefixMatched() || result.setPrefixMatcher(getPrefixMatcher())) {
-      myConsumer.consume(result);
+  /**
+   * If a given element matches the prefix, give it for further processing (which may eventually result in its appearing in the completion list)
+   * @param element
+   */
+  public void addElement(@NotNull final LookupElement element) {
+    if (myCompletionService.prefixMatches(element, getPrefixMatcher())) {
+      myConsumer.consume(element);
     }
   }
 
