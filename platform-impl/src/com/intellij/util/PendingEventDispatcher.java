@@ -18,18 +18,18 @@ public class PendingEventDispatcher <T extends EventListener> {
 
   private final T myMulticaster;
 
-  private List<T> myListeners = new ArrayList<T>();
-  private Map<T, Boolean> myListenersState = new HashMap<T, Boolean>();
+  private final List<T> myListeners = new ArrayList<T>();
+  private final Map<T, Boolean> myListenersState = new HashMap<T, Boolean>();
 
   private List<T> myCachedListeners = null;
 
-  private Stack<T> myDispatchingListeners = new Stack<T>();
+  private final Stack<T> myDispatchingListeners = new Stack<T>();
 
   private Method myCurrentDispatchMethod = null;
   private Object[] myCurrentDispatchArgs = null;
 
   private static int ourDispatchingEventsCounter = 0;
-  private boolean myAssertDispatchThread;
+  private final boolean myAssertDispatchThread;
 
   public static <T extends EventListener> PendingEventDispatcher<T> create(Class<T> listenerClass) {
     return create(listenerClass, true);
@@ -57,7 +57,7 @@ public class PendingEventDispatcher <T extends EventListener> {
             return "Multicaster";
           }
           else if (methodName.equals("hashCode")) {
-            return new Integer(System.identityHashCode(proxy));
+            return Integer.valueOf(System.identityHashCode(proxy));
           }
           else if (methodName.equals("equals")) {
             return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;

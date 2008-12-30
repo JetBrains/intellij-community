@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +57,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   public Element getState() {
     Element element = new Element("x");
     List<VirtualFile> files = new ArrayList<VirtualFile>(myMapping.keySet());
-    Collections.sort(files, new Comparator<VirtualFile>() {
+    ContainerUtil.quickSort(files, new Comparator<VirtualFile>() {
       public int compare(final VirtualFile o1, final VirtualFile o2) {
         if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
         return o1.getPath().compareTo(o2.getPath());

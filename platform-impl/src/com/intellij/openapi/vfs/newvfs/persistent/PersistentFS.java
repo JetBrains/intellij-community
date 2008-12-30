@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
@@ -511,7 +512,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
 
-    Collections.sort(deletionList, DEPTH_COMPARATOR);
+    ContainerUtil.quickSort(deletionList, DEPTH_COMPARATOR);
     List<VirtualFile> filesToBeDeleted = new ArrayList<VirtualFile>();
     for (VFileDeleteEvent event : deletionList) {
       boolean ok = true;

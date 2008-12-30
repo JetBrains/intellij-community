@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 
 import java.util.*;
@@ -62,7 +63,7 @@ public abstract class HighlighterList {
         iterator.remove();
       }
     }
-    Collections.sort(mySegmentHighlighters, MY_RANGE_COMPARATOR);
+    ContainerUtil.quickSort(mySegmentHighlighters, MY_RANGE_COMPARATOR);
 
     myIsDirtied = false;
   }

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -487,7 +488,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
 
       if (!myCachedSortedHighlighters.isEmpty()) {
-        Collections.sort(myCachedSortedHighlighters, new Comparator<RangeHighlighter>() {
+        ContainerUtil.quickSort(myCachedSortedHighlighters, new Comparator<RangeHighlighter>() {
           public int compare(final RangeHighlighter h1, final RangeHighlighter h2) {
             return h1.getStartOffset() - h2.getStartOffset();
           }

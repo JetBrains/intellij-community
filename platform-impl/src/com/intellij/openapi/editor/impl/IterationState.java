@@ -12,11 +12,11 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -381,9 +381,7 @@ public final class IterationState {
                            : null;
 
     final int size = myCurrentHighlighters.size();
-    if (size > 1) {
-      Collections.sort(myCurrentHighlighters, LayerComparator.INSTANCE);
-    }
+    ContainerUtil.quickSort(myCurrentHighlighters, LayerComparator.INSTANCE);
 
     for (int i = 0; i < size; i++) {
       RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
@@ -504,9 +502,7 @@ public final class IterationState {
 
     Color caret = isInCaretRow && myCaretRowAttributes != null ? myCaretRowAttributes.getBackgroundColor() : null;
 
-    if (myCurrentHighlighters.size() > 1) {
-      Collections.sort(myCurrentHighlighters, LayerComparator.INSTANCE);
-    }
+      ContainerUtil.quickSort(myCurrentHighlighters, LayerComparator.INSTANCE);
 
     for (int i = 0; i < myCurrentHighlighters.size(); i++) {
       RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -118,7 +119,7 @@ public abstract class PassExecutorService {
       threadsToStartCountdown.addAndGet(passes.size());
 
       // create one scheduled pass per unique id (possibly for multiple fileeditors. they all will be applied at the pass finish)
-      Collections.sort(passes, new Comparator<TextEditorHighlightingPass>(){
+      ContainerUtil.quickSort(passes, new Comparator<TextEditorHighlightingPass>(){
         public int compare(final TextEditorHighlightingPass o1, final TextEditorHighlightingPass o2) {
           return o1.getId() - o2.getId();
         }

@@ -3,21 +3,25 @@ package com.intellij.lang.properties;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -140,7 +144,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       }
     }
     // put default properties file first
-    Collections.sort(properties, new Comparator<Property>() {
+    ContainerUtil.quickSort(properties, new Comparator<Property>() {
       public int compare(final Property o1, final Property o2) {
         String name1 = o1.getContainingFile().getName();
         String name2 = o2.getContainingFile().getName();

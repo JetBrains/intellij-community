@@ -28,12 +28,12 @@ class CommandMerger {
   private String myCommandName = null;
   private ArrayList<UndoableAction> myCurrentActions = new ArrayList<UndoableAction>();
   private Set<DocumentReference> myAffectedDocuments = new HashSet<DocumentReference>();
-  private DocumentAdapter myDocumentListener;
+  private final DocumentAdapter myDocumentListener;
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
 
-  public CommandMerger(UndoManagerImpl manager, EditorFactory editorFactory) {
+  CommandMerger(UndoManagerImpl manager, EditorFactory editorFactory) {
     myManager = manager;
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
     myDocumentListener = new DocumentAdapter() {
@@ -111,9 +111,7 @@ class CommandMerger {
         nextCommandToMerge.myOnlyUndoTransparents && nextCommandToMerge.myHasUndoTransparents) {
       return myAffectedDocuments.equals(nextCommandToMerge.myAffectedDocuments);
     }
-    if (myIsComplex || nextCommandToMerge.isComplex()) return false;
-
-    return (groupId != null && Comparing.equal(myLastGroupId, groupId));
+    return !myIsComplex && !nextCommandToMerge.isComplex() && groupId != null && Comparing.equal(myLastGroupId, groupId);
   }
 
   boolean isComplex() {
@@ -154,7 +152,7 @@ class CommandMerger {
     }
 
     if (myIsComplex) {
-      if (group.getAffectedDocuments().size() > 0) {
+      if (!group.getAffectedDocuments().isEmpty()) {
         myManager.getUndoStacksHolder().addToGlobalStack(group);
       }
     }

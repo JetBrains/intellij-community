@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -262,7 +263,7 @@ public class ActionsTreeUtil {
 
     filterOtherActionsGroup(result);
 
-    Collections.sort(result, new Comparator<String>() {
+    ContainerUtil.quickSort(result, new Comparator<String>() {
       public int compare(String id1, String id2) {
         return getTextToCompare(id1).compareToIgnoreCase(getTextToCompare(id2));
       }

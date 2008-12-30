@@ -50,7 +50,7 @@ public class EventDispatcher <T extends EventListener>{
             return "Multicaster";
           }
           else if (methodName.equals("hashCode")) {
-            return new Integer(System.identityHashCode(proxy));
+            return Integer.valueOf(System.identityHashCode(proxy));
           }
           else if (methodName.equals("equals")) {
             return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;

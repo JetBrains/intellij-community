@@ -35,6 +35,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -377,7 +378,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   public void performPreRunActivities(final List<InspectionProfileEntry> globalTools, final List<InspectionProfileEntry> localTools,
                                       final GlobalInspectionContext context) {
     getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
-    Collections.sort(globalTools, new Comparator<InspectionProfileEntry>() {
+    ContainerUtil.quickSort(globalTools, new Comparator<InspectionProfileEntry>() {
       public int compare(final InspectionProfileEntry o1, final InspectionProfileEntry o2) {
         if (o1 instanceof DeadCodeInspection) return -1;
         if (o2 instanceof DeadCodeInspection) return 1;

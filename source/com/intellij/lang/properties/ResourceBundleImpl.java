@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public class ResourceBundleImpl implements ResourceBundle {
   public PropertiesFile getDefaultPropertiesFile(final Project project) {
     List<PropertiesFile> files = getPropertiesFiles(project);
     // put default properties file first
-    Collections.sort(files, new Comparator<PropertiesFile>() {
+    ContainerUtil.quickSort(files, new Comparator<PropertiesFile>() {
       public int compare(final PropertiesFile o1, final PropertiesFile o2) {
         return Comparing.compare(o1.getName(), o2.getName());
       }
