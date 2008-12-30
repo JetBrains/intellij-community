@@ -43,9 +43,9 @@ public class ContextComputationProcessor {
   }
 
   @Nullable
-  private static PsiElement getContext(@Nullable PsiElement place) {
+  private static PsiElement getContext(@NotNull PsiElement place) {
     final PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(place, PsiConditionalExpression.class);
-    if (conditionalExpression != null && place != null && PsiTreeUtil.isAncestor(conditionalExpression.getCondition(), place, false)) return null;
+    if (conditionalExpression != null && PsiTreeUtil.isAncestor(conditionalExpression.getCondition(), place, false)) return null;
 
     PsiElement element = place;
     PsiElement prev = place;
@@ -53,9 +53,9 @@ public class ContextComputationProcessor {
       final PsiElement parent = element.getParent();
 
       if (!(parent instanceof PsiBinaryExpression ||
-                   parent instanceof PsiParenthesizedExpression ||
-                   parent instanceof PsiTypeCastExpression ||
-                   parent instanceof PsiConditionalExpression)) {
+            parent instanceof PsiParenthesizedExpression ||
+            parent instanceof PsiTypeCastExpression ||
+            parent instanceof PsiConditionalExpression)) {
         break;
       }
       prev = element;
@@ -68,10 +68,10 @@ public class ContextComputationProcessor {
     return element;
   }
 
-  public static List<Object> collectOperands(@Nullable final PsiExpression place, final String prefix, final String suffix, final Ref<Boolean> unparsable) {
+  @NotNull
+  public static List<Object> collectOperands(@NotNull final PsiExpression place, final String prefix, final String suffix, final Ref<Boolean> unparsable) {
     final PsiElement parent = getContext(place);
     if (parent == null) return Collections.emptyList();
-    assert place != null;
 
     final ArrayList<Object> result = new ArrayList<Object>();
     addStringFragment(prefix, result);
@@ -92,8 +92,7 @@ public class ContextComputationProcessor {
     }
   }
 
-  @NotNull
-  public List<Object> collectOperands(final PsiElement expression, final List<Object> result, final Ref<Boolean> unparsable) {
+  public void collectOperands(final PsiElement expression, final List<Object> result, final Ref<Boolean> unparsable) {
     final PsiElement firstChild;
     if (expression instanceof PsiParenthesizedExpression) {
       collectOperands(((PsiParenthesizedExpression)expression).getExpression(), result, unparsable);
@@ -122,6 +121,5 @@ public class ContextComputationProcessor {
       if (o == null) result.add(expression);
       else addStringFragment(String.valueOf(o), result);
     }
-    return result;
   }
 }
