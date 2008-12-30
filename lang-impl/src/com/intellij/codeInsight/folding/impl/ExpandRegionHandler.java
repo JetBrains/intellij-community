@@ -6,10 +6,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 
 public class ExpandRegionHandler implements CodeInsightActionHandler {
   public void invoke(Project project, final Editor editor, PsiFile file){
+    expandRegionAtCaret(project, editor);
+  }
+
+  public static void expandRegionAtCaret(final Project project, @Nullable final Editor editor) {
+    if (editor == null) return;
+
     CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor);
 
