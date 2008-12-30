@@ -527,8 +527,7 @@ public class ContainerUtil {
     quickSort(list, comparator, 0, list.size());
   }
 
-  private static <T> void quickSort(List<T> x, Comparator<? super T> comparator, int off, int end) {
-    int len = end - off;
+  private static <T> void quickSort(List<T> x, Comparator<? super T> comparator, int off, int len) {
     // Insertion sort on smallest arrays
     if (len < 7) {
       for (int i = off; i < len + off; i++) {
@@ -555,31 +554,30 @@ public class ContainerUtil {
     T v = x.get(m);
 
     // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
+    int a = off;
+    int b = a;
+    int c = off + len - 1;
+    int d = c;
     while (true) {
       while (b <= c && comparator.compare(x.get(b), v) <= 0) {
         if (comparator.compare(x.get(b), v) == 0) {
-          int a1 = a++;
-          swapElements(x, a1, b);
+          swapElements(x, a++, b);
         }
         b++;
       }
       while (c >= b && comparator.compare(v, x.get(c)) <= 0) {
         if (comparator.compare(x.get(c), v) == 0) {
-          int b1 = d--;
-          swapElements(x, c, b1);
+          swapElements(x, c, d--);
         }
         c--;
       }
       if (b > c) break;
-      int a1 = b++;
-      int b1 = c--;
-      swapElements(x, a1, b1);
+      swapElements(x, b++, c--);
     }
 
     // Swap partition elements back to middle
-    int s, n = off + len;
-    s = Math.min(a - off, b - a);
+    int n = off + len;
+    int s = Math.min(a - off, b - a);
     vecswap(x, off, b - s, s);
     s = Math.min(d - c, n - d - 1);
     vecswap(x, b, n - s, s);
