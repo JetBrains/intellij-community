@@ -17,11 +17,11 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -29,16 +29,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 public class AbstractTreeUpdater implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeUpdater");
 
   private final LinkedList<TreeUpdatePass> myNodeQueue = new LinkedList<TreeUpdatePass>();
   private final AbstractTreeBuilder myTreeBuilder;
-  private Runnable myRunAfterUpdate;
+  private final List<Runnable> myRunAfterUpdate = new ArrayList<Runnable>();
   private Runnable myRunBeforeUpdate;
   private final MergingUpdateQueue myUpdateQueue;
 
@@ -159,10 +157,16 @@ public class AbstractTreeUpdater implements Disposable {
     if (myRunAfterUpdate != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          synchronized (AbstractTreeUpdater.this) {
-            if (myRunAfterUpdate != null) {
-              myRunAfterUpdate.run();
-              myRunAfterUpdate = null;
+          List<Runnable> runAfterUpdate = null;
+          synchronized (myRunAfterUpdate) {
+            if (!myRunAfterUpdate.isEmpty()) {
+              runAfterUpdate = new ArrayList<Runnable>(myRunAfterUpdate);
+              myRunAfterUpdate.clear();
+            }
+          }
+          if (runAfterUpdate != null) {
+            for (Runnable r : runAfterUpdate) {
+              r.run();
             }
           }
         }
@@ -194,8 +198,11 @@ public class AbstractTreeUpdater implements Disposable {
     myUpdateQueue.cancelAllUpdates();
   }
 
-  public synchronized void runAfterUpdate(final Runnable runnable) {
-    myRunAfterUpdate = runnable;
+  public void runAfterUpdate(final Runnable runnable) {
+    if (runnable == null) return;
+    synchronized (myRunAfterUpdate) {
+      myRunAfterUpdate.add(runnable);
+    }
   }
 
   public synchronized void runBeforeUpdate(final Runnable runnable) {

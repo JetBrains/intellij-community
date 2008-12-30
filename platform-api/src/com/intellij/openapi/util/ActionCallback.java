@@ -42,6 +42,10 @@ public class ActionCallback {
     myDone.setExecuted();
   }
 
+  public boolean isDone() {
+    return myDone.isExecuted();
+  }
+
   public void setRejected() {
     myRejected.setExecuted();
   }

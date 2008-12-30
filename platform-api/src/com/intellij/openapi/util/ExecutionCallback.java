@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.ArrayList;
 
-class ExecutionCallback {
+public class ExecutionCallback {
   private final Executed myExecuted;
   private List<Runnable> myRunnables;
 
@@ -20,6 +20,10 @@ class ExecutionCallback {
   public void setExecuted() {
     myExecuted.signalExecution();
     callback();
+  }
+
+  public boolean isExecuted() {
+    return myExecuted.isExecuted();
   }
 
   final void doWhenExecuted(@NotNull final Runnable runnable) {

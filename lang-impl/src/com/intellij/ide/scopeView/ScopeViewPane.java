@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -119,8 +120,9 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     actionGroup.add(ActionManager.getInstance().getAction("ScopeView.EditScopes"));
   }
 
-  public void updateFromRoot(boolean restoreExpandedPaths) {
+  public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
+    return new ActionCallback.Done();
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {

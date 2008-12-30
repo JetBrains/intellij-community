@@ -1356,6 +1356,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     setPaneOption(myShowLibraryContents, showLibraryContents, paneId, true);
   }
 
+  public ActionCallback setShowLibraryContentsCB(boolean showLibraryContents, String paneId) {
+    return setPaneOption(myShowLibraryContents, showLibraryContents, paneId, true);
+  }
+
   public boolean isShowModules(String paneId) {
     return getPaneOptionValue(myShowModules, paneId, ourShowModulesDefaults);
   }
@@ -1372,14 +1376,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     setPaneOption(myAbbreviatePackageNames, abbreviatePackageNames, paneId, true);
   }
 
-  private void setPaneOption(Map<String, Boolean> optionsMap, boolean value, String paneId, final boolean updatePane) {
+  private ActionCallback setPaneOption(Map<String, Boolean> optionsMap, boolean value, String paneId, final boolean updatePane) {
     optionsMap.put(paneId, value ? Boolean.TRUE : Boolean.FALSE);
     if (updatePane) {
       final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
       if (pane != null) {
-        pane.updateFromRoot(false);
+        return pane.updateFromRoot(false);
       }
     }
+    return new ActionCallback.Done();
   }
 
   private static boolean getPaneOptionValue(Map<String, Boolean> optionsMap, String paneId, boolean defaultValue) {

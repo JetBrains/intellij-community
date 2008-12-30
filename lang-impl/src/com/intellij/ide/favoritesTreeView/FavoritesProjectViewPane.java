@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -102,8 +103,8 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     return subId;
   }
 
-  public void updateFromRoot(boolean restoreExpandedPaths) {
-    getTreeBuilder().updateFromRoot();
+  public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
+    return ((FavoritesViewTreeBuilder) getTreeBuilder()).updateFromRootCB();
   }
 
   public void select(Object object, VirtualFile file, boolean requestFocus) {

@@ -129,7 +129,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     myTreeStructure = null;
   }
 
-  public abstract void updateFromRoot(boolean restoreExpandedPaths);
+  public abstract ActionCallback updateFromRoot(boolean restoreExpandedPaths);
+
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
   public void selectModule(final Module module, final boolean requestFocus) {
     doSelectModuleOrGroup(module, requestFocus);

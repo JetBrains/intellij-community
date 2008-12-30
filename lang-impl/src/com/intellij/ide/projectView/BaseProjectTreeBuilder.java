@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,13 +95,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  public void select(Object element, VirtualFile file, boolean requestFocus) {
+  public ActionCallback select(Object element, VirtualFile file, boolean requestFocus) {
     DefaultMutableTreeNode selected = alreadySelectedNode(element);
     if (selected == null) {
       AbstractTreeNode node = expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, Conditions.<AbstractTreeNode>alwaysTrue());
       selected = getNodeForElement(node);
     }
-    TreeUtil.selectInTree(selected, requestFocus, getTree());
+    return TreeUtil.selectInTree(selected, requestFocus, getTree());
   }
 
   public void selectInWidth(final Object element, final boolean requestFocus, final Condition<AbstractTreeNode> nonStopCondition) {

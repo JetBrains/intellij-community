@@ -17,6 +17,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -106,19 +107,22 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
 
   public void updateFromRoot() {
-    ((FavoritesTreeStructure)getTreeStructure()).rootsChanged();
-    if (isDisposed()) return;
-    getUpdater().cancelAllRequests();
-    super.updateFromRoot();
+    updateFromRootCB();
   }
 
-  public void select(Object element, VirtualFile file, boolean requestFocus) {
+  public ActionCallback updateFromRootCB() {
+    ((FavoritesTreeStructure)getTreeStructure()).rootsChanged();
+    if (isDisposed()) return new ActionCallback.Done();
+    getUpdater().cancelAllRequests();
+    return super.updateFromRootCB();
+  }
+
+  public ActionCallback select(Object element, VirtualFile file, boolean requestFocus) {
     final DefaultMutableTreeNode node = findSmartFirstLevelNodeByElement(element);
     if (node != null){
-      TreeUtil.selectInTree(node, requestFocus, getTree());
-      return;
+      return TreeUtil.selectInTree(node, requestFocus, getTree());
     }
-    super.select(element, file, requestFocus);
+    return super.select(element, file, requestFocus);
   }
 
   @Nullable

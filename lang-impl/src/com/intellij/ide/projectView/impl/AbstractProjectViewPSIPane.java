@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
@@ -132,29 +133,44 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     installTreePopupHandler(ActionPlaces.PROJECT_VIEW_POPUP, IdeActions.GROUP_PROJECT_VIEW_POPUP);
   }
 
-  public final void updateFromRoot(boolean restoreExpandedPaths) {
+  public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     final ArrayList<Object> selectionPaths = new ArrayList<Object>();
-    Runnable expandPaths = null;
+    Runnable afterUpdate;
+    final ActionCallback cb = new ActionCallback();
     if (restoreExpandedPaths) {
       TreeBuilderUtil.storePaths(getTreeBuilder(), (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
-      expandPaths = new Runnable() {
+      afterUpdate = new Runnable() {
         public void run() {
           if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
             myTree.setSelectionPaths(new TreePath[0]);
             TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
           }
+          cb.setDone();
         }
       };
     }
-    getTreeBuilder().addSubtreeToUpdate(getTreeBuilder().getRootNode(), expandPaths);
+    else {
+      afterUpdate = new Runnable() {
+        public void run() {
+          cb.setDone();
+        }
+      };
+    }
+    getTreeBuilder().addSubtreeToUpdate(getTreeBuilder().getRootNode(), afterUpdate);
     //myTreeBuilder.updateFromRoot();
+    return cb;
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
+    selectCB(element, file, requestFocus);
+  }
+
+  public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus);
+      return ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus);
     }
+    return new ActionCallback.Done(); 
   }
 
   @NotNull

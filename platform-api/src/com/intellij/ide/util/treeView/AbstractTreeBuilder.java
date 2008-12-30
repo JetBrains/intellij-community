@@ -18,6 +18,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -171,6 +172,10 @@ public class AbstractTreeBuilder implements Disposable {
 
   public void updateFromRoot() {
     getUi().doUpdateFromRoot();
+  }
+
+  protected ActionCallback updateFromRootCB() {
+   return getUi().doUpdateFromRootCB();
   }
 
   public void initRootNode() {

@@ -481,6 +481,17 @@ class AbstractTreeUi {
     updateSubtree(getRootNode());
   }
 
+  public ActionCallback doUpdateFromRootCB() {
+    final ActionCallback cb = new ActionCallback();
+    getUpdater().runAfterUpdate(new Runnable() {
+      public void run() {
+        cb.setDone();
+      }
+    });
+    updateSubtree(getRootNode());
+    return cb;
+  }
+
   public final void updateSubtree(DefaultMutableTreeNode node) {
     updateSubtree(new TreeUpdatePass(node));
   }
