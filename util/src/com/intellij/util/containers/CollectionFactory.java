@@ -32,7 +32,7 @@ public class CollectionFactory {
     return new THashMap<T,V>();
   }
 
-  public static <T> List<T> arrayList() {
+  public static <T> ArrayList<T> arrayList() {
     return new ArrayList<T>();
   }
 }
