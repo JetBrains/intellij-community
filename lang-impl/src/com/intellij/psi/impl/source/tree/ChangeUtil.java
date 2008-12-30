@@ -254,14 +254,14 @@ public class ChangeUtil {
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         destinationTreeChange.addElementaryChange(element, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, element));
         action.makeChange(destinationTreeChange);
+        ASTNode node = element;
+        while (node != null) {
+          ASTNode parent = node.getTreeParent();
+          ((TreeElement) node).clearCaches();
+          node = parent;
+        }
       }
     }, (TreeElement) element);
-    ASTNode node = element;
-    while (node != null) {
-      ASTNode parent = node.getTreeParent();
-      ((TreeElement) node).clearCaches();
-      node = parent;
-    }
   }
 
   public interface ChangeAction{
