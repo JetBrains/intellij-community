@@ -172,7 +172,7 @@ public class WeakReferenceArray <T> {
 
   private T getImpl(int index) {
     final MyWeakReference<T> reference = MyWeakReference.getFrom(myReferences, index);
-    return (reference != null) ? reference.get() : null;
+    return reference == null ? null : reference.get();
   }
 
   public int getCapacity() {

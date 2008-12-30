@@ -141,7 +141,7 @@ public class CompositeElement extends TreeElement {
   }
 
   public void clearCaches() {
-    setCachedLength(-1);
+    myCachedLength = -1;
 
     myModificationsCount++;
     myParentModifications = -1;
@@ -303,12 +303,7 @@ public class CompositeElement extends TreeElement {
       anchorBefore = before.booleanValue() ? anchor : anchor.getTreeNext();
     }
     else {
-      if (before != null && !before.booleanValue()) {
-        anchorBefore = firstChild;
-      }
-      else {
-        anchorBefore = null;
-      }
+      anchorBefore = before == null || before.booleanValue() ? null : firstChild;
     }
     return (TreeElement)CodeEditUtil.addChildren(this, first, last, anchorBefore);
   }
@@ -356,10 +351,6 @@ public class CompositeElement extends TreeElement {
       length += child.getTextLength();
     }
     return length;
-  }
-
-  private void setCachedLength(int length) {
-    myCachedLength = length;
   }
 
   public TreeElement getFirstChildNode() {

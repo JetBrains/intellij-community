@@ -35,7 +35,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -54,11 +53,13 @@ import java.util.Collections;
 public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent {
   private final Project myProject;
   private final PsiManager myPsiManager;
+  private final PomModel myPomModel;
 
-  public PomJavaAspectImpl(Project project, PsiManager psiManager, TreeAspect treeAspect) {
+  public PomJavaAspectImpl(Project project, PsiManager psiManager, TreeAspect treeAspect, PomModel pomModel) {
     myProject = project;
     myPsiManager = psiManager;
-    PomManager.getModel(project).registerAspect(PomJavaAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
+    myPomModel = pomModel;
+    pomModel.registerAspect(PomJavaAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
   }
 
   public LanguageLevel getLanguageLevel() {
@@ -82,13 +83,12 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   }
 
   public void update(PomModelEvent event) {
-    final PomModel model = PomManager.getModel(myProject);
-    final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(model.getModelAspect(TreeAspect.class));
+    final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myPomModel.getModelAspect(TreeAspect.class));
     if(changeSet == null) return;
     final PsiFile containingFile = changeSet.getRootElement().getPsi().getContainingFile();
     if(!(containingFile.getLanguage() instanceof JavaLanguage)) return;
-    final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, containingFile);
+    final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(myPomModel, containingFile);
     set.addChange(new JavaTreeChanged(containingFile));
-    event.registerChangeSet(PomJavaAspectImpl.this, set);
+    event.registerChangeSet(this, set);
   }
 }

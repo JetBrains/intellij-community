@@ -19,7 +19,7 @@ package com.intellij.pom.java.events;
 import com.intellij.psi.PsiFile;
 
 public class JavaTreeChanged implements PomJavaChange {
-  private PsiFile myFile;
+  private final PsiFile myFile;
 
   public JavaTreeChanged(final PsiFile file) {
     myFile = file;

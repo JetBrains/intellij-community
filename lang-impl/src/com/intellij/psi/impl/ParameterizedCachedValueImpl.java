@@ -62,7 +62,7 @@ public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedVal
     private final Object[] myDependencies;
     private final long[] myTimeStamps;
 
-    public Data(final T value, final Object[] dependencies, final long[] timeStamps) {
+    private Data(final T value, final Object[] dependencies, final long[] timeStamps) {
       myValue = value;
       myDependencies = dependencies;
       myTimeStamps = timeStamps;

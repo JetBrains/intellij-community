@@ -381,7 +381,9 @@ public final class IterationState {
                            : null;
 
     final int size = myCurrentHighlighters.size();
-    ContainerUtil.quickSort(myCurrentHighlighters, LayerComparator.INSTANCE);
+    if (size > 1) {
+      ContainerUtil.quickSort(myCurrentHighlighters, LayerComparator.INSTANCE);
+    }
 
     for (int i = 0; i < size; i++) {
       RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
@@ -460,7 +462,6 @@ public final class IterationState {
 
     if (fore == null) fore = myDefaultForeground;
     if (back == null) back = myDefaultBackground;
-    if (fontType == Font.PLAIN) fontType = Font.PLAIN;
     if (effectType == null) effectType = EffectType.BOXED;
 
     myMergedAttributes.setForegroundColor(fore);

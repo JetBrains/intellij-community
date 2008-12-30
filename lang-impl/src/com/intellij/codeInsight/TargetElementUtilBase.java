@@ -88,10 +88,8 @@ public class TargetElementUtilBase {
     if (offset >= textLength) {
       correctedOffset = textLength - 1;
     }
-    else {
-      if (!Character.isJavaIdentifierPart(text.charAt(offset))) {
-        correctedOffset--;
-      }
+    else if (!Character.isJavaIdentifierPart(text.charAt(offset))) {
+      correctedOffset--;
     }
     if (correctedOffset < 0 || !Character.isJavaIdentifierPart(text.charAt(correctedOffset))) return offset;
     return correctedOffset;
