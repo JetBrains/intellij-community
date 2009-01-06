@@ -42,6 +42,6 @@ public class GroovyStructureViewModel extends TextEditorBasedStructureViewModel 
 
   @NotNull
   public Filter[] getFilters() {
-    return Filter.EMPTY_ARRAY;
+    return new Filter[]{new GroovyInheritedFileter()};
   }
 }

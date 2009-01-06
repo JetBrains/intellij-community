@@ -26,4 +26,8 @@ public class GroovyMethodStructureViewElement extends GroovyStructureViewElement
   public TreeElement[] getChildren() {
     return StructureViewTreeElement.EMPTY_ARRAY;
   }
+
+  public boolean isInherit() {
+    return isInherit;
+  }
 }
