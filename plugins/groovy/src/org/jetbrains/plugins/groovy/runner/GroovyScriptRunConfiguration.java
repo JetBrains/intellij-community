@@ -176,17 +176,19 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   private String getConfPath(String groovyHome) {
-    String confpath = "";
+    String confpath = groovyHome + GROOVY_STARTER_CONF;
+    if (new File(confpath).exists()) {
+      return confpath;
+    }
+
     URL resource = getClass().getClassLoader().getResource("conf/groovy-starter.conf");
-    if (resource == null) return groovyHome + GROOVY_STARTER_CONF;
-    
+    assert resource != null;
     try {
-      confpath = new File(resource.toURI()).getPath().replace(File.separatorChar, '/');
+      return new File(resource.toURI()).getPath().replace(File.separatorChar, '/');
     }
     catch (URISyntaxException e) {
-      confpath = groovyHome + GROOVY_STARTER_CONF;
+      throw new RuntimeException(e);
     }
-    return confpath;
   }
 
   private void configureGroovyStarter(JavaParameters params, final Module module, boolean isTests) throws CantRunException {
