@@ -178,6 +178,8 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   private String getConfPath(String groovyHome) {
     String confpath = "";
     URL resource = getClass().getClassLoader().getResource("conf/groovy-starter.conf");
+    if (resource == null) return groovyHome + GROOVY_STARTER_CONF;
+    
     try {
       confpath = new File(resource.toURI()).getPath().replace(File.separatorChar, '/');
     }
