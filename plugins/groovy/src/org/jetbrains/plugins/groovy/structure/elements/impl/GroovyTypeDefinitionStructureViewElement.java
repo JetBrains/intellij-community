@@ -2,14 +2,16 @@ package org.jetbrains.plugins.groovy.structure.elements.impl;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureViewElement;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.impl.GroovyTypeDefinitionItemPresentation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureViewElement {
@@ -30,8 +32,15 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
       children.add(new GroovyVariableStructureViewElement(field));
     }
 
-    for (GrMethod method : typeDefinition.getGroovyMethods()) {
-      children.add(new GroovyMethodStructureViewElement(method, false));
+    List<PsiMethod> methods = Arrays.asList(typeDefinition.getMethods());
+    for (PsiMethod method : typeDefinition.getAllMethods()) {
+      if (method instanceof GrAccessorMethod) continue;
+      
+      if (methods.contains(method)) {
+        children.add(new GroovyMethodStructureViewElement(method, false));
+      } else {
+        children.add(new GroovyMethodStructureViewElement(method, true));
+      }
     }
 
     return children.toArray(new GroovyStructureViewElement[children.size()]);
