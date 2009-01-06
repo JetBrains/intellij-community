@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -491,38 +491,41 @@ public class ParenthesesUtils{
     public static boolean areParenthesesNeeded(
             PsiExpression expression, PsiElement parentExpression,
             boolean ignoreClarifyingParentheses) {
-        System.out.println("ParenthesesUtils.areParenthesesNeeded(" + expression + ", " +
-                parentExpression +
-                ")");
-        if (parentExpression instanceof PsiBinaryExpression &&
-                expression instanceof PsiBinaryExpression) {
+        if (parentExpression instanceof PsiBinaryExpression) {
             final PsiBinaryExpression parentBinaryExpression =
                     (PsiBinaryExpression) parentExpression;
-            final PsiBinaryExpression childBinaryExpression =
-                    (PsiBinaryExpression)expression;
-            final IElementType childOperator =
-                    childBinaryExpression.getOperationTokenType();
-            final IElementType parentOperator =
-                    parentBinaryExpression.getOperationTokenType();
-            if (ignoreClarifyingParentheses &&
-                    !childOperator.equals(parentOperator)) {
-                return true;
-            }
-            final PsiType parentType = parentBinaryExpression.getType();
-            if (parentType == null) {
-                return true;
-            }
-            final PsiType childType = childBinaryExpression.getType();
-            if (!parentType.equals(childType)) {
-                return true;
-            }
-            if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
-                    expression, false)) {
-                if (!isCommutativeBinaryOperator(childOperator)) {
+            if (expression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression childBinaryExpression =
+                        (PsiBinaryExpression)expression;
+                final IElementType childOperator =
+                        childBinaryExpression.getOperationTokenType();
+                final IElementType parentOperator =
+                        parentBinaryExpression.getOperationTokenType();
+                if (ignoreClarifyingParentheses &&
+                        !childOperator.equals(parentOperator)) {
+                    return true;
+                }
+                final PsiType parentType = parentBinaryExpression.getType();
+                if (parentType == null) {
+                    return true;
+                }
+                final PsiType childType = childBinaryExpression.getType();
+                if (!parentType.equals(childType)) {
+                    return true;
+                }
+                if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
+                        expression, false)) {
+                    if (!isCommutativeBinaryOperator(childOperator)) {
+                        return true;
+                    }
+                }
+                return false;
+            } else if (expression instanceof PsiConditionalExpression) {
+                if (PsiTreeUtil.isAncestor(parentBinaryExpression.getROperand(),
+                        expression, false)) {
                     return true;
                 }
             }
-            return false;
         }
         return false;
     }
