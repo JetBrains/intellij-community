@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.GroupByTypeComparator;
 import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -327,8 +328,10 @@ class AssociationsEditor {
             final Object object = getObject(value);
             if (object instanceof PsiFile) {
                 final PsiFile file = (PsiFile)object;
+                final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
                 if (myManager.getAssociationsFor(file).length > 0) {
-                    myTemp.setUserObject(new MyNodeDescriptor((NodeDescriptor<?>)((DefaultMutableTreeNode)value).getUserObject()));
+                    //noinspection unchecked
+                    myTemp.setUserObject(new MyNodeDescriptor((NodeDescriptor<PsiFileNode>)userObject));
                     super.customizeCellRenderer(tree, myTemp, selected, expanded, leaf, row, hasFocus);
                     return;
                 }
@@ -336,22 +339,24 @@ class AssociationsEditor {
             super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
         }
 
-        private class MyNodeDescriptor extends NodeDescriptor<Object> {
-            public MyNodeDescriptor(NodeDescriptor<?> nodeDescriptor) {
-                super(null, null);
+        private class MyNodeDescriptor extends NodeDescriptor<PsiFileNode> {
+            private final PsiFileNode myNode;
+
+            public MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {
+                super(nodeDescriptor.getProject(), null);
                 myName = nodeDescriptor.toString();
                 myOpenIcon = nodeDescriptor.getOpenIcon();
                 myClosedIcon = LayeredIcon.create(nodeDescriptor.getClosedIcon(), LINK_OVERLAY);
                 myColor = nodeDescriptor.getColor();
+                myNode = nodeDescriptor.getElement();
             }
 
             public boolean update() {
                 return false;
             }
 
-            public Object getElement() {
-                assert false;
-                return null;
+            public PsiFileNode getElement() {
+                return myNode;
             }
         }
     }
