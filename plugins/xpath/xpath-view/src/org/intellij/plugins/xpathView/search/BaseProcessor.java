@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.ide.highlighter.XmlLikeFileType;
 
 public abstract class BaseProcessor implements Processor<VirtualFile> {
     private final ProgressIndicator myIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -29,12 +30,7 @@ public abstract class BaseProcessor implements Processor<VirtualFile> {
         myIndicator.checkCanceled();
 
         final FileType fileType = t.getFileType();
-        if (fileType == StdFileTypes.XML ||
-                fileType == StdFileTypes.XHTML ||
-                fileType == StdFileTypes.HTML ||
-                fileType == StdFileTypes.JSP ||
-                fileType == StdFileTypes.JSPX)
-        {
+        if (fileType instanceof XmlLikeFileType) {
             processXmlFile(t);
         }
         return true;

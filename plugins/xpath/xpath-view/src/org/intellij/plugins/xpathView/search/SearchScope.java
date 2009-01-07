@@ -18,9 +18,8 @@ package org.intellij.plugins.xpathView.search;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -28,15 +27,18 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.jdom.Element;
+
+import java.util.Collection;
+import java.util.Arrays;
+
+import gnu.trove.THashSet;
 
 public class SearchScope implements JDOMExternalizable {
 
@@ -49,6 +51,8 @@ public class SearchScope implements JDOMExternalizable {
     private String myPath;
     private boolean myRecursive;
     private String myScopeName;
+
+    private com.intellij.psi.search.SearchScope myCustomScope;
 
     public SearchScope() {
         myScopeType = ScopeType.PROJECT;
@@ -70,6 +74,10 @@ public class SearchScope implements JDOMExternalizable {
         myRecursive = recursive;
         myModuleName = moduleName;
         myScopeName = scopeName;
+    }
+
+    public void setCustomScope(com.intellij.psi.search.SearchScope customScope) {
+        myCustomScope = customScope;
     }
 
     public String getName() {
@@ -156,7 +164,6 @@ public class SearchScope implements JDOMExternalizable {
 
     public boolean isValid() {
         final String dirName = getPath();
-        final String scopeName = getScopeName();
         final String moduleName = getModuleName();
 
         switch (getScopeType()) {
@@ -165,36 +172,24 @@ public class SearchScope implements JDOMExternalizable {
             case DIRECTORY:
                 return dirName != null && dirName.length() > 0 && findFile(dirName) != null;
             case CUSTOM:
-                return scopeName != null && scopeName.length() > 0;
+                return myCustomScope != null;
         }
 
         return true;
     }
 
 
-    public void iterateContent(@NotNull Project project, final Processor<VirtualFile> processor) {
+    public void iterateContent(@NotNull final Project project, final Processor<VirtualFile> processor) {
 
         switch (getScopeType()) {
             case PROJECT:
-                ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
-                    public boolean processFile(VirtualFile fileOrDir) {
-                        if (!fileOrDir.isDirectory()) {
-                            processor.process(fileOrDir);
-                        }
-                        return true;
-                    }
-                });
+                //noinspection unchecked
+                ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Condition.TRUE));
                 break;
             case MODULE:
                 final Module module = ModuleManager.getInstance(project).findModuleByName(getModuleName());
-                ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new ContentIterator() {
-                    public boolean processFile(VirtualFile fileOrDir) {
-                        if (!fileOrDir.isDirectory()) {
-                            processor.process(fileOrDir);
-                        }
-                        return true;
-                    }
-                });
+                //noinspection unchecked
+                ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new MyFileIterator(processor, Condition.TRUE));
                 break;
             case DIRECTORY:
                 final String dirName = getPath();
@@ -202,28 +197,59 @@ public class SearchScope implements JDOMExternalizable {
 
                 final VirtualFile virtualFile = findFile(dirName);
                 if (virtualFile != null) {
-                    iterateDirectory(virtualFile, processor, isRecursive());
+                    iterateRecursively(virtualFile, processor, isRecursive());
                 }
                 break;
             case CUSTOM:
-                final NamedScopesHolder scopesHolder = NamedScopeManager.getInstance(project);
-                final String scope = getScopeName();
-                assert scope != null;
+                assert myCustomScope != null;
 
-                final PsiManager manager = PsiManager.getInstance(project);
-                final NamedScope namedScope = scopesHolder.getScope(scope);
-                ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
-                    public boolean processFile(VirtualFile fileOrDir) {
-                        if (!fileOrDir.isDirectory()) {
-                            final PsiFile psiFile = manager.findFile(fileOrDir);
-                            final PackageSet value = namedScope.getValue();
-                            if (psiFile != null && value != null && value.contains(psiFile, scopesHolder)) {
-                                processor.process(fileOrDir);
-                            }
+                final ContentIterator iterator;
+                if (myCustomScope instanceof GlobalSearchScope) {
+                    final GlobalSearchScope searchScope = (GlobalSearchScope)myCustomScope;
+                    iterator = new MyFileIterator(processor, new Condition<VirtualFile>() {
+                        public boolean value(VirtualFile virtualFile) {
+                            return searchScope.contains(virtualFile);
                         }
-                        return true;
+                    });
+                    if (searchScope.isSearchInLibraries()) {
+                        final Collection<VirtualFile> libraryFiles = new THashSet<VirtualFile>();
+                        for (Module mod : ModuleManager.getInstance(project).getModules()) {
+                            ModuleRootManager.getInstance(mod).processOrder(new RootPolicy<Void>(){
+                                @Nullable
+                                public Void visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final Void value) {
+                                    libraryFiles.addAll(Arrays.asList(libraryOrderEntry.getFiles(OrderRootType.CLASSES)));
+                                    libraryFiles.addAll(Arrays.asList(libraryOrderEntry.getFiles(OrderRootType.SOURCES)));
+                                    return null;
+                                }
+
+                                @Nullable
+                                public Void visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Void value) {
+                                    libraryFiles.addAll(Arrays.asList(jdkOrderEntry.getFiles(OrderRootType.CLASSES)));
+                                    libraryFiles.addAll(Arrays.asList(jdkOrderEntry.getFiles(OrderRootType.SOURCES)));
+                                    return null;
+                                }
+                            }, null);
+                        }
+                        final Processor<VirtualFile> adapter = new Processor<VirtualFile>() {
+                            public boolean process(VirtualFile virtualFile) {
+                                return iterator.processFile(virtualFile);
+                            }
+                        };
+                        for (final VirtualFile file : libraryFiles) {
+                            iterateRecursively(file, adapter, true);
+                        }
                     }
-                });
+                } else {
+                    final PsiManager manager = PsiManager.getInstance(project);
+                    iterator = new MyFileIterator(processor, new Condition<VirtualFile>() {
+                        public boolean value(VirtualFile virtualFile) {
+                            final PsiFile element = manager.findFile(virtualFile);
+                            return element != null && PsiSearchScopeUtil.isInScope(myCustomScope, element);
+                        }
+                    });
+                }
+
+                ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
         }
     }
 
@@ -232,14 +258,36 @@ public class SearchScope implements JDOMExternalizable {
         return LocalFileSystem.getInstance().findFileByPath(dirName.replace('\\', '/'));
     }
 
-    private static void iterateDirectory(VirtualFile virtualFile, Processor<VirtualFile> processor, boolean recursive) {
+    private static void iterateRecursively(VirtualFile virtualFile, Processor<VirtualFile> processor, boolean recursive) {
         final VirtualFile[] children = virtualFile.getChildren();
         for (VirtualFile file : children) {
-            if (recursive && file.isDirectory()) {
-                iterateDirectory(file, processor, recursive);
+            if (file.isDirectory()) {
+                if (recursive) {
+                    iterateRecursively(file, processor, recursive);
+                }
             } else {
                 processor.process(file);
             }
+        }
+        if (!virtualFile.isDirectory()) {
+            processor.process(virtualFile);
+        }
+    }
+
+    private static class MyFileIterator implements ContentIterator {
+        private final Processor<VirtualFile> myProcessor;
+        private final Condition<VirtualFile> myCondition;
+
+        public MyFileIterator(Processor<VirtualFile> processor, Condition<VirtualFile> condition) {
+            myCondition = condition;
+            myProcessor = processor;
+        }
+
+        public boolean processFile(VirtualFile fileOrDir) {
+            if (!fileOrDir.isDirectory() && myCondition.value(fileOrDir)) {
+                myProcessor.process(fileOrDir);
+            }
+            return true;
         }
     }
 }

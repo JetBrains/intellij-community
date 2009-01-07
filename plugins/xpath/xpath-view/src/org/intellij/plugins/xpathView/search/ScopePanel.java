@@ -15,16 +15,13 @@
  */
 package org.intellij.plugins.xpathView.search;
 
-import com.intellij.ide.util.scopeChooser.EditScopesDialog;
-import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
@@ -59,9 +54,11 @@ public class ScopePanel extends JPanel {
 
     private Project myProject;
 
-    public void initComponent(@NotNull Project project, @Nullable Module currentModule, final SearchScope scope) {
+    public ScopePanel(@NotNull Project project) {
         myProject = project;
+    }
 
+    public void initComponent(@Nullable Module currentModule, final SearchScope scope) {
         final ItemListener stateListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 myModuleSelection.setEnabled(myModuleScope.isSelected());
@@ -70,14 +67,14 @@ public class ScopePanel extends JPanel {
                 myCustomScopeSelection.setEnabled(myCustomScope.isSelected());
 
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    firePropertyChange("scope", null, getSearchScope());
+                    firePropertyChange("scope", null, getSelectedScope());
                 }
             }
         };
         final ItemListener scopeListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    firePropertyChange("scope", null, getSearchScope());
+                    firePropertyChange("scope", null, getSelectedScope());
                 }
             }
         };
@@ -91,7 +88,7 @@ public class ScopePanel extends JPanel {
         myCustomScope.addItemListener(stateListener);
         myCustomScope.setSelected(scope.getScopeType() == SearchScope.ScopeType.CUSTOM);
 
-        myModuleSelection.setModel(createModel(ModuleManager.getInstance(project).getModules()));
+        myModuleSelection.setModel(createModel(ModuleManager.getInstance(myProject).getModules()));
         myModuleSelection.setRenderer(new DefaultListCellRenderer() {
             public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 final JLabel l = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -106,7 +103,7 @@ public class ScopePanel extends JPanel {
 
         Module m;
         if (scope.getModuleName() != null) {
-            if ((m = ModuleManager.getInstance(project).findModuleByName(scope.getModuleName())) == null) {
+            if ((m = ModuleManager.getInstance(myProject).findModuleByName(scope.getModuleName())) == null) {
                 m = currentModule;
             }
         } else {
@@ -118,46 +115,16 @@ public class ScopePanel extends JPanel {
 
         myModuleSelection.addItemListener(scopeListener);
 
-        final NamedScopeManager scopeManager = NamedScopeManager.getInstance(myProject);
-        final JComboBox comboBox = myCustomScopeSelection.getComboBox();
-        final NamedScope[] scopes = scopeManager.getScopes();
-        comboBox.setModel(createModel(scopes));
-        comboBox.setRenderer(new DefaultListCellRenderer() {
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                if (value != null) {
-                    value = ((NamedScope)value).getName();
-                }
-                return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            }
-        });
-        if (scope.getScopeName() != null) {
-            comboBox.setSelectedItem(scope.getScopeName());
-        }
-        comboBox.addItemListener(scopeListener);
-
-        myCustomScopeSelection.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                final EditScopesDialog dlg = EditScopesDialog.editConfigurable(myProject, new Runnable() {
-                    public void run() {
-                        if (scope != null) ScopeChooserConfigurable.getInstance(myProject).selectNodeInTree(scope);
-                    }
-                });
-                if (dlg.isOK()) {
-                    final NamedScope[] scopes = scopeManager.getScopes();
-                    comboBox.setModel(createModel(scopes));
-                    comboBox.setSelectedItem(dlg.getSelectedScope());
-                    firePropertyChange("scope", null, getSearchScope());
-                }
-            }
-        });
+        ((ScopeChooserCombo)myCustomScopeSelection).init(myProject, true, true, scope.getScopeName());
+        myCustomScopeSelection.getComboBox().addItemListener(scopeListener);
 
         myDirectory.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
             protected void textChanged(DocumentEvent e) {
-                firePropertyChange("scope", null, getSearchScope());
+                firePropertyChange("scope", null, getSelectedScope());
             }
         });
         myDirectory.setText(scope.getPath());
-        myDirectory.addBrowseFolderListener("Select Path", "Select Path", project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+        myDirectory.addBrowseFolderListener("Select Path", "Select Path", myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
         myRecursive.setSelected(scope.isRecursive());
     }
@@ -169,12 +136,7 @@ public class ScopePanel extends JPanel {
 
     private void createUIComponents() {
         myRoot = this;
-    }
-
-    @Nullable
-    private String getScopeName() {
-        final NamedScope scope = ((NamedScope)myCustomScopeSelection.getComboBox().getSelectedItem());
-        return scope != null ? scope.getName() : null;
+        myCustomScopeSelection = new ScopeChooserCombo();
     }
 
     @Nullable
@@ -201,9 +163,15 @@ public class ScopePanel extends JPanel {
     }
 
     public SearchScope getSearchScope() {
+        final SearchScope scope = getSelectedScope();
+        scope.setCustomScope(((ScopeChooserCombo)myCustomScopeSelection).getSelectedScope());
+        return scope;
+    }
+
+    SearchScope getSelectedScope() {
         return new SearchScope(getScopeType(),
                 getDirectoryName(), myRecursive.isSelected(),
                 getModuleName(),
-                getScopeName());
+                ((ScopeChooserCombo)myCustomScopeSelection).getSelectedScopeName());
     }
 }

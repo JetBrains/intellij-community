@@ -70,7 +70,7 @@
               <visible value="true"/>
             </properties>
           </component>
-          <component id="3b398" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myCustomScopeSelection">
+          <component id="3b398" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myCustomScopeSelection" custom-create="true">
             <constraints>
               <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

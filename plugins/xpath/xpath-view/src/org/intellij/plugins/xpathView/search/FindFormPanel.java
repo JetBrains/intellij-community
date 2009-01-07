@@ -24,8 +24,10 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 
 public class FindFormPanel extends JPanel implements InputForm {
-    @SuppressWarnings({ "UNUSED_SYMBOL", "FieldCanBeLocal" })
+    @SuppressWarnings({ "FieldCanBeLocal", "UnusedDeclaration" })
     private JPanel myRoot;
+
+    private final Project myProject;
 
     private InputFormPanel myInputPanel;
     private JCheckBox myNewTabCheckbox;
@@ -35,12 +37,13 @@ public class FindFormPanel extends JPanel implements InputForm {
     private ScopePanel myScopePanel;
 
     public FindFormPanel(Project project, Module module, SearchScope searchScope) {
-        myScopePanel.initComponent(project, module, searchScope);
+        myProject = project;
+        myScopePanel.initComponent(module, searchScope);
     }
 
     private void createUIComponents() {
         myRoot = this;
-        myScopePanel = new ScopePanel();
+        myScopePanel = new ScopePanel(myProject);
     }
 
     public JComponent getComponent() {
