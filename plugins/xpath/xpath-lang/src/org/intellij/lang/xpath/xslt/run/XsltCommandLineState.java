@@ -27,6 +27,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -41,6 +43,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.net.NetUtils;
 import static org.intellij.lang.xpath.xslt.run.XsltRunConfiguration.isEmpty;
 
@@ -129,7 +132,6 @@ class XsltCommandLineState extends JavaCommandLineState {
         }
         vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
-        /*
         final PluginId pluginId = PluginManager.getPluginByClassName(getClass().getName());
         assert pluginId != null;
         final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
@@ -140,15 +142,12 @@ class XsltCommandLineState extends JavaCommandLineState {
 
         final char c = File.separatorChar;
         File rtClasspath = new File(pluginPath, "lib" + c + "rt" + c + "xslt-rt.jar");
-        */
-        File rtClasspath = new File("C:/Demetra/plugins/xpath/lib/rt/xslt-rt.jar"); 
+//        File rtClasspath = new File("C:/Demetra/plugins/xpath/lib/rt/xslt-rt.jar");
         if (!rtClasspath.exists()) {
             LOG.warn("Plugin's Runtime classes not found in " + rtClasspath.getAbsolutePath());
-            /*
             if (!(rtClasspath = new File(pluginPath, "classes")).exists()) {
                 throw new CantRunException("Runtime classes not found");
             }
-            */
             parameters.getVMParametersList().prepend("-ea");
         }
         parameters.getClassPath().addTail(rtClasspath.getAbsolutePath());
