@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +103,7 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
 
     @NotNull
     private static XmlComment createComment(Project project, String s) throws IncorrectOperationException {
-        final XmlTag element = XmlElementFactory.getInstance(project).createTagFromText("<foo><!-- " + s + " --></foo>");
+        final XmlTag element = XmlElementFactory.getInstance(project).createTagFromText("<foo><!-- " + s + " --></foo>", StdLanguages.XML);
         final XmlComment newComment = PsiTreeUtil.getChildOfType(element, XmlComment.class);
         assert newComment != null;
         return newComment;

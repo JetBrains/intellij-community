@@ -28,6 +28,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public class XsltNamespaceContext implements NamespaceContext {
     public static IntentionAction[] getUnresolvedNamespaceFixesStatic(PsiReference reference, String localName) {
         try {
             final XmlElementFactory factory = XmlElementFactory.getInstance(reference.getElement().getProject());
-            final XmlTag tag = factory.createTagFromText("<" + reference.getCanonicalText() + ":" + localName + " />");
+            final XmlTag tag = factory.createTagFromText("<" + reference.getCanonicalText() + ":" + localName + " />", StdLanguages.XML);
 
             final XmlFile xmlFile = PsiTreeUtil.getContextOfType(reference.getElement(), XmlFile.class, true);
             return new IntentionAction[]{

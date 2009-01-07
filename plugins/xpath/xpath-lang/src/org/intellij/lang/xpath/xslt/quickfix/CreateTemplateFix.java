@@ -15,18 +15,19 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
-
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
 public class CreateTemplateFix extends AbstractFix {
     private static final String DUMMY_NS = "urn:x__dummy__";
@@ -70,28 +71,24 @@ public class CreateTemplateFix extends AbstractFix {
 
         // this is a bit ugly, but seems like the only way to get a newline between the closing tag of the previous and
         // the start tag of the newly created tag
-        final XmlTag dummy1 = (XmlTag)parentTag.addAfter(XmlElementFactory.getInstance(project).createTagFromText(DUMMY_TAG), tag);
+        final XmlTag dummy1 = (XmlTag)parentTag.addAfter(XmlElementFactory.getInstance(project).createTagFromText(DUMMY_TAG, StdLanguages.XML), tag);
         templateTag = (XmlTag)parentTag.addAfter(templateTag, dummy1);
         templateTag = (XmlTag)tag.getManager().getCodeStyleManager().reformat(templateTag);
 
         final XmlTag dummy2 = templateTag.findFirstSubTag("dummy");
 
-        // TODO: caret is now positioned at the start of the line, but should be at properly inted position
         moveTo(editor, dummy2);
-        
+
+        deleteTag(dummy2);  // reverse order: preserve offsets
         deleteTag(dummy1);
-        deleteTag(dummy2);
     }
 
     private static void deleteTag(XmlTag dummy1) throws IncorrectOperationException {
-        final XmlText text = XmlElementFactory.getInstance(dummy1.getProject()).createDisplayText(" ");
-        final PsiElement e = dummy1.replace(text).getFirstChild();
-        assert e != null;
-        final PsiElement element = e.getFirstChild();
-        assert element != null;
-        final PsiElement cdataText = element.getNextSibling();
-        assert cdataText != null;
-        e.replace(cdataText);
+        final PsiDocumentManager manager = PsiDocumentManager.getInstance(dummy1.getProject());
+        final Document document = manager.getDocument(dummy1.getContainingFile());
+        assert document != null;
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        document.deleteString(dummy1.getTextRange().getStartOffset(), dummy1.getTextRange().getEndOffset());
     }
 
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {

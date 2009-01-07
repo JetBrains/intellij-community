@@ -15,26 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.context;
 
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SimpleFieldCache;
-import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.util.XmlUtil;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import gnu.trove.THashSet;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.ContextType;
@@ -51,11 +31,31 @@ import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
 import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
-import org.intellij.lang.xpath.xslt.refactoring.introduceVariable.XsltIntroduceVariableAction;
 import org.intellij.lang.xpath.xslt.util.NSDeclTracker;
 import org.intellij.lang.xpath.xslt.util.QNameUtil;
+
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleFieldCache;
+import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import gnu.trove.THashSet;
 
 import javax.xml.namespace.QName;
 import java.util.*;
@@ -296,7 +296,7 @@ public class XsltContextProvider extends ContextProvider {
                 final String namespace = namespaceDeclarations.get(prefix);
                 if (isIgnoredNamespace(prefix, namespace)) continue;
 
-                final XmlTag tag = ef.createTagFromText("<dummy-tag xmlns='" + namespace + "' />");
+                final XmlTag tag = ef.createTagFromText("<dummy-tag xmlns='" + namespace + "' />", StdLanguages.XML);
                 final XmlDocument document = PsiTreeUtil.getParentOfType(tag, XmlDocument.class);
                 final XmlNSDescriptor rootDescriptor = tag.getNSDescriptor(tag.getNamespace(), true);
                 if (rootDescriptor == null ||
