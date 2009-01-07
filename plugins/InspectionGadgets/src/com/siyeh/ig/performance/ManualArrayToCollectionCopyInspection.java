@@ -169,9 +169,15 @@ public class ManualArrayToCollectionCopyInspection
             final PsiExpressionList argumentList =
                     methodCallExpression.getArgumentList();
             final PsiExpression argument = argumentList.getExpressions()[0];
+            final PsiExpression deparenthesizedArgument =
+                    PsiUtil.deparenthesizeExpression(argument);
+            if (!(deparenthesizedArgument instanceof
+                    PsiArrayAccessExpression)) {
+                return null;
+            }
             final PsiArrayAccessExpression arrayAccessExpression =
                     (PsiArrayAccessExpression)
-                            PsiUtil.deparenthesizeExpression(argument);
+                            deparenthesizedArgument;
             if (arrayAccessExpression == null) {
                 return null;
             }
