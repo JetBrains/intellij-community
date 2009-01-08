@@ -34,11 +34,12 @@ public class SdkUtil {
   public static class ProcessCallInfo {
     private List<String> myStdoutLines;
     private List<String> myStderrLines;
-    private int exit_code;
+    private int myExitCode;
 
     protected ProcessCallInfo(List<String> stdout_lines, List<String> stderr_lines, int exit_code) {
       myStdoutLines = stdout_lines;
       myStderrLines = stderr_lines;
+      myExitCode = exit_code;
     }
 
     public List<String> getStdout() {
@@ -50,7 +51,7 @@ public class SdkUtil {
     }
     
     public int exitValue() {
-      return exit_code;
+      return myExitCode;
     }
   }
 
@@ -123,6 +124,7 @@ public class SdkUtil {
           if (s == null) break;
           my_lines.add(s);
         }
+        reader.close();
       }
       catch (IOException e) {
         LOG.info(e);
