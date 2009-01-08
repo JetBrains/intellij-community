@@ -5,6 +5,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.stubs.PyDecoratorListStub;
 import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,6 +17,11 @@ public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> 
   
   public PyDecoratorListImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyDecoratorList(this);
   }
 
   public PyDecoratorListImpl(final PyDecoratorListStub stub) {

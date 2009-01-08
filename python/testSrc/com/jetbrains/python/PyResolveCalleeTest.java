@@ -24,7 +24,7 @@ public class PyResolveCalleeTest extends ResolveTestCase {
   public void testInstanceCall() throws Exception {
     PyCallExpression.PyMarkedFunction resolved = resolveCallee();
     assertNotNull(resolved.getFunction());
-    assertTrue(resolved.getFlags().equals(EnumSet.of(PyCallExpression.Flag.IMPLICIT_FIRST_ARG)));
+    assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testClassCall() throws Exception {
@@ -36,7 +36,7 @@ public class PyResolveCalleeTest extends ResolveTestCase {
   public void testDecoCall() throws Exception {
     PyCallExpression.PyMarkedFunction resolved = resolveCallee();
     assertNotNull(resolved.getFunction());
-    assertTrue(resolved.getFlags().equals(EnumSet.of(PyCallExpression.Flag.IMPLICIT_FIRST_ARG)));
+    assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testDecoParamCall() throws Exception {

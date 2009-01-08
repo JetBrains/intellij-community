@@ -51,10 +51,6 @@ public interface PyCallExpression extends PyExpression {
 
   enum Flag {
     /**
-     * First arg of the call is implicit, drop first parameter.
-     */
-    IMPLICIT_FIRST_ARG,
-    /**
      * Called function is decorated with @classmethod, first param is the class.
      */
     CLASSMETHOD,
@@ -70,10 +66,12 @@ public interface PyCallExpression extends PyExpression {
   class PyMarkedFunction {
     PyFunction myFunction;
     EnumSet<Flag> myFlags;
+    int myImplicitOffset;
 
-    public PyMarkedFunction(@NotNull PyFunction function, EnumSet<Flag> flags) {
+    public PyMarkedFunction(@NotNull PyFunction function, EnumSet<Flag> flags, int offset) {
       myFunction = function;
       myFlags = flags;
+      myImplicitOffset = offset;
     }
 
     public PyFunction getFunction() {
@@ -82,6 +80,15 @@ public interface PyCallExpression extends PyExpression {
 
     public EnumSet<Flag> getFlags() {
       return myFlags;
+    }
+
+    /**
+     * @return number of implicitly passed positional parameters; 0 means no parameters are passed implicitly.
+     * Note that a <tt>*args</tt> is never markeg as passed implicitly.
+     * E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.   
+     */
+    public int getImplicitOffset() {
+      return myImplicitOffset;
     }
 
   }

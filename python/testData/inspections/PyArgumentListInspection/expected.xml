@@ -80,4 +80,44 @@
     <line>66</line>
     <description>Unexpected argument</description>
   </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>80</line>
+    <description>Parameter 'param' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>84</line>
+    <description>Unexpected argument</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>90</line>
+    <description>Parameter 'p2' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>94</line>
+    <description>Parameter 'p2' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>119</line>
+    <description>Parameter 'param' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>128</line>
+    <description>Parameter 'p1' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>128</line>
+    <description>Parameter 'p2' unfilled</description>
+  </problem>
+  <problem>
+    <file>badarglist.py</file>
+    <line>132</line>
+    <description>Parameter 'p2' unfilled</description>
+  </problem>
 </problems>

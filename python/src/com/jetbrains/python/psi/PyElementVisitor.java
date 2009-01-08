@@ -42,6 +42,10 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyExpression(node);
   }
 
+  public void visitPyDecoratorList(final PyDecoratorList node) {
+    visitElement(node);
+  }
+
   public void visitPyGeneratorExpression(final PyGeneratorExpression node) {
     visitPyExpression(node);
   }

@@ -65,6 +65,9 @@ public class FunctionParsing extends Parsing {
       if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
         getExpressionParser().parseArgumentList(myBuilder);
       }
+      else { // empty arglist node, so we always have it
+        myBuilder.mark().done(PyElementTypes.ARGUMENT_LIST);
+      }
       checkMatches(PyTokenTypes.STATEMENT_BREAK, message("PARSE.expected.statement.break"));
       decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
       decorated = true;

@@ -5,6 +5,8 @@ PyFile:DecoratedFunction.py
         PsiElement(Py:AT)('@')
         PyReferenceExpression: staticmethod
           PsiElement(Py:IDENTIFIER)('staticmethod')
+        PyArgumentList
+          <empty list>
       PsiWhiteSpace('\n')
       PyDecorator: @xmlize
         PsiElement(Py:AT)('@')

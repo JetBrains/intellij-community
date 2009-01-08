@@ -258,7 +258,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       ret.my_marked_func = resolved_callee;
       if (resolved_callee != null) {
         PyFunction func = resolved_callee.getFunction();
-        boolean implicit_self = resolved_callee.getFlags().contains(PyCallExpression.Flag.IMPLICIT_FIRST_ARG);
         PyParameter[] params = func.getParameterList().getParameters();
         // prepare args and slots
         List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
@@ -298,11 +297,11 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
             }
           }
         }
-        // rule out 'self'
+        // rule out 'self' or other implicit params
         int param_index = 0;
-        if (implicit_self && (params.length > 0)) {
-          param_slots.remove(params[0].getName()); // the self param
-          param_index = 1;
+        for (int i=0; i < resolved_callee.getImplicitOffset() && i < params.length; i+=1) {
+          param_slots.remove(params[i].getName()); // the self param
+          param_index += 1;
         }
         boolean seen_tuple_arg = false;
         boolean seen_kwd_arg = false;

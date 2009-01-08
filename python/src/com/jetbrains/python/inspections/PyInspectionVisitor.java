@@ -19,6 +19,10 @@ public class PyInspectionVisitor extends PyElementVisitor {
     myHolder = holder;
   }
 
+  public ProblemsHolder getHolder() {
+    return myHolder;
+  }
+
   protected final void registerProblem(final PsiElement element,
                                        final String message){
     if (element == null || element.getTextLength() == 0){

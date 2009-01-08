@@ -64,11 +64,12 @@ public class PyCallExpressionHelper {
         else resolved = cref.resolve();
         if (resolved != null) {
           EnumSet<PyCallExpression.Flag> flags = EnumSet.noneOf(PyCallExpression.Flag.class);
+          int implicit_offset = 0;
           //boolean is_inst = isByInstance();
-          if (isByInstance(us)) flags.add(PyCallExpression.Flag.IMPLICIT_FIRST_ARG);
+          if (isByInstance(us)) implicit_offset += 1;
           if (resolved instanceof PyFunction) {
             PyFunction meth = (PyFunction)resolved; // constructor call?
-            if (PyNames.INIT.equals(meth.getName())) flags.add(PyCallExpression.Flag.IMPLICIT_FIRST_ARG);
+            if (PyNames.INIT.equals(meth.getName())) implicit_offset += 1;
             // look for closest decorator
             PyDecoratorList decolist = meth.getDecoratorList();
             if (decolist != null) {
@@ -80,7 +81,7 @@ public class PyCallExpressionHelper {
                 if (deco.isBuiltin()) {
                   if (PyNames.STATICMETHOD.equals(deconame)) {
                     flags.add(PyCallExpression.Flag.STATICMETHOD);
-                    flags.remove(PyCallExpression.Flag.IMPLICIT_FIRST_ARG);
+                    if (implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
                   }
                   else if (PyNames.CLASSMETHOD.equals(deconame)) {
                     flags.add(PyCallExpression.Flag.CLASSMETHOD);
@@ -91,7 +92,7 @@ public class PyCallExpressionHelper {
             }
           }
           if (!(resolved instanceof PyFunction)) return null; // omg, bogus __init__
-          return new PyCallExpression.PyMarkedFunction((PyFunction) resolved, flags);
+          return new PyCallExpression.PyMarkedFunction((PyFunction)resolved, flags, implicit_offset);
         }
       }
     }

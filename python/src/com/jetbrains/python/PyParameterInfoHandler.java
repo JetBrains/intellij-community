@@ -3,7 +3,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyCallExpression.Flag;
 import static com.jetbrains.python.psi.PyCallExpression.PyMarkedFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,9 +102,9 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     // ^^ gotta hate the covariance issues
     for (int i =0; i < flags.length; i += 1) flags[i] = EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class); 
 
-    if (marked.getFlags().contains(Flag.IMPLICIT_FIRST_ARG)) {
-      //arg_index -= 1; // argument 0 is parameter 1, thus kipping para,eter 0 which is 'self'
-      flags[0].add(ParameterInfoUIContextEx.Flag.DISABLE); // show but mark as absent
+    // disable implicit params
+    for (int i=0; i < marked.getImplicitOffset(); i +=1) {
+      flags[i].add(ParameterInfoUIContextEx.Flag.DISABLE); // show but mark as absent
     }
     int cur_arg_index = 0;
     for (PyExpression arg : arglist.getArguments()) {
