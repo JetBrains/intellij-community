@@ -750,7 +750,7 @@ if __name__ == "__main__":
         dirname += os.path.sep.join(quals[0 : pathindex+1])
         if not os.path.isdir(dirname):
           action = "creating subdir " + dirname
-          os.mkdir(dirname)
+          os.makedirs(dirname)
       fname = dirname + os.path.sep + quals[-1] + ".py"
       #
       action = "importing"
