@@ -189,6 +189,12 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     if (mouseEvent.getClickCount() == 0) {
       return;
     }
+
+    final int id = mouseEvent.getID();
+    if ((id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED)) {
+      return;
+    }
+    
     final Component sourceComponent = mouseEvent.getComponent();
     final Point originalPoint = mouseEvent.getPoint();
 
