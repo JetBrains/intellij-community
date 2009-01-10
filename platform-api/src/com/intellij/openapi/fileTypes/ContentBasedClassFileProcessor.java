@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Perfroms additional analysises on file with {@link com.intellij.openapi.fileTypes.StdFileTypes#CLASS} filetype (e. g. classfile,
+ * Perfroms additional analyses on file with {@link com.intellij.openapi.fileTypes.StdFileTypes#CLASS} filetype (e. g. classfile,
  * compiled from other than Java source language).
  *
  * @author ilyas
@@ -23,19 +23,19 @@ public interface ContentBasedClassFileProcessor {
   boolean isApplicable(Project project, VirtualFile vFile);
 
   /**
-   * Creates syntax highlighter for recognized classfile
+   * @return syntax highlighter for recognized classfile
    */
   @NotNull
   SyntaxHighlighter createHighlighter(Project project, VirtualFile vFile);
 
   /**
-   * Returns specific text representation of compiled classfile
+   * @return specific text representation of compiled classfile
    */
   @NotNull
   String obtainFileText(Project project, VirtualFile file);
 
   /**
-   * Returns source language for compiled classfile
+   * @return language for compiled classfile
    */
   @Nullable
   Language obtainLanguageForFile(VirtualFile file);

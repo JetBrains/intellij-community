@@ -18,13 +18,18 @@ package com.intellij.psi.util;
 
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
+import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
  */
 public class PsiMethodUtil {
+
+  private static final JavaMainMethodProvider[] myProviders = Extensions.getExtensions(JavaMainMethodProvider.EP_NAME);
+
   public static final Condition<PsiClass> MAIN_CLASS = new Condition<PsiClass>() {
     public boolean value(final PsiClass psiClass) {
       if (psiClass instanceof PsiAnonymousClass) return false;
@@ -38,12 +43,17 @@ public class PsiMethodUtil {
 
   @Nullable
   public static PsiMethod findMainMethod(final PsiClass aClass) {
+    for (JavaMainMethodProvider provider : myProviders) {
+      if (provider.isApplicable(aClass)) {
+        return provider.findMainInClass(aClass);
+      }
+    }
     final PsiMethod[] mainMethods = aClass.findMethodsByName("main", false);
     return findMainMethod(mainMethods);
   }
 
   @Nullable
-  public static PsiMethod findMainMethod(final PsiMethod[] mainMethods) {
+  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods) {
     for (final PsiMethod mainMethod : mainMethods) {
       if (isMainMethod(mainMethod)) return mainMethod;
     }
@@ -64,12 +74,22 @@ public class PsiMethodUtil {
   }
 
   public static boolean hasMainMethod(final PsiClass psiClass) {
+    for (JavaMainMethodProvider provider : myProviders) {
+      if (provider.isApplicable(psiClass)) {
+        return provider.hasMainMethod(psiClass);
+      }
+    }
     return findMainMethod(psiClass.findMethodsByName("main", true)) != null;
   }
 
   @Nullable
   public static PsiMethod findMainInClass(final PsiClass aClass) {
     if (!ConfigurationUtil.MAIN_CLASS.value(aClass)) return null;
+    for (JavaMainMethodProvider provider : myProviders) {
+      if (provider.isApplicable(aClass)) {
+        return provider.findMainInClass(aClass);
+      }
+    }
     return findMainMethod(aClass);
   }
 }
