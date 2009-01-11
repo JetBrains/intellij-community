@@ -59,7 +59,7 @@ public class GitVcsConfigurable implements Configurable {
    */
   @Nullable
   public String getHelpTopic() {
-    return null;
+    return "project.propVCSSupport.VCSs.Git";
   }
 
   /**
