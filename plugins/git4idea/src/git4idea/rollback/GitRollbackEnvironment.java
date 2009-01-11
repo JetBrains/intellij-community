@@ -91,6 +91,8 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     HashMap<VirtualFile, List<FilePath>> toUnindex = new HashMap<VirtualFile, List<FilePath>>();
     HashMap<VirtualFile, List<FilePath>> toRevert = new HashMap<VirtualFile, List<FilePath>>();
     List<FilePath> toDelete = new ArrayList<FilePath>();
+
+    listener.determinate();
     // collect changes to revert
     for (Change c : changes) {
       switch (c.getType()) {

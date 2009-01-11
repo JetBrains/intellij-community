@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn.rollback;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -10,10 +12,11 @@ import com.intellij.openapi.vcs.changes.EmptyChangelistBuilder;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -21,7 +24,9 @@ import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -39,59 +44,80 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
-    for (Change change: changes) {
-      listener.accept(change);
-
-      File beforePath = null;
-      ContentRevision beforeRevision = change.getBeforeRevision();
+    listener.indeterminate();
+    final SvnChangeProvider changeProvider = (SvnChangeProvider) mySvnVcs.getChangeProvider();
+    
+    final UnversionedFilesGroupCollector collector = new UnversionedFilesGroupCollector();
+    final Set<String> files = new HashSet<String>();
+    for (Change change : changes) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
-        beforePath = beforeRevision.getFile().getIOFile();
-        checkRevertFile(beforePath, exceptions);
+        files.add(beforeRevision.getFile().getIOFile().getAbsolutePath());
       }
-      ContentRevision afterRevision = change.getAfterRevision();
+      final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
-        File afterPath = afterRevision.getFile().getIOFile();
-        if (!afterPath.equals(beforePath)) {
-          UnversionedFilesCollector collector = new UnversionedFilesCollector();
+        final String afterPath = afterRevision.getFile().getIOFile().getAbsolutePath();
+        files.add(afterPath);
+
+        if ((beforeRevision != null) && (! afterPath.equals(beforeRevision.getFile().getIOFile().getAbsolutePath()))) {
+          // move/rename
+          collector.setBefore(beforeRevision.getFile().getIOFile(), afterRevision.getFile().getIOFile());
           try {
-            ((SvnChangeProvider) mySvnVcs.getChangeProvider()).getChanges(afterRevision.getFile(), false, collector);
+            changeProvider.getChanges(afterRevision.getFile(), false, collector);
           }
           catch (SVNException e) {
             exceptions.add(new VcsException(e));
           }
-          checkRevertFile(afterPath, exceptions);
-          // rolling back a rename should delete the after file
-          if (beforePath != null) {
-            for(VirtualFile f: collector.getUnversionedFiles()) {
-              File ioFile = new File(f.getPath());
-              ioFile.renameTo(new File(beforePath, ioFile.getName()));
-            }
-            FileUtil.delete(afterPath);
-          }
         }
       }
     }
-  }
 
-  private void checkRevertFile(final File ioFile, final List<VcsException> exceptions) {
+    final File[] filesArr = new File[files.size()];
+    int i = 0;
+    for (String file : files) {
+      filesArr[i] = new File(file);
+      ++ i;
+    }
+
     try {
-      SVNWCClient client = mySvnVcs.createWCClient();
+      final SVNWCClient client = mySvnVcs.createWCClient();
       client.setEventHandler(new ISVNEventHandler() {
         public void handleEvent(SVNEvent event, double progress) {
+          if (event.getAction() == SVNEventAction.REVERT) {
+            final File file = event.getFile();
+            if (file != null) {
+              listener.accept(file);
+            }
+          }
           if (event.getAction() == SVNEventAction.FAILED_REVERT) {
             exceptions.add(new VcsException("Revert failed"));
           }
         }
 
         public void checkCancelled() {
+          listener.checkCanceled();
         }
       });
-      client.doRevert(ioFile, false);
+      client.doRevert(filesArr, SVNDepth.EMPTY, null);
     }
     catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
         // skip errors on unversioned resources.
         exceptions.add(new VcsException(e));
+      }
+    }
+
+    final List<Trinity<File, File, File>> fromTo = collector.getFromTo();
+    for (Trinity<File, File, File> trinity : fromTo) {
+      if (trinity.getFirst().exists()) {
+        // parent successfully renamed/moved
+        trinity.getSecond().renameTo(trinity.getThird());
+      }
+    }
+    final List<Pair<File, File>> toBeDeleted = collector.getToBeDeleted();
+    for (Pair<File, File> pair : toBeDeleted) {
+      if (pair.getFirst().exists()) {
+        FileUtil.delete(pair.getSecond());
       }
     }
   }
@@ -118,15 +144,33 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
   }
 
-  private static class UnversionedFilesCollector extends EmptyChangelistBuilder {
-    private List<VirtualFile> myUnversionedFiles = new ArrayList<VirtualFile>();
+  private static class UnversionedFilesGroupCollector extends EmptyChangelistBuilder {
+    private File myCurrentBeforeFile;
+    private List<Pair<File, File>> myToBeDeleted;
+    private List<Trinity<File, File, File>> myFromTo;
 
-    public void processUnversionedFile(final VirtualFile file) {
-      myUnversionedFiles.add(file);
+    private UnversionedFilesGroupCollector() {
+      myFromTo = new ArrayList<Trinity<File, File, File>>();
+      myToBeDeleted = new ArrayList<Pair<File, File>>();
     }
 
-    public List<VirtualFile> getUnversionedFiles() {
-      return myUnversionedFiles;
+    @Override
+    public void processUnversionedFile(final VirtualFile file) {
+      final File to = new File(myCurrentBeforeFile, file.getName());
+      myFromTo.add(new Trinity<File, File, File>(myCurrentBeforeFile, new File(file.getPath()), to));
+    }
+
+    public void setBefore(@NotNull final File beforeFile, @NotNull final File afterFile) {
+      myCurrentBeforeFile = beforeFile;
+      myToBeDeleted.add(new Pair<File, File>(beforeFile, afterFile));
+    }
+
+    public List<Pair<File, File>> getToBeDeleted() {
+      return myToBeDeleted;
+    }
+
+    public List<Trinity<File, File, File>> getFromTo() {
+      return myFromTo;
     }
   }
 }
