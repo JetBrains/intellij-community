@@ -160,7 +160,7 @@ public abstract class AbstractVcs {
    * This method is called only for directories which are mapped to this VCS in the project configuration.
    *
    * @param filePath the path to check.
-   * @return true if the path is managed by this VCS, false otherwise. 
+   * @return true if the path is managed by this VCS, false otherwise.
    */
   public boolean fileIsUnderVcs(FilePath filePath) {
     return true;
@@ -272,6 +272,23 @@ public abstract class AbstractVcs {
       return (CachingCommittedChangesProvider)provider;
     }
     return null;
+  }
+
+  /**
+   * For some version controls (like Git) the revision parsing is dependent
+   * on the the specific repository instance since the the revision number
+   * returned from this method is later used for comparison information.
+   * By default, this method invokes {@link #parseRevisionNumber(String)}.
+   * The client code should invoke this method, if it expect ordering information
+   * from revision numbers.
+   *
+   * @param revisionNumberString the string to be parsed
+   * @param path                 the path for which revsion number is queried
+   * @return the parsed revision number
+   */
+  @Nullable
+  public VcsRevisionNumber parseRevisionNumber(String revisionNumberString, FilePath path) {
+    return parseRevisionNumber(revisionNumberString);
   }
 
   @Nullable

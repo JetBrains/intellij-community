@@ -18,9 +18,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 
@@ -66,7 +66,7 @@ public class DefaultPatchBaseVersionProvider {
     if (myRevisionPattern != null) {
       final Matcher matcher = myRevisionPattern.matcher(myVersionId);
       if (matcher.find()) {
-        revision = myVcs.parseRevisionNumber(matcher.group(1));
+        revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
       }
     }
 
@@ -75,7 +75,7 @@ public class DefaultPatchBaseVersionProvider {
       try {
         versionDate = new Date(myVersionId);
       }
-      catch(IllegalArgumentException ex) {
+      catch (IllegalArgumentException ex) {
         return;
       }
     }
@@ -84,7 +84,7 @@ public class DefaultPatchBaseVersionProvider {
       if (session == null) return;
       final List<VcsFileRevision> list = session.getRevisionList();
       if (list == null) return;
-      for(VcsFileRevision fileRevision: list) {
+      for (VcsFileRevision fileRevision : list) {
         boolean found;
         if (revision != null) {
           found = fileRevision.getRevisionNumber().compareTo(revision) <= 0;
@@ -101,7 +101,7 @@ public class DefaultPatchBaseVersionProvider {
         }
       }
     }
-    catch(IOException e) {
+    catch (IOException e) {
       LOG.error(e);
     }
   }
@@ -116,7 +116,7 @@ public class DefaultPatchBaseVersionProvider {
     try {
       Date.parse(myVersionId);
     }
-    catch(IllegalArgumentException ex) {
+    catch (IllegalArgumentException ex) {
       return false;
     }
     return true;
