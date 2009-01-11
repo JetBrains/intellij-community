@@ -296,6 +296,9 @@ public class CompileDriver {
       windowManager.getStatusBar(myProject).setInfo("");
     }
 
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    FileDocumentManager.getInstance().saveAllDocuments();
+    
     final DependencyCache dependencyCache = createDependencyCache();
     final CompileContextImpl compileContext =
       new CompileContextImpl(myProject, compileTask, scope, dependencyCache, !isRebuild && !forceCompile);
@@ -305,9 +308,6 @@ public class CompileDriver {
       compileContext.assignModule(outputs.getFirst(), pair.getSecond(), false);
       compileContext.assignModule(outputs.getSecond(), pair.getSecond(), true);
     }
-
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    FileDocumentManager.getInstance().saveAllDocuments();
 
     compileTask.start(new Runnable() {
       public void run() {
