@@ -116,6 +116,11 @@ public class SvnRepositoryContentRevision implements ContentRevision {
     return new SvnRepositoryContentRevision(vcs, repositoryRoot, path, localPath, revision);
   }
 
+  @Override
+  public String toString() {
+    return myFilePath.getIOFile() + "#" + myRevision; 
+  }
+
   private class ContentLoader implements Runnable {
     private final String myPath;
     private final long myRevision;
