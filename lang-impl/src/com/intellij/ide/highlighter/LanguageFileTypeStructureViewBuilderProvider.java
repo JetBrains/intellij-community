@@ -19,13 +19,12 @@ import org.jetbrains.annotations.Nullable;
 public class LanguageFileTypeStructureViewBuilderProvider implements StructureViewBuilderProvider {
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(@NotNull final FileType fileType, @NotNull final VirtualFile file, @NotNull final Project project) {
-    if (fileType instanceof LanguageFileType) {
-      final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile == null) return null;
-      final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage());
-      return factory == null ?  null : factory.getStructureViewBuilder(psiFile);
-    }
+    if (!(fileType instanceof LanguageFileType)) return null;
 
-    return null;
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if (psiFile == null) return null;
+    
+    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiFile.getLanguage());
+    return factory == null ?  null : factory.getStructureViewBuilder(psiFile);
   }
 }
