@@ -97,7 +97,13 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     myProjectManager.blockReloadingProjectOnExternalChanges();
     myFiles = new ArrayList<VirtualFile>(files);
     myProvider = provider;
-    myModel = new ListTableModel<VirtualFile>(NAME_COLUMN, TYPE_COLUMN);
+
+    List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
+    Collections.addAll(columns, NAME_COLUMN, TYPE_COLUMN);
+    if (myProvider instanceof MergeProvider2) {
+      Collections.addAll(columns, ((MergeProvider2) myProvider).getMergeInfoColumns());
+    }
+    myModel = new ListTableModel<VirtualFile>(columns.toArray(new ColumnInfo[columns.size()]));
     myModel.setItems(files);
     myTable.setModel(myModel);
     myVirtualFileRenderer.setFont(UIUtil.getListFont());
@@ -134,16 +140,23 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private void updateButtonState() {
     boolean haveSelection = myTable.getSelectedRowCount() > 0;
-    boolean haveBinaryFiles = false;
+    boolean haveUnmergeableFiles = false;
     for(VirtualFile file: myTable.getSelection()) {
       if (myBinaryFiles.contains(file)) {
-        haveBinaryFiles = true;
+        haveUnmergeableFiles = true;
         break;
+      }
+      if (myProvider instanceof MergeProvider2) {
+        boolean canMerge = ((MergeProvider2) myProvider).canMerge(file);
+        if (!canMerge) {
+          haveUnmergeableFiles = true;
+          break;
+        }
       }
     }
     myAcceptYoursButton.setEnabled(haveSelection);
     myAcceptTheirsButton.setEnabled(haveSelection);
-    myMergeButton.setEnabled(haveSelection && !haveBinaryFiles);
+    myMergeButton.setEnabled(haveSelection && !haveUnmergeableFiles);
   }
 
   @Nullable
@@ -190,7 +203,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
               file.setBinaryContent(data.LAST);
               checkMarkModifiedProject(file);
             }
-            markFileProcessed(file);
+            markFileProcessed(file, isCurrent ? MergeProvider2.Resolution.AcceptedYours : MergeProvider2.Resolution.AcceptedTheirs);
           }
           catch (Exception e) {
             ex.set(e);
@@ -205,9 +218,14 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     updateModelFromFiles();
   }
 
-  private void markFileProcessed(final VirtualFile file) {
+  private void markFileProcessed(final VirtualFile file, final MergeProvider2.Resolution resolution) {
     myFiles.remove(file);
-    myProvider.conflictResolvedForFile(file);
+    if (myProvider instanceof MergeProvider2) {
+      ((MergeProvider2) myProvider).conflictResolvedForFile(file, resolution);
+    }
+    else {
+      myProvider.conflictResolvedForFile(file);
+    }
     myProcessedFiles.add(file);
     VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
   }
@@ -266,7 +284,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       request.setWindowTitle(VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.getPresentableUrl())));
       DiffManager.getInstance().getDiffTool().show(request);
       if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
-        markFileProcessed(file);
+        markFileProcessed(file, MergeProvider2.Resolution.Merged);
         checkMarkModifiedProject(file);
       }
       else {
