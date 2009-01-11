@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -18,10 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.*;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,17 +49,24 @@ public class RequestHint {
       myTargetMethodSignature = JVMNameUtil.getJVMSignature(psiMethod);
     }
                   
-    public boolean shouldStopAtLocation(Location location, final DebugProcessImpl debugProcess) {
+    public boolean shouldStopAtLocation(final SuspendContextImpl context) {
       try {
+        final StackFrameProxyImpl frameProxy = context.getFrameProxy();
+        if (frameProxy == null) {
+          return true;
+        }
+        final Location location = frameProxy.location();
         final Method method = location.method();
         if (!myTargetMethodName.equals(method.name())) {
           return false;
         }
-        if (!myTargetMethodSignature.getName(debugProcess).equals(method.signature())) {
+        final DebugProcessImpl process = context.getDebugProcess();
+        if (!myTargetMethodSignature.getName(process).equals(method.signature())) {
           return false;
         }
-        final ReferenceType declaringType = method.declaringType();
-        return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(debugProcess), declaringType);
+        final ObjectReference thisObject = frameProxy.thisObject();
+        final ReferenceType locationClass = thisObject != null? thisObject.referenceType() : method.declaringType();
+        return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), locationClass);
       }
       catch (EvaluateException e) {
         LOG.info(e);
@@ -213,8 +218,7 @@ public class RequestHint {
         }
         // smart step feature
         if (myTargetMethodSignature != null) {
-          final Location location = context.getFrameProxy().location();
-          if (!myTargetMethodSignature.shouldStopAtLocation(location, context.getDebugProcess())) {
+          if (!myTargetMethodSignature.shouldStopAtLocation(context)) {
             return StepRequest.STEP_OUT;
           }
         }
