@@ -142,7 +142,11 @@ public class CompilerUtil {
     }
 
     final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString, chunkLanguageLevel);
-    if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
+    if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_6)) {
+      commandLine.add("-source");
+      commandLine.add("1.6");
+    }
+    else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
       commandLine.add("-source");
       commandLine.add("1.5");
     }
