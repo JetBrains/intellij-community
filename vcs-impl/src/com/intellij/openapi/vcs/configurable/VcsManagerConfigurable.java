@@ -150,7 +150,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       }
 
       public String getHelpTopic() {
-        return null;
+        return "project.propVCSSupport.VCSs";
       }
     };
   }
