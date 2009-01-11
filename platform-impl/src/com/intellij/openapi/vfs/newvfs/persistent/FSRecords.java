@@ -935,6 +935,10 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
+  public static void invalidateCaches() {
+    DbConnection.createBrokenMarkerFile();
+  }
+
   public static void checkSanity() {
     long startTime = System.currentTimeMillis();
     synchronized (lock) {

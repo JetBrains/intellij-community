@@ -61,7 +61,7 @@
       <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
       <action id="Print" class="com.intellij.codeEditor.printing.PrintAction"/>
 
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ReloadFromDisk"/>
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="InvalidateCaches"/>
     </group>
 
     <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">

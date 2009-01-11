@@ -114,6 +114,7 @@
         </group>
         <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
+        <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
         
         <group id="ChangeFileEncodingGroup" popup="true" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
           <action id="ChangeFileEncodingGroupAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingGroup" text=""/>
