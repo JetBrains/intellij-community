@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +54,7 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 
 import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -181,12 +181,16 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       return confpath;
     }
 
-    URL resource = getClass().getClassLoader().getResource("conf/groovy-starter.conf");
-    assert resource != null;
     try {
-      return new File(resource.toURI()).getPath().replace(File.separatorChar, '/');
+      final String jarPath = PathUtil.getJarPathForClass(getClass());
+      if (new File(jarPath).isFile()) { //jar; distribution mode
+        return new File(jarPath, "../groovy-starter.conf").getCanonicalPath();
+      }
+
+      //else, it's directory in out, development mode
+      return new File(jarPath, "conf/groovy-starter.conf").getCanonicalPath();
     }
-    catch (URISyntaxException e) {
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
