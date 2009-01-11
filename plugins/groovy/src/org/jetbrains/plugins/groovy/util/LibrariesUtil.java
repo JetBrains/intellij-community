@@ -88,7 +88,7 @@ public abstract class LibrariesUtil {
         if (realFile.exists()) {
           File parentFile = realFile.getParentFile();
           if (parentFile != null) {
-            if (parentFile.isDirectory() && !"lib".equals(parentFile.getName()) /*for non-traditional distributions*/) {
+            if (parentFile.isDirectory() && !("lib".equals(parentFile.getName()) || "embeddable".equals(parentFile.getName())) /*for non-traditional distributions*/) {
               path = parentFile.getPath();
             }
             else {
