@@ -44,6 +44,7 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.psi.PsiElement;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -322,8 +323,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                            myPresentation.getScopeText());
 
             if (notFoundActions == null || notFoundActions.isEmpty()) {
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO, message, IconLoader.getIcon("/actions/find.png"),
-                                                                       null);
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
+                                                                       XmlStringUtil.escapeString(message),
+                                                                       IconLoader.getIcon("/actions/find.png"), null);
             }
             else {
               List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);
