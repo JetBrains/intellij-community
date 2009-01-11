@@ -185,6 +185,7 @@ public class InjectLanguageAction implements IntentionAction {
                                               final String languageId) {
     if (psiMethod == null) return false;
     if (parameterIndex < -1) return false;
+    if (parameterIndex >= psiMethod.getParameterList().getParametersCount()) return false;
     final PsiModifierList methodModifiers = psiMethod.getModifierList();
     if (methodModifiers.hasModifierProperty(PsiModifier.PRIVATE) || methodModifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
       return doAddLanguageAnnotation(project, parameterIndex >0? psiMethod.getParameterList().getParameters()[parameterIndex - 1] : psiMethod, languageId);
