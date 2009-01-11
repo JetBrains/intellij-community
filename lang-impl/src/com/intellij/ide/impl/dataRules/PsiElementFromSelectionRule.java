@@ -8,7 +8,10 @@ public class PsiElementFromSelectionRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
     final Object element = dataProvider.getData(DataConstants.SELECTED_ITEM);
     if (element instanceof PsiElement) {
-      return element;
+      PsiElement psiElement = (PsiElement)element;
+      if (psiElement.isValid()) {
+        return element;
+      }
     }
 
     return null;
