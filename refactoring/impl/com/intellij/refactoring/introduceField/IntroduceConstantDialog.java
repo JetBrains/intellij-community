@@ -26,8 +26,9 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -68,7 +69,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private TypeSelector myTypeSelector;
   private StateRestoringCheckBox myCbDeleteVariable;
   private final JavaCodeStyleManager myCodeStyleManager;
-  private TextAccessor myTfTargetClassName;
+  private ReferenceEditorComboWithBrowseButton myTfTargetClassName;
   private PsiClass myDestinationClass;
   private JPanel myTypePanel;
   private JPanel myTargetClassNamePanel;
@@ -191,33 +192,19 @@ class IntroduceConstantDialog extends DialogWrapper {
         possibleClassNames.add(parentClass.getQualifiedName());
       }
     }
-    if (possibleClassNames.size() > 1) {
-      ReferenceEditorComboWithBrowseButton targetClassName =
-        new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true, RECENTS_KEY);
-      myTargetClassNamePanel.setLayout(new BorderLayout());
-      myTargetClassNamePanel.add(targetClassName, BorderLayout.CENTER);
-      myTargetClassNameLabel.setLabelFor(targetClassName);
-      targetClassName.setHistory(ArrayUtil.toStringArray(possibleClassNames));
-      myTfTargetClassName = targetClassName;
-      targetClassName.getChildComponent().addDocumentListener(new DocumentAdapter() {
-        public void documentChanged(DocumentEvent e) {
-          targetClassChanged();
-        }
-      });
+    myTfTargetClassName =
+      new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true, RECENTS_KEY);
+    myTargetClassNamePanel.setLayout(new BorderLayout());
+    myTargetClassNamePanel.add(myTfTargetClassName, BorderLayout.CENTER);
+    myTargetClassNameLabel.setLabelFor(myTfTargetClassName);
+    for (String possibleClassName : possibleClassNames) {
+      myTfTargetClassName.prependItem(possibleClassName);
     }
-    else {
-      ReferenceEditorWithBrowseButton targetClassName = JavaReferenceEditorUtil
-          .createReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
-      myTargetClassNamePanel.setLayout(new BorderLayout());
-      myTargetClassNamePanel.add(targetClassName, BorderLayout.CENTER);
-      myTargetClassNameLabel.setLabelFor(targetClassName);
-      myTfTargetClassName = targetClassName;
-      targetClassName.addDocumentListener(new DocumentAdapter() {
-        public void documentChanged(DocumentEvent e) {
-          targetClassChanged();
-        }
-      });
-    }
+    myTfTargetClassName.getChildComponent().addDocumentListener(new DocumentAdapter() {
+      public void documentChanged(DocumentEvent e) {
+        targetClassChanged();
+      }
+    });
     myIntroduceEnumConstantCb.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         enableEnumDependant(introduceEnumConstant());
