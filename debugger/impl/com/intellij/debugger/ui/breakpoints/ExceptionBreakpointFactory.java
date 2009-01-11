@@ -14,9 +14,9 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Element;
 
@@ -107,7 +107,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
       String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
 
       if (qName != null && qName.length() > 0) {
-        ExceptionBreakpoint breakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addExceptionBreakpoint(qName, ((PsiJavaFile)selectedClass.getContainingFile()).getPackageName());
+        ExceptionBreakpoint breakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addExceptionBreakpoint(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName());
         getPanel().addBreakpoint(breakpoint);
       }
     }
