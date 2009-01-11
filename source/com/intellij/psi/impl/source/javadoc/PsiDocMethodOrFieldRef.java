@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
@@ -48,7 +49,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     final String name = element.getText();
 
 
-    PsiType[] signature = getSignature();
+    final String[] signature = getSignature();
 
     final PsiMethod[] methods = getAllMethods(scope, this);
 
@@ -65,14 +66,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         for (int j = 0; j < parameters.length; j++) {
           PsiParameter parameter = parameters[j];
           PsiType type1 = TypeConversionUtil.erasure(parameter.getType());
-          PsiType type2 = signature[j];
-          if (type2 instanceof PsiEllipsisType) {
-            type2 = ((PsiEllipsisType)type2).toArrayType();
-          }
-          if (type1 instanceof PsiEllipsisType) {
-            type1 = ((PsiEllipsisType)type1).toArrayType();
-          }
-          if (!type1.equals(type2)) continue nextMethod;
+          String type2 = signature[j];
+          if (!Comparing.strEqual(type1.getPresentableText(), type2) && !Comparing.strEqual(type1.getCanonicalText(), type2)) continue nextMethod;
         }
 
         return new MyReference(method) {
@@ -129,7 +124,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
 
-  private PsiType[] getSignature() {
+  private String[] getSignature() {
     PsiElement element = getNameElement().getNextSibling();
 
     while (element != null && !(element instanceof PsiDocTagValue)) {
@@ -138,17 +133,21 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     if (element == null) return null;
 
-    List<PsiType> types = new ArrayList<PsiType>();
+    List<String> types = new ArrayList<String>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == JavaDocElementType.DOC_TYPE_HOLDER) {
-        if(child.getFirstChild() instanceof PsiTypeElement){
-          PsiTypeElement type = (PsiTypeElement)child.getFirstChild();
-          types.add(type.getType());
+        final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm mathod(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
+        if (typeStrings != null) {
+          for (String type : typeStrings) {
+            if (type.length() > 0) {
+              types.add(type);
+            }
+          }
         }
       }
     }
 
-    return types.toArray(new PsiType[types.size()]);
+    return types.toArray(new String[types.size()]);
   }
 
   private PsiElement getScope(){
