@@ -540,7 +540,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           if (document == null) return; //do not inspect binary files
           final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
           try {
-            pass.doInspectInBatch((InspectionManagerEx)manager, tools.toArray(new InspectionProfileEntry[tools.size()]), myProgressIndicator);
+            pass.doInspectInBatch((InspectionManagerEx)manager, tools.toArray(new InspectionProfileEntry[tools.size()]), myProgressIndicator,
+                                  true);
           }
           catch (ProcessCanceledException e) {
             throw e;

@@ -91,10 +91,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = getInspectionTools(profile);
 
-    inspect(tools, progress, iManager, true);
+    inspect(tools, progress, iManager, true, true);
   }
 
-  public void doInspectInBatch(final InspectionManagerEx iManager, InspectionProfileEntry[] toolWrappers, final ProgressIndicator progress) {
+  public void doInspectInBatch(final InspectionManagerEx iManager, InspectionProfileEntry[] toolWrappers, final ProgressIndicator progress,
+                               boolean ignoreSuppressed) {
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
@@ -104,7 +105,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
     }
     LocalInspectionTool[] tools = tool2Wrapper.keySet().toArray(new LocalInspectionTool[tool2Wrapper.size()]);
-    inspect(tools, progress, iManager, false);
+    inspect(tools, progress, iManager, false, ignoreSuppressed);
     addDescriptorsFromInjectedResults(tool2Wrapper, iManager);
     for (int i = 0; i < myTools.size(); i++) {
       final LocalInspectionTool tool = myTools.get(i);
@@ -160,7 +161,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly) {
+  private void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly,
+                       final boolean ignoreSuppressed) {
     if (tools.length == 0) return;
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
@@ -194,7 +196,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             advanceProgress(elements.length);
 
             if (holder.hasResults()) {
-              appendDescriptors(holder.getResults(), tool);
+              appendDescriptors(holder.getResults(), tool, ignoreSuppressed);
             }
           }
         }, progress);
@@ -250,14 +252,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return highlightInfo;
   }
 
-  private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool) {
+  private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool, boolean ignoreSuppressed) {
     if (problemDescriptors == null) return;
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
     ProgressManager progressManager = ProgressManager.getInstance();
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       progressManager.checkCanceled();
-      if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool)) {
+      if (!(ignoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool))) {
         myDescriptors.add(problemDescriptor);
         HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, severity);
         myLevels.add(type);
@@ -462,6 +464,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         result.add(res);
       }
     }
+  }
+
+  public List<HighlightInfo> getInfos() {
+    return myInfos;
   }
 
   private static class InjectedPsiInspectionResult {
