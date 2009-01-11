@@ -23,6 +23,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
 import git4idea.checkin.GitCheckinEnvironment;
@@ -62,6 +64,10 @@ import java.util.List;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs {
+  /**
+   * the logger
+   */
+  private static final Logger log = Logger.getInstance(GitVcs.class.getName());
   /**
    * Vcs name
    */
@@ -282,17 +288,35 @@ public class GitVcs extends AbstractVcs {
   @SuppressWarnings({"deprecation"})
   @Override
   @Nullable
-  public VcsRevisionNumber parseRevisionNumber(String revision) {
+  public VcsRevisionNumber parseRevisionNumber(String revision, FilePath path) {
     if (revision == null || revision.length() == 0) return null;
-
     if (revision.length() > 40) {    // date & revision-id encoded string
       String datestr = revision.substring(0, revision.indexOf("["));
       String rev = revision.substring(revision.indexOf("[") + 1, 40);
       Date d = new Date(Date.parse(datestr));
       return new GitRevisionNumber(rev, d);
     }
-
+    if(path != null) {
+      VirtualFile root = GitUtil.getGitRoot(myProject, path);
+      try {
+        return GitRevisionNumber.resolve(myProject, root, revision);
+      }
+      catch (VcsException e) {
+        log.error("Unexpected problem with resolving the git revision number: ",e);
+      }
+    }
     return new GitRevisionNumber(revision);
+
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @SuppressWarnings({"deprecation"})
+  @Override
+  @Nullable
+  public VcsRevisionNumber parseRevisionNumber(String revision) {
+    return parseRevisionNumber(revision, null);
   }
 
   /**
