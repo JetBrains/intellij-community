@@ -7,8 +7,6 @@ import com.intellij.errorreport.bean.NotifierBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
-import com.intellij.errorreport.error.ThreadClosedException;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -137,22 +135,6 @@ public class ITNReporter extends ErrorReportSubmitter {
         Messages.showMessageDialog(parentComponent,
                                    DiagnosticBundle.message("error.report.new.eap.build.message", e.getMessage()), CommonBundle.getWarningTitle(),
                                    Messages.getWarningIcon());
-        break;
-      }
-      catch (ThreadClosedException e) {
-        submissionStatus = SubmittedReportInfo.SubmissionStatus.DUPLICATE;
-        threadId = e.getThreadId();
-        if (Messages.showYesNoDialog(parentComponent,
-                                     DiagnosticBundle.message("error.report.already.closed.message", e.getMessage()),
-                                     ReportMessages.ERROR_REPORT, Messages.getQuestionIcon()) == 0) {
-          try {
-            BrowserUtil.launchBrowser(URL_HEADER + threadId);
-          }
-          catch (IllegalThreadStateException ex) {
-            // it's OK
-            // browser is not exited
-          }
-        }
         break;
       }
       catch (Exception e) {

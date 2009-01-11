@@ -7,7 +7,6 @@ import com.intellij.errorreport.bean.NotifierBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
-import com.intellij.errorreport.error.ThreadClosedException;
 import com.intellij.errorreport.itn.ITNProxy;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.idea.IdeaLogger;
@@ -119,8 +118,7 @@ public class ErrorReportSender {
 
   private SendTask sendTask;
 
-  public void prepareError(Project project, Throwable exception)
-    throws IOException, NewBuildException, ThreadClosedException {
+  public void prepareError(Project project, Throwable exception) throws IOException, NewBuildException {
 
     sendTask = new SendTask (project, exception);
 
