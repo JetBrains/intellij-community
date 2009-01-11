@@ -24,11 +24,20 @@ public interface RollbackProgressListener {
     }
     public void accept(final VirtualFile file) {
     }
+    public void checkCanceled() {
+    }
+    public void indeterminate() {
+    }
+    public void determinate() {
+    }
   };
 
+  void determinate();
+  void indeterminate();
   void accept(final Change change);
   void accept(final FilePath filePath);
   void accept(final List<FilePath> paths);
   void accept(final File file);
   void accept(final VirtualFile file);
+  void checkCanceled();
 }

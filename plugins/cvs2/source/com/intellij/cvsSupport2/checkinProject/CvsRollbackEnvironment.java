@@ -30,6 +30,7 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
 
   public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions, @NotNull final RollbackProgressListener listener) {
 
+    listener.determinate();
     CvsRollbacker rollbacker = new CvsRollbacker(myProject);
     for (Change change : changes) {
       final FilePath filePath = ChangesUtil.getFilePath(change);

@@ -31,7 +31,9 @@ public class RollbackProgressModifier implements RollbackProgressListener {
     if (myIndicator != null) {
       myIndicator.setText2(VcsBundle.message("rolling.back.file", name));
       checkName(name);
-      myIndicator.setFraction(myCnt / myTotal);
+      if (! myIndicator.isIndeterminate()) {
+        myIndicator.setFraction(myCnt / myTotal);
+      }
       myIndicator.checkCanceled();
     }
   }
@@ -42,6 +44,18 @@ public class RollbackProgressModifier implements RollbackProgressListener {
       if (myTotal >= (myCnt + 1)) {
         ++ myCnt;
       }
+    }
+  }
+
+  public void determinate() {
+    if (myIndicator != null) {
+      myIndicator.setIndeterminate(false);
+    }
+  }
+
+  public void indeterminate() {
+    if (myIndicator != null) {
+      myIndicator.setIndeterminate(true);
     }
   }
 
@@ -73,5 +87,11 @@ public class RollbackProgressModifier implements RollbackProgressListener {
 
   public void accept(final VirtualFile file) {
     acceptImpl(new File(file.getPath()).getAbsolutePath());
+  }
+
+  public void checkCanceled() {
+    if (myIndicator != null) {
+      myIndicator.checkCanceled();
+    }
   }
 }

@@ -5,10 +5,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -39,7 +36,7 @@ public class RollbackChangesDialog extends DialogWrapper {
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously,
                                      final Runnable afterVcsRefreshInAwt) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
       Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
@@ -47,15 +44,9 @@ public class RollbackChangesDialog extends DialogWrapper {
       return;
     }
 
-    ArrayList<Change> validChanges = new ArrayList<Change>();
-    Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
-    for (Change change : changes) {
-      final LocalChangeList list = manager.getChangeList(change);
-      if (list != null) {
-        lists.add(list);
-        validChanges.add(change);
-      }
-    }
+    final ArrayList<Change> validChanges = new ArrayList<Change>();
+    final Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
+    lists.addAll(manager.getInvolvedListsFilterChanges(changes, validChanges));
 
     rollback(project, new ArrayList<LocalChangeList>(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt);
   }

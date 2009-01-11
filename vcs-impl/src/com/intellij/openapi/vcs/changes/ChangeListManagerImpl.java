@@ -439,21 +439,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull
   public Runnable prepareForChangeDeletion(final Collection<Change> changes) {
     final Map<String, LocalChangeList> lists = new HashMap<String, LocalChangeList>();
-    final Map<String, List<Change>> map = new HashMap<String, List<Change>>();
+    final Map<String, List<Change>> map;
     synchronized (myDataLock) {
-      for (Change change : changes) {
-        LocalChangeList changeList = getChangeList(change);
-        if (changeList == null) {
-          changeList = getDefaultChangeList();
-        }
-        List<Change> list = map.get(changeList.getName());
-        if (list == null) {
-          list = new ArrayList<Change>();
-          map.put(changeList.getName(), list);
-          lists.put(changeList.getName(), changeList);
-        }
-        list.add(change);
-      }
+      map = myWorker.listsForChanges(changes, lists);
     }
     return new Runnable() {
       public void run() {
@@ -486,6 +474,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public LocalChangeList getDefaultChangeList() {
     synchronized (myDataLock) {
       return myWorker.getDefaultListCopy();
+    }
+  }
+
+  @NotNull
+  public Collection<LocalChangeList> getInvolvedListsFilterChanges(final Collection<Change> changes, final List<Change> validChanges) {
+    synchronized (myDataLock) {
+      return myWorker.getInvolvedListsFilterChanges(changes, validChanges);
     }
   }
 
