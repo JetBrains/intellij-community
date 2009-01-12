@@ -200,7 +200,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   public boolean isValid() {
     if (isCopy()) return true; // "dummy" file
-    return getVirtualFile().isValid() && myManager.getFileManager().findFile(getVirtualFile()) == this;
+    return getVirtualFile().isValid() && !myManager.getProject().isDisposed() && myManager.getFileManager().findFile(getVirtualFile()) == this;
   }
 
   public boolean isWritable() {
