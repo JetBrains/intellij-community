@@ -20,13 +20,10 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -36,11 +33,8 @@ import java.security.PrivilegedAction;
 public abstract class MappedBufferWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
 
-  @NonNls public static final String BBU_TEMP_FILE_NAME = "BBU";
-  @NonNls public static final String CLEANER_METHOD_NAME = "cleaner";
-  @NonNls public static final String CLEAN_METHOD_NAME = "clean";
-  @NonNls public static final String VIEWED_BUFFER_FIELD = "viewedBuffer";
-  @NonNls public static final String FINALIZE_METHOD = "finalize";
+  @NonNls private static final String CLEANER_METHOD_NAME = "cleaner";
+  @NonNls private static final String CLEAN_METHOD_NAME = "clean";
 
   protected File myFile;
   protected long myPosition;
@@ -56,9 +50,11 @@ public abstract class MappedBufferWrapper {
 
   protected abstract MappedByteBuffer map();
 
+  private static int MAX_FORCE_ATTEMPTS = 10;
+
   public final void unmap() {
     if (!unmapMappedByteBuffer142b19(this)) {
-      unmapMappedByteBuffer141(this);
+      LOG.error("Unmapping failed for: " + myFile);
     }
   }
 
@@ -74,35 +70,6 @@ public abstract class MappedBufferWrapper {
   }
 
 
-  private static void unmapMappedByteBuffer141(MappedBufferWrapper holder) {
-    ByteBuffer buffer = holder.getIfCached();
-
-    unmapBuffer(buffer);
-
-    boolean needGC = SystemInfo.JAVA_VERSION.startsWith("1.4.0");
-
-    if (!needGC) {
-      try {
-        File newFile = File.createTempFile(BBU_TEMP_FILE_NAME, "", holder.myFile.getParentFile());
-        newFile.delete();
-        if (!holder.myFile.renameTo(newFile)) {
-          needGC = true;
-        }
-        else {
-          newFile.renameTo(holder.myFile);
-        }
-      }
-      catch (IOException e) {
-        needGC = true;
-      }
-    }
-
-    if (needGC) {
-      System.gc();
-      System.runFinalization();
-    }
-  }
-
   private static boolean unmapMappedByteBuffer142b19(MappedBufferWrapper holder) {
     if (clean(holder.getIfCached())) {
       return true;
@@ -111,8 +78,29 @@ public abstract class MappedBufferWrapper {
     return false;
   }
 
-  public static boolean clean(final Object buffer) {
+  public static boolean clean(final ByteBuffer buffer) {
     if (buffer == null) return true;
+
+    int i;
+    for (i = 0; i < MAX_FORCE_ATTEMPTS; i++) {
+      try {
+        ((MappedByteBuffer)buffer).force();
+        break;
+      }
+      catch (Throwable e) {
+        try {
+          Thread.sleep(10);
+        }
+        catch (InterruptedException e1) {
+          // Can't be
+        }
+      }
+    }
+
+    if (i == MAX_FORCE_ATTEMPTS) {
+      return false;
+    }
+
     return AccessController.doPrivileged(new PrivilegedAction<Object>() {
       public Object run() {
         try {
@@ -153,25 +141,6 @@ public abstract class MappedBufferWrapper {
       GET_CLEANER_METHOD = m;
     }
     return m;
-  }
-
-  private static void unmapBuffer(ByteBuffer buffer) {
-    try {
-      Field field = Class.forName("java.nio.DirectByteBuffer").getDeclaredField(VIEWED_BUFFER_FIELD);
-      field.setAccessible(true);
-      if (field.get(buffer) instanceof MappedByteBuffer) {
-        unmapBuffer((MappedByteBuffer)field.get(buffer));
-        return;
-      }
-
-
-      Method finalizeMethod = Object.class.getDeclaredMethod(FINALIZE_METHOD, ArrayUtil.EMPTY_CLASS_ARRAY);
-      finalizeMethod.setAccessible(true);
-      finalizeMethod.invoke(buffer, ArrayUtil.EMPTY_OBJECT_ARRAY);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
   }
 
   public boolean isMapped() {
