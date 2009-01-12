@@ -35,6 +35,8 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +45,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SetPropertyDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -58,8 +59,9 @@ public class SetPropertyAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    SVNInfo info = vcs.getInfoWithCaching(file);
-    return info != null && info.getURL() != null;
+    if (file == null || project == null || vcs == null) return false;
+    final FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
+    return (! FileStatus.IGNORED.equals(status)) && (! FileStatus.UNKNOWN.equals(status));
   }
 
   protected boolean needsFiles() {
