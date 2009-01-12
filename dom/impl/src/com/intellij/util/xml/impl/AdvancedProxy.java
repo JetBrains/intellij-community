@@ -16,6 +16,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class AdvancedProxy {
       final ProxyDescription key = new ProxyDescription(superClass, interfaces, additionalMethods);
       Factory factory = ourFactories.get(key);
       if (factory != null) {
-        return (T) factory.newInstance(getConstructorParameterTypes(factory.getClass(), constructorArgs), constructorArgs, callbacks);
+        return (T)factory.newInstance(getConstructorParameterTypes(factory.getClass(), constructorArgs), constructorArgs, callbacks);
       }
 
       AdvancedEnhancer e = new AdvancedEnhancer();
@@ -91,7 +92,8 @@ public class AdvancedProxy {
       if (superClass != null) {
         e.setSuperclass(superClass);
         factory = (Factory)e.create(getConstructorParameterTypes(superClass, constructorArgs), constructorArgs);
-      } else {
+      }
+      else {
         assert constructorArgs.length == 0;
         factory = (Factory)e.create();
       }
@@ -102,7 +104,17 @@ public class AdvancedProxy {
     catch (CodeGenerationException e) {
       final Throwable throwable = e.getCause();
       if (throwable instanceof ProcessCanceledException) {
-        throw(ProcessCanceledException)throwable;
+        throw (ProcessCanceledException)throwable;
+      }
+      if (throwable instanceof InvocationTargetException) {
+        final InvocationTargetException targetException = (InvocationTargetException)throwable;
+        final Throwable cause = targetException.getCause();
+        if (cause instanceof RuntimeException) {
+          throw (RuntimeException)cause;
+        }
+        if (cause instanceof Error) {
+          throw (Error)cause;
+        }
       }
       throw e;
     }
