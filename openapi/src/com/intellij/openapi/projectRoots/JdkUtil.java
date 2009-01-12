@@ -31,6 +31,9 @@ public class JdkUtil {
       rtJar = homeDirectory.findFileByRelativePath("jre/lib/vm.jar"); // for IBM jdk
     }
     if (rtJar == null) {
+      rtJar = homeDirectory.findFileByRelativePath("../Classes/classes.jar"); // for mac
+    }
+    if (rtJar == null) {
       return null;
     }
     VirtualFile rtJarFileContent = JarFileSystem.getInstance().findFileByPath(rtJar.getPath() + JarFileSystem.JAR_SEPARATOR);
