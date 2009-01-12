@@ -589,7 +589,7 @@ public class DocumentationManager {
   }
 
   public Project getProject(@Nullable final PsiElement element) {
-    assert element == null || myProject == element.getProject();
+    assert element == null || !element.isValid() || myProject == element.getProject();
     return myProject;
   }
 
