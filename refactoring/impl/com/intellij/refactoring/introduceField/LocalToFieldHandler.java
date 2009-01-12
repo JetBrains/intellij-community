@@ -281,7 +281,7 @@ public class LocalToFieldHandler {
     final PsiCodeBlock body = inClass.getBody();
     assert body != null;
     body.add(assignment);
-    if (!PsiTreeUtil.isAncestor(inClass, local, true)) local.delete();
+    local.delete();
   }
 
   private void addInitializationToConstructors(PsiLocalVariable local, PsiField field, PsiMethod enclosingConstructor,

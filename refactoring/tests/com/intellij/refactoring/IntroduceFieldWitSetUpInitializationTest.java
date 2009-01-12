@@ -45,6 +45,10 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
     doTest();
   }
 
+  public void testInitiallyInSetUp() throws Exception {
+    doTest();
+  }
+
   public void testPublicBaseClassSetUp() throws Exception {
     doTest();
   }
