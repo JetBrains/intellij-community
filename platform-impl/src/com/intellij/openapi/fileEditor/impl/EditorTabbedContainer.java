@@ -61,7 +61,8 @@ final class EditorTabbedContainer implements Disposable {
           return myProject;
         }
         if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
-          return myWindow.getSelectedFile();
+          final VirtualFile selectedFile = myWindow.getSelectedFile();
+          return selectedFile != null && selectedFile.isValid() ? selectedFile : null;
         }
         if (DataConstantsEx.EDITOR_WINDOW.equals(dataId)) {
           return myWindow;
