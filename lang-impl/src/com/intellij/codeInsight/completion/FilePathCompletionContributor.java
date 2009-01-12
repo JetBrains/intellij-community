@@ -103,49 +103,51 @@ public class FilePathCompletionContributor extends CompletionContributor {
           final VirtualFile contextFile = parameters.getOriginalFile().getVirtualFile();
           if (contextFile != null) {
             final Module contextModule = index.getModuleForFile(contextFile);
-            final Module[] dependencies = ModuleRootManager.getInstance(contextModule).getDependencies();
+            if (contextModule != null) {
+              final Module[] dependencies = ModuleRootManager.getInstance(contextModule).getDependencies();
 
-            final Set<Module> modules = new HashSet<Module>(dependencies.length + 1);
-            modules.addAll(Arrays.asList(dependencies));
-            modules.add(contextModule);
+              final Set<Module> modules = new HashSet<Module>(dependencies.length + 1);
+              modules.addAll(Arrays.asList(dependencies));
+              modules.add(contextModule);
 
-            final LogicalRoot contextRoot = logicalRootsManager.findLogicalRoot(contextFile);
-            if (contextRoot != null) {
-              final VirtualFile contextRootFile = contextRoot.getVirtualFile();
-              final LogicalRootType contextRootType = contextRoot.getType();
+              final LogicalRoot contextRoot = logicalRootsManager.findLogicalRoot(contextFile);
+              if (contextRoot != null) {
+                final VirtualFile contextRootFile = contextRoot.getVirtualFile();
+                final LogicalRootType contextRootType = contextRoot.getType();
 
-              final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
-              for (final String name : resultNames) {
-                ProgressManager.getInstance().checkCanceled();
+                final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
+                for (final String name : resultNames) {
+                  ProgressManager.getInstance().checkCanceled();
 
-                final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-                  public PsiFile[] compute() {
-                    return FilenameIndex.getFilesByName(project, name, scope);
-                  }
-                });
+                  final PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+                    public PsiFile[] compute() {
+                      return FilenameIndex.getFilesByName(project, name, scope);
+                    }
+                  });
 
-                if (files.length > 0) {
-                  for (final PsiFile file : files) {
-                    ApplicationManager.getApplication().runReadAction(new Runnable() {
-                      public void run() {
-                        final VirtualFile virtualFile = file.getVirtualFile();
-                        if (virtualFile != null && virtualFile.isValid()) {
-                          final Module module = index.getModuleForFile(virtualFile);
-                          if (modules.contains(module)) {
-                            final LogicalRoot logicalRoot = logicalRootsManager.findLogicalRoot(virtualFile);
-                            if (logicalRoot != null && contextRootType == logicalRoot.getType()) {
-                              final VirtualFile _context = contextRoot == logicalRoot ? contextRootFile : project.getBaseDir();
-                              if (_context != null) {
-                                final PsiDirectory psiFile = psiManager.findDirectory(_context);
-                                if (psiFile != null) {
-                                  result.addElement(new FilePathLookupItem(file, psiFile));
+                  if (files.length > 0) {
+                    for (final PsiFile file : files) {
+                      ApplicationManager.getApplication().runReadAction(new Runnable() {
+                        public void run() {
+                          final VirtualFile virtualFile = file.getVirtualFile();
+                          if (virtualFile != null && virtualFile.isValid()) {
+                            final Module module = index.getModuleForFile(virtualFile);
+                            if (modules.contains(module)) {
+                              final LogicalRoot logicalRoot = logicalRootsManager.findLogicalRoot(virtualFile);
+                              if (logicalRoot != null && contextRootType == logicalRoot.getType()) {
+                                final VirtualFile _context = contextRoot == logicalRoot ? contextRootFile : project.getBaseDir();
+                                if (_context != null) {
+                                  final PsiDirectory psiFile = psiManager.findDirectory(_context);
+                                  if (psiFile != null) {
+                                    result.addElement(new FilePathLookupItem(file, psiFile));
+                                  }
                                 }
                               }
                             }
                           }
                         }
-                      }
-                    });
+                      });
+                    }
                   }
                 }
               }
