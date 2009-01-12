@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.util.IconUtil;
@@ -33,7 +34,11 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
   private final Project myProject;
 
   public AbstractFileTreeTable(final Project project, final Class<T> valueClass, final String valueTitle) {
-    super(new MyModel<T>(project, valueClass, valueTitle));
+    this(project, valueClass, valueTitle, VirtualFileFilter.ALL);
+  }
+
+  public AbstractFileTreeTable(final Project project, final Class<T> valueClass, final String valueTitle, @NotNull VirtualFileFilter filter) {
+    super(new MyModel<T>(project, valueClass, valueTitle, filter));
     myProject = project;
 
     myModel = (MyModel)getTableModel();
@@ -207,8 +212,8 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     private final String myValueTitle;
     private AbstractFileTreeTable<T> myTreeTable;
 
-    private MyModel(final Project project, final Class<T> valueClass, final String valueTitle) {
-      super(new ProjectRootNode(project));
+    private MyModel(final Project project, final Class<T> valueClass, final String valueTitle, VirtualFileFilter filter) {
+      super(new ProjectRootNode(project, filter));
       myValueClass = valueClass;
       myValueTitle = valueTitle;
     }
@@ -303,8 +308,15 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
   }
 
   public static class ProjectRootNode extends ConvenientNode<Project> {
-    public ProjectRootNode(Project project) {
+    private VirtualFileFilter myFilter;
+
+    public ProjectRootNode(@NotNull Project project) {
+      this(project, VirtualFileFilter.ALL);
+    }
+
+    public ProjectRootNode(@NotNull Project project, @NotNull VirtualFileFilter filter) {
       super(project);
+      myFilter = filter;
     }
 
     protected void appendChildrenTo(final Collection<ConvenientNode> children) {
@@ -316,7 +328,9 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
         for (VirtualFile candidate : roots) {
           if (VfsUtil.isAncestor(candidate, root, true)) continue NextRoot;
         }
-        children.add(new FileNode(root, project));
+        if (myFilter.accept(root)) {
+          children.add(new FileNode(root, project, myFilter));
+        }
       }
     }
   }
@@ -390,18 +404,24 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
   public static class FileNode extends ConvenientNode<VirtualFile> {
     private final Project myProject;
+    private VirtualFileFilter myFilter;
 
-    public FileNode(@NotNull VirtualFile file, final Project project) {
+    public FileNode(@NotNull VirtualFile file, final @NotNull Project project) {
+      this(file, project, VirtualFileFilter.ALL);
+    }
+
+    public FileNode(@NotNull VirtualFile file, final @NotNull Project project, @NotNull VirtualFileFilter filter) {
       super(file);
       myProject = project;
+      myFilter = filter;
     }
 
     protected void appendChildrenTo(final Collection<ConvenientNode> children) {
       VirtualFile[] childrenf = getObject().getChildren();
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (VirtualFile child : childrenf) {
-        if (fileIndex.isInContent(child)) {
-          children.add(new FileNode(child, myProject));
+        if (myFilter.accept(child) && fileIndex.isInContent(child)) {
+          children.add(new FileNode(child, myProject, myFilter));
         }
       }
     }
