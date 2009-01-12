@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template;
  import com.intellij.openapi.components.ServiceManager;
  import com.intellij.openapi.diagnostic.Logger;
  import com.intellij.openapi.project.Project;
+ import com.intellij.openapi.application.ApplicationManager;
  import com.intellij.psi.*;
  import com.intellij.psi.codeStyle.JavaCodeStyleManager;
  import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -22,8 +23,8 @@ package com.intellij.codeInsight.template;
 
    @Nullable
    public static String[] getNames(final ExpressionContext context) {
-     Project project = context.getProject();
-     int offset = context.getStartOffset();
+     final Project project = context.getProject();
+     final int offset = context.getStartOffset();
 
      PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -34,14 +35,18 @@ package com.intellij.codeInsight.template;
        names = getNamesForIdentifier(project, (PsiIdentifier)element);
      }
      else{
-       PsiFile fileCopy = (PsiFile)file.copy();
-       BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
-       try{
-         blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
-       }
-       catch(IncorrectOperationException e){
-         LOG.error(e);
-       }
+       final PsiFile fileCopy = (PsiFile)file.copy();
+       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+         public void run() {
+           BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
+           try{
+             blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
+           }
+           catch(IncorrectOperationException e){
+             LOG.error(e);
+           }
+         }
+       });
        PsiElement identifierCopy = fileCopy.findElementAt(offset);
        if (identifierCopy instanceof PsiIdentifier) {
          names = getNamesForIdentifier(project, (PsiIdentifier)identifierCopy);
