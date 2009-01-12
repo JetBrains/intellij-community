@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -86,7 +87,9 @@ public abstract class DiffActionExecutor {
       }
 
       final SimpleDiffRequest request = new SimpleDiffRequest(myProject, mySelectedFile.getPresentableUrl());
-      final DocumentContent content2 = new DocumentContent(myProject, FileDocumentManager.getInstance().getDocument(mySelectedFile));
+      final Document document = FileDocumentManager.getInstance().getDocument(mySelectedFile);
+      if (document == null) return;
+      final DocumentContent content2 = new DocumentContent(myProject, document);
 
       final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(mySelectedFile);
 
