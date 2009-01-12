@@ -24,6 +24,10 @@ public abstract class ExtendClassImpl implements ExtendClass {
     return false;
   }
 
+  public boolean allowNonPublic() {
+    return false;
+  }
+
   public boolean allowAbstract() {
     return true;
   }

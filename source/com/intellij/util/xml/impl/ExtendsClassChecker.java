@@ -57,7 +57,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
     if (psiClass != null) {
         return checkExtendClass(element, psiClass, extend.value(),
                                 extend.instantiatable(), extend.canBeDecorator(), extend.allowInterface(),
-                                extend.allowAbstract(), extend.allowEnum(), holder);
+                                extend.allowNonPublic(), extend.allowAbstract(), extend.allowEnum(), holder);
     }
     return Collections.emptyList();
   }
@@ -65,6 +65,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
   @NotNull
   public static List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element, final PsiClass value, final String name,
                                                                    final boolean instantiatable, final boolean canBeDecorator, final boolean allowInterface,
+                                                                   final boolean allowNonPublic,
                                                                    final boolean allowAbstract,
                                                                    final boolean allowEnum,
                                                                    final DomElementAnnotationHolder holder) {
@@ -82,7 +83,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
       if (value.hasModifierProperty(PsiModifier.ABSTRACT)) {
         list.add(holder.createProblem(element, DomBundle.message("class.is.not.concrete", value.getQualifiedName())));
       }
-      else if (!value.hasModifierProperty(PsiModifier.PUBLIC)) {
+      else if (!allowNonPublic && !value.hasModifierProperty(PsiModifier.PUBLIC)) {
         list.add(holder.createProblem(element, DomBundle.message("class.is.not.public", value.getQualifiedName())));
       }
       else if (!hasDefaultConstructor(value)) {
@@ -150,7 +151,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
         if (value != null && value.length != 0) {
           for (String className : value) {
             final List<DomElementProblemDescriptor> problemDescriptors =
-              checkExtendClass(element, ((PsiClass)valueObject), className, false, false, true, true, true, holder);
+              checkExtendClass(element, ((PsiClass)valueObject), className, false, false, true, false, true, true, holder);
             if (!problemDescriptors.isEmpty()) {
               return problemDescriptors;
             }

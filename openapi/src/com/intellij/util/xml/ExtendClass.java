@@ -49,6 +49,8 @@ public @interface ExtendClass {
 
   boolean allowEmpty() default false;
 
+  boolean allowNonPublic() default false;
+
   boolean allowAbstract() default true;
 
   boolean allowInterface() default true;
