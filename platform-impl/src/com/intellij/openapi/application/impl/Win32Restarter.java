@@ -28,6 +28,10 @@ public class Win32Restarter {
       Messages.showMessageDialog("Restart failed: " + ex.getMessage(), "Restart", Messages.getErrorIcon());
       return;
     }
+
+    // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
+    // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
+    // process which happened to have the same process ID.
     try {
       Thread.sleep(500);
     }
