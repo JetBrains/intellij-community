@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -72,12 +73,24 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   public void apply() throws ConfigurationException {
     myPluginManagerMain.apply();
     if (myPluginManagerMain.isRequireShutdown()) {
-      if (Messages.showYesNoDialog(IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName()),
-                                   IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
-        ApplicationManagerEx.getApplicationEx().exit(true);
+      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      if (app.isRestartCapable()) {
+        if (Messages.showYesNoDialog(IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName()),
+                                     IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
+          app.restart();
+        }
+        else {
+          myPluginManagerMain.ignoreChanges();
+        }
       }
       else {
-        myPluginManagerMain.ignoreChanges ();
+        if (Messages.showYesNoDialog(IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName()),
+                                     IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
+          app.exit(true);
+        }
+        else {
+          myPluginManagerMain.ignoreChanges();
+        }
       }
     }
   }
