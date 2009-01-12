@@ -139,7 +139,7 @@ public class GitChangeUtils {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.SHOW);
     h.setNoSSH(true);
     h.setSilent(true);
-    h.addParameters("--name-status", "--no-abbrev", "-M", "--pretty=format:\"%ct%n%H%n%P%n%an%x20<%ae>%n%cn%x20<%ce>%n%s%n%x00%n%b%n%x00\"",
+    h.addParameters("--name-status", "--no-abbrev", "-M", "--pretty=format:%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x00%n%b%n%x00",
                     "--encoding=UTF-8", revisionName, "--");
     String output = h.run();
     try {

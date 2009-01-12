@@ -90,7 +90,7 @@ public class GitHistoryUtils {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
-    h.addParameters("-M", "--follow", "--name-only", "--pretty=format:%H%x00%ct%x00%an%x20<%ae>%x00%cn%x20<%ce>%x00%s%n%n%b%x00",
+    h.addParameters("-M", "--follow", "--name-only", "--pretty=format:%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%s%n%n%b%x00",
                     "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
