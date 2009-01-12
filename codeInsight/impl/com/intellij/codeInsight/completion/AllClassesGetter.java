@@ -68,7 +68,7 @@ public class AllClassesGetter {
         if (psiManager.areElementsEquivalent(psiClass, DefaultInsertHandler.resolveReference(psiReference))) {
           insertFqn = false;
         }
-        else {
+        else if (psiClass.isValid()) {
           try {
             final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
             if (newUnderlying != null) {
