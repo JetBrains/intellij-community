@@ -92,14 +92,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   public static List<PsiExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, final PsiElement... statementsInRange) {
     final PsiElement elementAtCaret = file.findElementAt(TargetElementUtil.adjustOffset(editor.getDocument(), offset));
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
-    for (PsiElement element : statementsInRange) {
+    /*for (PsiElement element : statementsInRange) {
       if (element instanceof PsiExpressionStatement) {
         final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
         if (expression.getType() != PsiType.VOID) {
           expressions.add(expression);
         }
       }
-    }
+    }*/
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
       if (!expressions.contains(expression) && /*!(expression instanceof PsiReferenceExpression) &&*/ !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
