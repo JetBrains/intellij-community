@@ -477,6 +477,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     firstResult = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model);
     if (firstResult.isStringFound()) {
       myEditor.getSelectionModel().setSelection(firstResult.getStartOffset(), firstResult.getEndOffset());
+
+      myEditor.getCaretModel().moveToOffset(firstResult.getEndOffset());
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+
       myEditor.getCaretModel().moveToOffset(firstResult.getStartOffset());
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       return true;
