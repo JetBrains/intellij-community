@@ -57,11 +57,13 @@ public class CvsChangeProvider implements ChangeProvider {
   private final CvsVcs2 myVcs;
   private final CvsEntriesManager myEntriesManager;
   private final ProjectFileIndex myFileIndex;
+  private final ChangeListManager myChangeListManager;
 
   public CvsChangeProvider(final CvsVcs2 vcs, CvsEntriesManager entriesManager) {
     myVcs = vcs;
     myEntriesManager = entriesManager;
     myFileIndex = ProjectRootManager.getInstance(vcs.getProject()).getFileIndex();
+    myChangeListManager = ChangeListManager.getInstance(vcs.getProject());
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress,
@@ -182,7 +184,7 @@ public class CvsChangeProvider implements ChangeProvider {
     final VirtualFile dir = filePath.getVirtualFileParent();
     if (dir == null) return;
 
-    final Entry entry = CvsEntriesManager.getInstance().getEntryFor(dir, filePath.getName());
+    final Entry entry = myEntriesManager.getEntryFor(dir, filePath.getName());
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
     VcsRevisionNumber number = entry != null ? new CvsRevisionNumber(entry.getRevision()) : VcsRevisionNumber.NULL;
     processStatus(filePath, dir.findChild(filePath.getName()), status, number, entry != null && entry.isBinary(), builder);
@@ -202,14 +204,14 @@ public class CvsChangeProvider implements ChangeProvider {
     if (parentDir == null || !myFileIndex.isInContent(parentDir)) {
       return;
     }
-    final CvsInfo info = CvsEntriesManager.getInstance().getCvsInfoFor(dir);
+    final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);
     if (info.getRepository() == null) {
       // don't report unversioned directories as switched (IDEADEV-17178)
       builder.processUnversionedFile(dir);
       return;
     }
     final String dirTag = info.getStickyTag();
-    final CvsInfo parentInfo = CvsEntriesManager.getInstance().getCvsInfoFor(parentDir);
+    final CvsInfo parentInfo = myEntriesManager.getCvsInfoFor(parentDir);
     final String parentDirTag = parentInfo.getStickyTag();
     if (!Comparing.equal(dirTag, parentDirTag)) {
       if (dirTag == null) {
@@ -238,7 +240,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     else if (!scope.belongsTo(VcsContextFactory.SERVICE.getInstance().createFilePathOn(parentDir))) {
       // check if we're doing a partial refresh below a switched dir (IDEADEV-16611)
-      final String parentBranch = ChangeListManager.getInstance(myVcs.getProject()).getSwitchedBranch(parentDir);
+      final String parentBranch = myChangeListManager.getSwitchedBranch(parentDir);
       if (parentBranch != null) {
         builder.processSwitchedFile(dir, parentBranch, true);
       }
@@ -250,7 +252,7 @@ public class CvsChangeProvider implements ChangeProvider {
     if (!myFileIndex.isInContent(dir)) {
       return;
     }
-    final String dirTag = CvsEntriesManager.getInstance().getCvsInfoFor(dir).getStickyTag();
+    final String dirTag = myEntriesManager.getCvsInfoFor(dir).getStickyTag();
     String dirStickyInfo = getStickyInfo(dirTag);
     if (entry != null && !Comparing.equal(entry.getStickyInformation(), dirStickyInfo)) {
       VirtualFile file = filePath.getVirtualFile();
