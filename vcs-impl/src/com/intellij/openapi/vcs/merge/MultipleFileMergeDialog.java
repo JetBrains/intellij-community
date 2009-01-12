@@ -52,6 +52,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private JButton myMergeButton;
   private TableView<VirtualFile> myTable;
   private final MergeProvider myProvider;
+  private final MergeSession myMergeSession;
   private final List<VirtualFile> myFiles;
   private final ListTableModel<VirtualFile> myModel;
   private Project myProject;
@@ -101,7 +102,11 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
     Collections.addAll(columns, NAME_COLUMN, TYPE_COLUMN);
     if (myProvider instanceof MergeProvider2) {
-      Collections.addAll(columns, ((MergeProvider2) myProvider).getMergeInfoColumns());
+      myMergeSession = ((MergeProvider2) myProvider).createMergeSession(files);
+      Collections.addAll(columns, myMergeSession.getMergeInfoColumns());
+    }
+    else {
+      myMergeSession = null;
     }
     myModel = new ListTableModel<VirtualFile>(columns.toArray(new ColumnInfo[columns.size()]));
     myModel.setItems(files);
@@ -146,8 +151,8 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         haveUnmergeableFiles = true;
         break;
       }
-      if (myProvider instanceof MergeProvider2) {
-        boolean canMerge = ((MergeProvider2) myProvider).canMerge(file);
+      if (myMergeSession != null) {
+        boolean canMerge = myMergeSession.canMerge(file);
         if (!canMerge) {
           haveUnmergeableFiles = true;
           break;

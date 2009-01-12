@@ -1,7 +1,9 @@
 package com.intellij.openapi.vcs.merge;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Merge provider which allows plugging into the functionality of the Multiple File Merge dialog.
@@ -13,20 +15,13 @@ public interface MergeProvider2 extends MergeProvider {
   enum Resolution { Merged, AcceptedYours, AcceptedTheirs }
 
   /**
-   * Returns the list of additional columns to be displayed in the dialog. The Item type for the
-   * column should be VirtualFile.
+   * Initiates a multiple file merge operation for the specified list of files.
    *
-   * @return the list of columns, or an empty list if no additional columns should be displayed.
+   * @param files the list of files to be merged.
+   * @return the merge session instance.
    */
-  ColumnInfo[] getMergeInfoColumns();
-
-  /**
-   * Returns true if a merge operation can be invoked for the specified virtual file, false otherwise.
-   *
-   * @param file a file shown in the dialog.
-   * @return true if the merge dialog can be shown, false otherwise.
-   */
-  boolean canMerge(VirtualFile file);
+  @NotNull
+  MergeSession createMergeSession(List<VirtualFile> files);
 
   /**
    * Called when the user executes one of the resolve actions (merge, accept yours, accept theirs) for
