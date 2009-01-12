@@ -44,7 +44,10 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
       final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
       if (ref == null) continue;
 
-      PsiModifierList modlist = (PsiModifierList)ann.getParent();
+      PsiElement parent = ann.getParent();
+      if (!(parent instanceof PsiModifierList)) continue; // Can be a PsiNameValuePair, if annotation is used to annotate annotation parameters
+      
+      PsiModifierList modlist = (PsiModifierList)parent;
       final PsiElement owner = modlist.getParent();
       if (!(owner instanceof PsiMember)) continue;
 
