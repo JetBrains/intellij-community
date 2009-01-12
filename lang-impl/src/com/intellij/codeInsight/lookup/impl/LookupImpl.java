@@ -383,6 +383,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public Point calculatePosition(){
     Dimension dim = getComponent().getPreferredSize();
     int lookupStart = getLookupStart();
+    if (lookupStart < 0) {
+      LOG.assertTrue(false, lookupStart + "; minprefix=" + myMinPrefixLength + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" + getPsiElement());
+    }
+
     LogicalPosition pos = myEditor.offsetToLogicalPosition(lookupStart);
     Point location = myEditor.logicalPositionToXY(pos);
     location.y += myEditor.getLineHeight();
