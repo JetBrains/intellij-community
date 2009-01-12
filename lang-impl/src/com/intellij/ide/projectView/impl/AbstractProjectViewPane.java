@@ -321,6 +321,10 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
 
   protected Object exhumeElementFromNode(final DefaultMutableTreeNode node) {
+    return extractUserObject(node);
+  }
+
+  public static Object extractUserObject(DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
     Object element = null;
     if (userObject instanceof AbstractTreeNode) {
@@ -473,8 +477,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   public interface TransferableWrapper {
-    TreeNode[] getTreeNodes ();
-    PsiElement[] getPsiElements ();
+    TreeNode[] getTreeNodes();
+    @Nullable PsiElement[] getPsiElements();
   }
 
   private class MyDragGestureListener implements DragGestureListener {
@@ -484,21 +488,23 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       ProjectView projectView = (ProjectView)dataContext.getData(ProjectViewImpl.PROJECT_VIEW_DATA_CONSTANT);
       if (projectView == null) return;
 
-      final TreeNode[] nodes = projectView.getCurrentProjectViewPane().getSelectedTreeNodes();
-      if (nodes != null ) {
-        final PsiElement [] elements = projectView.getCurrentProjectViewPane().getSelectedPSIElements();
+      final AbstractProjectViewPane currentPane = projectView.getCurrentProjectViewPane();
+      final TreeNode[] nodes = currentPane.getSelectedTreeNodes();
+      if (nodes != null) {
+        final Object[] elements = currentPane.getSelectedElements();
+        final PsiElement[] psiElements = currentPane.getSelectedPSIElements();
         try {
           Object transferableWrapper = new TransferableWrapper() {
             public TreeNode[] getTreeNodes() {
               return nodes;
             }
             public PsiElement[] getPsiElements() {
-              return elements;
+              return psiElements;
             }
           };
 
           //FavoritesManager.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject.getClass(), draggableObject.getValue());
-          if (elements != null && elements.length > 0) {
+          if ((psiElements != null && psiElements.length > 0) || canDragElements(elements)) {
             dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(transferableWrapper), myDragSourceListener);
           }
         }
@@ -508,6 +514,14 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       }
     }
 
+    private boolean canDragElements(Object[] elements) {
+      for (Object element : elements) {
+        if (element instanceof Module) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
   private static class MyDragSourceListener implements DragSourceListener {

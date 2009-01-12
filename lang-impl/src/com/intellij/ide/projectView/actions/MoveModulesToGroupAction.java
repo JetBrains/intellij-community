@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveModulesToGroupAction extends AnAction {
   protected final ModuleGroup myModuleGroup;
@@ -42,10 +43,12 @@ public class MoveModulesToGroupAction extends AnAction {
     doMove(modules, myModuleGroup, dataContext);
   }
 
-  protected static void doMove(final Module[] modules, final ModuleGroup group, final DataContext dataContext) {
+  public static void doMove(final Module[] modules, final ModuleGroup group, @Nullable final DataContext dataContext) {
     Project project = modules[0].getProject();
     for (final Module module : modules) {
-      ModifiableModuleModel model = (ModifiableModuleModel)dataContext.getData(DataConstantsEx.MODIFIABLE_MODULE_MODEL);
+      ModifiableModuleModel model = dataContext != null
+                                    ? (ModifiableModuleModel)dataContext.getData(DataConstantsEx.MODIFIABLE_MODULE_MODEL)
+                                    : null;
       if (model != null){
         model.setModuleGroupPath(module, group == null ? null : group.getGroupPath());
       } else {

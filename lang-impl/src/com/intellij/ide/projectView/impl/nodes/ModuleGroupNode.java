@@ -4,6 +4,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
@@ -12,11 +14,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
+public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> implements DropTargetNode {
   public ModuleGroupNode(final Project project, final ModuleGroup value, final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -65,5 +69,28 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
 
   public int getTypeSortWeight(final boolean sortByType) {
     return 1;
+  }
+
+  public boolean canDrop(TreeNode[] sourceNodes) {
+    final List<Module> modules = extractModules(sourceNodes);
+    return !modules.isEmpty();
+  }
+
+  public void drop(TreeNode[] sourceNodes) {
+    final List<Module> modules = extractModules(sourceNodes);
+    MoveModulesToGroupAction.doMove(modules.toArray(new Module[modules.size()]), getValue(), null);
+  }
+
+  private static List<Module> extractModules(TreeNode[] sourceNodes) {
+    final List<Module> modules = new ArrayList<Module>();
+    for (TreeNode sourceNode : sourceNodes) {
+      if (sourceNode instanceof DefaultMutableTreeNode) {
+        final Object userObject = AbstractProjectViewPane.extractUserObject((DefaultMutableTreeNode)sourceNode);
+        if (userObject instanceof Module) {
+          modules.add((Module) userObject);
+        }
+      }
+    }
+    return modules;
   }
 }

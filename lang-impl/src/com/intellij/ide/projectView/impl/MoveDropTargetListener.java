@@ -1,10 +1,13 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -16,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -212,6 +216,12 @@ class MoveDropTargetListener implements DropTargetListener {
   private class MoveDropHandler extends MoveCopyDropHandler {
 
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
+      if (targetNode instanceof DefaultMutableTreeNode) {
+        final Object userObject = ((DefaultMutableTreeNode)targetNode).getUserObject();
+        if (userObject instanceof DropTargetNode && ((DropTargetNode) userObject).canDrop(sourceNodes)) {
+          return true;
+        }
+      }
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
       return sourceElements.length == 0 ||
@@ -220,6 +230,12 @@ class MoveDropTargetListener implements DropTargetListener {
     }
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
+      if (targetNode instanceof DefaultMutableTreeNode) {
+        final Object userObject = ((DefaultMutableTreeNode)targetNode).getUserObject();
+        if (userObject instanceof DropTargetNode && ((DropTargetNode) userObject).canDrop(sourceNodes)) {
+          ((DropTargetNode) userObject).drop(sourceNodes);
+        }
+      }
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
