@@ -37,6 +37,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -133,11 +134,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     return isValid() && !getElement().isWritable();
   }
 
+  @Nullable
   public FileEditorLocation getLocation() {
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
     FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor(virtualFile);
-    if (editor == null) return null;
+    if (!(editor instanceof TextEditor)) return null;
 
     return new TextEditorLocation(myUsageInfo.startOffset + getElement().getTextRange().getStartOffset(), (TextEditor)editor);
   }

@@ -18,6 +18,7 @@ package com.intellij.usages;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -30,6 +31,7 @@ public interface Usage extends Navigatable {
   boolean isValid();
   boolean isReadOnly();
 
+  @Nullable
   FileEditorLocation getLocation();
 
   void selectInEditor();
