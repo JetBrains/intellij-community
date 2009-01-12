@@ -55,10 +55,7 @@ import org.testng.xml.Parser;
 import org.testng.xml.SuiteGenerator;
 import org.testng.xml.XmlSuite;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
@@ -277,7 +274,20 @@ public class TestNGRunnableState extends JavaCommandLineState
 
       LOGGER.info("Using annotationType of " + annotationType);
 
-      LaunchSuite suite = SuiteGenerator.createSuite(project.getName(), null, map, groupNames, testParams, annotationType, 1);
+      int logLevel = 1;
+      try {
+        final Properties properties = new Properties();
+        properties.load(new ByteArrayInputStream(config.getPersistantData().VM_PARAMETERS.getBytes()));
+        final String verbose = properties.getProperty("-Dtestng.verbose");
+        if (verbose != null) {
+          logLevel = Integer.parseInt(verbose);
+        }
+      }
+      catch (Exception e) { //not a number
+        logLevel = 1;
+      }
+
+      LaunchSuite suite = SuiteGenerator.createSuite(project.getName(), null, map, groupNames, testParams, annotationType, logLevel);
 
       File xmlFile = suite.save(new File(PathManager.getSystemPath()));
       javaParameters.getProgramParametersList().add(xmlFile.getAbsolutePath());
