@@ -126,6 +126,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return null;
   }
 
+  @Nullable
   private GetDataRule getRuleFromMap(final String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
@@ -140,11 +141,15 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return rule;
   }
 
+  @Nullable
   private static Object validated(Object data, String dataId, Object dataSource) {
     Object invalidData = DataValidator.findInvalidData(dataId, data, dataSource);
     if (invalidData != null) {
+      return null;
+      /*
       LOG.assertTrue(false, "Data isn't valid. " + dataId + "=" + invalidData + " Provided by: " + dataSource.getClass().getName() + " (" +
                             dataSource.toString() + ")");
+      */
     }
     return data;
   }
