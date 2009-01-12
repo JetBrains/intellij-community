@@ -4,6 +4,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.codeInsight.folding.impl.ExpandRegionHandler;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
@@ -207,6 +208,8 @@ public class BreakpointManager implements JDOMExternalizable {
           }
           offset = editor.getDocument().getLineStartOffset(line);
         }
+
+        ExpandRegionHandler.expandRegionAtCaret(myProject, editor);
 
         Breakpoint breakpoint = findBreakpoint(document, offset, null);
         if (breakpoint == null) {
