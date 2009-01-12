@@ -34,12 +34,15 @@ public class PsiFileImplUtil {
           EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
           
           String trailer = editorSettings.getStripTrailingSpaces();
+          boolean ensureEOLonEOF = editorSettings.isEnsureNewLineAtEOF();
           editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+          editorSettings.setEnsureNewLineAtEOF(false);
           try {
             fdm.saveDocument(doc);
           }
           finally {
             editorSettings.setStripTrailingSpaces(trailer);
+            editorSettings.setEnsureNewLineAtEOF(ensureEOLonEOF);
           }
         }
       }

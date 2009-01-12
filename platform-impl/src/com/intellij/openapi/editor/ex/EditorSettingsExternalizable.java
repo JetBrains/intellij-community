@@ -9,8 +9,8 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.nio.charset.Charset;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 
 public class EditorSettingsExternalizable implements NamedJDOMExternalizable, ExportableApplicationComponent, Cloneable {
   //Q: make it interface?
@@ -28,6 +28,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_VIRTUAL_SPACE = true;
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = "Changed";
+    public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = 500;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
@@ -217,6 +218,15 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void setBlinkPeriod(int blinkInterval) {
     myOptions.CARET_BLINKING_PERIOD = blinkInterval;
+  }
+
+
+  public boolean isEnsureNewLineAtEOF() {
+    return myOptions.IS_ENSURE_NEWLINE_AT_EOF;
+  }
+
+  public void setEnsureNewLineAtEOF(boolean ensure) {
+    myOptions.IS_ENSURE_NEWLINE_AT_EOF = ensure;
   }
 
   public String getStripTrailingSpaces() {
