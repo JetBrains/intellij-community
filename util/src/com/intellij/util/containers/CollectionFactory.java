@@ -35,4 +35,8 @@ public class CollectionFactory {
   public static <T> ArrayList<T> arrayList() {
     return new ArrayList<T>();
   }
+
+  public static <T, V> LinkedHashMap<T, V> linkedMap() {
+    return new LinkedHashMap<T,V>();
+  }
 }
