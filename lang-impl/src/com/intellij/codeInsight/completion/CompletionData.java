@@ -168,10 +168,10 @@ public class CompletionData {
       final int endIndex = offsetInFile - element.getTextRange().getStartOffset();
       final int beginIndex = ref.getRangeInElement().getStartOffset();
       if (beginIndex > endIndex) {
-        LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element);
+        LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element + " text=" + element.getText());
       }
       if (beginIndex < 0) {
-        LOG.error("Inconsistent reference (begin < 0): ref=" + ref + " element=" + element + "; begin=" + beginIndex);
+        LOG.error("Inconsistent reference (begin < 0): ref=" + ref + " element=" + element + "; begin=" + beginIndex + " text=" + element.getText());
       }
       LOG.assertTrue(endIndex >= 0);
       return element.getText().substring(beginIndex, endIndex);
