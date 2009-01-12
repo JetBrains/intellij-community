@@ -58,6 +58,8 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
                                            myEditor, writeAttributes, clearHighlights, myWriteUsages);
     if (!clearHighlights) {
       WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo(myStatusText);
+
+      HighlightHandlerBase.setupFindModel(myEditor.getProject()); // enable f3 navigation
     }
     if (myHintText != null) {
       HintManager.getInstance().showInformationHint(myEditor, myHintText);

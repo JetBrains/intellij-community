@@ -11,7 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
  * @author msk
  */
 public abstract class HighlightHandlerBase {
-  protected static void setupFindModel(final Project project) {
+  static void setupFindModel(final Project project) {
     final FindManager findManager = FindManager.getInstance(project);
     FindModel model = findManager.getFindNextModel();
     if (model == null) {
