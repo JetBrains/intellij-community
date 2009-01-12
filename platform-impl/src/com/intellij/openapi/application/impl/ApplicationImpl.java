@@ -35,7 +35,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
@@ -970,6 +969,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isDisposeInProgress() {
     return myDisposeInProgress;
+  }
+
+  public boolean isRestartCapable() {
+    return SystemInfo.isWindows;
+  }
+
+  public void restart() {
+   if (SystemInfo.isWindows) {
+     Win32Restarter.restart();
+    }
   }
 
   public boolean isSaving() {

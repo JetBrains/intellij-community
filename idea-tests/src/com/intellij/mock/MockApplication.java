@@ -103,6 +103,12 @@ public class MockApplication extends MockComponentManager implements Application
     return false;
   }
 
+  public boolean isRestartCapable() {
+    return false;
+  }
+
+  public void restart() {
+  }
 
   public void runReadAction(Runnable action) {
     action.run();
