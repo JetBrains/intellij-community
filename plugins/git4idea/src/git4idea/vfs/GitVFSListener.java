@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitFileUtils;
 import git4idea.i18n.GitBundle;
 
 import java.util.ArrayList;
@@ -82,7 +82,7 @@ public class GitVFSListener extends VcsVFSListener {
     for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitSimpleHandler.addFiles(myProject, root, e.getValue()).run();
+        GitFileUtils.addFiles(myProject, root, e.getValue());
         markRootDirty(root);
       }
       catch (VcsException ex) {
@@ -120,7 +120,7 @@ public class GitVFSListener extends VcsVFSListener {
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitSimpleHandler.delete(myProject, root, e.getValue()).run();
+        GitFileUtils.delete(myProject, root, e.getValue());
         markRootDirty(root);
       }
       catch (VcsException ex) {

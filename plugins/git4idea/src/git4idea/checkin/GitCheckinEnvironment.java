@@ -37,6 +37,7 @@ import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitFileUtils;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -370,7 +371,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     boolean rc = true;
     if (!added.isEmpty()) {
       try {
-        GitSimpleHandler.addPaths(project, root, added).run();
+        GitFileUtils.addPaths(project, root, added);
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -433,7 +434,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitSimpleHandler.delete(myProject, root, e.getValue()).run();
+        GitFileUtils.delete(myProject, root, e.getValue());
         markRootDirty(root);
       }
       catch (VcsException ex) {
@@ -479,7 +480,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitSimpleHandler.addFiles(myProject, root, e.getValue()).run();
+        GitFileUtils.addFiles(myProject, root, e.getValue());
         markRootDirty(root);
       }
       catch (VcsException ex) {

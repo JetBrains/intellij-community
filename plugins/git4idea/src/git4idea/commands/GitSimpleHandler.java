@@ -18,16 +18,12 @@ package git4idea.commands;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Simple Git hanlder that accumulates stdout and stderr and has nothing on stdin.
@@ -242,60 +238,4 @@ public class GitSimpleHandler extends GitHandler {
     return handler;
   }
 
-  /**
-   * Prepare delete files handler.
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to delete
-   * @return a simple handler that does the task
-   */
-  public static GitSimpleHandler delete(Project project, VirtualFile root, List<FilePath> files) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, RM);
-    handler.addRelativePaths(files);
-    handler.setNoSSH(true);
-    return handler;
-  }
-
-  /**
-   * Prepare add files handler.
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to add
-   * @return a simple handler that does the task
-   */
-  public static GitSimpleHandler addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, ADD);
-    handler.addRelativeFiles(files);
-    handler.setNoSSH(true);
-    return handler;
-  }
-
-  /**
-   * Prepare add files handler.
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to add
-   * @return a simple handler that does the task
-   */
-  public static GitSimpleHandler addFiles(Project project, VirtualFile root, VirtualFile... files) {
-    return addFiles(project, root, Arrays.asList(files));
-  }
-
-  /**
-   * Prepare add files handler.
-   *
-   * @param project the project
-   * @param root    a vcs root
-   * @param files   files to add
-   * @return a simple handler that does the task
-   */
-  public static GitSimpleHandler addPaths(Project project, VirtualFile root, Collection<FilePath> files) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, ADD);
-    handler.addRelativePaths(files);
-    handler.setNoSSH(true);
-    return handler;
-  }
 }
