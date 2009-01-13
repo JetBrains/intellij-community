@@ -4,7 +4,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ActionCallback;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -45,26 +44,22 @@ public class SMRunnerUtil {
     });
   }
 
-  public static ActionCallback runInEventDispatchThread(final Runnable runnable, final ModalityState state) {
+  public static void runInEventDispatchThread(final Runnable runnable, final ModalityState state) {
     try {
       if (SwingUtilities.isEventDispatchThread()) {
         runnable.run();
       }
       else {
-        final ActionCallback cb = new ActionCallback();
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           public void run() {
             runnable.run();
-            cb.setDone();
           }
         }, state);
-        return cb;
       }
     }
     catch (Exception e) {
       LOG.warn(e);
     }
-    return new ActionCallback.Done();
   }
 
 }
