@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -26,11 +27,13 @@ public class TemplateLanguageFormattingModelBuilder implements FormattingModelBu
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     if (element instanceof PsiFile) {
-      final TemplateLanguageFileViewProvider provider = (TemplateLanguageFileViewProvider)((PsiFile)element).getViewProvider();
-      final Language language = provider.getTemplateDataLanguage();
-      FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(language);
-      if (builder != null) {
-        return builder.createModel(provider.getPsi(language), settings);
+      final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
+      if (viewProvider instanceof TemplateLanguageFileViewProvider) {
+        final Language language = ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage();
+        FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(language);
+        if (builder != null) {
+          return builder.createModel(viewProvider.getPsi(language), settings);
+        }
       }
     }
 
