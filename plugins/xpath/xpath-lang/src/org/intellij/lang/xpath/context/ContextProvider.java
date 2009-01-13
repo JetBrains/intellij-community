@@ -103,21 +103,21 @@ public abstract class ContextProvider {
     @NotNull
     public static ContextProvider getContextProvider(PsiFile psiFile) {
         ContextProvider provider = psiFile.getCopyableUserData(KEY);
-        if (provider != null && isValid(provider)) {
+        if (provider != null && provider.isValid()) {
             return provider;
         }
         final PsiElement context = psiFile.getContext();
         if (context != null) {
             provider = context.getCopyableUserData(KEY);
-            if (provider != null && isValid(provider)) {
+            if (provider != null && provider.isValid()) {
                 return provider;
             }
         }
         return getFromExtensionOrDefault(psiFile);
     }
 
-    private static boolean isValid(ContextProvider provider) {
-        final XmlElement contextElement = provider.getContextElement();
+    protected boolean isValid() {
+        final XmlElement contextElement = getContextElement();
         return contextElement != null && contextElement.isValid();
     }
 

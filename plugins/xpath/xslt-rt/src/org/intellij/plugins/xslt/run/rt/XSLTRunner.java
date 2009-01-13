@@ -38,13 +38,16 @@ public class XSLTRunner implements XSLTMain {
     }
 
     public static void main(String[] args) throws Throwable {
-        final TransformerFactory transformerFactory;
+        final XSLTMain main = loadMain();
 
-        final String factoryClass = System.getProperty("xslt.transformer-factory");
-        if (factoryClass != null) {
-            transformerFactory = (TransformerFactory)Class.forName(factoryClass).newInstance();
-        } else {
-            transformerFactory = TransformerFactory.newInstance();
+        TransformerFactory transformerFactory;
+        try {
+            transformerFactory = main.createTransformerFactory();
+        } catch (AbstractMethodError e) {
+            // old debugger
+            transformerFactory = createTransformerFactoryStatic();
+        } catch (ClassNotFoundException e) {
+            transformerFactory = createTransformerFactoryStatic();
         }
 
         final String uriResolverClass = System.getProperty("xslt.uri-resolver");
@@ -117,7 +120,6 @@ public class XSLTRunner implements XSLTMain {
                     }
                 }
 
-                final XSLTMain main = loadMain();
                 main.start(transformer, new StreamSource(input), result);
             }
         } catch (TransformerException e) {
@@ -129,6 +131,19 @@ public class XSLTRunner implements XSLTMain {
         } catch (Throwable t) {
             t.printStackTrace();
             System.exit(1);
+        }
+    }
+
+    public TransformerFactory createTransformerFactory() throws Exception {
+        return createTransformerFactoryStatic();
+    }
+
+    public static TransformerFactory createTransformerFactoryStatic() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        final String factoryClass = System.getProperty("xslt.transformer-factory");
+        if (factoryClass != null) {
+            return (TransformerFactory)Class.forName(factoryClass).newInstance();
+        } else {
+            return TransformerFactory.newInstance();
         }
     }
 
