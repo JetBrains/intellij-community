@@ -5,8 +5,8 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -204,7 +204,7 @@ public class ElementsChooser<T> extends JPanel {
     if (wasSelected) {
       final int rowCount = myTableModel.getRowCount();
       if (rowCount > 0) {
-        selectRow((elementRow + 1) % rowCount);
+        selectRow(elementRow % rowCount);
       }
       else {
         myTable.getSelectionModel().clearSelection();

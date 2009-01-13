@@ -230,8 +230,7 @@ public class UserRenderersConfigurable implements Configurable{
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final NodeRenderer selectedElement = myRendererChooser.getSelectedElement();
-      if (selectedElement != null) {
+      for (NodeRenderer selectedElement : myRendererChooser.getSelectedElements()) {
         myRendererChooser.removeElement(selectedElement);
       }
     }
