@@ -55,6 +55,13 @@ public final class WeakHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
     public int hashCode() {
       return myHash;
     }
+
+    @Override
+    public String toString() {
+      Object t = get();
+      if (t != null) return "WeakKey(" + t.toString() + ")";
+      return super.toString();
+    }
   }
 
   private static class HardKey implements Key{
