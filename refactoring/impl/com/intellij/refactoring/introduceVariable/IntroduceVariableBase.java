@@ -102,8 +102,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }*/
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
-      if (!expressions.contains(expression) && /*!(expression instanceof PsiReferenceExpression) &&*/ !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
-        expressions.add(expression);
+      if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && expression.getType() != PsiType.VOID) {
+        if (!(expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression)) {
+          expressions.add(expression);
+        }
       }
       expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
     }
@@ -241,7 +243,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         text = text.trim();
       }
 
-      tempExpr = elementFactory.createExpressionFromText(text, file);
+      final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
+      tempExpr = elementFactory.createExpressionFromText(text, parent);
 
       final boolean [] hasErrors = new boolean[1];
       final JavaRecursiveElementVisitor errorsVisitor = new JavaRecursiveElementVisitor() {
@@ -268,23 +271,19 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         FileDocumentManager.getInstance().getDocument(file.getVirtualFile()).createRangeMarker(startOffset, endOffset);
       tempExpr.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
 
-      final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
       tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
 
-      createReplacement("intellijidearulezzz", file, prefix, suffix, parent, rangeMarker).accept(errorsVisitor);
+      final PsiExpression toBeExpression = createReplacement("intellijidearulezzz", file, prefix, suffix, parent, rangeMarker);
+      toBeExpression.accept(errorsVisitor);
       if (hasErrors[0]) return null;
+     /*
+      if (tempExpr != null && !ReplaceExpressionUtil.canExtract(toBeExpression.getNode(), tempExpr.getNode())) { //or show warning?
+        tempExpr = null;
+      }*/
     }
     catch (IncorrectOperationException e) {
       tempExpr = null;
     }
-
-   /* todo: check associativity rules
-     if (tempExpr != null && !(tempExpr instanceof PsiLiteralExpression)) {
-      if (Messages.showOkCancelDialog("Introduce variable would break sematics of the initial expression", "Warning", Messages.getWarningIcon()) !=
-          DialogWrapper.OK_EXIT_CODE) {
-        tempExpr = null;
-      }
-    }*/
 
     return tempExpr;
   }
@@ -558,7 +557,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (StringUtil.stripQuotesAroundValue(end).length() == 0 && suffix == null) end = "";
 
     final String text = beg + (prefix != null ? prefix : "") + refText + (suffix != null ? suffix : "") + end;
-    return JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createExpressionFromText(text, file);
+    return JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createExpressionFromText(text, parent);
   }
 
   public static PsiStatement putStatementInLoopBody(PsiStatement declaration, PsiElement container, PsiElement finalAnchorStatement)
