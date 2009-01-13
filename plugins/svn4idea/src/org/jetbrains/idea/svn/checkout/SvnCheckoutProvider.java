@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -213,23 +214,26 @@ public class SvnCheckoutProvider implements CheckoutProvider {
             try {
               progressIndicator.setText(SvnBundle.message("progress.text.import", target.getAbsolutePath()));
 
-              final SvnExcludingIgnoredOperation operation = new SvnExcludingIgnoredOperation(project,
-                new SvnExcludingIgnoredOperation.Operation() {
-                  public void doOperation(final VirtualFile file) throws SVNException {
-                    final String current = FileUtil.toSystemIndependentName(file.getPath());
-                    final String subpath = current.substring(targetPath.length());
-                    final SVNURL subUrl = url.appendPath(subpath, false);
-
-                    final File ioFile = new File(file.getPath());
-
-                    client.doImport(ioFile, subUrl, message, null, !includeIgnored, false, SVNDepth.EMPTY);
-                  }
-                }, depth);
-
               final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
               if (targetVf == null) {
                 errorMessage.set("Can not find file: " + targetPath);
+              } else if (! ExcludedFileIndex.getInstance(project).isInContent(targetVf)) {
+                // do not pay attention to ignored/excluded settings
+                client.doImport(target, url, message, null, !includeIgnored, false, depth);
               } else {
+                final SvnExcludingIgnoredOperation operation = new SvnExcludingIgnoredOperation(project,
+                  new SvnExcludingIgnoredOperation.Operation() {
+                    public void doOperation(final VirtualFile file) throws SVNException {
+                      final String current = FileUtil.toSystemIndependentName(file.getPath());
+                      final String subpath = current.substring(targetPath.length());
+                      final SVNURL subUrl = url.appendPath(subpath, false);
+
+                      final File ioFile = new File(file.getPath());
+
+                      // todo think of grouping files
+                      client.doImport(ioFile, subUrl, message, null, !includeIgnored, false, SVNDepth.EMPTY);
+                    }
+                  }, depth);
                 operation.execute(targetVf);
               }
             }
