@@ -23,7 +23,7 @@ class LibraryInfoBasedOnLibrary implements LibraryInfo {
   private LibraryInfoImpl myInfoToRestore;
 
   public LibraryInfoBasedOnLibrary(@NotNull Library library) {
-    assert !((LibraryEx)library).isDisposed();
+    assert !(library instanceof LibraryEx) || !((LibraryEx)library).isDisposed();
     myLibrary = library;
     myInfoToRestore = new LibraryInfoImpl(library);
   }
