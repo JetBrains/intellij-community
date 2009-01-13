@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,6 +123,14 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
             final PsiType firstType = firstArgument.getType();
             if (firstType == null) {
                 return;
+            }
+            if (firstArgument instanceof PsiLiteralExpression) {
+                final PsiLiteralExpression literalExpression =
+                        (PsiLiteralExpression)firstArgument;
+                final String expressionText = literalExpression.getText();
+                if (expressionText.contains("%n")) {
+                    return;
+                }
             }
             if (firstType.equalsToText("java.lang.String") &&
                     arguments.length == 1) {
