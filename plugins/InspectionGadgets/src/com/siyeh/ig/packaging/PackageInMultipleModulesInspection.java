@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006-2008 Dave Griffith, Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
@@ -21,33 +36,44 @@ import java.util.Set;
 public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
 
 
+    @Override
     @NotNull
     public String getGroupDisplayName() {
         return GroupNames.PACKAGING_GROUP_NAME;
     }
 
+    @Override
     @Nullable
-    public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope analysisScope, InspectionManager inspectionManager, GlobalInspectionContext globalInspectionContext) {
+    public CommonProblemDescriptor[] checkElement(
+            RefEntity refEntity, AnalysisScope analysisScope,
+            InspectionManager inspectionManager,
+            GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefPackage)) {
             return null;
         }
+        final List<RefEntity> children = refEntity.getChildren();
+        if (children == null) {
+            return null;
+        }
         final Set<RefModule> modules = new HashSet<RefModule>();
-        final RefPackage refPackage = (RefPackage) refEntity;
-        final List<RefEntity> children = refPackage.getChildren();
         for (RefEntity child : children) {
-            if (child instanceof RefClass) {
-                final RefClass refClass = (RefClass) child;
-                final RefModule module = refClass.getModule();
-                modules.add(module);
+            if (!(child instanceof RefClass)) {
+                continue;
             }
+            final RefClass refClass = (RefClass) child;
+            final RefModule module = refClass.getModule();
+            modules.add(module);
         }
         if (modules.size() <= 1) {
             return null;
         }
         final String errorString =
-                InspectionGadgetsBundle.message("package.in.multiple.modules.problem.descriptor", refPackage.getQualifiedName());
+                InspectionGadgetsBundle.message(
+                        "package.in.multiple.modules.problem.descriptor",
+                        refEntity.getQualifiedName());
 
-        return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
+        return new CommonProblemDescriptor[]{
+                inspectionManager.createProblemDescriptor(errorString)};
 
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith
+ * Copyright 2006-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,13 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
     @SuppressWarnings({"PublicField"})
     public int limit = 3;
 
+    @Override
     @NotNull
     public String getGroupDisplayName() {
         return GroupNames.PACKAGING_GROUP_NAME;
     }
 
+    @Override
     @Nullable
     public CommonProblemDescriptor[] checkElement(
             RefEntity refEntity,
@@ -51,9 +53,11 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
         if (!(refEntity instanceof RefPackage)) {
             return null;
         }
-        final RefPackage refPackage = (RefPackage) refEntity;
+        final List<RefEntity> children = refEntity.getChildren();
+        if (children == null) {
+            return null;
+        }
         int numClasses = 0;
-        final List<RefEntity> children = refPackage.getChildren();
         for (RefEntity child : children) {
             if(child instanceof RefClass) {
                 numClasses++;
@@ -64,12 +68,14 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
         }
         final String errorString = InspectionGadgetsBundle.message(
                         "package.with.too.few.classes.problem.descriptor",
-                refPackage.getQualifiedName(), numClasses, limit);
+                refEntity.getQualifiedName(), Integer.valueOf(numClasses),
+                Integer.valueOf(limit));
         return new CommonProblemDescriptor[]{
                 inspectionManager.createProblemDescriptor(errorString)
         };
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleIntegerFieldOptionsPanel(
                 InspectionGadgetsBundle.message(

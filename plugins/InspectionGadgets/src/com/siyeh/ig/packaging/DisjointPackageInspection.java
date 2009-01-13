@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006-2008 Dave Griffith, Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
@@ -24,18 +39,26 @@ import java.util.Set;
 
 public class DisjointPackageInspection extends BaseGlobalInspection {
 
+    @Override
     @NotNull
     public String getGroupDisplayName() {
         return GroupNames.PACKAGING_GROUP_NAME;
     }
 
+    @Override
     @Nullable
-    public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope analysisScope, InspectionManager inspectionManager, GlobalInspectionContext globalInspectionContext) {
+    public CommonProblemDescriptor[] checkElement(
+            RefEntity refEntity, AnalysisScope analysisScope,
+            InspectionManager inspectionManager,
+            GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefPackage)) {
             return null;
         }
         final RefPackage refPackage = (RefPackage) refEntity;
         final List<RefEntity> children = refPackage.getChildren();
+        if (children == null) {
+            return null;
+        }
         final Set<RefClass> childClasses = new HashSet<RefClass>();
         for (RefEntity child : children) {
             if (!(child instanceof RefClass)) {
@@ -48,32 +71,38 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
             }
             childClasses.add((RefClass) child);
         }
-        if (childClasses.size() == 0) {
+        if (childClasses.isEmpty()) {
             return null;
         }
-        final Set<Set<RefClass>> components = createComponents(refPackage, childClasses);
+        final Set<Set<RefClass>> components =
+                createComponents(refPackage, childClasses);
         if (components.size() == 1) {
             return null;
         }
         final String errorString = InspectionGadgetsBundle
-                .message("disjoint.package.problem.descriptor", refPackage.getQualifiedName(), components.size());
+                .message("disjoint.package.problem.descriptor",
+                        refPackage.getQualifiedName(),
+                        Integer.valueOf(components.size()));
 
-        return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
+        return new CommonProblemDescriptor[]{
+                inspectionManager.createProblemDescriptor(errorString)};
     }
 
-    private static Set<Set<RefClass>> createComponents(RefPackage aPackage, Set<RefClass> classes) {
+    private static Set<Set<RefClass>> createComponents(
+            RefPackage aPackage, Set<RefClass> classes) {
         final Set<RefClass> allClasses = new HashSet<RefClass>(classes);
         final Set<Set<RefClass>> out = new HashSet<Set<RefClass>>();
-        while (allClasses.size() > 0) {
-            final Set<RefClass> currentComponent = new HashSet<RefClass>();
-            final List<RefClass> pendingClasses = new ArrayList<RefClass>();
+        while (!allClasses.isEmpty()) {
             final RefClass seed = allClasses.iterator().next();
             allClasses.remove(seed);
+            final Set<RefClass> currentComponent = new HashSet<RefClass>();
             currentComponent.add(seed);
+            final List<RefClass> pendingClasses = new ArrayList<RefClass>();
             pendingClasses.add(seed);
-            while (pendingClasses.size() > 0) {
+            while (!pendingClasses.isEmpty()) {
                 final RefClass classToProcess = pendingClasses.remove(0);
-                final Set<RefClass> relatedClasses = getRelatedClasses(aPackage, classToProcess);
+                final Set<RefClass> relatedClasses =
+                        getRelatedClasses(aPackage, classToProcess);
                 for (RefClass relatedClass : relatedClasses) {
                     if (!currentComponent.contains(relatedClass) &&
                             !pendingClasses.contains(relatedClass)) {
@@ -88,7 +117,8 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
         return out;
     }
 
-    private static Set<RefClass> getRelatedClasses(RefPackage aPackage, RefClass classToProcess) {
+    private static Set<RefClass> getRelatedClasses(RefPackage aPackage,
+                                                   RefClass classToProcess) {
         final Set<RefClass> out = new HashSet<RefClass>();
         final Set<RefClass> dependencies =
                 DependencyUtils.calculateDependenciesForClass(classToProcess);
@@ -98,7 +128,8 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
             }
         }
 
-        final Set<RefClass> dependents = DependencyUtils.calculateDependentsForClass(classToProcess);
+        final Set<RefClass> dependents =
+                DependencyUtils.calculateDependentsForClass(classToProcess);
         for (RefClass dependent : dependents) {
             if (packageContainsClass(aPackage, dependent)) {
                 out.add(dependent);
@@ -107,7 +138,8 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
         return out;
     }
 
-    private static boolean packageContainsClass(RefPackage aPackage, RefClass aClass) {
+    private static boolean packageContainsClass(RefPackage aPackage,
+                                                RefClass aClass) {
       return aPackage.equals(RefJavaUtil.getPackage(aClass));
     }
 }
