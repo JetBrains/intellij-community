@@ -915,7 +915,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         // need read action to ensure that the project was not disposed during the iteration over the project list
         public void run() {
           for (final Project project : myProjectManager.getOpenProjects()) {
-            if (project.isInitialized()) {
+            if (!project.isInitialized()) {
               continue; // the content of this project will be scanned during its post-startup activities
             }
             final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
