@@ -222,7 +222,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
           }
           catch (EvaluateException e) {
             buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"));
-            buf.append("\"");
+            buf.append(" \"");
             buf.append(getLogMessage());
             buf.append("\"");
             buf.append(" : ");
