@@ -12,7 +12,7 @@ import java.util.List;
  * @since 8.1
  */
 public interface MergeProvider2 extends MergeProvider {
-  enum Resolution { Merged, AcceptedYours, AcceptedTheirs }
+
 
   /**
    * Initiates a multiple file merge operation for the specified list of files.
@@ -23,12 +23,4 @@ public interface MergeProvider2 extends MergeProvider {
   @NotNull
   MergeSession createMergeSession(List<VirtualFile> files);
 
-  /**
-   * Called when the user executes one of the resolve actions (merge, accept yours, accept theirs) for
-   * a conflicting file.
-   *
-   * @param file the conflicting file.
-   * @param resolution the used resolution.
-   */
-  void conflictResolvedForFile(VirtualFile file, Resolution resolution);
 }

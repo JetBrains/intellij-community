@@ -62,34 +62,36 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private VirtualFileRenderer myVirtualFileRenderer = new VirtualFileRenderer();
 
-  private ColumnInfo<VirtualFile, VirtualFile> NAME_COLUMN = new ColumnInfo<VirtualFile, VirtualFile>(VcsBundle.message("multiple.file.merge.column.name")) {
-    public VirtualFile valueOf(final VirtualFile virtualFile) {
-      return virtualFile;
-    }
+  private ColumnInfo<VirtualFile, VirtualFile> NAME_COLUMN =
+    new ColumnInfo<VirtualFile, VirtualFile>(VcsBundle.message("multiple.file.merge.column.name")) {
+      public VirtualFile valueOf(final VirtualFile virtualFile) {
+        return virtualFile;
+      }
 
-    @Override
-    public TableCellRenderer getRenderer(final VirtualFile virtualFile) {
-      return myVirtualFileRenderer;
-    }
-  };
+      @Override
+      public TableCellRenderer getRenderer(final VirtualFile virtualFile) {
+        return myVirtualFileRenderer;
+      }
+    };
 
-  private ColumnInfo<VirtualFile, String> TYPE_COLUMN = new ColumnInfo<VirtualFile, String>(VcsBundle.message("multiple.file.merge.column.type")) {
-    public String valueOf(final VirtualFile virtualFile) {
-      return myBinaryFiles.contains(virtualFile)
-             ? VcsBundle.message("multiple.file.merge.type.binary")
-             : VcsBundle.message("multiple.file.merge.type.text");
-    }
+  private ColumnInfo<VirtualFile, String> TYPE_COLUMN =
+    new ColumnInfo<VirtualFile, String>(VcsBundle.message("multiple.file.merge.column.type")) {
+      public String valueOf(final VirtualFile virtualFile) {
+        return myBinaryFiles.contains(virtualFile)
+               ? VcsBundle.message("multiple.file.merge.type.binary")
+               : VcsBundle.message("multiple.file.merge.type.text");
+      }
 
-    @Override
-    public String getMaxStringValue() {
-      return VcsBundle.message("multiple.file.merge.type.binary");
-    }
+      @Override
+      public String getMaxStringValue() {
+        return VcsBundle.message("multiple.file.merge.type.binary");
+      }
 
-    @Override
-    public int getAdditionalWidth() {
-      return 10;
-    }
-  };
+      @Override
+      public int getAdditionalWidth() {
+        return 10;
+      }
+    };
 
   public MultipleFileMergeDialog(Project project, final List<VirtualFile> files, final MergeProvider provider) {
     super(project, false);
@@ -102,7 +104,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
     Collections.addAll(columns, NAME_COLUMN, TYPE_COLUMN);
     if (myProvider instanceof MergeProvider2) {
-      myMergeSession = ((MergeProvider2) myProvider).createMergeSession(files);
+      myMergeSession = ((MergeProvider2)myProvider).createMergeSession(files);
       Collections.addAll(columns, myMergeSession.getMergeInfoColumns());
     }
     else {
@@ -135,7 +137,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         updateButtonState();
       }
     });
-    for(VirtualFile file: files) {
+    for (VirtualFile file : files) {
       if (file.getFileType().isBinary() || provider.isBinary(file)) {
         myBinaryFiles.add(file);
       }
@@ -146,7 +148,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private void updateButtonState() {
     boolean haveSelection = myTable.getSelectedRowCount() > 0;
     boolean haveUnmergeableFiles = false;
-    for(VirtualFile file: myTable.getSelection()) {
+    for (VirtualFile file : myTable.getSelection()) {
       if (myBinaryFiles.contains(file)) {
         haveUnmergeableFiles = true;
         break;
@@ -171,7 +173,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   @Override
   protected Action[] createActions() {
-    return new Action[] { getCancelAction() };
+    return new Action[]{getCancelAction()};
   }
 
   @Override
@@ -187,7 +189,8 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     super.dispose();
   }
 
-  @Override @NonNls
+  @Override
+  @NonNls
   protected String getDimensionServiceKey() {
     return "MultipleFileMergeDialog";
   }
@@ -195,20 +198,22 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private void acceptRevision(final boolean isCurrent) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final Collection<VirtualFile> files = myTable.getSelection();
-    for(final VirtualFile file: files) {
+    for (final VirtualFile file : files) {
       final Ref<Exception> ex = new Ref<Exception>();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            MergeData data = myProvider.loadRevisions(file);
-            if (isCurrent) {
-              file.setBinaryContent(data.CURRENT);
+            if (!(myProvider instanceof MergeProvider2) || myMergeSession.canMerge(file)) {
+              MergeData data = myProvider.loadRevisions(file);
+              if (isCurrent) {
+                file.setBinaryContent(data.CURRENT);
+              }
+              else {
+                file.setBinaryContent(data.LAST);
+                checkMarkModifiedProject(file);
+              }
             }
-            else {
-              file.setBinaryContent(data.LAST);
-              checkMarkModifiedProject(file);
-            }
-            markFileProcessed(file, isCurrent ? MergeProvider2.Resolution.AcceptedYours : MergeProvider2.Resolution.AcceptedTheirs);
+            markFileProcessed(file, isCurrent ? MergeSession.Resolution.AcceptedYours : MergeSession.Resolution.AcceptedTheirs);
           }
           catch (Exception e) {
             ex.set(e);
@@ -223,10 +228,10 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     updateModelFromFiles();
   }
 
-  private void markFileProcessed(final VirtualFile file, final MergeProvider2.Resolution resolution) {
+  private void markFileProcessed(final VirtualFile file, final MergeSession.Resolution resolution) {
     myFiles.remove(file);
     if (myProvider instanceof MergeProvider2) {
-      ((MergeProvider2) myProvider).conflictResolvedForFile(file, resolution);
+      myMergeSession.conflictResolvedForFile(file, resolution);
     }
     else {
       myProvider.conflictResolvedForFile(file);
@@ -243,7 +248,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       int selIndex = myTable.getSelectionModel().getMinSelectionIndex();
       myModel.setItems(myFiles);
       if (selIndex >= myFiles.size()) {
-        selIndex = myFiles.size()-1;
+        selIndex = myFiles.size() - 1;
       }
       myTable.getSelectionModel().setSelectionInterval(selIndex, selIndex);
     }
@@ -251,12 +256,12 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private void showMergeDialog() {
     final Collection<VirtualFile> files = myTable.getSelection();
-    for(final VirtualFile file: files) {
+    for (final VirtualFile file : files) {
       final MergeData mergeData;
       try {
         mergeData = myProvider.loadRevisions(file);
       }
-      catch(VcsException ex) {
+      catch (VcsException ex) {
         Messages.showErrorDialog(myRootPanel, "Error loading revisions to merge: " + ex.getMessage());
         break;
       }
@@ -274,8 +279,8 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       String originalText = decodeContent(file, mergeData.ORIGINAL);
 
       DiffRequestFactory diffRequestFactory = DiffRequestFactory.getInstance();
-      MergeRequest request = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, myProject,
-                                                                   ActionButtonPresentation.createApplyButton());
+      MergeRequest request = diffRequestFactory
+        .createMergeRequest(leftText, rightText, originalText, file, myProject, ActionButtonPresentation.createApplyButton());
       String lastVersionTitle;
       if (mergeData.LAST_REVISION_NUMBER != null) {
         lastVersionTitle = VcsBundle.message("merge.version.title.last.version.number", mergeData.LAST_REVISION_NUMBER.asString());
@@ -283,13 +288,14 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       else {
         lastVersionTitle = VcsBundle.message("merge.version.title.last.version");
       }
-      request.setVersionTitles(new String[]{VcsBundle.message("merge.version.title.local.changes"),
-        VcsBundle.message("merge.version.title.merge.result"),
-        lastVersionTitle});
-      request.setWindowTitle(VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.getPresentableUrl())));
+      request.setVersionTitles(
+        new String[]{VcsBundle.message("merge.version.title.local.changes"), VcsBundle.message("merge.version.title.merge.result"),
+          lastVersionTitle});
+      request
+        .setWindowTitle(VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.getPresentableUrl())));
       DiffManager.getInstance().getDiffTool().show(request);
       if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
-        markFileProcessed(file, MergeProvider2.Resolution.Merged);
+        markFileProcessed(file, MergeSession.Resolution.Merged);
         checkMarkModifiedProject(file);
       }
       else {
@@ -317,7 +323,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private static class VirtualFileRenderer extends ColoredTableCellRenderer {
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      VirtualFile vf = (VirtualFile) value;
+      VirtualFile vf = (VirtualFile)value;
       setIcon(vf.getIcon());
       append(FileUtil.toSystemDependentName(vf.getPresentableUrl()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
