@@ -28,7 +28,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     }
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    PsiDirectory dir = DirectoryChooserUtil.getOrChooseDirectory(view);
+    PsiDirectory dir = getTargetDirectory(dataContext, view);
     if (dir == null) return;
 
     FileTemplate selectedTemplate = getTemplate(project, dir);
@@ -45,6 +45,10 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
         }
       }
     }
+  }
+
+  protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
+    return DirectoryChooserUtil.getOrChooseDirectory(view);
   }
 
   @Nullable
