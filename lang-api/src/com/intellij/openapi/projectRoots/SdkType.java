@@ -139,7 +139,10 @@ public abstract class SdkType {
               valid = isValidSdkHome(files[0].getPath() + MAC_HOME_PATH);
             }
             if (!valid) {
-              throw new Exception(ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName()));
+              String message = files[0].isDirectory()
+                               ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
+                               : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
+              throw new Exception(message);
             }
           }
         }

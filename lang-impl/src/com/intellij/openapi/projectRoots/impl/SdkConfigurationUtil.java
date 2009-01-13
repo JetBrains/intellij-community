@@ -65,7 +65,10 @@ public class SdkConfigurationUtil {
             }
           }
         }
-        throw new Exception(ProjectBundle.message("sdk.configure.home.invalid.error", sdkTypes [0].getPresentableName()));
+        String message = files[0].isDirectory()
+                         ? ProjectBundle.message("sdk.configure.home.invalid.error", sdkTypes [0].getPresentableName())
+                         : ProjectBundle.message("sdk.configure.home.file.invalid.error", sdkTypes [0].getPresentableName());
+        throw new Exception(message);
       }
     };
     descriptor.setTitle(descriptor0.getTitle());
