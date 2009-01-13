@@ -28,6 +28,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -41,6 +42,8 @@ import java.util.Map;
  */
 public class RunContentBuilder implements LogConsoleManager, Disposable  {
   private static final Icon DEFAULT_RERUN_ICON = IconLoader.getIcon("/actions/refreshUsages.png");
+  @NonNls private static final String JAVA_RUNNER = "JavaRunner";
+  
   private final ProgramRunner myRunner;
   private final Project myProject;
   private final ArrayList<Disposable> myDisposeables = new ArrayList<Disposable>();
@@ -100,13 +103,16 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
 
     final RunProfile profile = myEnvironment.getRunProfile();
 
-    myUi = RunnerLayoutUi.Factory.getInstance(myProject).create("JavaRunner", myExecutor.getId(), profile.getName(), this);
+    final ExecutionConsole console = myExecutionResult.getExecutionConsole();
+    final String runnerType = console instanceof ExecutionConsoleEx?
+                              JAVA_RUNNER +"." + ((ExecutionConsoleEx)console).getExecutionConsoleId(): JAVA_RUNNER;
+    myUi = RunnerLayoutUi.Factory.getInstance(myProject).create(runnerType, myExecutor.getId(), profile.getName(), this);
     myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
     }
-    final ExecutionConsole console = myExecutionResult.getExecutionConsole();
+
     if (console != null) {
       if (console instanceof ExecutionConsoleEx) {
         ((ExecutionConsoleEx)console).buildUi(myUi);
