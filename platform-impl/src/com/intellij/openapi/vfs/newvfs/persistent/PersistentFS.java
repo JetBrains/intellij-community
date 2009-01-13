@@ -14,10 +14,10 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
@@ -100,7 +100,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
-  private String[] listPersisted(final VirtualFile file) {
+  public String[] listPersisted(final VirtualFile file) {
     return listPersisted(getFileId(file));
   }
 

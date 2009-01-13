@@ -31,6 +31,11 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
+  public Collection<VirtualFile> getInDbChildren() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
   public NewVirtualFileSystem getFileSystem() {
     final VirtualFileSystemEntry parent = getParent();
     assert parent != null;

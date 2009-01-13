@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -633,25 +634,23 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
 
-  private static interface FileProcessor {
+  private interface FileProcessor {
     void execute(VirtualFile file);
   }
 
-  private static void processRecursively(VirtualFile file, final FileProcessor processor) {
+  private static void processRecursively(VirtualFile file, boolean dbOnly, final FileProcessor processor) {
     if (file.getFileSystem() instanceof LocalFileSystem) {
       if (file.isDirectory()) {
-        new Object() {
-          void traverse(final VirtualFile dir) {
-            for (VirtualFile child : dir.getChildren()) {
-              if (child.isDirectory()) {
-                traverse(child);
-              }
-              else {
-                processor.execute(child);
-              }
-            }
+        if (dbOnly) {
+          for (VirtualFile child : ((NewVirtualFile)file).getInDbChildren()) {
+            processRecursively(child, true, processor);
           }
-        }.traverse(file);
+        }
+        else {
+          for (VirtualFile child : file.getChildren()) {
+            processRecursively(child, false, processor);
+          }
+        }
       }
       else {
         processor.execute(file);
@@ -792,7 +791,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 for (VirtualFile root : intermediateRoots) {
                   indicator.setText2(root.getPresentableUrl());
                   indicator.setFraction(++processed / (double)totalRootsCount);
-                  processRecursively(root, processor);
+                  processRecursively(root, false, processor);
                 }
               }
             }
@@ -830,7 +829,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
       final VirtualFile eventFile = event.getFile();
-      processRecursively(eventFile, new FileProcessor() {
+      if (LOG.isDebugEnabled() && eventFile.isDirectory()) {
+        LOG.debug("Processing file deletion: " + eventFile.getPresentableUrl());
+      }
+      processRecursively(eventFile, true, new FileProcessor() {
         public void execute(final VirtualFile file) {
           final String filePath = file.getPath();
           try {
@@ -893,7 +895,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void markDirtyIfSource(final VirtualFile file) {
-      processRecursively(file, new FileProcessor() {
+      processRecursively(file, false, new FileProcessor() {
         public void execute(final VirtualFile file) {
           final SourceFileInfo srcInfo = file.isValid()? loadSourceInfo(file) : null;
           if (srcInfo != null) {
@@ -917,7 +919,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             final int projectId = getProjectId(project);
             if (rootManager.getFileIndex().isInSourceContent(file)) {
               final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
-              processRecursively(file, new FileProcessor() {
+              processRecursively(file, false, new FileProcessor() {
                 public void execute(final VirtualFile file) {
                   if (isCompilable(file)) {
                     addSourceForRecompilation(projectId, file, null);
@@ -936,7 +938,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             }
             else {
               if (belongsToIntermediateSources(file, project)) {
-                processRecursively(file, new FileProcessor() {
+                processRecursively(file, false, new FileProcessor() {
                   public void execute(final VirtualFile file) {
                     addSourceForRecompilation(projectId, file, null);
                   }

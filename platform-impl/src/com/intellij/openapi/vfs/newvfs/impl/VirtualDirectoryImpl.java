@@ -148,6 +148,28 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
+  public synchronized Collection<VirtualFile> getInDbChildren() {
+    if (myChildren instanceof VirtualFile[]) {
+      return Arrays.asList((VirtualFile[])myChildren);
+    }
+
+    if (!ourPersistence.wereChildrenAccessed(this)) {
+      return Collections.emptyList();
+    }
+
+    if (ourPersistence.areChildrenLoaded(this)) {
+      return Arrays.asList(getChildren());
+    }
+
+    final String[] names = ourPersistence.listPersisted(this);
+    for (String name : names) {
+      findChild(name, false);
+    }
+
+    return ensureAsMap().values();
+  }
+
+  @NotNull
   public synchronized VirtualFile[] getChildren() {
     if (myChildren instanceof VirtualFile[]) {
       return (VirtualFile[])myChildren;
