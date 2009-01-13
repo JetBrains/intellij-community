@@ -342,11 +342,6 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       myTypeSelectorManager.setAllOccurences(false);
     }
-    Window dialog = (Window)SwingUtilities.getAncestorOfClass(Window.class, myPanel);
-    if (dialog != null) {
-      dialog.pack();
-    }
-    myPanel.revalidate();
   }
 
   private void updateVisibilityPanel() {
