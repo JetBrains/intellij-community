@@ -6,7 +6,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public class PreferNonGenericWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
-    if (!(item instanceof MutableLookupElement)) return 0;
-
-    final Object object = ((MutableLookupElement)item).getObject();
+    final Object object = item.getObject();
     if (object instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)object;
 
