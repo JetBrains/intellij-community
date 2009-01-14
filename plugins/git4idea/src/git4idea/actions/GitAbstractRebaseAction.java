@@ -69,6 +69,7 @@ public abstract class GitAbstractRebaseAction extends GitRepositoryAction {
         return;
       }
     }
+    affectedRoots.add(root);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.REBASE);
     h.addParameters(getOptionName());
     GitHandlerUtil.doSynchronously(h, getActionTitle(), h.printableCommandLine());

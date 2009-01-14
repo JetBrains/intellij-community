@@ -167,15 +167,15 @@ public class GitRebaseEditor extends DialogWrapper {
    */
   private void validateFields() {
     final ArrayList<GitRebaseEntry> entries = myTableModel.myEntries;
-    final GitRebaseEntry.Action squash = GitRebaseEntry.Action.squash;
-    for (int i = 0; i < entries.size(); i++) {
-      if (entries.get(i).getAction() == squash) {
-        if (!(i > 0 && entries.get(i - 1).getAction() == squash || i < entries.size() - 1 && entries.get(i + 1).getAction() == squash)) {
-          setErrorText(GitBundle.getString("rebase.editor.invalid.squash"));
-          setOKActionEnabled(false);
-          return;
-        }
-      }
+    if (entries.size() == 0) {
+      setErrorText(GitBundle.getString("rebase.editor.invalid.entryset"));
+      setOKActionEnabled(false);
+      return;
+    }
+    if (entries.get(0).getAction() == GitRebaseEntry.Action.squash) {
+      setErrorText(GitBundle.getString("rebase.editor.invalid.squash"));
+      setOKActionEnabled(false);
+      return;
     }
     setErrorText(null);
     setOKActionEnabled(true);

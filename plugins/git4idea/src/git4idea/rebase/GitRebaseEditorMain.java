@@ -19,6 +19,7 @@ import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Vector;
 
@@ -41,6 +42,10 @@ public class GitRebaseEditorMain {
    * Rebase editor handler name
    */
   @NonNls static final String HANDLER_NAME = "Git4ideaRebaseEditorHandler";
+  /**
+   * The prefix for cygwin files
+   */
+  private static final String CYGDRIVE_PREFIX = "/cygdrive/";
 
   /**
    * A private constructor for static class
@@ -88,7 +93,11 @@ public class GitRebaseEditorMain {
       XmlRpcClientLite client = new XmlRpcClientLite("localhost", port);
       Vector<Object> params = new Vector<Object>();
       params.add(handler);
-      params.add(file);
+      if (System.getProperty("os.name").toLowerCase().startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {
+        int p = CYGDRIVE_PREFIX.length();
+        file = file.substring(p, p + 1) + ":" + file.substring(p + 1);
+      }
+      params.add(new File(file).getAbsolutePath());
       Integer exitCode = (Integer)client.execute(HANDLER_NAME + ".editCommits", params);
       if (exitCode == null) {
         exitCode = ERROR_EXIT_CODE;

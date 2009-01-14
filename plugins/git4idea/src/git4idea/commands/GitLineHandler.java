@@ -212,8 +212,8 @@ public class GitLineHandler extends GitHandler {
           if (i < n && text.charAt(i) == '\n') {
             i++;
           }
-          startLine = i;
           rc.add(text.substring(startLine, i));
+          startLine = i;
           break;
         default:
           i++;

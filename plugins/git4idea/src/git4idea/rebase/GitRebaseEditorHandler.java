@@ -53,6 +53,10 @@ public class GitRebaseEditorHandler implements Closeable {
    * If true, the handler has been closed
    */
   private boolean myIsClosed;
+  /**
+   * Set to true after rebase edior was shown
+   */
+  private boolean myRebaseEditorShown = false;
 
   /**
    * The constructor from fields that is expected to be
@@ -82,16 +86,31 @@ public class GitRebaseEditorHandler implements Closeable {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         try {
-          GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, path);
-          editor.show();
-          if (editor.isOK()) {
-            editor.save();
-            isSuccess.set(true);
-            return;
+          if (myRebaseEditorShown) {
+            GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, path);
+            editor.show();
+            if (editor.isOK()) {
+              editor.save();
+              isSuccess.set(true);
+              return;
+            }
+            else {
+              isSuccess.set(false);
+            }
           }
           else {
-            editor.cancel();
-            isSuccess.set(true);
+            myRebaseEditorShown = true;
+            GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, path);
+            editor.show();
+            if (editor.isOK()) {
+              editor.save();
+              isSuccess.set(true);
+              return;
+            }
+            else {
+              editor.cancel();
+              isSuccess.set(true);
+            }
           }
         }
         catch (Exception e) {
