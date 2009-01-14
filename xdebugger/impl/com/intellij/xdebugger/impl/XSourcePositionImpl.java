@@ -1,14 +1,14 @@
 package com.intellij.xdebugger.impl;
 
-import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -49,12 +49,15 @@ public class XSourcePositionImpl implements XSourcePosition {
   }
 
   @Nullable
-  public static XSourcePositionImpl create(@Nullable VirtualFile file, final int line) {
+  public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
     if (file == null) return null;
 
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) {
       return null;
+    }
+    if (line < 0){
+      line = 0;
     }
     int offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
     return new XSourcePositionImpl(file, line, offset);
