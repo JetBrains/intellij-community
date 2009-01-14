@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
@@ -273,16 +274,19 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
       tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
 
-      final PsiExpression toBeExpression = createReplacement("intellijidearulezzz", file, prefix, suffix, parent, rangeMarker);
+      final String fakeInitializer = "intellijidearulezzz";
+      final PsiExpression toBeExpression = createReplacement(fakeInitializer, file, prefix, suffix, parent, rangeMarker);
       toBeExpression.accept(errorsVisitor);
       if (hasErrors[0]) return null;
-     /*
-      if (tempExpr != null && !ReplaceExpressionUtil.canExtract(toBeExpression.getNode(), tempExpr.getNode())) { //or show warning?
-        tempExpr = null;
-      }*/
+
+      final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(toBeExpression.getText().indexOf(fakeInitializer)), PsiReferenceExpression.class);
+      assert refExpr != null;
+      if (ReplaceExpressionUtil.isNeedParenthesis(refExpr.getNode(), tempExpr.getNode())) {
+        return null;
+      }
     }
     catch (IncorrectOperationException e) {
-      tempExpr = null;
+      return null;
     }
 
     return tempExpr;
