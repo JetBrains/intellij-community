@@ -17,7 +17,7 @@ package org.jetbrains.plugins.grails.fileType;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
-import com.intellij.lang.injection.JavaConcatenationInjectorManager;
+import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;

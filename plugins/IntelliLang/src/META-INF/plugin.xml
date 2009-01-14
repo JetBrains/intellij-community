@@ -53,6 +53,8 @@
     <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                         serviceImplementation="org.intellij.plugins.intelliLang.Configuration"/>
     <applicationConfigurable implementation="org.intellij.plugins.intelliLang.Settings"/>
+
+    <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.ConcatenationInjector"/>
   </extensions>
 
   <application-components>

@@ -28,23 +28,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
-import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
-import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -67,8 +58,6 @@ public final class CustomLanguageInjector implements ProjectComponent {
 
   private final Project myProject;
   private final Configuration myInjectionConfiguration;
-  private long myConfigurationModificationCount;
-  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> myMethodCache;
 
   @SuppressWarnings({"unchecked"})
   private final List<Pair<SmartPsiElementPointer<PsiLanguageInjectionHost>, InjectedLanguage>> myTempPlaces = new ArrayList();
@@ -103,10 +92,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
       }
     }
 
-    if (place instanceof PsiExpression) {
-      processLiteralExpressionInjections(findFirstLiteralExpression((PsiExpression)place), processor);
-    }
-    else if (place instanceof XmlTag) {
+    if (place instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)place;
       for (final XmlTagInjection injection : myInjectionConfiguration.getTagInjections()) {
         if (injection.isApplicable(xmlTag)) {
@@ -185,7 +171,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
     }
   }
 
-  private static boolean isStringLiteral(final PsiElement place) {
+  static boolean isStringLiteral(final PsiElement place) {
     if (place instanceof PsiLiteralExpression) {
       final PsiElement child = place.getFirstChild();
       if (child != null && child instanceof PsiJavaToken) {
@@ -195,174 +181,6 @@ public final class CustomLanguageInjector implements ProjectComponent {
       }
     }
     return false;
-  }
-
-  @Nullable
-  private static PsiLiteralExpression findFirstLiteralExpression(final PsiExpression expression) {
-    if (isStringLiteral(expression)) return (PsiLiteralExpression)expression;
-    final LinkedList<PsiElement> list = new LinkedList<PsiElement>();
-    list.add(expression);
-    while (!list.isEmpty()) {
-      final PsiElement element = list.removeFirst();
-      if (element instanceof PsiCallExpression) continue;  // IDEADEV-28384 - TODO: other cases?
-      if (isStringLiteral(element)) {
-        return (PsiLiteralExpression)element;
-      }
-      list.addAll(0, Arrays.asList(element.getChildren()));
-    }
-    return null;
-  }
-
-  private void processLiteralExpressionInjections(@Nullable final PsiLiteralExpression firstLiteral, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    if (firstLiteral == null) return;
-    final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstLiteral, null);
-    final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock? topBlock : firstLiteral.getContainingFile()}, "", true);
-    final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
-    final LinkedList<PsiExpression> places = new LinkedList<PsiExpression>();
-    places.add(firstLiteral);
-    boolean unparsable = false;
-    while (!places.isEmpty()) {
-      final PsiExpression curPlace = places.removeFirst();
-      final PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(curPlace, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
-      if (owner == null) continue;
-      if (processAnnotationInjections(firstLiteral, owner, processor)) return; // annotated element
-
-      final PsiMethod psiMethod;
-      final Trinity<String, Integer, Integer> trin;
-      if (owner instanceof PsiParameter) {
-        psiMethod = PsiTreeUtil.getParentOfType(owner, PsiMethod.class, false);
-        final PsiParameterList parameterList = psiMethod == null? null : psiMethod.getParameterList();
-        // don't check catchblock parameters & etc.
-        if (parameterList == null || parameterList != owner.getParent()) continue;
-        trin = Trinity.create(psiMethod.getName(), parameterList.getParametersCount(),
-                              parameterList.getParameterIndex((PsiParameter)owner));
-      }
-      else if (owner instanceof PsiMethod) {
-        psiMethod = (PsiMethod)owner;
-        trin = Trinity.create(psiMethod.getName(), psiMethod.getParameterList().getParametersCount(), -1);
-      }
-      else if (myInjectionConfiguration.isResolveReferences() &&
-               owner instanceof PsiVariable && visitedVars.add(owner)) {
-        final PsiVariable variable = (PsiVariable)owner;
-        for (PsiReference psiReference : ReferencesSearch.search(variable, searchScope).findAll()) {
-          final PsiElement element = psiReference.getElement();
-          if (element instanceof PsiExpression) {
-            final PsiExpression refExpression = (PsiExpression)element;
-            places.add(refExpression);
-            if (!unparsable) {
-              unparsable = checkUnparsableReference(refExpression);
-            }
-          }
-        }
-        continue;
-      }
-      else {
-        continue;
-      }
-      final Collection<MethodParameterInjection> injections = getMethodCache().get(trin);
-      if (injections == null) return;
-      for (MethodParameterInjection injection : injections) {
-        if (injection.isApplicable(psiMethod)) {
-          processInjectionWithContext(firstLiteral, unparsable, injection.getInjectedLanguageId(), injection.getPrefix(),
-                                      injection.getSuffix(), processor);
-          return;
-        }
-      }
-    }
-  }
-
-  private static boolean checkUnparsableReference(final PsiExpression refExpression) {
-    final PsiElement parent = refExpression.getParent();
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-      final IElementType operation = assignmentExpression.getOperationTokenType();
-      if (assignmentExpression.getLExpression() == refExpression && JavaTokenType.PLUSEQ.equals(operation)) {
-        return true;
-      }
-    }
-    else if (parent instanceof PsiBinaryExpression) {
-      return true;
-    }
-    return false;
-  }
-
-  private MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> getMethodCache() {
-    if (myMethodCache != null && myInjectionConfiguration.getModificationCount() == myConfigurationModificationCount) {
-      return myMethodCache;
-    }
-    myConfigurationModificationCount = myInjectionConfiguration.getModificationCount();
-    final MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection> tmpMap =
-        new MultiValuesMap<Trinity<String, Integer, Integer>, MethodParameterInjection>();
-    for (MethodParameterInjection injection : myInjectionConfiguration.getParameterInjections()) {
-      for (MethodParameterInjection.MethodInfo info : injection.getMethodInfos()) {
-        final boolean[] flags = info.getParamFlags();
-        for (int i = 0; i < flags.length; i++) {
-          if (!flags[i]) continue;
-          tmpMap.put(Trinity.create(info.getMethodName(), flags.length, i), injection);
-        }
-        if (info.isReturnFlag()) {
-          tmpMap.put(Trinity.create(info.getMethodName(), 0, -1), injection);
-        }
-      }
-    }
-    myMethodCache = tmpMap;
-    return tmpMap;
-  }
-
-  private boolean processAnnotationInjections(@NotNull PsiLiteralExpression firstLiteral, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    final PsiAnnotation[] annotations =
-      AnnotationUtilEx.getAnnotationFrom(annoElement, myInjectionConfiguration.getLanguageAnnotationPair(), true);
-    if (annotations.length > 0) {
-      final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
-      final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
-      final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
-      processInjectionWithContext(firstLiteral, false, id, prefix, suffix, processor);
-      return true;
-    }
-    return false;
-  }
-
-  private static void processInjectionWithContext(@NotNull final PsiLiteralExpression place, final boolean unparsable, final String langId,
-                                                  final String prefix,
-                                                  final String suffix,
-                                                  final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    final Ref<Boolean> unparsableRef = Ref.create(unparsable);
-    final List<Object> objects = ContextComputationProcessor.collectOperands(place, prefix, suffix, unparsableRef);
-    if (objects.isEmpty()) return;
-    final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
-    final int len = objects.size();
-    for (int i = 0; i < len; i++) {
-      String curPrefix = null;
-      Object o = objects.get(i);
-      if (o instanceof String) {
-        curPrefix = (String)o;
-        if (i == len - 1) return; // IDEADEV-26751
-        o = objects.get(++i);
-      }
-      String curSuffix = null;
-      PsiLanguageInjectionHost curHost = null;
-      if (o instanceof PsiLanguageInjectionHost) {
-        curHost = (PsiLanguageInjectionHost)o;
-        if (i == len-2) {
-          final Object next = objects.get(i + 1);
-          if (next instanceof String) {
-            i ++;
-            curSuffix = (String)next;
-          }
-        }
-      }
-      if (curHost == null) {
-        unparsableRef.set(Boolean.TRUE);
-      }
-      else {
-        list.add(Trinity.create(curHost, InjectedLanguage.create(langId, curPrefix, curSuffix, true),
-                                ElementManipulators.getManipulator(curHost).getRangeInElement(curHost)));
-      }
-    }
-    for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-      trinity.first.putUserData(HAS_UNPARSABLE_FRAGMENTS, unparsableRef.get());
-    }
-    processor.process(InjectedLanguage.findLanguageById(langId), list);
   }
 
   public void disposeComponent() {
@@ -411,118 +229,125 @@ public final class CustomLanguageInjector implements ProjectComponent {
       final PsiFile containingFile = host.getContainingFile();
       myInjector.getInjectedLanguage(host, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
         public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
-          // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
-          // Maybe IDEA core is caching a bit too aggressively here?
-          if (language == null/* && (pair.second.getLength() > 0*/) {
-            return true;
-          }
           for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
             if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
           }
-          boolean injectionStarted = false;
           for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
             final PsiLanguageInjectionHost host = trinity.first;
             if (host.getContainingFile() != containingFile) continue;
-
             final TextRange textRange = trinity.third;
-            final InjectedLanguage injectedLanguage = trinity.second;
             ranges.add(textRange.shiftRight(host.getTextRange().getStartOffset()));
-
-            if (!injectionStarted) {
-              registrar.startInjecting(language);
-              injectionStarted = true;
-            }
-            if (injectedLanguage.isDynamic()) {
-              // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
-              // useful cases may break. This system is far from perfect still...
-              final StringBuilder prefix = new StringBuilder(injectedLanguage.getPrefix());
-              final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
-              adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
-
-              addPlaceSafe(registrar, prefix.toString(), suffix.toString(), host, textRange, language);
-            }
-            else {
-              addPlaceSafe(registrar, injectedLanguage.getPrefix(), injectedLanguage.getSuffix(), host, textRange, language);
-            }
           }
-          //try {
-          if (injectionStarted) {
-            registrar.doneInjecting();
-          }
-            //}
-            //catch (AssertionError e) {
-            //  logError(language, host, null, e);
-            //}
-            //catch (Exception e) {
-            //  logError(language, host, null, e);
-            //}
-
+          registerInjection(language, list, containingFile, registrar);
           return true;
         }
       });
     }
+  }
+  private static void addPlaceSafe(MultiHostRegistrar registrar, String prefix, String suffix, PsiLanguageInjectionHost host, TextRange textRange,
+                                   Language language) {
+    registrar.addPlace(prefix, suffix, host, textRange);
+  }
 
-    private static void addPlaceSafe(MultiHostRegistrar registrar, String prefix, String suffix, PsiLanguageInjectionHost host, TextRange textRange,
-                                     Language language) {
-      registrar.addPlace(prefix, suffix, host, textRange);
+  private static String getUnescapedText(final PsiElement host, final String text) {
+    if (host instanceof PsiLiteralExpression) {
+      return StringUtil.unescapeStringCharacters(text);
     }
+    else if (host instanceof XmlElement) {
+      return XmlUtil.unescape(text);
+    }
+    else {
+      return text;
+    }
+  }
 
-    private static String getUnescapedText(final PsiElement host, final String text) {
-      if (host instanceof PsiLiteralExpression) {
-        return StringUtil.unescapeStringCharacters(text);
+  // Avoid sticking text and prefix/suffix together in a way that it would form a single token.
+  // See http://www.jetbrains.net/jira/browse/IDEADEV-8302#action_111865
+  // This code assumes that for the injected language a single space character is a token separator
+  // that doesn't (significantly) change the semantics if added to the prefix/suffix
+  //
+  // NOTE: This does not work in all cases, such as string literals in JavaScript where a
+  // space character isn't a token separator. See also comments in IDEA-8561
+  private static void adjustPrefixAndSuffix(String text, StringBuilder prefix, StringBuilder suffix) {
+    if (prefix.length() > 0) {
+      if (!endsWithSpace(prefix) && !startsWithSpace(text)) {
+        prefix.append(" ");
       }
-      else if (host instanceof XmlElement) {
-        return XmlUtil.unescape(text);
+      else if (endsWithSpace(prefix) && startsWithSpace(text)) {
+        trim(prefix);
+      }
+    }
+    if (suffix.length() > 0) {
+      if (text.length() == 0) {
+        // avoid to stick whitespace from prefix and suffix together
+        trim(suffix);
+      }
+      else if (!startsWithSpace(suffix) && !endsWithSpace(text)) {
+        suffix.insert(0, " ");
+      }
+      else if (startsWithSpace(suffix) && endsWithSpace(text)) {
+        trim(suffix);
+      }
+    }
+  }
+
+  private static void trim(StringBuilder string) {
+    while (startsWithSpace(string)) string.deleteCharAt(0);
+    while (endsWithSpace(string)) string.deleteCharAt(string.length() - 1);
+  }
+
+  private static boolean startsWithSpace(CharSequence sequence) {
+    final int length = sequence.length();
+    return length > 0 && sequence.charAt(0) <= ' ';
+  }
+
+  private static boolean endsWithSpace(CharSequence sequence) {
+    final int length = sequence.length();
+    return length > 0 && sequence.charAt(length - 1) <= ' ';
+  }
+
+  static void registerInjection(Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list, PsiFile containingFile, MultiHostRegistrar registrar) {
+    // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
+    // Maybe IDEA core is caching a bit too aggressively here?
+    if (language == null/* && (pair.second.getLength() > 0*/) {
+      return;
+    }
+    boolean injectionStarted = false;
+    for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+      final PsiLanguageInjectionHost host = trinity.first;
+      if (host.getContainingFile() != containingFile) continue;
+
+      final TextRange textRange = trinity.third;
+      final InjectedLanguage injectedLanguage = trinity.second;
+
+      if (!injectionStarted) {
+        registrar.startInjecting(language);
+        injectionStarted = true;
+      }
+      if (injectedLanguage.isDynamic()) {
+        // Only adjust prefix/suffix if it has been computed dynamically. Otherwise some other
+        // useful cases may break. This system is far from perfect still...
+        final StringBuilder prefix = new StringBuilder(injectedLanguage.getPrefix());
+        final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
+        adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
+
+        addPlaceSafe(registrar, prefix.toString(), suffix.toString(), host, textRange, language);
       }
       else {
-        return text;
+        addPlaceSafe(registrar, injectedLanguage.getPrefix(), injectedLanguage.getSuffix(), host, textRange, language);
       }
     }
-
-    // Avoid sticking text and prefix/suffix together in a way that it would form a single token.
-    // See http://www.jetbrains.net/jira/browse/IDEADEV-8302#action_111865
-    // This code assumes that for the injected language a single space character is a token separator
-    // that doesn't (significantly) change the semantics if added to the prefix/suffix
-    //
-    // NOTE: This does not work in all cases, such as string literals in JavaScript where a
-    // space character isn't a token separator. See also comments in IDEA-8561
-    private static void adjustPrefixAndSuffix(String text, StringBuilder prefix, StringBuilder suffix) {
-      if (prefix.length() > 0) {
-        if (!endsWithSpace(prefix) && !startsWithSpace(text)) {
-          prefix.append(" ");
-        }
-        else if (endsWithSpace(prefix) && startsWithSpace(text)) {
-          trim(prefix);
-        }
-      }
-      if (suffix.length() > 0) {
-        if (text.length() == 0) {
-          // avoid to stick whitespace from prefix and suffix together
-          trim(suffix);
-        }
-        else if (!startsWithSpace(suffix) && !endsWithSpace(text)) {
-          suffix.insert(0, " ");
-        }
-        else if (startsWithSpace(suffix) && endsWithSpace(text)) {
-          trim(suffix);
-        }
-      }
+    //try {
+    if (injectionStarted) {
+      registrar.doneInjecting();
     }
-
-    private static void trim(StringBuilder string) {
-      while (startsWithSpace(string)) string.deleteCharAt(0);
-      while (endsWithSpace(string)) string.deleteCharAt(string.length() - 1);
-    }
-
-    private static boolean startsWithSpace(CharSequence sequence) {
-      final int length = sequence.length();
-      return length > 0 && sequence.charAt(0) <= ' ';
-    }
-
-    private static boolean endsWithSpace(CharSequence sequence) {
-      final int length = sequence.length();
-      return length > 0 && sequence.charAt(length - 1) <= ' ';
-    }
+    //}
+    //catch (AssertionError e) {
+    //  logError(language, host, null, e);
+    //}
+    //catch (Exception e) {
+    //  logError(language, host, null, e);
+    //}
   }
 
   public static CustomLanguageInjector getInstance(Project project) {
