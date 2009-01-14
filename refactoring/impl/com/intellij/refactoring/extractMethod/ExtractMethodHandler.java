@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -25,12 +26,15 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class ExtractMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
@@ -42,19 +46,40 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
       final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       if (file != null && editor != null) {
-        final ExtractMethodProcessor processor = getProcessor(elements, project, file, editor, true);
-        if (processor != null) {
-          invokeOnElements(project, editor, processor, true);
-        }
+        invokeOnElements(project, editor, file, elements);
       }
     }
   }
 
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+    final Pass<PsiElement[]> callback = new Pass<PsiElement[]>() {
+      public void pass(final PsiElement[] selectedValue) {
+        invokeOnElements(project, editor, file, selectedValue);
+      }
+    };
+    selectAndPass(project, editor, file, callback);
+  }
+
+  public static void selectAndPass(final Project project, final Editor editor, final PsiFile file, final Pass<PsiElement[]> callback) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+      final int offset = editor.getCaretModel().getOffset();
+      final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
+      final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
+      if (expressions.size() < 2) {
+        editor.getSelectionModel().selectLineAtCaret();
+      }
+      else {
+        IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
+          @Override
+          public void pass(PsiExpression psiExpression) {
+            callback.pass(new PsiExpression[]{psiExpression});
+          }
+        });
+        return;
+      }
     }
+
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -68,7 +93,10 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     else {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
+    callback.pass(elements);
+  }
 
+  private static void invokeOnElements(Project project, Editor editor, PsiFile file, PsiElement[] elements) {
     final ExtractMethodProcessor processor = getProcessor(elements, project, file, editor, true);
     if (processor != null) {
       invokeOnElements(project, editor, processor, true);

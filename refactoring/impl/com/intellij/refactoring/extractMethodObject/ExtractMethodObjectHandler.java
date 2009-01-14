@@ -4,17 +4,14 @@
  */
 package com.intellij.refactoring.extractMethodObject;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -29,24 +26,14 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#" + ExtractMethodObjectHandler.class.getName());
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
-    }
-    int startOffset = editor.getSelectionModel().getSelectionStart();
-    int endOffset = editor.getSelectionModel().getSelectionEnd();
+    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<PsiElement[]>() {
+      public void pass(final PsiElement[] selectedValue) {
+        invokeOnElements(project, editor, file, selectedValue);
+      }
+    });
+  }
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    PsiElement[] elements;
-    PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
-    if (expr != null) {
-      elements = new PsiElement[]{expr};
-    }
-    else {
-      elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
-    }
-
+  private void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
     if (elements.length == 0) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
