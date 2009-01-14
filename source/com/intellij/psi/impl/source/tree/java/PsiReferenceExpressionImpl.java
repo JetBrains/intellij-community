@@ -527,15 +527,18 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         return null;
 
       case ChildRole.REFERENCE_NAME:
-        return getChildRole(getLastChildNode()) == role ? getLastChildNode() : null;
+        if (getChildRole(getLastChildNode()) == role) {
+          return getLastChildNode();
+        }
+
+        return TreeUtil.findChild(this, IDENTIFIER);
 
       case ChildRole.QUALIFIER:
         if (getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER) {
           return getFirstChildNode();
         }
-        else {
-          return null;
-        }
+
+        return null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
         return TreeUtil.findChild(this, REFERENCE_PARAMETER_LIST);
