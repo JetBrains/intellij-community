@@ -23,10 +23,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.usageView.UsageInfo;
@@ -101,8 +102,11 @@ class XPathUsageSearcher implements UsageSearcher {
             if (psiFile instanceof XmlFile) {
                 final XmlFile t1 = (XmlFile)psiFile;
                 final XmlDocument document;
-                if (t1 instanceof JspFile) {
-                    final PsiFile root = ((JspFile)t1).getBaseLanguageRoot();
+                FileViewProvider fileViewProvider = t1.getViewProvider();
+
+                if (fileViewProvider instanceof TemplateLanguageFileViewProvider) {
+                    final PsiFile root = fileViewProvider.getPsi(((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage());
+
                     if (root instanceof XmlFile) {
                         document = ((XmlFile)root).getDocument();
                     } else {
