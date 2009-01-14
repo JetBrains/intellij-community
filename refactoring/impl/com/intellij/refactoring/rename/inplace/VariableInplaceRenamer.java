@@ -156,13 +156,16 @@ public class VariableInplaceRenamer {
                 finish();
 
                 if (snapshot != null) {
-                  final String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
-                  if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
-                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                      public void run() {
-                        snapshot.apply(newName);
-                      }
-                    });
+                  TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
+                  if (value != null) {
+                    final String newName = value.toString();
+                    if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
+                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                        public void run() {
+                          snapshot.apply(newName);
+                        }
+                      });
+                    }
                   }
                 }
               }
