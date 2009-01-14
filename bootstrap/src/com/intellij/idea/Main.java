@@ -4,11 +4,15 @@ import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Main {
   private static boolean isHeadless;
@@ -17,12 +21,17 @@ public class Main {
   }
 
   public static void main(final String[] args) {
-    installPatch();
+    if (installPatch()) {
+      JOptionPane.showMessageDialog(null, "The application cannot start right away since some critical files have been changed, " +
+                                          "please restart it manually.");
+      return;
+    }
 
     isHeadless = isHeadless(args);
     if (isHeadless) {
       System.setProperty("java.awt.headless", Boolean.TRUE.toString());
-    } else if (GraphicsEnvironment.isHeadless()) {
+    }
+    else if (GraphicsEnvironment.isHeadless()) {
       throw new HeadlessException("Unable to detect graphics environment");
     }
 
@@ -50,26 +59,32 @@ public class Main {
     return isHeadless;
   }
 
-  private static void installPatch() {
+  private static boolean installPatch() {
     try {
       File ideaHomeDir = getIdeaHomeDir();
-      if (ideaHomeDir == null) return;
+      if (ideaHomeDir == null) return false;
 
       File patchFile = new File(ideaHomeDir, "patch.jar");
-      if (!patchFile.exists()) return;
+      if (!patchFile.exists()) return false;
 
       File tempFile = File.createTempFile("idea.patch", null);
       tempFile.deleteOnExit();
       copyFile(patchFile, tempFile);
       patchFile.delete();
 
-      Process process = Runtime.getRuntime().exec(new String[]{
-        System.getProperty("java.home") + "/bin/java",
-        "-classpath",
-        tempFile.getPath(),
-        "com.intellij.updater.Runner",
-        "install",
-        ideaHomeDir.getPath()});
+      List<String> args = new ArrayList<String>();
+      if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+        File launcherPath = new File(ideaHomeDir, "bin/vistalauncher.exe");
+        args.add(launcherPath.getPath());
+      }
+      Collections.addAll(args,
+                         System.getProperty("java.home") + "/bin/java",
+                         "-classpath",
+                         tempFile.getPath(),
+                         "com.intellij.updater.Runner",
+                         "install",
+                         ideaHomeDir.getPath());
+      Process process = Runtime.getRuntime().exec(args.toArray(new String[args.size()]));
 
       Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
       Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
@@ -77,7 +92,8 @@ public class Main {
       errThread.start();
 
       try {
-        process.waitFor();
+        boolean requiresRestart = process.waitFor() == 42;
+        return requiresRestart;
       }
       finally {
         outThread.join();
@@ -87,6 +103,7 @@ public class Main {
     catch (Exception e) {
       e.printStackTrace();
     }
+    return false;
   }
 
   private static class StreamRedirector implements Runnable {

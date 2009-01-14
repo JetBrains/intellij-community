@@ -87,8 +87,11 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   protected void doOKAction() {
     if (doDownloadAndPrepare()) {
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      app.saveAll();
-      app.exit(true);
+      if (app.isRestartCapable()) {
+        app.restart();
+      } else {
+        app.exit(true);
+      }
     }
     super.doOKAction();
   }
