@@ -43,13 +43,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   private final PsiManager myManager;
-  private volatile VirtualFile myVirtualFile;
+  private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
-  private volatile boolean myPhysical;
+  private final boolean myPhysical;
   private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
   private volatile Content myContent;
   private volatile SoftReference<Document> myDocument;
-  private volatile Language myBaseLanguage;
+  private final Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -65,7 +65,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myEventSystemEnabled = physical;
     myBaseLanguage = language;
     setContent(new VirtualFileContent());
-    calcPhysical();
+    myPhysical = isEventSystemEnabled() &&
+                 !(virtualFile instanceof LightVirtualFile) &&
+                 !(virtualFile.getFileSystem() instanceof DummyFileSystem) &&
+                 !(virtualFile.getFileSystem() instanceof TempFileSystem);
   }
 
   @NotNull
@@ -141,12 +144,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private void unsetPsiContent() {
     if (!(myContent instanceof PsiFileContent)) return;
     final Document cachedDocument = getCachedDocument();
-    if (cachedDocument != null) {
-      setContent(new DocumentContent());
-    }
-    else {
-      setContent(new VirtualFileContent());
-    }
+    setContent(cachedDocument == null ? new VirtualFileContent() : new DocumentContent());
   }
 
   public void beforeDocumentChanged() {
@@ -173,14 +171,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public boolean isPhysical() {
     return myPhysical;
-  }
-
-  private void calcPhysical() {
-    VirtualFile virtualFile = getVirtualFile();
-    myPhysical = isEventSystemEnabled() &&
-                 !(virtualFile instanceof LightVirtualFile) &&
-                 !(virtualFile.getFileSystem() instanceof DummyFileSystem) &&
-                 !(virtualFile.getFileSystem() instanceof TempFileSystem);
   }
 
   public long getModificationStamp() {
@@ -231,8 +221,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   protected boolean isIgnored() {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (fileTypeManager.isFileIgnored(getVirtualFile().getName())) return true;
-    return false;
+    return fileTypeManager.isFileIgnored(getVirtualFile().getName());
   }
 
   @Nullable
@@ -287,14 +276,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
-  }
-
-  public void setVirtualFile(final VirtualFile file) {
-    myVirtualFile = file;
-    if (myDocument != null) myDocument.clear();
-    myPsiFile.set(null);
-    myBaseLanguage = calcBaseLanguage(file, getManager().getProject());
-    calcPhysical();
   }
 
   @Nullable
@@ -443,7 +424,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
 
     public long getModificationStamp() {
-      Document document = myDocument != null ? myDocument.get() : null;
+      Document document = myDocument == null ? null : myDocument.get();
       if (document != null) return document.getModificationStamp();
       return myVirtualFile.getModificationStamp();
     }
@@ -454,7 +435,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     private CharSequence myContent = null;
     private final long myModificationStamp;
 
-    public PsiFileContent(final PsiFileImpl file, final long modificationStamp) {
+    private PsiFileContent(final PsiFileImpl file, final long modificationStamp) {
       myFile = file;
       myModificationStamp = modificationStamp;
     }

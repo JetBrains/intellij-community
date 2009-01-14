@@ -1,8 +1,15 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import java.util.List;
+import com.intellij.util.SmartList;
 
 /**
  * @author cdr
-*/
-interface Places extends List<InjectedLanguageUtil.Place> {}
+ */
+class Places extends SmartList<Place> {
+  public boolean isValid() {
+    for (Place place : this) {
+      if (!place.isValid()) return false;
+    }
+    return true;
+  }
+}

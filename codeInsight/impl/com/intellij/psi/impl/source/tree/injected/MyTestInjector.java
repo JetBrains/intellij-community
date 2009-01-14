@@ -64,7 +64,7 @@ public class MyTestInjector {
         for (int i = 0; i < operands.length; i++) {
           PsiElement operand = operands[i];
           if (!(operand instanceof PsiLanguageInjectionHost)) continue;
-          TextRange textRange = new TextRange(1, operand.getTextLength() - 1);
+          TextRange textRange = textRangeToInject((PsiLanguageInjectionHost)operand);
           injectionPlacesRegistrar.addPlace(i == 0 ? null : prefix, i == operands.length - 1 ? null : suffix, (PsiLanguageInjectionHost)operand, textRange);
         }
         injectionPlacesRegistrar.doneInjecting();
@@ -205,16 +205,13 @@ public class MyTestInjector {
           if (variable == null) return;
           if (host.getParent() instanceof PsiBinaryExpression) return;
           if ("ql".equals(variable.getName())) {
-            TextRange textRange = new TextRange(1, host.getTextLength() - 1);
-            placesToInject.addPlace(ql, textRange, null, null);
+            placesToInject.addPlace(ql, textRangeToInject(host), null, null);
           }
           if ("xml".equals(variable.getName())) {
-            TextRange textRange = new TextRange(1, host.getTextLength() - 1);
-            placesToInject.addPlace(StdLanguages.XML, textRange, null, null);
+            placesToInject.addPlace(StdLanguages.XML, textRangeToInject(host), null, null);
           }
           if ("js".equals(variable.getName())) { // with prefix/suffix
-            TextRange textRange = new TextRange(1, host.getTextLength() - 1);
-            placesToInject.addPlace(js, textRange, "function foo(doc,window) {", "}");
+            placesToInject.addPlace(js, textRangeToInject(host), "function foo(doc,window) {", "}");
           }
 
           if ("lang".equals(variable.getName())) {
@@ -225,8 +222,7 @@ public class MyTestInjector {
             Language language = findLanguageByID(text);
 
             if (language != null) {
-              TextRange textRange = new TextRange(1, host.getTextLength() - 1);
-              placesToInject.addPlace(language, textRange, "", "");
+              placesToInject.addPlace(language, textRangeToInject(host), "", "");
             }
           }
         }
@@ -242,6 +238,12 @@ public class MyTestInjector {
     inject(host, placesToInject, language, null, null);
   }
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language, @NonNls String prefix, String suffix) {
+    TextRange insideQuotes = textRangeToInject(host);
+
+    placesToInject.addPlace(language, insideQuotes, prefix, suffix);
+  }
+
+  public static TextRange textRangeToInject(PsiLanguageInjectionHost host) {
     ASTNode[] children = ((ASTNode)host).getChildren(null);
     TextRange insideQuotes = new TextRange(0, host.getTextLength());
 
@@ -251,7 +253,9 @@ public class MyTestInjector {
     if (children.length > 1 && children[children.length-1].getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
       insideQuotes = new TextRange(insideQuotes.getStartOffset(), children[children.length-2].getTextRange().getEndOffset() - host.getTextRange().getStartOffset());
     }
-
-    placesToInject.addPlace(language, insideQuotes, prefix, suffix);
+    if (host instanceof PsiLiteralExpression) {
+      insideQuotes = new TextRange(1, host.getTextLength()-1);
+    }
+    return insideQuotes;
   }
 }

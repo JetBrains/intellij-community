@@ -81,7 +81,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     while (iterator.hasNext()) {
       EditorWindow editorWindow = iterator.next();
       if (!editorWindow.isValid() || myDocumentWindow.intersects(editorWindow.myDocumentWindow)) {
-        editorWindow.disposeModel();
+        editorWindow.dispose();
 
         InjectedLanguageUtil.clearCaches(editorWindow.getInjectedFile());
         iterator.remove();
@@ -108,7 +108,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.offsetToLogicalPosition(offsetInHost);
   }
 
-  private void disposeModel() {
+  private void dispose() {
     assert !myDisposed;
     myCaretModelDelegate.disposeModel();
 
@@ -120,6 +120,8 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
       myDelegate.removeEditorMouseMotionListener(wrapper);
     }
     myEditorMouseMotionListeners.clear();
+
+    getDocument().dispose();
     myDisposed = true;
   }
 

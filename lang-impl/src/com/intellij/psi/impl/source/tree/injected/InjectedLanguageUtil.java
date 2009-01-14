@@ -1,6 +1,9 @@
 package com.intellij.psi.impl.source.tree.injected;
-  
-import com.intellij.injected.editor.*;
+
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +34,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author cdr
  */
 public class InjectedLanguageUtil {
-  private static final Key<ParameterizedCachedValue<Places, PsiElement>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
   static final Key<List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
   public static void forceInjectionOnElement(@NotNull final PsiElement host) {
@@ -64,23 +66,12 @@ public class InjectedLanguageUtil {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }
 
-  public static List<PsiLanguageInjectionHost.Shred> getShreds(PsiFile injectedFile) {
+  public static Place getShreds(PsiFile injectedFile) {
     FileViewProvider viewProvider = injectedFile.getViewProvider();
     if (!(viewProvider instanceof InjectedFileViewProvider)) return null;
     InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)viewProvider;
     return myFileViewProvider.getShreds();
   }
-
-  static class Place {
-    private final PsiFile myInjectedPsi;
-    private final List<PsiLanguageInjectionHost.Shred> myShreds;
-
-    Place(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> shreds) {
-      myShreds = shreds;
-      myInjectedPsi = injectedPsi;
-    }
-  }
-
 
   public static void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
@@ -99,10 +90,8 @@ public class InjectedLanguageUtil {
     Places places = probeElementsUp(host, containingFile, probeUp);
     if (places == null) return;
     for (Place place : places) {
-      PsiFile injectedPsi = place.myInjectedPsi;
-      List<PsiLanguageInjectionHost.Shred> pairs = place.myShreds;
-
-      visitor.visit(injectedPsi, pairs);
+      PsiFile injectedPsi = place.getInjectedPsi();
+      visitor.visit(injectedPsi, place);
     }
   }
 
@@ -158,7 +147,8 @@ public class InjectedLanguageUtil {
     return viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
   }
 
-  private static final InjectedPsiProvider INJECTED_PSI_PROVIDER = new InjectedPsiProvider();
+  private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
+  private static final Key<ParameterizedCachedValue<Places, PsiElement>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
   private static Places probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
@@ -170,16 +160,14 @@ public class InjectedLanguageUtil {
       ParameterizedCachedValue<Places,PsiElement> data = current.getUserData(INJECTED_PSI_KEY);
       Places places;
       if (data == null) {
-        places = InjectedPsiProvider.doCompute(current, injectedManager, project, hostPsiFile);
+        places = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
         if (places != null) {
+          // pollute user data only if there is injected fragment there
           ParameterizedCachedValue<Places, PsiElement> cachedValue = psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
           Document hostDocument = hostPsiFile.getViewProvider().getDocument();
           CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
           ((ParameterizedCachedValueImpl<Places, PsiElement>)cachedValue).setValue(result);
           current.putUserData(INJECTED_PSI_KEY, cachedValue);
-          //for (Place place : places) {
-          //  place.myShreds.get(0).host.putUserData(INJECTED_PSI_KEY, cachedValue);
-          //}
         }
       }
       else {
@@ -189,8 +177,9 @@ public class InjectedLanguageUtil {
         // check that injections found intersect with queried element
         TextRange elementRange = element.getTextRange();
         for (Place place : places) {
-          for (PsiLanguageInjectionHost.Shred shred : place.myShreds) {
+          for (PsiLanguageInjectionHost.Shred shred : place) {
             if (shred.host.getTextRange().intersects(elementRange)) {
+              assert places.isValid();
               return places;
             }
           }

@@ -276,7 +276,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
    */
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
-    List<PsiLanguageInjectionHost.Shred> shreds = InjectedLanguageUtil.getShreds(injectedPsi);
+    Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);
     if (shreds == null) return Collections.emptyList();
     Object result = null; // optimization: TextRange or ArrayList
     int count = 0;

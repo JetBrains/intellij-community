@@ -17,6 +17,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   private final int myPrefixLineCount;
   private final int mySuffixLineCount;
 
-  public DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, List<PsiLanguageInjectionHost.Shred> shreds) {
+  public DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, Place shreds) {
     myDelegate = delegate;
     myOneLine = oneLine;
     myPrefixes = new String[shreds.size()];
@@ -638,5 +639,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public void dispose() {
+    for (RangeMarker rangeMarker : myRelevantRangesInHostDocument) {
+      myDelegate.removeRangeMarker((RangeMarkerEx)rangeMarker);
+    }
   }
 }

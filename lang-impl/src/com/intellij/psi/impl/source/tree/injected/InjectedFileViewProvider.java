@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -16,37 +15,36 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author cdr
 */
 class InjectedFileViewProvider extends SingleRootFileViewProvider {
-  private List<PsiLanguageInjectionHost.Shred> myShreds;
+  private Place myShreds;
   private Project myProject;
   private final Object myLock = new Object();
+  private final DocumentWindow myDocumentWindow;
 
-  InjectedFileViewProvider(@NotNull PsiManager psiManager, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost.Shred> shreds) {
+  InjectedFileViewProvider(@NotNull PsiManager psiManager, @NotNull VirtualFileWindow virtualFile, Place shreds, DocumentWindow documentWindow) {
     super(psiManager, (VirtualFile)virtualFile);
+    myDocumentWindow = documentWindow;
     synchronized (myLock) {
-      myShreds = new ArrayList<PsiLanguageInjectionHost.Shred>(shreds);
+      myShreds = shreds;
       myProject = myShreds.get(0).host.getProject();
     }
   }
 
   public void rootChanged(PsiFile psiFile) {
     super.rootChanged(psiFile);
+
     List<PsiLanguageInjectionHost.Shred> shreds;
-    Project project;
     synchronized (myLock) {
       shreds = myShreds;
-      project = myProject;
     }
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    DocumentWindowImpl documentWindow = (DocumentWindowImpl)documentManager.getDocument(psiFile);
+    DocumentWindowImpl documentWindow = (DocumentWindowImpl)myDocumentWindow;
     assert documentWindow.getHostRanges().length == shreds.size();
-    String[] changes = documentWindow.calculateMinEditSequence(psiFile.getText());
+    String[] changes = documentWindow.calculateMinEditSequence(psiFile.getNode().getText());
     assert changes.length == shreds.size();
     for (int i = 0; i < changes.length; i++) {
       String change = changes[i];
@@ -61,14 +59,6 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
   }
 
   public FileViewProvider clone() {
-
-    /*
-    final FileViewProvider copy = super.clone();
-    final PsiFile psi = copy.getPsi(getBaseLanguage());
-    psi.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, getPsi(getBaseLanguage()).getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
-    return copy;
-    */
-
     final DocumentWindow oldDocumentWindow = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
     Document hostDocument = oldDocumentWindow.getDelegate();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
@@ -98,23 +88,31 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
     return file;
   }
 
-  void replace(VirtualFileWindowImpl virtualFile, List<PsiLanguageInjectionHost.Shred> shreds) {
+  void setShreds(Place shreds) {
     synchronized (myLock) {
-      setVirtualFile(virtualFile);
-      myShreds = new ArrayList<PsiLanguageInjectionHost.Shred>(shreds);
+      myShreds = new Place(shreds, shreds.getInjectedPsi());
       myProject = shreds.get(0).host.getProject();
     }
   }
 
   boolean isValid() {
+    return getShreds().isValid();
+  }
+
+  boolean isDisposed() {
     synchronized (myLock) {
-      return !myProject.isDisposed();
+      return myProject.isDisposed();
     }
   }
 
-  List<PsiLanguageInjectionHost.Shred> getShreds() {
+  Place getShreds() {
     synchronized (myLock) {
       return myShreds;
     }
+  }
+
+  @Override
+  public DocumentWindow getDocument() {
+    return myDocumentWindow;
   }
 }
