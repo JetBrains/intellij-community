@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                         return false;
                     } else if (InitializationUtils.
                             classInitializerAssignsVariableOrFails(
-                                    classInitializer,  field)){
+                                    classInitializer,  field, true)){
                         isInitialized = true;
                     }
                     assignedInInitializer = true;
@@ -124,7 +124,7 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                             false)) {
                         return false;
                     } else if (InitializationUtils.methodAssignsVariableOrFails(
-                            method, field)){
+                            method, field, true)){
                         isInitialized = true;
                     }
                     continue;
@@ -147,7 +147,7 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             }
             PsiClass containingClass = aClass.getContainingClass();
             final AssigmentVisitor assignmentVisitor =
-                    new AssigmentVisitor(field);
+                    new AssigmentVisitor(field, aClass);
             while (containingClass != null) {
                 containingClass.accept(assignmentVisitor);
                 if (assignmentVisitor.isVariableAssigned()) {
@@ -175,7 +175,7 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                             return false;
                         } else if (InitializationUtils.
                                 classInitializerAssignsVariableOrFails(
-                                        classInitializer, field)) {
+                                        classInitializer, field, true)) {
                             assignedInInitializer = true;
                         }
                     }
@@ -204,7 +204,7 @@ public class FieldMayBeFinalInspection extends BaseInspection {
             }
             PsiClass containingClass = aClass.getContainingClass();
             final AssigmentVisitor assignmentVisitor =
-                    new AssigmentVisitor(field);
+                    new AssigmentVisitor(field, aClass);
             while (containingClass != null) {
                 containingClass.accept(assignmentVisitor);
                 if (assignmentVisitor.isVariableAssigned()) {
@@ -252,10 +252,23 @@ public class FieldMayBeFinalInspection extends BaseInspection {
                 extends JavaRecursiveElementVisitor {
 
             private final PsiVariable variable;
+            private final PsiClass excludedClass;
             private boolean variableAssigned = false;
 
-            AssigmentVisitor(PsiVariable variable) {
+            AssigmentVisitor(PsiVariable variable, PsiClass excludedClass) {
                 this.variable = variable;
+                this.excludedClass = excludedClass;
+            }
+
+            @Override
+            public void visitClass(PsiClass aClass) {
+                if (variableAssigned) {
+                    return;
+                }
+                if (aClass.equals(excludedClass)) {
+                    return;
+                }
+                super.visitClass(aClass);
             }
 
             @Override

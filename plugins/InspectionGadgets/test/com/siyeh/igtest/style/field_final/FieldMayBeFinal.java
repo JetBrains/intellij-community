@@ -96,4 +96,15 @@ public class FieldMayBeFinal {
             private boolean pleaseTellMeIt = true;
         }
     }
+
+    static class Test3 {
+        private static String hostName;
+        static {
+            try {
+                hostName = java.net.InetAddress.getLocalHost().getHostName();
+            } catch (Exception ignored) {
+                hostName = "localhost";
+            }
+        }
+    }
 }

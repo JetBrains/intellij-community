@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,44 +26,69 @@ import java.util.Set;
 public class InitializationUtils{
 
     private InitializationUtils(){
-        super();
     }
 
     public static boolean methodAssignsVariableOrFails(
             @Nullable PsiMethod method, @NotNull PsiVariable variable) {
+        return methodAssignsVariableOrFails(method, variable, false);
+    }
+
+    public static boolean methodAssignsVariableOrFails(
+            @Nullable PsiMethod method, @NotNull PsiVariable variable,
+            boolean strict) {
         if (method == null) {
             return false;
         }
         final PsiCodeBlock body = method.getBody();
-        return body != null && blockAssignsVariableOrFails(body, variable);
+        return body != null && blockAssignsVariableOrFails(body, variable,
+                strict);
     }
 
     public static boolean classInitializerAssignsVariableOrFails(
             @Nullable PsiClassInitializer initializer,
-            @NotNull PsiVariable variable) {
+            @NotNull PsiVariable variable, boolean strict) {
         if (initializer == null) {
             return false;
         }
         final PsiCodeBlock body = initializer.getBody();
-        return blockAssignsVariableOrFails(body, variable);
+        return blockAssignsVariableOrFails(body, variable, strict);
     }
 
     public static boolean blockAssignsVariableOrFails(
             @Nullable PsiCodeBlock block, @NotNull PsiVariable variable) {
+        return blockAssignsVariableOrFails(block, variable, false);
+    }
+
+    public static boolean blockAssignsVariableOrFails(
+            @Nullable PsiCodeBlock block, @NotNull PsiVariable variable,
+            boolean strict) {
         return blockAssignsVariableOrFails(block, variable,
-                new HashSet<MethodSignature>());
+                new HashSet<MethodSignature>(), strict);
     }
 
     private static boolean blockAssignsVariableOrFails(
             @Nullable PsiCodeBlock block, @NotNull PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods, boolean strict){
         if(block == null){
             return false;
         }
         final PsiStatement[] statements = block.getStatements();
         for(final PsiStatement statement : statements){
             if(statementAssignsVariableOrFails(statement, variable,
-                    checkedMethods)){
+                    checkedMethods, strict)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean blockFails(@Nullable PsiCodeBlock block){
+        if(block == null){
+            return false;
+        }
+        final PsiStatement[] statements = block.getStatements();
+        for(PsiStatement statement : statements){
+            if(ExceptionUtils.statementThrowsException(statement)) {
                 return true;
             }
         }
@@ -72,7 +97,7 @@ public class InitializationUtils{
 
     private static boolean statementAssignsVariableOrFails(
             @Nullable PsiStatement statement, PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods, boolean strict){
         if(statement == null){
             return false;
         }
@@ -89,13 +114,13 @@ public class InitializationUtils{
                     (PsiReturnStatement) statement;
             final PsiExpression returnValue = returnStatement.getReturnValue();
             return expressionAssignsVariableOrFails(returnValue, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiThrowStatement){
             final PsiThrowStatement throwStatement =
                     (PsiThrowStatement) statement;
             final PsiExpression exception = throwStatement.getException();
             return expressionAssignsVariableOrFails(exception, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiExpressionListStatement){
             final PsiExpressionListStatement list =
                     (PsiExpressionListStatement) statement;
@@ -103,7 +128,7 @@ public class InitializationUtils{
             final PsiExpression[] expressions = expressionList.getExpressions();
             for(final PsiExpression expression : expressions){
                 if(expressionAssignsVariableOrFails(expression, variable,
-                        checkedMethods)){
+                        checkedMethods, strict)){
                     return true;
                 }
             }
@@ -114,17 +139,17 @@ public class InitializationUtils{
             final PsiExpression expression =
                     expressionStatement.getExpression();
             return expressionAssignsVariableOrFails(expression, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiDeclarationStatement){
             final PsiDeclarationStatement declarationStatement =
                     (PsiDeclarationStatement)statement;
             return declarationStatementAssignsVariableOrFails(
-                    declarationStatement, variable, checkedMethods);
+                    declarationStatement, variable, checkedMethods, strict);
         } else if(statement instanceof PsiForStatement){
             final PsiForStatement forStatement = (PsiForStatement)statement;
             return forStatementAssignsVariableOrFails(forStatement,
                     variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiForeachStatement){
             final PsiForeachStatement foreachStatement =
                     (PsiForeachStatement)statement;
@@ -134,44 +159,44 @@ public class InitializationUtils{
             final PsiWhileStatement whileStatement =
                     (PsiWhileStatement)statement;
             return whileStatementAssignsVariableOrFails(whileStatement,
-                    variable, checkedMethods);
+                    variable, checkedMethods, strict);
         } else if(statement instanceof PsiDoWhileStatement){
             final PsiDoWhileStatement doWhileStatement =
                     (PsiDoWhileStatement)statement;
             return doWhileAssignsVariableOrFails(doWhileStatement, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiSynchronizedStatement){
             final PsiSynchronizedStatement synchronizedStatement =
                     (PsiSynchronizedStatement)statement;
             final PsiCodeBlock body = synchronizedStatement.getBody();
             return blockAssignsVariableOrFails(body, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiBlockStatement){
             final PsiBlockStatement blockStatement =
                     (PsiBlockStatement)statement;
             final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
             return blockAssignsVariableOrFails(codeBlock, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiLabeledStatement){
             final PsiLabeledStatement labeledStatement =
                     (PsiLabeledStatement) statement;
             final PsiStatement statementLabeled =
                     labeledStatement.getStatement();
             return statementAssignsVariableOrFails(statementLabeled, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiIfStatement){
             final PsiIfStatement ifStatement = (PsiIfStatement)statement;
             return ifStatementAssignsVariableOrFails(ifStatement, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiTryStatement){
             final PsiTryStatement tryStatement = (PsiTryStatement)statement;
             return tryStatementAssignsVariableOrFails(tryStatement, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(statement instanceof PsiSwitchStatement){
             final PsiSwitchStatement switchStatement =
                     (PsiSwitchStatement)statement;
             return switchStatementAssignsVariableOrFails(switchStatement,
-                    variable, checkedMethods);
+                    variable, checkedMethods, strict);
         } else {
             // unknown statement type
             return false;
@@ -181,10 +206,10 @@ public class InitializationUtils{
     private static boolean switchStatementAssignsVariableOrFails(
             @NotNull PsiSwitchStatement switchStatement,
             @NotNull PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods) {
+            @NotNull Set<MethodSignature> checkedMethods, boolean strict) {
         final PsiExpression expression = switchStatement.getExpression();
         if (expressionAssignsVariableOrFails(expression, variable,
-                checkedMethods)) {
+                checkedMethods, strict)) {
             return true;
         }
         final PsiCodeBlock body = switchStatement.getBody();
@@ -218,7 +243,7 @@ public class InitializationUtils{
                 assigns = false;
             } else {
                 assigns |= statementAssignsVariableOrFails(statement, variable,
-                        checkedMethods);
+                        checkedMethods, strict);
                 if (i == statements.length - 1 && !assigns) {
                     return false;
                 }
@@ -229,7 +254,7 @@ public class InitializationUtils{
 
     private static boolean declarationStatementAssignsVariableOrFails(
             PsiDeclarationStatement declarationStatement, PsiVariable variable,
-            Set<MethodSignature> checkedMethods){
+            Set<MethodSignature> checkedMethods, boolean strict){
         final PsiElement[] elements =
                 declarationStatement.getDeclaredElements();
         for(PsiElement element : elements){
@@ -238,7 +263,7 @@ public class InitializationUtils{
                 final PsiExpression initializer =
                         declaredVariable.getInitializer();
                 if(expressionAssignsVariableOrFails(initializer, variable,
-                        checkedMethods)){
+                        checkedMethods, strict)){
                     return true;
                 }
             }
@@ -248,71 +273,79 @@ public class InitializationUtils{
 
     private static boolean tryStatementAssignsVariableOrFails(
             @NotNull PsiTryStatement tryStatement, PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods, boolean strict){
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        boolean initializedInTryAndCatch =
-                blockAssignsVariableOrFails(tryBlock, variable,
-                        checkedMethods);
+        if (!blockAssignsVariableOrFails(tryBlock, variable,
+                        checkedMethods, strict)) {
+            return false;
+        }
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
         for (final PsiCodeBlock catchBlock : catchBlocks){
-            initializedInTryAndCatch &=
-            blockAssignsVariableOrFails(catchBlock, variable,
-                    checkedMethods);
-        }
-        if (initializedInTryAndCatch){
-            return true;
+            if (strict) {
+                if (!blockFails(catchBlock)) {
+                    return false;
+                }
+            } else if (!blockAssignsVariableOrFails(catchBlock, variable,
+                    checkedMethods, strict)) {
+                return false;
+            }
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
         return blockAssignsVariableOrFails(finallyBlock, variable,
-                checkedMethods);
+                checkedMethods, strict);
     }
 
     private static boolean ifStatementAssignsVariableOrFails(
             @NotNull PsiIfStatement ifStatement,
             PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods,
+            boolean strict){
         final PsiExpression condition = ifStatement.getCondition();
         if(expressionAssignsVariableOrFails(condition, variable,
-                checkedMethods)){
+                checkedMethods, strict)){
             return true;
         }
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
         if (BoolUtils.isTrue(condition)) {
             return statementAssignsVariableOrFails(thenBranch, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if (BoolUtils.isFalse(condition)) {
             return statementAssignsVariableOrFails(elseBranch, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         }
         return statementAssignsVariableOrFails(thenBranch, variable,
-                checkedMethods) &&
+                checkedMethods, strict) &&
                 statementAssignsVariableOrFails(elseBranch, variable,
-                        checkedMethods);
+                        checkedMethods, strict);
     }
 
     private static boolean doWhileAssignsVariableOrFails(
             @NotNull PsiDoWhileStatement doWhileStatement,
             PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods,
+            boolean strict){
         final PsiExpression condition = doWhileStatement.getCondition();
         final PsiStatement body = doWhileStatement.getBody();
         return expressionAssignsVariableOrFails(condition, variable,
-                checkedMethods) ||
-                statementAssignsVariableOrFails(body, variable, checkedMethods);
+                checkedMethods, strict) ||
+                statementAssignsVariableOrFails(body, variable, checkedMethods,
+                        strict);
     }
 
     private static boolean whileStatementAssignsVariableOrFails(
             @NotNull PsiWhileStatement whileStatement, PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods,
+            boolean strict){
         final PsiExpression condition = whileStatement.getCondition();
         if(expressionAssignsVariableOrFails(condition, variable,
-                checkedMethods)){
+                checkedMethods, strict)){
             return true;
         }
         if(BoolUtils.isTrue(condition)){
             final PsiStatement body = whileStatement.getBody();
-            if(statementAssignsVariableOrFails(body, variable, checkedMethods)){
+            if(statementAssignsVariableOrFails(body, variable, checkedMethods,
+                    strict)){
                 return true;
             }
         }
@@ -321,24 +354,26 @@ public class InitializationUtils{
 
     private static boolean forStatementAssignsVariableOrFails(
             @NotNull PsiForStatement forStatement, PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods, boolean strict){
         final PsiStatement initialization = forStatement.getInitialization();
         if(statementAssignsVariableOrFails(initialization, variable,
-                checkedMethods)){
+                checkedMethods, strict)){
             return true;
         }
         final PsiExpression test = forStatement.getCondition();
-        if(expressionAssignsVariableOrFails(test, variable, checkedMethods)){
+        if(expressionAssignsVariableOrFails(test, variable, checkedMethods,
+                strict)){
             return true;
         }
         if(BoolUtils.isTrue(test)){
             final PsiStatement body = forStatement.getBody();
-            if(statementAssignsVariableOrFails(body, variable, checkedMethods)){
+            if(statementAssignsVariableOrFails(body, variable, checkedMethods,
+                    strict)){
                 return true;
             }
             final PsiStatement update = forStatement.getUpdate();
             if(statementAssignsVariableOrFails(update, variable,
-                    checkedMethods)){
+                    checkedMethods, strict)){
                 return true;
             }
         }
@@ -353,7 +388,7 @@ public class InitializationUtils{
     private static boolean expressionAssignsVariableOrFails(
             @Nullable PsiExpression expression,
             PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods, boolean strict){
         if(expression == null){
             return false;
         }
@@ -368,18 +403,18 @@ public class InitializationUtils{
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)expression;
             return methodCallAssignsVariableOrFails(methodCallExpression,
-                    variable, checkedMethods);
+                    variable, checkedMethods, strict);
         } else if (expression instanceof PsiNewExpression){
             final PsiNewExpression newExpression = (PsiNewExpression)expression;
             return newExpressionAssignsVariableOrFails(newExpression, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(expression instanceof PsiArrayInitializerExpression){
             final PsiArrayInitializerExpression array =
                     (PsiArrayInitializerExpression) expression;
             final PsiExpression[] initializers = array.getInitializers();
             for(final PsiExpression initializer : initializers){
                 if(expressionAssignsVariableOrFails(initializer, variable,
-                        checkedMethods)){
+                        checkedMethods, strict)){
                     return true;
                 }
             }
@@ -389,7 +424,7 @@ public class InitializationUtils{
                     (PsiTypeCastExpression) expression;
             final PsiExpression operand = typeCast.getOperand();
             return expressionAssignsVariableOrFails(operand, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(expression instanceof PsiArrayAccessExpression){
             final PsiArrayAccessExpression accessExpression =
                     (PsiArrayAccessExpression) expression;
@@ -398,36 +433,36 @@ public class InitializationUtils{
             final PsiExpression indexExpression =
                     accessExpression.getIndexExpression();
             return expressionAssignsVariableOrFails(arrayExpression, variable,
-                    checkedMethods) ||
+                    checkedMethods, strict) ||
                     expressionAssignsVariableOrFails(indexExpression, variable,
-                            checkedMethods);
+                            checkedMethods, strict);
         } else if(expression instanceof PsiPrefixExpression){
             final PsiPrefixExpression prefixExpression =
                     (PsiPrefixExpression) expression;
             final PsiExpression operand = prefixExpression.getOperand();
             return expressionAssignsVariableOrFails(operand, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(expression instanceof PsiPostfixExpression){
             final PsiPostfixExpression postfixExpression =
                     (PsiPostfixExpression) expression;
             final PsiExpression operand = postfixExpression.getOperand();
             return expressionAssignsVariableOrFails(operand, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         } else if(expression instanceof PsiBinaryExpression){
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             return expressionAssignsVariableOrFails(lhs, variable,
-                    checkedMethods) ||
+                    checkedMethods, strict) ||
                     expressionAssignsVariableOrFails(rhs, variable,
-                            checkedMethods);
+                            checkedMethods, strict);
         } else if(expression instanceof PsiConditionalExpression){
             final PsiConditionalExpression conditional =
                     (PsiConditionalExpression) expression;
             final PsiExpression condition = conditional.getCondition();
             if(expressionAssignsVariableOrFails(condition, variable,
-                    checkedMethods)){
+                    checkedMethods, strict)){
                 return true;
             }
             final PsiExpression thenExpression =
@@ -435,18 +470,20 @@ public class InitializationUtils{
             final PsiExpression elseExpression =
                     conditional.getElseExpression();
             return expressionAssignsVariableOrFails(thenExpression, variable,
-                    checkedMethods) &&
+                    checkedMethods, strict) &&
                     expressionAssignsVariableOrFails(elseExpression, variable,
-                            checkedMethods);
+                            checkedMethods, strict);
         } else if(expression instanceof PsiAssignmentExpression){
             final PsiAssignmentExpression assignment =
                     (PsiAssignmentExpression) expression;
             final PsiExpression lhs = assignment.getLExpression();
-            if(expressionAssignsVariableOrFails(lhs, variable, checkedMethods)){
+            if(expressionAssignsVariableOrFails(lhs, variable, checkedMethods,
+                    strict)){
                 return true;
             }
             final PsiExpression rhs = assignment.getRExpression();
-            if(expressionAssignsVariableOrFails(rhs, variable, checkedMethods)){
+            if(expressionAssignsVariableOrFails(rhs, variable, checkedMethods,
+                    strict)){
                 return true;
             }
             if(lhs instanceof PsiReferenceExpression){
@@ -463,13 +500,13 @@ public class InitializationUtils{
 
     private static boolean newExpressionAssignsVariableOrFails(
             @NotNull PsiNewExpression newExpression, PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods, boolean strict){
         final PsiExpressionList argumentList = newExpression.getArgumentList();
         if(argumentList != null){
             final PsiExpression[] args = argumentList.getExpressions();
             for(final PsiExpression arg : args){
                 if(expressionAssignsVariableOrFails(arg, variable,
-                        checkedMethods)){
+                        checkedMethods, strict)){
                     return true;
                 }
             }
@@ -477,14 +514,14 @@ public class InitializationUtils{
         final PsiArrayInitializerExpression arrayInitializer =
                 newExpression.getArrayInitializer();
         if(expressionAssignsVariableOrFails(arrayInitializer, variable,
-                checkedMethods)){
+                checkedMethods, strict)){
             return true;
         }
         final PsiExpression[] arrayDimensions =
                 newExpression.getArrayDimensions();
         for(final PsiExpression dim : arrayDimensions){
             if(expressionAssignsVariableOrFails(dim, variable,
-                    checkedMethods)){
+                    checkedMethods, strict)){
                 return true;
             }
         }
@@ -494,18 +531,19 @@ public class InitializationUtils{
     private static boolean methodCallAssignsVariableOrFails(
             @NotNull PsiMethodCallExpression callExpression,
             PsiVariable variable,
-            @NotNull Set<MethodSignature> checkedMethods){
+            @NotNull Set<MethodSignature> checkedMethods, boolean strict){
         final PsiExpressionList argList = callExpression.getArgumentList();
         final PsiExpression[] args = argList.getExpressions();
         for(final PsiExpression arg : args){
-            if(expressionAssignsVariableOrFails(arg, variable, checkedMethods)){
+            if(expressionAssignsVariableOrFails(arg, variable, checkedMethods,
+                    strict)){
                 return true;
             }
         }
         final PsiReferenceExpression methodExpression =
                 callExpression.getMethodExpression();
         if(expressionAssignsVariableOrFails(methodExpression, variable,
-                checkedMethods)){
+                checkedMethods, strict)){
             return true;
         }
         final PsiMethod method = callExpression.resolveMethod();
@@ -520,7 +558,7 @@ public class InitializationUtils{
         final PsiClass containingClass =
                 ClassUtils.getContainingClass(callExpression);
         final PsiClass calledClass = method.getContainingClass();
-        if(!calledClass.equals(containingClass)){
+        if(calledClass == null || !calledClass.equals(containingClass)){
             return false;
         }
         if(method.hasModifierProperty(PsiModifier.STATIC)
@@ -530,7 +568,7 @@ public class InitializationUtils{
                 || calledClass.hasModifierProperty(PsiModifier.FINAL)){
             final PsiCodeBlock body = method.getBody();
             return blockAssignsVariableOrFails(body, variable,
-                    checkedMethods);
+                    checkedMethods, strict);
         }
         return false;
     }
