@@ -3,6 +3,9 @@ package com.intellij.idea;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.extensions.PluginId;
@@ -42,7 +45,12 @@ public class IdeaTestApplication extends CommandLineApplication {
     if (ourInstance == null) {
       new IdeaTestApplication();
       PluginsFacade.INSTANCE.getPlugins(); //initialization
-      ApplicationManagerEx.getApplicationEx().load(null);
+      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      new WriteAction() {
+        protected void run(Result result) throws Throwable {
+          app.load(null);
+        }
+      }.execute();
     }
     return (IdeaTestApplication)ourInstance;
   }
