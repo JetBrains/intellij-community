@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -64,6 +65,9 @@ public final class ExecutionHandler {
         builder.setBuildFile(buildFile.getAllOptions(), VfsUtil.virtualToIoFile(buildFile.getVirtualFile()));
         builder.calculateProperties(dataContext);
         builder.addTargets(targets);
+
+        builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
+
         messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets);
         commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
         messageView.setBuildCommandLine(commandLine.getCommandLineString());
