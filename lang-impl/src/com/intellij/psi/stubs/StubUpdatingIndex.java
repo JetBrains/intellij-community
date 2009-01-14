@@ -368,10 +368,10 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         lock.lock();
         final ValueContainer<SerializedStubTree> valueContainer = getData(key);
         if (valueContainer.size() != 1) {
+          LOG.assertTrue(valueContainer.size() == 0);
           return result;
         }
 
-        assert valueContainer.size() == 1;
         result.put(key, valueContainer.getValueIterator().next());
       }
       finally {
