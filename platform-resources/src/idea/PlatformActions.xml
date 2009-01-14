@@ -110,7 +110,7 @@
         <group id="ExportImportGroup">
           <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
           <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
-          <action id="SaveInNewFormat" class="com.intellij.ide.actions.OpenInNewFormatAction" text="Open in New (Directory Based) Format" internal="true"/>
+          <action id="SaveInNewFormat" class="com.intellij.ide.actions.OpenInNewFormatAction" text="Open in New (Directory Based) Format"/>
         </group>
         <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
