@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class XRemoveWatchAction extends XWatchesTreeActionBase {
 
   protected boolean isEnabled(final AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e);
-    return tree != null && !getSelectedWatches(tree).isEmpty();
+    return tree != null && !getSelectedNodes(tree, XDebuggerTreeNode.class).isEmpty();
   }
 
 
@@ -23,8 +23,8 @@ public class XRemoveWatchAction extends XWatchesTreeActionBase {
     XDebuggerTree tree = XDebuggerTree.getTree(e);
     if (tree == null) return;
 
-    List<WatchNode> watchNodes = getSelectedWatches(tree);
+    List<? extends XDebuggerTreeNode> nodes = getSelectedNodes(tree, XDebuggerTreeNode.class);
     XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
-    tab.getWatchesView().removeWatches(watchNodes);
+    tab.getWatchesView().removeWatches(nodes);
   }
 }

@@ -15,7 +15,7 @@ public class XEditWatchAction extends XWatchesTreeActionBase {
   @Override
   public void update(final AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e);
-    e.getPresentation().setVisible(tree != null && getSelectedWatches(tree).size() == 1);
+    e.getPresentation().setVisible(tree != null && getSelectedNodes(tree, WatchNode.class).size() == 1);
     super.update(e);
   }
 
@@ -27,7 +27,7 @@ public class XEditWatchAction extends XWatchesTreeActionBase {
     XDebuggerTree tree = XDebuggerTree.getTree(e);
     if (tree == null) return;
 
-    List<WatchNode> watchNodes = getSelectedWatches(tree);
+    List<? extends WatchNode> watchNodes = getSelectedNodes(tree, WatchNode.class);
     if (watchNodes.size() != 1) return;
 
     WatchNode node = watchNodes.get(0);
