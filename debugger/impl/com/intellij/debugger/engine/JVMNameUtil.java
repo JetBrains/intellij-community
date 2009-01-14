@@ -60,6 +60,9 @@ public class JVMNameUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void appendJVMSignature(JVMNameBuffer buffer , PsiType type){
+    if (type == null) {
+      return;
+    }
     final PsiType psiType = TypeConversionUtil.erasure(type);
     if (psiType instanceof PsiArrayType) {
       buffer.append(new JVMRawText("["));
@@ -89,7 +92,7 @@ public class JVMNameUtil {
       buffer.append(getPrimitiveSignature(psiType.getCanonicalText()));
     }
     else {
-      LOG.assertTrue(false, "unknown type " + (type != null? type.getCanonicalText() : "null"));
+      LOG.assertTrue(false, "unknown type " + type.getCanonicalText());
     }
   }
 
