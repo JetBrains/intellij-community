@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.messages.MessageBusConnection;
@@ -62,6 +63,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
   private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
+  private final SLRUCache<Project, File> myGeneratedDataPaths = new SLRUCache<Project, File>(8, 8) {
+    @NotNull
+    public File createValue(Project project) {
+      return CompilerPaths.getGeneratedDataDirectory(project);
+    }
+  };
 
   private final ProjectManager myProjectManager;
 
@@ -801,6 +808,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     public void projectClosed(final Project project) {
+      myGeneratedDataPaths.clear();
       myConnections.remove(project).disconnect();
       synchronized (mySourcesToRecompile) {
         mySourcesToRecompile.remove(getProjectId(project));
@@ -954,38 +962,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-
-  private static boolean belongsToIntermediateSources(VirtualFile file, Project project) {
-    final IntermediateOutputCompiler[] srcGenerators = CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
-    if (srcGenerators.length == 0) {
-      return false;
+  private boolean belongsToIntermediateSources(VirtualFile file, Project project) {
+    try {
+      return FileUtil.isAncestor(myGeneratedDataPaths.get(project), new File(file.getPath()), true);
     }
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    if (modules.length == 0) {
-      return false;
+    catch (IOException e) {
+      LOG.error(e); // according to javadoc of FileUtil.isAncestor(), this should never happen
     }
-
-    final String filePath = file.getPath();
-    for (IntermediateOutputCompiler generator : srcGenerators) {
-      for (Module module : modules) {
-        String outputRoot = CompilerPaths.getGenerationOutputPath(generator, module, false);
-        if (!outputRoot.endsWith("/")) {
-          outputRoot += "/";
-        }
-        if (FileUtil.startsWith(filePath, outputRoot)) {
-          return true;
-        }
-
-        String testsOutputRoot = CompilerPaths.getGenerationOutputPath(generator, module, true);
-        if (!testsOutputRoot.endsWith("/")) {
-          testsOutputRoot += "/";
-        }
-        if (FileUtil.startsWith(filePath, testsOutputRoot)) {
-          return true;
-        }
-      }
-    }
-
     return false;
   }
 
