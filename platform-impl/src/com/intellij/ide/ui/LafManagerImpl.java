@@ -4,15 +4,11 @@ import com.incors.plaf.alloy.AlloyBedouin;
 import com.incors.plaf.alloy.AlloyIdea;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.RoamingTypePerPlatform;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.ScreenUtil;
@@ -43,10 +39,11 @@ import java.util.HashMap;
  */
 @State(
     name = "LafManager",
+    roamingType = RoamingType.PER_PLATFORM,
     storages = {@Storage(
         id = "other",
         file = "$APP_CONFIG$/options.xml")})
-public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element>, RoamingTypePerPlatform {
+public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String IDEA_LAF_CLASSNAME = "idea.laf.classname";

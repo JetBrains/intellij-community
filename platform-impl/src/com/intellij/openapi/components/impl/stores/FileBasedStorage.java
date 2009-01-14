@@ -54,8 +54,8 @@ public class FileBasedStorage extends XmlElementStorage {
                           String rootElementName,
                           @NotNull Disposable parentDisposable,
                           PicoContainer picoContainer,
-                          ComponentRoamingManager componentRoamingManager) {
-    super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager);
+                          ComponentRoamingManager componentRoamingManager, ComponentVersionProvider localComponentVersionProvider) {
+    super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager, localComponentVersionProvider);
     Application app = ApplicationManager.getApplication();
 
     if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
@@ -132,6 +132,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   public void resetProviderCache() {
     myProviderUpToDateHash = null;
+    myProviderVersions = null;
   }
 
 
@@ -419,7 +420,7 @@ VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
 
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    StorageData loadedData = loadData(true);
+    StorageData loadedData = loadData(true, myListener);
     Document document = getDocument(loadedData);
     if (phisicalContentNeedsSave(document)) {
       File file = new File(myFile.getAbsolutePath());

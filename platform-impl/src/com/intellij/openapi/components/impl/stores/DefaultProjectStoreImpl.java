@@ -54,7 +54,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final Document document = _d;
 
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
-                                                            ROOT_TAG_NAME, StreamProvider.DEFAULT, "", ComponentRoamingManager.getInstance()) {
+                                                            ROOT_TAG_NAME, StreamProvider.DEFAULT, "", ComponentRoamingManager.getInstance(),
+                                                            ComponentVersionProvider.EMPTY) {
       @Nullable
       protected Document loadDocument() throws StateStorageException {
         return document;

@@ -46,13 +46,26 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected Integer myProviderUpToDateHash;
   private boolean mySavingDisabled = false;
 
+  private Map<String, Element> myStorageComponentStates = new TreeMap<String, Element>();
+
+  private final ComponentVersionProvider myLocalVersionProvider;
+  private final ComponentVersionProvider myRemoteVersionProvider;
+
+  protected Map<String, Long> myProviderVersions = null;
+
+  protected ComponentVersionListener myListener = new ComponentVersionListener(){
+    public void componentStateChanged(String componentName) {
+      myLocalVersionProvider.changeVersion(componentName,  System.currentTimeMillis());
+    }
+  };
+
 
   protected XmlElementStorage(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
                               @NotNull Disposable parentDisposable,
                               @NotNull String rootElementName,
                               StreamProvider streamProvider,
                               String fileSpec,
-                              ComponentRoamingManager componentRoamingManager) {
+                              ComponentRoamingManager componentRoamingManager, ComponentVersionProvider localComponentVersionsProvider) {
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myRootElementName = rootElementName;
     myStreamProvider = streamProvider;
@@ -60,6 +73,27 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myComponentRoamingManager = componentRoamingManager;
     Disposer.register(parentDisposable, this);
     myIsProjectSettings = "$PROJECT_FILE$".equals(myFileSpec) || myFileSpec.startsWith("$PROJECT_CONFIG_DIR$");
+
+    myLocalVersionProvider = localComponentVersionsProvider;
+
+    myRemoteVersionProvider = new ComponentVersionProvider(){
+      public long getVersion(String name) {
+        if (myProviderVersions == null) {
+          loadProviderVersions();
+        }
+
+        return myProviderVersions.containsKey(name) ? myProviderVersions.get(name).longValue() : 0;
+
+      }
+
+      public void changeVersion(String name, long version) {
+        if (myProviderVersions == null) {
+          loadProviderVersions();
+        }
+
+        myProviderVersions.put(name, version);
+      }
+    };
   }
 
   @Nullable
@@ -70,7 +104,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     final StorageData storageData = getStorageData();
     final Element state = storageData.getState(componentName);
 
+
+
     if (state != null) {
+      if (!myStorageComponentStates.containsKey(componentName)) {
+        myStorageComponentStates.put(componentName, state);
+      }
       storageData.removeState(componentName);
     }
 
@@ -92,20 +131,22 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected StorageData getStorageData() throws StateStorageException {
     if (myLoadedData != null) return myLoadedData;
 
-    myLoadedData = loadData(true);
+    myLoadedData = loadData(true, myListener);
 
     return myLoadedData;
   }
 
   @NotNull
-  protected StorageData loadData(final boolean useProvidersData) throws StateStorageException {
+  protected StorageData loadData(final boolean useProvidersData, ComponentVersionListener listener) throws StateStorageException {
     Document document = loadDocument();
 
     StorageData result = createStorageData();
 
     if (document != null) {
-      LOG.info("Document was not loaded for " + myFileSpec);
       loadState(result, document.getRootElement());
+    }
+    else {
+      LOG.info("Document was not loaded for " + myFileSpec);      
     }
 
     if (!myIsProjectSettings && useProvidersData) {
@@ -117,6 +158,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
               if (sharedDocument != null) {
                 filterComponentsDisabledForRoaming(sharedDocument.getRootElement(), roamingType);
+                filterOutOfDateComponents(sharedDocument.getRootElement());
 
                 loadState(result, sharedDocument.getRootElement());
               }
@@ -175,7 +217,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   @NotNull
   public ExternalizationSession startExternalization() {
     try {
-      final ExternalizationSession session = new MyExternalizationSession(getStorageData().clone());
+      final ExternalizationSession session = new MyExternalizationSession(getStorageData().clone(), myListener);
 
       mySession = session;
       return session;
@@ -231,9 +273,11 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   protected class MyExternalizationSession implements ExternalizationSession {
     private StorageData myStorageData;
+    private final ComponentVersionListener myListener;
 
-    public MyExternalizationSession(final StorageData storageData) {
+    public MyExternalizationSession(final StorageData storageData, ComponentVersionListener listener) {
       myStorageData = storageData;
+      myListener = listener;
     }
 
     public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
@@ -251,6 +295,19 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       if (element.getAttributes().isEmpty() && element.getChildren().isEmpty()) return;
 
       myStorageData.setState(componentName, element);
+
+      Element oldElement = myStorageComponentStates.get(componentName);
+      try {
+        if (oldElement != null && !JDOMUtil.areElementsEqual(oldElement, element)) {
+          myListener.componentStateChanged(componentName);
+        }
+      }
+      finally {
+        myStorageComponentStates.put(componentName, (Element)element.clone());
+      }
+
+
+
     }
   }
 
@@ -384,6 +441,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
                   if (copy.getRootElement().getChildren().size() > 0) {
                     StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
+                    Document versionDoc = createVersionDocument(copy);
+                    if (versionDoc.getRootElement().getChildren().size() > 0) {
+                      StorageUtil.sendContent(myStreamProvider, myFileSpec + ".ver", versionDoc, roamingType, true);
+                    }
                   }
                 }
                 catch (IOException e) {
@@ -472,6 +533,31 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
       return null;
     }
+  }
+
+  private Document createVersionDocument(Document copy) {
+    return new Document(StateStorageManagerImpl.createComponentVersionsXml(loadVersions(copy)));
+  }
+
+  private Map<String, Long> loadVersions(Document copy) {
+
+    HashMap<String, Long> result = new HashMap<String, Long>();
+
+    List list = copy.getRootElement().getChildren(COMPONENT);
+    for (Object o : list) {
+      if (o instanceof Element) {
+        Element component = (Element)o;
+        String name = component.getAttributeValue(ATTR_NAME);
+        if (name != null) {
+          long version = myLocalVersionProvider.getVersion(name);
+          if (version != 0) {
+            result.put(name, version);
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   public void dispose() {
@@ -644,8 +730,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
+  public void resetData(){
+    myLoadedData = null;
+  }
+
   public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
-    final StorageData storageData = loadData(false);
+    final StorageData storageData = loadData(false, myListener);
 
     final StorageData oldLoadedData = myLoadedData;
 
@@ -686,5 +776,44 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
+  private void filterOutOfDateComponents(final Element element) {
+    final List components = element.getChildren(COMPONENT);
+
+    List<Element> toDelete = new ArrayList<Element>();
+
+    for (Object componentObj : components) {
+      final Element componentElement = (Element)componentObj;
+      final String nameAttr = componentElement.getAttributeValue(NAME);
+
+      if (myRemoteVersionProvider.getVersion(nameAttr) <= myLocalVersionProvider.getVersion(nameAttr)) {
+        toDelete.add(componentElement);
+      }
+      else {
+        myLocalVersionProvider.changeVersion(nameAttr, myRemoteVersionProvider.getVersion(nameAttr));
+      }
+    }
+
+    for (Element toDeleteElement : toDelete) {
+      element.removeContent(toDeleteElement);
+    }
+
+  }
+
+  private void loadProviderVersions() {
+    myProviderVersions = new TreeMap<String, Long>();
+    for (RoamingType type : RoamingType.values()) {
+      Document doc = null;
+      try {
+        doc = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec + ".ver", type));
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+      }
+      if (doc != null) {
+        StateStorageManagerImpl.loadComponentVersions(myProviderVersions, doc);
+      }
+
+    }
+  }
 
 }

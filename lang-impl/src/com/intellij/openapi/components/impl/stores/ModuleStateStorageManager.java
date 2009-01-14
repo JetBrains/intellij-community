@@ -3,6 +3,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,4 +23,13 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
   protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
     return ModuleStoreImpl.DEFAULT_STATE_STORAGE;
   }
+
+  protected String getVersionsFilePath() {
+    return PathManager.getConfigPath() + "/" + "module" + getLocationHash() + ".xml";
+  }
+
+  private String getLocationHash() {
+    return myModule.getName() + Integer.toHexString(myModule.getModuleFilePath().hashCode());    
+  }
+
 }

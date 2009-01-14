@@ -5,26 +5,27 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.fs.IFile;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.ConnectException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider {
+public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider, ComponentVersionProvider {
 
   private static final Logger LOG = Logger.getInstance("#" + StateStorageManagerImpl.class.getName());
 
@@ -35,6 +36,10 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   private final String myRootTagName;
   private Object mySession;
   private final PicoContainer myPicoContainer;
+
+  private Map<String, Long> myComponentVersions;
+
+  private String myVersionsFilePath = null;
 
   private final MultiMap<RoamingType, StreamProvider> myStreamProviders = new MultiMap<RoamingType, StreamProvider>();
 
@@ -105,6 +110,74 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   }
 
+  public long getVersion(String name) {
+    if (myComponentVersions == null) {
+      myComponentVersions = loadVersions();
+    }
+
+    return myComponentVersions.containsKey(name) ? myComponentVersions.get(name).longValue() : 0;
+  }
+
+  public void changeVersionsFilePath(String newPath) {
+    myVersionsFilePath = newPath;
+    resetLocalVersions();
+  }
+
+  public void resetLocalVersions(){
+    myComponentVersions = null;
+  }
+
+  private Map<String, Long> loadVersions() {
+    if (myVersionsFilePath == null) {
+      myVersionsFilePath = getVersionsFilePath();
+    }
+
+    TreeMap<String, Long> result = new TreeMap<String, Long>();
+    String filePath = myVersionsFilePath;
+    if (filePath != null) {
+      try {
+        Document document = JDOMUtil.loadDocument(new File(filePath));
+        loadComponentVersions(result, document);
+      }
+      catch (JDOMException e) {
+        LOG.debug(e);
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+      }
+    }
+    return result;
+  }
+
+  public static void loadComponentVersions(Map<String, Long> result, Document document) {
+    List componentObjs = document.getRootElement().getChildren("component");
+    for (Object componentObj : componentObjs) {
+      if (componentObj instanceof Element) {
+        Element componentEl = (Element)componentObj;
+        String name = componentEl.getAttributeValue("name");
+        String version = componentEl.getAttributeValue("version");
+
+        if (name != null && version != null) {
+          try {
+            result.put(name, Long.parseLong(version));
+          }
+          catch (NumberFormatException e) {
+            //ignore
+          }
+        }
+      }
+    }
+  }
+
+  protected abstract String getVersionsFilePath();
+
+  public void changeVersion(String name, long version) {
+    if (myComponentVersions == null) {
+      myComponentVersions = loadVersions();
+    }
+
+    myComponentVersions.put(name, version);
+  }
 
   @Nullable
   private StateStorage createStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
@@ -173,7 +246,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   protected StateStorage createFileStateStorage(final String fileSpec, final String expandedFile, final String rootTagName,
                                                 final PicoContainer picoContainer) {
     return new FileBasedStorage(getMacroSubstitutor(fileSpec), this, expandedFile, fileSpec, rootTagName, this, picoContainer,
-                                ComponentRoamingManager.getInstance()) {
+                                ComponentRoamingManager.getInstance(), this) {
       @NotNull
       protected StorageData createStorageData() {
         return StateStorageManagerImpl.this.createStorageData(fileSpec);
@@ -277,11 +350,13 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
     for (String macro : myMacros.keySet()) {
       final String replacement = myMacros.get(macro);
-      if (replacement == null) {
+      /*if (replacement == null) {
         return null;
-      }
+      }*/
 
-      actualFile = StringUtil.replace(actualFile, macro, replacement);
+      if (replacement != null) {
+        actualFile = StringUtil.replace(actualFile, macro, replacement);
+      }
     }
 
     return actualFile;
@@ -313,11 +388,16 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   }
 
   public void finishSave(final SaveSession saveSession) {
-    assert mySession == saveSession: "mySession=" + mySession + " saveSession=" + saveSession;
+    try {
+      assert mySession == saveSession: "mySession=" + mySession + " saveSession=" + saveSession;
 
-    ((MySaveSession)saveSession).finishSave();
+      ((MySaveSession)saveSession).finishSave();
 
-    mySession = null;
+      mySession = null;
+    }
+    finally {
+      save();
+    }
   }
 
   public void reset(){
@@ -458,4 +538,39 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     }
   }
 
+  public void save() {
+    if (myVersionsFilePath == null) {
+      myVersionsFilePath = getVersionsFilePath();
+    }
+
+    if (myVersionsFilePath != null) {
+      try {
+        if (myComponentVersions == null) {
+          myComponentVersions = loadVersions();
+        }
+        
+        JDOMUtil.writeDocument(new Document(createComponentVersionsXml(myComponentVersions)), myVersionsFilePath, "\n");
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+
+    }
+  }
+
+  public static Element createComponentVersionsXml(Map<String, Long> versions) {
+    Element vers = new Element("versions");
+
+    for (String name : versions.keySet()) {
+      long version = versions.get(name);
+      if (version != 0) {
+        Element element = new Element("component");
+        vers.addContent(element);
+        element.setAttribute("name", name);
+        element.setAttribute("version", String.valueOf(version));
+      }
+
+    }
+    return vers;
+  }
 }

@@ -54,6 +54,10 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
         return fileName;
       }
 
+      protected String getVersionsFilePath() {
+        return PathManager.getConfigPath() + "/" + "appComponentVersions.xml";
+      }
+
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
         if (fileSpec.equals("$" + APP_CONFIG_STORAGE_MACRO + "$/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
         return super.getMacroSubstitutor(fileSpec);

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.application.PathManager;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
@@ -64,6 +65,10 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     return name;
   }
 
+  protected String getVersionsFilePath() {
+    return PathManager.getConfigPath() + "/" + "project" + myProject.getLocationHash() + ".xml";
+  }
+
   private static boolean isWorkspace(final Map options) {
     return options != null && Boolean.parseBoolean((String)options.get(ProjectStoreImpl.OPTION_WORKSPACE));
   }
@@ -75,7 +80,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   protected StateStorage createFileStateStorage(final String fileSpec, final String expandedFile, final String rootTagName,
                                                 final PicoContainer picoContainer) {
     return new FileBasedStorage(getMacroSubstitutor(fileSpec),this,expandedFile,fileSpec, rootTagName, this, picoContainer,
-                                ComponentRoamingManager.getInstance()) {
+                                ComponentRoamingManager.getInstance(), this) {
       @NotNull
       protected StorageData createStorageData() {
         return ProjectStateStorageManager.this.createStorageData(fileSpec);

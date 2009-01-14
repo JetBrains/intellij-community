@@ -12,7 +12,6 @@ import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.RoamingTypePerPlatform;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Document;
@@ -29,14 +28,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(
   name = "KeymapManager",
+  roamingType = RoamingType.PER_PLATFORM,
   storages = {
     @Storage(
         id="keymap",
         file = "$APP_CONFIG$/keymap.xml"
     )}
 )
-public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableComponent,
-                                                                  RoamingTypePerPlatform {
+public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
 

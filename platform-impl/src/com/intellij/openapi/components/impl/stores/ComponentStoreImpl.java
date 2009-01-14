@@ -245,6 +245,13 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   private RoamingType getRoamingType(final PersistentStateComponent component) {
+    if (component instanceof RoamingTypeDisabled) {
+       return RoamingType.DISABLED;
+    }
+    else if (component instanceof RoamingTypePerPlatform) {
+      return RoamingType.PER_PLATFORM;
+    }
+
     final State stateSpec = getStateSpec(component);
     assert stateSpec != null;
 
