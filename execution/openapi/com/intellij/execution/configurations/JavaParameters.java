@@ -115,7 +115,7 @@ public class JavaParameters {
       return;
     }
 
-    Charset encoding = EncodingProjectManager.getInstance(module.getProject()).getEncoding(null, true);
+    Charset encoding = EncodingProjectManager.getInstance(module.getProject()).getDefaultCharset();
     if (encoding != null) {
       myCharset = encoding;
     }
