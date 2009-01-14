@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpFileType;
@@ -97,7 +96,13 @@ class GroupSurrounder implements Surrounder {
     }
 
     private static boolean isInsideStringLiteral(PsiElement context) {
-        return PsiTreeUtil.getContextOfType(context, PsiLiteralExpression.class, false) != null;
+      while (context != null) {
+        if (RegExpElementImpl.isLiteralExpression(context)) {
+          return true;
+        }
+        context = context.getContext();
+      }
+      return false;
     }
 
     protected String makeReplacement(StringBuilder s) {

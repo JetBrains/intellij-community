@@ -13,10 +13,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="openapi" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="psi-extapi" />
   </component>
   <component name="RetroweaverPlugin">
     <setting name="active" value="false" />

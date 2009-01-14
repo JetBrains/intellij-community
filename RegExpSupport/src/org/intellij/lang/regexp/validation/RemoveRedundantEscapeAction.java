@@ -16,18 +16,18 @@
 package org.intellij.lang.regexp.validation;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlStringUtil;
-import com.intellij.lang.ASTNode;
-import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
 import org.jetbrains.annotations.NotNull;
 
 class RemoveRedundantEscapeAction implements IntentionAction {
@@ -63,14 +63,14 @@ class RemoveRedundantEscapeAction implements IntentionAction {
 
     private String replacement(Character v) {
         final PsiElement context = myChar.getContainingFile().getContext();
-        return context instanceof PsiLiteralExpression ?
+        return RegExpElementImpl.isLiteralExpression(context) ?
                 StringUtil.escapeStringCharacters(v.toString()) :
                 (context instanceof XmlElement ?
                         XmlStringUtil.escapeString(v.toString()) :
                         v.toString());
     }
 
-    public boolean startInWriteAction() {
+  public boolean startInWriteAction() {
         return true;
     }
 }

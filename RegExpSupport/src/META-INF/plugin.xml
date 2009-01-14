@@ -11,6 +11,8 @@
   <vendor>Sascha Weinreuter</vendor>
   <idea-version since-build="6656"/>
 
+  <depends>com.intellij.modules.xml</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
 

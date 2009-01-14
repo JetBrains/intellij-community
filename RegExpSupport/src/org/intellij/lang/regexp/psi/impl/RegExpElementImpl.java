@@ -18,11 +18,13 @@ package org.intellij.lang.regexp.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -85,6 +87,16 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
     }
 
     protected final boolean isInsideStringLiteral() {
-        return getContainingFile().getContext() instanceof PsiLiteralExpression;
+        return isLiteralExpression(getContainingFile().getContext());
     }
+
+  public static boolean isLiteralExpression(PsiElement context) {
+    final ASTNode astNode = context.getNode();
+    if (astNode == null) {
+      return false;
+    }
+    final IElementType elementType = astNode.getElementType();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
+    return parserDefinition.getStringLiteralElements().contains(elementType);
+  }
 }
