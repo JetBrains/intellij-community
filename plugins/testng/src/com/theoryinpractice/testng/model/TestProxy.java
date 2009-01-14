@@ -12,11 +12,10 @@ import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.theoryinpractice.testng.ui.Printable;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
+import org.jetbrains.annotations.Nullable;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
@@ -34,7 +33,7 @@ public class TestProxy implements AbstractTestProxy {
   private String name;
   private TestProxy parent;
   private List<Printable> output;
-  private PsiElement psiElement;
+  private SmartPsiElementPointer psiElement;
   private boolean inProgress;
   private int myExceptionMark;
 
@@ -52,12 +51,19 @@ public class TestProxy implements AbstractTestProxy {
     this.name = name;
   }
 
+  @Nullable
   public PsiElement getPsiElement() {
-    return psiElement;
+    return psiElement != null ? psiElement.getElement() : null;
   }
 
   public void setPsiElement(PsiElement psiElement) {
-    this.psiElement = psiElement;
+    if (psiElement != null) {
+      final Project project = psiElement.getProject();
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      this.psiElement = SmartPointerManager.getInstance(project).createLazyPointer(psiElement);
+    } else {
+      this.psiElement = null;
+    }
   }
 
   public boolean isResult() {
@@ -99,7 +105,7 @@ public class TestProxy implements AbstractTestProxy {
           PsiMethod[] methods = psiClass.getAllMethods();
           for (PsiMethod method : methods) {
             if (method.getName().equals(resultMessage.getMethod())) {
-              psiElement = method;
+              setPsiElement(method);
               break;
             }
           }
@@ -141,7 +147,9 @@ public class TestProxy implements AbstractTestProxy {
 
   public Location getLocation(final Project project) {
     if (psiElement == null) return null;
-    return new PsiLocation<PsiElement>(project, psiElement);
+    final PsiElement element = psiElement.getElement();
+    if (element == null) return null;
+    return new PsiLocation<PsiElement>(project, element);
   }
 
   public Navigatable getDescriptor(final Location location) {
