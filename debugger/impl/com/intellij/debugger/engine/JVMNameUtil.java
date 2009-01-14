@@ -89,7 +89,7 @@ public class JVMNameUtil {
       buffer.append(getPrimitiveSignature(psiType.getCanonicalText()));
     }
     else {
-      LOG.assertTrue(false, "unknown type " + type.getCanonicalText());
+      LOG.assertTrue(false, "unknown type " + (type != null? type.getCanonicalText() : "null"));
     }
   }
 
