@@ -546,7 +546,8 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public boolean isSelected(AnActionEvent event) {
-      return AntConfigurationBase.getInstance(myProject).isFilterTargets();
+      final Project project = myProject;
+      return project != null? AntConfigurationBase.getInstance(project).isFilterTargets() : false;
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
