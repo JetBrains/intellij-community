@@ -380,8 +380,11 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
             if (element == child && childUrl != null) {
               newRoots.add(Pair.create(childUrl, root.second));
             }
-            else if (element == oldParent) {
-              newRoots.add(Pair.create(root.first.createUrlByElement(newParent), root.second));
+            else {
+              if (element == oldParent) {
+                newRoots.add(Pair.create(root.first.createUrlByElement(newParent), root.second));
+              }
+              newRoots.add(root);
             }
           }
           myName2FavoritesRoots.put(listName, newRoots);
