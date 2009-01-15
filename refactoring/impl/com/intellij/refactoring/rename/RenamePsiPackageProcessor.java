@@ -1,9 +1,9 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -44,6 +45,16 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     }
     else {
       return newName;
+    }
+  }
+
+  @Override
+  public void findExistingNameConflicts(PsiElement element, String newName, Collection<String> conflicts) {
+    final PsiPackage aPackage = (PsiPackage)element;
+    final Project project = element.getProject();
+    final String qualifiedNameAfterRename = getPackageQualifiedNameAfterRename(aPackage, newName, true);
+    if (JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project)) != null) {
+      conflicts.add("Class with qualified name \'" + qualifiedNameAfterRename + "\'  already exist");
     }
   }
 
