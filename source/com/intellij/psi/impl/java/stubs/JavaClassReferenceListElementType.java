@@ -132,6 +132,20 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
       for (String name : names) {
         sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, PsiNameHelper.getShortClassName(name));
       }
+
+      if (role == PsiReferenceList.Role.EXTENDS_LIST) {
+        StubElement parentStub = stub.getParentStub();
+        if (parentStub instanceof PsiClassStub) {
+          PsiClassStub psiClassStub = (PsiClassStub)parentStub;
+          if (psiClassStub.isEnum()) {
+            sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, "Enum");
+          }
+
+          if (psiClassStub.isAnnotationType()) {
+            sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, "Annotation");
+          }
+        }
+      }
     }
   }
 }
