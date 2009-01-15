@@ -96,16 +96,18 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       final Object value = target.getValue();
       if (value instanceof String) {
         final LocalInspectionToolWrapper inspectionTool = (LocalInspectionToolWrapper)((InspectionProfileImpl)inspectionProfile).getToolById(((String)value));
-        final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(inspectionTool.getTool());
-        final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
-        final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
-        tool.initialize(context);
-        ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-        pass.doInspectInBatch(managerEx, new InspectionProfileEntry[]{tool}, ProgressManager.getInstance().getProgressIndicator(), false);
-        for (HighlightInfo info : pass.getInfos()) {
-          final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
-          if (element != null) {
-            addOccurrence(element);
+        if (inspectionTool != null) {
+          final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(inspectionTool.getTool());
+          final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
+          final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
+          tool.initialize(context);
+          ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
+          pass.doInspectInBatch(managerEx, new InspectionProfileEntry[]{tool}, ProgressManager.getInstance().getProgressIndicator(), false);
+          for (HighlightInfo info : pass.getInfos()) {
+            final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
+            if (element != null) {
+              addOccurrence(element);
+            }
           }
         }
       }
