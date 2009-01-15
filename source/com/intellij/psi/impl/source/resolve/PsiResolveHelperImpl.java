@@ -424,9 +424,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           PsiType bound = intersectAllExtends(typeParam, arg);
           return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
         }
-        else {
-          return null;
-        }
+        return null;
       }
       if (paramClass == null) return null;
 

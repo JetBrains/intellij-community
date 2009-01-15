@@ -335,7 +335,7 @@ public final class PsiUtil extends PsiUtilBase {
     return accessLevel > accessModifiers.length ? null : accessModifiers[accessLevel - 1];
   }
 
-  private static final String[] accessModifiers = new String[]{
+  private static final String[] accessModifiers = {
     PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC
   };
 

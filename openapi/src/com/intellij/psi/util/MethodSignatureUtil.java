@@ -249,7 +249,7 @@ public class MethodSignatureUtil {
     for (int i = 0; i < methodTypeParameters.length; i++) {
       PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
       PsiElementFactory factory = JavaPsiFacade.getInstance(methodTypeParameter.getProject()).getElementFactory();
-      result = result .put(superTypeParameters[i], factory.createType(methodTypeParameter));
+      result = result.put(superTypeParameters[i], factory.createType(methodTypeParameter));
     }
 
     return result;
@@ -264,12 +264,7 @@ public class MethodSignatureUtil {
       PsiType otherSubstituted;
       if (type instanceof PsiClassType) {
         final PsiClass resolved = ((PsiClassType)type).resolve();
-        if (resolved instanceof PsiTypeParameter) {
-          otherSubstituted = substitutor2.substitute((PsiTypeParameter)resolved);
-        }
-        else {
-          otherSubstituted = substitutor2.substitute(type);
-        }
+        otherSubstituted = resolved instanceof PsiTypeParameter ? substitutor2.substitute((PsiTypeParameter)resolved) : substitutor2.substitute(type);
       }
       else {
         otherSubstituted = substitutor2.substitute(type);
