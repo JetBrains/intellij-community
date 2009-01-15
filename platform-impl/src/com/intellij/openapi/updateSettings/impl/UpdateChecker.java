@@ -344,7 +344,10 @@ public final class UpdateChecker {
     InputStream in = null;
     OutputStream out = null;
 
-    File patchFile = new File(PathManager.getHomePath(), "patch.jar");
+    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String patchFileName = "jetbrains.patch.jar." + platform;
+    File patchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
+    
     try {
       connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
       in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);

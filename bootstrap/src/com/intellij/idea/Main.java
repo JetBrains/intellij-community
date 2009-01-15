@@ -64,40 +64,43 @@ public class Main {
       File ideaHomeDir = getIdeaHomeDir();
       if (ideaHomeDir == null) return false;
 
-      File patchFile = new File(ideaHomeDir, "patch.jar");
+      String platform = System.getProperty("idea.platform.prefix", "idea");
+      String patchFileName = "jetbrains.patch.jar." + platform;
+      File patchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
+
       if (!patchFile.exists()) return false;
 
-      File tempFile = File.createTempFile("idea.patch", null);
-      tempFile.deleteOnExit();
-      copyFile(patchFile, tempFile);
-      patchFile.delete();
-
-      List<String> args = new ArrayList<String>();
-      if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-        File launcherPath = new File(ideaHomeDir, "bin/vistalauncher.exe");
-        args.add(launcherPath.getPath());
-      }
-      Collections.addAll(args,
-                         System.getProperty("java.home") + "/bin/java",
-                         "-classpath",
-                         tempFile.getPath(),
-                         "com.intellij.updater.Runner",
-                         "install",
-                         ideaHomeDir.getPath());
-      Process process = Runtime.getRuntime().exec(args.toArray(new String[args.size()]));
-
-      Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
-      Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
-      outThread.start();
-      errThread.start();
-
       try {
-        boolean requiresRestart = process.waitFor() == 42;
-        return requiresRestart;
+        List<String> args = new ArrayList<String>();
+        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+          File launcherPath = new File(ideaHomeDir, "bin/vistalauncher.exe");
+          args.add(launcherPath.getPath());
+        }
+        Collections.addAll(args,
+                         System.getProperty("java.home") + "/bin/java",
+                           "-classpath",
+                           patchFile.getPath(),
+                           "com.intellij.updater.Runner",
+                           "install",
+                           ideaHomeDir.getPath());
+        Process process = Runtime.getRuntime().exec(args.toArray(new String[args.size()]));
+
+        Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
+        Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
+        outThread.start();
+        errThread.start();
+
+        try {
+          boolean requiresRestart = process.waitFor() == 42;
+          return requiresRestart;
+        }
+        finally {
+          outThread.join();
+          errThread.join();
+        }
       }
       finally {
-        outThread.join();
-        errThread.join();
+        patchFile.delete();
       }
     }
     catch (Exception e) {
