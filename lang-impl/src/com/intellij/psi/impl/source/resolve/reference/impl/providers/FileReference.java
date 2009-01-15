@@ -333,7 +333,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     final Project project = element.getProject();
 
     String newName;
+
     if (myFileReferenceSet.isAbsolutePathReference()) {
+      boolean hasSlash = myFileReferenceSet.getPathString().startsWith("/");
       PsiFileSystemItem root = null;
       PsiFileSystemItem dstItem = null;
       for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
@@ -353,37 +355,36 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       if (relativePath == null) {
         return element;
       }
-      newName = "/" + relativePath;
+      newName = hasSlash ? "/" + relativePath : relativePath  ;
 
     } else { // relative path
       PsiFileSystemItem curItem = null;
       PsiFileSystemItem dstItem = null;
-      helpers: for (final FileReferenceHelper helper: FileReferenceHelperRegistrar.getHelpers()) {
+      final FileReferenceHelper helper = FileReferenceHelperRegistrar.getNotNullHelper(file);
 
-        final Collection<PsiFileSystemItem> contexts = helper.getContexts(project, curVFile);
-        switch (contexts.size()) {
-          case 0:
-            continue;
-          default:
-            for (PsiFileSystemItem context : contexts) {
-              final VirtualFile contextFile = context.getVirtualFile();
-              assert contextFile != null;
-              if (VfsUtil.isAncestor(contextFile, dstVFile, true)) {
-                final String path = VfsUtil.getRelativePath(dstVFile, contextFile, '/');
-                if (path != null) {
-                  return rename(path); 
-                }
+      final Collection<PsiFileSystemItem> contexts = helper.getContexts(project, curVFile);
+      switch (contexts.size()) {
+        case 0:
+          break;
+        default:
+          for (PsiFileSystemItem context : contexts) {
+            final VirtualFile contextFile = context.getVirtualFile();
+            assert contextFile != null;
+            if (VfsUtil.isAncestor(contextFile, dstVFile, true)) {
+              final String path = VfsUtil.getRelativePath(dstVFile, contextFile, '/');
+              if (path != null) {
+                return rename(path);
               }
             }
-          case 1:
-            PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
-            PsiFileSystemItem _curItem = helper.getPsiFileSystemItem(project, curVFile);
-            if (_dstItem != null && _curItem != null) {
-              curItem = _curItem;
-              dstItem = _dstItem;
-              break helpers;
-            }
-        }
+          }
+        case 1:
+          PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
+          PsiFileSystemItem _curItem = helper.getPsiFileSystemItem(project, curVFile);
+          if (_dstItem != null && _curItem != null) {
+            curItem = _curItem;
+            dstItem = _dstItem;
+            break;
+          }
       }
       checkNotNull(curItem, curVFile, dstVFile);
       assert curItem != null;
