@@ -44,7 +44,7 @@ public class TemplateSurrounder implements Surrounder {
     if (fileType instanceof XmlLikeFileType) {
       for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
         if (contextType.isInContext(fileType)) {
-          if (contextType.isEnabled(templateContext)) return true;
+          if (templateContext.isEnabled(contextType)) return true;
         }
       }
 

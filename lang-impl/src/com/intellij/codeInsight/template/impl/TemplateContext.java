@@ -3,82 +3,40 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.codeInsight.template.TemplateContextType;
 import org.jdom.Element;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
-public class TemplateContext implements Cloneable {
-
-  public final ContextElement JAVA_CODE;
-  public final ContextElement JAVA_COMMENT;
-  public final ContextElement JAVA_STRING;
-  public final ContextElement XML;
-  public final ContextElement HTML;
-  public final ContextElement JSP;
-  public final ContextElement COMPLETION;
-  public final ContextElement OTHER;
+public class TemplateContext {
 
   private final Map<String, Boolean> myAdditionalContexts;
 
   public TemplateContext() {
     myAdditionalContexts = new LinkedHashMap<String, Boolean>();
 
-    JAVA_CODE = new ContextElement("JAVA_CODE", true);
-    JAVA_COMMENT = new ContextElement("JAVA_COMMENT");
-    JAVA_STRING = new ContextElement("JAVA_STRING");
-    XML = new ContextElement("XML");
-    HTML= new ContextElement("HTML");
-    JSP = new ContextElement("JSP");
-    COMPLETION = new ContextElement("COMPLETION");
-    OTHER = new ContextElement("OTHER");
-
   }
 
-  public class ContextElement {
-    private final String myKey;
-
-    public ContextElement(final String key) {
-      myKey = key;
-    }
-
-    public ContextElement(final String key, boolean defValue) {
-      this(key);
-      setValue(defValue);
-    }
-
-    public boolean getValue() {
-      return isEnabled(myKey);
-    }
-
-    public void setValue(boolean value) {
-      setEnabled(myKey, value);
-    }
-
-    @Override
-    public String toString() {
-      return myKey + " " + getValue();
-    }
-  }
-  public Object clone()  {
+  public TemplateContext createCopy()  {
     TemplateContext cloneResult = new TemplateContext();
-    for (String contextName : myAdditionalContexts.keySet()) {
-      cloneResult.setEnabled(contextName, isEnabled(contextName));
-    }
+    cloneResult.myAdditionalContexts.putAll(myAdditionalContexts);
     return cloneResult;
   }
 
-  public boolean isEnabled(String contextName) {
+  public boolean isEnabled(TemplateContextType contextType) {
     Boolean storedValue;
-    synchronized (this) {
-      storedValue = myAdditionalContexts.get(contextName);
+    synchronized (myAdditionalContexts) {
+      storedValue = myAdditionalContexts.get(contextType.getContextId());
     }
-    return storedValue == null ? false : storedValue;
+    return storedValue == null ? false : storedValue.booleanValue();
   }
 
-  public synchronized void setEnabled(String contextName, boolean value) {
-    myAdditionalContexts.put(contextName, value);
+  public void setEnabled(TemplateContextType contextType, boolean value) {
+    synchronized (myAdditionalContexts) {
+      myAdditionalContexts.put(contextType.getContextId(), value);
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -89,7 +47,7 @@ public class TemplateContext implements Cloneable {
         String name = option.getAttributeValue("name");
         String value = option.getAttributeValue("value");
         if (name != null && value != null) {
-          setEnabled(name, Boolean.parseBoolean(value));
+          myAdditionalContexts.put(name, Boolean.parseBoolean(value));
         }
       }
     }

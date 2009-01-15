@@ -248,11 +248,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   private boolean checkContext(final TemplateImpl template, final PsiFile file, final int offset) {
     TemplateContextType contextType = getContextType(file, offset);
     TemplateContext templateContext = template.getTemplateContext();
-    return contextType.isEnabled(templateContext);
+    return templateContext.isEnabled(contextType);
   }
 
   public TemplateContextType getContextType(@NotNull PsiFile file, int offset) {
-    final Collection<TemplateContextType> typeCollection = getAllContextTypes();
+    final TemplateContextType[] typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
     for(TemplateContextType contextType: typeCollection) {
       if (contextType.getClass().getName().startsWith("com.intellij.codeInsight.template")) userDefinedExtensionsFirst.addLast(contextType);
@@ -267,12 +267,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return null;
   }
 
-  public static Collection<TemplateContextType> getAllContextTypes() {
-    // OtherContextType must be last in the list, so don't register it as extension
-    List<TemplateContextType> result = new ArrayList<TemplateContextType>();
-    Collections.addAll(result, Extensions.getExtensions(TemplateContextType.EP_NAME));
-    result.add(new OtherContextType());
-    return result;
+  public static TemplateContextType[] getAllContextTypes() {
+    return Extensions.getExtensions(TemplateContextType.EP_NAME);
   }
 
   @NotNull

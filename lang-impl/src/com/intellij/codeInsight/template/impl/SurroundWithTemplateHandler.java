@@ -37,7 +37,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     ArrayList<TemplateImpl> array = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) continue;
-      if (contextType.isEnabled(template.getTemplateContext()) && template.isSelectionTemplate()) {
+      if (template.getTemplateContext().isEnabled(contextType) && template.isSelectionTemplate()) {
         array.add(template);
       }
     }

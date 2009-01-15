@@ -152,7 +152,7 @@ public class TemplateImpl implements Template, SchemeElement {
     template.isToReformat = isToReformat;
     template.isToShortenLongNames = isToShortenLongNames;
     template.myIsInline = myIsInline;
-    template.myTemplateContext = (TemplateContext)myTemplateContext.clone();
+    template.myTemplateContext = myTemplateContext.createCopy();
     template.isDeactivated = isDeactivated;
     for (Variable variable : myVariables) {
       template.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
@@ -376,20 +376,18 @@ public class TemplateImpl implements Template, SchemeElement {
   }
 
   public Map<TemplateContextType, Boolean> createContext(){
-    final Collection<TemplateContextType> contextTypes = TemplateManagerImpl.getAllContextTypes();
 
     Map<TemplateContextType, Boolean> context = new LinkedHashMap<TemplateContextType, Boolean>();
-    for (TemplateContextType processor : contextTypes) {
-      context.put(processor, processor.isEnabled(getTemplateContext()));
+    for (TemplateContextType processor : TemplateManagerImpl.getAllContextTypes()) {
+      context.put(processor, getTemplateContext().isEnabled(processor));
     }
     return context;
 
   }
 
   public boolean contextsEqual(TemplateImpl t){
-    final Collection<TemplateContextType> contextTypes = TemplateManagerImpl.getAllContextTypes();
-    for (TemplateContextType contextType : contextTypes) {
-      if (contextType.isEnabled(getTemplateContext()) != contextType.isEnabled(t.getTemplateContext())) {
+    for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
+      if (getTemplateContext().isEnabled(contextType) != t.getTemplateContext().isEnabled(contextType)) {
         return false;
       }
     }
@@ -404,7 +402,7 @@ public class TemplateImpl implements Template, SchemeElement {
 
   public void applyContext(final Map<TemplateContextType, Boolean> context) {
     for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
-      entry.getKey().setEnabled(getTemplateContext(), entry.getValue().booleanValue());
+      getTemplateContext().setEnabled(entry.getKey(), entry.getValue().booleanValue());
     }
   }
 

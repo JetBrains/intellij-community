@@ -37,7 +37,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     for (TemplateImpl template : templates) {
       if (template.isDeactivated() || template.isSelectionTemplate()) continue;
       String key = template.getKey();
-      if (key.startsWith(prefix) && contextType.isEnabled(template.getTemplateContext())) {
+      if (key.startsWith(prefix) && template.getTemplateContext().isEnabled(contextType)) {
         LookupItem item = new LookupItem(template, key);
         array.add(item);
       }

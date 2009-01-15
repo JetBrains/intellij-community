@@ -1,22 +1,24 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaCodeContextType extends AbstractContextType {
-  public String getName() {
-    return CodeInsightBundle.message("dialog.edit.template.checkbox.java.code");
+public class JavaCodeContextType extends TemplateContextType {
+  public JavaCodeContextType() {
+    super("JAVA_CODE", CodeInsightBundle.message("dialog.edit.template.checkbox.java.code"));
   }
 
-  public boolean isInContext(final PsiFile file, final int offset) {
+
+  public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.JAVA) {
       PsiElement element = file.findElementAt(offset);
@@ -31,15 +33,14 @@ public class JavaCodeContextType extends AbstractContextType {
   }
 
   @Override
-  public boolean isInContext(final FileType fileType) {
-    return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX ;
+  public boolean isInContext(@NotNull final FileType fileType) {
+    return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX;
   }
 
-  protected LanguageFileType getExpectedFileType() {
-    return StdFileTypes.JAVA;
+  @NotNull
+  @Override
+  public SyntaxHighlighter createHighlighter() {
+    return new JavaFileHighlighter();
   }
 
-  protected TemplateContext.ContextElement getContextElement(final TemplateContext context) {
-    return context.JAVA_CODE;
-  }
 }

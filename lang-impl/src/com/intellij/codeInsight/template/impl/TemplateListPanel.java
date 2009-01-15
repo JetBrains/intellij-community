@@ -166,7 +166,7 @@ class TemplateListPanel extends JPanel {
   private boolean areContextsEqual(final TemplateImpl newTemplate, final TemplateImpl originalTemplate) {
     Map<TemplateContextType, Boolean> templateContext = getTemplateContext(newTemplate);
     for (TemplateContextType processor : templateContext.keySet()) {
-      if (processor.isEnabled(originalTemplate.getTemplateContext()) != templateContext.get(processor).booleanValue())
+      if (originalTemplate.getTemplateContext().isEnabled(processor) != templateContext.get(processor).booleanValue())
         return false;
     }
     return true;

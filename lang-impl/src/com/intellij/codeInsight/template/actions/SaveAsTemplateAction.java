@@ -9,12 +9,11 @@
 package com.intellij.codeInsight.template.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.OtherContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.EditTemplateDialog;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -101,18 +100,8 @@ public class SaveAsTemplateAction extends AnAction {
     TemplateImpl template = new TemplateImpl("", document.getText(), TemplateSettings.USER_GROUP_NAME);
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file.getVirtualFile());
-    boolean anyApplicable = false;
     for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
-      if (contextType.isInContext(fileType)) {
-        contextType.setEnabled(template.getTemplateContext(), true);
-        anyApplicable = true;
-      }
-      else {
-        contextType.setEnabled(template.getTemplateContext(), false);
-      }
-    }
-    if (!anyApplicable) {
-      new OtherContextType().setEnabled(template.getTemplateContext(), true);
+      template.getTemplateContext().setEnabled(contextType, contextType.isInContext(fileType));
     }
 
     String defaultShortcut = "";

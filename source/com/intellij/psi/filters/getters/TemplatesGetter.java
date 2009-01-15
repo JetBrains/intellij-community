@@ -1,7 +1,7 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.template.CompletionContextType;
+import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -29,7 +29,7 @@ public class TemplatesGetter implements ContextGetter{
 
       final TemplateContext templateContext = template.getTemplateContext();
 
-      if (!new CompletionContextType().isEnabled(templateContext)) {
+      if (!templateContext.isEnabled(new SmartCompletionContextType())) {
         continue;
       }
       result.add(template);

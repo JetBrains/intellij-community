@@ -2,7 +2,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.CompletionContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -264,7 +263,7 @@ public class EditTemplateDialog extends DialogWrapper {
     for (TemplateContextType contextType : myContext.keySet()) {
       gbConstraints.gridy = row;
       gbConstraints.gridx = col;
-      JCheckBox cb = new JCheckBox(contextType.getName());
+      JCheckBox cb = new JCheckBox(contextType.getPresentableName());
       cb.getModel().addChangeListener(listener);
       panel.add(cb, gbConstraints);
       myCbContextMap.put(contextType, cb);
@@ -288,7 +287,7 @@ public class EditTemplateDialog extends DialogWrapper {
   private boolean isEnabledInStaticContextOnly() {
     for(TemplateContextType type: myCbContextMap.keySet()) {
       final JCheckBox cb = myCbContextMap.get(type);
-      if (type instanceof CompletionContextType) {
+      if (!type.isExpandableFromEditor()) {
         if (!cb.isSelected()) return false;
       }
       else {

@@ -64,7 +64,6 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
 
   protected boolean isEnabled(final TemplateImpl template) {
     final TemplateContext context = template.getTemplateContext();
-    return new XmlContextType().isEnabled(context) ||
-           new HtmlContextType().isEnabled(context);
+    return context.isEnabled(new XmlContextType()) || context.isEnabled(new HtmlContextType());
   }
 }
