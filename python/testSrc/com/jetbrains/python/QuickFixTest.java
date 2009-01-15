@@ -85,9 +85,11 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
         assertFalse("There should be one intention for highlight info", map.containsKey(info.startOffset));
         map.put(info.startOffset, info);
 
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          IntentionAction action = pair.first.getAction();
-          availableActions.add(action);
+        if (info.quickFixActionRanges != null) {
+          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+            IntentionAction action = pair.first.getAction();
+            availableActions.add(action);
+          }
         }
       }
     }
