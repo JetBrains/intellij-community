@@ -8,7 +8,6 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
@@ -91,7 +90,25 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   }
 
   public static List<PsiExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, final PsiElement... statementsInRange) {
-    final PsiElement elementAtCaret = file.findElementAt(TargetElementUtil.adjustOffset(editor.getDocument(), offset));
+    Document document = editor.getDocument();
+    CharSequence text = document.getCharsSequence();
+    int correctedOffset = offset;
+    int textLength = document.getTextLength();
+    if (offset >= textLength) {
+      correctedOffset = textLength - 1;
+    }
+    else if (!Character.isJavaIdentifierPart(text.charAt(offset))) {
+      correctedOffset--;
+    }
+    if (correctedOffset < 0) {
+      correctedOffset = offset;
+    }
+    else if (!Character.isJavaIdentifierPart(text.charAt(correctedOffset))) {
+      if (text.charAt(correctedOffset) != ')') {
+        correctedOffset = offset;
+      }
+    }
+    final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
     /*for (PsiElement element : statementsInRange) {
       if (element instanceof PsiExpressionStatement) {
@@ -275,7 +292,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
 
       final String fakeInitializer = "intellijidearulezzz";
-      final PsiExpression toBeExpression = createReplacement(fakeInitializer, file, prefix, suffix, parent, rangeMarker);
+      final PsiExpression toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker);
       toBeExpression.accept(errorsVisitor);
       if (hasErrors[0]) return null;
 
@@ -496,7 +513,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
               }
               if (replaceWrite || !RefactoringUtil.isAssignmentLHS(occurrence)) {
-                array.add(replace(occurrence, ref, file));
+                array.add(replace(occurrence, ref, project));
               }
             }
 
@@ -506,7 +523,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             }
           } else {
             if (!deleteSelf && replaceSelf) {
-              replace(expr1, ref, file);
+              replace(expr1, ref, project);
             }
           }
 
@@ -531,7 +548,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return true;
   }
 
-  public static PsiElement replace(final PsiExpression expr1, final PsiExpression ref, final PsiFile file)
+  public static PsiElement replace(final PsiExpression expr1, final PsiExpression ref, final Project project)
     throws IncorrectOperationException {
     final PsiExpression expr2 = RefactoringUtil.outermostParenthesizedExpression(expr1);
     if (expr2.isPhysical()) {
@@ -543,11 +560,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       final PsiElement parent = expr1.getUserData(ElementToWorkOn.PARENT);
       final RangeMarker rangeMarker = expr1.getUserData(ElementToWorkOn.TEXT_RANGE);
 
-      return parent.replace(createReplacement(ref.getText(), file, prefix, suffix, parent, rangeMarker));
+      return parent.replace(createReplacement(ref.getText(), project, prefix, suffix, parent, rangeMarker));
     }
   }
 
-  private static PsiExpression createReplacement(final String refText, final PsiFile file,
+  private static PsiExpression createReplacement(final String refText, final Project project,
                                                  final String prefix,
                                                  final String suffix,
                                                  final PsiElement parent, final RangeMarker rangeMarker) {
@@ -561,7 +578,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (StringUtil.stripQuotesAroundValue(end).length() == 0 && suffix == null) end = "";
 
     final String text = beg + (prefix != null ? prefix : "") + refText + (suffix != null ? suffix : "") + end;
-    return JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createExpressionFromText(text, parent);
+    return JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(text, parent);
   }
 
   public static PsiStatement putStatementInLoopBody(PsiStatement declaration, PsiElement container, PsiElement finalAnchorStatement)

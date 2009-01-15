@@ -110,14 +110,14 @@ public class RefactoringUtil {
     final PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(fieldName, element != null ? element : occurrence);
     final PsiElementFactory factory = facade.getElementFactory();
     if (psiVariable != null && psiVariable.equals(newField)) {
-      return IntroduceVariableBase.replace(occurrence, factory.createExpressionFromText(fieldName, null), file);
+      return IntroduceVariableBase.replace(occurrence, factory.createExpressionFromText(fieldName, null), manager.getProject());
     }
     else {
       final PsiReferenceExpression ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + fieldName, null);
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
         ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
       }
-      return IntroduceVariableBase.replace(occurrence, ref, file);
+      return IntroduceVariableBase.replace(occurrence, ref, manager.getProject());
     }
   }
 

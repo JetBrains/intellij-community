@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
@@ -199,6 +200,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
     myCodeFragmentMember = codeFragment.getParent();
+    if (myCodeFragmentMember == null) {
+      myCodeFragmentMember = ControlFlowUtil.findCodeFragment(codeFragment.getContext()).getParent();
+    }
 
     try {
       myControlFlow = ControlFlowFactory.getInstance(myProject).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, true);
@@ -744,7 +748,8 @@ public class ExtractMethodProcessor implements MatchProvider {
         statement.getExpression().replace(myExpression);
         body.add(statement);
       }
-      myMethodCall = (PsiMethodCallExpression)myExpression.replace(myMethodCall);
+      final PsiElement replacement = IntroduceVariableBase.replace(myExpression, myMethodCall, myProject);
+      myMethodCall = PsiTreeUtil.getParentOfType(replacement.findElementAt(replacement.getText().indexOf(myMethodCall.getText())), PsiMethodCallExpression.class);
     }
 
     if (myAnchor instanceof PsiField) {

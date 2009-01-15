@@ -92,6 +92,12 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     }
     else {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
+      if (elements.length == 0) {
+        final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+        if (expression != null) {
+          elements = new PsiElement[]{expression};
+        }
+      }
     }
     callback.pass(elements);
   }
