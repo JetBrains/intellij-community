@@ -138,8 +138,8 @@ public class XsltRefactoringSupport implements ApplicationComponent {
                     }
   
                     amgr.unregisterAction(name);
+                    amgr.registerAction(name, origAction);
                 }
-                amgr.registerAction(name, origAction);
             } else {
                 LOG.info("Cannot uninstall action '" + name + "'. It has been hooked by another action: " + action.getClass().getName());
             }
