@@ -1,0 +1,3 @@
+class Foo {
+  psvm<caret>
+}
