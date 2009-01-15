@@ -15,8 +15,8 @@ import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import com.intellij.diagnostic.logging.DebuggerLogConsoleManager;
 import com.intellij.diagnostic.logging.LogConsoleImpl;
-import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
@@ -60,7 +60,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DebuggerSessionTab implements LogConsoleManager, Disposable {
+public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchLastReturnValue.png");
