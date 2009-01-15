@@ -34,5 +34,5 @@ public interface UserDataHolderEx extends UserDataHolder {
    * @return true if old value got replaced, false otherwise
    * @see java.util.concurrent.ConcurrentMap#replace(Object, Object, Object)
    */
-  <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue);
+  <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue);
 }

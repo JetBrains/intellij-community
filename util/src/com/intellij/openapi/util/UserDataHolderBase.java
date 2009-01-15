@@ -119,18 +119,17 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-  public <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue) {
+  public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
     synchronized (WRITE_LOCK) {
       Map<Key, Object> map = myUserMap;
       if (map == null) {
-        if (newValue != null) {
-          myUserMap = map = createMap();
-          map.put(key, newValue);
-        }
+        if (newValue == null) return oldValue == null;
+        myUserMap = map = createMap();
+        map.put(key, newValue);
         return true;
       }
       T prev = (T)map.get(key);
-      if (!oldValue.equals(prev)) {
+      if (!Comparing.equal(oldValue, prev)) {
         return false;
       }
       if (newValue == null) {
