@@ -17,6 +17,8 @@
 package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtil;
 
 /**
  * @author mike
@@ -43,5 +45,10 @@ public class ExtensionPointName<T> {
 
   public T[] getExtensions() {
     return Extensions.getExtensions(this);
+  }
+
+  @Nullable
+  public <V extends T> V findExtension(Class<V> instanceOf) {
+    return ContainerUtil.findInstance(getExtensions(), instanceOf);
   }
 }
