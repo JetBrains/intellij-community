@@ -14,6 +14,7 @@ import java.util.Collection;
 
 public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<PsiReferenceList> {
   public static final StubIndexKey<String, PsiReferenceList> KEY = StubIndexKey.createIndexKey("java.class.extlist");
+  private static final int VERSION = 1;
 
   private static final JavaSuperClassNameOccurenceIndex ourInstance = new JavaSuperClassNameOccurenceIndex();
   public static JavaSuperClassNameOccurenceIndex getInstance() {
@@ -26,5 +27,10 @@ public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<P
 
   public Collection<PsiReferenceList> get(final String s, final Project project, final GlobalSearchScope scope) {
     return super.get(s, project, new JavaSourceFilterScope(scope, project));
+  }
+
+  @Override
+  public int getVersion() {
+    return super.getVersion() + VERSION;
   }
 }
