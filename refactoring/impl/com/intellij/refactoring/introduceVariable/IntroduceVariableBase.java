@@ -217,48 +217,60 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     PsiExpression tempExpr;
     final PsiElement elementAt = PsiTreeUtil.findCommonParent(file.findElementAt(startOffset), file.findElementAt(endOffset - 1));
     final PsiLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(elementAt, PsiLiteralExpression.class);
+
+    final PsiLiteralExpression startLiteralExpression = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiLiteralExpression.class);
+    final PsiLiteralExpression endLiteralExpression = PsiTreeUtil.getParentOfType(file.findElementAt(endOffset), PsiLiteralExpression.class);
+
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     try {
       String text = file.getText().subSequence(startOffset, endOffset).toString();
       String prefix = null;
       String suffix = null;
-      if (literalExpression != null) {
-
-        final int expressionOffset = literalExpression.getTextOffset();
-        final int literalLength = literalExpression.getTextLength();
-
-        String stripped = startOffset == expressionOffset && (StringUtil.startsWithChar(text, '\"') || StringUtil.startsWithChar(text, '\''))
-                          ? text.substring(1)
-                          : text;
-        stripped =
-          endOffset == expressionOffset + literalLength && (StringUtil.endsWithChar(stripped, '\"') || StringUtil.endsWithChar(stripped, '\''))
-          ? stripped.substring(0, stripped.length() - 1)
-          : stripped;
-
-        boolean primitive = false;
-        if (stripped.equals("true") || stripped.equals("false")) {
-          primitive = true;
-        } else {
-          try {
-            Integer.parseInt(stripped);
-            primitive = true;
+      String stripped = text;
+      if (startLiteralExpression != null) {
+        final int startExpressionOffset = startLiteralExpression.getTextOffset();
+        if (startOffset == startExpressionOffset) {
+          if (StringUtil.startsWithChar(text, '\"') || StringUtil.startsWithChar(text, '\'')) {
+            stripped = text.substring(1);
           }
-          catch (NumberFormatException e1) {
-            //then not primitive
-          }
-        }
-
-        text = primitive ? stripped : ("\"" + stripped + "\"");
-
-        if (expressionOffset + 1 < startOffset) {
+        } else if (startOffset == startExpressionOffset + 1) {
+          text = "\"" + text;
+        } else if (startOffset > startExpressionOffset + 1){
           prefix = "\" + ";
+          text = "\"" + text;
         }
+      }
 
-        if (expressionOffset + literalLength - 1 > endOffset) {
+      if (endLiteralExpression != null) {
+        final int endExpressionOffset = endLiteralExpression.getTextOffset() + endLiteralExpression.getTextLength();
+        if (endOffset == endExpressionOffset ) {
+          if (StringUtil.endsWithChar(stripped, '\"') || StringUtil.endsWithChar(stripped, '\'')) {
+            stripped = stripped.substring(0, stripped.length() - 1);
+          }
+        } else if (endOffset == endExpressionOffset - 1) {
+          text += "\"";
+        } else if (endOffset < endExpressionOffset - 1) {
           suffix = " + \"";
+          text += "\"";
         }
-      } else {
-        text = text.trim();
+      }
+
+      boolean primitive = false;
+      if (stripped.equals("true") || stripped.equals("false")) {
+        primitive = true;
+      }
+      else {
+        try {
+          Integer.parseInt(stripped);
+          primitive = true;
+        }
+        catch (NumberFormatException e1) {
+          //then not primitive
+        }
+      }
+
+      if (primitive) {
+        text = stripped;
       }
 
       final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
@@ -572,10 +584,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final TextRange parentRange = parent.getTextRange();
 
     String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
-    if (StringUtil.stripQuotesAroundValue(beg).length() == 0 && prefix == null) beg = "";
+    if (StringUtil.stripQuotesAroundValue(beg).trim().length() == 0 && prefix == null) beg = "";
 
     String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
-    if (StringUtil.stripQuotesAroundValue(end).length() == 0 && suffix == null) end = "";
+    if (StringUtil.stripQuotesAroundValue(end).trim().length() == 0 && suffix == null) end = "";
 
     final String text = beg + (prefix != null ? prefix : "") + refText + (suffix != null ? suffix : "") + end;
     return JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(text, parent);

@@ -84,8 +84,12 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
         final PsiLiteralExpression literalExpression =
           PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiLiteralExpression.class);
         if (literalExpression != null && !literals.contains(literalExpression)) { //enum. occurrences inside string literals
-          results.add(IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, offset + endOffset));
-          literals.add(literalExpression);
+          final PsiExpression expression =
+            IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, offset + endOffset);
+          if (expression != null) {
+            results.add(expression);
+            literals.add(literalExpression);
+          }
         }
         result = findManager.findString(text, endOffset, findModel);
       }
