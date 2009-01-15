@@ -101,7 +101,6 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
     public MyTreeTable() {
       super(myProject, myValueClass, myTreeTableTitle);
-      reset(myMappings.getMappings());
       getValueColumn().setCellEditor(new DefaultCellEditor(new JComboBox()) {
         private VirtualFile myVirtualFile;
 
