@@ -67,6 +67,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.Icons;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -357,11 +358,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         return 8;
       }
     };
-    layeredIcon.setIcon(plusIcon, 1, -12, icon.getIconHeight() / 2);
+    layeredIcon.setIcon(plusIcon, 1, -12, (icon == null ? Icons.FOLDER_ICON:icon).getIconHeight() / 2);
     return layeredIcon;
   }
-
-
 
   private void rebuildComponent() {
     myPreferredWidth = 0;
