@@ -88,13 +88,15 @@ public class XsltRefactoringSupport implements ApplicationComponent {
         final ActionManagerEx amgr = ActionManagerEx.getInstanceEx();
 
         final AnAction action = amgr.getAction(actionName);
-        newAction.setHookedAction(action);
+        if (action != null) {
+          newAction.setHookedAction(action);
 
-        if (full) {
-            fullInstall(action, newAction, amgr);
+          if (full) {
+              fullInstall(action, newAction, amgr);
+          }
+
+          amgr.unregisterAction(actionName);
         }
-
-        amgr.unregisterAction(actionName);
         amgr.registerAction(actionName, newAction);
         myActions.put(actionName, newAction);
     }
