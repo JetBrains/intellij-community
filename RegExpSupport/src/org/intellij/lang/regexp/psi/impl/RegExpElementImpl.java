@@ -30,6 +30,7 @@ import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements RegExpElement {
     public RegExpElementImpl(ASTNode node) {
@@ -90,7 +91,8 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         return isLiteralExpression(getContainingFile().getContext());
     }
 
-  public static boolean isLiteralExpression(PsiElement context) {
+  public static boolean isLiteralExpression(@Nullable PsiElement context) {
+    if (context == null) return false;
     final ASTNode astNode = context.getNode();
     if (astNode == null) {
       return false;
