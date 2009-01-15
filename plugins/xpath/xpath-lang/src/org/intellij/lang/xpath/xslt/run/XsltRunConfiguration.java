@@ -15,10 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-
-import com.intellij.debugger.ui.DebuggerSessionTab;
+import com.intellij.diagnostic.logging.DebuggerLogConsoleManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -50,10 +47,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.jdom.Element;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -153,7 +151,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (myOutputType == OutputType.CONSOLE && myFileType != null) {
             final HighlightingOutputConsole console = new HighlightingOutputConsole(getProject(), myFileType);
 
-            final List<XsltRunnerExtension> extensions = XsltRunnerExtension.getExtensions(this, manager instanceof DebuggerSessionTab);
+            final List<XsltRunnerExtension> extensions = XsltRunnerExtension.getExtensions(this, manager instanceof DebuggerLogConsoleManager);
             boolean consoleTabAdded = false;
             for (XsltRunnerExtension extension : extensions) {
                 if (extension.createTabs(getProject(), manager, console, startedProcess)) {
