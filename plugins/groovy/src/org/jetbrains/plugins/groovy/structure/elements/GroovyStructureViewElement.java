@@ -20,6 +20,23 @@ abstract public class GroovyStructureViewElement implements StructureViewTreeEle
     return myElement.isValid() ? myElement : null;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GroovyStructureViewElement that = (GroovyStructureViewElement)o;
+
+    if (myElement != null ? !myElement.equals(that.myElement) : that.myElement != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myElement != null ? myElement.hashCode() : 0;
+  }
+
   public void navigate(boolean b) {
     ((Navigatable) myElement).navigate(b);
   }
