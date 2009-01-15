@@ -46,6 +46,10 @@ public class CommonShortcuts {
     return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EDIT_SOURCE));
   }
 
+  public static ShortcutSet getViewSource() {
+    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_VIEW_SOURCE));
+  }
+
   public static ShortcutSet getNew() {
     return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_NEW_ELEMENT));
   }

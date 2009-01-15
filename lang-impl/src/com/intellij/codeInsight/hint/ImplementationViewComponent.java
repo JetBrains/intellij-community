@@ -343,12 +343,11 @@ public class ImplementationViewComponent extends JPanel {
     group.add(forward);
 
     EditSourceActionBase edit = new EditSourceAction();
-    edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-    edit.registerCustomShortcutSet(CommonShortcuts.ENTER, this);
+    edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getEditSource(), CommonShortcuts.ENTER), this);
     group.add(edit);
 
     edit = new ShowSourceAction();
-    edit.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, this);
+    edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getViewSource(), CommonShortcuts.CTRL_ENTER), this);
     group.add(edit);
 
     final ShowFindUsagesAction findUsagesAction = new ShowFindUsagesAction();
