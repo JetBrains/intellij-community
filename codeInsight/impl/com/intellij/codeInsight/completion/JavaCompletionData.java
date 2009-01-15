@@ -255,10 +255,10 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-      final CompletionVariant variant = new CompletionVariant(psiElement().afterLeaf(
+      final CompletionVariant variant = new CompletionVariant(PsiElement.class, psiElement().afterLeaf(
           psiElement(PsiIdentifier.class).afterLeaf(
             psiElement().withText(string().oneOf(",", "<")).withParent(PsiTypeParameterList.class))));
-      variant.includeScopeClass(PsiClass.class, true);
+      //variant.includeScopeClass(PsiClass.class, true);
       variant.addCompletion(PsiKeyword.EXTENDS, TailType.SPACE);
       registerVariant(variant);
     }
