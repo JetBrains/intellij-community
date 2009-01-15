@@ -22,7 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ven
  */
-public interface PsiClassOwner {
+public interface PsiClassOwner extends PsiFile {
   /**
    * @return classes owned by this element.
    */
