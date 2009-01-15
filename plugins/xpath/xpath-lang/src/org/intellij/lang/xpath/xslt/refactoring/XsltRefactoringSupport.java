@@ -86,16 +86,16 @@ public class XsltRefactoringSupport implements ApplicationComponent {
     @SuppressWarnings({"RawUseOfParameterizedType"})
     private void install(String actionName, XsltRefactoringActionBase newAction, boolean full) {
         final ActionManagerEx amgr = ActionManagerEx.getInstanceEx();
-
         final AnAction action = amgr.getAction(actionName);
+
         if (action != null) {
-          newAction.setHookedAction(action);
+            newAction.setHookedAction(action);
 
-          if (full) {
-              fullInstall(action, newAction, amgr);
-          }
+            if (full) {
+                fullInstall(action, newAction, amgr);
+            }
 
-          amgr.unregisterAction(actionName);
+            amgr.unregisterAction(actionName);
         }
         amgr.registerAction(actionName, newAction);
         myActions.put(actionName, newAction);
@@ -131,11 +131,14 @@ public class XsltRefactoringSupport implements ApplicationComponent {
 
             if (action == myActions.get(name)) {
                 final AnAction origAction = ((HookedAction)action).getHookedAction();
-                if (full) {
-                    fullUninstall(action, origAction, amgr);
-                }
 
-                amgr.unregisterAction(name);
+                if (origAction != null) {
+                    if (full) {
+                        fullUninstall(action, origAction, amgr);
+                    }
+  
+                    amgr.unregisterAction(name);
+                }
                 amgr.registerAction(name, origAction);
             } else {
                 LOG.info("Cannot uninstall action '" + name + "'. It has been hooked by another action: " + action.getClass().getName());
