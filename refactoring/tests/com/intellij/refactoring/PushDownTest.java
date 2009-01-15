@@ -5,15 +5,13 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PushDownTest extends LightCodeInsightTestCase {
@@ -32,9 +30,22 @@ public class PushDownTest extends LightCodeInsightTestCase {
 
     final PsiClass[] classes = ((PsiJavaFile)psiMember.getContainingFile()).getClasses();
 
+    assert classes.length > 0;
+
+    final List<MemberInfo> membersToMove = new ArrayList<MemberInfo>();
+
+    final PsiField fieldByName = classes[0].findFieldByName("fieldToMove", false);
+    if (fieldByName != null) {
+      final MemberInfo memberInfo = new MemberInfo(fieldByName);
+      memberInfo.setChecked(true);
+      membersToMove.add(memberInfo);
+    }
+
     final MemberInfo memberInfo = new MemberInfo(psiMember);
     memberInfo.setChecked(true);
-    new PushDownProcessor(getProject(), new MemberInfo[]{memberInfo}, classes[0], new JavaDocPolicy(JavaDocPolicy.ASIS)){
+    membersToMove.add(memberInfo);
+
+    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), classes[0], new JavaDocPolicy(JavaDocPolicy.ASIS)){
       @Override
       protected boolean showConflicts(final List<String> conflicts) {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
@@ -61,5 +72,13 @@ public class PushDownTest extends LightCodeInsightTestCase {
 
   public void testDisagreeTypeParameter() throws Exception {
     doTest(true);
+  }
+
+  public void testFieldAndReferencedClass() throws Exception {
+    doTest();
+  }
+
+  public void testFieldAndStaticReferencedClass() throws Exception {
+    doTest();
   }
 }

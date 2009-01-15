@@ -110,7 +110,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   }
 
   private static final Key<Boolean> REMOVE_QUALIFIER_KEY = Key.create("REMOVE_QUALIFIER_KEY");
-  private static final Key<Boolean> REPLACE_QUALIFIER_KEY = Key.create("REPLACE_QUALIFIER_KEY");
+  private static final Key<PsiClass> REPLACE_QUALIFIER_KEY = Key.create("REPLACE_QUALIFIER_KEY");
 
   private void encodeRefs() {
     final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
@@ -149,14 +149,22 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
   private void encodeRef(final PsiJavaCodeReferenceElement expression, final Set<PsiMember> movedMembers, final PsiElement toPut) {
     final PsiElement resolved = expression.resolve();
-    if (movedMembers.contains(resolved)) {
-      if (expression.getQualifier() == null) {
-        toPut.putCopyableUserData(REMOVE_QUALIFIER_KEY, Boolean.TRUE);
-      } else {
+    if (resolved == null) return;
+    for (PsiMember movedMember : movedMembers) {
+      if (movedMember.equals(resolved)) {
+        if (expression.getQualifier() == null) {
+          toPut.putCopyableUserData(REMOVE_QUALIFIER_KEY, Boolean.TRUE);
+        } else {
+          final PsiElement qualifier = expression.getQualifier();
+          if (qualifier instanceof PsiJavaCodeReferenceElement &&
+              ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(myClass)) {
+            toPut.putCopyableUserData(REPLACE_QUALIFIER_KEY, myClass);
+          }
+        }
+      } else if (movedMember instanceof PsiClass && PsiTreeUtil.getParentOfType(resolved, PsiClass.class, false) == movedMember) {
         final PsiElement qualifier = expression.getQualifier();
-        if (qualifier instanceof PsiJavaCodeReferenceElement &&
-            ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(myClass)) {
-          toPut.putCopyableUserData(REPLACE_QUALIFIER_KEY, Boolean.TRUE);
+        if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(movedMember)) {
+          toPut.putCopyableUserData(REPLACE_QUALIFIER_KEY, (PsiClass)movedMember);
         }
       }
     }
@@ -192,7 +200,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     });
   }
 
-  private static void decodeRef(final PsiJavaCodeReferenceElement ref,
+  private void decodeRef(final PsiJavaCodeReferenceElement ref,
                          final PsiElementFactory factory,
                          final PsiClass targetClass,
                          final PsiElement toGet) {
@@ -202,15 +210,26 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         final PsiElement qualifier = ref.getQualifier();
         if (qualifier != null) qualifier.delete();
       }
-      else if (toGet.getCopyableUserData(REPLACE_QUALIFIER_KEY) != null) {
-        toGet.putCopyableUserData(REPLACE_QUALIFIER_KEY, null);
-        final PsiElement qualifier = ref.getQualifier();
-        if (qualifier != null) {
-          if (ref instanceof PsiReferenceExpression) {
-            qualifier.replace(factory.createReferenceExpression(targetClass));
-          }
-          else {
-            qualifier.replace(factory.createReferenceElementByType(factory.createType(targetClass)));
+      else {
+        PsiClass psiClass = toGet.getCopyableUserData(REPLACE_QUALIFIER_KEY);
+        if (psiClass != null) {
+          toGet.putCopyableUserData(REPLACE_QUALIFIER_KEY, null);
+          final PsiElement qualifier = ref.getQualifier();
+          if (qualifier != null) {
+
+            if (psiClass == myClass) {
+              psiClass = targetClass;
+            } else if (psiClass.getContainingClass() == myClass) {
+              psiClass = targetClass.findInnerClassByName(psiClass.getName(), false);
+              LOG.assertTrue(psiClass != null);
+            }
+
+            if (ref instanceof PsiReferenceExpression) {
+              ((PsiReferenceExpression)ref).setQualifierExpression(factory.createReferenceExpression(psiClass));
+            }
+            else {
+              qualifier.replace(factory.createReferenceElementByType(factory.createType(psiClass)));
+            }
           }
         }
       }
