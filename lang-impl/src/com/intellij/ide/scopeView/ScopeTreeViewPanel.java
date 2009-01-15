@@ -494,7 +494,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
 
     private void processRenamed(final NamedScope scope, final PsiFile file) {
-      if (!file.isValid() || !file.isPhysical()) return;
+      if (!file.isValid() || !file.getViewProvider().isPhysical()) return;
       final PackageSet packageSet = scope.getValue();
       if (packageSet == null) return; //invalid scope selected
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
