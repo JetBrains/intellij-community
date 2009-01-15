@@ -387,9 +387,11 @@ public class PythonSdkType extends SdkType {
                 new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}
               );
               if (gen_result.exitValue() != 0) {
+                StringBuffer sb = new StringBuffer();
                 for (String err_line : gen_result.getStderr()) {
-                  LOG.error(err_line);
+                  sb.append(err_line).append("\n");
                 }
+                LOG.error(sb.toString());
               }
             }
           }

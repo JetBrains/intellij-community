@@ -1,0 +1,64 @@
+package com.jetbrains.python.validation;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyHighlighter;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyFunction;
+
+/**
+ * Highlights class definitions, functrion definitions, and decorators.
+ * User: dcheryasov
+ * Date: Jan 9, 2009 9:53:38 AM
+ */
+public class PyDefinitionsAnnotator extends PyAnnotator {
+
+  @Override
+  public void visitPyClass(PyClass class_node) {
+    final ASTNode astNode = class_node.getNode();
+    if (astNode != null) {
+      ASTNode name_node = astNode.findChildByType(PyTokenTypes.IDENTIFIER);
+      if (name_node != null) {
+        Annotation ann = getHolder().createInfoAnnotation(name_node, null);
+        ann.setTextAttributes(PyHighlighter.PY_CLASS_DEFINITION);
+      }
+    }
+  }
+
+  @Override
+  public void visitPyFunction(PyFunction node) {
+    ASTNode name_node =  node.getNameNode();
+    if (name_node != null) {
+      Annotation ann = getHolder().createInfoAnnotation(name_node, null);
+      if (PyNames.UnderscoredNames.contains(node.getName())) {
+        ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+      }
+      else ann.setTextAttributes(PyHighlighter.PY_FUNC_DEFINITION);
+    }
+  }
+
+  @Override
+  public void visitPyDecoratorList(PyDecoratorList node) {
+    PyDecorator[] decos = node.getDecorators();
+    for (PyDecorator deco : decos) {
+      highlightDecorator(deco);  
+    }
+  }
+
+  private void highlightDecorator(PyDecorator node) {
+    // highlight only the identifier
+    PsiElement mk = node.getFirstChild(); // the '@'
+    if (mk != null) {
+      mk = mk.getNextSibling(); // ref
+      if (mk != null) {
+        Annotation ann = getHolder().createInfoAnnotation(mk, null);
+        ann.setTextAttributes(PyHighlighter.PY_DECORATOR);
+      }
+    }
+  }
+}

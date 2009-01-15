@@ -18,13 +18,15 @@ package com.jetbrains.python;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import static com.intellij.openapi.editor.SyntaxHighlighterColors.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.lexer.PythonFutureAwareLexer;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,37 +45,54 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     return new PythonFutureAwareLexer();
   }
 
-  static final TextAttributesKey PY_KEYWORD =
-      TextAttributesKey.createTextAttributesKey("PY.KEYWORD", SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
+  private static TextAttributesKey _copy(String name, TextAttributesKey src) {
+    return TextAttributesKey.createTextAttributesKey(name, src.getDefaultAttributes().clone());
+  }
 
-  static final TextAttributesKey PY_STRING =
-      TextAttributesKey.createTextAttributesKey("PY.STRING", SyntaxHighlighterColors.STRING.getDefaultAttributes());
-  static final TextAttributesKey PY_NUMBER =
-      TextAttributesKey.createTextAttributesKey("PY.NUMBER", SyntaxHighlighterColors.NUMBER.getDefaultAttributes());
+  static final TextAttributesKey PY_KEYWORD = _copy("PY.KEYWORD", KEYWORD);
 
-  static final TextAttributesKey PY_LINE_COMMENT =
-      TextAttributesKey.createTextAttributesKey("PY.LINE_COMMENT", SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes());
+  static final TextAttributesKey PY_STRING = _copy("PY.STRING", STRING);
+  static final TextAttributesKey PY_NUMBER = _copy("PY.NUMBER", NUMBER);
 
-  static final TextAttributesKey PY_OPERATION_SIGN =
-      TextAttributesKey.createTextAttributesKey("PY.OPERATION_SIGN", SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes());
+  static final TextAttributesKey PY_LINE_COMMENT = _copy("PY.LINE_COMMENT", LINE_COMMENT);
 
-  static final TextAttributesKey PY_PARENTHS =
-      TextAttributesKey.createTextAttributesKey("PY.PARENTHS", SyntaxHighlighterColors.PARENTHS.getDefaultAttributes());
+  static final TextAttributesKey PY_OPERATION_SIGN = _copy("PY.OPERATION_SIGN", OPERATION_SIGN);
 
-  static final TextAttributesKey PY_BRACKETS =
-      TextAttributesKey.createTextAttributesKey("PY.BRACKETS", SyntaxHighlighterColors.BRACKETS.getDefaultAttributes());
+  static final TextAttributesKey PY_PARENTHS = _copy("PY.PARENTHS", PARENTHS);
 
-  static final TextAttributesKey PY_BRACES =
-      TextAttributesKey.createTextAttributesKey("PY.BRACES", SyntaxHighlighterColors.BRACES.getDefaultAttributes());
+  static final TextAttributesKey PY_BRACKETS = _copy("PY.BRACKETS", BRACKETS);
 
-  static final TextAttributesKey PY_COMMA =
-      TextAttributesKey.createTextAttributesKey("PY.COMMA", SyntaxHighlighterColors.COMMA.getDefaultAttributes());
+  static final TextAttributesKey PY_BRACES = _copy("PY.BRACES", BRACES);
 
-  static final TextAttributesKey PY_DOT =
-      TextAttributesKey.createTextAttributesKey("PY.DOT", SyntaxHighlighterColors.DOT.getDefaultAttributes());
+  static final TextAttributesKey PY_COMMA = _copy("PY.COMMA", COMMA);
 
-  public static final TextAttributesKey PY_DOC_COMMENT =
-      TextAttributesKey.createTextAttributesKey("PY.DOC_COMMENT", SyntaxHighlighterColors.DOC_COMMENT.getDefaultAttributes());
+  static final TextAttributesKey PY_DOT = _copy("PY.DOT", DOT);
+
+  public static final TextAttributesKey PY_DOC_COMMENT = _copy("PY.DOC_COMMENT", DOC_COMMENT);
+
+  public static final TextAttributesKey PY_DECORATOR = TextAttributesKey.createTextAttributesKey(
+    "PY.DECORATOR", new TextAttributes(Color.blue.darker(), null, null, null, Font.PLAIN)
+  );
+
+  public static final TextAttributesKey PY_CLASS_DEFINITION = TextAttributesKey.createTextAttributesKey(
+    "PY.CLASS_DEFINITION", new TextAttributes(Color.black, null, null, null, Font.BOLD)
+  );
+
+  public static final TextAttributesKey PY_FUNC_DEFINITION = TextAttributesKey.createTextAttributesKey(
+    "PY.FUNC_DEFINITION", new TextAttributes(Color.black, null, null, null, Font.BOLD)
+  );
+
+  public static final TextAttributesKey PY_PREDEFINED_DEFINITION = TextAttributesKey.createTextAttributesKey(
+    "PY.PREDEFINED_DEFINITION", new TextAttributes(Color.magenta.darker(), null, null, null, Font.BOLD)
+  );
+
+  public static final TextAttributesKey PY_PREDEFINED_USAGE = TextAttributesKey.createTextAttributesKey(
+    "PY.PREDEFINED_USAGE", new TextAttributes(Color.magenta.darker(), null, null, null, Font.PLAIN)
+  );
+
+  public static final TextAttributesKey PY_BUILTIN_NAME = TextAttributesKey.createTextAttributesKey(
+    "PY.BUILTIN_NAME", new TextAttributes(KEYWORD.getDefaultAttributes().getForegroundColor(), null, null, null, Font.PLAIN)
+  );
 
   public PyHighlighter() {
     keys1 = new HashMap<IElementType, TextAttributesKey>();

@@ -17,23 +17,35 @@ import java.util.Map;
  */
 public class PythonColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-      new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
-      new AttributesDescriptor("String", PyHighlighter.PY_STRING),
-      new AttributesDescriptor("Number", PyHighlighter.PY_NUMBER),
-      new AttributesDescriptor("Line Comment", PyHighlighter.PY_LINE_COMMENT),
-      new AttributesDescriptor("Operation Sign", PyHighlighter.PY_OPERATION_SIGN),
-      new AttributesDescriptor("Parentheses", PyHighlighter.PY_PARENTHS),
-      new AttributesDescriptor("Brackets", PyHighlighter.PY_BRACKETS),
-      new AttributesDescriptor("Braces", PyHighlighter.PY_BRACES),
-      new AttributesDescriptor("Comma", PyHighlighter.PY_COMMA),
-      new AttributesDescriptor("Dot", PyHighlighter.PY_DOT),
-      new AttributesDescriptor("Doc Comment", PyHighlighter.PY_DOC_COMMENT)
+    new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
+    new AttributesDescriptor("String", PyHighlighter.PY_STRING),
+    new AttributesDescriptor("Number", PyHighlighter.PY_NUMBER),
+    new AttributesDescriptor("Line Comment", PyHighlighter.PY_LINE_COMMENT),
+    new AttributesDescriptor("Operation Sign", PyHighlighter.PY_OPERATION_SIGN),
+    new AttributesDescriptor("Parentheses", PyHighlighter.PY_PARENTHS),
+    new AttributesDescriptor("Brackets", PyHighlighter.PY_BRACKETS),
+    new AttributesDescriptor("Braces", PyHighlighter.PY_BRACES),
+    new AttributesDescriptor("Comma", PyHighlighter.PY_COMMA),
+    new AttributesDescriptor("Dot", PyHighlighter.PY_DOT),
+    new AttributesDescriptor("Function definition", PyHighlighter.PY_FUNC_DEFINITION),
+    new AttributesDescriptor("Class definition", PyHighlighter.PY_CLASS_DEFINITION),
+    new AttributesDescriptor("Doc Comment", PyHighlighter.PY_DOC_COMMENT),
+    new AttributesDescriptor("Predefined item definition", PyHighlighter.PY_PREDEFINED_DEFINITION),
+    new AttributesDescriptor("Decorator", PyHighlighter.PY_DECORATOR),
+    new AttributesDescriptor("Built-in name", PyHighlighter.PY_BUILTIN_NAME),
+    new AttributesDescriptor("Predefined name", PyHighlighter.PY_PREDEFINED_USAGE)
   };
 
   @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<String, TextAttributesKey>();
 
   static {
     ourTagToDescriptorMap.put("docComment", PyHighlighter.PY_DOC_COMMENT);
+    ourTagToDescriptorMap.put("decorator", PyHighlighter.PY_DECORATOR);
+    ourTagToDescriptorMap.put("predefined", PyHighlighter.PY_PREDEFINED_DEFINITION);
+    ourTagToDescriptorMap.put("predefinedUsage", PyHighlighter.PY_PREDEFINED_USAGE);
+    ourTagToDescriptorMap.put("funcDef", PyHighlighter.PY_FUNC_DEFINITION);
+    ourTagToDescriptorMap.put("classDef", PyHighlighter.PY_CLASS_DEFINITION);
+    ourTagToDescriptorMap.put("builtin", PyHighlighter.PY_BUILTIN_NAME);
   }
 
   @NotNull
@@ -64,10 +76,23 @@ public class PythonColorsPage implements ColorSettingsPage {
 
   @NotNull
   public String getDemoText() {
-    return "def f():\n" +
-           "    <docComment>\"\"\" Syntax Highlighting Demo \"\"\"</docComment>\n" +
-           "    s = (\"Test\", 2+3, {'a': 'b'})   # Comment\n" +
-           "    print s[0].lower()";
+    return
+      "@<decorator>decorator</decorator>(param=1)\n" +
+      "def f(x):\n" +
+      "    <docComment>\"\"\" Syntax Highlighting Demo \"\"\"</docComment>\n" +
+      "    s = (\"Test\", 2+3, {'a': 'b'}, x)   # Comment\n" +
+      "    print s[0].lower()\n"+
+      "\n"+
+      "class <classDef>Foo</classDef>:\n"+
+      "    def <predefined>__init__</predefined>(self):\n" +
+      "        self.sense = None\n" +
+      "    \n" +
+      "    def <funcDef>makeSense</funcDef>(self, whatever):\n"+
+      "        self.sense = whatever\n"+
+      "\n"+
+      "x = <builtin>len</builtin>('abc')\n"+
+      "print(f.<predefinedUsage>__doc__</predefinedUsage>)"
+    ;
   }
 
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {

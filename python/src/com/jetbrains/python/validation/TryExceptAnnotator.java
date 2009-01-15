@@ -16,15 +16,14 @@
 
 package com.jetbrains.python.validation;
 
-import com.jetbrains.python.psi.PyTryExceptStatement;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyExceptBlock;
+import com.jetbrains.python.psi.PyTryExceptStatement;
 
 /**
- * Created by IntelliJ IDEA.
+ * Marks misplaced default 'except' clauses.
  * User: yole
  * Date: 13.06.2005
- * Time: 13:49:18
- * To change this template use File | Settings | File Templates.
  */
 public class TryExceptAnnotator extends PyAnnotator {
     @Override public void visitPyTryExceptStatement(final PyTryExceptStatement node) {
@@ -32,7 +31,7 @@ public class TryExceptAnnotator extends PyAnnotator {
         boolean haveDefaultExcept = false;
         for(PyExceptBlock block: exceptBlocks) {
             if (haveDefaultExcept) {
-                getHolder().createErrorAnnotation(block, "default 'except': must be last");
+                getHolder().createErrorAnnotation(block, PyBundle.message("ANN.default.except.must.be.last"));
             }
             if (block.getExceptClass() == null) {
                 haveDefaultExcept = true;
