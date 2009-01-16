@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 public class SuppressionUtil {
   @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
-    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+((\\s*,\\s*|\\s*)\\w+)*)");
+    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(\\s*,\\w+)*\\s*\\w*)");
 
   private SuppressionUtil() {
   }
