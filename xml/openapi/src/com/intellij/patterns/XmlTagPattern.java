@@ -42,6 +42,19 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
     });
   }
 
+  public Self withAnyAttribute(@NotNull @NonNls final String... attributeNames) {
+    return with(new PatternCondition<XmlTag>("withAnyAttribute") {
+      public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
+        for (String attributeName : attributeNames) {
+          if (xmlTag.getAttribute(attributeName) != null) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
+  }
+
   public Self isFirstSubtag(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<XmlTag>("isFirstSubtag") {
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
