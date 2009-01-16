@@ -320,6 +320,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(new MyRemoveBreakpointAction());
       group.add(new MyToggleBreakpointAction());
+      for (AnAction action : myType.getAdditionalPopupMenuActions(XLineBreakpointImpl.this, XDebuggerManager.getInstance(getProject()).getCurrentSession())) {
+        group.add(action);
+      }
       group.add(new Separator());
       group.add(new ViewBreakpointsAction(XDebuggerBundle.message("xdebugger.view.breakpoint.properties.action"), XLineBreakpointImpl.this));
       return group;

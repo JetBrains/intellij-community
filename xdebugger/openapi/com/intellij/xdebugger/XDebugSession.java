@@ -17,6 +17,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -100,6 +101,9 @@ public interface XDebugSession {
 
   @NotNull
   RunContentDescriptor getRunContentDescriptor();
+
+  @Nullable  
+  RunProfile getRunProfile();
 
   void setPauseActionSupported(boolean isSupported);
 

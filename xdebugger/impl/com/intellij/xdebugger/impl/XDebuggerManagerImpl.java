@@ -33,10 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -189,6 +186,19 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @NotNull
   public XDebugSession[] getDebugSessions() {
     return mySessions.toArray(new XDebugSession[mySessions.size()]);
+  }
+
+  @NotNull
+  @Override
+  public <T extends XDebugProcess> Collection<? extends T> getDebugProcesses(Class<T> processClass) {
+    final List<T> list = new ArrayList<T>();
+    for (XDebugSessionImpl session : mySessions) {
+      final XDebugProcess process = session.getDebugProcess();
+      if (processClass.isInstance(process)) {
+        list.add(processClass.cast(process));
+      }
+    }
+    return list;
   }
 
   @Nullable

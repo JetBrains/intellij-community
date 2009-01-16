@@ -6,6 +6,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,6 +85,11 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void rebuildViews() {
     mySessionTab.rebuildViews();
+  }
+
+  @Nullable
+  public RunProfile getRunProfile() {
+    return myEnvironment != null ? myEnvironment.getRunProfile() : null;
   }
 
   public boolean isPauseActionSupported() {

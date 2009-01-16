@@ -151,7 +151,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return result;
   }
 
-  public RunnerAndConfigurationSettings getSettings(RunConfiguration configuration) {
+  @Nullable
+  public RunnerAndConfigurationSettingsImpl getSettings(RunConfiguration configuration) {
     for (RunnerAndConfigurationSettingsImpl settings : getSortedConfigurations()) {
       if (settings.getConfiguration() == configuration) return settings;
     }
