@@ -109,6 +109,10 @@ public class OptimizeImportsTest extends CodeInsightFixtureTestCase {
     doTest("A.groovy");
   }
 
+  public void testSameFile() throws Throwable {
+    doTest("A.groovy");
+  }
+
   private void doTest(@NonNls String filePath) throws Throwable {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);

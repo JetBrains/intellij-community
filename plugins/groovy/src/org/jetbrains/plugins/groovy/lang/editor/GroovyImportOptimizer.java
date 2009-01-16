@@ -143,6 +143,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
       });
 
+      for (final PsiClass psiClass : myFile.getClasses()) {
+        importedClasses.remove(psiClass.getQualifiedName());
+      }
+
       // remove ALL imports from file
       final GrImportStatement[] oldImports = myFile.getImportStatements();
 
