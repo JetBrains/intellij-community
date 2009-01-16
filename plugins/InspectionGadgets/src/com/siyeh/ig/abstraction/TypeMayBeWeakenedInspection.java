@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Bas Leijdekkers
+ * Copyright 2006-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         final Collection<InspectionGadgetsFix> fixes = new ArrayList();
         for (PsiClass weakestClass : weakerClasses) {
             final String qualifiedName = weakestClass.getQualifiedName();
+            if (qualifiedName == null) {
+                continue;
+            }
             fixes.add(new TypeMayBeWeakenedFix(qualifiedName));
         }
         return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
@@ -112,7 +115,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
         private final String fqClassName;
 
-        TypeMayBeWeakenedFix(String fqClassName) {
+        TypeMayBeWeakenedFix(@NotNull String fqClassName) {
             this.fqClassName = fqClassName;
         }
 
