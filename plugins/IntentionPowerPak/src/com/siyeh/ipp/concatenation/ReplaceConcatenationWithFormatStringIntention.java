@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@ import java.util.ArrayList;
 public class ReplaceConcatenationWithFormatStringIntention
         extends Intention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new SimpleStringConcatenationPredicate();
     }
 
+    @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         PsiBinaryExpression expression =
@@ -59,7 +61,7 @@ public class ReplaceConcatenationWithFormatStringIntention
             newExpression.append(", ");
             newExpression.append(formatParameter.getText());
         }
-        newExpression.append(")");
+        newExpression.append(')');
         replaceExpression(newExpression.toString(), expression);
     }
 
@@ -94,6 +96,9 @@ public class ReplaceConcatenationWithFormatStringIntention
             return false;
         }
         final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) {
+            return false;
+        }
         final String qualifiedName = containingClass.getQualifiedName();
         if (!"java.io.PrintStream".equals(qualifiedName) &&
                 !"java.io.Printwriter".equals(qualifiedName)) {
@@ -116,7 +121,7 @@ public class ReplaceConcatenationWithFormatStringIntention
             newExpression.append(", ");
             newExpression.append(formatParameter.getText());
         }
-        newExpression.append(")");
+        newExpression.append(')');
         replaceExpression(newExpression.toString(), methodCallExpression);
         return true;
     }
@@ -151,7 +156,16 @@ public class ReplaceConcatenationWithFormatStringIntention
                     (PsiBinaryExpression) lhs;
             buildFormatString(binaryExpression, formatString, formatParameters);
         } else {
-            formatString.append("%s");
+            final PsiType type = lhs.getType();
+            if (type != null &&
+                    (type.equalsToText("long") ||
+                    type.equalsToText("int") ||
+                    type.equalsToText("java.lang.Long") ||
+                    type.equalsToText("java.lang.Integer"))) {
+                formatString.append("%d");
+            } else {
+                formatString.append("%s");
+            }
             formatParameters.add(lhs);
         }
     }
