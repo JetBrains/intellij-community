@@ -9,13 +9,13 @@
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public final class Settings {
   private final boolean myMakeClassParameter;
@@ -27,13 +27,15 @@ public final class Settings {
 
 
   public static final class FieldParameter {
-    public FieldParameter(PsiField field, String name) {
+    public FieldParameter(PsiField field, String name, PsiType type) {
       this.field = field;
       this.name = name;
+      this.type = type;
     }
 
     public final PsiField field;
     public final String name;
+    public final PsiType type;
   }
 
 
@@ -49,7 +51,7 @@ public final class Settings {
       for (ParameterTablePanel.VariableData data : variableDatum) {
         if (data.passAsParameter) {
           myFieldToNameMapping.put((PsiField)data.variable, data.name);
-          myFieldToNameList.add(new FieldParameter((PsiField)data.variable, data.name));
+          myFieldToNameList.add(new FieldParameter((PsiField)data.variable, data.name, data.type));
         }
       }
     }
@@ -71,7 +73,7 @@ public final class Settings {
         final PsiField field = fields[i];
         final String name = names[i];
         myFieldToNameMapping.put(field, name);
-        myFieldToNameList.add(new FieldParameter(field, name));
+        myFieldToNameList.add(new FieldParameter(field, name, field.getType()));
       }
     }
     else {

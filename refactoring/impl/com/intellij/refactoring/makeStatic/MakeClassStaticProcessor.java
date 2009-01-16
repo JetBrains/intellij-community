@@ -11,8 +11,8 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -46,7 +46,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       List<Settings.FieldParameter> parameters = mySettings.getParameterOrderList();
 
       for (Settings.FieldParameter fieldParameter : parameters) {
-        final PsiType type = fieldParameter.field.getType();
+        final PsiType type = fieldParameter.type;
         final PsiField field = factory.createField(convertToFieldName(fieldParameter.name), type);
         myMember.add(field);
       }
