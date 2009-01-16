@@ -45,7 +45,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private Map<String, InspectionTool> myTools = new HashMap<String, InspectionTool>();
 
   //diff map with base profile
-  private LinkedHashMap<HighlightDisplayKey, ToolState> myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>();
+  private LinkedHashMap<String, ToolState> myDisplayLevelMap = new LinkedHashMap<String, ToolState>();
   private boolean myLockedProfile = false;
 
   protected InspectionProfileImpl mySource;
@@ -82,7 +82,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myTools = new HashMap<String, InspectionTool>();
     initInspectionTools();
 
-    myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
+    myDisplayLevelMap = new LinkedHashMap<String, ToolState>(inspectionProfile.myDisplayLevelMap);
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
 
     myBaseProfile = inspectionProfile.myBaseProfile;
@@ -129,10 +129,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return myVisibleTreeState;
   }
 
-  private static boolean toolSettingsAreEqual(HighlightDisplayKey key,
+  private static boolean toolSettingsAreEqual(String toolName,
                                        InspectionProfileImpl profile1,
                                        InspectionProfileImpl profile2) {
-    final String toolName = key.toString();
     final InspectionProfileEntry tool1 = profile1.getInspectionTool(toolName);//findInspectionToolByName(profile1, toolDisplayName);
     final InspectionProfileEntry tool2 = profile2.getInspectionTool(toolName);//findInspectionToolByName(profile2, toolDisplayName);
     if (tool1 == null && tool2 == null) {
@@ -158,11 +157,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (myBaseProfile == null) {
       return false;
     }
-    final boolean toolsSettings = toolSettingsAreEqual(key, this, myBaseProfile);
-    if (myDisplayLevelMap.keySet().contains(key)) {
-      if (toolsSettings && myDisplayLevelMap.get(key).equals(myBaseProfile.getToolState(key))) {
+    final String toolName = key.toString();
+    final boolean toolsSettings = toolSettingsAreEqual(toolName, this, myBaseProfile);
+    if (myDisplayLevelMap.keySet().contains(toolName)) {
+      if (toolsSettings && myDisplayLevelMap.get(toolName).equals(myBaseProfile.getToolState(toolName))) {
         if (!myLockedProfile) {
-          myDisplayLevelMap.remove(key);
+          myDisplayLevelMap.remove(toolName);
         }
         return false;
       }
@@ -171,7 +171,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
 
     if (!toolsSettings) {
-      myDisplayLevelMap.put(key, myBaseProfile.getToolState(key));
+      myDisplayLevelMap.put(key.toString(), myBaseProfile.getToolState(toolName));
       return true;
     }
 
@@ -184,8 +184,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     copyToolsConfigurations(myBaseProfile);
     if (myLockedProfile && myBaseProfile != null) { //store whole state for locked profiles
       for (InspectionProfileEntry entry : myBaseProfile.getInspectionTools()) {
-        final HighlightDisplayKey displayKey = HighlightDisplayKey.find(entry.getShortName());
-        myDisplayLevelMap.put(displayKey, myBaseProfile.getToolState(displayKey));
+        final String shortName = entry.getShortName();
+        myDisplayLevelMap.put(shortName, myBaseProfile.getToolState(shortName));
       }
     }
   }
@@ -202,7 +202,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey) {
-    HighlightDisplayLevel level = getToolState(inspectionToolKey).getLevel();
+    HighlightDisplayLevel level = getToolState(inspectionToolKey.toString()).getLevel();
     if (!((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().isSeverityValid(level.getSeverity())){
       level = HighlightDisplayLevel.WARNING;
       setErrorLevel(inspectionToolKey, level);
@@ -210,7 +210,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return level;
   }
 
-  private ToolState getToolState(HighlightDisplayKey key) {
+  private ToolState getToolState(String key) {
     ToolState state = myDisplayLevelMap.get(key);
     if (state == null) {
       if (myBaseProfile != null) {
@@ -266,17 +266,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {//from old profiles
         level = HighlightDisplayLevel.WARNING;
       }
+      final String enabled = toolElement.getAttributeValue(ENABLED_TAG);
+      HighlightDisplayKey key = HighlightDisplayKey.find(toolClassName);
+      final ToolState toolState = new ToolState(level, enabled != null && Boolean.parseBoolean(enabled));
+      myDisplayLevelMap.put(toolClassName, toolState);
 
-      InspectionTool tool = myTools.get(toolClassName);
-      if (tool != null) {
-        tool.readSettings(toolElement);
+      if (key == null) {
+        toolState.setToolElement(toolElement);
+        continue; //tool was somehow dropped
       }
 
-      HighlightDisplayKey key = HighlightDisplayKey.find(toolClassName);
-      if (key == null) continue; //tool was somehow dropped
-
-      final String enabled = toolElement.getAttributeValue(ENABLED_TAG);
-      myDisplayLevelMap.put(key, new ToolState(level, enabled != null && Boolean.parseBoolean(enabled)));
+      InspectionTool tool = myTools.get(toolClassName);
+      LOG.assertTrue(tool != null);
+      tool.readSettings(toolElement);
     }
   }
 
@@ -286,18 +288,27 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     element.setAttribute(VERSION_TAG, VALID_VERSION);
     element.setAttribute(IS_LOCKED, String.valueOf(myLockedProfile));
 
-    for (final HighlightDisplayKey key : myDisplayLevelMap.keySet()) {
-      Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
-      final String toolName = key.toString();
-      inspectionElement.setAttribute(CLASS_TAG, toolName);
-      inspectionElement.setAttribute(LEVEL_TAG, getToolState(key).getLevel().toString());
-      inspectionElement.setAttribute(ENABLED_TAG, Boolean.toString(isToolEnabled(key)));
+    for (final String toolName : myDisplayLevelMap.keySet()) {
+      final ToolState state = getToolState(toolName);
+      final HighlightDisplayKey key = HighlightDisplayKey.find(toolName);
+      if ( key != null) {
+        final Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
 
-      final InspectionTool tool = myTools.get(toolName);
-      if (tool != null) {
+        inspectionElement.setAttribute(CLASS_TAG, toolName);
+        inspectionElement.setAttribute(LEVEL_TAG, state.getLevel().toString());
+        inspectionElement.setAttribute(ENABLED_TAG, Boolean.toString(isToolEnabled(key)));
+
+        final InspectionTool tool = myTools.get(toolName);
+        LOG.assertTrue(tool != null);
         tool.writeSettings(inspectionElement);
+
+        element.addContent(inspectionElement);
+      } else {
+        final Element toolElement = state.getToolElement();
+        LOG.assertTrue(toolElement != null);
+        toolElement.detach();
+        element.addContent(toolElement);
       }
-      element.addContent(inspectionElement);
     }
   }
 
@@ -375,10 +386,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void lockProfile(boolean isLocked){
     for (InspectionTool tool : myTools.values()) {
-      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      final String key = tool.getShortName();
       if (isLocked){
         myDisplayLevelMap.put(key, getToolState(key));
-      } else if (!isProperSetting(key)){
+      } else if (!isProperSetting(HighlightDisplayKey.find(key))){
         myDisplayLevelMap.remove(key);
       }
     }
@@ -434,7 +445,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     super.copyFrom(profile);
     final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
     if (profile == null) return;
-    myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
+    myDisplayLevelMap = new LinkedHashMap<String, ToolState>(inspectionProfile.myDisplayLevelMap);
     myBaseProfile = inspectionProfile.myBaseProfile;
     copyToolsConfigurations(inspectionProfile);
   }
@@ -482,23 +493,21 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void enableTool(String inspectionTool){
-    final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionTool);
-    setState(key,
-             new ToolState(getErrorLevel(key), true));
+    setState(inspectionTool,
+             new ToolState(getErrorLevel(HighlightDisplayKey.find(inspectionTool)), true));
   }
 
   public void disableTool(String inspectionTool){
-    final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionTool);
-    setState(key,
-             new ToolState(getErrorLevel(key), false));
+    setState(inspectionTool,
+             new ToolState(getErrorLevel(HighlightDisplayKey.find(inspectionTool)), false));
   }
 
 
   public void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level) {
-    setState(key, new ToolState(level, isToolEnabled(key)));
+    setState(key.toString(), new ToolState(level, isToolEnabled(key)));
   }
 
-  private void setState(HighlightDisplayKey key, ToolState state) {
+  private void setState(String key, ToolState state) {
     if (myBaseProfile != null &&
         state.equals(myBaseProfile.getToolState(key))) {
       if (toolSettingsAreEqual(key, this, myBaseProfile) && !myLockedProfile){ //settings may differ
@@ -513,7 +522,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean isToolEnabled(HighlightDisplayKey key) {
-    final ToolState toolState = getToolState(key);
+    final ToolState toolState = getToolState(key.toString());
     return toolState != null && toolState.isEnabled();    
   }
 
@@ -562,7 +571,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         } else {
           HighlightDisplayKey.register(shortName);
         } */
-        DEFAULT_PROFILE.myDisplayLevelMap.put(HighlightDisplayKey.find(shortName), new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
+        DEFAULT_PROFILE.myDisplayLevelMap.put(shortName, new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
       }
     }
     return DEFAULT_PROFILE;
@@ -593,6 +602,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private static class ToolState {
     private final HighlightDisplayLevel myLevel;
     private boolean myEnabled;
+    private Element myToolElement = null;
 
     private ToolState(final HighlightDisplayLevel level, final boolean enabled) {
       myLevel = level;
@@ -616,6 +626,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     public int hashCode() {
       return myLevel.hashCode();
+    }
+
+    public Element getToolElement() {
+      return myToolElement;
+    }
+
+    public void setToolElement(Element toolElement) {
+      myToolElement = toolElement;
     }
   }
 
