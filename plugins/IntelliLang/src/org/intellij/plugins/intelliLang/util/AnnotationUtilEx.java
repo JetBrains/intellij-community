@@ -53,11 +53,6 @@ public class AnnotationUtilEx {
    */
   @Nullable
   public static PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiExpression element, LookupType type) {
-    return getAnnotatedElementFor(element, type, null);
-  }
-
-  @Nullable
-  public static PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiExpression element, LookupType type, @Nullable Set<String> interesting) {
     if (element == null) return null;
 
     if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLRARATION_ONLY) {
@@ -77,11 +72,11 @@ public class AnnotationUtilEx {
     if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
       if (p.getRExpression() == element) {
-        return getAnnotatedElementFor(p.getLExpression(), type, interesting);
+        return getAnnotatedElementFor(p.getLExpression(), type);
       }
     }
     else if (parent instanceof PsiExpression) {
-      return getAnnotatedElementFor((PsiExpression)parent, type, interesting);
+      return getAnnotatedElementFor((PsiExpression)parent, type);
     }
     else if (parent instanceof PsiReturnStatement) {
       final PsiMethod m = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
@@ -96,11 +91,11 @@ public class AnnotationUtilEx {
       final PsiArrayInitializerMemberValue value = (PsiArrayInitializerMemberValue)parent;
       final PsiElement pair = value.getParent();
       if (pair instanceof PsiNameValuePair) {
-        return getAnnotationMethod((PsiNameValuePair)pair, element, interesting);
+        return getAnnotationMethod((PsiNameValuePair)pair, element);
       }
     }
     else if (parent instanceof PsiNameValuePair) {
-      return getAnnotationMethod((PsiNameValuePair)parent, element, interesting);
+      return getAnnotationMethod((PsiNameValuePair)parent, element);
     }
     else {
       return PsiUtilEx.getParameterForArgument(element);
@@ -121,12 +116,12 @@ public class AnnotationUtilEx {
   }
 
   @Nullable
-  private static PsiModifierListOwner getAnnotationMethod(PsiNameValuePair pair, PsiExpression element, @Nullable Set<String> interesting) {
+  private static PsiModifierListOwner getAnnotationMethod(PsiNameValuePair pair, PsiExpression element) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair.getParent(), PsiAnnotation.class);
     assert annotation != null;
 
     final String fqn = annotation.getQualifiedName();
-    if (fqn == null || interesting != null && !interesting.contains(fqn)) return null;
+    if (fqn == null) return null;
 
     final PsiClass psiClass = JavaPsiFacade.getInstance(element.getProject()).findClass(fqn, element.getResolveScope());
     if (psiClass != null && psiClass.isAnnotationType()) {

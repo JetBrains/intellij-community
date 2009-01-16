@@ -77,7 +77,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     boolean unparsable = false;
     while (!places.isEmpty()) {
       final PsiExpression curPlace = places.removeFirst();
-      final PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(curPlace, AnnotationUtilEx.LookupType.PREFER_CONTEXT, myInjectionConfiguration.getLanguageAnnotationPair().second);
+      final PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(curPlace, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
       if (owner == null) continue;
       if (processAnnotationInjections(firstLiteral, owner, processor)) return; // annotated element
 
