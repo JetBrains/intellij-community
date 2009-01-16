@@ -41,11 +41,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class XmlFileType extends XmlLikeFileType {
+  public static final XmlFileType INSTANCE = new XmlFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "xml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xml.png");
 
-  public XmlFileType() {
+  private XmlFileType() {
     super(XMLLanguage.INSTANCE);
     TypedHandler.registerBaseLanguageQuoteHandler(XMLLanguage.class, TypedHandler.getQuoteHandlerForType(this));
   }
