@@ -1,9 +1,12 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,16 +22,33 @@ import java.util.Set;
 public class PsiSubstitutorImpl implements PsiSubstitutor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSubstitutorImpl");
   private final Map<PsiTypeParameter, PsiType> mySubstitutionMap;
+  private final TObjectHashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new TObjectHashingStrategy<PsiTypeParameter>() {
+    public int computeHashCode(PsiTypeParameter object) {
+      String name = object.getName();
+      return name == null ? 0 : name.hashCode();
+    }
+    public boolean equals(PsiTypeParameter element1, PsiTypeParameter element2) {
+      if (element1 == element2 || element1.equals(element2)) return true;
+      if (!Comparing.strEqual(element1.getName(), element2.getName())) return false;
+      PsiTypeParameterListOwner owner1 = element1.getOwner();
+      PsiTypeParameterListOwner owner2 = element2.getOwner();
+      boolean b = owner1 instanceof PsiClass && owner2 instanceof PsiClass && element1.getManager().areElementsEquivalent(owner1, owner2);
+      if (b) {
+        return b;
+      }
+      return false;
+    }
+  };
 
-  private PsiSubstitutorImpl(Map<PsiTypeParameter, PsiType> map) {
-    mySubstitutionMap = map;
+  private PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map) {
+    mySubstitutionMap = new THashMap<PsiTypeParameter, PsiType>(map, PSI_EQUIVALENCE);
   }
 
-  public PsiSubstitutorImpl() {
-    mySubstitutionMap = new HashMap<PsiTypeParameter, PsiType>(2);
+  PsiSubstitutorImpl() {
+    mySubstitutionMap = new THashMap<PsiTypeParameter, PsiType>(2, PSI_EQUIVALENCE);
   }
 
-  public PsiType substitute(PsiTypeParameter typeParameter){
+  public PsiType substitute(@NotNull PsiTypeParameter typeParameter){
     if(!mySubstitutionMap.containsKey(typeParameter)){
       return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
     }
@@ -286,21 +306,28 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return substituted;
   }
 
-  public synchronized PsiSubstitutor put(PsiTypeParameter typeParameter, PsiType mapping) {
-    final PsiSubstitutorImpl ret = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
+  @Override
+  protected PsiSubstitutorImpl clone() {
+    return new PsiSubstitutorImpl(mySubstitutionMap);
+  }
+
+  public synchronized PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
+    PsiSubstitutorImpl ret = clone();
     ret.mySubstitutionMap.put(typeParameter, mapping);
     return ret;
   }
 
-  public synchronized PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings) {
+  public synchronized PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
     final PsiTypeParameter[] params = parentClass.getTypeParameters();
-    PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
+    PsiSubstitutorImpl substitutor = clone();
     for (int i = 0; i < params.length; i++) {
+      PsiTypeParameter param = params[i];
+      assert param != null;
       if (mappings != null && mappings.length > i) {
-        substitutor.mySubstitutionMap.put(params[i], mappings[i]);
+        substitutor.mySubstitutionMap.put(param, mappings[i]);
       }
       else {
-        substitutor.mySubstitutionMap.put(params[i], null);
+        substitutor.mySubstitutionMap.put(param, null);
       }
     }
 
@@ -310,7 +337,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   public PsiSubstitutor putAll(PsiSubstitutor another) {
     if (another instanceof EmptySubstitutorImpl) return this;
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
-    PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
+    PsiSubstitutorImpl substitutor = clone();
     substitutor.mySubstitutionMap.putAll(anotherImpl.mySubstitutionMap);
     return substitutor;
   }
