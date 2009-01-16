@@ -1,3 +1,7 @@
+Date: 15 Jan 2008
+  Changed classes:
+    gnu.trove.THashMap - fixed bug in put() method for null value
+
 Date: 17 Oct 2006
   Changed classes:
     gnu.trove.T*ArrayList - fixed bug in set() method
