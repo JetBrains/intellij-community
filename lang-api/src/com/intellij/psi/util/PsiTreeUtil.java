@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
@@ -570,5 +571,22 @@ public class PsiTreeUtil {
     }
 
     return filteredElements.toArray(new PsiElement[filteredElements.size()]);
+  }
+
+  public static boolean treeWalkUp(@NotNull final PsiScopeProcessor processor, @NotNull final PsiElement entrance,
+                                   @Nullable final PsiElement maxScope,
+                                   @NotNull final ResolveState state) {
+    PsiElement prevParent = entrance;
+    PsiElement scope = entrance;
+
+    while (scope != null) {
+      if (!scope.processDeclarations(processor, state, prevParent, entrance)) return false;
+
+      if (scope == maxScope) break;
+      prevParent = scope;
+      scope = prevParent.getContext();
+    }
+
+    return true;
   }
 }
