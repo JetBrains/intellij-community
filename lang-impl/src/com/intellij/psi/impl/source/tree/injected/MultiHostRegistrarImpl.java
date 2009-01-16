@@ -23,8 +23,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -243,28 +243,30 @@ class MultiHostRegistrarImpl implements MultiHostRegistrar {
         throw new RuntimeException("Patch error, lang="+myLanguage+";\n "+myHostVirtualFile+"; places:"+injectionHosts+";\n ranges:"+shreds, e);
       }
 
-      InjectedFileViewProvider injectedFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
-
-      assert injectedFileViewProvider.isValid();
-      PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
-
       addToResults(place);
 
-      boolean isAncestor = false;
-      for (PsiLanguageInjectionHost.Shred shred : shreds) {
-        PsiLanguageInjectionHost host = shred.host;
-        isAncestor |= PsiTreeUtil.isAncestor(myContextElement, host, false);
-      }
-      assert isAncestor : myContextElement + " must be the parent of at least one of injection hosts: " + shreds;
-
-      assert documentWindow.getText().equals(psiFile.getText());
-      assert injectedFileViewProvider.getDocument() instanceof DocumentWindowImpl;
-      assert documentManager.getCachedDocument(psiFile) == injectedFileViewProvider.getDocument();
-      assert psiFile.getVirtualFile() == injectedFileViewProvider.getVirtualFile();
+      assertEverythingIsAllright(documentManager, documentWindow, psiFile);
     }
     finally {
       clear();
     }
+  }
+
+  private void assertEverythingIsAllright(PsiDocumentManager documentManager, DocumentWindowImpl documentWindow, PsiFile psiFile) {
+    boolean isAncestor = false;
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      PsiLanguageInjectionHost host = shred.host;
+      isAncestor |= PsiTreeUtil.isAncestor(myContextElement, host, false);
+    }
+    assert isAncestor : myContextElement + " must be the parent of at least one of injection hosts: " + shreds;
+
+    InjectedFileViewProvider injectedFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
+    assert injectedFileViewProvider.isValid();
+    assert documentWindow.getText().equals(psiFile.getText());
+    assert injectedFileViewProvider.getDocument() instanceof DocumentWindowImpl;
+    assert documentManager.getCachedDocument(psiFile) == injectedFileViewProvider.getDocument();
+    assert psiFile.getVirtualFile() == injectedFileViewProvider.getVirtualFile();
+    PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
   }
 
   private void addToResults(Place place) {

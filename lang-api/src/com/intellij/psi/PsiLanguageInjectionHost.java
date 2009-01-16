@@ -73,6 +73,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
       this.prefix = prefix;
       this.suffix = suffix;
       this.range = range;
+      assert isValid();
     }
 
     public RangeMarker getHostRangeMarker() {
@@ -96,7 +97,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
     }
 
     public boolean isValid() {
-      return relevantRangeInHost.isValid() && host.isValid() && host.getTextRange().containsRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset());
+      return relevantRangeInHost.isValid() && host.isValid() /*&& host.getTextRange().containsRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset())*/;
     }
   }
 }

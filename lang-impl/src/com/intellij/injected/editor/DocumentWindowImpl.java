@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -33,31 +32,17 @@ import java.util.List;
 public class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.injected.DocumentRangee");
   private final DocumentEx myDelegate;
-  //sorted by startOffset
-  private final RangeMarker[] myRelevantRangesInHostDocument;
   private final boolean myOneLine;
-  private final String[] myPrefixes;
-  private final String[] mySuffixes;
+  private Place myShreds;
   private final int myPrefixLineCount;
   private final int mySuffixLineCount;
 
   public DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, Place shreds) {
     myDelegate = delegate;
     myOneLine = oneLine;
-    myPrefixes = new String[shreds.size()];
-    mySuffixes = new String[shreds.size()];
-    myRelevantRangesInHostDocument = new RangeMarker[shreds.size()];
-    for (int i = 0; i < shreds.size(); i++) {
-      PsiLanguageInjectionHost.Shred shred = shreds.get(i);
-      myPrefixes[i] = shred.prefix;
-      mySuffixes[i] = shred.suffix;
-      myRelevantRangesInHostDocument[i] = shred.getHostRangeMarker();
-      if (i != 0) {
-        assert myRelevantRangesInHostDocument[i].getStartOffset() >= myRelevantRangesInHostDocument[i - 1].getStartOffset() : Arrays.asList(myRelevantRangesInHostDocument);
-      }
-    }
-    myPrefixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myPrefixes[0]));
-    mySuffixLineCount = Math.max(1, 1 + StringUtil.countNewLines(mySuffixes[mySuffixes.length - 1]));
+    myShreds = shreds;
+    myPrefixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myShreds.get(0).prefix));
+    mySuffixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myShreds.get(shreds.size()- 1).suffix));
   }
 
   public int getLineCount() {
@@ -70,19 +55,19 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public int getLineEndOffset(int line) {
-    if (line==0 && myPrefixes[0].length()==0) return getTextLength();
+    if (line==0 && myShreds.get(0).prefix.length()==0) return getTextLength();
     return new DocumentImpl(getText()).getLineEndOffset(line);
   }
 
   public String getText() {
     StringBuilder text = new StringBuilder();
     String hostText = myDelegate.getText();
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      RangeMarker hostRange = shred.getHostRangeMarker();
       if (hostRange.isValid()) {
-        text.append(myPrefixes[i]);
+        text.append(shred.prefix);
         text.append(hostText, hostRange.getStartOffset(), hostRange.getEndOffset());
-        text.append(mySuffixes[i]);
+        text.append(shred.suffix);
       }
     }
     return text.toString();
@@ -98,11 +83,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   public int getTextLength() {
     int length = 0;
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
-      length += myPrefixes[i].length();
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      RangeMarker hostRange = shred.getHostRangeMarker();
+      length += shred.prefix.length();
       length += hostRange.getEndOffset() - hostRange.getStartOffset();
-      length += mySuffixes[i].length();
+      length += shred.suffix.length();
     }
     return length;
   }
@@ -110,16 +95,16 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public int getLineNumber(int offset) {
     int lineNumber = 0;
     String hostText = myDelegate.getText();
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      String prefix = myPrefixes[i];
-      String suffix = mySuffixes[i];
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      String prefix = shred.prefix;
+      String suffix = shred.suffix;
       lineNumber += StringUtil.getLineBreakCount(prefix.substring(0, Math.min(offset, prefix.length())));
       if (offset < prefix.length()) {
         return lineNumber;
       }
       offset -= prefix.length();
-      
-      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
+
+      RangeMarker currentRange = shred.getHostRangeMarker();
       int rangeLength = currentRange.getEndOffset() - currentRange.getStartOffset();
       String rangeText = hostText.substring(currentRange.getStartOffset(), currentRange.getEndOffset());
 
@@ -141,7 +126,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public TextRange getHostRange(int hostOffset) {
-    for (RangeMarker currentRange : myRelevantRangesInHostDocument) {
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      RangeMarker currentRange = shred.getHostRangeMarker();
       TextRange textRange = InjectedLanguageUtil.toTextRange(currentRange);
       if (textRange.grown(1).contains(hostOffset)) return textRange;
     }                              
@@ -149,8 +135,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public void insertString(final int offset, CharSequence s) {
-    LOG.assertTrue(offset >= myPrefixes[0].length());
-    LOG.assertTrue(offset <= getTextLength() - mySuffixes[mySuffixes.length-1].length());
+    LOG.assertTrue(offset >= myShreds.get(0).prefix.length());
+    LOG.assertTrue(offset <= getTextLength() - myShreds.get(myShreds.size() - 1).suffix.length());
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
     }
@@ -161,15 +147,15 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
     assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;
 
-    List<TextRange> hostRangesToDelete = new ArrayList<TextRange>(myRelevantRangesInHostDocument.length);
+    List<TextRange> hostRangesToDelete = new ArrayList<TextRange>(myShreds.size());
 
     int offset = startOffset;
     int curRangeStart = 0;
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      curRangeStart += myPrefixes[i].length();
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      curRangeStart += shred.prefix.length();
       if (offset < curRangeStart) offset = curRangeStart;
       if (offset >= endOffset) break;
-      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
+      RangeMarker hostRange = shred.getHostRangeMarker();
       if (!hostRange.isValid()) continue;
       int hostRangeLength = hostRange.getEndOffset() - hostRange.getStartOffset();
       TextRange range = TextRange.from(curRangeStart, hostRangeLength);
@@ -179,7 +165,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         offset = rangeToDelete.getEndOffset();
       }
       curRangeStart += hostRangeLength;
-      curRangeStart += mySuffixes[i].length();
+      curRangeStart += shred.suffix.length();
     }
 
     int delta = 0;
@@ -300,23 +286,28 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public void setText(CharSequence text) {
-    LOG.assertTrue(text.toString().startsWith(myPrefixes[0]));
-    LOG.assertTrue(text.toString().endsWith(mySuffixes[mySuffixes.length-1]));
+    LOG.assertTrue(text.toString().startsWith(myShreds.get(0).prefix));
+    LOG.assertTrue(text.toString().endsWith(myShreds.get(myShreds.size() - 1).suffix));
     if (isOneLine()) {
       text = StringUtil.replace(text.toString(), "\n", "");
     }
     String[] changes = calculateMinEditSequence(text.toString());
-    assert changes.length == myRelevantRangesInHostDocument.length;
+    assert changes.length == myShreds.size();
     for (int i = 0; i < changes.length; i++) {
       String change = changes[i];
-      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
+      RangeMarker hostRange = myShreds.get(i).getHostRangeMarker();
       myDelegate.replaceString(hostRange.getStartOffset(), hostRange.getEndOffset(), change);
     }
   }
 
   @NotNull
   public RangeMarker[] getHostRanges() {
-    return myRelevantRangesInHostDocument;
+    RangeMarker[] markers = new RangeMarker[myShreds.size()];
+    for (int i = 0; i < myShreds.size(); i++) {
+      PsiLanguageInjectionHost.Shred shred = myShreds.get(i);
+      markers[i] = shred.getHostRangeMarker();
+    }
+    return markers;
   }
 
   public RangeMarker createRangeMarker(final TextRange textRange) {
@@ -399,20 +390,20 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   //todo use escaper?
   public int hostToInjected(int hostOffset) {
-    if (hostOffset < myRelevantRangesInHostDocument[0].getStartOffset()) return myPrefixes[0].length();
+    if (hostOffset < myShreds.get(0).getHostRangeMarker().getStartOffset()) return myShreds.get(0).prefix.length();
     int offset = 0;
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      offset += myPrefixes[i].length();
-      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
-      RangeMarker nextRange = i==myRelevantRangesInHostDocument.length-1 ? null : myRelevantRangesInHostDocument[i+1];
+    for (int i = 0; i < myShreds.size(); i++) {
+      offset += myShreds.get(i).prefix.length();
+      RangeMarker currentRange = myShreds.get(i).getHostRangeMarker();
+      RangeMarker nextRange = i == myShreds.size() - 1 ? null : myShreds.get(i + 1).getHostRangeMarker();
       if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
         if (hostOffset >= currentRange.getEndOffset()) hostOffset = currentRange.getEndOffset();
         return offset + hostOffset - currentRange.getStartOffset();
       }
       offset += currentRange.getEndOffset() - currentRange.getStartOffset();
-      offset += mySuffixes[i].length();
+      offset += myShreds.get(i).suffix.length();
     }
-    return getTextLength() - mySuffixes[mySuffixes.length-1].length();
+    return getTextLength() - myShreds.get(myShreds.size() - 1).suffix.length();
   }
 
   public int injectedToHost(int offset) {
@@ -431,11 +422,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   private int injectedToHost(int offset, boolean preferLeftFragment) {
-    if (offset < myPrefixes[0].length()) return myRelevantRangesInHostDocument[0].getStartOffset();
+    if (offset < myShreds.get(0).prefix.length()) return myShreds.get(0).getHostRangeMarker().getStartOffset();
     int prevEnd = 0;
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
-      offset -= myPrefixes[i].length();
+    for (int i = 0; i < myShreds.size(); i++) {
+      RangeMarker currentRange = myShreds.get(i).getHostRangeMarker();
+      offset -= myShreds.get(i).prefix.length();
       int length = currentRange.getEndOffset() - currentRange.getStartOffset();
       if (offset < 0) {
         return preferLeftFragment ? prevEnd : currentRange.getStartOffset() - 1;
@@ -447,10 +438,10 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         return currentRange.getStartOffset() + offset;
       }
       offset -= length;
-      offset -= mySuffixes[i].length();
+      offset -= myShreds.get(i).suffix.length();
       prevEnd = currentRange.getEndOffset();
     }
-    return myRelevantRangesInHostDocument[myRelevantRangesInHostDocument.length-1].getEndOffset();
+    return myShreds.get(myShreds.size() - 1).getHostRangeMarker().getEndOffset();
   }
 
   @NotNull
@@ -466,7 +457,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   public int injectedToHostLine(int line) {
     if (line < myPrefixLineCount) {
-      return myDelegate.getLineNumber(myRelevantRangesInHostDocument[0].getStartOffset());
+      return myDelegate.getLineNumber(myShreds.get(0).getHostRangeMarker().getStartOffset());
     }
     int lineCount = getLineCount();
     if (line > lineCount - mySuffixLineCount) {
@@ -479,8 +470,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public boolean containsRange(int start, int end) {
-    if (end - start > myRelevantRangesInHostDocument[0].getEndOffset() - myRelevantRangesInHostDocument[0].getStartOffset()) return false;
-    for (RangeMarker hostRange : myRelevantRangesInHostDocument) {
+    if (end - start > myShreds.get(0).getHostRangeMarker().getEndOffset() - myShreds.get(0).getHostRangeMarker().getStartOffset()) return false;
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      RangeMarker hostRange = shred.getHostRangeMarker();
       if (!hostRange.isValid()) continue;
       TextRange textRange = InjectedLanguageUtil.toTextRange(hostRange);
       if (textRange.contains(new ProperTextRange(start, end))) return true;
@@ -494,9 +486,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     int offset = 0;
     int startOffset = -1;
     int endOffset = -1;
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
-      offset += myPrefixes[i].length();
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      RangeMarker hostRange = shred.getHostRangeMarker();
+      offset += shred.prefix.length();
       int length = hostRange.getEndOffset() - hostRange.getStartOffset();
       TextRange intersection = new ProperTextRange(offset, offset + length).intersection(rangeToEdit);
       if (intersection != null) {
@@ -506,7 +498,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         endOffset = intersection.getEndOffset();
       }
       offset += length;
-      offset += mySuffixes[i].length();
+      offset += shred.suffix.length();
     }
     if (startOffset == -1) return null;
     return new ProperTextRange(startOffset, endOffset);
@@ -515,9 +507,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public boolean intersects(DocumentWindowImpl documentWindow) {
     int i = 0;
     int j = 0;
-    while (i < myRelevantRangesInHostDocument.length && j < documentWindow.myRelevantRangesInHostDocument.length) {
-      RangeMarker range = myRelevantRangesInHostDocument[i];
-      RangeMarker otherRange = documentWindow.myRelevantRangesInHostDocument[j];
+    while (i < myShreds.size() && j < documentWindow.myShreds.size()) {
+      RangeMarker range = myShreds.get(i).getHostRangeMarker();
+      RangeMarker otherRange = documentWindow.myShreds.get(j).getHostRangeMarker();
       if (InjectedLanguageUtil.toTextRange(range).intersects(InjectedLanguageUtil.toTextRange(otherRange))) return true;
       if (range.getEndOffset() > otherRange.getStartOffset()) i++;
       else if (range.getStartOffset() < otherRange.getEndOffset()) j++;
@@ -534,21 +526,25 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   // result[i] == "" means delete
   // result[i] == string means replace
   public String[] calculateMinEditSequence(String newText) {
-    String[] result = new String[myRelevantRangesInHostDocument.length];
+    String[] result = new String[myShreds.size()];
     String hostText = myDelegate.getText();
     calculateMinEditSequence(hostText, newText, result, 0, result.length - 1);
     for (int i = 0; i < result.length; i++) {
       String change = result[i];
       if (change == null) continue;
-      assert change.startsWith(myPrefixes[i]) : change + " " + myPrefixes[i];
-      assert change.endsWith(mySuffixes[i]) : change + " " + mySuffixes[i];
-      result[i] = StringUtil.trimEnd(StringUtil.trimStart(change, myPrefixes[i]), mySuffixes[i]);
+      String prefix = myShreds.get(i).prefix;
+      String suffix = myShreds.get(i).suffix;
+      assert change.startsWith(prefix) : change + " " + prefix;
+      assert change.endsWith(suffix) : change + " " + suffix;
+      result[i] = StringUtil.trimEnd(StringUtil.trimStart(change, prefix), suffix);
     }
     return result;
   }
 
   private String getRangeText(String hostText, int i) {
-    return myPrefixes[i] + hostText.substring(myRelevantRangesInHostDocument[i].getStartOffset(), myRelevantRangesInHostDocument[i].getEndOffset()) + mySuffixes[i];
+    return myShreds.get(i).prefix +
+           hostText.substring(myShreds.get(i).getHostRangeMarker().getStartOffset(), myShreds.get(i).getHostRangeMarker().getEndOffset()) +
+           myShreds.get(i).suffix;
   }
   private void calculateMinEditSequence(String hostText, String newText, String[] result, int i, int j) {
     String rangeText1 = getRangeText(hostText, i);
@@ -568,17 +564,19 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       return;
     }
     if (i+1 == j) {
-      String separator = mySuffixes[i] + myPrefixes[j];
+      String suffix = myShreds.get(i).suffix;
+      String prefix = myShreds.get(j).prefix;
+      String separator = suffix + prefix;
       if (separator.length() != 0) {
         int sep = newText.indexOf(separator);
         assert sep != -1;
-        result[i] = newText.substring(0, sep + mySuffixes[i].length());
-        result[j] = newText.substring(sep + mySuffixes[i].length() + myPrefixes[j].length(), newText.length());
+        result[i] = newText.substring(0, sep + suffix.length());
+        result[j] = newText.substring(sep + suffix.length() + prefix.length(), newText.length());
         return;
       }
-      String prefix = StringUtil.commonPrefix(rangeText1, newText);
-      result[i] = prefix;
-      result[j] = newText.substring(prefix.length());
+      String commonPrefix = StringUtil.commonPrefix(rangeText1, newText);
+      result[i] = commonPrefix;
+      result[j] = newText.substring(commonPrefix.length());
       return;
     }
     String middleText = getRangeText(hostText, i + 1);
@@ -604,13 +602,15 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   public boolean areRangesEqual(@NotNull DocumentWindow otherd) {
     DocumentWindowImpl window = (DocumentWindowImpl)otherd;
-    if (myRelevantRangesInHostDocument.length != window.myRelevantRangesInHostDocument.length) return false;
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      if (!myPrefixes[i].equals(window.myPrefixes[i])) return false;
-      if (!mySuffixes[i].equals(window.mySuffixes[i])) return false;
+    if (myShreds.size() != window.myShreds.size()) return false;
+    for (int i = 0; i < myShreds.size(); i++) {
+      PsiLanguageInjectionHost.Shred shred = myShreds.get(i);
+      PsiLanguageInjectionHost.Shred otherShred = window.myShreds.get(i);
+      if (!shred.prefix.equals(otherShred.prefix)) return false;
+      if (!shred.suffix.equals(otherShred.suffix)) return false;
 
-      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
-      RangeMarker other = window.myRelevantRangesInHostDocument[i];
+      RangeMarker hostRange = shred.getHostRangeMarker();
+      RangeMarker other = otherShred.getHostRangeMarker();
       if (hostRange.getStartOffset() != other.getStartOffset()) return false;
       if (hostRange.getEndOffset() != other.getEndOffset()) return false;
     }
@@ -618,10 +618,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public boolean isValid() {
-    for (RangeMarker range : myRelevantRangesInHostDocument) {
-      if (!range.isValid()) return false;
-    }
-    return true;
+    return myShreds.isValid();
   }
 
   public boolean equals(Object o) {
@@ -631,7 +628,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public int hashCode() {
-    return myRelevantRangesInHostDocument[0].getStartOffset();
+    return myShreds.get(0).getHostRangeMarker().getStartOffset();
   }
 
   public boolean isOneLine() {
@@ -639,8 +636,13 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public void dispose() {
-    for (RangeMarker rangeMarker : myRelevantRangesInHostDocument) {
+    for (PsiLanguageInjectionHost.Shred shred : myShreds) {
+      RangeMarker rangeMarker = shred.getHostRangeMarker();
       myDelegate.removeRangeMarker((RangeMarkerEx)rangeMarker);
     }
+  }
+
+  public void setShreds(Place shreds) {
+    myShreds = shreds;
   }
 }

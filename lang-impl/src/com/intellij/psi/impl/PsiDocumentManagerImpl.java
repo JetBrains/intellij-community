@@ -549,6 +549,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         error += "editorText.length > psiText.length i=" + i + "\n";
         break;
       }
+      if (i >= editorText.length()){
+        error += "editorText.length > psiText.length i=" + i + "\n";
+        break;
+      }
       if (editorText.charAt(i) != fileText[i]){
         error += "first unequal char i=" + i + "\n";
         break;

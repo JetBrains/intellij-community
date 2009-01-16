@@ -15,7 +15,7 @@ public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
 
   Place(@NotNull List<PsiLanguageInjectionHost.Shred> shreds, PsiFile injectedPsi) {
     super(shreds);
-    myInjectedPsi = injectedPsi;
+    setInjectedPsi(injectedPsi);
   }
 
   public void setInjectedPsi(PsiFile injectedPsi) {
@@ -27,7 +27,7 @@ public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
   }
 
   public boolean isValid() {
-    if (!myInjectedPsi.isValid()) {
+    if (myInjectedPsi != null && !myInjectedPsi.isValid()) {
       return false;
     }
     for (PsiLanguageInjectionHost.Shred shred : this) {

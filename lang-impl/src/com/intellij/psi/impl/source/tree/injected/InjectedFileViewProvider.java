@@ -92,6 +92,8 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
     synchronized (myLock) {
       myShreds = new Place(shreds, shreds.getInjectedPsi());
       myProject = shreds.get(0).host.getProject();
+      ((DocumentWindowImpl)myDocumentWindow).setShreds(myShreds);
+      assert myShreds.isValid();
     }
   }
 
