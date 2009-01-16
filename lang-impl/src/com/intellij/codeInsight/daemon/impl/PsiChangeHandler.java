@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -22,8 +23,6 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,9 +137,6 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
     }
 
     if (!child.isValid()) return;
-    if (file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) { // must filter out non-physical elements and do not forget that tests can reside in TempFileSystem
-      return;
-    }
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document != null) {
       List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
