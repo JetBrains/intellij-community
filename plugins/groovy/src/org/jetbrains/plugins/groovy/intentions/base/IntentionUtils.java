@@ -59,7 +59,6 @@ public class IntentionUtils {
 
     Project project = owner.getProject();
     GrTypeElement typeElement = method.getReturnTypeElementGroovy();
-    ParameterNameExpression paramNameExpression = new ParameterNameExpression();
     ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
     TemplateBuilder builder = new TemplateBuilder(method);
     if (!isConstructor) {
@@ -72,7 +71,7 @@ public class IntentionUtils {
       GrParameter parameter = parameters[i];
       GrTypeElement parameterTypeElement = parameter.getTypeElementGroovy();
       builder.replaceElement(parameterTypeElement, paramTypesExpressions[i]);
-      builder.replaceElement(parameter.getNameIdentifierGroovy(), paramNameExpression);
+      builder.replaceElement(parameter.getNameIdentifierGroovy(), new ParameterNameExpression());
     }
     GrOpenBlock body = method.getBlock();
     assert body != null;
