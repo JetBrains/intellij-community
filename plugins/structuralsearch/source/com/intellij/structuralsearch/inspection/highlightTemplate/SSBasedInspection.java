@@ -20,6 +20,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -154,8 +155,12 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
     }
   }
 
-  public void projectOpened(Project project) {
-    precompileConfigurations(project);
+  public void projectOpened(final Project project) {
+    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        precompileConfigurations(project);
+      }
+    });
   }
 
   @TestOnly
