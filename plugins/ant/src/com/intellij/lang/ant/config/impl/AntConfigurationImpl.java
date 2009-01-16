@@ -443,6 +443,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private void saveEvents(final Element element, final AntBuildFile buildFile) {
     List<Element> events = null;
+    final Set<String> savedEvents = new HashSet<String>();
     synchronized (myEventToTargetMap) {
       for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
         final Pair<AntBuildFile, String> pair = myEventToTargetMap.get(event);
@@ -452,7 +453,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         Element eventElement = new Element(EXECUTE_ON_ELEMENT);
         eventElement.setAttribute(EVENT_ELEMENT, event.getTypeId());
         eventElement.setAttribute(TARGET_ELEMENT, pair.second);
-        event.writeExternal(eventElement, getProject());
+
+        final String id = event.writeExternal(eventElement, getProject());
+        if (savedEvents.contains(id)) continue;
+        savedEvents.add(id);
+
         if (events == null) {
           events = new ArrayList<Element>();
         }

@@ -1,8 +1,8 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.ExecutionEvent;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -77,9 +77,10 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     myPresentableName = element.getAttributeValue(PRESENTABLE_NAME);
   }
 
-  public void writeExternal(Element element, Project project) {
+  public String writeExternal(Element element, Project project) {
     super.writeExternal(element, project);
     element.setAttribute(PRESENTABLE_NAME, myPresentableName);
+    return myPresentableName;
   }
 
   public boolean equals(Object o) {
