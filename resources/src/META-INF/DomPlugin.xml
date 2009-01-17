@@ -22,6 +22,9 @@
     <applicationService serviceInterface="com.intellij.util.xml.ElementPresentationManager"
                         serviceImplementation="com.intellij.util.xml.ElementPresentationManagerImpl"/>
 
+    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager"
+                        serviceImplementation="com.intellij.util.xml.impl.ConverterManagerImpl"/>
+
     <projectService serviceInterface="com.intellij.util.xml.ui.CommittableUtil"
                     serviceImplementation="com.intellij.util.xml.ui.CommittableUtil"/>
 
@@ -30,6 +33,12 @@
 
     <projectService serviceInterface="com.intellij.util.xml.DomElementsNavigationManager"
                     serviceImplementation="com.intellij.util.xml.impl.DomElementsNavigationManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.util.xml.DomManager"
+                    serviceImplementation="com.intellij.util.xml.impl.DomManagerImpl"/>
+    
+    <projectService serviceInterface="com.intellij.util.xml.actions.generate.DomTemplateRunner"
+                    serviceImplementation="com.intellij.util.xml.impl.DomTemplateRunnerImpl"/>
 
     <annotator language="XML" implementationClass="com.intellij.util.xml.impl.DefaultDomAnnotator"/>
     <documentationProvider implementation="com.intellij.util.xml.DomDocumentationProvider"/>

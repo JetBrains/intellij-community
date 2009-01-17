@@ -43,7 +43,7 @@ public class DomTemplateRunnerImpl extends DomTemplateRunner {
   }
 
   @Nullable
-  protected Template getTemplate(final String mappingId) {
+  protected static Template getTemplate(final String mappingId) {
     return mappingId != null ? TemplateSettings.getInstance().getTemplateById(mappingId) : null;
   }
 }

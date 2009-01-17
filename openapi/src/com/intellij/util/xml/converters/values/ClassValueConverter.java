@@ -22,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ClassValueConverter extends Converter<PsiClass> implements CustomReferenceConverter {
 
-  public static ClassValueConverter getClassValueConverter(Project project) {
-    return ServiceManager.getService(project, ClassValueConverter.class);
+  public static ClassValueConverter getClassValueConverter() {
+    return ServiceManager.getService(ClassValueConverter.class);
   }
 
   public PsiClass fromString(@Nullable @NonNls String s, final ConvertContext context) {

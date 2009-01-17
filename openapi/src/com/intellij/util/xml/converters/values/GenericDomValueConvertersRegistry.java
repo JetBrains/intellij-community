@@ -1,14 +1,11 @@
 package com.intellij.util.xml.converters.values;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiType;
 import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ConverterManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +21,6 @@ public class GenericDomValueConvertersRegistry {
 
   private final Map<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>> myConditionConverters =
     new LinkedHashMap<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>>();
-
-  private final Project myProject;
-
-  public GenericDomValueConvertersRegistry(final Project project) {
-    myProject = project;
-  }
 
   public void registerDefaultConverters() {
     registerBooleanConverters();
@@ -47,13 +38,8 @@ public class GenericDomValueConvertersRegistry {
   }
 
   public void registerClassValueConverters() {
-    final ConverterManager converterManager = DomManager.getDomManager(myProject).getConverterManager();
-    final ClassValueConverter classValueConverter = ClassValueConverter.getClassValueConverter(myProject);
-    converterManager.registerConverterImplementation(ClassValueConverter.class, classValueConverter);
-    registerConverter(classValueConverter, Class.class);
-    final ClassArrayConverter classArrayConverter = ClassArrayConverter.getClassArrayConverter(myProject);
-    converterManager.registerConverterImplementation(ClassArrayConverter.class, classArrayConverter);
-    registerConverter(classArrayConverter, Class[].class);
+    registerConverter(ClassValueConverter.getClassValueConverter(), Class.class);
+    registerConverter(ClassArrayConverter.getClassArrayConverter(), Class[].class);
   }
 
   public void registerCharacterConverter() {

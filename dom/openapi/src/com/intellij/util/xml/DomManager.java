@@ -16,7 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
@@ -26,8 +26,8 @@ import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,11 +37,11 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public abstract class DomManager implements ProjectComponent, ModificationTracker {
+public abstract class DomManager implements ModificationTracker {
   public static final Key<Module> MOCK_ELEMENT_MODULE = Key.create("MockElementModule");
 
   public static DomManager getDomManager(Project project) {
-    return project.getComponent(DomManager.class);
+    return ServiceManager.getService(project, DomManager.class);
   }
 
   public abstract Project getProject();
@@ -136,7 +136,7 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
   public abstract void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory);
 
   /**
-   * @return a new {@link com.intellij.util.xml.ModelMerger} instance
+   * @deprecated use {@link DomService#createModelMerger()} instead
    */
   public abstract ModelMerger createModelMerger();
 

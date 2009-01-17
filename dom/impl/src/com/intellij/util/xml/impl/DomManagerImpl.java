@@ -4,11 +4,9 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -28,7 +26,6 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
@@ -63,8 +60,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public final class DomManagerImpl extends DomManager implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomManagerImpl");
+public final class DomManagerImpl extends DomManager {
   private static final Key<Object> MOCK = Key.create("MockElement");
   public static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription> MOCK_DESCIPRTION = Key.create("MockDescription");
@@ -93,7 +89,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       };
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
-  private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
+  private final ConverterManagerImpl myConverterManager;
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
 
   private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
@@ -112,15 +108,14 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   public DomManagerImpl(final PomModel pomModel,
                         final Project project, final PsiManager psiManager,
-                        final XmlAspect xmlAspect,
-                        final WolfTheProblemSolver solver,
-                        final DomElementAnnotationsManager annotationsManager,
+                        final XmlAspect xmlAspect, final DomElementAnnotationsManager annotationsManager,
                         final VirtualFileManager virtualFileManager,
                         final StartupManager startupManager,
                         final ProjectRootManager projectRootManager,
                         final DomApplicationComponent applicationComponent,
-                        final CommandProcessor commandProcessor) {
+                        final ConverterManager converterManager) {
     myProject = project;
+    myConverterManager = (ConverterManagerImpl)converterManager;
     myApplicationComponent = applicationComponent;
     myAnnotationsManager = (DomElementAnnotationsManagerImpl)annotationsManager;
     pomModel.addModelListener(new PomModelListener() {
@@ -148,17 +143,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     });
 
     myFileFactory = PsiFileFactory.getInstance(project);
-    /*solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile file) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            return isDomFile(psiManager.findFile(file));
-          }
-        }).booleanValue();
-      }
-    }, project);*/
 
-    startupManager.registerStartupActivity(new Runnable() {
+    final Runnable setupVfsListeners = new Runnable() {
       public void run() {
         final VirtualFileAdapter listener = new VirtualFileAdapter() {
           private final List<XmlFile> myDeletedFiles = new SmartList<XmlFile>();
@@ -215,7 +201,12 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         };
         virtualFileManager.addVirtualFileListener(listener, project);
       }
-    });
+    };
+    if (!((StartupManagerEx)startupManager).startupActivityPassed()) {
+      startupManager.registerStartupActivity(setupVfsListeners);
+    } else {
+      setupVfsListeners.run();
+    }
 
     myFileIndex = projectRootManager.getFileIndex();
 
@@ -293,7 +284,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DomManagerImpl getDomManager(Project project) {
-    return (DomManagerImpl)project.getComponent(DomManager.class);
+    return (DomManagerImpl)DomManager.getDomManager(project);
   }
 
   public void addDomEventListener(DomEventListener listener, Disposable parentDisposable) {
@@ -419,18 +410,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
     myChanging = changing;
     return oldChanging;
-  }
-
-  public final void initComponent() {
-  }
-
-  public final void disposeComponent() {
-  }
-
-  public final void projectOpened() {
-  }
-
-  public final void projectClosed() {
   }
 
   public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
@@ -609,7 +588,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     //noinspection unchecked
     final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
     for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
-      registerImplementation(entry.getKey(), entry.getValue(), myProject);
+      registerImplementation(entry.getKey(), entry.getValue(), null);
     }
     myTypeChooserManager.copyFrom(description.getTypeChooserManager());
 

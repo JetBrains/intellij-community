@@ -61,11 +61,13 @@ class ImplementationClassCache extends SoftFactoryMap<Class<? extends DomElement
   public final void registerImplementation(final Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
                                            final Disposable parentDisposable) {
     myImplementationClasses.put(domElementClass, implementationClass);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        myImplementationClasses.remove(domElementClass);
-      }
-    });
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, new Disposable() {
+        public void dispose() {
+          myImplementationClasses.remove(domElementClass);
+        }
+      });
+    }
     super.clear();
   }
 

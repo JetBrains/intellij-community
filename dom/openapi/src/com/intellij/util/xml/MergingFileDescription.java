@@ -76,7 +76,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     }
 
     if (myMerger == null) {
-      myMerger = domManager.createModelMerger();
+      myMerger = DomService.getInstance().createModelMerger();
     }
     return myMerger.mergeModels(getRootElementClass(), roots);
   }

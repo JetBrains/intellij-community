@@ -24,7 +24,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.ModelMerger;
 import com.intellij.util.xml.model.DomModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +36,8 @@ import java.util.Set;
 
 public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T>, C extends PsiElement> extends BaseDomModelFactory<Module, T, M, C> {
 
-  protected DomModelFactory(@NotNull Class<T> aClass, @NotNull ModelMerger modelMerger, final Project project, @NonNls String name) {
-    super(aClass, modelMerger, project, name);
+  protected DomModelFactory(@NotNull Class<T> aClass, final Project project, @NonNls String name) {
+    super(aClass, project, name);
   }
 
   protected Module getModelScope(final XmlFile file) {

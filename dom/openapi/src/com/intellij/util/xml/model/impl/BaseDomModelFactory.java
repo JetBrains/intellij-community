@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.ModelMerger;
+import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.model.DomModel;
 import com.intellij.util.xml.model.MultipleDomModelFactory;
 import com.intellij.util.xml.model.SimpleModelFactory;
@@ -31,14 +32,14 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
   private SimpleModelFactory<T,M> mySimpleDomModelFactory;
   private MultipleDomModelFactory<S, T, M> myMultipleDomModelFactory;
 
-  protected BaseDomModelFactory(@NotNull Class<T> aClass, @NotNull ModelMerger modelMerger, final Project project, @NonNls String name) {
-    super(aClass, modelMerger);
+  protected BaseDomModelFactory(@NotNull Class<T> aClass, final Project project, @NonNls String name) {
+    super(aClass, DomService.getInstance().createModelMerger());
 
     myProject = project;
 
-    mySimpleDomModelFactory = createSimpleModelFactory(aClass, modelMerger, project, name);
+    mySimpleDomModelFactory = createSimpleModelFactory(aClass, getModelMerger(), project, name);
 
-    myMultipleDomModelFactory = createMultipleDomModelFactory(aClass, modelMerger, project, name);
+    myMultipleDomModelFactory = createMultipleDomModelFactory(aClass, getModelMerger(), project, name);
   }
 
   protected abstract S getModelScope(final XmlFile file);

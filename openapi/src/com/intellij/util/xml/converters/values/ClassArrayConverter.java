@@ -5,11 +5,10 @@
 package com.intellij.util.xml.converters.values;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
 
 public abstract class ClassArrayConverter extends ClassValueConverter {
 
-   public static ClassArrayConverter getClassArrayConverter(Project project) {
-    return ServiceManager.getService(project, ClassArrayConverter.class);
+   public static ClassArrayConverter getClassArrayConverter() {
+    return ServiceManager.getService(ClassArrayConverter.class);
   }
 }

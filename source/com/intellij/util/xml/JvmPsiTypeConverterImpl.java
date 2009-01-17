@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,19 +19,25 @@ import java.util.List;
  * @author peter
  */
 public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
-  
+
   private static final BidirectionalMap<PsiType, Character> ourPrimitiveTypes = new BidirectionalMap<PsiType, Character>();
-  private final JavaClassReferenceProvider JVM_REFERENCE_PROVIDER;
-  private final JavaClassReferenceProvider REFERENCE_PROVIDER;
-
-  public JvmPsiTypeConverterImpl(final Project project) {
-    JVM_REFERENCE_PROVIDER = new JavaClassReferenceProvider(project);
-    REFERENCE_PROVIDER = new JavaClassReferenceProvider(project);
-    REFERENCE_PROVIDER.setSoft(true);
-
-    JVM_REFERENCE_PROVIDER.setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
-    JVM_REFERENCE_PROVIDER.setSoft(true);
-  }
+  private static final UserDataCache<JavaClassReferenceProvider, Project, Object> JVM_REFERENCE_PROVIDER = new UserDataCache<JavaClassReferenceProvider, Project, Object>("JvmPsiTypeConverterImplJVM") {
+    @Override
+    protected JavaClassReferenceProvider compute(Project project, Object p) {
+      JavaClassReferenceProvider provider = new JavaClassReferenceProvider(project);
+      provider.setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
+      provider.setSoft(true);
+      return provider;
+    }
+  };
+  private static final UserDataCache<JavaClassReferenceProvider, Project, Object> REFERENCE_PROVIDER = new UserDataCache<JavaClassReferenceProvider, Project, Object>("JvmPsiTypeConverterImplPlain") {
+    @Override
+    protected JavaClassReferenceProvider compute(Project project, Object p) {
+      JavaClassReferenceProvider provider = new JavaClassReferenceProvider(project);
+      provider.setSoft(true);
+      return provider;
+    }
+  };
 
   static {
     ourPrimitiveTypes.put(PsiType.BYTE, 'B');
@@ -62,8 +69,8 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
       if (c == 'L') {
         if (!s.endsWith(";")) return null;
         final PsiClass aClass =
-            DomJavaUtil.findClass(s.substring(arrayDimensions + 1, s.length() - 1), context.getFile(), context.getModule(), null);
-          return aClass == null ? null : makeArray(arrayDimensions, createType(aClass));
+          DomJavaUtil.findClass(s.substring(arrayDimensions + 1, s.length() - 1), context.getFile(), context.getModule(), null);
+        return aClass == null ? null : makeArray(arrayDimensions, createType(aClass));
       }
 
       if (s.length() == arrayDimensions + 1) {
@@ -132,11 +139,11 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     final int dimensions = getArrayDimensions(s);
     if (dimensions > 0) {
       if (s.charAt(dimensions) == 'L' && s.endsWith(";")) {
-        return JVM_REFERENCE_PROVIDER.getReferencesByString(s.substring(dimensions + 1), element,
-                                                            element.getText().indexOf(s) + dimensions + 1);
+        return JVM_REFERENCE_PROVIDER.get(value.getManager().getProject(), null).getReferencesByString(s.substring(dimensions + 1), element,
+                                                                                                       element.getText().indexOf(s) + dimensions + 1);
       }
       if (psiType != null) return PsiReference.EMPTY_ARRAY;
     }
-    return REFERENCE_PROVIDER.getReferencesByElement(element);
+    return REFERENCE_PROVIDER.get(value.getManager().getProject(), null).getReferencesByElement(element);
   }
 }
