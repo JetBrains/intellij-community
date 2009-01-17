@@ -134,6 +134,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, String appName) {
     super(null);
 
+    getPicoContainer().registerComponentInstance(Application.class, this);
+
     CommonBundle.assertKeyIsFound = isUnitTestMode;
 
     if (isInternal || isUnitTestMode) {

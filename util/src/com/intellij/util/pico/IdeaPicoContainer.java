@@ -65,6 +65,7 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
 
   public List getComponentAdaptersOfType(final Class componentType) {
     if (componentType == null) return Collections.emptyList();
+    if (componentType == String.class) return Collections.emptyList();
 
     List<ComponentAdapter> result = new ArrayList<ComponentAdapter>();
 

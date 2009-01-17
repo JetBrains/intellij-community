@@ -61,6 +61,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   public ModuleImpl(String filePath, Project project) {
     super(project);
 
+    getPicoContainer().registerComponentInstance(Module.class, this);
+
     myProject = project;
 
     init(filePath);

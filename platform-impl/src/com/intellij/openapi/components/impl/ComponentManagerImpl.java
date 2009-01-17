@@ -349,7 +349,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myMessageBus = MessageBusFactory.newMessageBus(this, myParentComponentManager != null ? myParentComponentManager.getMessageBus() : null);
     final MutablePicoContainer picoContainer = getPicoContainer();
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
-    picoContainer.registerComponentInstance(this);
     /*
     picoContainer.registerComponentInstance(ExtensionInitializer.class, new ExtensionInitializer() {
       public void initExtension(final Object extension) {

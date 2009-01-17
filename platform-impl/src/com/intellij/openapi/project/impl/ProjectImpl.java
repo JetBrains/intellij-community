@@ -72,6 +72,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
     super(ApplicationManager.getApplication());
 
+    getPicoContainer().registerComponentInstance(Project.class, this);
+
     myDefault = isDefault;
 
     getStateStore().setProjectFilePath(filePath);
