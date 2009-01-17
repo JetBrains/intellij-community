@@ -138,6 +138,8 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     // Setting up classpath
     RunnerUtil.configureScriptSystemClassPath(params, module);
 
+    params.setCharset(null);
+
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
     //add starter configuration parameters
