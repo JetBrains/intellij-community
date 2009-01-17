@@ -18,17 +18,16 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,15 +37,13 @@ import org.jetbrains.plugins.gant.config.GantConfigUtils;
 import org.jetbrains.plugins.gant.config.grails.GantGrailsFacet;
 import org.jetbrains.plugins.gant.config.groovy.GantGroovyFacet;
 import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.runner.RunnerUtil;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.nio.charset.Charset;
 
 /**
  * @author ilyas
@@ -141,11 +138,6 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     RunnerUtil.configureScriptSystemClassPath(params, module);
 
     params.setWorkingDirectory(getAbsoluteWorkDir());
-
-    // Setting up process encoding according to locale
-    final ArrayList<String> list = new ArrayList<String>();
-    CompilerUtil.addLocaleOptions(list, false);
-    params.getVMParametersList().addAll(list);
 
     //add starter configuration parameters
     String gantHome = GantConfigUtils.getInstance().getSDKInstallPath(module);
