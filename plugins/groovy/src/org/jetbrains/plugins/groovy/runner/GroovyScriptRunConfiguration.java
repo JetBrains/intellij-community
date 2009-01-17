@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.runner;
 
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
@@ -140,11 +139,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     RunnerUtil.configureScriptSystemClassPath(params, module);
 
     params.setWorkingDirectory(getAbsoluteWorkDir());
-
-    // Setting up process encoding according to locale
-    final ArrayList<String> list = new ArrayList<String>();
-    CompilerUtil.addLocaleOptions(list, false);
-    params.getVMParametersList().addAll(list);
 
     //add starter configuration parameters
     String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
