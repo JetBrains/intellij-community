@@ -21,10 +21,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -208,6 +205,22 @@ final class EditorTabbedContainer implements Disposable {
   }
 
   public void setTabPlacement(final int tabPlacement) {
+    switch (tabPlacement) {
+      case SwingConstants.TOP:
+        myTabs.getPresentation().setTabsPosition(JBTabsPosition.top);
+        break;
+      case SwingConstants.BOTTOM:
+        myTabs.getPresentation().setTabsPosition(JBTabsPosition.bottom);
+        break;
+      case SwingConstants.LEFT:
+        myTabs.getPresentation().setTabsPosition(JBTabsPosition.left);
+        break;
+      case SwingConstants.RIGHT:
+        myTabs.getPresentation().setTabsPosition(JBTabsPosition.right);
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown tab placement code=" + tabPlacement);
+    }
   }
 
   @Nullable
