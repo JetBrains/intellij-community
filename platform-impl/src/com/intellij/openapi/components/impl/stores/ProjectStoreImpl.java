@@ -13,14 +13,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -705,7 +705,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         if (pair.second == null) return false;
       }
 
-      if (!isReloadPossible(componentNames)) return false;
+      if (!componentNames.isEmpty()) {
+        StorageUtil.logStateDiffInfo(changedFiles, componentNames);        
+      }
+
+      if (!isReloadPossible(componentNames)) {
+        return false;
+      }
     }
     finally {
       finishSave(saveSession);

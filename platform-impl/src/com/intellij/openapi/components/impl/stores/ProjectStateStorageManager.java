@@ -87,7 +87,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
       }
 
       @Override
-      protected synchronized Element getState(final String componentName) throws StateStorageException {
+      public synchronized Element getState(final String componentName) throws StateStorageException {
         Element dataFromSuper = super.getState(componentName);
         if (dataFromSuper == null) {
           ensureAlternativeState();

@@ -100,7 +100,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected abstract Document loadDocument() throws StateStorageException;
 
   @Nullable
-  protected synchronized Element getState(final String componentName) throws StateStorageException {
+  public synchronized Element getState(final String componentName) throws StateStorageException {
     final StorageData storageData = getStorageData();
     final Element state = storageData.getState(componentName);
 

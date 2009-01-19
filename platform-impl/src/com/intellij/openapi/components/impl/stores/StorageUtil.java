@@ -1,17 +1,23 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
@@ -20,15 +26,20 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Set;
 
 /**
  * @author mike
  */
 public class StorageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
+  private static boolean ourDumpChangedComponentStates = "true".equals(System.getProperty("log.externally.changed.component.states"));
 
   private StorageUtil() {
   }
@@ -181,5 +192,69 @@ public class StorageUtil {
       in.close();
     }
 
+  }
+
+  public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) throws IOException {
+
+    if (!ApplicationManagerEx.getApplicationEx().isInternal() && !ourDumpChangedComponentStates) return;
+
+    try {
+      File logDirectory = createLogDirectory();
+
+      logDirectory.mkdirs();
+
+      for (String componentName : componentNames) {
+        for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+          StateStorage storage = pair.second;
+          if ((storage instanceof XmlElementStorage)) {
+            Element state = ((XmlElementStorage)storage).getState(componentName);
+            if (state != null) {
+              File logFile = new File(logDirectory, "prev_" + componentName + ".xml");
+              FileUtil.writeToFile(logFile, JDOMUtil.writeElement(state, "\n").getBytes());
+            }
+          }
+        }
+
+      }
+
+      for (Pair<VirtualFile, StateStorage> changedFile : changedFiles) {
+        File logFile = new File(logDirectory, "new_" + changedFile.first.getName());
+
+        FileUtil.copy(new File(changedFile.first.getPath()), logFile);
+      }
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+  }
+
+  static File createLogDirectory() {
+    UniqueFileNamesProvider namesProvider = new UniqueFileNamesProvider();
+
+    File statesDir = new File(PathManager.getSystemPath(), "log/componentStates");
+    File[] children = statesDir.listFiles();
+    if (children != null) {
+      if (children.length > 10) {
+        File childToDelete = null;
+
+        for (File child : children) {
+          if (childToDelete == null || childToDelete.lastModified() > child.lastModified()) {
+            childToDelete = child;
+          }
+        }
+
+        if (childToDelete != null) {
+          FileUtil.delete(childToDelete);
+        }
+      }
+
+
+      for (File child : children) {
+        namesProvider.reserveFileName(child.getName());
+      }
+    }
+
+    return new File(statesDir, namesProvider.suggestName("state-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date())
+                        + "-" + ApplicationInfo.getInstance().getBuildNumber()));
   }
 }

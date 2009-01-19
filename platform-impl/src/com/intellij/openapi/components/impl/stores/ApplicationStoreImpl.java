@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-import java.util.Collection;
 
 class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ApplicationStoreImpl");
@@ -98,10 +98,18 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       for (String name : componentNames) {
         if (!isReloadPossible(Collections.singleton(name))) {
           notReloadableComponents.add(name);
+
         }
       }
 
-      if (!isReloadPossible(componentNames)) return false;
+
+      if (!componentNames.isEmpty()) {
+        StorageUtil.logStateDiffInfo(changedFiles, componentNames);
+      }
+      
+      if (!isReloadPossible(componentNames)) {
+        return false;
+      }
     }
     finally {
       finishSave(saveSession);
