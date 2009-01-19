@@ -515,7 +515,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
     }
 
     public boolean isScriptedReference() {
-      return false;
+      return myLinkInfo.scripted;
     }
 
     public String getMediaValue() {
