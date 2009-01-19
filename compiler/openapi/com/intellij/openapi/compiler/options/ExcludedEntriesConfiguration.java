@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -129,8 +128,8 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   }
 
   public void loadState(final ExcludedEntriesConfiguration state) {
-    XmlSerializerUtil.copyBean(state, this);
-    for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
+    for (ExcludeEntryDescription description : state.getExcludeEntryDescriptions()) {
+      addExcludeEntryDescription(description);
       description.init(this);
     }
     Disposer.dispose(state);
