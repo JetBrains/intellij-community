@@ -16,13 +16,64 @@
 package git4idea.actions;
 
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitRebaseUtils;
+import git4idea.rebase.GitRebaseActionDialog;
+import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitHandlerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.ui.Messages;
+
+import java.util.List;
+import java.util.Set;
+import java.util.Iterator;
 
 /**
  * Rebase abort action
  */
-public class GitRebaseAbort extends GitAbstractRebaseAction {
+public class GitRebaseAbort extends GitRepositoryAction {
+
+  /**
+   * {@inheritDoc}
+   */
+  protected void perform(@NotNull Project project,
+                         @NotNull List<VirtualFile> gitRoots,
+                         @NotNull VirtualFile defaultRoot,
+                         Set<VirtualFile> affectedRoots,
+                         List<VcsException> exceptions) throws VcsException {
+    // remote all roots where there are no rebase in progress
+    for (Iterator<VirtualFile> i = gitRoots.iterator(); i.hasNext();) {
+      if (!GitRebaseUtils.isRebaseInTheProgress(i.next())) {
+        i.remove();
+      }
+    }
+    if (gitRoots.size() == 0) {
+      Messages.showErrorDialog(project, GitBundle.getString("rebase.action.no.root"), GitBundle.getString("rebase.action.error"));
+      return;
+    }
+    final VirtualFile root;
+    if (gitRoots.size() == 1) {
+      root = gitRoots.get(0);
+    }
+    else {
+      if (!gitRoots.contains(defaultRoot)) {
+        defaultRoot = gitRoots.get(0);
+      }
+      GitRebaseActionDialog d = new GitRebaseActionDialog(project, getActionTitle(), gitRoots, defaultRoot);
+      root = d.selectRoot();
+      if (root == null) {
+        return;
+      }
+    }
+    affectedRoots.add(root);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.REBASE);
+    h.addParameters(getOptionName());
+    GitHandlerUtil.doSynchronously(h, getActionTitle(), h.printableCommandLine());
+  }
 
   /**
    * {@inheritDoc}
@@ -32,8 +83,9 @@ public class GitRebaseAbort extends GitAbstractRebaseAction {
     return GitBundle.getString("rebase.abort.action.name");
   }
 
+
   /**
-   * {@inheritDoc}
+   * @return the option name
    */
   @NonNls
   protected String getOptionName() {
@@ -41,7 +93,7 @@ public class GitRebaseAbort extends GitAbstractRebaseAction {
   }
 
   /**
-   * {@inheritDoc}
+   * @return title for root selection dialog
    */
   protected String getActionTitle() {
     return GitBundle.getString("rebase.abort.action.name");

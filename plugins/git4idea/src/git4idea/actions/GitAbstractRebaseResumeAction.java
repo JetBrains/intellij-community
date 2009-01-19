@@ -17,35 +17,27 @@ package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandler;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseActionDialog;
 import git4idea.rebase.GitRebaseUtils;
+import git4idea.rebase.GitRebaseEditorHandler;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
- * Base class for git rebase [--skip, --abort, and --continue] actions
+ * Base class for git rebase [--skip, --continue] actions and git rebase operation
  */
-public abstract class GitAbstractRebaseAction extends GitRepositoryAction {
+public abstract class GitAbstractRebaseResumeAction extends GitRebaseActionBase {
 
   /**
    * {@inheritDoc}
    */
-  protected void perform(@NotNull Project project,
-                         @NotNull List<VirtualFile> gitRoots,
-                         @NotNull VirtualFile defaultRoot,
-                         Set<VirtualFile> affectedRoots,
-                         List<VcsException> exceptions) throws VcsException {
-    // remote all roots where there are no rebase in progress
+  protected GitLineHandler createHandler(Project project, List<VirtualFile> gitRoots, VirtualFile defaultRoot) {
     for (Iterator<VirtualFile> i = gitRoots.iterator(); i.hasNext();) {
       if (!GitRebaseUtils.isRebaseInTheProgress(i.next())) {
         i.remove();
@@ -53,7 +45,7 @@ public abstract class GitAbstractRebaseAction extends GitRepositoryAction {
     }
     if (gitRoots.size() == 0) {
       Messages.showErrorDialog(project, GitBundle.getString("rebase.action.no.root"), GitBundle.getString("rebase.action.error"));
-      return;
+      return null;
     }
     final VirtualFile root;
     if (gitRoots.size() == 1) {
@@ -66,13 +58,20 @@ public abstract class GitAbstractRebaseAction extends GitRepositoryAction {
       GitRebaseActionDialog d = new GitRebaseActionDialog(project, getActionTitle(), gitRoots, defaultRoot);
       root = d.selectRoot();
       if (root == null) {
-        return;
+        return null;
       }
     }
-    affectedRoots.add(root);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.REBASE);
+    GitLineHandler h = new GitLineHandler(project, root, GitHandler.REBASE);
     h.addParameters(getOptionName());
-    GitHandlerUtil.doSynchronously(h, getActionTitle(), h.printableCommandLine());
+    return h;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected void configureEditor(GitRebaseEditorHandler editor) {
+    editor.setRebaseEditorShown();
   }
 
   /**

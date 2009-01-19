@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Rebase abort action
  */
-public class GitRebaseContinue extends GitAbstractRebaseAction {
+public class GitRebaseContinue extends GitAbstractRebaseResumeAction {
 
   /**
    * {@inheritDoc}

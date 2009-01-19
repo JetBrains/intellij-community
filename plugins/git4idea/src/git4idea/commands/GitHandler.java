@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -302,6 +303,24 @@ public abstract class GitHandler {
    */
   public Project project() {
     return myProject;
+  }
+
+  /**
+   * @return the current working directory
+   */
+  public File workingDirectory() {
+    return myWorkingDirectory;
+  }
+
+  /**
+   * @return the current working directory
+   */
+  public VirtualFile workingDirectoryFile() {
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(workingDirectory());
+    if (file == null) {
+      throw new IllegalStateException("The working directly should be available: " + workingDirectory());
+    }
+    return file;
   }
 
   /**

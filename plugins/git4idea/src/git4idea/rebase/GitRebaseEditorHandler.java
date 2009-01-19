@@ -99,7 +99,7 @@ public class GitRebaseEditorHandler implements Closeable {
             }
           }
           else {
-            myRebaseEditorShown = true;
+            setRebaseEditorShown();
             GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, path);
             editor.show();
             if (editor.isOK()) {
@@ -120,6 +120,13 @@ public class GitRebaseEditorHandler implements Closeable {
       }
     });
     return (isSuccess.isNull() || !isSuccess.get().booleanValue()) ? GitRebaseEditorMain.ERROR_EXIT_CODE : 0;
+  }
+
+  /**
+   * This method is invoked to indicate that this editor will be invoked in the rebase continuation action.
+   */
+  public void setRebaseEditorShown() {
+    myRebaseEditorShown = true;
   }
 
   /**
