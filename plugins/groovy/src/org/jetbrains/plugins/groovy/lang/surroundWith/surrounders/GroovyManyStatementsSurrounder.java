@@ -61,7 +61,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
       if (i == 0) {
         parentNode.replaceChild(element1.getNode(), newStmt.getNode());
       } else {
-        assert parentNode == element.getParent().getNode();
+        if (parentNode != element.getParent().getNode()) return null;
 
         final int endOffset = element.getTextRange().getEndOffset();
         final PsiElement semicolon = PsiTreeUtil.findElementOfClassAtRange(element.getContainingFile(), endOffset, endOffset + 1, PsiElement.class);
