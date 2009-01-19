@@ -139,7 +139,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     if (!myProject.isOpen()) return;
     JPanel valuesPanelComponent = new JPanel(new GridBagLayout());
-    myValuesPanel.add(valuesPanelComponent, VALUES);
+    myValuesPanel.add(new JScrollPane(valuesPanelComponent), VALUES);
     myValuesPanel.add(myNoPropertySelectedPanel, NO_PROPERTY_SELECTED);
 
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
@@ -181,10 +181,37 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       if (!names.isEmpty()) {
         title += " ("+StringUtil.join(names, "/")+")";
       }
-      JPanel comp = new JPanel(new BorderLayout());
+      final Dimension dimension = new Dimension(200, editor.getLineHeight() * 4);
+      JComponent comp = new JPanel(new BorderLayout()) {
+        @Override
+        public Dimension getPreferredSize() {
+          return dimension;
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+          return dimension;
+        }
+
+        @Override
+        public Dimension getMinimumSize() {
+          return dimension;
+        }
+
+        @Override
+        public Dimension getSize(Dimension rv) {
+          return dimension;
+        }
+
+        @Override
+        public int getHeight() {
+          return (int)dimension.getHeight();
+        }
+      };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
       comp.setBorder(IdeBorderFactory.createTitledBorder(title));
-      myTitledPanels.put(propertiesFile, comp);
+      myTitledPanels.put(propertiesFile, (JPanel)comp);
+
       valuesPanelComponent.add(comp, gc);
     }
 
@@ -193,7 +220,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     gc.gridheight = GridBagConstraints.REMAINDER;
     gc.gridwidth = GridBagConstraints.REMAINDER;
     gc.weightx = 10;
-    gc.weighty = 10;
+    gc.weighty = 1;
 
     valuesPanelComponent.add(new JPanel(), gc);
     myValuesPanel.repaint();

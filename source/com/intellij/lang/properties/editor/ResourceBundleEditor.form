@@ -23,7 +23,7 @@
               </grid>
             </constraints>
             <properties>
-              <dividerLocation value="20"/>
+              <dividerLocation value="347"/>
             </properties>
             <border type="none"/>
             <children>
@@ -36,22 +36,15 @@
                 <border type="none"/>
                 <children/>
               </xy>
-              <scrollpane id="f2339">
+              <xy id="21f18" binding="myValuesPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <splitpane position="right"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
-                <children>
-                  <xy id="21f18" binding="myValuesPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
-                    <margin top="0" left="0" bottom="0" right="0"/>
-                    <constraints/>
-                    <properties/>
-                    <border type="none"/>
-                    <children/>
-                  </xy>
-                </children>
-              </scrollpane>
+                <children/>
+              </xy>
             </children>
           </splitpane>
         </children>
