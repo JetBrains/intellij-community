@@ -85,8 +85,13 @@ public class PasteReferenceProvider implements PasteProvider {
       return (String)contents.getTransferData(CopyReferenceAction.OUR_DATA_FLAVOR);
     }
     catch (UnsupportedFlavorException e) {
+      // ignore
     }
     catch (IOException e) {
+      // ignore
+    }
+    catch (NoClassDefFoundError e) {
+      // ignore
     }
     return null;
   }
