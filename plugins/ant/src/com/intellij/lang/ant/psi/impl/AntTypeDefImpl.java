@@ -372,7 +372,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     final String nsPrefix = (uri == null) ? null : getSourceElement().getPrefixByNamespace(uri);
     final AntTypeId id = (nsPrefix == null) ? new AntTypeId(name) : new AntTypeId(name, nsPrefix);
-    AntTypeDefinitionImpl def = null;
+    AntTypeDefinitionImpl def;
     if (clazz == null) {
       def = new AntTypeDefinitionImpl(id, classname, isTask(), false);
     }
@@ -388,33 +388,31 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       }
       def.setIsProperty(isAssignableFrom(org.apache.tools.ant.taskdefs.Property.class.getName(), clazz));
     }
-    if (def != null) {
-      myNewDefinitions = ArrayUtil.append(myNewDefinitions, def);
-      def.setDefiningElement(this);
-      if (parent != null) {
-        if (!(parent instanceof AntProject)) {
-          // make custom definition available at project level first 
-          final AntProject antProject = parent.getAntProject();
-          if (antProject != null) {
-            antProject.registerCustomType(def);
-          }
-        }
-        parent.registerCustomType(def);
-      }
-      else {
-        if (antFile != null) {
-          antFile.registerCustomType(def);
+    myNewDefinitions = ArrayUtil.append(myNewDefinitions, def);
+    def.setDefiningElement(this);
+    if (parent != null) {
+      if (!(parent instanceof AntProject)) {
+        // make custom definition available at project level first
+        final AntProject antProject = parent.getAntProject();
+        if (antProject != null) {
+          antProject.registerCustomType(def);
         }
       }
+      parent.registerCustomType(def);
+    }
+    else {
       if (antFile != null) {
-        for (final AntTypeId typeId : def.getNestedElements()) {
-          final String nestedClassName = def.getNestedClassName(typeId);
-          AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)antFile.getBaseTypeDefinition(nestedClassName);
-          if (nestedDef == null) {
-            nestedDef = loadClass(antFile, nestedClassName, typeId.getName(), uri, null);
-            if (nestedDef != null) {
-              def.registerNestedType(nestedDef.getTypeId(), nestedDef.getClassName());
-            }
+        antFile.registerCustomType(def);
+      }
+    }
+    if (antFile != null) {
+      for (final AntTypeId typeId : def.getNestedElements()) {
+        final String nestedClassName = def.getNestedClassName(typeId);
+        AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)antFile.getBaseTypeDefinition(nestedClassName);
+        if (nestedDef == null) {
+          nestedDef = loadClass(antFile, nestedClassName, typeId.getName(), uri, null);
+          if (nestedDef != null) {
+            def.registerNestedType(nestedDef.getTypeId(), nestedDef.getClassName());
           }
         }
       }

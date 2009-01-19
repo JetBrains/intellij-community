@@ -987,6 +987,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         }
       }
       catch (Exception e) {
+        LOG.info(e);
         myProject = null;
       }
     }

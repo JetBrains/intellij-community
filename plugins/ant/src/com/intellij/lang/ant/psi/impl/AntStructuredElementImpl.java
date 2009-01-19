@@ -346,6 +346,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       myNameElement = null;
       myLastFoundElementOffset = -1;
       myLastFoundElement = null;
+      myLastProcessedChildren = null;
       invalidateAntlibNamespace();
     }
   }
@@ -412,7 +413,13 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
+  private AntElement[] myLastProcessedChildren;
+
   private AntElement[] fixUndefinedElements(final AntElement[] elements) {
+    if (myLastProcessedChildren == elements) {
+      return elements;
+    }
+    myLastProcessedChildren = elements;
     if (isValid()) {
       for (int i = 0; i < elements.length; i++) {
         final AntElement element = elements[i];
