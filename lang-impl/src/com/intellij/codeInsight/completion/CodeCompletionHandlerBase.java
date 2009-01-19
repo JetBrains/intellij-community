@@ -170,6 +170,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                     assert lookup == indicator.getLookup() : lookup;
 
                     indicator.closeAndFinish();
+                    if (editor.isDisposed()) return;
+
                     CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
                     assert completion == null : "1 this=" + indicator + "\ncurrent=" + completion;
                     HintManager.getInstance().hideAllHints();
