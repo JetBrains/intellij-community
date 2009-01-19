@@ -64,7 +64,21 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
       Document document = documentManager.getDocument(myFile);
       LOG.assertTrue(!documentManager.isUncommited(document));
-      LOG.assertTrue(myFile.getTextLength() == document.getTextLength());
+      if (myFile.getTextLength() != document.getTextLength()) {
+        final String docText = document.getText();
+        myFile.accept(new PsiRecursiveElementVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            super.visitElement(element);
+            final String rangeText = element.getTextRange().substring(docText);
+            final String elemText = element.getText();
+            if (!rangeText.equals(elemText)) {
+              throw new AssertionError("PSI text doesn't equal to the document's one: element" + element + "\ndocText=" + rangeText + "\npsiText" + elemText);
+            }
+          }
+        });
+        LOG.assertTrue(false, "File=" + myFile);
+      }
       myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
 
       mySyncStartOffset = range.getStartOffset();
