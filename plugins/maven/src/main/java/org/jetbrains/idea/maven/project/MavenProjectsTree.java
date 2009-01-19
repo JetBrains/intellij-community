@@ -414,6 +414,26 @@ public class MavenProjectsTree {
     }
   }
 
+  public void resolvePlugins(MavenGeneralSettings generalSettings,
+                             MavenConsole console,
+                             MavenProcess process) throws MavenProcessCanceledException {
+    MavenEmbedderWrapper embedderForRead = MavenEmbedderFactory.createEmbedderForRead(generalSettings, console, process, this);
+    MavenEmbedderWrapper embedderForResolve = MavenEmbedderFactory.createEmbedderForResolve(generalSettings, console, process, this);
+    try {
+      for (MavenProjectModel each : getProjects()) {
+        process.checkCanceled();
+        process.setText(ProjectBundle.message("maven.resolving.plugins.pom", FileUtil.toSystemDependentName(each.getPath())));
+        process.setText2("");
+        each.resolvePlugins(embedderForRead, embedderForResolve, process);
+        fireUpdated(each);
+      }
+    }
+    finally {
+      embedderForResolve.release();
+      embedderForRead.release();
+    }
+  }
+
   public void generateSources(MavenGeneralSettings coreSettings,
                               MavenConsole console,
                               MavenProcess process) throws MavenProcessCanceledException {

@@ -327,6 +327,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myMavenProjectsManager.updateDependencies();
   }
 
+  protected void resolvePlugins() throws MavenException, MavenProcessCanceledException {
+    myMavenProjectsManager.resolvePlugins();
+  }
+
   protected void generateSources() throws MavenException, MavenProcessCanceledException {
     myMavenProjectsManager.updateFolders();
   }

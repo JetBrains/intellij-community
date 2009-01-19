@@ -125,7 +125,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProjectModel>
     MavenEmbedderWrapper e = MavenEmbedderFactory.createEmbedderForRead(getGeneralSettings(), new SoutMavenConsole(), process);
     try {
       for (VirtualFile f : getParameters().myFiles) {
-        MavenProjectState state = MavenReader.readProject(e, f, new ArrayList<String>(), process);
+        MavenProjectState state = MavenReader.readProject(e, f, new ArrayList<String>(), process).first;
         if (!state.isValid()) continue;
 
         Set<String> profiles = new LinkedHashSet<String>(state.getProfilesIds());
