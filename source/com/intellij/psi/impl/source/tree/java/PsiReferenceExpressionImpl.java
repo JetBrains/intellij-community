@@ -67,16 +67,25 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       throw new IncorrectOperationException("Reference is qualified: "+getText());
     }
     String staticName = getReferenceName();
-    PsiImportList importList = ((PsiJavaFile)getContainingFile()).getImportList();
-    PsiImportStatementBase singleImportStatement = importList.findSingleImportStatement(staticName);
-    if (singleImportStatement == null) {
-      bindToElementViaStaticImport(qualifierClass, staticName, importList);
-    }
-    else {
+    PsiFile containingFile = getContainingFile();
+    PsiImportList importList = null;
+    boolean doImportStatic;
+    if (containingFile instanceof PsiJavaFile) {
+      importList = ((PsiJavaFile)containingFile).getImportList();
+      PsiImportStatementBase singleImportStatement = importList.findSingleImportStatement(staticName);
+      doImportStatic = singleImportStatement == null;
       if (singleImportStatement instanceof PsiImportStaticStatement) {
         String qName = qualifierClass.getQualifiedName() + "." + staticName;
         if (qName.equals(singleImportStatement.getImportReference().getQualifiedName())) return this;
       }
+    }
+    else {
+      doImportStatic = false;
+    }
+    if (doImportStatic) {
+      bindToElementViaStaticImport(qualifierClass, staticName, importList);
+    }
+    else {
       PsiManagerEx manager = getManager();
       PsiReferenceExpression classRef = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceExpression(qualifierClass);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
