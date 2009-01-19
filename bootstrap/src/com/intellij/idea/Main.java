@@ -73,11 +73,15 @@ public class Main {
       try {
         List<String> args = new ArrayList<String>();
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-          File launcherPath = new File(ideaHomeDir, "bin/vistalauncher.exe");
-          args.add(launcherPath.getPath());
+          File launcherFile = new File(ideaHomeDir, "bin/vistalauncher.exe");
+          File launcherCopy = File.createTempFile("vistalauncher", ".exe");
+          launcherCopy.deleteOnExit();
+          copyFile(launcherFile, launcherCopy);
+          args.add(launcherCopy.getPath());
         }
+
         Collections.addAll(args,
-                         System.getProperty("java.home") + "/bin/java",
+                           System.getProperty("java.home") + "/bin/java",
                            "-classpath",
                            patchFile.getPath(),
                            "com.intellij.updater.Runner",
