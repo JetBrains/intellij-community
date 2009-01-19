@@ -368,9 +368,15 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
       int first = 0;
       if (first <= last) {
-        PsiElement firstAdded = anchorParent.addRangeBefore(statements[first], statements[last], anchor);
+        final PsiElement rBraceOrReturnStatement =
+          PsiTreeUtil.skipSiblingsForward(statements[last], PsiWhiteSpace.class, PsiComment.class);
+        LOG.assertTrue(rBraceOrReturnStatement != null);
+        final PsiElement beforeRBraceStatement = rBraceOrReturnStatement.getPrevSibling();
+        LOG.assertTrue(beforeRBraceStatement != null);
+        PsiElement firstAdded = anchorParent.addRangeBefore(statements[first], beforeRBraceStatement, anchor);
 
         PsiElement current = firstAdded.getPrevSibling();
+        LOG.assertTrue(current != null);
         if (blockData.thisVar != null) {
           PsiDeclarationStatement statement = PsiTreeUtil.getNextSiblingOfType(current, PsiDeclarationStatement.class);
           thisVar = (PsiLocalVariable)statement.getDeclaredElements()[0];

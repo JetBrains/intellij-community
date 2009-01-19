@@ -132,6 +132,10 @@ public class InlineMethodTest extends CodeInsightTestCase {
     doTest();
   }
 
+  public void testTailComment() throws Exception {   //IDEADEV-33638
+    doTest();
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";
