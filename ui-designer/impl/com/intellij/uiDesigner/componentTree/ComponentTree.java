@@ -536,6 +536,7 @@ public final class ComponentTree extends Tree implements DataProvider {
           final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
                                                    (int) dtde.getLocation().getY());
           final RadComponent targetComponent = getComponentFromPath(path);
+          if (!myEditor.ensureEditable()) return;
           if (targetComponent instanceof RadContainer) {
             final ComponentDropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
             if (dcl != null) {
