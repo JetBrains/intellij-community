@@ -1097,6 +1097,30 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "file://foo.javadoc");
   }
 
+  public void testEjbDependenciesInJarProject() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>foo</groupId>" +
+                  "    <artifactId>foo</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <type>ejb</type>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>foo</groupId>" +
+                  "    <artifactId>bar</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <type>ejb-client</type>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModules("project");
+    assertModuleLibDeps("project", "Maven: foo:foo:ejb:1", "Maven: foo:bar:ejb-client:client:1");
+  }
+
   private void assertProjectLibraries(String... expectedNames) {
     List<String> actualNames = new ArrayList<String>();
     for (Library each : ProjectLibraryTable.getInstance(myProject).getLibraries()) {
