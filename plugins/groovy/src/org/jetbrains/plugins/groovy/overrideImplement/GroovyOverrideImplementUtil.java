@@ -63,7 +63,12 @@ public class GroovyOverrideImplementUtil {
 
     List<PsiMethodMember> classMembers = new ArrayList<PsiMethodMember>();
     for (CandidateInfo candidate : candidates) {
-      classMembers.add(new PsiMethodMember(candidate));
+      final PsiMethod method = (PsiMethod)candidate.getElement();
+      assert method != null;
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && !GrTypeDefinition.DEFAULT_BASE_CLASS_NAME.equals(containingClass.getQualifiedName())) {
+        classMembers.add(new PsiMethodMember(candidate));
+      }
     }
 
 
