@@ -104,8 +104,8 @@ public class SingleRowLayout extends TabLayout {
 
     data.insets = myTabs.getLayoutInsets();
 
-    data.hToolbar = myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
-    data.vToolbar = !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
+    data.hToolbar = selectedToolbar != null && myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
+    data.vToolbar = selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
 
     myTabs.resetLayout(layoutLabels || myTabs.isHideTabs());
 
@@ -113,7 +113,7 @@ public class SingleRowLayout extends TabLayout {
     if (layoutLabels && !myTabs.isHideTabs()) {
       data.position = getStrategy().getStartPosition(data);
 
-      recomputeToLayout(selectedToolbar, data);
+      recomputeToLayout(data);
 
       layoutLabelsAndGhosts(data);
 
@@ -219,7 +219,7 @@ public class SingleRowLayout extends TabLayout {
   }
 
 
-  private void recomputeToLayout(final JBTabsImpl.Toolbar selectedToolbar, final SingleRowPassInfo data) {
+  private void recomputeToLayout(final SingleRowPassInfo data) {
     data.toFitLength = getStrategy().getToFitLength(data);
 
     if (myTabs.isGhostsAlwaysVisible()) {

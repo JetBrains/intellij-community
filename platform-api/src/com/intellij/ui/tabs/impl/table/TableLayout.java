@@ -6,7 +6,6 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -136,10 +135,10 @@ public class TableLayout extends TabLayout {
     }
 
     if (myTabs.getSelectedInfo() != null) {
-      final JComponent selectedToolbar = myTabs.myInfo2Toolbar.get(myTabs.getSelectedInfo());
+      final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(myTabs.getSelectedInfo());
 
       int xAddin = 0;
-      if (!myTabs.myHorizontalSide && selectedToolbar != null) {
+      if (!myTabs.myHorizontalSide && selectedToolbar != null && !selectedToolbar.isEmpty()) {
         xAddin = selectedToolbar.getPreferredSize().width + 1;
         myTabs.layout(selectedToolbar, insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, myTabs.getHeight() - eachY - insets.bottom - 2);
       }

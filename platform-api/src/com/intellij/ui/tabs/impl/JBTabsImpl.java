@@ -1249,7 +1249,7 @@ public class JBTabsImpl extends JComponent
     config.setAntialiasing(false);
     if (isSideComponentVertical()) {
       Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
-      if (!toolbarComp.isEmpty()) {
+      if (toolbarComp != null && !toolbarComp.isEmpty()) {
         Rectangle toolBounds = toolbarComp.getBounds();
         g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR);
         g.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
@@ -1635,7 +1635,7 @@ public class JBTabsImpl extends JComponent
       max.myLabel.height = Math.max(max.myLabel.height, label.getPreferredSize().height);
       max.myLabel.width = Math.max(max.myLabel.width, label.getPreferredSize().width);
       final Toolbar toolbar = myInfo2Toolbar.get(eachInfo);
-      if (!toolbar.isEmpty()) {
+      if (toolbar != null && !toolbar.isEmpty()) {
         max.myToolbar.height = Math.max(max.myToolbar.height, toolbar.getPreferredSize().height);
         max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.getPreferredSize().width);
       }
