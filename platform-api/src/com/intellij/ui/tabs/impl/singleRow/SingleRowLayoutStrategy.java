@@ -37,7 +37,7 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract Dimension getCompSizeDelta(SingleRowPassInfo data);
 
-  public abstract ShapeTransform createShapeTransform(Rectangle labelRec);
+  public abstract ShapeTransform createShapeTransform(Rectangle rectangle);
 
   public abstract boolean canBeStretched();
 

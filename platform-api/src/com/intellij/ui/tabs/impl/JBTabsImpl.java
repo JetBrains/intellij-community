@@ -1262,7 +1262,7 @@ public class JBTabsImpl extends JComponent
   private ShapeInfo computeSelectedLabelShape() {
     final ShapeInfo shape = new ShapeInfo();
 
-    shape.path = getEffectiveLayout().createShapeTransform(getBounds());
+    shape.path = getEffectiveLayout().createShapeTransform(getSize());
     shape.insets = shape.path.transformInsets(getLayoutInsets());
     shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
 

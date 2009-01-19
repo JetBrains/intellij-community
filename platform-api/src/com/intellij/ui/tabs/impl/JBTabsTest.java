@@ -34,6 +34,7 @@ public class JBTabsTest {
     });
     tabs.setTestMode(true);
 
+    frame.getContentPane().add(new JTree(), BorderLayout.WEST);
     frame.getContentPane().add(tabs.getComponent(), BorderLayout.CENTER);
 
     JPanel south = new JPanel(new FlowLayout());
