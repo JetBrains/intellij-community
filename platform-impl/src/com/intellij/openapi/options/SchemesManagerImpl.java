@@ -1,9 +1,6 @@
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -114,19 +111,19 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private void addVFSListener() {
-    if (ApplicationManager.getApplication() == null || myListenerAdded) return;
+    Application app = ApplicationManager.getApplication();
+    if (app == null || myListenerAdded) return;
 
     final LocalFileSystem system = LocalFileSystem.getInstance();
     myVFSBaseDir = system.findFileByIoFile(myBaseDir);
 
-    if (myVFSBaseDir == null) {
+    if (myVFSBaseDir == null && !app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
       myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       myRefreshAlarm.addRequest(new Runnable(){
         public void run() {
           ensureVFSBaseDir();
         }
-      },
-                                                           60 * 1000);
+      }, 60 * 1000, ModalityState.NON_MODAL);
     }
 
     system.addVirtualFileListener(new VirtualFileAdapter() {
