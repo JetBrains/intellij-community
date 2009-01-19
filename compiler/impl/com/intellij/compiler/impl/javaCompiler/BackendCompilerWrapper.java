@@ -756,8 +756,12 @@ public class BackendCompilerWrapper {
   private Pair<String, String> moveToRealLocation(String tempOutputDir, String pathToClass, VirtualFile sourceFile) {
     final Module module = myCompileContext.getModuleByFile(sourceFile);
     if (module == null) {
+      final String message =
+        "Cannot determine module for source file: " + sourceFile.getPresentableUrl() + ";\nCorresponding output file: " + pathToClass;
+      LOG.info(message);
+      myCompileContext.addMessage(CompilerMessageCategory.WARNING, message, sourceFile.getUrl(), -1, -1);
       // do not move: looks like source file has been invalidated, need recompilation
-      return null;
+      return new Pair<String, String>(tempOutputDir, pathToClass);
     }
     final String realOutputDir;
     if (myCompileContext.isInTestSourceContent(sourceFile)) {
