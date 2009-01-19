@@ -1,0 +1,411 @@
+package com.intellij.ui.tabs.impl;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+
+public abstract class ShapeTransform {
+
+  protected GeneralPath myPath = new GeneralPath();
+
+  private Rectangle myShapeRect;
+
+  protected int myXTranform;
+  protected int myYTranform;
+  private boolean mySwap;
+
+  public ShapeTransform(Rectangle shapeRect, int xTransform, int yTranform, boolean swap) {
+    myShapeRect = shapeRect;
+    myXTranform = xTransform;
+    myYTranform = yTranform;
+    mySwap = swap;
+  }
+
+  public ShapeTransform(int XTranform, int YTranform) {
+    myXTranform = XTranform;
+    myYTranform = YTranform;
+  }
+
+  public final Rectangle getShapeRect() {
+    return myShapeRect;
+  }
+
+  public abstract int getX();
+
+  public abstract int getY();
+
+  public abstract int getMaxX();
+
+  public abstract int getMaxY();
+
+  public final int deltaX(int deltaX) {
+    return deltaX * myXTranform;
+  }
+
+  public final int deltaY(int deltaY) {
+    return deltaY * myYTranform;
+  }
+
+  public final <T> T transformX1(T o1, T o2) {
+    return (mySwap ? myYTranform : myXTranform) == 1 ? o1: o2;
+  }
+
+  public final <T> T transformX2(T o1, T o2) {
+    return (mySwap ? myYTranform : myXTranform) == 1 ? o2: o1;
+  }
+
+  public final <T> T transformY1(T o1, T o2) {
+    return (mySwap ? myXTranform : myYTranform) == 1 ? o1: o2;    
+  }
+
+  public final <T> T transformY2(T o1, T o2) {
+    return (mySwap ? myXTranform : myYTranform) == 1 ? o2: o1;
+  }
+
+  public abstract Insets transformInsets(Insets insets);
+
+  public abstract Line2D.Float transformLine(int x1, int y1, int x2, int y2);
+
+  public abstract ShapeTransform createTransform(Rectangle innerRec);
+
+  public abstract ShapeTransform copy();
+
+  public final int getWidth() {
+    return Math.abs(getMaxX() - getX());
+  }
+
+  public final int getHeight() {
+    return Math.abs(getMaxY() - getY());
+  }
+
+  public final ShapeTransform moveTo(int x, int y) {
+    if (mySwap) {
+      myPath.moveTo(y, x);
+    } else {
+      myPath.moveTo(x, y);
+    }
+
+    return this;
+  }
+
+  public final ShapeTransform quadTo(int x1, int y1, int x2, int y2) {
+    if (mySwap) {
+      myPath.quadTo(y1, x1, y2, x2);
+    } else {
+      myPath.quadTo(x1, y1, x2, y2);
+    }
+
+    return this;
+  }
+
+  public final ShapeTransform lineTo(int x, int y) {
+    if (mySwap) {
+      myPath.lineTo(y, x);
+    } else {
+      myPath.lineTo(x, y);
+    }
+
+    return this;
+  }
+
+  public final GeneralPath getShape() {
+    return myPath;
+  }
+
+  public final ShapeTransform reset() {
+    return reset(null);
+  }
+
+  public final ShapeTransform reset(Rectangle shapeRec) {
+    myPath = new GeneralPath();
+    if (shapeRec != null) {
+      myShapeRect = shapeRec;
+    }
+
+    return this;
+  }
+
+  public final ShapeTransform closePath() {
+    myPath.closePath();
+    return this;
+  }
+
+  public final ShapeTransform doRect(int x, int y, int width, int height) {
+    if (width <= 0 || height <= 0) return this;
+    return moveTo(x, y).lineTo(x + deltaX(width), y).lineTo(x + deltaX(width), y + deltaY(height)).lineTo(x, y + deltaY(height)).closePath();
+  }
+
+  public static class Top extends ShapeTransform {
+
+    public Top() {
+      this(null);
+    }
+
+    public Top(Rectangle shapeRect) {
+      this(shapeRect, new GeneralPath());
+    }
+
+    public Top(Rectangle shapeRect, GeneralPath path) {
+      super(shapeRect, 1, 1, false);
+      myPath = path;
+    }
+
+    public int getX() {
+      return getShapeRect().x;
+    }
+
+    public int getY() {
+      return getShapeRect().y;
+    }
+
+    public int getMaxX() {
+      return (int)getShapeRect().getMaxX();
+    }
+
+    public int getMaxY() {
+      return (int)getShapeRect().getMaxY();
+    }
+
+
+    @Override
+    public ShapeTransform createTransform(Rectangle innerRec) {
+      return new Top(innerRec);
+    }
+
+    @Override
+    public Insets transformInsets(Insets insets) {
+      return new Insets(insets.top, insets.left, insets.bottom, insets.right);
+    }
+
+    @Override
+    public Line2D.Float transformLine(int x1, int y1, int x2, int y2) {
+      return new Line2D.Float(x1, y1, x2, y2);
+    }
+
+    public ShapeTransform copy() {
+      return new Top((Rectangle)getShapeRect().clone(), (GeneralPath)myPath.clone());
+    }
+  }
+
+  public static class Left extends ShapeTransform {
+    public Left() {
+      this(null);
+    }
+
+    public Left(Rectangle shapeRect) {
+      this(shapeRect, new GeneralPath());
+    }
+
+    public Left(Rectangle shapeRect, GeneralPath path) {
+      super(shapeRect, 1, 1, true);
+      myPath = path;
+    }
+
+    public int getX() {
+      return getShapeRect().y;
+    }
+
+    public int getY() {
+      return getShapeRect().x;
+    }
+
+    public int getMaxX() {
+      return (int)getShapeRect().getMaxY();
+    }
+
+    public int getMaxY() {
+      return (int)getShapeRect().getMaxX();
+    }
+
+    @Override
+    public ShapeTransform createTransform(Rectangle innerRec) {
+      return new Left(innerRec);
+    }
+
+    @Override
+    public Line2D.Float transformLine(int x1, int y1, int x2, int y2) {
+      return new Line2D.Float(y1, x1, y2, x2);
+    }
+
+    @Override
+    public Insets transformInsets(Insets insets) {
+      return new Insets(insets.left, insets.bottom, insets.right, insets.top);
+    }
+
+    public ShapeTransform copy() {
+      return new Left((Rectangle)getShapeRect().clone(), (GeneralPath)myPath.clone());
+    }
+  }
+
+  public static class Bottom extends ShapeTransform {
+    public Bottom(Rectangle shapeRect, GeneralPath path) {
+      super(shapeRect, 1, -1, false);
+      myPath = path;
+    }
+
+    public Bottom(Rectangle shapeRect) {
+      this(shapeRect, new GeneralPath());
+    }
+
+    public Bottom() {
+      this(null);
+    }
+
+    public int getX() {
+      return getShapeRect().x;
+    }
+
+    public int getY() {
+      return (int)getShapeRect().getMaxY();
+    }
+
+    public int getMaxX() {
+      return (int)getShapeRect().getMaxX();
+    }
+
+    public int getMaxY() {
+      return getShapeRect().y;
+    }
+
+    public ShapeTransform copy() {
+      return new Bottom((Rectangle)getShapeRect().clone(), (GeneralPath)myPath.clone());
+    }
+
+    @Override
+    public ShapeTransform createTransform(Rectangle innerRec) {
+      return new Bottom(innerRec);
+    }
+
+    @Override
+    public Insets transformInsets(Insets insets) {
+      return new Insets(insets.bottom, insets.right, insets.top, insets.left);
+    }
+
+    @Override
+    public Line2D.Float transformLine(int x1, int y1, int x2, int y2) {
+      return new Line2D.Float(x2,
+                              Math.abs(y2) - 1,
+                              x1,
+                              Math.abs(y1) - 1);
+    }
+  }
+
+
+  public static class Right extends ShapeTransform {
+    public Right(Rectangle shapeRect, GeneralPath path) {
+      super(shapeRect, 1, -1, true);
+      myPath = path;
+    }
+
+    public Right(Rectangle rec) {
+      this(rec, new GeneralPath());
+    }
+
+    public Right() {
+      this(null);
+    }
+
+    public int getX() {
+      return getShapeRect().y;
+    }
+
+    public int getY() {
+      return (int)getShapeRect().getMaxX();
+    }
+
+    public int getMaxX() {
+      return (int)getShapeRect().getMaxY();
+    }
+
+    public int getMaxY() {
+      return getShapeRect().x;
+    }
+
+    public ShapeTransform copy() {
+      return new Right((Rectangle)getShapeRect().clone(), (GeneralPath)myPath.clone());
+    }
+
+    @Override
+    public Insets transformInsets(Insets insets) {
+      return new Insets(insets.right, insets.top, insets.left, insets.bottom);
+    }
+
+    @Override
+    public ShapeTransform createTransform(Rectangle innerRec) {
+      return new Right(innerRec);
+    }
+
+    public Line2D.Float transformLine(int x1, int y1, int x2, int y2) {
+      return new Line2D.Float(y1, x1, y2, x2);
+    }
+  }
+
+  public static void main(String[] args) {
+    final JFrame frame = new JFrame();
+    frame.getContentPane().setLayout(new BorderLayout());
+    final JPanel content = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    frame.getContentPane().add(content, BorderLayout.CENTER);
+
+    content.add(new Painter("TOP", new Top()));
+    content.add(new Painter("LEFT", new Left()));
+    content.add(new Painter("BOTTOM", new Bottom()));
+    content.add(new Painter("RIGHT", new Right()));
+
+    frame.setBounds(300, 300, 300, 300);
+    frame.show();
+  }
+
+  private static class Painter extends JLabel {
+    private ShapeTransform myT;
+
+    private Painter(String text, ShapeTransform transform) {
+      setText(text);
+      setFont(getFont().deriveFont(30f));
+      setBorder(new EmptyBorder(6, 6, 6, 6));
+      myT = transform;
+      setOpaque(false);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+
+      g.setColor(Color.red);
+      final Graphics2D g2d = (Graphics2D)g;
+
+      int arc1 = 4;
+      int arc2 = 6;
+
+      final Rectangle r = new Rectangle(arc1, arc1, getWidth() - arc1 - 1, getHeight() - arc1 - 1);
+
+      myT.reset(r);
+
+      myT.moveTo(myT.getX() - myT.deltaX(arc1), myT.getMaxY());
+      myT.quadTo(myT.getX(), myT.getMaxY(), myT.getX(), myT.getMaxY() - myT.deltaY(arc1));
+      myT.lineTo(myT.getX(), myT.getY() + myT.deltaY(arc2));
+      myT.quadTo(myT.getX(), myT.getY(), myT.getX() + myT.deltaX(arc2), myT.getY());
+      myT.lineTo(myT.getMaxX() - myT.deltaX(arc2), myT.getY());
+      myT.quadTo(myT.getMaxX(), myT.getY(), myT.getMaxX(), myT.getY() + myT.deltaY(arc2));
+      myT.lineTo(myT.getMaxX(), myT.getMaxY());
+
+      g2d.draw(myT.getShape());
+
+
+      final int innerRecSize = 18;
+      final Rectangle innerRec = new Rectangle(getWidth() / 2 - innerRecSize / 2, getHeight() / 2 - innerRecSize / 2, innerRecSize, innerRecSize);
+
+      final ShapeTransform inner = myT.createTransform(innerRec);
+      inner.moveTo(inner.getX(), inner.getMaxY());
+      inner.lineTo(inner.getX(), inner.getY());
+      inner.lineTo(inner.getMaxX(), inner.getY());
+      inner.lineTo(inner.getMaxX(), inner.getMaxY());
+
+      g2d.draw(inner.getShape());
+    }
+  }
+
+
+
+}

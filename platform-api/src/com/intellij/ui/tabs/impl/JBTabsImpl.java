@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
+import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
@@ -32,7 +33,7 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -50,7 +51,7 @@ public class JBTabsImpl extends JComponent
 
   TabInfo mySelectedInfo;
   public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<TabInfo, TabLabel>();
-  public final Map<TabInfo, JComponent> myInfo2Toolbar = new HashMap<TabInfo, JComponent>();
+  public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<TabInfo, Toolbar>();
   public Dimension myHeaderFitSize;
 
   Insets myInnerInsets = new Insets(0, 0, 0, 0);
@@ -273,6 +274,20 @@ public class JBTabsImpl extends JComponent
 
   void setTestMode(final boolean testMode) {
     myTestMode = testMode;
+  }
+
+  public void layoutComp(SingleRowPassInfo data, int deltaX, int deltaY, int deltaWidth, int deltaHeight) {
+    if (data.hToolbar != null) {
+      final int toolbarHeight = data.hToolbar.getPreferredSize().height;
+      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp, deltaWidth, deltaHeight);
+      layout(data.hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight);
+    } else if (data.vToolbar != null) {
+      final int toolbarWidth = data.vToolbar.getPreferredSize().width;
+      final Rectangle compRect = layoutComp(toolbarWidth + deltaX, deltaY, data.comp, deltaWidth, deltaHeight);
+      layout(data.vToolbar, compRect.x - toolbarWidth, compRect.y, toolbarWidth, compRect.height);
+    } else {
+      layoutComp(deltaX, deltaY, data.comp, deltaWidth, deltaHeight);
+    }
   }
 
   class TabActionsAutoHideListener extends MouseMotionAdapter {
@@ -810,15 +825,14 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
-    final JComponent old = myInfo2Toolbar.get(tabInfo);
+    final Toolbar old = myInfo2Toolbar.get(tabInfo);
     if (old != null) {
       remove(old);
     }
-    final JComponent toolbar = createToolbarComponent(tabInfo);
-    if (toolbar != null) {
-      myInfo2Toolbar.put(tabInfo, toolbar);
-      add(toolbar);
-    }
+
+    final Toolbar toolbar = createToolbarComponent(tabInfo);
+    myInfo2Toolbar.put(tabInfo, toolbar);
+    add(toolbar);
   }
 
   private void updateTabActions(final TabInfo info) {
@@ -847,7 +861,7 @@ public class JBTabsImpl extends JComponent
     return null;
   }
 
-  protected JComponent createToolbarComponent(final TabInfo tabInfo) {
+  protected Toolbar createToolbarComponent(final TabInfo tabInfo) {
     return new Toolbar(this, tabInfo);
   }
 
@@ -939,9 +953,11 @@ public class JBTabsImpl extends JComponent
 
   public static class Toolbar extends JPanel {
     private JBTabsImpl myTabs;
+    private TabInfo myInfo;
 
     public Toolbar(JBTabsImpl tabs, TabInfo info) {
       myTabs = tabs;
+      myInfo = info;
 
       setLayout(new BorderLayout());
 
@@ -965,6 +981,10 @@ public class JBTabsImpl extends JComponent
           add(side, BorderLayout.CENTER);
         }
       }
+    }
+
+    public boolean isEmpty() {
+      return getComponentCount() == 0;
     }
   }
 
@@ -998,10 +1018,10 @@ public class JBTabsImpl extends JComponent
       }
 
       if (isStealthModeEffective() && !isHideTabs()) {
-        final TabLabel label = myInfo2Label.get(getSelectedInfo());
+        final TabLabel label = getSelectedLabel();
         final Rectangle bounds = label.getBounds();
         final Insets insets = getLayoutInsets();
-        layout(label, bounds.x, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
+        layout(label, insets.left, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
       }
 
       myTabActionsAutoHideListener.processMouseOver();
@@ -1013,7 +1033,7 @@ public class JBTabsImpl extends JComponent
     applyResetComponents();
   }
 
-  public void layoutComp(int componentX, int componentY, final JComponent comp, int deltaWidth, int deltaHeight) {
+  public Rectangle layoutComp(int componentX, int componentY, final JComponent comp, int deltaWidth, int deltaHeight) {
     final Insets insets = getLayoutInsets();
 
     final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : myBorder.getEffectiveBorder();
@@ -1032,17 +1052,18 @@ public class JBTabsImpl extends JComponent
     border.left += inner.left;
     border.right += inner.right;
 
+
     int x = insets.left + componentX + border.left;
-    int y = componentY + border.top;
+    int y = insets.top + componentY + border.top;
     int width = getWidth() - insets.left - insets.right - componentX - border.left - border.right;
-    int height = getHeight() - insets.bottom - componentY - border.top - border.bottom;
+    int height = getHeight() - insets.top - insets.bottom - componentY - border.top - border.bottom;
 
     if (!noTabsVisible) {
       width += deltaWidth;
       height += deltaHeight;
     }
 
-    layout(comp, x, y, width, height);
+    return layout(comp, x, y, width, height);
   }
 
 
@@ -1097,10 +1118,7 @@ public class JBTabsImpl extends JComponent
       resetLayout(c);
     }
 
-    final JComponent toolbar = myInfo2Toolbar.get(each);
-    if (toolbar != null) {
-      resetLayout(toolbar);
-    }
+    resetLayout(myInfo2Toolbar.get(each));
 
     if (resetLabels) {
       resetLayout(myInfo2Label.get(each));
@@ -1132,248 +1150,106 @@ public class JBTabsImpl extends JComponent
     final Rectangle clip = g.getClipBounds();
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
 
-    int arc = getArcSize();
-
-    final Color topBlickColor = getTopBlickColor();
-    final Color rightBlockColor = getRightBlockColor();
-    final Color boundsColor = getBoundsColor();
-
-    Insets insets = getLayoutInsets();
-
     final TabInfo selected = getSelectedInfo();
-
-    final int selectionTabVShift = getSelectionTabVShift();
-    int curveArc = 2;
 
     boolean leftGhostExists = isSingleRow();
     boolean rightGhostExists = isSingleRow();
 
-    if (myTestMode) {
-      g.setColor(Color.red);
-      for (TabInfo each : myVisibleInfos) {
-        final TabLabel label = myInfo2Label.get(each);
-        final Rectangle bounds = label.getBounds();
-        g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      }
-
-      g.setColor(Color.blue);
-      if (leftGhostExists) {
-        g2d.draw(mySingleRowLayout.myLastSingRowLayout.firstGhost);
-      }
-
-      if (rightGhostExists) {
-        g2d.draw(mySingleRowLayout.myLastSingRowLayout.lastGhost);
-      }
-
-      g.setColor(Color.black);
-      final Rectangle more = mySingleRowLayout.myLastSingRowLayout.moreRect;
-      if (more != null) {
-        g2d.draw(more);
-      }
-
-
-      return;
-    }
-
-
     if (!isStealthModeEffective() && !isHideTabs()) {
       if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.lastGhostVisible) {
-        int topX = mySingleRowLayout.myLastSingRowLayout.lastGhost.x - arc;
-        int topY = mySingleRowLayout.myLastSingRowLayout.lastGhost.y + selectionTabVShift;
-        int bottomX = (int)(mySingleRowLayout.myLastSingRowLayout.lastGhost.getMaxX() - curveArc);
-        int bottomY = (int)mySingleRowLayout.myLastSingRowLayout.lastGhost.getMaxY() + 1;
-
-        final GeneralPath path = new GeneralPath();
-        path.moveTo(topX, topY);
-        path.lineTo(bottomX, topY);
-        path.quadTo(bottomX - curveArc, topY + (bottomY - topY) / 4, bottomX, topY + (bottomY - topY) / 2);
-        path.quadTo(bottomX + curveArc, bottomY - (bottomY - topY) / 4, bottomX, bottomY);
-        path.lineTo(topX, bottomY);
-
-        path.closePath();
-
-        g2d.setColor(getBackground());
-        g2d.fill(path);
-
-        g2d.setColor(boundsColor);
-        g2d.draw(path);
-
-        g2d.setColor(topBlickColor);
-        g2d.drawLine(topX, topY + 1, bottomX - curveArc, topY + 1);
+        paintLastGhost(g2d);
       }
 
 
       paintNonSelectedTabs(g2d, leftGhostExists);
 
       if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.firstGhostVisible) {
-        final GeneralPath path = new GeneralPath();
-
-        int topX = mySingleRowLayout.myLastSingRowLayout.firstGhost.x + curveArc;
-        int topY = mySingleRowLayout.myLastSingRowLayout.firstGhost.y + selectionTabVShift;
-        int bottomX = (int)mySingleRowLayout.myLastSingRowLayout.firstGhost.getMaxX() + 1;
-        int bottomY = (int)(mySingleRowLayout.myLastSingRowLayout.firstGhost.getMaxY() + 1);
-
-        path.moveTo(topX, topY);
-
-        final boolean isLeftFromSelection = mySingleRowLayout.myLastSingRowLayout.toLayout.indexOf(getSelectedInfo()) == 0;
-
-        if (isLeftFromSelection) {
-          path.lineTo(bottomX, topY);
-        }
-        else {
-          path.lineTo(bottomX - arc, topY);
-          path.quadTo(bottomX, topY, bottomX, topY + arc);
-        }
-
-        path.lineTo(bottomX, bottomY);
-        path.lineTo(topX, bottomY);
-
-        path.quadTo(topX - curveArc * 2 + 1, bottomY - (bottomY - topY) / 4, topX, bottomY - (bottomY - topY) / 2);
-
-        path.quadTo(topX + curveArc - 1, topY + (bottomY - topY) / 4, topX, topY);
-
-        path.closePath();
-
-        g2d.setColor(getBackground());
-        g2d.fill(path);
-
-        g.setColor(boundsColor);
-        g2d.draw(path);
-
-        g.setColor(topBlickColor);
-        g.drawLine(topX + 1, topY + 1, bottomX - arc, topY + 1);
-
-        g.setColor(rightBlockColor);
-        g2d.drawLine(bottomX - 1, topY + arc, bottomX - 1, bottomY - 1);
+        paintFirstGhost(g2d);
       }
 
     }
 
     if (selected == null) return;
+    if (getSelectedLabel() == null) return;
 
 
-    final TabLabel selectedLabel = myInfo2Label.get(selected);
-    if (selectedLabel == null) return;
-
-    Rectangle selectedTabBounds = selectedLabel.getBounds();
-
-
-    final GeneralPath path = new GeneralPath();
-    int bottomY = (int)selectedTabBounds.getMaxY() + 1;
-    final int topY = selectedTabBounds.y;
-    int leftX = selectedTabBounds.x;
-
-    int rightX = selectedTabBounds.x + selectedTabBounds.width;
-
-    path.moveTo(insets.left, bottomY);
-    path.lineTo(leftX, bottomY);
-    path.lineTo(leftX, topY + arc);
-    path.quadTo(leftX, topY, leftX + arc, topY);
-
-    int lastX = getWidth() - insets.right - 1;
-
-    if (isStealthModeEffective()) {
-      path.lineTo(lastX - arc, topY);
-      path.quadTo(lastX, topY, lastX, topY + arc);
-      path.lineTo(lastX, bottomY);
-    }
-    else {
-      path.lineTo(rightX - arc, topY);
-      path.quadTo(rightX, topY, rightX, topY + arc);
-      if (myLastLayoutPass.hasCurveSpaceFor(selected)) {
-        path.lineTo(rightX, bottomY - arc);
-        path.quadTo(rightX, bottomY, rightX + arc, bottomY);
-      }
-      else {
-        path.lineTo(rightX, bottomY);
-      }
-    }
-
-    path.lineTo(lastX, bottomY);
-
-    if (isStealthModeEffective()) {
-      path.closePath();
-    }
-
-    final GeneralPath fillPath = (GeneralPath)path.clone();
+    final ShapeInfo shapeInfo = computeSelectedLabelShape();
     if (!isHideTabs()) {
-      fillPath.lineTo(lastX, bottomY + 1);
-      fillPath.lineTo(leftX, bottomY + 1);
-      fillPath.closePath();
       g2d.setColor(getBackground());
-      g2d.fill(fillPath);
+      g2d.fill(shapeInfo.fillPath.getShape());
     }
+    
 
-
-    final Color from;
-    final Color to;
     final int alpha;
-    int paintTopY = topY;
-    int paintBottomY = bottomY;
+    int paintTopY = shapeInfo.labelTopY;
+    int paintBottomY = shapeInfo.labelBottomY;
     final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null);
     Color bgPreFill = null;
     if (paintFocused) {
       if (getActiveTabFillIn() == null) {
-        from = UIUtil.getFocusedFillColor();
-        to = UIUtil.getFocusedFillColor();
+        shapeInfo.from = UIUtil.getFocusedFillColor();
+        shapeInfo.to = UIUtil.getFocusedFillColor();
       }
       else {
         bgPreFill = getActiveTabFillIn();
         alpha = 255;
-        paintBottomY = topY + getArcSize() - 2;
-        from = UIUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
-        to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+        paintBottomY = shapeInfo.labelTopY + shapeInfo.labelPath.deltaY(getArcSize() - 2);
+        shapeInfo.from = UIUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
+        shapeInfo.to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
       }
     }
     else {
       if (isPaintFocus()) {
         if (getActiveTabFillIn() == null) {
           alpha = 150;
-          from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
-          to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
+          shapeInfo.from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
+          shapeInfo.to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
         }
         else {
           alpha = 255;
-          from = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
-          to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+          shapeInfo.from = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+          shapeInfo.to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
         }
       }
       else {
         alpha = 255;
-        from = UIUtil.toAlpha(Color.white, alpha);
-        to = UIUtil.toAlpha(Color.white, alpha);
+        shapeInfo.from = UIUtil.toAlpha(Color.white, alpha);
+        shapeInfo.to = UIUtil.toAlpha(Color.white, alpha);
       }
     }
 
     if (!isHideTabs()) {
       if (bgPreFill != null) {
         g2d.setColor(bgPreFill);
-        g2d.fill(fillPath);
+        g2d.fill(shapeInfo.fillPath.getShape());
       }
-      g2d.setPaint(new GradientPaint(selectedTabBounds.x, paintTopY, from, selectedTabBounds.x, paintBottomY, to));
-      g2d.fill(fillPath);
+
+      final Line2D.Float gradientLine =
+        shapeInfo.fillPath.transformLine(shapeInfo.fillPath.getX(), paintTopY, shapeInfo.fillPath.getX(), paintBottomY);
+
+
+      g2d.setPaint(new GradientPaint((float)gradientLine.getX1(),
+                                     (float)gradientLine.getY1(),
+                                     shapeInfo.fillPath.transformY1(shapeInfo.from, shapeInfo.to),
+                                     (float)gradientLine.getX2(),
+                                     (float)gradientLine.getY2(),
+                                     shapeInfo.fillPath.transformY1(shapeInfo.to, shapeInfo.from)));
+      g2d.fill(shapeInfo.fillPath.getShape());
     }
 
     Color borderColor = UIUtil.getBoundsColor(paintFocused);
     g2d.setColor(borderColor);
 
     if (!isHideTabs()) {
-      g2d.draw(path);
+      g2d.draw(shapeInfo.path.getShape());
     }
 
-    if (isHideTabs()) {
-      paintBorder(g2d, insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.bottom - insets.top,
-                  borderColor, from, to, paintFocused);
-    }
-    else {
-      paintBorder(g2d, insets.left, bottomY, getWidth() - insets.left - insets.right, getHeight() - bottomY - insets.bottom, borderColor,
-                  from, to, paintFocused);
-    }
+    paintBorder(g2d, shapeInfo, borderColor);
 
     config.setAntialiasing(false);
     if (isSideComponentVertical()) {
-      JComponent toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
-      if (toolbarComp != null) {
+      Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
+      if (!toolbarComp.isEmpty()) {
         Rectangle toolBounds = toolbarComp.getBounds();
         g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR);
         g.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
@@ -1381,6 +1257,150 @@ public class JBTabsImpl extends JComponent
     }
 
     config.restore();
+  }
+
+  private ShapeInfo computeSelectedLabelShape() {
+    final ShapeInfo shape = new ShapeInfo();
+
+    shape.path = getEffectiveLayout().createShapeTransform(getBounds());
+    shape.insets = shape.path.transformInsets(getLayoutInsets());
+    shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
+
+    shape.labelBottomY = shape.labelPath.getMaxY() + shape.labelPath.deltaY(1);
+    shape.labelTopY = shape.labelPath.getY();
+    shape.labelLeftX = shape.labelPath.getX();
+    shape.labelRightX = shape.labelPath.getX() + shape.labelPath.deltaX(shape.labelPath.getWidth());
+
+    shape.path.moveTo(shape.insets.left, shape.labelBottomY);
+    shape.path.lineTo(shape.labelLeftX, shape.labelBottomY);
+    shape.path.lineTo(shape.labelLeftX, shape.labelTopY + shape.labelPath.deltaY(getArcSize()));
+    shape.path.quadTo(shape.labelLeftX, shape.labelTopY, shape.labelLeftX + shape.labelPath.deltaX(getArcSize()), shape.labelTopY);
+
+    int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right + 1);
+
+    if (isStealthModeEffective()) {
+      shape.path.lineTo(lastX - shape.path.deltaX(getArcSize()), shape.labelTopY);
+      shape.path.quadTo(lastX, shape.labelTopY, lastX, shape.labelTopY + shape.path.deltaY(getArcSize()));
+      shape.path.lineTo(lastX, shape.labelBottomY);
+    }
+    else {
+      shape.path.lineTo(shape.labelRightX - shape.path.deltaX(getArcSize()), shape.labelTopY);
+      shape.path.quadTo(shape.labelRightX, shape.labelTopY, shape.labelRightX, shape.labelTopY + shape.path.deltaY(getArcSize()));
+      if (myLastLayoutPass.hasCurveSpaceFor(getSelectedInfo())) {
+        shape.path.lineTo(shape.labelRightX, shape.labelBottomY - shape.path.deltaY(getArcSize()));
+        shape.path.quadTo(shape.labelRightX, shape.labelBottomY, shape.labelRightX + shape.path.deltaX(getArcSize()), shape.labelBottomY);
+      }
+      else {
+        shape.path.lineTo(shape.labelRightX, shape.labelBottomY);
+      }
+    }
+
+    shape.path.lineTo(lastX, shape.labelBottomY);
+
+    if (isStealthModeEffective()) {
+      shape.path.closePath();
+    }
+
+    shape.fillPath = shape.path.copy();
+    if (!isHideTabs()) {
+      shape.fillPath.lineTo(lastX, shape.labelBottomY + shape.fillPath.deltaY(1));
+      shape.fillPath.lineTo(shape.labelLeftX, shape.labelBottomY + shape.fillPath.deltaY(1));
+      shape.fillPath.closePath();
+    }
+    return shape;
+  }
+
+  private TabLabel getSelectedLabel() {
+    return myInfo2Label.get(getSelectedInfo());
+  }
+
+  class ShapeInfo {
+    ShapeTransform path;
+    ShapeTransform fillPath;
+    ShapeTransform labelPath;
+    int labelBottomY;
+    int labelTopY;
+    int labelLeftX;
+    int labelRightX;
+    Insets insets;
+    Color from;
+    Color to;
+  }
+
+
+  private void paintFirstGhost(Graphics2D g2d) {
+    final ShapeTransform path = getEffectiveLayout().createShapeTransform(mySingleRowLayout.myLastSingRowLayout.firstGhost);
+
+    int topX = path.getX() + path.deltaX(getCurveArc());
+    int topY = path.getY() + path.deltaY(getSelectionTabVShift());
+    int bottomX = path.getMaxX() + path.deltaX(1);
+    int bottomY = path.getMaxY() + path.deltaY(1);
+
+    path.moveTo(topX, topY);
+
+    final boolean isLeftFromSelection = mySingleRowLayout.myLastSingRowLayout.toLayout.indexOf(getSelectedInfo()) == 0;
+
+    if (isLeftFromSelection) {
+      path.lineTo(bottomX, topY);
+    }
+    else {
+      path.lineTo(bottomX - getArcSize(), topY);
+      path.quadTo(bottomX, topY, bottomX, topY + path.deltaY(getArcSize()));
+    }
+
+    path.lineTo(bottomX, bottomY);
+    path.lineTo(topX, bottomY);
+
+    path.quadTo(topX - path.deltaX(getCurveArc() * 2 - 1),
+                bottomY - path.deltaY(Math.abs(bottomY - topY) / 4),
+                topX,
+                bottomY - path.deltaY(Math.abs(bottomY - topY) / 2));
+
+    path.quadTo(topX + path.deltaX(getCurveArc() - 1), topY + path.deltaY(Math.abs(bottomY - topY) / 4), topX, topY);
+
+    path.closePath();
+
+    g2d.setColor(getBackground());
+    g2d.fill(path.getShape());
+
+    g2d.setColor(getBoundsColor());
+    g2d.draw(path.getShape());
+
+    g2d.setColor(getTopBlickColor());
+    g2d.drawLine(topX + path.deltaX(1), topY + path.deltaY(1), bottomX - path.deltaX(getArcSize()), topY + path.deltaY(1));
+
+    g2d.setColor(getRightBlockColor());
+    g2d.drawLine(bottomX - path.deltaX(1), topY + path.deltaY(getArcSize()), bottomX - path.deltaX(1), bottomY - path.deltaY(1));
+  }
+
+  private void paintLastGhost(Graphics2D g2d) {
+    final ShapeTransform path = getEffectiveLayout().createShapeTransform(mySingleRowLayout.myLastSingRowLayout.lastGhost);
+
+    int topX = path.getX() - path.deltaX(getArcSize());
+    int topY = path.getY() + path.deltaY(getSelectionTabVShift());
+    int bottomX = path.getMaxX() - path.deltaX(getCurveArc());
+    int bottomY = path.getMaxY() + path.deltaY(1);
+
+    path.moveTo(topX, topY);
+    path.lineTo(bottomX, topY);
+    path.quadTo(bottomX - getCurveArc(), topY + (bottomY - topY) / 4, bottomX, topY + (bottomY - topY) / 2);
+    path.quadTo(bottomX + getCurveArc(), bottomY - (bottomY - topY) / 4, bottomX, bottomY);
+    path.lineTo(topX, bottomY);
+
+    path.closePath();
+
+    g2d.setColor(getBackground());
+    g2d.fill(path.getShape());
+
+    g2d.setColor(getBoundsColor());
+    g2d.draw(path.getShape());
+
+    g2d.setColor(getTopBlickColor());
+    g2d.drawLine(topX, topY + path.deltaY(1), bottomX - path.deltaX(getCurveArc()), topY + path.deltaY(1));
+  }
+
+  private int getCurveArc() {
+    return 2;
   }
 
   private Color getBoundsColor() {
@@ -1423,8 +1443,6 @@ public class JBTabsImpl extends JComponent
     final TabInfo prev = myLastLayoutPass.getPreviousFor(myVisibleInfos.get(tabIndex));
     final TabInfo next = myLastLayoutPass.getNextFor(myVisibleInfos.get(tabIndex));
 
-    final Rectangle eachBounds = eachLabel.getBounds();
-    final GeneralPath path = new GeneralPath();
 
     boolean firstShowing = prev == null;
     if (!firstShowing && !leftGhostExists) {
@@ -1438,119 +1456,109 @@ public class JBTabsImpl extends JComponent
 
     boolean leftFromSelection = selected != null && tabIndex == myVisibleInfos.indexOf(selected) - 1;
 
+    final ShapeTransform shape = getEffectiveLayout().createShapeTransform(eachLabel.getBounds());
 
-    int leftX = firstShowing ? eachBounds.x : eachBounds.x - arc - 1;
-    int topY = eachBounds.y + selectionTabVShift;
-    int rigthX = !lastShowing && leftFromSelection ? (int)eachBounds.getMaxX() + arc + 1 : (int)eachBounds.getMaxX();
-    int bottomY = (int)eachBounds.getMaxY() + 1;
+    int leftX = firstShowing ? shape.getX() : shape.getX() - shape.deltaX(arc + 1);
+    int topY = shape.getY() + shape.deltaY(selectionTabVShift);
+    int rigthX = !lastShowing && leftFromSelection ? shape.getMaxX() + shape.deltaX(arc + 1) : shape.getMaxX();
+    int bottomY = shape.getMaxY() + shape.deltaY(1);
 
-    path.moveTo(leftX, bottomY);
-    path.lineTo(leftX, topY + arc);
-    path.quadTo(leftX, topY, leftX + arc, topY);
-    path.lineTo(rigthX - arc, topY);
-    path.quadTo(rigthX, topY, rigthX, topY + arc);
-    path.lineTo(rigthX, bottomY);
+    shape.moveTo(leftX, bottomY);
+    shape.lineTo(leftX, topY + shape.deltaY(arc));
+    shape.quadTo(leftX, topY, leftX + shape.deltaX(arc), topY);
+    shape.lineTo(rigthX - shape.deltaX(arc), topY);
+    shape.quadTo(rigthX, topY, rigthX, topY + shape.deltaY(arc));
+    shape.lineTo(rigthX, bottomY);
 
     if (!isSingleRow()) {
       final TablePassInfo info = myTableLayout.myLastTableLayout;
       if (!info.isInSelectionRow(each)) {
-        path.lineTo(rigthX, bottomY + getArcSize());
-        path.lineTo(leftX, bottomY + getArcSize());
-        path.lineTo(leftX, bottomY);
+        shape.lineTo(rigthX, bottomY + shape.deltaY(getArcSize()));
+        shape.lineTo(leftX, bottomY + shape.deltaY(getArcSize()));
+        shape.lineTo(leftX, bottomY);
       }
     }
 
-    path.closePath();
+    shape.closePath();
 
     g2d.setColor(getBackground());
-    g2d.fill(path);
+    g2d.fill(shape.getShape());
 
     g2d.setColor(topBlickColor);
-    g2d.drawLine(leftX + arc, topY + 1, rigthX - arc, topY + 1);
+    g2d.drawLine(leftX + shape.deltaX(arc), topY + shape.deltaY(1), rigthX - shape.deltaX(arc), topY + shape.deltaY(1));
 
     g2d.setColor(rightBlockColor);
-    g2d.drawLine(rigthX - 1, topY + arc - 1, rigthX - 1, bottomY);
+    g2d.drawLine(rigthX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rigthX - shape.deltaX(1), bottomY);
 
     g2d.setColor(boundsColor);
-    g2d.draw(path);
+    g2d.draw(shape.getShape());
   }
 
   public int getSelectionTabVShift() {
     return 2;
   }
 
-  private void paintBorder(Graphics2D g2d,
-                           int x,
-                           int y,
-                           int width,
-                           int height,
-                           final Color borderColor,
-                           final Color fillFrom,
-                           final Color fillTo,
-                           boolean isFocused) {
-    final Insets border = myBorder.getEffectiveBorder();
+  private void paintBorder(Graphics2D g2d, ShapeInfo shape, final Color borderColor) {
 
+    final ShapeTransform shaper = shape.path.copy().reset();
 
-    int topY = y + 1;
-    int bottomY = y + border.top - 2;
+    final Insets paintBorder = shape.path.transformInsets(myBorder.getEffectiveBorder());
+
+    int topY = shape.labelPath.getMaxY() + shape.labelPath.deltaY(1);
+    int bottomY = topY + paintBorder.top - 2;
     int middleY = topY + (bottomY - topY) / 2;
 
-    if (border.top > 0) {
+
+    final int boundsX = shape.path.getX() + shape.path.deltaX(shape.insets.left);
+
+    final int boundsY = isHideTabs() ? shape.path.getY() + shape.path.deltaY(shape.insets.top) : shape.labelPath.getMaxY() + shape.path.deltaY(1);
+
+    final int boundsHeight = Math.abs(shape.path.getMaxY() - boundsY) - shape.insets.bottom - paintBorder.bottom;
+    final int boundsWidth = Math.abs(shape.path.getMaxX() - (shape.insets.left + shape.insets.right));
+
+    if (paintBorder.top > 0) {
       if (isHideTabs()) {
         if (isToDrawBorderIfTabsHidden()) {
           g2d.setColor(borderColor);
-          g2d.drawLine(x, y, x + width - 1, y);
+          g2d.fill(shaper.reset().doRect(boundsX, boundsY, boundsWidth, 1).getShape());
         }
       }
       else if (isStealthModeEffective()) {
-        g2d.setColor(borderColor);
-        g2d.drawLine(x, y - 1, x + width - 1, y - 1);
+        //g2d.setColor(borderColor);
+        //g2d.fill(shaper.reset().doRect(boundsX, boundsY - 1, boundsWidth, 1).getShape());
       }
-      else if (getActiveTabFillIn() == null) {
-        if (border.top > 1) {
-          g2d.setColor(Color.white);
-          g2d.fillRect(x, topY, width, bottomY - topY);
-
-          g2d.setColor(fillTo);
-          g2d.fillRect(x, topY, width, middleY - topY);
-
-          final Color relfectionStartColor =
-              isFocused ? UIUtil.toAlpha(UIUtil.getListSelectionBackground().darker(), 125) : UIUtil.toAlpha(borderColor, 75);
-          g2d.setPaint(new GradientPaint(x, middleY, relfectionStartColor, x, bottomY, UIUtil.toAlpha(Color.white, 255)));
-          g2d.fillRect(x, middleY, width, bottomY - middleY);
-
-          g2d.setColor(UIUtil.toAlpha(Color.white, 100));
-          g2d.drawLine(x, topY, x + width - 1, topY);
-
-
-          g2d.setColor(Color.lightGray);
-          g2d.drawLine(x, bottomY, x + width - 1, bottomY);
+      else  {
+        Color tabFillColor = getActiveTabFillIn();
+        if (tabFillColor == null) {
+          tabFillColor = shape.path.transformY1(shape.to, shape.from);
         }
-        else if (border.top == 1) {
+
+        g2d.setColor(tabFillColor);
+        g2d.fill(shaper.reset().doRect(boundsX, topY + shape.path.deltaY(1), boundsWidth, paintBorder.top).getShape());
+
+        if (paintBorder.top >= 1) {
           g2d.setColor(borderColor);
-          g2d.drawLine(x, y, x + width - 1, y);
-        }
-      }
-      else {
-        g2d.setColor(getActiveTabFillIn());
-        g2d.fillRect(x, topY, width, border.top);
-        if (border.top > 1) {
-          g2d.setColor(borderColor);
-          final int topLine = topY + border.top - 2;
-          g2d.drawLine(x, topLine, x + width - 1, topLine);
-        }
+          final int topLine = topY + shape.path.deltaY(paintBorder.top - 1);
+          g2d.draw(shaper.reset().doRect(boundsX, topLine, boundsWidth - 1, 1).getShape());
+        } 
       }
     }
 
     g2d.setColor(borderColor);
-    g2d.fillRect(x, y + height - border.bottom, width, border.bottom);
 
-    g2d.fillRect(x, y, border.left, height);
-    g2d.fillRect(x + width - border.right, y, border.right, height);
+    //bottom
+    g2d.fill(shaper.reset().doRect(boundsX, Math.abs(shape.path.getMaxY() - shape.insets.bottom - paintBorder.bottom), boundsWidth, paintBorder.bottom).getShape());
+
+    //left
+    g2d.fill(shaper.reset().doRect(boundsX, boundsY, paintBorder.left, boundsHeight).getShape());
+
+    //right
+    g2d.fill(shaper.reset().doRect(shape.path.getMaxX() - shape.insets.right - paintBorder.right, boundsY, paintBorder.right, boundsHeight).getShape());
+
   }
 
   public boolean isStealthModeEffective() {
-    return myStealthTabMode && getTabCount() == 1 && isSideComponentVertical();
+    return myStealthTabMode && getTabCount() == 1 && isSideComponentVertical() && getTabsPosition() == JBTabsPosition.top;
   }
 
 
@@ -1626,8 +1634,8 @@ public class JBTabsImpl extends JComponent
       final TabLabel label = myInfo2Label.get(eachInfo);
       max.myLabel.height = Math.max(max.myLabel.height, label.getPreferredSize().height);
       max.myLabel.width = Math.max(max.myLabel.width, label.getPreferredSize().width);
-      final JComponent toolbar = myInfo2Toolbar.get(eachInfo);
-      if (toolbar != null) {
+      final Toolbar toolbar = myInfo2Toolbar.get(eachInfo);
+      if (!toolbar.isEmpty()) {
         max.myToolbar.height = Math.max(max.myToolbar.height, toolbar.getPreferredSize().height);
         max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.getPreferredSize().width);
       }
@@ -1719,10 +1727,7 @@ public class JBTabsImpl extends JComponent
 
   private void processRemove(final TabInfo info, boolean forcedNow) {
     remove(myInfo2Label.get(info));
-    final JComponent tb = myInfo2Toolbar.get(info);
-    if (tb != null) {
-      remove(tb);
-    }
+    remove(myInfo2Toolbar.get(info));
 
     JComponent tabComponent = info.getComponent();
 
@@ -1867,6 +1872,10 @@ public class JBTabsImpl extends JComponent
 
   ActionManager getActionManager() {
     return myActionManager;
+  }
+
+  public TabsBorder getTabsBorder() {
+    return myBorder;
   }
 
   @NotNull
@@ -2153,11 +2162,16 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isSingleRow() {
-    return myLayout == mySingleRowLayout;
+    return getEffectiveLayout() == mySingleRowLayout;
   }
 
   public boolean isSideComponentVertical() {
     return !myHorizontalSide;
+  }
+
+  private TabLayout getEffectiveLayout() {
+    if (myLayout == myTableLayout && getTabsPosition() == JBTabsPosition.top) return myTableLayout;
+    return mySingleRowLayout;
   }
 
   public JBTabsPresentation setUiDecorator(UiDecorator decorator) {
@@ -2260,19 +2274,22 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  public static void layout(JComponent c, Rectangle bounds) {
+  public static Rectangle layout(JComponent c, Rectangle bounds) {
     final Rectangle now = c.getBounds();
     if (!bounds.equals(now)) {
       c.setBounds(bounds);
     }
     c.putClientProperty(LAYOUT_DONE, Boolean.TRUE);
+
+    return bounds;
   }
 
-  public static void layout(JComponent c, int x, int y, int width, int height) {
-    layout(c, new Rectangle(x, y, width, height));
+  public static Rectangle layout(JComponent c, int x, int y, int width, int height) {
+    return layout(c, new Rectangle(x, y, width, height));
   }
 
   public static void resetLayout(JComponent c) {
+    if (c == null) return;
     c.putClientProperty(LAYOUT_DONE, null);
   }
 

@@ -1,10 +1,7 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.LayoutPassInfo;
-import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.ui.tabs.impl.TabLayout;
+import com.intellij.ui.tabs.impl.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,10 +13,10 @@ public class SingleRowLayout extends TabLayout {
   JBTabsImpl myTabs;
   public SingleRowPassInfo myLastSingRowLayout;
 
-  final LayoutStrategy myTop;
-  final LayoutStrategy myLeft;
-  final LayoutStrategy myBottom;
-  final LayoutStrategy myRight;
+  final SingleRowLayoutStrategy myTop;
+  final SingleRowLayoutStrategy myLeft;
+  final SingleRowLayoutStrategy myBottom;
+  final SingleRowLayoutStrategy myRight;
 
   public MoreIcon myMoreIcon = new MoreIcon() {
     protected boolean isActive() {
@@ -43,15 +40,20 @@ public class SingleRowLayout extends TabLayout {
   private RowDropPolicy myRowDropPolicy = RowDropPolicy.first;
 
 
-  public SingleRowLayout(final JBTabsImpl tabs) {
-    myTabs = tabs;
-    myTop = new LayoutStrategy.Top(this);
-    myLeft = new LayoutStrategy.Left(this);
-    myBottom = new LayoutStrategy.Bottom(this);
-    myRight = new LayoutStrategy.Right(this);
+  @Override
+  public ShapeTransform createShapeTransform(Rectangle labelRec) {
+    return getStrategy().createShapeTransform(labelRec);
   }
 
-  LayoutStrategy getStrategy() {
+  public SingleRowLayout(final JBTabsImpl tabs) {
+    myTabs = tabs;
+    myTop = new SingleRowLayoutStrategy.Top(this);
+    myLeft = new SingleRowLayoutStrategy.Left(this);
+    myBottom = new SingleRowLayoutStrategy.Bottom(this);
+    myRight = new SingleRowLayoutStrategy.Right(this);
+  }
+
+  SingleRowLayoutStrategy getStrategy() {
     switch (myTabs.getPresentation().getTabsPosition()) {
       case top:
         return myTop;
@@ -92,7 +94,7 @@ public class SingleRowLayout extends TabLayout {
   public LayoutPassInfo layoutSingleRow() {
     SingleRowPassInfo data = new SingleRowPassInfo(this);
     final TabInfo selected = myTabs.getSelectedInfo();
-    final JComponent selectedToolbar = myTabs.myInfo2Toolbar.get(selected);
+    final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(selected);
 
     final boolean layoutLabels = checkLayoutLabels();
     if (!layoutLabels) {
@@ -102,12 +104,11 @@ public class SingleRowLayout extends TabLayout {
 
     data.insets = myTabs.getLayoutInsets();
 
+    data.hToolbar = myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
+    data.vToolbar = !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
+
     myTabs.resetLayout(layoutLabels || myTabs.isHideTabs());
 
-
-    if (selectedToolbar != null) {
-      getStrategy().setComponentAddins(data, selectedToolbar, myTabs.isToDrawBorderIfTabsHidden());
-    }
 
     if (layoutLabels && !myTabs.isHideTabs()) {
       data.position = getStrategy().getStartPosition(data);
@@ -121,24 +122,32 @@ public class SingleRowLayout extends TabLayout {
       }
     }
 
-    data.compPosition = getStrategy().getComponentPosition(data);
-
-    if (selectedToolbar != null) {
-      Rectangle tb = getStrategy().getToolbarRec(data, selectedToolbar);
-      if (tb != null) {
-        myTabs.layout(selectedToolbar, tb);
-      }
-    }
-
-
-
     if (selected != null) {
-      final JComponent comp = selected.getComponent();
-      Point point = getStrategy().getCompPoint(data);
-      Dimension sizeDelta = getStrategy().getCompSizeDelta(data);
-
-      myTabs.layoutComp(point.x, point.y, comp, sizeDelta.width, sizeDelta.height);
+      data.comp = selected.getComponent();
+      getStrategy().layoutComp(data);
     }
+
+    //data.compPosition = getStrategy().getComponentPosition(data);
+    //
+    //if (selectedToolbar != null) {
+    //  Rectangle tb = getStrategy().getToolbarRec(data, selectedToolbar);
+    //  if (tb != null) {
+    //    myTabs.layout(selectedToolbar, tb);
+    //  }
+    //}
+
+
+
+    //if (selected != null) {
+    //  final JComponent comp = selected.getComponent();
+    //  Point point = getStrategy().getCompPoint(data);
+    //  Dimension sizeDelta = getStrategy().getCompSizeDelta(data);
+    //
+    //  //todo: kirillk - remove magic
+    //  final int compY = point.y + (myTabs.isStealthModeEffective() ? 1 : 0);
+    //
+    //  myTabs.layoutComp(point.x, compY, comp, sizeDelta.width, sizeDelta.height);
+    //}
 
 
     if (data.toLayout.size() > 0 && myTabs.myVisibleInfos.size() > 0) {
@@ -168,7 +177,7 @@ public class SingleRowLayout extends TabLayout {
 
     int deltaToFit = 0;
     if (data.firstGhostVisible || data.lastGhostVisible) {
-      if (data.requiredLength < data.toFitLength) {
+      if (data.requiredLength < data.toFitLength && getStrategy().canBeStretched()) {
         deltaToFit = (int)Math.floor((data.toFitLength - data.requiredLength) / (double)data.toLayout.size());
       }
     }
@@ -210,8 +219,7 @@ public class SingleRowLayout extends TabLayout {
   }
 
 
-  private void recomputeToLayout(final JComponent selectedToolbar, final SingleRowPassInfo data) {
-    data.displayedHToolbar = myTabs.myHorizontalSide && selectedToolbar != null;
+  private void recomputeToLayout(final JBTabsImpl.Toolbar selectedToolbar, final SingleRowPassInfo data) {
     data.toFitLength = getStrategy().getToFitLength(data);
 
     if (myTabs.isGhostsAlwaysVisible()) {

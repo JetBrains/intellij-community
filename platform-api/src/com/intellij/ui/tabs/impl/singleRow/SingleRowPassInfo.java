@@ -1,9 +1,10 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
-import com.intellij.ui.tabs.impl.LayoutPassInfo;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.LayoutPassInfo;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -11,14 +12,16 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   final Dimension laayoutSize;
   int contentCount;
   int position;
-  int componentFixedPosition;
   int requiredLength;
   int toFitLength;
   public final java.util.List<TabInfo> toLayout;
   public final java.util.List<TabInfo> toDrop;
   int moreRectAxisSize;
   public Rectangle moreRect;
-  public boolean displayedHToolbar;
+
+  public JComponent hToolbar;
+  public JComponent vToolbar;
+
   public int compPosition;
 
   public Rectangle firstGhost;
@@ -30,6 +33,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public Insets insets;
 
   private JBTabsImpl myTabs;
+  public JComponent comp;
 
   public SingleRowPassInfo(SingleRowLayout layout) {
     myTabs = layout.myTabs;

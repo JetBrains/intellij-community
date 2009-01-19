@@ -1,23 +1,21 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.ShapeTransform;
 
-import javax.swing.*;
 import java.awt.*;
 
-public abstract class LayoutStrategy {
+public abstract class SingleRowLayoutStrategy {
 
   SingleRowLayout myLayout;
   JBTabsImpl myTabs;
 
-  protected LayoutStrategy(final SingleRowLayout layout) {
+  protected SingleRowLayoutStrategy(final SingleRowLayout layout) {
     myLayout = layout;
     myTabs = myLayout.myTabs;
   }
 
   abstract int getMoreRectAxisSize();
-
-  abstract void setComponentAddins(final SingleRowPassInfo data, JComponent toolbar, final boolean toolbarVertical);
 
   public abstract int getStartPosition(final SingleRowPassInfo data);
 
@@ -35,17 +33,17 @@ public abstract class LayoutStrategy {
 
   public abstract Rectangle getMoreRect(final SingleRowPassInfo data);
 
-  public abstract int getComponentPosition(final SingleRowPassInfo data);
-
-  public abstract Rectangle getToolbarRec(final SingleRowPassInfo data, final JComponent selectedToolbar);
-
-  public abstract Point getCompPoint(final SingleRowPassInfo data);
-
   public abstract boolean isToCenterTextWhenStretched();
 
   public abstract Dimension getCompSizeDelta(SingleRowPassInfo data);
 
-  abstract static class Horizontal extends LayoutStrategy {
+  public abstract ShapeTransform createShapeTransform(Rectangle labelRec);
+
+  public abstract boolean canBeStretched();
+
+  public abstract void layoutComp(SingleRowPassInfo data);
+
+  abstract static class Horizontal extends SingleRowLayoutStrategy {
     protected Horizontal(final SingleRowLayout layout) {
       super(layout);
     }
@@ -54,12 +52,21 @@ public abstract class LayoutStrategy {
       return true;
     }
 
+    @Override
+    public boolean canBeStretched() {
+      return true;
+    }
+
     public int getMoreRectAxisSize() {
       return myLayout.myMoreIcon.getIconWidth() + 6;
     }
 
     public int getToFitLength(final SingleRowPassInfo data) {
-      return myTabs.getWidth() - data.insets.left - data.insets.right - (data.displayedHToolbar ? myTabs.getToolbarInset() : 0);
+      if (data.hToolbar != null) {
+        return myTabs.getWidth() - data.insets.left - data.insets.right - data.hToolbar.getMinimumSize().width;  
+      } else {
+        return myTabs.getWidth() - data.insets.left - data.insets.right;
+      }
     }
 
     public int getLengthIncrement(final Dimension labelPrefSize) {
@@ -82,21 +89,16 @@ public abstract class LayoutStrategy {
       return data.insets.left;
     }
 
-    void setComponentAddins(final SingleRowPassInfo data, final JComponent toolbar, final boolean toolbarVertical) {
-      if (myTabs.isSideComponentVertical()) {
-        data.componentFixedPosition = toolbar.getPreferredSize().width + 1;
-      }
-    }
-
-    public Point getCompPoint(final SingleRowPassInfo data) {
-      return new Point(data.componentFixedPosition, data.compPosition);
-    }
   }
 
   static class Top extends Horizontal {
 
     Top(final SingleRowLayout layout) {
       super(layout);
+    }
+
+    public ShapeTransform createShapeTransform(Rectangle labelRec) {
+      return new ShapeTransform.Top(labelRec);
     }
 
     public int getFixedPosition(final SingleRowPassInfo data) {
@@ -109,28 +111,32 @@ public abstract class LayoutStrategy {
     }
 
 
+    @Override
+    public void layoutComp(SingleRowPassInfo data) {
+      if (myTabs.isHideTabs()) {
+        myTabs.layoutComp(data, 0, 0, 0, 0);
+      } else {
+        final int x = data.vToolbar != null ? data.vToolbar.getPreferredSize().width + 1 : 0;
+        final int y = data.compPosition + myTabs.myHeaderFitSize.height + 1;
+
+        if (data.hToolbar != null) {
+          myTabs.layoutComp(x, y, data.comp, 0, 0);
+          int toolbarX = data.position + myTabs.getToolbarInset() + (data.moreRect != null ? data.moreRect.width : 0);
+          final Rectangle rec =
+            new Rectangle(toolbarX, data.insets.top, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height + 1);
+          myTabs.layout(data.hToolbar, rec);
+        } else if (data.vToolbar != null) {
+          final Rectangle compBounds = myTabs.layoutComp(x, y, data.comp, 0, 0);
+          final int toolbarWidth = data.vToolbar.getPreferredSize().width;
+          myTabs.layout(data.vToolbar, compBounds.x - toolbarWidth - 1, compBounds.y, toolbarWidth, compBounds.height);
+        } else {
+          myTabs.layoutComp(x, y, data.comp, 0, 0);
+        }
+      }
+    }
+
     public Dimension getCompSizeDelta(SingleRowPassInfo data) {
       return new Dimension();
-    }
-
-    public int getComponentPosition(final SingleRowPassInfo data) {
-      return myTabs.isHideTabs() ? data.insets.top : myTabs.myHeaderFitSize.height + data.insets.top + (myTabs.isStealthModeEffective() ? 0 : 1);
-    }
-
-    public Rectangle getToolbarRec(final SingleRowPassInfo data, final JComponent selectedToolbar) {
-      if (!myTabs.isSideComponentVertical() && !myTabs.isHideTabs()) {
-        int toolbarX = data.position + myTabs.getToolbarInset() + (data.moreRect != null ? data.moreRect.width : 0);
-        final Rectangle rec =
-          new Rectangle(toolbarX, data.insets.top, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height - 1);
-        return rec;
-      }
-      else if (myTabs.isSideComponentVertical()) {
-        final Rectangle rec = new Rectangle(data.insets.left + 1, data.compPosition + 1, selectedToolbar.getPreferredSize().width,
-                                            myTabs.getSize().height - data.compPosition - data.insets.bottom - 2);
-        return rec;
-      }
-
-      return null;
     }
 
   }
@@ -138,6 +144,15 @@ public abstract class LayoutStrategy {
   static class Bottom extends Horizontal {
     Bottom(final SingleRowLayout layout) {
       super(layout);
+    }
+
+    @Override
+    public void layoutComp(SingleRowPassInfo data) {
+      if (myTabs.isHideTabs()) {
+        myTabs.layoutComp(data, 0, 0, 0, 0);
+      } else {
+        myTabs.layoutComp(data, 0, 0, 0, -(myTabs.myHeaderFitSize.height + myTabs.getTabsBorder().getEffectiveBorder().top));
+      }
     }
 
     public int getFixedPosition(final SingleRowPassInfo data) {
@@ -149,20 +164,17 @@ public abstract class LayoutStrategy {
                                             data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height - 1);
     }
 
-    public int getComponentPosition(final SingleRowPassInfo data) {
-      return data.insets.top;
-    }
-
-    public Rectangle getToolbarRec(final SingleRowPassInfo data, final JComponent selectedToolbar) {
-      return null;
-    }
-
     public Dimension getCompSizeDelta(SingleRowPassInfo data) {
-      return new Dimension(0, -myTabs.myHeaderFitSize.height);
+      return new Dimension(0, -(myTabs.myHeaderFitSize.height + 1));
+    }
+
+    @Override
+    public ShapeTransform createShapeTransform(Rectangle labelRec) {
+      return new ShapeTransform.Bottom(labelRec);
     }
   }
 
-  abstract static class Vertical extends LayoutStrategy {
+  abstract static class Vertical extends SingleRowLayoutStrategy {
     protected Vertical(SingleRowLayout layout) {
       super(layout);
     }
@@ -177,6 +189,11 @@ public abstract class LayoutStrategy {
 
     public Dimension getCompSizeDelta(SingleRowPassInfo data) {
       return new Dimension();
+    }
+
+    @Override
+    public boolean canBeStretched() {
+      return false;
     }
 
     public int getStartPosition(final SingleRowPassInfo data) {
@@ -207,8 +224,18 @@ public abstract class LayoutStrategy {
     }
 
 
-    void setComponentAddins(final SingleRowPassInfo data, final JComponent toolbar, final boolean toolbarVertical) {
+    @Override
+    public void layoutComp(SingleRowPassInfo data) {
+      if (myTabs.isHideTabs()) {
+        myTabs.layoutComp(data, 0, 0, 0, 0);
+      } else {
+        myTabs.layoutComp(data, myTabs.myHeaderFitSize.width + myTabs.getTabsBorder().getEffectiveBorder().top, 0, 0, 0);
+      }
+    }
 
+    @Override
+    public ShapeTransform createShapeTransform(Rectangle labelRec) {
+      return new ShapeTransform.Left(labelRec);
     }
 
     public Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength) {
@@ -226,17 +253,6 @@ public abstract class LayoutStrategy {
                            data.moreRectAxisSize - 1);
     }
 
-    public int getComponentPosition(final SingleRowPassInfo data) {
-      return myTabs.isHideTabs() ? data.insets.left : myTabs.myHeaderFitSize.width + data.insets.left;
-    }
-
-    public Rectangle getToolbarRec(final SingleRowPassInfo data, final JComponent selectedToolbar) {
-      return null;
-    }
-
-    public Point getCompPoint(final SingleRowPassInfo data) {
-      return new Point(data.compPosition, data.componentFixedPosition);
-    }
   }
 
   static class Right extends Vertical {
@@ -244,7 +260,17 @@ public abstract class LayoutStrategy {
       super(layout);
     }
 
-    void setComponentAddins(SingleRowPassInfo data, JComponent toolbar, boolean toolbarVertical) {
+    @Override
+    public void layoutComp(SingleRowPassInfo data) {
+      if (myTabs.isHideTabs()) {
+        myTabs.layoutComp(data, 0, 0, 0, 0);
+      } else {
+        myTabs.layoutComp(data, 0, 0, -(myTabs.myHeaderFitSize.width + myTabs.getTabsBorder().getEffectiveBorder().top - 1), 0);
+      }
+    }
+
+    public ShapeTransform createShapeTransform(Rectangle labelRec) {
+      return new ShapeTransform.Right(labelRec);
     }
 
     public Rectangle getLayoutRec(int position, int fixedPos, int length, int fixedFitLength) {
@@ -260,18 +286,6 @@ public abstract class LayoutStrategy {
                         myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize,
                         myTabs.myHeaderFitSize.width - 1,
                         data.moreRectAxisSize - 1);
-    }
-
-    public int getComponentPosition(SingleRowPassInfo data) {
-      return data.insets.left;
-    }
-
-    public Rectangle getToolbarRec(SingleRowPassInfo data, JComponent selectedToolbar) {
-      return null;
-    }
-
-    public Point getCompPoint(SingleRowPassInfo data) {
-      return new Point(data.compPosition, data.componentFixedPosition);
     }
 
     @Override

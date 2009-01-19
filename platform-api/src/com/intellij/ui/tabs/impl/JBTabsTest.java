@@ -10,6 +10,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
@@ -107,7 +108,7 @@ public class JBTabsTest {
       }
     });
 
-    tabs.addTab(new TabInfo(new JTree() {
+    final JTree someTree = new JTree() {
       public void addNotify() {
         super.addNotify();    //To change body of overridden methods use File | Settings | File Templates.
         System.out.println("JBTabs.addNotify");
@@ -117,7 +118,9 @@ public class JBTabsTest {
         System.out.println("JBTabs.removeNotify");
         super.removeNotify();    //To change body of overridden methods use File | Settings | File Templates.
       }
-    })).setText("Tree1").setActions(new DefaultActionGroup(), null)
+    };
+    //someTree.setBorder(new LineBorder(Color.cyan));
+    tabs.addTab(new TabInfo(someTree)).setText("Tree1").setActions(new DefaultActionGroup(), null)
         .setIcon(IconLoader.getIcon("/debugger/frame.png"));
 
     final JTree component = new JTree();
@@ -184,24 +187,27 @@ public class JBTabsTest {
     }
     text.setText(buffer.toString());
 
-    tabs.addTab(new TabInfo(new JScrollPane(text))).setText("Text text text");
+    final JLabel tb = new JLabel("Side comp");
+    tb.setBorder(new LineBorder(Color.red));
+    tabs.addTab(new TabInfo(new JScrollPane(text)).setSideComponent(tb)).setText("Text text text");
     tabs.addTab(toAnimate1).append("Tree2", new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.black, Color.red));
     tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
     tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
     tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 4").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 5").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 6").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 7").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 8").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 4").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 5").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 6").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 7").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 8").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
     tabs.setTabSidePaintBorder(5);
     tabs.getPresentation().setActiveTabFillIn(Color.white);
     tabs.setGhostsAlwaysVisible(true);
 
-    tabs.setBorder(new LineBorder(Color.CYAN));
+    //tabs.setBorder(new LineBorder(Color.blue, 2));
+    tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
 
     tabs.setUiDecorator(new UiDecorator() {
       public UiDecoration getDecoration() {
@@ -212,7 +218,7 @@ public class JBTabsTest {
 
     tabs.setStealthTabMode(true);
 
-    frame.setBounds(1400, 200, 1200, 800);
+    frame.setBounds(1400, 200, 1000, 800);
     frame.show();
 
 
