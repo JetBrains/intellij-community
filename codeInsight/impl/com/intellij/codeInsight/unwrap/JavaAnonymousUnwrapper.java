@@ -53,7 +53,7 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
 
   private PsiElement findTopmostParentOfType(PsiElement el, Class clazz) {
     while (true) {
-      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz);
+      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class);
       if (temp == null || temp instanceof PsiFile) return el;
       el = temp;
     }
