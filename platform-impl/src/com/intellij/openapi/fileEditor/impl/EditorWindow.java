@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -480,37 +479,40 @@ public class EditorWindow {
       return fakeIcon;
     }
 
-    Icon icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().getProject());
-    List<Icon> icons = Collections.singletonList(icon);
+    final Icon baseIcon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().getProject());
 
-    // Pinned
+    int count = 1;
+
+    final Icon pinIcon;
     final EditorComposite composite = findFileComposite(file);
     if (composite != null && composite.isPinned()) {
-      icons = new ArrayList<Icon>(6);
-      icons.add(icon);
-      icons.add(PIN_ICON);
+      count++;
+      pinIcon = PIN_ICON;
+    }
+    else {
+      pinIcon = null;
     }
 
-    // Modified
+    final Icon modifiedIcon;
     if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) {
-      if (icons.size()==1) icons = new ArrayList<Icon>(6);
-      icons.add(icon);
-      if (composite != null && composite.isModified()) {
-        icons.add(MODIFIED_ICON);
-      }
-      else {
-        icons.add(GAP_ICON);
-      }
+      modifiedIcon = composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
+      count++;
+    }
+    else {
+      modifiedIcon = null;
     }
 
-    if (icons.size() == 1) return icons.get(0);
-    final LayeredIcon result = new LayeredIcon(icons.size());
-    for (int i = icons.size() - 1; i >= 0; i--) {
-      result.setIcon(icons.get(i), i);
-    }
+    if (count == 1) return baseIcon;
+
+    int i = 0;
+    final LayeredIcon result = new LayeredIcon(count);
+    result.setIcon(baseIcon, i++);
+    if (pinIcon != null) result.setIcon(pinIcon, i++);
+    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);
 
     return result;
   }
+
   public void unsplit() {
     checkConsistency();
     final Container splitter = myPanel.getParent();

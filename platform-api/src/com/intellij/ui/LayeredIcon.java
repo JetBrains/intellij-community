@@ -74,10 +74,6 @@ public class LayeredIcon implements Icon {
   }
 
   public void setIcon(Icon icon, int layer, int hShift, int vShift) {
-    if (icon instanceof DeferredIcon) {
-      icon = ((DeferredIcon)icon).evaluate();
-    }
-
     if (icon instanceof LayeredIcon) {
       ((LayeredIcon)icon).checkIHaventIconInsideMe(this);
     }
