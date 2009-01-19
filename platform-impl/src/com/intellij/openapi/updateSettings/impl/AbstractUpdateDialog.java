@@ -70,14 +70,8 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   }
 
   private void setButtonsText() {
-    boolean found = false;
-    if (myUploadedPlugins != null) {
-      for (PluginDownloader uploadedPlugin : myUploadedPlugins) {
-        if (!UpdateChecker.getDisabledToUpdatePlugins().contains(uploadedPlugin.getPluginId())) found = true;
-      }
-    }
-    setOKButtonText(found ? IdeBundle.message("update.plugins.shutdown.action") : getOkButtonText());
-    setCancelButtonText(found ? IdeBundle.message("update.plugins.update.later.action") : CommonBundle.getCloseButtonText());
+    setOKButtonText(getOkButtonText());
+    setCancelButtonText(CommonBundle.getCancelButtonText());
   }
 
   protected String getOkButtonText() {

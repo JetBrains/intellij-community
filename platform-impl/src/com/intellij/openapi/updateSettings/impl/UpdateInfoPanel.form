@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.UpdateInfoDialog.UpdateInfoPanel">
   <grid id="18751" binding="myPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="122" y="38" width="478" height="357"/>
+      <xy x="122" y="198" width="478" height="197"/>
     </constraints>
     <properties/>
     <border type="etched"/>
@@ -118,7 +118,7 @@
       </component>
       <component id="969e3" class="javax.swing.JLabel">
         <constraints>
-          <grid row="8" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -134,55 +134,12 @@
           <text resource-bundle="messages/IdeBundle" key="updates.new.version.available"/>
         </properties>
       </component>
-      <component id="d2906" class="javax.swing.JEditorPane" binding="myEditorPane">
+      <vspacer id="59641">
         <constraints>
-          <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="150" height="50"/>
-          </grid>
-          <gridbag weightx="1.0" weighty="1.0"/>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
-        <properties>
-          <contentType value="text/html"/>
-          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;&#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      &#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
-        </properties>
-      </component>
-      <grid id="eef8d" binding="myWholePluginsPanel" layout-manager="GridBagLayout">
-        <constraints>
-          <grid row="5" column="1" row-span="2" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="1.0"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <scrollpane id="4e24b">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="1" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                <maximum-size width="-1" height="100"/>
-              </grid>
-              <gridbag weightx="1.0" weighty="1.0"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <grid id="a0e0" binding="myUpdatedPluginsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-                <constraints/>
-                <properties/>
-                <border type="none"/>
-                <children/>
-              </grid>
-            </children>
-          </scrollpane>
-          <component id="11a27" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="10" left="0" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="Plugins ready to update"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
+      </vspacer>
     </children>
   </grid>
 </form>

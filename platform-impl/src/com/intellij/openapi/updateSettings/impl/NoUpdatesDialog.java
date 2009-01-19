@@ -1,6 +1,9 @@
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.ui.Messages;
 
 import javax.swing.*;
 import java.util.List;
@@ -25,12 +28,28 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     return new NoUpdatesPanel().myPanel;
   }
 
+  @Override
+  protected String getOkButtonText() {
+    return myUploadedPlugins == null ? CommonBundle.getOkButtonText() : IdeBundle.message("update.plugins.update.action");
+  }
+
   protected Action[] createActions() {
     final Action cancelAction = getCancelAction();
     if (myUploadedPlugins != null) {
       return new Action[] {getOKAction(), cancelAction};
     }
-    return new Action[]{cancelAction};
+    return new Action[] {getOKAction()};
+  }
+
+  @Override
+  protected boolean doDownloadAndPrepare() {
+    boolean hasSmthToUpdate = super.doDownloadAndPrepare();
+    if (hasSmthToUpdate &&
+        Messages.showYesNoDialog(IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName()),
+                                 IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) != 0) {
+      hasSmthToUpdate = false;
+    }
+    return hasSmthToUpdate;
   }
 
   private class NoUpdatesPanel {
@@ -38,9 +57,11 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     private JPanel myPluginsPanel;
     private JEditorPane myEditorPane;
     private JPanel myWholePluginsPanel;
+    private JLabel myNothingFoundToUpdateLabel;
 
     public NoUpdatesPanel() {
       initPluginsPanel(myPanel, myPluginsPanel, myWholePluginsPanel, myEditorPane);
+      myNothingFoundToUpdateLabel.setVisible(myUploadedPlugins == null);
     }
   }
 }

@@ -99,9 +99,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JLabel myVersionNumber;
     private JLabel myNewVersionNumber;
     private JLabel myNewBuildNumber;
-    private JPanel myUpdatedPluginsPanel;
-    private JEditorPane myEditorPane;
-    private JPanel myWholePluginsPanel;
     private JLabel myPatchAvailableLabel;
     private JLabel myPatchSizeLabel;
 
@@ -135,8 +132,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       else {
         myPatchSizeLabel.setText(patch.getSize() + "MB");
       }
-
-      initPluginsPanel(myPanel, myUpdatedPluginsPanel, myWholePluginsPanel, myEditorPane);
     }
   }
 }

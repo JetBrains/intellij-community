@@ -2,20 +2,11 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.NoUpdatesDialog.NoUpdatesPanel">
   <grid id="18751" binding="myPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="63" y="44" width="432" height="155"/>
+      <xy x="63" y="44" width="484" height="155"/>
     </constraints>
     <properties/>
     <border type="etched"/>
     <children>
-      <component id="f06b4" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="1.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/IdeBundle" key="updates.no.updates.message"/>
-        </properties>
-      </component>
       <component id="bc72e" class="javax.swing.JEditorPane" binding="myEditorPane">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
@@ -30,7 +21,7 @@
       </component>
       <grid id="71b5" binding="myWholePluginsPanel" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="1" column="0" row-span="2" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="2" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="1.0"/>
         </constraints>
         <properties/>
@@ -58,7 +49,7 @@
               <gridbag weightx="1.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text value="Plugins ready to update"/>
+              <text value="&lt;html&gt;&lt;b&gt;Plugins from configured hosts ready to update.&lt;/b&gt;&lt;br&gt; Uncheck plugins you do not want to update. &lt;/html&gt;"/>
             </properties>
           </component>
           <vspacer id="88098">
@@ -69,6 +60,15 @@
           </vspacer>
         </children>
       </grid>
+      <component id="42774" class="javax.swing.JLabel" binding="myNothingFoundToUpdateLabel">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="11" use-parent-layout="false"/>
+          <gridbag top="0" left="5" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="&lt;html&gt;&lt;b&gt;Nothing found to update&lt;/b&gt;&lt;/html&gt;"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>
