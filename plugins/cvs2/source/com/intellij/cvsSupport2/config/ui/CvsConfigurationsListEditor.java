@@ -13,6 +13,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -42,7 +43,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   public CvsConfigurationsListEditor(List<CvsRootConfiguration> configs, Project project) {
     super(true);
     myCvs2SettingsEditPanel = new Cvs2SettingsEditPanel(project);
-    setTitle(com.intellij.CvsBundle.message("operation.name.edit.configurations"));
+    setTitle(CvsBundle.message("operation.name.edit.configurations"));
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     selectNone();
     fillModel(configs);
@@ -55,7 +56,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
       }
     });
 
-    setTitle(com.intellij.CvsBundle.message("dialog.title.cvs.roots"));
+    setTitle(CvsBundle.message("dialog.title.cvs.roots"));
 
     if (!configs.isEmpty()) {
       myList.setSelectedIndex(0);
@@ -64,6 +65,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   }
 
+  @Nullable
   public static CvsRootConfiguration reconfigureCvsRoot(String root, Project project){
     CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     CvsRootConfiguration selectedConfig = configuration.getConfigurationForCvsRoot(root);
@@ -246,7 +248,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private class MyAddAction extends AnAction {
     public MyAddAction() {
-      super(com.intellij.CvsBundle.message("action.name.add"), null, IconLoader.getIcon("/general/add.png"));
+      super(CvsBundle.message("action.name.add"), null, IconLoader.getIcon("/general/add.png"));
       registerCustomShortcutSet(CommonShortcuts.INSERT, myList);
 
     }
@@ -262,7 +264,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private class MyRemoveAction extends AnAction {
     public MyRemoveAction() {
-      super(com.intellij.CvsBundle.message("action.name.remove"), null, IconLoader.getIcon("/general/remove.png"));
+      super(CvsBundle.message("action.name.remove"), null, IconLoader.getIcon("/general/remove.png"));
       registerCustomShortcutSet(CommonShortcuts.DELETE, myList);
     }
 
@@ -277,7 +279,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private class MyCopyAction extends AnAction {
     public MyCopyAction() {
-      super(com.intellij.CvsBundle.message("action.name.copy"), null, IconLoader.getIcon("/general/copy.png"));
+      super(CvsBundle.message("action.name.copy"), null, IconLoader.getIcon("/general/copy.png"));
       registerCustomShortcutSet(new CustomShortcutSet(
         KeyStroke.getKeyStroke(KeyEvent.VK_C, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)),
                                 myList);
@@ -295,13 +297,13 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   @NonNls
   public Object getData(String dataId) {
     if (DataConstants.HELP_ID.equals(dataId)){
-      return "vcs.cvs.configure";
+      return "reference.versionControl.cvs.options";
     }
     return null;
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("vcs.cvs.configure");
+    HelpManager.getInstance().invokeHelp("reference.versionControl.cvs.options");
   }
 
   protected Action[] createActions() {
