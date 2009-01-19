@@ -23,7 +23,7 @@ public class MavenImportingSettingsForm {
   private JCheckBox myCreateGroupsCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myUpdateFoldersOnImportCheckBox;
-  private JCheckBox myImportIsBackgroundCheckBox;
+  private JCheckBox myResolveInBackgroundCheckBox;
 
   public MavenImportingSettingsForm() {
     this(false);
@@ -45,7 +45,7 @@ public class MavenImportingSettingsForm {
       myCreateGroupsCheckBox.setVisible(false);
       myUseMavenOutputCheckBox.setVisible(false);
       myUpdateFoldersOnImportCheckBox.setVisible(false);
-      myImportIsBackgroundCheckBox.setVisible(false);
+      myResolveInBackgroundCheckBox.setVisible(false);
     } else {
       myUseExhaustiveSearchCheckBox.setVisible(false);
     }
@@ -75,7 +75,7 @@ public class MavenImportingSettingsForm {
     data.setLookForNested(myUseExhaustiveSearchCheckBox.isSelected());
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
     data.setUpdateFoldersOnImport(myUpdateFoldersOnImportCheckBox.isSelected());
-    data.setImportInBackground(myImportIsBackgroundCheckBox.isSelected());
+    data.setResolveInBackground(myResolveInBackgroundCheckBox.isSelected());
   }
 
   public void setData(final MavenImportingSettings data) {
@@ -88,7 +88,7 @@ public class MavenImportingSettingsForm {
     myUseExhaustiveSearchCheckBox.setSelected(data.isLookForNested());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
     myUpdateFoldersOnImportCheckBox.setSelected(data.isUpdateFoldersOnImport());
-    myImportIsBackgroundCheckBox.setSelected(data.isImportInBackground());
+    myResolveInBackgroundCheckBox.setSelected(data.isResolveInBackground());
 
     enableControls();
   }

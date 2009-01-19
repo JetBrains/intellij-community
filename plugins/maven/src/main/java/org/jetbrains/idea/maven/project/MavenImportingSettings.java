@@ -13,7 +13,7 @@ public class MavenImportingSettings implements Cloneable {
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
   private boolean updateFoldersOnImport = true;
-  private boolean importInBackground = false;
+  private boolean resolveInBackground = true;
 
   @NotNull
   public String getDedicatedModuleDir() {
@@ -72,12 +72,12 @@ public class MavenImportingSettings implements Cloneable {
     this.updateFoldersOnImport = updateFoldersOnImport;
   }
 
-  public boolean isImportInBackground() {
-    return importInBackground;
+  public boolean isResolveInBackground() {
+    return resolveInBackground;
   }
 
-  public void setImportInBackground(boolean value) {
-    importInBackground = value;
+  public void setResolveInBackground(boolean value) {
+    resolveInBackground = value;
   }
 
   public boolean equals(final Object o) {
@@ -92,7 +92,7 @@ public class MavenImportingSettings implements Cloneable {
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (updateFoldersOnImport != that.updateFoldersOnImport) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
-    if (importInBackground != that.importInBackground) return false;
+    if (resolveInBackground != that.resolveInBackground) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
 
     return true;
@@ -107,7 +107,7 @@ public class MavenImportingSettings implements Cloneable {
     result = 31 * result + (updateFoldersOnImport ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
-    result = 31 * result + (importInBackground ? 1 : 0);
+    result = 31 * result + (resolveInBackground ? 1 : 0);
     return result;
   }
 
