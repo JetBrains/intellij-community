@@ -1534,9 +1534,9 @@ public class JBTabsImpl extends JComponent
         }
 
         g2d.setColor(tabFillColor);
-        g2d.fill(shaper.reset().doRect(boundsX, topY + shape.path.deltaY(1), boundsWidth, paintBorder.top).getShape());
+        g2d.fill(shaper.reset().doRect(boundsX, topY + shape.path.deltaY(1), boundsWidth, paintBorder.top - 1).getShape());
 
-        if (paintBorder.top >= 1) {
+        if (paintBorder.top > 1) {
           g2d.setColor(borderColor);
           final int topLine = topY + shape.path.deltaY(paintBorder.top - 1);
           g2d.draw(shaper.reset().doRect(boundsX, topLine, boundsWidth - 1, 1).getShape());
