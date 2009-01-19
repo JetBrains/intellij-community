@@ -19,32 +19,34 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This policy is to create a duplicate <code>toString</code> method.
  */
 public class DuplicatePolicy implements ConflictResolutionPolicy {
 
-    private static final DuplicatePolicy instance = new DuplicatePolicy();
-    private static InsertNewMethodStrategy newMethodStrategy = InsertAtCaretStrategy.getInstance();
+  private static final DuplicatePolicy instance = new DuplicatePolicy();
+  private static InsertNewMethodStrategy newMethodStrategy = InsertAtCaretStrategy.getInstance();
 
-    private DuplicatePolicy() {
-    }
+  private DuplicatePolicy() {
+  }
 
-    public static DuplicatePolicy getInstance() {
-        return instance;
-    }
+  public static DuplicatePolicy getInstance() {
+    return instance;
+  }
 
-    public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
-        newMethodStrategy = strategy;
-    }
+  public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
+    newMethodStrategy = strategy;
+  }
 
-    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-        return newMethodStrategy.insertNewMethod(clazz, newMethod, editor);
-    }
+  public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor)
+    throws IncorrectOperationException {
+    return newMethodStrategy.insertNewMethod(clazz, newMethod, editor);
+  }
 
-    public String toString() {
-        return "Duplicate";
-    }
+  public String toString() {
+    return "Duplicate";
+  }
 
 }

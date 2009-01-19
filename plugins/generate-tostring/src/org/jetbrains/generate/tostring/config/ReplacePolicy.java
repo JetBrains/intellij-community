@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This policy is to replace the existing <code>toString</code> method.
@@ -38,7 +39,7 @@ public class ReplacePolicy implements ConflictResolutionPolicy {
         // not needed here
     }
 
-    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         if (existingMethod != null) {
             return (PsiMethod) existingMethod.replace(newMethod);
         } else {

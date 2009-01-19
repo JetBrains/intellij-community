@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -38,11 +39,11 @@ public class InsertAtCaretStrategy implements InsertNewMethodStrategy {
     return instance;
   }
 
-  public PsiMethod insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+  public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
     int offset = editor != null ? editor.getCaretModel().getOffset() : clazz.getTextRange().getEndOffset() - 1;
-    final PsiGenerationInfo generationInfo = new PsiGenerationInfo(newMethod, false);
+    final PsiGenerationInfo<PsiMethod> generationInfo = new PsiGenerationInfo<PsiMethod>(newMethod, false);
     GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(generationInfo));
-    return (PsiMethod) generationInfo.getPsiMember();
+    return generationInfo.getPsiMember();
   }
 
   public String toString() {

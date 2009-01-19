@@ -22,6 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Inserts the method last in the javafile.
@@ -37,7 +38,7 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
         return instance;
     }
 
-    public PsiMethod insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
 
         // if main method exists and is the last then add toString just before main method

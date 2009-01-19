@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This policy is to cancel.
@@ -38,7 +39,7 @@ public class CancelPolicy implements ConflictResolutionPolicy {
         // not used as this is cancel
     }
 
-    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         return null;
     }
 

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Inserts the method after the hashCode/equals methods in the javafile.
@@ -37,7 +38,7 @@ public class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodStrateg
         return instance;
     }
 
-    public PsiMethod insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
         // lazy initialize otherwise IDEA throws error: Component requests are not allowed before they are created
         if (psi == null) {
             psi = PsiAdapterFactory.getPsiAdapter();

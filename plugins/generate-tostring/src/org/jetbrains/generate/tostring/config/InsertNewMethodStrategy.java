@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,16 +28,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface InsertNewMethodStrategy {
 
-    /**
-     * Applies the choosen policy.
-     *
-     * @param clazz          PSIClass.
-     * @param newMethod      new method.
-     * @param editor
-     * @return if the policy was executed normally (not cancelled)
-     * @throws com.intellij.util.IncorrectOperationException is thrown if there is an IDEA error.
-     */
-    @Nullable
-    PsiMethod insertNewMethod(PsiClass clazz, PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
+  /**
+   * Applies the choosen policy.
+   *
+   * @param clazz     PSIClass.
+   * @param newMethod new method.
+   * @param editor
+   * @return if the policy was executed normally (not cancelled)
+   * @throws com.intellij.util.IncorrectOperationException
+   *          is thrown if there is an IDEA error.
+   */
+  @Nullable
+  PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
 
 }
