@@ -24,12 +24,11 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfo {
     myMergeIfExists = true;
   }
 
-  public PsiGenerationInfo(T myMember, boolean myMergeIfExists) {
-    this.myMember = myMember;
-    this.myMergeIfExists = myMergeIfExists;
+  public PsiGenerationInfo(@NotNull T member, boolean mergeIfExists) {
+    myMember = member;
+    myMergeIfExists = mergeIfExists;
   }
 
-    @NotNull
   public final T getPsiMember() {
     return myMember;
   }

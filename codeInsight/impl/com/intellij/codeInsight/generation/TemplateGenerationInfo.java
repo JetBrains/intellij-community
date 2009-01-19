@@ -5,7 +5,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 
 abstract class TemplateGenerationInfo extends GenerationInfo {
   private final Expression myExpression;
@@ -22,7 +21,6 @@ abstract class TemplateGenerationInfo extends GenerationInfo {
 
   protected abstract PsiTypeElement getTemplateElement(PsiMethod method);
 
-  @NotNull
   public PsiMethod getPsiMember() {
     return myElement.getElement();
   }

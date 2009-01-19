@@ -17,7 +17,6 @@ public abstract class GenerationInfo {
   
   public abstract void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException;
 
-  @NotNull
   public abstract PsiMember getPsiMember();
 
   /**
