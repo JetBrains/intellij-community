@@ -604,7 +604,7 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
 
-  private abstract class NodeAppender {
+  private static abstract class NodeAppender {
     public abstract CheckedTreeNode append(CheckedTreeNode node);
   }
 
