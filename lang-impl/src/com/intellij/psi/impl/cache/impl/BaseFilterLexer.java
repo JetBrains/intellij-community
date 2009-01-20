@@ -21,6 +21,7 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   private int myOccurenceMask;
   private CharSequence myBuffer;
   private char[] myBufferArray;
+  private TodoScanningData[] myTodoScanningData;
 
   public static interface OccurrenceConsumer {
     void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask);
@@ -85,25 +86,50 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
       if (start >= end) return; // this prevents scanning of the same comment twice
 
       CharSequence input = new CharSequenceSubSequence(myBuffer, start, end);
-      advanceTodoItemsCount(input, myOccurrenceConsumer);
+      myTodoScanningData = advanceTodoItemsCount(input, myOccurrenceConsumer, myTodoScanningData);
 
       myTodoScannedBound = end;
     }
   }
 
-  public static void advanceTodoItemsCount(final CharSequence input, final OccurrenceConsumer consumer) {
-    IndexPattern[] patterns = CacheUtil.getIndexPatterns();
-    for (final IndexPattern indexPattern : patterns) {
-      Pattern pattern = indexPattern.getPattern();
-      if (pattern != null) {
-        Matcher matcher = pattern.matcher(input);
-        while (matcher.find()) {
-          if (matcher.start() != matcher.end()) {
-            consumer.incTodoOccurrence(indexPattern);
-          }
+  public static class TodoScanningData {
+    final IndexPattern pattern;
+    final Matcher matcher;
+
+    public TodoScanningData(IndexPattern pattern, Matcher matcher) {
+      this.matcher = matcher;
+      this.pattern = pattern;
+    }
+  }
+
+  public static TodoScanningData[] advanceTodoItemsCount(final CharSequence input, final OccurrenceConsumer consumer, TodoScanningData[] todoScanningData) {
+    if (todoScanningData == null) {
+      IndexPattern[] patterns = CacheUtil.getIndexPatterns();
+      todoScanningData = new TodoScanningData[patterns.length];
+
+      for (int i = 0; i < patterns.length; ++i) {
+        IndexPattern indexPattern = patterns[i];
+        Pattern pattern = indexPattern.getPattern();
+
+        if (pattern != null) {
+          todoScanningData [i] = new TodoScanningData(indexPattern, pattern.matcher(""));
         }
       }
     }
+
+    for (TodoScanningData data:todoScanningData) {
+      if (data == null) continue;
+      Matcher matcher = data.matcher;
+      matcher.reset(input);
+
+      while (matcher.find()) {
+        if (matcher.start() != matcher.end()) {
+          consumer.incTodoOccurrence(data.pattern);
+        }
+      }
+    }
+
+    return todoScanningData;
   }
 
   public final void run(CharSequence chars, int start, int end, char[] charArray) {

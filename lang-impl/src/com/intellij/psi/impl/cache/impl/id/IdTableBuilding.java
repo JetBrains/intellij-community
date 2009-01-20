@@ -246,10 +246,10 @@ public class IdTableBuilding {
 
     @NotNull
     public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
-      final CharSequence chars = inputData.getContentAsText();
       if (CacheUtil.getIndexPatternCount() > 0) {
+        final CharSequence chars = inputData.getContentAsText();
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
-        EditorHighlighter highlighter = null;
+        EditorHighlighter highlighter;
 
         final EditorHighlighter editorHighlighter = inputData.getUserData(FileBasedIndex.EDITOR_HIGHLIGHTER);
         if (editorHighlighter != null && checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
@@ -258,11 +258,22 @@ public class IdTableBuilding {
           highlighter = HighlighterFactory.createHighlighter(null, myFile);
           highlighter.setText(chars);
         }
+
+        final int documentLength = chars.length();
+        BaseFilterLexer.TodoScanningData[] todoScanningDatas = null;
         final HighlighterIterator iterator = highlighter.createIterator(0);
+        
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
+
           if (CacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
-            BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(iterator.getStart(), iterator.getEnd()), occurrenceConsumer);
+            int start = iterator.getStart();
+            int end = iterator.getEnd();
+
+            if (start >= documentLength || end > documentLength) {
+              Logger.getInstance(getClass().getName()).error("Lexer editor highlighter produces tokens out of range:"+documentLength+",("+start + "," + end + ")");
+            }
+            todoScanningDatas = BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(start, end), occurrenceConsumer, todoScanningDatas);
           }
           iterator.advance();
         }
