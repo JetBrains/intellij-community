@@ -385,7 +385,7 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
 
   private class ReaderThread implements Runnable {
     private BufferedReader myFileStream;
-    private boolean myRunning = true;
+    private boolean myRunning = false;
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
     public ReaderThread(File file){
       try {
