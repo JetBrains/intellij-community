@@ -29,6 +29,9 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
     GitLineHandler h = createHandler(project, gitRoots, defaultRoot);
+    if(h == null) {
+      return;
+    }
     final VirtualFile root = h.workingDirectoryFile();
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
     GitRebaseEditorHandler editor = service.getHandler(project, root);
