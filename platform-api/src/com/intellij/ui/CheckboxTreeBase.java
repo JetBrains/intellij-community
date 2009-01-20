@@ -325,12 +325,12 @@ public class CheckboxTreeBase extends Tree {
 
         myCheckbox.setBackground(null);
         setBackground(null);
+        myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       }
       else {
         myCheckbox.setVisible(false);
       }
-      myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-      customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
       return this;
     }
