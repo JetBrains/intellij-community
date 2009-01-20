@@ -6,23 +6,13 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.IJSwingUtilities;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.plaf.TabbedPaneUI;
-import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 /**
  * @author Anton Katilin
@@ -53,9 +43,9 @@ public class TabbedPaneWrapper {
   public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
     myTabbedPane = createTabbedPane(tabPlacement);
     myTabbedPane.putClientProperty(TabbedPaneWrapper.class, myTabbedPane);
-    myTabbedPane.myInstallKeyboardNavigation = installKeyboardNavigation;
+    myTabbedPane.setKeyboardNavigation(installKeyboardNavigation);
     myTabbedPaneHolder = createTabbedPaneHolder();
-    myTabbedPaneHolder.add(myTabbedPane, BorderLayout.CENTER);
+    myTabbedPaneHolder.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
     myTabbedPaneHolder.setFocusCycleRoot(true);
     myTabbedPaneHolder.setFocusTraversalPolicy(new _MyFocusTraversalPolicy());
 
@@ -65,7 +55,7 @@ public class TabbedPaneWrapper {
   private void assertIsDispatchThread() {
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (application != null){
-      application.assertIsDispatchThread(myTabbedPane);
+      application.assertIsDispatchThread(myTabbedPane.getComponent());
     }
   }
 
@@ -104,7 +94,7 @@ public class TabbedPaneWrapper {
   }
 
   protected TabbedPane createTabbedPane(final int tabPlacement) {
-    return new TabbedPane(tabPlacement);
+    return new TabbedPaneImpl(tabPlacement);
   }
 
   /**
@@ -304,7 +294,7 @@ public class TabbedPaneWrapper {
     myTabbedPane.removeAll();
   }
 
-  private static final class TabWrapper extends JPanel implements DataProvider{
+  public static final class TabWrapper extends JPanel implements DataProvider{
     private JComponent myComponent;
 
     public TabWrapper(@NotNull final JComponent component) {
@@ -360,288 +350,6 @@ public class TabbedPaneWrapper {
     }
   }
 
-  protected static class TabbedPane extends JTabbedPane {
-    private ScrollableTabSupport myScrollableTabSupport;
-    private AnAction myNextTabAction = null;
-    private AnAction myPreviousTabAction = null;
-    private PrevNextActionsDescriptor myInstallKeyboardNavigation = null;
-
-    public TabbedPane(final int tabPlacement) {
-      super(tabPlacement);
-      setFocusable(false);
-      addMouseListener(
-        new MouseAdapter() {
-          public void mouseClicked(final MouseEvent e) {
-            _requestDefaultFocus();
-          }
-        }
-      );
-    }
-
-    @Override
-    public void addNotify() {
-      super.addNotify();
-      if (myInstallKeyboardNavigation != null) {
-        installKeyboardNavigation(myInstallKeyboardNavigation);
-      }
-    }
-
-    @Override
-    public void removeNotify() {
-      super.removeNotify();
-      if (myInstallKeyboardNavigation != null) {
-        uninstallKeyboardNavigation();
-      }
-    }
-
-    @SuppressWarnings({"NonStaticInitializer"})
-    private void installKeyboardNavigation(final PrevNextActionsDescriptor installKeyboardNavigation){
-      myNextTabAction = new AnAction() {
-        {
-          setEnabledInModalContext(true);
-        }
-
-        public void actionPerformed(final AnActionEvent e) {
-          int index = getSelectedIndex() + 1;
-          if (index >= getTabCount()) {
-            index = 0;
-          }
-          setSelectedIndex(index);
-        }
-      };
-      final AnAction nextAction = ActionManager.getInstance().getAction(installKeyboardNavigation.getNextActionId());
-      LOG.assertTrue(nextAction != null, "Cannot find action with specified id: " + installKeyboardNavigation.getNextActionId());
-      myNextTabAction.registerCustomShortcutSet(
-        nextAction.getShortcutSet(),
-        this
-      );
-
-      myPreviousTabAction = new AnAction() {
-        {
-          setEnabledInModalContext(true);
-        }
-
-        public void actionPerformed(final AnActionEvent e) {
-          int index = getSelectedIndex() - 1;
-          if (index < 0) {
-            index = getTabCount() - 1;
-          }
-          setSelectedIndex(index);
-        }
-      };
-      final AnAction prevAction = ActionManager.getInstance().getAction(installKeyboardNavigation.getPrevActionId());
-      LOG.assertTrue(prevAction != null, "Cannot find action with specified id: " + installKeyboardNavigation.getPrevActionId());
-      myPreviousTabAction.registerCustomShortcutSet(
-        prevAction.getShortcutSet(),
-        this
-      );
-    }
-
-    private void uninstallKeyboardNavigation() {
-      if (myNextTabAction != null) {
-        myNextTabAction.unregisterCustomShortcutSet(this);
-        myNextTabAction = null;
-      }
-      if (myPreviousTabAction != null) {
-        myPreviousTabAction.unregisterCustomShortcutSet(this);
-        myPreviousTabAction = null;
-      }
-    }
-
-
-    public void setUI(final TabbedPaneUI ui){
-      super.setUI(ui);
-      if(ui instanceof BasicTabbedPaneUI){
-        myScrollableTabSupport=new ScrollableTabSupport((BasicTabbedPaneUI)ui);
-      }else{
-        myScrollableTabSupport=null;
-      }
-    }
-
-    /**
-     * Scrolls tab to visible area. If tabbed pane has <code>JTabbedPane.WRAP_TAB_LAYOUT</code> layout policy then
-     * the method does nothing.
-     * @param index index of tab to be scrolled.
-     */
-    public final void scrollTabToVisible(final int index){
-      if(myScrollableTabSupport==null|| WRAP_TAB_LAYOUT==getTabLayoutPolicy()){ // tab scrolling isn't supported by UI
-        return;
-      }
-      final TabbedPaneUI tabbedPaneUI=getUI();
-      Rectangle tabBounds=tabbedPaneUI.getTabBounds(this,index);
-      final int tabPlacement=getTabPlacement();
-      if(TOP==tabPlacement || BOTTOM==tabPlacement){ //tabs are on the top or bottom
-        if(tabBounds.x<50){  //if tab is to the left of visible area
-          int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-          while(leadingTabIndex != index && leadingTabIndex>0 && tabBounds.x<50){
-            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex-1);
-            leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-            tabBounds=tabbedPaneUI.getTabBounds(this,index);
-          }
-        }else if(tabBounds.x+tabBounds.width>getWidth()-50){ // if tab's right side is out of visible range
-          int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-          while(leadingTabIndex != index && leadingTabIndex<getTabCount()-1 && tabBounds.x+tabBounds.width>getWidth()-50){
-            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex+1);
-            leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-            tabBounds=tabbedPaneUI.getTabBounds(this,index);
-          }
-        }
-      }else{ // tabs are on left or right side
-        if(tabBounds.y<30){ //tab is above visible area
-          int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-          while(leadingTabIndex != index && leadingTabIndex>0 && tabBounds.y<30){
-            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex-1);
-            leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-            tabBounds=tabbedPaneUI.getTabBounds(this,index);
-          }
-        } else if(tabBounds.y+tabBounds.height>getHeight()-30){  //tab is under visible area
-          int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-          while(leadingTabIndex != index && leadingTabIndex<getTabCount()-1 && tabBounds.y+tabBounds.height>getHeight()-30){
-            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex+1);
-            leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-            tabBounds=tabbedPaneUI.getTabBounds(this,index);
-          }
-        }
-      }
-    }
-
-    public void setSelectedIndex(final int index){
-      if (index >= getTabCount()) return;
-
-      try {
-        super.setSelectedIndex(index);
-      }
-      catch (ArrayIndexOutOfBoundsException e) {
-        //http://www.jetbrains.net/jira/browse/IDEADEV-22331
-        //may happen on Mac OSX 10.5
-        return;
-      }
-
-      scrollTabToVisible(index);
-      doLayout();
-    }
-
-   //http://www.jetbrains.net/jira/browse/IDEADEV-22331
-   //to let repaint happen since AIOBE is thrown from Mac OSX's UI
-   protected void fireStateChanged() {
-     // Guaranteed to return a non-null array
-     Object[] listeners = listenerList.getListenerList();
-     // Process the listeners last to first, notifying
-     // those that are interested in this event
-     for (int i = listeners.length - 2; i >= 0; i -= 2) {
-       if (listeners[i] == ChangeListener.class) {
-         // Lazily create the event:
-         if (changeEvent == null) changeEvent = new ChangeEvent(this);
-         final ChangeListener each = (ChangeListener)listeners[i + 1];
-         if (each != null && each.getClass().getName().indexOf("apple.laf.CUIAquaTabbedPane") >= 0) {
-
-           SwingUtilities.invokeLater(new Runnable() {
-             public void run() {
-               revalidate();
-               repaint();
-             }
-           });
-
-           continue;
-         }
-
-         each.stateChanged(changeEvent);
-       }
-     }
-   }
-
-
-    public final void removeTabAt (final int index) {
-      super.removeTabAt (index);
-      //This event should be fired necessarily because when swing fires an event
-      // page to be removed is still in the tabbed pane. There can be a situation when
-      // event fired according to swing event contains invalid information about selected page.
-      fireStateChanged();
-    }
-
-    private void _requestDefaultFocus() {
-      final TabWrapper selectedComponent = (TabWrapper)getSelectedComponent();
-      if (selectedComponent != null) {
-        selectedComponent.requestDefaultFocus();
-      }
-      else {
-        super.requestDefaultFocus();
-      }
-    }
-
-    protected final int getTabIndexAt(final int x,final int y){
-      final TabbedPaneUI ui=getUI();
-      for (int i = 0; i < getTabCount(); i++) {
-        final Rectangle bounds = ui.getTabBounds(this, i);
-        if (bounds.contains(x, y)) {
-          return i;
-        }
-      }
-      return -1;
-    }
-
-    /**
-     * That is hack-helper for working with scrollable tab layout. The problem is BasicTabbedPaneUI doesn't
-     * have any API to scroll tab to visible area. Therefore we have to implement it...
-     */
-    private final class ScrollableTabSupport{
-      private final BasicTabbedPaneUI myUI;
-      @NonNls public static final String TAB_SCROLLER_NAME = "tabScroller";
-      @NonNls public static final String LEADING_TAB_INDEX_NAME = "leadingTabIndex";
-      @NonNls public static final String SET_LEADING_TAB_INDEX_METHOD = "setLeadingTabIndex";
-
-      public ScrollableTabSupport(final BasicTabbedPaneUI ui){
-        myUI=ui;
-      }
-
-      /**
-       * @return value of <code>leadingTabIndex</code> field of BasicTabbedPaneUI.ScrollableTabSupport class.
-       */
-      public int getLeadingTabIndex(){
-        try{
-          final Field tabScrollerField=BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
-          tabScrollerField.setAccessible(true);
-          final Object tabScrollerValue=tabScrollerField.get(myUI);
-
-          final Field leadingTabIndexField=tabScrollerValue.getClass().getDeclaredField(LEADING_TAB_INDEX_NAME);
-          leadingTabIndexField.setAccessible(true);
-          return leadingTabIndexField.getInt(tabScrollerValue);
-        }catch(Exception exc){
-          final StringWriter writer=new StringWriter();
-          exc.printStackTrace(new PrintWriter(writer));
-          throw new IllegalStateException("myUI="+myUI+"; cause="+writer.getBuffer());
-        }
-      }
-
-      public void setLeadingTabIndex(final int leadingIndex){
-        try{
-          final Field tabScrollerField=BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
-          tabScrollerField.setAccessible(true);
-          final Object tabScrollerValue=tabScrollerField.get(myUI);
-
-          Method setLeadingIndexMethod=null;
-          final Method[] methods=tabScrollerValue.getClass().getDeclaredMethods();
-          for (final Method method : methods) {
-            if (SET_LEADING_TAB_INDEX_METHOD.equals(method.getName())) {
-              setLeadingIndexMethod = method;
-              break;
-            }
-          }
-          if(setLeadingIndexMethod==null){
-            throw new IllegalStateException("method setLeadingTabIndex not found");
-          }
-          setLeadingIndexMethod.setAccessible(true);
-          setLeadingIndexMethod.invoke(
-            tabScrollerValue, Integer.valueOf(getTabPlacement()), Integer.valueOf(leadingIndex));
-        }catch(Exception exc){
-          final StringWriter writer=new StringWriter();
-          exc.printStackTrace(new PrintWriter(writer));
-          throw new IllegalStateException("myUI="+myUI+"; cause="+writer.getBuffer());
-        }
-      }
-    }
-  }
-
   private final class _MyFocusTraversalPolicy extends IdeFocusTraversalPolicy{
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       final JComponent component=getSelectedComponent();
@@ -659,7 +367,7 @@ public class TabbedPaneWrapper {
     }
 
     public final boolean requestDefaultFocus() {
-      final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane);
+      final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane.getComponent());
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {
           preferredFocusedComponent.requestFocus();

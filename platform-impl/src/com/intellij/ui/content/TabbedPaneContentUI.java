@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.TabbedPaneImpl;
+import com.intellij.ui.TabbedPane;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
 
@@ -107,7 +109,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       super(tabPlacement);
     }
 
-    protected TabbedPaneWrapper.TabbedPane createTabbedPane(int tabPlacement) {
+    protected TabbedPane createTabbedPane(int tabPlacement) {
       return new MyTabbedPane(tabPlacement);
     }
 
@@ -115,7 +117,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       return new MyTabbedPaneHolder();
     }
 
-    private class MyTabbedPane extends TabbedPane {
+    private class MyTabbedPane extends TabbedPaneImpl {
       public MyTabbedPane(int tabPlacement) {
         super(tabPlacement);
         addMouseListener(new MyPopupHandler());
