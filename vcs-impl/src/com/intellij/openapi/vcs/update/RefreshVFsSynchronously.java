@@ -3,7 +3,9 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,6 +76,32 @@ public class RefreshVFsSynchronously {
           return true;
         }
       });
+    }
+  }
+
+  public static void updateChanges(final List<Change> changes) {
+    // approx so ok
+    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+    if (pi != null) {
+      pi.setIndeterminate(false);
+    }
+    final double num = changes.size();
+    int cnt = 0;
+    for (Change change : changes) {
+      if ((change.getBeforeRevision() != null) &&
+          (change.isMoved() || change.isRenamed() || change.isIsReplaced() || (change.getAfterRevision() == null))) {
+        refreshDeletedOrReplaced(change.getBeforeRevision().getFile().getIOFile());
+      } else if (change.getBeforeRevision() != null) {
+        refresh(change.getBeforeRevision().getFile().getIOFile());
+      }
+      if (change.getAfterRevision() != null && (! Comparing.equal(change.getAfterRevision(), change.getBeforeRevision()))) {
+        refresh(change.getAfterRevision().getFile().getIOFile());
+      }
+      if (pi != null) {
+        ++ cnt;
+        pi.setFraction(cnt/num);
+        pi.setText2("Refreshing: " + change.toString());
+      }
     }
   }
 

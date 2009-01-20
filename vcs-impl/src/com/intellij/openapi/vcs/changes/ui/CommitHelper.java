@@ -17,14 +17,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,6 +152,7 @@ public class CommitHelper {
     }
     finally {
       commitCompleted(processor.getVcsExceptions(), processor);
+      processor.customRefresh();
       VirtualFileManager.getInstance().refresh(true, processor.postRefresh());
     }
   }
@@ -198,6 +200,9 @@ public class CommitHelper {
     public void doBeforeRefresh() {
     }
 
+    public void customRefresh() {
+    }
+
     public Runnable postRefresh() {
       return null;
     }
@@ -236,6 +241,7 @@ public class CommitHelper {
 
   private interface ActionsAroundRefresh {
     void doBeforeRefresh();
+    void customRefresh();
     void doVcsRefresh();
     Runnable postRefresh();
   }
@@ -306,6 +312,10 @@ public class CommitHelper {
           return LocalHistory.startAction(myProject, myActionName);
         }
       });
+    }
+
+    public void customRefresh() {
+      RefreshVFsSynchronously.updateChanges(myIncludedChanges);
     }
 
     public Runnable postRefresh() {
