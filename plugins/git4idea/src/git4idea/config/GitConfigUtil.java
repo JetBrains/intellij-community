@@ -24,6 +24,7 @@ import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -193,6 +194,16 @@ public class GitConfigUtil {
       encoding = getCommitEncoding(project, root);
     }
     return encoding;
+  }
+
+  /**
+   * Get encoding that GIT uses for file names.
+   *
+   * @return the encoding for file namees
+   */
+  public static String getFilenameEncoding() {
+    // FIXME the best guess is that the default encoding is used.
+    return Charset.defaultCharset().name();
   }
 
 }

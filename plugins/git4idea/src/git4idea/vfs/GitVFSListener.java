@@ -77,7 +77,7 @@ public class GitVFSListener extends VcsVFSListener {
    * {@inheritDoc}
    */
   protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
-    Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByVcsRoot(myProject, addedFiles);
+    Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles);
     // note that copied files are not processed because they are included into added files.
     for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
       try {

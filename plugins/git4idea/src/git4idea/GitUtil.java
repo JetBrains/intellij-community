@@ -29,10 +29,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
@@ -65,27 +67,7 @@ public class GitUtil {
     return vfile;
   }
 
-  @NotNull
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(@NotNull Project project,
-                                                                       @NotNull Collection<VirtualFile> virtualFiles) {
-    Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
-
-    for (VirtualFile file : virtualFiles) {
-      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
-      assert vcsRoot != null;
-
-      List<VirtualFile> files = result.get(vcsRoot);
-      if (files == null) {
-        files = new ArrayList<VirtualFile>();
-        result.put(vcsRoot, files);
-      }
-      files.add(file);
-    }
-
-    return result;
-  }
-
-  /**
+ /**
    * Sort files by Git root
    *
    * @param virtualFiles files to sort
@@ -104,14 +86,7 @@ public class GitUtil {
       }
       files.add(file);
     }
-
     return result;
-  }
-
-
-  @NotNull
-  public static Map<VirtualFile, List<VirtualFile>> sortFilesByVcsRoot(Project project, VirtualFile[] affectedFiles) {
-    return sortFilesByVcsRoot(project, Arrays.asList(affectedFiles));
   }
 
   public static String getRelativeFilePath(VirtualFile file, @NotNull final VirtualFile baseDir) {
@@ -196,16 +171,18 @@ public class GitUtil {
    *          if the path in invalid
    */
   public static String unescapePath(String path) throws VcsException {
-    StringBuilder rc = new StringBuilder(path.length());
+    final int l = path.length();
+    StringBuilder rc = new StringBuilder(l);
     for (int i = 0; i < path.length(); i++) {
       char c = path.charAt(i);
       if (c == '\\') {
         //noinspection AssignmentToForLoopParameter
         i++;
-        if (i <= path.length()) {
+        if (i >= l) {
           throw new VcsException("Unterminated escape sequence in the path: " + path);
         }
-        switch (path.charAt(i)) {
+        final char e = path.charAt(i);
+        switch (e) {
           case '\\':
             rc.append('\\');
             break;
@@ -215,8 +192,54 @@ public class GitUtil {
           case 'n':
             rc.append('\n');
             break;
-          // TODO support unicode
           default:
+            if (isOctal(e)) {
+              // collect sequence of charcters as a byte array.
+              // count bytes first
+              int n = 0;
+              for (int j = i; j < l;) {
+                if (isOctal(path.charAt(j))) {
+                  n++;
+                  for (int k = 0; k < 3 && j < l && isOctal(path.charAt(j)); k++) {
+                    //noinspection AssignmentToForLoopParameter
+                    j++;
+                  }
+                }
+                if (j + 1 >= l || path.charAt(j) != '\\' || !isOctal(path.charAt(j + 1))) {
+                  break;
+                }
+                //noinspection AssignmentToForLoopParameter
+                j++;
+              }
+              // convert to byte array
+              byte[] b = new byte[n];
+              n = 0;
+              while (i < l) {
+                if (isOctal(path.charAt(i))) {
+                  int code = 0;
+                  for (int k = 0; k < 3 && i < l && isOctal(path.charAt(i)); k++) {
+                    code = code * 8 + (path.charAt(i) - '0');
+                    //noinspection AssignmentToForLoopParameter
+                    i++;
+                  }
+                  b[n++] = (byte)code;
+                }
+                if (i + 1 >= l || path.charAt(i) != '\\' || !isOctal(path.charAt(i + 1))) {
+                  break;
+                }
+                //noinspection AssignmentToForLoopParameter
+                i++;
+              }
+              assert n == b.length;
+              // add them to string
+              final String encoding = GitConfigUtil.getFilenameEncoding();
+              try {
+                rc.append(new String(b, encoding));
+              }
+              catch (UnsupportedEncodingException e1) {
+                throw new IllegalStateException("The file name encoding is unsuported: " + encoding);
+              }
+            }
             throw new VcsException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
         }
       }
@@ -225,6 +248,15 @@ public class GitUtil {
       }
     }
     return rc.toString();
+  }
+
+  /**
+   * Check if character is octal digit
+   * @param ch a character to test
+   * @return true if the octal digit, false otherwise
+   */
+  private static boolean isOctal(char ch) {
+    return '0' <= ch && ch <= '7';
   }
 
   /**
@@ -317,7 +349,7 @@ public class GitUtil {
    * @throws IllegalArgumentException if the file is not under git
    */
   @Nullable
-  public static VirtualFile gitRootOrNull(@NotNull final VirtualFile file) {
+  public static VirtualFile gitRootOrNull(final VirtualFile file) {
     VirtualFile root = file;
     while (root != null) {
       if (root.findFileByRelativePath(".git") != null) {
@@ -336,14 +368,7 @@ public class GitUtil {
    * @return true if the file is under git
    */
   public static boolean isUnderGit(final VirtualFile vFile) {
-    VirtualFile root = vFile;
-    while (root != null) {
-      if (root.findFileByRelativePath(".git") != null) {
-        return true;
-      }
-      root = root.getParent();
-    }
-    return false;
+    return gitRootOrNull(vFile) != null;
   }
 
   /**
@@ -382,6 +407,7 @@ public class GitUtil {
   public static String relativePath(final File root, VirtualFile file) {
     return relativePath(root, VfsUtil.virtualToIoFile(file));
   }
+
   /**
    * Get relative path
    *
