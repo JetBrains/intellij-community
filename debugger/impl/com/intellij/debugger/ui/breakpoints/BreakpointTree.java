@@ -593,11 +593,13 @@ public class BreakpointTree extends CheckboxTree {
 
   private static class BreakpointTreeCellRenderer extends CheckboxTreeCellRenderer {
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      final CheckedTreeNode node = (CheckedTreeNode)value;
-      final TreeDescriptor descriptor = getDescriptor(node);
-      descriptor.customizeCellRenderer(getTextRenderer(), node, selected, node.isChecked(), expanded, leaf, hasFocus);
-      if (descriptor instanceof BreakpointDescriptor) {
-        myCheckbox.setEnabled(node.isEnabled() && !((BreakpointDescriptor)descriptor).isSlave());
+      if (value instanceof CheckedTreeNode) {
+        final CheckedTreeNode node = (CheckedTreeNode)value;
+        final TreeDescriptor descriptor = getDescriptor(node);
+        descriptor.customizeCellRenderer(getTextRenderer(), node, selected, node.isChecked(), expanded, leaf, hasFocus);
+        if (descriptor instanceof BreakpointDescriptor) {
+          myCheckbox.setEnabled(node.isEnabled() && !((BreakpointDescriptor)descriptor).isSlave());
+        }
       }
     }
   }
