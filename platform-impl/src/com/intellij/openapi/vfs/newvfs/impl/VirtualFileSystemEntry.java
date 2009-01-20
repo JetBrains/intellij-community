@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -241,27 +242,37 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public Charset getCharset() {
-    if (isDirectory()) return Charset.defaultCharset();
-    if (!isDirectory() && !isCharsetSet()) {
-      try {
-        final byte[] content;
+    Charset charset;
+    if (isCharsetSet()) {
+      charset = super.getCharset();
+    }
+    else {
+      if (isDirectory()) {
+        Charset configured = EncodingManager.getInstance().getEncoding(this, true);
+        charset = configured == null ? Charset.defaultCharset() : configured;
+      }
+      else {
         try {
-          content = contentsToByteArray();
+          final byte[] content;
+          try {
+            content = contentsToByteArray();
+          }
+          catch (FileNotFoundException e) {
+            // file has already been deleted from disk
+            return super.getCharset();
+          }
+          charset = LoadTextUtil.detectCharset(this, content);
         }
-        catch (FileNotFoundException e) {
-          // file has already been deleted from disk
+        catch (FileTooBigException e) {
           return super.getCharset();
         }
-        LoadTextUtil.detectCharset(this, content);
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (FileTooBigException e) {
-        return super.getCharset();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      setCharset(charset);
     }
-    return super.getCharset();
+    return charset;
   }
 
   public String getPresentableName() {
