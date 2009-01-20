@@ -1635,7 +1635,7 @@ public class JBTabsImpl extends JComponent
       max.myLabel.height = Math.max(max.myLabel.height, label.getPreferredSize().height);
       max.myLabel.width = Math.max(max.myLabel.width, label.getPreferredSize().width);
       final Toolbar toolbar = myInfo2Toolbar.get(eachInfo);
-      if (toolbar != null && !toolbar.isEmpty()) {
+      if (myLayout.isSideComponentOnTabs() && toolbar != null && !toolbar.isEmpty()) {
         max.myToolbar.height = Math.max(max.myToolbar.height, toolbar.getPreferredSize().height);
         max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.getPreferredSize().width);
       }

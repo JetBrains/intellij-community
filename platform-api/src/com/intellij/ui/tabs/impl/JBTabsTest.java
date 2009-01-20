@@ -10,7 +10,6 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
@@ -208,7 +207,8 @@ public class JBTabsTest {
     tabs.setGhostsAlwaysVisible(true);
 
     //tabs.setBorder(new LineBorder(Color.blue, 2));
-    tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
+    //tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
+    tabs.setBorder(null);
 
     tabs.setUiDecorator(new UiDecorator() {
       public UiDecoration getDecoration() {

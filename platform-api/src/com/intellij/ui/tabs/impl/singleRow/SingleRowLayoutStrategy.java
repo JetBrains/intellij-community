@@ -43,6 +43,10 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract void layoutComp(SingleRowPassInfo data);
 
+  public boolean isSideComponentOnTabs() {
+    return false;
+  }
+
   abstract static class Horizontal extends SingleRowLayoutStrategy {
     protected Horizontal(final SingleRowLayout layout) {
       super(layout);
@@ -97,6 +101,11 @@ public abstract class SingleRowLayoutStrategy {
       super(layout);
     }
 
+    @Override
+    public boolean isSideComponentOnTabs() {
+      return !myTabs.isSideComponentVertical();
+    }
+
     public ShapeTransform createShapeTransform(Rectangle labelRec) {
       return new ShapeTransform.Top(labelRec);
     }
@@ -106,7 +115,8 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
-      return new Rectangle(myTabs.getWidth() - data.insets.right - data.moreRectAxisSize, data.insets.top + myTabs.getSelectionTabVShift(),
+      final int x = data.position + (data.lastGhostVisible ? data.lastGhost.width : 0);
+      return new Rectangle(x, data.insets.top + myTabs.getSelectionTabVShift(),
                                             data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height - 1);
     }
 
@@ -121,9 +131,9 @@ public abstract class SingleRowLayoutStrategy {
 
         if (data.hToolbar != null) {
           myTabs.layoutComp(x, y, data.comp, 0, 0);
-          int toolbarX = data.position + myTabs.getToolbarInset() + (data.moreRect != null ? data.moreRect.width : 0);
+          int toolbarX = data.moreRect != null ? (int)data.moreRect.getMaxX() + myTabs.getToolbarInset() : (data.position + myTabs.getToolbarInset());
           final Rectangle rec =
-            new Rectangle(toolbarX, data.insets.top, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height + 1);
+            new Rectangle(toolbarX, data.insets.top + 1, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height);
           myTabs.layout(data.hToolbar, rec);
         } else if (data.vToolbar != null) {
           final Rectangle compBounds = myTabs.layoutComp(x, y, data.comp, 0, 0);
@@ -160,7 +170,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
-      return new Rectangle(myTabs.getWidth() - data.insets.right - data.moreRectAxisSize, getFixedPosition(data) + myTabs.getSelectionTabVShift(),
+      return new Rectangle(myTabs.getWidth() - data.insets.right - data.moreRectAxisSize + 2, getFixedPosition(data),
                                             data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height - 1);
     }
 
@@ -184,7 +194,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.getIconHeight() + 6;
+      return myLayout.myMoreIcon.getIconHeight() + 4;
     }
 
     public Dimension getCompSizeDelta(SingleRowPassInfo data) {
@@ -248,7 +258,7 @@ public abstract class SingleRowLayoutStrategy {
 
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
       return new Rectangle(data.insets.left + myTabs.getSelectionTabVShift(),
-                           myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize,
+                           myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize - 1,
                            myTabs.myHeaderFitSize.width - 1,
                            data.moreRectAxisSize - 1);
     }
@@ -283,7 +293,7 @@ public abstract class SingleRowLayoutStrategy {
 
     public Rectangle getMoreRect(SingleRowPassInfo data) {
       return new Rectangle(data.laayoutSize.width - myTabs.myHeaderFitSize.width,
-                        myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize,
+                        myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize - 1,
                         myTabs.myHeaderFitSize.width - 1,
                         data.moreRectAxisSize - 1);
     }

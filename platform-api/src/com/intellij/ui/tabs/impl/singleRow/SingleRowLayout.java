@@ -41,6 +41,11 @@ public class SingleRowLayout extends TabLayout {
 
 
   @Override
+  public boolean isSideComponentOnTabs() {
+    return getStrategy().isSideComponentOnTabs();
+  }
+
+  @Override
   public ShapeTransform createShapeTransform(Rectangle labelRec) {
     return getStrategy().createShapeTransform(labelRec);
   }
