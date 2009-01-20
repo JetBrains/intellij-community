@@ -52,13 +52,13 @@ public class GitContentRevision implements ContentRevision {
   /**
    * The charset for the file
    */
-  @Nullable private final Charset myCharset;
+  @NotNull private final Charset myCharset;
 
   public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project, Charset charset) {
     myProject = project;
     myFile = file;
     myRevision = revision;
-    myCharset = charset;
+    myCharset = charset != null ? charset : file.getCharset(project);
   }
 
   public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {
@@ -72,9 +72,7 @@ public class GitContentRevision implements ContentRevision {
     }
     VirtualFile root = GitUtil.getGitRoot(myProject, myFile);
     GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.SHOW);
-    if (myCharset != null) {
-      h.setCharset(myCharset);
-    }
+    h.setCharset(myCharset);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(myRevision.getRev() + ":" + GitUtil.relativePath(root, myFile));
