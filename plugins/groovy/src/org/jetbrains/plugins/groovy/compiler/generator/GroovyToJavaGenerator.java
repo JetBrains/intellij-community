@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -357,9 +356,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     methods.addAll(Arrays.asList(typeDefinition.getMethods()));
-    if (isClassDef &&
-        !(typeDefinition.getSuperClass() instanceof GrClassDefinition) &&
-        !InheritanceUtil.isInheritor(typeDefinition, "groovy.lang.GroovyObjectSupport")) {
+    if (isClassDef) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
       methods.add(factory.createMethodFromText("public groovy.lang.MetaClass getMetaClass() {}", null));
       methods.add(factory.createMethodFromText("public void setMetaClass(groovy.lang.MetaClass mc) {}", null));
