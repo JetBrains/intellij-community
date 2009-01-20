@@ -891,8 +891,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (newNode instanceof Token) {
         if (oldNode instanceof ForeignLeafPsiElement) {
           final IElementType type = newNode.getTokenType();
-          if (type instanceof TokenWrapper) {
-            return ((TokenWrapper)type).getValue().equals(oldNode.getText()) ? ThreeState.YES : ThreeState.NO;
+          if (type instanceof ForeignLeafType) {
+            return ((ForeignLeafType)type).getValue().equals(oldNode.getText()) ? ThreeState.YES : ThreeState.NO;
           }
           return ThreeState.NO;
         }
@@ -943,8 +943,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public boolean hashcodesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof LeafElement && n2 instanceof Token) {
-        if (n1 instanceof ForeignLeafPsiElement && n2.getTokenType() instanceof TokenWrapper) {
-          return n1.getText().equals(((TokenWrapper)n2.getTokenType()).getValue());
+        if (n1 instanceof ForeignLeafPsiElement && n2.getTokenType() instanceof ForeignLeafType) {
+          return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getValue());
         }
 
         return ((LeafElement)n1).textMatches(myText, ((Token)n2).myTokenStart, ((Token)n2).myTokenEnd);
@@ -1088,10 +1088,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private LeafElement createLeaf(final IElementType type, final int start, final int end) {
     if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(myText, start, end, myCharTable);
-    }
-
-    if (myComments.contains(type) && !(type instanceof IChameleonElementType)) {
-      return new PsiCommentImpl(type, myText, start, end, myCharTable);
     }
 
     return ASTFactory.leaf(type, myText, start, end, myCharTable);

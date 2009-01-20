@@ -228,13 +228,18 @@ public final class Annotation {
       if (mySeverity == HighlightSeverity.WARNING) return CodeInsightColors.WARNINGS_ATTRIBUTES;
       if (mySeverity == HighlightSeverity.INFO) return CodeInsightColors.INFO_ATTRIBUTES;
     }
+
+    if (myHighlightType == ProblemHighlightType.GENERIC_ERROR) {
+      return CodeInsightColors.ERRORS_ATTRIBUTES;
+    }
+
     if (myHighlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       return CodeInsightColors.DEPRECATED_ATTRIBUTES;
     }
     if (myHighlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
     }
-    if (myHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
+    if (myHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL || myHighlightType == ProblemHighlightType.ERROR) {
       return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
     }
     return HighlighterColors.TEXT;

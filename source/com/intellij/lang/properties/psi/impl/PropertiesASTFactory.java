@@ -2,10 +2,7 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.CharTable;
@@ -28,6 +25,11 @@ public class PropertiesASTFactory extends ASTFactory {
     if (type == PropertiesTokenTypes.VALUE_CHARACTERS) {
       return new PropertyValueImpl(type, fileText, start, end, table);
     }
+
+    if (type == PropertiesTokenTypes.END_OF_LINE_COMMENT) {
+      return new PsiCommentImpl(type, fileText, start, end, table);
+    }
+
     return new LeafPsiElement(type, fileText, start, end, table);
   }
 }
