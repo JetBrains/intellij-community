@@ -216,7 +216,8 @@ public final class LoadTextUtil {
       CharSequence content = ((LightVirtualFile)file).getContent();
       if (StringUtil.indexOf(content, '\r') == -1) return content;
 
-      CharBuffer buffer = CharBuffer.wrap(content);
+      CharBuffer buffer = CharBuffer.allocate(content.length());
+      buffer.append(content);
       convertLineSeparators(buffer);
       return buffer;
     }
@@ -252,8 +253,7 @@ public final class LoadTextUtil {
 
   @NotNull
   public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes, @NotNull VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
-    detectCharset(virtualFile, bytes);
-    final Charset charset = virtualFile.getCharset();
+    final Charset charset = detectCharset(virtualFile, bytes);
     final int offset = skipBOM(virtualFile, bytes);
 
     final Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
