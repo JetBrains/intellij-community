@@ -54,23 +54,24 @@ public class CheckboxTreeBase extends Tree {
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         int row = getRowForLocation(e.getX(), e.getY());
-        if (row >= 0) {
-          Rectangle rowBounds = getRowBounds(row);
-          cellRenderer.setBounds(rowBounds);
-          Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
-          checkBounds.setLocation(rowBounds.getLocation());
+        if (row < 0) return;
+        final Object o = getPathForRow(row).getLastPathComponent();
+        if (!(o instanceof CheckedTreeNode)) return;
+        Rectangle rowBounds = getRowBounds(row);
+        cellRenderer.setBounds(rowBounds);
+        Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
+        checkBounds.setLocation(rowBounds.getLocation());
 
-          final CheckedTreeNode node = (CheckedTreeNode)getPathForRow(row).getLastPathComponent();
-          if (checkBounds.contains(e.getPoint())) {
-            if (node.isEnabled()) {
-              toggleNode(node);
-              setSelectionRow(row);
-            }
-            e.consume();
+        final CheckedTreeNode node = (CheckedTreeNode)o;
+        if (checkBounds.contains(e.getPoint())) {
+          if (node.isEnabled()) {
+            toggleNode(node);
+            setSelectionRow(row);
           }
-          else if (e.getClickCount() > 1) {
-            onDoubleClick(node);
-          }
+          e.consume();
+        }
+        else if (e.getClickCount() > 1) {
+          onDoubleClick(node);
         }
       }
     });
@@ -80,13 +81,17 @@ public class CheckboxTreeBase extends Tree {
         if (isToggleEvent(e)) {
           TreePath treePath = getLeadSelectionPath();
           if (treePath == null) return;
-          CheckedTreeNode firstNode = (CheckedTreeNode)treePath.getLastPathComponent();
+          final Object o = treePath.getLastPathComponent();
+          if (!(o instanceof CheckedTreeNode)) return;
+          CheckedTreeNode firstNode = (CheckedTreeNode)o;
           boolean checked = toggleNode(firstNode);
 
           TreePath[] selectionPaths = getSelectionPaths();
           for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
             final TreePath selectionPath = selectionPaths[i];
-            CheckedTreeNode node = (CheckedTreeNode)selectionPath.getLastPathComponent();
+            final Object o1 = selectionPath.getLastPathComponent();
+            if (!(o1 instanceof CheckedTreeNode)) continue;
+            CheckedTreeNode node = (CheckedTreeNode)o1;
             checkNode(node, checked);
             ((DefaultTreeModel)getModel()).nodeChanged(node);
           }
@@ -180,10 +185,12 @@ public class CheckboxTreeBase extends Tree {
     changeNodeState(node, checked);
     if (!checked) {
       if (myCheckPolicy.uncheckParentWithUncheckedChild) {
-        CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
+        TreeNode parent = node.getParent();
         while (parent != null) {
-          changeNodeState(parent, false);
-          parent = (CheckedTreeNode)parent.getParent();
+          if (parent instanceof CheckedTreeNode) {
+            changeNodeState((CheckedTreeNode)parent, false);
+          }
+          parent = parent.getParent();
         }
       }
       if (myCheckPolicy.uncheckChildrenWithUncheckedParent) {
@@ -197,10 +204,12 @@ public class CheckboxTreeBase extends Tree {
       }
 
       if (myCheckPolicy.checkParentWithCheckedChild) {
-        CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
+        TreeNode parent = node.getParent();
         while (parent != null) {
-          changeNodeState(parent, true);
-          parent = (CheckedTreeNode)parent.getParent();
+          if (parent instanceof CheckedTreeNode) {
+            changeNodeState((CheckedTreeNode)parent, true);
+          }
+          parent = parent.getParent();
         }
       }
 
@@ -218,7 +227,9 @@ public class CheckboxTreeBase extends Tree {
   private void uncheckChildren(final CheckedTreeNode node) {
     final Enumeration children = node.children();
     while (children.hasMoreElements()) {
-      CheckedTreeNode child = (CheckedTreeNode)children.nextElement();
+      final Object o = children.nextElement();
+      if (!(o instanceof CheckedTreeNode)) continue;
+      CheckedTreeNode child = (CheckedTreeNode)o;
       changeNodeState(child, false);
       uncheckChildren(child);
     }
@@ -227,7 +238,9 @@ public class CheckboxTreeBase extends Tree {
   private void checkChildren(final CheckedTreeNode node) {
     final Enumeration children = node.children();
     while (children.hasMoreElements()) {
-      CheckedTreeNode child = (CheckedTreeNode)children.nextElement();
+      final Object o = children.nextElement();
+      if (!(o instanceof CheckedTreeNode)) continue;
+      CheckedTreeNode child = (CheckedTreeNode)o;
       changeNodeState(child, true);
       checkChildren(child);
     }
@@ -250,7 +263,8 @@ public class CheckboxTreeBase extends Tree {
 
   private static boolean isAllChildrenUnchecked(final CheckedTreeNode node) {
     for (int i = 0; i < node.getChildCount(); i++) {
-      if (((CheckedTreeNode)node.getChildAt(i)).isChecked()) {
+      final TreeNode o = node.getChildAt(i);
+      if ((o instanceof CheckedTreeNode) && ((CheckedTreeNode)o).isChecked()) {
         return false;
       }
     }
@@ -259,7 +273,8 @@ public class CheckboxTreeBase extends Tree {
 
   private static boolean isAllChildrenChecked(final CheckedTreeNode node) {
     for (int i = 0; i < node.getChildCount(); i++) {
-      if (!((CheckedTreeNode)node.getChildAt(i)).isChecked()) {
+      final TreeNode o = node.getChildAt(i);
+      if ((o instanceof CheckedTreeNode) && !((CheckedTreeNode)o).isChecked()) {
         return false;
       }
     }
@@ -304,37 +319,38 @@ public class CheckboxTreeBase extends Tree {
         CheckedTreeNode node = (CheckedTreeNode)value;
 
         NodeState state = getNodeStatus(node);
+        myCheckbox.setVisible(true);
         myCheckbox.setSelected(state != NodeState.CLEAR);
         myCheckbox.setEnabled(node.isEnabled() && state != NodeState.PARTIAL);
-        revalidate();
-
 
         myCheckbox.setBackground(null);
         setBackground(null);
-
-        myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       }
+      else {
+        myCheckbox.setVisible(false);
+      }
+      myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+      revalidate();
       return this;
     }
 
     private NodeState getNodeStatus(final CheckedTreeNode node) {
-      if (node.getChildCount() == 0) return node.isChecked() ? NodeState.FULL : NodeState.CLEAR;
+      final boolean checked = node.isChecked();
+      if (node.getChildCount() == 0) return checked ? NodeState.FULL : NodeState.CLEAR;
 
       NodeState result = null;
 
       for (int i = 0; i < node.getChildCount(); i++) {
         TreeNode child = node.getChildAt(i);
-        if (child instanceof CheckedTreeNode) {
-          NodeState childStatus = getNodeStatus((CheckedTreeNode)child);
-          if (childStatus == NodeState.PARTIAL) return NodeState.PARTIAL;
-
-          if (result == null) {
-            result = childStatus;
-          }
-          else if (result != childStatus) {
-            return NodeState.PARTIAL;
-          }
+        NodeState childStatus = child instanceof CheckedTreeNode? getNodeStatus((CheckedTreeNode)child) :
+                checked? NodeState.FULL : NodeState.CLEAR;
+        if (childStatus == NodeState.PARTIAL) return NodeState.PARTIAL;
+        if (result == null) {
+          result = childStatus;
+        }
+        else if (result != childStatus) {
+          return NodeState.PARTIAL;
         }
       }
 
