@@ -33,7 +33,6 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,15 +40,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author spleaner
  */
-public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<HtmlLinkTagIndex.LinkInfo>> {
-  public static final ID<Integer, List<LinkInfo>> INDEX_ID = ID.create("HtmlLinkTagIndex");
+public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLinkTagIndex.InfoHolder<HtmlLinkTagIndex.LinkInfo>> {
+  public static final ID<Integer, InfoHolder<LinkInfo>> INDEX_ID = ID.create("HtmlLinkTagIndex");
   private final EnumeratorIntegerDescriptor myKeyDescriptor = new EnumeratorIntegerDescriptor();
 
   @NonNls private static final String LINK = "link";
@@ -77,10 +74,10 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
       return language instanceof TemplateLanguage || (language instanceof XMLLanguage && language != XMLLanguage.INSTANCE);
     }
   };
-  private DataExternalizer<List<LinkInfo>> myValueExternalizer = new DataExternalizer<List<LinkInfo>>() {
-    public void save(DataOutput out, List<LinkInfo> value) throws IOException {
-      out.writeInt(value.size());
-      for (final LinkInfo linkInfo : value) {
+  private DataExternalizer<InfoHolder<LinkInfo>> myValueExternalizer = new DataExternalizer<InfoHolder<LinkInfo>>() {
+    public void save(DataOutput out, InfoHolder<LinkInfo> value) throws IOException {
+      out.writeInt(value.myValues.length);
+      for (final LinkInfo linkInfo : value.myValues) {
         out.writeInt(linkInfo.offset);
         out.writeBoolean(linkInfo.scripted);
 
@@ -102,7 +99,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
       }
     }
 
-    public List<LinkInfo> read(DataInput in) throws IOException {
+    public InfoHolder<LinkInfo> read(DataInput in) throws IOException {
       final int size = in.readInt();
       final List<LinkInfo> list = new ArrayList<LinkInfo>(size);
       for (int i = 0; i < size; i++) {
@@ -118,11 +115,11 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
         list.add(new LinkInfo(offset, scripted, href, media, type, rel, title));
       }
 
-      return list;
+      return new InfoHolder<LinkInfo>(list.toArray(new LinkInfo[list.size()]));
     }
   };
 
-  public ID<Integer, List<LinkInfo>> getName() {
+  public ID<Integer, InfoHolder<LinkInfo>> getName() {
     return INDEX_ID;
   }
 
@@ -152,19 +149,20 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
   }
 
   @NotNull
-  public static List<LinkReferenceResult> getReferencedFiles(@NotNull final VirtualFile file, @NotNull final Project project) {
+  public static List<LinkReferenceResult> getReferencedFiles(@NotNull final VirtualFile _file, @NotNull final Project project) {
     final List<LinkReferenceResult> result = new ArrayList<LinkReferenceResult>();
-    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+    if (!(_file.getFileSystem() instanceof LocalFileSystem)) {
       return result;
     }
 
     FileBasedIndex.getInstance()
-      .processValues(INDEX_ID, FileBasedIndex.getFileId(file), null, new FileBasedIndex.ValueProcessor<List<LinkInfo>>() {
-        public void process(final VirtualFile file, final List<LinkInfo> value) {
+      .processValues(INDEX_ID, FileBasedIndex.getFileId(_file), null, new FileBasedIndex.ValueProcessor<InfoHolder<LinkInfo>>() {
+        public void process(final VirtualFile file, final InfoHolder<LinkInfo> value) {
+
           final PsiManager psiManager = PsiManager.getInstance(project);
           final PsiFile psiFile = psiManager.findFile(file);
           if (psiFile != null) {
-            for (final LinkInfo linkInfo : value) {
+            for (final LinkInfo linkInfo : value.myValues) {
               if (linkInfo.value != null || linkInfo.scripted) {
                 final PsiFileSystemItem[] item = new PsiFileSystemItem[]{null};
                 if (linkInfo.value != null) {
@@ -189,15 +187,15 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
     return result;
   }
 
-  public DataIndexer<Integer, List<LinkInfo>, FileContent> getIndexer() {
-    return new DataIndexer<Integer, List<LinkInfo>, FileContent>() {
+  public DataIndexer<Integer, InfoHolder<LinkInfo>, FileContent> getIndexer() {
+    return new DataIndexer<Integer, InfoHolder<LinkInfo>, FileContent>() {
       @NotNull
-      public Map<Integer, List<LinkInfo>> map(final FileContent inputData) {
+      public Map<Integer, InfoHolder<LinkInfo>> map(final FileContent inputData) {
         final VirtualFile file = inputData.getFile();
         final int id = FileBasedIndex.getFileId(file);
         final Language language = ((LanguageFileType)file.getFileType()).getLanguage();
 
-        final Map<Integer, List<LinkInfo>> result = new THashMap<Integer, List<LinkInfo>>();
+        final List<LinkInfo> result = new ArrayList<LinkInfo>();
 
         if (HTMLLanguage.INSTANCE == language || XHTMLLanguage.INSTANCE == language) {
           final Lexer original = HTMLLanguage.INSTANCE == language ? new HtmlHighlightingLexer() : new XHtmlHighlightingLexer();
@@ -260,7 +258,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
                 tokenType = lexer.getTokenType();
               }
 
-              addResult(result, id, linkTagOffset, href, media, type, rel, title, false);
+              addResult(result, linkTagOffset, href, media, type, rel, title, false);
             }
 
             lexer.advance();
@@ -298,7 +296,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
                     final String rel = getAttributeValue(tag, REL_ATTR);
                     final String title = getAttributeValue(tag, TITLE_ATTR);
 
-                    addResult(result, id, tag.getTextOffset(), href, media, type, rel, title, isHrefScripted(tag));
+                    addResult(result, tag.getTextOffset(), href, media, type, rel, title, isHrefScripted(tag));
                   }
 
                   super.visitXmlTag(tag);
@@ -311,7 +309,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
           }
         }
 
-        return result;
+        return Collections.singletonMap(id, new InfoHolder<LinkInfo>(result.toArray(new LinkInfo[result.size()])));
       }
     };
   }
@@ -369,8 +367,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
     return null;
   }
 
-  private static void addResult(final Map<Integer, List<LinkInfo>> result,
-                                final int id,
+  private static void addResult(final List<LinkInfo> result,
                                 final int offset,
                                 final String hrefValue,
                                 final String mediaValue,
@@ -378,20 +375,14 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
                                 final String relValue,
                                 final String titleValue,
                                 final boolean scripted) {
-    List<LinkInfo> infos = result.get(id);
-    if (infos == null) {
-      infos = new ArrayList<LinkInfo>();
-      result.put(id, infos);
-    }
-
-    infos.add(new LinkInfo(offset, scripted, hrefValue, mediaValue, typeValue, relValue, titleValue));
+    result.add(new LinkInfo(offset, scripted, hrefValue, mediaValue, typeValue, relValue, titleValue));
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
-  public DataExternalizer<List<LinkInfo>> getValueExternalizer() {
+  public DataExternalizer<InfoHolder<LinkInfo>> getValueExternalizer() {
     return myValueExternalizer;
   }
 
@@ -502,7 +493,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
                 for (PsiReference reference : references) {
                   final PsiElement element = reference.resolve();
                   if (element instanceof PsiFile) {
-                    return (PsiFile) element;
+                    return (PsiFile)element;
                   }
                 }
               }
@@ -536,6 +527,31 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, List<H
 
     public String getTitleValue() {
       return myLinkInfo.title;
+    }
+  }
+
+  static class InfoHolder<T> {
+    public T[] myValues;
+
+    InfoHolder(final T[] values) {
+      myValues = values;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final InfoHolder that = (InfoHolder)o;
+
+      if (!Arrays.equals(myValues, that.myValues)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myValues != null ? Arrays.hashCode(myValues) : 0;
     }
   }
 }
