@@ -45,6 +45,6 @@ public abstract class ExternalResourceManager implements ModificationTracker {
   @Nullable
   public abstract PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, String version);
   
-  public abstract String[] getResourceUrls(FileType fileType, final boolean includeStandard);
-  public abstract String[] getResourceUrls(FileType fileType, @NonNls String version, final boolean includeStandard);
+  public abstract String[] getResourceUrls(@Nullable FileType fileType, final boolean includeStandard);
+  public abstract String[] getResourceUrls(@Nullable FileType fileType, @NonNls String version, final boolean includeStandard);
 }

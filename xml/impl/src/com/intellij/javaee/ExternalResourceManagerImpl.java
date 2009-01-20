@@ -53,6 +53,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
 
   private final Map<String, Map<String,String>> myResources = new HashMap<String, Map<String, String>>();
+  private final Set<String> myResourceLocations = new HashSet<String>();
+
   private final Map<String, XmlNSDescriptorImpl> myImplicitNamespaces = new THashMap<String, XmlNSDescriptorImpl>();
   private final Set<String> myIgnoredResources = new HashSet<String>();
   private final Map<String, Map<String,String>> myStdResources = new HashMap<String, Map<String,String>>();
@@ -140,6 +142,15 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName) {
     addStdResource(resource, version, STANDARD_SCHEMAS + fileName, getClass());
+  }
+
+  public boolean isStandardResource(VirtualFile file) {
+    VirtualFile parent = file.getParent();
+    return parent != null && parent.getName().equals("standardSchemas");
+  }
+
+  public boolean isUserResource(VirtualFile file) {
+    return myResourceLocations.contains(file.getUrl()); 
   }
 
   public void addStdResource(@NonNls String resource, @NonNls String fileName){
@@ -285,7 +296,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     final MultiMap<String, String> value = myNamespacesByTagName.get(project, project).getValue();
     assert value != null;
     final Collection<String> strings = value.get(tagName);
-    return strings == null ? Collections.<String>emptySet() : new HashSet<String>(strings);
+    return new HashSet<String>(strings);
   }
 
   public Collection<VirtualFile> getSchemaFiles(String namespace, Project project) {
@@ -298,7 +309,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     return getResourceUrls(fileType, DEFAULT_VERSION, includeStandard);
   }
 
-  public String[] getResourceUrls(final FileType fileType, @NonNls final String version, final boolean includeStandard) {
+  public String[] getResourceUrls(@Nullable final FileType fileType, @NonNls final String version, final boolean includeStandard) {
     final List<String> result = new LinkedList<String>();
     addResourcesFromMap(fileType, result,version, myResources);
 
@@ -309,7 +320,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     return ArrayUtil.toStringArray(result);
   }
 
-  private static void addResourcesFromMap(final FileType fileType, final List<String> result, String version, Map<String, Map<String, String>> resourcesMap) {
+  private static void addResourcesFromMap(@Nullable final FileType fileType, final List<String> result, String version, Map<String, Map<String, String>> resourcesMap) {
     Map<String, String> resources = getMap(resourcesMap, version, false);
     if (resources == null) return;
     final Set<String> keySet = resources.keySet();
@@ -338,11 +349,16 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void addResource(@NonNls String url, @NonNls String version, @NonNls String location) {
+    addSilently(url, version, location);
+    fireExternalResourceChanged();
+  }
+
+  private void addSilently(String url, String version, String location) {
     final Map<String, String> map = getMap(myResources, version, true);
     assert map != null;
     map.put(url, location);
+    myResourceLocations.add(location);
     myModificationCount++;
-    fireExternalResourceChanged();
   }
 
   public void removeResource(String url) {
@@ -352,7 +368,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   public void removeResource(String url, String version) {
     Map<String, String> map = getMap(myResources, version, false);
     if (map != null) {
-      map.remove(url);
+      String location = map.remove(url);
+      if (location != null) {
+        myResourceLocations.remove(url);
+      }
       myModificationCount++;
       fireExternalResourceChanged();
     }
@@ -374,9 +393,13 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void addIgnoredResource(String url) {
+    addIgnoredSilently(url);
+    fireExternalResourceChanged();
+  }
+
+  private void addIgnoredSilently(String url) {
     myIgnoredResources.add(url);
     myModificationCount++;
-    fireExternalResourceChanged();
   }
 
   public void removeIgnoredResource(String url) {
@@ -406,12 +429,12 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     myModificationCount++;
     for (final Object o1 : element.getChildren(RESOURCE_ELEMENT)) {
       Element e = (Element)o1;
-      addResource(e.getAttributeValue(URL_ATTR), e.getAttributeValue(LOCATION_ATTR).replace('/', File.separatorChar));
+      addSilently(e.getAttributeValue(URL_ATTR), DEFAULT_VERSION, e.getAttributeValue(LOCATION_ATTR).replace('/', File.separatorChar));
     }
 
     for (final Object o : element.getChildren(IGNORED_RESOURCE_ELEMENT)) {
       Element e = (Element)o;
-      addIgnoredResource(e.getAttributeValue(URL_ATTR));
+      addIgnoredSilently(e.getAttributeValue(URL_ATTR));
     }
   }
 

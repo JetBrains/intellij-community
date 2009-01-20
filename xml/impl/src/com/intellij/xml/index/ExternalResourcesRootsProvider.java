@@ -1,14 +1,16 @@
 package com.intellij.xml.index;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.indexing.IndexedRootsProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -23,7 +25,15 @@ public class ExternalResourcesRootsProvider implements IndexedRootsProvider {
   }
 
   public Set<VirtualFile> getRootsToIndex(final Project project) {
-    final VirtualFile file = getStandardSchemas();
-    return file != null ? Collections.singleton(file) : Collections.<VirtualFile>emptySet();
+    final VirtualFile standardSchemas = getStandardSchemas();
+    String path = FetchExtResourceAction.getExternalResourcesPath();
+    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    VirtualFile extResources = localFileSystem.findFileByPath(path);
+    HashSet<VirtualFile> roots = new HashSet<VirtualFile>(2);
+    roots.add(standardSchemas);
+    if (extResources != null) {
+      roots.add(extResources);
+    }
+    return roots;
   }
 }

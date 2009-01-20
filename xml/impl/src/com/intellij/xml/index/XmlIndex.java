@@ -1,6 +1,8 @@
 package com.intellij.xml.index;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +12,9 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -26,15 +31,43 @@ public abstract class XmlIndex<V> implements FileBasedIndexExtension<String, V> 
   };
 
   protected static VirtualFileFilter createFilter(final Project project) {
-
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return new VirtualFileFilter() {
-
-      private final ProjectFileIndex myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-
       public boolean accept(final VirtualFile file) {
         final VirtualFile parent = file.getParent();
         assert parent != null;
-        return myFileIndex.isInContent(file) || myFileIndex.isInLibraryClasses(file) || parent.getName().equals("standardSchemas");
+        return fileIndex.isInContent(file) || fileIndex.isInLibraryClasses(file) || parent.getName().equals("standardSchemas");
+      }
+    };
+  }
+
+
+  protected static VirtualFileFilter createFilter(@NotNull final Module module) {
+
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
+    return new VirtualFileFilter() {
+      public boolean accept(final VirtualFile file) {
+        Module moduleForFile = fileIndex.getModuleForFile(file);
+        if (moduleForFile != null) { // in module content
+          return module.equals(moduleForFile);
+        }
+        if (fileIndex.isInLibraryClasses(file)) {
+          List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(file);
+          if (orderEntries.isEmpty()) {
+            return false;
+          }
+          for (OrderEntry orderEntry : orderEntries) {
+            Module ownerModule = orderEntry.getOwnerModule();
+            if (ownerModule != null) {
+              if (ownerModule.equals(module)) {
+                return true;
+              }
+            }
+          }
+        }
+        final VirtualFile parent = file.getParent();
+        assert parent != null;
+        return parent.getName().equals("standardSchemas");
       }
     };
   }
