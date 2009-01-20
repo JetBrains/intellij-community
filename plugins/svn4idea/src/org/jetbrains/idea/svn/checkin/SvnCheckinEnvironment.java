@@ -294,6 +294,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return commitInt(collectPaths(changes), preparedComment, true, false);
   }
 
+  public List<VcsException> commit(List<Change> changes, String preparedComment, Object parameters) {
+    return commit(changes, preparedComment);
+  }
+
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     final SVNWCClient wcClient = mySvnVcs.createWCClient();

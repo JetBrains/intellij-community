@@ -218,6 +218,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
+  public List<VcsException> commit(List<Change> changes, String preparedComment, Object parameters) {
+    return commit(changes, preparedComment);
+  }
+
   /**
    * Preform a merge commit
    *
