@@ -251,25 +251,29 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     if(!myDebugProcess.isAttached()) {
       return;
     }
-    Set<EventRequest> requests = myRequestorToBelongedRequests.get(requestor);
+    final Set<EventRequest> requests = myRequestorToBelongedRequests.remove(requestor);
     if(requests == null) {
       return;
     }
-    myRequestorToBelongedRequests.remove(requestor);
     for (final EventRequest request : requests) {
       try {
-        myEventRequestManager.deleteEventRequest(request);
         final Requestor targetRequestor = (Requestor)request.getProperty(REQUESTOR);
         if (targetRequestor != requestor) {
           // the same request may be assigned to more than one requestor, but
           // there is only one 'targetRequestor' for each request, so if target requestor and requestor being processed are different,
           // should clear also the mapping targetRequestor->request
           final Set<EventRequest> allTargetRequestorRequests = myRequestorToBelongedRequests.get(targetRequestor);
-          allTargetRequestorRequests.remove(request);
-          if (allTargetRequestorRequests.size() == 0) {
-            myRequestorToBelongedRequests.remove(targetRequestor);
+          if (allTargetRequestorRequests != null) {
+            allTargetRequestorRequests.remove(request);
+            if (allTargetRequestorRequests.size() == 0) {
+              myRequestorToBelongedRequests.remove(targetRequestor);
+            }
           }
         }
+        myEventRequestManager.deleteEventRequest(request);
+      }
+      catch (InvalidRequestStateException ignored) {
+        // request is already deleted
       }
       catch (InternalException e) {
         if (e.errorCode() == 41) {
