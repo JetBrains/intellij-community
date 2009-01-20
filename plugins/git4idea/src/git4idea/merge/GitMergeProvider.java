@@ -82,7 +82,7 @@ public class GitMergeProvider implements MergeProvider2 {
    * {@inheritDoc}
    */
   @NotNull
-  public MergeData loadRevisions(VirtualFile file) throws VcsException {
+  public MergeData loadRevisions(final VirtualFile file) throws VcsException {
     final MergeData mergeData = new MergeData();
     if (file == null) return mergeData;
     final FilePath path = VcsUtil.getFilePath(file.getPath());
@@ -90,9 +90,9 @@ public class GitMergeProvider implements MergeProvider2 {
     VcsRunnable runnable = new VcsRunnable() {
       @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
-        GitContentRevision original = new GitContentRevision(path, new GitRevisionNumber(":" + ORIGINAL_REVNUM), myProject);
-        GitContentRevision current = new GitContentRevision(path, new GitRevisionNumber(":" + YOURS_REVNUM), myProject);
-        GitContentRevision last = new GitContentRevision(path, new GitRevisionNumber(":" + THEIRS_REVNUM), myProject);
+        GitContentRevision original = new GitContentRevision(path, new GitRevisionNumber(":" + ORIGINAL_REVNUM), myProject, file.getCharset());
+        GitContentRevision current = new GitContentRevision(path, new GitRevisionNumber(":" + YOURS_REVNUM), myProject, file.getCharset());
+        GitContentRevision last = new GitContentRevision(path, new GitRevisionNumber(":" + THEIRS_REVNUM), myProject, file.getCharset());
         mergeData.ORIGINAL = original.getContent().getBytes();
         mergeData.CURRENT = current.getContent().getBytes();
         mergeData.LAST = last.getContent().getBytes();
