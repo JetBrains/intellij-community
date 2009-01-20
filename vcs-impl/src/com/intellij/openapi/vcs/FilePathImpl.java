@@ -4,10 +4,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,7 +148,8 @@ public class FilePathImpl implements FilePath {
     return myVirtualParent;
   }
 
-  @NotNull public File getIOFile() {
+  @NotNull
+  public File getIOFile() {
     return myFile;
   }
 
@@ -167,15 +172,36 @@ public class FilePathImpl implements FilePath {
   }
 
   public Charset getCharset() {
-    return myVirtualFile != null ?
-           myVirtualFile.getCharset()
-           : EncodingManager.getInstance().getDefaultCharset();
+    return getCharset(null);
+  }
+
+  public Charset getCharset(Project project) {
+    // try to find existing virtual file
+    VirtualFile existing = myVirtualFile != null && myVirtualFile.isValid() ? myVirtualFile : null;
+    if (existing == null) {
+      LocalFileSystem lfs = LocalFileSystem.getInstance();
+      for (File f = myFile; f != null; f = f.getParentFile()) {
+        existing = lfs.findFileByIoFile(f);
+        if (existing != null && existing.isValid()) {
+          break;
+        }
+      }
+    }
+    if (existing != null) {
+      Charset rc = existing.getCharset();
+      if (rc != null) {
+        return rc;
+      }
+    }
+    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : null;
+    if (e == null) {
+      e = EncodingManager.getInstance();
+    }
+    return e.getDefaultCharset();
   }
 
   public FileType getFileType() {
-    return myVirtualFile != null
-           ? myVirtualFile.getFileType()
-           : FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName());
+    return myVirtualFile != null ? myVirtualFile.getFileType() : FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName());
   }
 
   public static FilePathImpl create(File selectedFile) {
@@ -245,7 +271,7 @@ public class FilePathImpl implements FilePath {
         ourFileStringConstructor = File.class.getDeclaredConstructor(String.class, int.class);
         ourFileStringConstructor.setAccessible(true);
       }
-      catch(Exception ex) {
+      catch (Exception ex) {
         ourFileStringConstructor = null;
       }
     }
@@ -255,7 +281,7 @@ public class FilePathImpl implements FilePath {
         file = ourFileStringConstructor.newInstance(path, 1);
       }
     }
-    catch(Exception ex) {
+    catch (Exception ex) {
       // reflection call failed, try regular call
     }
     if (file == null) {
@@ -266,7 +292,8 @@ public class FilePathImpl implements FilePath {
     return result;
   }
 
-  @Override @NonNls
+  @Override
+  @NonNls
   public String toString() {
     return "FilePath[" + myFile + "]";
   }

@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public interface FilePath {
 
   /**
    * @return the {@link java.io.File} that corresponds to the path. The path might be non-existent or not local.
-   * @see #isNonLocal() 
+   * @see #isNonLocal()
    */
   @NotNull
   File getIOFile();
@@ -56,6 +57,14 @@ public interface FilePath {
   Document getDocument();
 
   Charset getCharset();
+
+  /**
+   * Get character set, considering the project defaults and a virtual file
+   *
+   * @param project the project which settings will be consulted
+   * @return the character set of the file
+   */
+  Charset getCharset(Project project);
 
   /**
    * @return the type of the file
