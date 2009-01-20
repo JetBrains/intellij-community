@@ -35,16 +35,21 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction{
     final DataContext dataContext = e.getDataContext();
     final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      presentation.setVisible(isEnabled(vFile, window));
+    }
+    else {
+      presentation.setEnabled(isEnabled(vFile, window));
+    }
+  }
+
+  private static boolean isEnabled(VirtualFile vFile, EditorWindow window) {
     if (vFile != null && window != null) {
       final EditorWindow[] siblings = window.findSiblings ();
       if (siblings != null && siblings.length == 1) {
-        presentation.setEnabled(true);
+        return true;
       }
-      else {
-        presentation.setEnabled(false);
-      }
-      return;
     }
-    presentation.setEnabled(false);
+    return false;
   }
 }
