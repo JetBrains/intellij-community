@@ -120,6 +120,8 @@ final class EditorTabbedContainer implements Disposable {
       }
     });
 
+    setTabPlacement(UISettings.getInstance().EDITOR_TAB_PLACEMENT);
+
     updateTabBorder();
 
     ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
