@@ -163,7 +163,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (method.isVarArgs()) return;
         if (method.getParameterList().getParametersCount() == argumentsCount) {
           parametersNumberMatch = true;
-          break;
         }
       }
     }
