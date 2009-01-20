@@ -37,7 +37,8 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
 
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
-    final List<PsiClass> classes = getTargetClasses(getElement());
+    PsiElement element = getElement();
+    final List<PsiClass> classes = getTargetClasses(element);
     if (classes.size() != 1 || !classes.get(0).isEnum()) return false;
     ExpectedTypeInfo[] typeInfos = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
     PsiType enumType = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory().createType(classes.get(0));

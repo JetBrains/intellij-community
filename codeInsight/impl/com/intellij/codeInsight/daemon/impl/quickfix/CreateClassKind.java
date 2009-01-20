@@ -10,7 +10,7 @@ public enum CreateClassKind {
   INTERFACE (QuickFixBundle.message("create.interface")),
   ENUM      (QuickFixBundle.message("create.enum"));
 
-  private String myDescription;
+  private final String myDescription;
 
   CreateClassKind(final String description) {
     myDescription = description;
