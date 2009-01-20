@@ -3,9 +3,8 @@ package org.jetbrains.plugins.groovy.structure.elements.impl;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -21,8 +20,8 @@ import java.util.List;
  * Date: 30.10.2007
  */
 public class GroovyFileStructureViewElement extends GroovyStructureViewElement {
-  public GroovyFileStructureViewElement(GroovyPsiElement element) {
-    super(element);
+  public GroovyFileStructureViewElement(GroovyFileBase groovyFileBase) {
+    super(groovyFileBase);
   }
 
   public ItemPresentation getPresentation() {
@@ -34,7 +33,7 @@ public class GroovyFileStructureViewElement extends GroovyStructureViewElement {
 
     for (GrTopStatement topStatement : ((GroovyFileBase) myElement).getTopStatements()) {
       if (topStatement instanceof GrTypeDefinition) {
-        children.add(new GroovyTypeDefinitionStructureViewElement(topStatement));
+        children.add(new GroovyTypeDefinitionStructureViewElement(((GrTypeDefinition)topStatement)));
       } else if (topStatement instanceof GrMethod) {
         children.add(new GroovyMethodStructureViewElement(((GrMethod) topStatement), false));
 

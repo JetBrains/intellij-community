@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.structure.elements.impl.GroovyMethodStructur
  * Time: 15:02:27
  * To change this template use File | Settings | File Templates.
  */
-public class GroovyInheritedFileter extends InheritedMembersFilter {
+public class GroovyInheritFilter extends InheritedMembersFilter {
   @Override
   public boolean isVisible(TreeElement treeNode) {
     if (treeNode instanceof GroovyMethodStructureViewElement){
