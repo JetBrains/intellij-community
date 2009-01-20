@@ -1523,10 +1523,6 @@ public class JBTabsImpl extends JComponent
           g2d.fill(shaper.reset().doRect(boundsX, boundsY, boundsWidth, 1).getShape());
         }
       }
-      else if (isStealthModeEffective()) {
-        //g2d.setColor(borderColor);
-        //g2d.fill(shaper.reset().doRect(boundsX, boundsY - 1, boundsWidth, 1).getShape());
-      }
       else  {
         Color tabFillColor = getActiveTabFillIn();
         if (tabFillColor == null) {

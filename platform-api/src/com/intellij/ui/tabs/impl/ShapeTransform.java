@@ -231,7 +231,7 @@ public abstract class ShapeTransform {
 
     @Override
     public Insets transformInsets(Insets insets) {
-      return new Insets(insets.left, insets.bottom, insets.right, insets.top);
+      return new Insets(insets.left, insets.top, insets.right, insets.bottom);
     }
 
     public ShapeTransform copy() {

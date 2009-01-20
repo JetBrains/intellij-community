@@ -11,6 +11,7 @@ import com.intellij.ui.tabs.UiDecorator;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -25,7 +26,7 @@ public class JBTabsTest {
     IconLoader.activate();
 
     final JFrame frame = new JFrame();
-    frame.getContentPane().setLayout(new BorderLayout());
+    frame.getContentPane().setLayout(new BorderLayout(0, 0));
     final int[] count = new int[1];
     final JBTabsImpl tabs = new JBTabsImpl(null, null, null, new Disposable() {
       public void dispose() {
@@ -37,6 +38,8 @@ public class JBTabsTest {
     frame.getContentPane().add(tabs.getComponent(), BorderLayout.CENTER);
 
     JPanel south = new JPanel(new FlowLayout());
+    south.setOpaque(true);
+    south.setBackground(Color.white);
 
 
     final JComboBox pos = new JComboBox(new Object[]{JBTabsPosition.top, JBTabsPosition.left, JBTabsPosition.right, JBTabsPosition.bottom});
@@ -208,7 +211,7 @@ public class JBTabsTest {
 
     //tabs.setBorder(new LineBorder(Color.blue, 2));
     //tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
-    tabs.setBorder(null);
+    tabs.setBorder(new EmptyBorder(30, 0, 0, 0));
 
     tabs.setUiDecorator(new UiDecorator() {
       public UiDecoration getDecoration() {
