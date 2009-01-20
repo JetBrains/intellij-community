@@ -62,11 +62,21 @@ public class VariableInplaceRenameHandler implements RenameHandler {
 
     if (!startedRename) {
       final DataContext ourDataContext = new DataContext() {
+        boolean myRecursionGuard;
+
         public Object getData(@NonNls final String dataId) {
           if (INVOKING_DEFAULT.equals(dataId)) {
             return Boolean.TRUE;
           }
-          return dataContext.getData(dataId);
+
+          if (myRecursionGuard) return null;
+
+          try {
+            myRecursionGuard = true;
+            return dataContext.getData(dataId);
+          } finally {
+            myRecursionGuard = false;
+          }
         }
       };
       RenameHandlerRegistry.getInstance().getRenameHandler(ourDataContext).invoke(
