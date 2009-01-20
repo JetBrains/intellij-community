@@ -50,6 +50,9 @@ public interface CheckinEnvironment {
   List<VcsException> commit(List<Change> changes, String preparedComment);
 
   @Nullable
+  List<VcsException> commit(List<Change> changes, String preparedComment, final Object parameters);
+
+  @Nullable
   List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);
 
   @Nullable

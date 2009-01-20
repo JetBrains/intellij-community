@@ -18,10 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.openapi.vcs.checkin.CheckinMetaHandler;
+import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,6 +68,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final boolean myIsAlien;
   private boolean myDisposed = false;
   private JLabel myWarningLabel;
+
+  private Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -185,8 +184,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myBrowserExtender.addSelectedListChangeListener(new SelectedListChangeListener() {
       public void selectedListChanged() {
-        updateComment();
-        updateVcsOptionsVisibility();
+        updateOnListSelection();
       }
     });
     myBrowser.setDiffExtendUIFactory(new ShowDiffAction.DiffExtendUIFactory() {
@@ -227,6 +225,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     boolean hasVcsOptions = false;
     Box vcsCommitOptions = Box.createVerticalBox();
     final List<AbstractVcs> vcses = getAffectedVcses();
+    myCheckinChangeListSpecificComponents = new HashMap<String, CheckinChangeListSpecificComponent>();
     for (AbstractVcs vcs : vcses) {
       final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (checkinEnvironment != null) {
@@ -238,6 +237,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           vcsCommitOptions.add(vcsOptions);
           myPerVcsOptionsPanels.put(vcs, vcsOptions);
           myAdditionalComponents.add(options);
+          if (options instanceof CheckinChangeListSpecificComponent) {
+            myCheckinChangeListSpecificComponents.put(vcs.getName(), (CheckinChangeListSpecificComponent) options);
+          }
           hasVcsOptions = true;
         }
       }
@@ -322,7 +324,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     init();
     updateButtons();
     updateVcsOptionsVisibility();
+    
+    updateOnListSelection();
     myCommitMessageArea.requestFocusInMessage();
+  }
+
+  private void updateOnListSelection() {
+    updateComment();
+    updateVcsOptionsVisibility();
+    for (CheckinChangeListSpecificComponent component : myCheckinChangeListSpecificComponents.values()) {
+      component.onChangeListSelected((LocalChangeList) myBrowser.getSelectedChangeList());
+    }
   }
 
   private void updateWarning() {
@@ -615,9 +627,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public void doCancelAction() {
+    for (CheckinChangeListSpecificComponent component : myCheckinChangeListSpecificComponents.values()) {
+      component.saveState();
+    }
     saveCommentIntoChangeList();
     //VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
     super.doCancelAction();
+  }
+
+  private Map<String, Object> getAdditionalDataForSubmit() {
+    final Map<String, Object> result = new HashMap<String, Object>();
+    for (Map.Entry<String, CheckinChangeListSpecificComponent> entry : myCheckinChangeListSpecificComponents.entrySet()) {
+      final Object data = entry.getValue().getDataForCommit();
+      if (data != null) {
+        result.put(entry.getKey(), data);
+      }
+    }
+    return result;
   }
 
   private void doCommit() {
@@ -628,7 +654,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myActionName,
       getCommitMessage(),
       myHandlers,
-      myAllOfDefaultChangeListChangesIncluded, false);
+      myAllOfDefaultChangeListChangesIncluded, false, getAdditionalDataForSubmit());
 
     if (myIsAlien) {
       helper.doAlienCommit(myVcs);

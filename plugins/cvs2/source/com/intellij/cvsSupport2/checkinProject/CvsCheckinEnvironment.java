@@ -96,6 +96,10 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return executor.getResult().getErrorsAndWarnings();
   }
 
+  public List<VcsException> commit(List<Change> changes, String preparedComment, Object parameters) {
+    return commit(changes, preparedComment);
+  }
+
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     final CvsHandler handler = RemoveLocallyFileOrDirectoryAction.getDefaultHandler(myProject, ChangesUtil.filePathsToFiles(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);

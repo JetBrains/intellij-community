@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,4 +51,8 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public abstract void setReadOnly(boolean isReadOnly);
 
   public abstract LocalChangeList copy();
+
+  public boolean hasDefaultName() {
+    return VcsBundle.message("changes.default.changlist.name").equals(getName());
+  }
 }

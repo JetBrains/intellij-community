@@ -108,6 +108,26 @@ public class ChangesUtil {
     return adder.getResult();
   }
 
+  public static List<File> getIoFilesFromChanges(final Collection<Change> changes) {
+    // further should contain paths
+    final List<File> result = new ArrayList<File>();
+    for (Change change : changes) {
+      if (change.getAfterRevision() != null) {
+        final File ioFile = change.getAfterRevision().getFile().getIOFile();
+        if (! result.contains(ioFile)) {
+          result.add(ioFile);
+        }
+      }
+      if (change.getBeforeRevision() != null) {
+        final File ioFile = change.getBeforeRevision().getFile().getIOFile();
+        if (! result.contains(ioFile)) {
+          result.add(ioFile);
+        }
+      }
+    }
+    return result;
+  }
+
   public static VirtualFile[] getFilesFromChanges(final Collection<Change> changes) {
     ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
     for (Change change : changes) {
