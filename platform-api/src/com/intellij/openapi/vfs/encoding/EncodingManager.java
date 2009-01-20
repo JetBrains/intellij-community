@@ -2,8 +2,8 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +26,13 @@ public abstract class EncodingManager implements ApplicationComponent {
   @NotNull
   public abstract Collection<Charset> getFavorites();
 
+  /**
+   * @param virtualFile
+   * @param useParentDefaults
+   * @return encoding configured for this file in Settings|File Encodings or,
+   *         if useParentDefaults is true, encoding configured for nearest parent of virtualFile or,
+   *         null if there is no configured encoding found.
+   */
   public abstract Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults);
 
   public abstract void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset);
@@ -38,7 +45,9 @@ public abstract class EncodingManager implements ApplicationComponent {
 
   public abstract void setNative2AsciiForPropertiesFiles(VirtualFile virtualFile, boolean native2Ascii);
 
-  // returns name of default charset configured in File|Template project settings|File encoding|Project
+  /**
+   * @return name of default charset configured in Settings|File Encodings|IDE encoding
+   */
   public abstract Charset getDefaultCharset();
 
   public String getDefaultCharsetName() {
