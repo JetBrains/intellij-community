@@ -1485,10 +1485,10 @@ public class JBTabsImpl extends JComponent
     g2d.fill(shape.getShape());
 
     g2d.setColor(topBlickColor);
-    g2d.drawLine(leftX + shape.deltaX(arc), topY + shape.deltaY(1), rigthX - shape.deltaX(arc), topY + shape.deltaY(1));
+    g2d.draw(shape.transformLine(leftX + shape.deltaX(arc + 1), topY + shape.deltaY(1), rigthX - shape.deltaX(arc - 1), topY + shape.deltaY(1)));
 
     g2d.setColor(rightBlockColor);
-    g2d.drawLine(rigthX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rigthX - shape.deltaX(1), bottomY);
+    g2d.draw(shape.transformLine(rigthX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rigthX - shape.deltaX(1), bottomY));
 
     g2d.setColor(boundsColor);
     g2d.draw(shape.getShape());
