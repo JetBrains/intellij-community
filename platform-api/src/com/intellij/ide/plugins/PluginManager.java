@@ -234,7 +234,7 @@ public class PluginManager {
 
   private static void prepareLoadingPluginsErrorMessage(final String errorMessage) {
     if (errorMessage != null) {
-      if (!Main.isHeadless()) {
+      if (!Main.isHeadless() && !ApplicationManager.getApplication().isUnitTestMode()) {
         if (myPluginError == null) {
           myPluginError = errorMessage;
         }
