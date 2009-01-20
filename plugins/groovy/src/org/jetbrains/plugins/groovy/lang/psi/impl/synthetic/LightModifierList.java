@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -30,7 +29,7 @@ import java.util.Set;
 public class LightModifierList extends LightElement implements PsiModifierList {
   private Set<String> myModifiers;
 
-  public LightModifierList(PsiManager manager, LinkedHashSet<String> modifiers) {
+  public LightModifierList(PsiManager manager, Set<String> modifiers) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myModifiers = modifiers;
   }

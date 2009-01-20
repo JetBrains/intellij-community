@@ -69,10 +69,10 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
     return findChildrenByClass(GrMethod.class);
   }
 
-  public PsiMethod[] getMethods() {
-    GrMethod[] groovyMethods = getGroovyMethods();
+  public List<PsiMethod> getMethods() {
+    PsiMethod[] groovyMethods = getGroovyMethods();
     GrField[] fields = getFields();
-    if (fields.length == 0) return groovyMethods;
+    if (fields.length == 0) return Arrays.asList(groovyMethods);
     List<PsiMethod> result = new ArrayList<PsiMethod>();
     result.addAll(Arrays.asList(groovyMethods));
     for (GrField field : fields) {
@@ -84,7 +84,7 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
       }
     }
 
-    return result.toArray(new PsiMethod[result.size()]);
+    return result;
   }
 
   public GrMembersDeclaration[] getMemberDeclarations() {

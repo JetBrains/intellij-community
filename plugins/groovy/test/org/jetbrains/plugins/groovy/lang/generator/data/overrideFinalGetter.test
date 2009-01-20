@@ -32,7 +32,7 @@ public class Base implements groovy.lang.GroovyObject {
   }
 }
 ---
-public class Derived extends Base {
+public class Derived extends Base implements groovy.lang.GroovyObject {
   public void setP(int p) {
     return ;
   }

@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticMethodImplementation;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
 import java.io.*;
@@ -367,6 +368,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
 
     for (PsiMethod method : methods) {
+      if (method instanceof GrSyntheticMethodImplementation) {
+        continue;
+      }
+
       if (method instanceof GrConstructor) {
         writeConstructor(text, (GrConstructor) method, isEnum);
         continue;
@@ -447,8 +452,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       GrTypeDefinitionBody block = enumConstant.getAnonymousBlock();
       if (block != null) {
         text.append("{\n");
-        PsiMethod[] methods = block.getMethods();
-        for (PsiMethod method : methods) {
+        for (PsiMethod method : block.getMethods()) {
           writeMethod(text, method, method.getParameterList().getParameters());
         }
         text.append("}");

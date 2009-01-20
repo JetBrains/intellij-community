@@ -9,7 +9,7 @@ public interface IBar extends groovy.lang.GroovyObject {}
 ---
 public interface Foo extends IBar {}
 ---
-public class Test1 implements Foo {
+public class Test1 implements Foo , groovy.lang.GroovyObject {
   public groovy.lang.MetaClass getMetaClass() {
     return null;
   }

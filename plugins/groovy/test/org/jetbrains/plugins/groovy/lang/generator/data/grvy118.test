@@ -32,7 +32,7 @@ public abstract class A implements groovy.lang.GroovyObject {
   }
 }
 ---
-public class B extends A {
+public class B extends A implements groovy.lang.GroovyObject {
   public java.lang.Object myMethod() {
     return null;
   }

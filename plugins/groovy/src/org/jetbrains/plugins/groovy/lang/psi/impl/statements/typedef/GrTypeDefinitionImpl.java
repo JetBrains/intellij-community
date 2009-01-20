@@ -34,7 +34,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
@@ -62,7 +61,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -73,6 +75,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticMethodImplementation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -92,7 +95,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   private GrMethod[] myConstructors;
   private static final Condition<PsiClassType> IS_GROOVY_OBJECT = new Condition<PsiClassType>() {
     public boolean value(PsiClassType psiClassType) {
-      return InheritanceUtil.isInheritor(psiClassType, DEFAULT_BASE_CLASS_NAME);
+      return psiClassType.equalsToText(DEFAULT_BASE_CLASS_NAME);
     }
   };
 
@@ -483,12 +486,13 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   @NotNull
   public PsiMethod[] getMethods() {
     if (myMethods == null) {
+      List<PsiMethod> result = new ArrayList<PsiMethod>();
       GrTypeDefinitionBody body = getBody();
       if (body != null) {
-        myMethods = body.getMethods();
-      } else {
-        myMethods = GrMethod.EMPTY_ARRAY;
+        result.addAll(body.getMethods());
       }
+      addGroovyObjectMethods(this, result);
+      myMethods = result.toArray(new PsiMethod[result.size()]);
     }
     return myMethods;
   }
@@ -571,9 +575,22 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       }
     }
 
-    final PsiClass[] supers = clazz.getSupers();
-    for (PsiClass aSuper : supers) {
+    addGroovyObjectMethods(clazz, allMethods);
+
+    for (PsiClass aSuper : clazz.getSupers()) {
       getAllMethodsInner(aSuper, allMethods, visited);
+    }
+  }
+
+  private static void addGroovyObjectMethods(PsiClass clazz, List<PsiMethod> allMethods) {
+    if (clazz instanceof GrTypeDefinition && !clazz.isInterface() && clazz.getExtendsListTypes().length == 0) {
+      final PsiClass groovyObject =
+        JavaPsiFacade.getInstance(clazz.getProject()).findClass(DEFAULT_BASE_CLASS_NAME, clazz.getResolveScope());
+      if (groovyObject != null) {
+        for (final PsiMethod method : groovyObject.getMethods()) {
+          allMethods.add(new GrSyntheticMethodImplementation(method, clazz));
+        }
+      }
     }
   }
 

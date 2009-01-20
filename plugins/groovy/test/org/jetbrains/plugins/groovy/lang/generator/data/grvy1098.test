@@ -34,7 +34,7 @@ public class A implements groovy.lang.GroovyObject {
   private static final java.lang.Object TEST = null;
 }
 ---
-public class B extends A {
+public class B extends A implements groovy.lang.GroovyObject {
   public groovy.lang.MetaClass getMetaClass() {
     return null;
   }

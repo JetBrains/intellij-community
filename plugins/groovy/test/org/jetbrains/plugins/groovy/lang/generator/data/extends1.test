@@ -25,7 +25,7 @@ public class b implements groovy.lang.GroovyObject {
   }
 }
 ---
-public class a extends b {
+public class a extends b implements groovy.lang.GroovyObject {
   public groovy.lang.MetaClass getMetaClass() {
     return null;
   }
