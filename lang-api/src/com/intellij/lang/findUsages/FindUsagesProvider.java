@@ -30,7 +30,7 @@ public interface FindUsagesProvider {
   /**
    * Gets the word scanner for building a word index for the specified language.
    *
-   * @return the word scanner implementation, or null if Find Usages is not supported for the language.
+   * @return the word scanner implementation, or null if {@link com.intellij.lang.cacheBuilder.SimpleWordsScanner} is OK.
    */
   @Nullable
   WordsScanner getWordsScanner();
