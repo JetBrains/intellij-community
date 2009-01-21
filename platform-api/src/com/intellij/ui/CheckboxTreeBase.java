@@ -325,12 +325,12 @@ public class CheckboxTreeBase extends Tree {
 
         myCheckbox.setBackground(null);
         setBackground(null);
-        myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       }
       else {
         myCheckbox.setVisible(false);
       }
+      myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
       return this;
     }
@@ -358,16 +358,36 @@ public class CheckboxTreeBase extends Tree {
     }
 
     /**
+     * Should be implemented by concrete implementations.
      * This method is invoked only for customization of component.
      * All component attributes are cleared when this method is being invoked.
+     * Note that in general case <code>value</code> is not an instance of CheckedTreeNode.
      */
-    public abstract void customizeCellRenderer(JTree tree,
-                                               Object value,
-                                               boolean selected,
-                                               boolean expanded,
-                                               boolean leaf,
-                                               int row,
-                                               boolean hasFocus);
+    public void customizeRenderer(JTree tree,
+                                  Object value,
+                                  boolean selected,
+                                  boolean expanded,
+                                  boolean leaf,
+                                  int row,
+                                  boolean hasFocus) {
+      if (value instanceof CheckedTreeNode) {
+        customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+      }
+    }
+
+    /**
+     * @deprecated
+     * @see CheckboxTreeCellRendererBase#customizeRenderer(javax.swing.JTree, Object, boolean, boolean, boolean, int, boolean)
+     */
+    @Deprecated
+    public void customizeCellRenderer(JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+    }
 
     public ColoredTreeCellRenderer getTextRenderer() {
       return myTextRenderer;
