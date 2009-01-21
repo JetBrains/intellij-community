@@ -370,12 +370,19 @@ public class PluginManager {
   }
 
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
-    final String buildNumber = getBuildNumber();
-    if (buildNumber != null) {
+    final String buildNumberString = getBuildNumber();
+    if (buildNumberString != null) {
+      int buildNumber;
+      try {
+        buildNumber = Integer.parseInt(buildNumberString);
+      }
+      catch (NumberFormatException e) {
+        return false;
+      }
       final String sinceBuild = descriptor.getSinceBuild();
       try {
-        Integer.parseInt(sinceBuild);
-        if (sinceBuild.compareToIgnoreCase(buildNumber) > 0) {
+        int sinceBuildNumber = Integer.parseInt(sinceBuild);
+        if (sinceBuildNumber > buildNumber) {
           return true;
         }
       }
@@ -385,8 +392,8 @@ public class PluginManager {
 
       final String untilBuild = descriptor.getUntilBuild();
       try {
-        Integer.parseInt(untilBuild);
-        if (untilBuild.compareToIgnoreCase(buildNumber) < 0) {
+        int untilBuildNumber = Integer.parseInt(untilBuild);
+        if (untilBuildNumber < buildNumber) {
           return true;
         }
       }
