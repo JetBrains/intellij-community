@@ -54,7 +54,7 @@ public class Comparing {
   }
 
   public static boolean equal(String arg1, String arg2) {
-    return equal(arg1, arg2, false);
+    return equal(arg1, arg2, true);
   }
 
   public static boolean equal(CharSequence s1, CharSequence s2, boolean caseSensitive) {
