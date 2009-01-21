@@ -106,7 +106,7 @@ public class FileContentStorage {
 
   @Nullable
   public synchronized byte[] remove(VirtualFile file) {
-    final int fileId = FileBasedIndex.getFileId(file);
+    final int fileId = Math.abs(FileBasedIndex.getFileId(file));
     synchronized (myLock) {
       try {
         return myFileIds.contains(fileId)? myCache.get(fileId) : null;
