@@ -6,6 +6,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class RelativePathCalculator {
+  private final int ourNumOfAllowedStepsAbove = 1;
+  private static final int ourAllowedStepsDown = 2;
+
   private final String myShifted;
   private final String myBase;
 
@@ -44,8 +47,13 @@ public class RelativePathCalculator {
       ++ cnt;
     }
 
+    final int stepsUp = baseParts.length - cnt - 1;
+    if ((! myRename) && (stepsUp > ourNumOfAllowedStepsAbove) && ((shiftedParts.length - cnt) <= ourAllowedStepsDown)) {
+      myResult = myShifted;
+      return;
+    }
     final StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < (baseParts.length - cnt - 1); i++) {
+    for (int i = 0; i < stepsUp; i++) {
       sb.append("../");
     }
 
