@@ -129,8 +129,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
 
   public void loadState(final ExcludedEntriesConfiguration state) {
     for (ExcludeEntryDescription description : state.getExcludeEntryDescriptions()) {
-      addExcludeEntryDescription(description);
-      description.init(this);
+      addExcludeEntryDescription(description.copy(this));
     }
     Disposer.dispose(state);
   }

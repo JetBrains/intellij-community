@@ -29,15 +29,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExcludeEntryDescription implements Disposable {
 
-  private boolean myIsFile;
+  private final String myUrl;
+  private final boolean myIsFile;
   private boolean myIncludeSubdirectories;
-  private String myUrl;
   private VirtualFilePointer myFilePointer;
 
-  public ExcludeEntryDescription() {
-  }
-
   public ExcludeEntryDescription(String url, boolean includeSubdirectories, boolean isFile, Disposable parent) {
+    myUrl = url;
     myFilePointer = VirtualFilePointerManager.getInstance().create(url, parent, null);
     myIncludeSubdirectories = includeSubdirectories;
     myIsFile = isFile;
@@ -45,16 +43,6 @@ public class ExcludeEntryDescription implements Disposable {
 
   public ExcludeEntryDescription(VirtualFile virtualFile, boolean includeSubdirectories, boolean isFile, Disposable parent) {
     this(virtualFile.getUrl(), includeSubdirectories, isFile, parent);
-  }
-
-  public void init(final Disposable parent) {
-    if (myFilePointer == null) {
-      myFilePointer = VirtualFilePointerManager.getInstance().create(myUrl, parent, null);
-    }
-  }
-
-  public void setFile(final boolean isFile) {
-    myIsFile = isFile;
   }
 
   public ExcludeEntryDescription copy(Disposable parent) {
@@ -112,9 +100,5 @@ public class ExcludeEntryDescription implements Disposable {
   }
 
   public void dispose() {
-  }
-
-  public void setUrl(final String url) {
-    myUrl = url;
   }
 }
