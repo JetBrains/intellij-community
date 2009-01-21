@@ -16,6 +16,7 @@ public final class TabInfo {
 
   public static final String ACTION_GROUP = "actionGroup";
   public static final String ICON = "icon";
+  public static final String COMPONENT = "component";
   public static final String TEXT = "text";
   public static final String TAB_ACTION_GROUP = "tabActionGroup";
   public static final String ALERT_ICON = "alertIcon";
@@ -104,7 +105,13 @@ public final class TabInfo {
     return this;
   }
 
-
+  public TabInfo setComponent(Component c) {
+    if (myComponent == c) return this;
+    JComponent old = myComponent;
+    myComponent = (JComponent)c;
+    myChangeSupport.firePropertyChange(COMPONENT, old, myComponent);
+    return this;
+  }
 
   public ActionGroup getGroup() {
     return myGroup;
@@ -264,6 +271,10 @@ public final class TabInfo {
     return this;
   }
 
+  public Color getDefaultForeground() {
+    return myDefaultForeground;
+  }
+
   public TabInfo setDefaultWaveColor(final Color waveColor) {
     myDefaultWaveColor = waveColor;
     myDefaultAttributes = null;
@@ -286,4 +297,5 @@ public final class TabInfo {
   public String getTooltipText() {
     return myTooltipText;
   }
+
 }

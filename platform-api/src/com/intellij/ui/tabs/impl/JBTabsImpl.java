@@ -9,10 +9,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.tabs.*;
@@ -129,7 +126,7 @@ public class JBTabsImpl extends JComponent
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
-    myFocusManager = focusManager;
+    myFocusManager = focusManager != null ? focusManager : PassThroughtIdeFocusManager.getInstance();
 
     setOpaque(true);
     setPaintBorder(-1, -1, -1, -1);
@@ -412,7 +409,7 @@ public class JBTabsImpl extends JComponent
 
     if (toFocus == null) {
       toFocus = info.getPreferredFocusableComponent();
-      final JComponent policyToFocus = myFocusManager != null ? myFocusManager.getFocusTargetFor(toFocus) : null;
+      final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
       if (policyToFocus != null) {
         toFocus = policyToFocus;
       }
@@ -622,7 +619,7 @@ public class JBTabsImpl extends JComponent
   private ActionCallback requestFocus(final JComponent toFocus) {
     if (toFocus == null) return new ActionCallback.Done();
 
-    if (myTestMode && myFocusManager == null && toFocus != null) {
+    if (myTestMode && toFocus != null) {
       toFocus.requestFocus();
       return new ActionCallback.Done();
     }
@@ -645,11 +642,7 @@ public class JBTabsImpl extends JComponent
       }
     };
 
-    if (myFocusManager != null) {
-      myFocusManager.doWhenFocusSettlesDown(onDone);
-    } else {
-      onDone.run();
-    }
+    myFocusManager.doWhenFocusSettlesDown(onDone);
 
     return callback;
   }
@@ -694,6 +687,8 @@ public class JBTabsImpl extends JComponent
     if (TabInfo.ACTION_GROUP.equals(evt.getPropertyName())) {
       updateSideComponent(tabInfo);
       relayout(false, false);
+    } else if (TabInfo.COMPONENT.equals(evt.getPropertyName())) {
+      relayout(true, false);
     }
     else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
       updateText(tabInfo);
@@ -1532,7 +1527,7 @@ public class JBTabsImpl extends JComponent
         g2d.setColor(tabFillColor);
         g2d.fill(shaper.reset().doRect(boundsX, topY + shape.path.deltaY(1), boundsWidth, paintBorder.top - 1).getShape());
 
-        if (paintBorder.top > 1) {
+        if (paintBorder.top >= 1) {
           g2d.setColor(borderColor);
           final int topLine = topY + shape.path.deltaY(paintBorder.top - 1);
           g2d.draw(shaper.reset().doRect(boundsX, topLine, boundsWidth - 1, 1).getShape());

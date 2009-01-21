@@ -1,10 +1,14 @@
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +22,7 @@ import java.awt.event.MouseListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class TabbedPaneWrapper {
+public class TabbedPaneWrapper implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneWrapper");
   private static final PrevNextActionsDescriptor DEFAULT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_PREVIOUS_TAB);
   protected final TabbedPane myTabbedPane;
@@ -50,6 +54,9 @@ public class TabbedPaneWrapper {
     myTabbedPaneHolder.setFocusTraversalPolicy(new _MyFocusTraversalPolicy());
 
     assertIsDispatchThread();
+  }
+
+  public void dispose() {
   }
 
   private void assertIsDispatchThread() {
@@ -394,5 +401,33 @@ public class TabbedPaneWrapper {
 
   public static TabbedPaneWrapper get(JTabbedPane tabs) {
     return (TabbedPaneWrapper)tabs.getClientProperty(TabbedPaneWrapper.class);
+  }
+
+  public static class AsJBTabs extends TabbedPaneWrapper {
+
+    private Project myProject;
+
+    public AsJBTabs(@Nullable Project project) {
+      myProject = project;
+    }
+
+    public AsJBTabs(@Nullable Project project, int tabPlacement) {
+      super(tabPlacement);
+      myProject = project;
+    }
+
+    public AsJBTabs(@Nullable Project project, int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
+      super(tabPlacement, installKeyboardNavigation);
+      myProject = project;
+    }
+
+    @Override
+    protected TabbedPane createTabbedPane(int tabPlacement) {
+      return new JBTabsPaneImpl(myProject, tabPlacement, this);
+    }
+
+    public JBTabs getTabs() {
+      return ((JBTabsPaneImpl)myTabbedPane).getTabs();
+    }
   }
 }
