@@ -69,6 +69,12 @@ public class VariableInplaceRenamer {
 
   public boolean performInplaceRename() {
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
+
+    final PsiReference reference = myElementToRename.getContainingFile().findReferenceAt(myEditor.getCaretModel().getOffset());
+    if (reference != null && !refs.contains(reference)) {
+      refs.add(reference);
+    }
+
     final FileViewProvider fileViewProvider = myElementToRename.getContainingFile().getViewProvider();
     VirtualFile file = getVirtualFileFromViewProvider(fileViewProvider);
 
