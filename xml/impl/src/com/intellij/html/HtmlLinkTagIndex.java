@@ -192,7 +192,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
       @NotNull
       public Map<Integer, InfoHolder<LinkInfo>> map(final FileContent inputData) {
         final VirtualFile file = inputData.getFile();
-        final int id = FileBasedIndex.getFileId(file);
+        final int id = Math.abs(FileBasedIndex.getFileId(file));
         final Language language = ((LanguageFileType)file.getFileType()).getLanguage();
 
         final List<LinkInfo> result = new ArrayList<LinkInfo>();
@@ -395,7 +395,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
   }
 
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   public int getCacheSize() {
