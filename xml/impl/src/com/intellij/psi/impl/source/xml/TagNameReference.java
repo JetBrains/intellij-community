@@ -17,9 +17,9 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -108,7 +108,7 @@ public class TagNameReference implements PsiReference {
       if (index != -1) {
         final PsiElement psiElement = resolve();
         
-        if (psiElement instanceof PsiFile) {
+        if (psiElement instanceof PsiFile || psiElement.isEquivalentTo(psiElement.getContainingFile())) {
           newElementName = newElementName.substring(0, index);
         }
       }
