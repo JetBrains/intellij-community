@@ -34,7 +34,7 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>IntelliJ IDEA @@major@@.@@minor@@, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2008</string>
+    <string>IntelliJ IDEA @@major@@.@@minor@@, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2009</string>
     <key>CFBundleShortVersionString</key>
     <string>@@major@@.@@minor@@</string>
     <key>CFBundleVersion</key>
@@ -56,11 +56,11 @@
         <key>com.apple.mrj.application.live-resize</key>
         <string>false</string>
         <key>idea.config.path</key>
-        <string>~/Library/Preferences/IntelliJIDEA80</string>
+        <string>~/Library/Preferences/IntelliJIDEA90</string>
         <key>idea.system.path</key>
-        <string>~/Library/Caches/IntelliJIDEA8x/</string>
+        <string>~/Library/Caches/IntelliJIDEA90/</string>
         <key>idea.plugins.path</key>
-        <string>~/Library/Application Support/IntelliJIDEA80/</string>
+        <string>~/Library/Application Support/IntelliJIDEA90/</string>
         <key>java.endorsed.dirs</key>
         <string></string>
         <key>idea.smooth.progress</key>
