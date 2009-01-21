@@ -33,8 +33,8 @@
       <!-- <reference id="ChangesView.Browse"/>   -->
       <separator/>
 
-      <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch"/>
-      <action id="Git.Checkout" class="git4idea.actions.GitCheckout" text="Checkout Branch"/>
+      <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch..."/>
+      <action id="Git.Checkout" class="git4idea.actions.GitCheckout" text="Checkout Branch..."/>
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add Snapshot">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
@@ -46,14 +46,15 @@
       <!-- <action id="TimeLapseView" class="org.jetbrains.idea.perforce.actions.TimeLapseViewAction"/> -->
       <separator/>
 
-      <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files"/>
-      <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch Changes"/>
-      <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull Changes"/>
-      <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes"/>
-      <action id="Git.MergeTool" class="git4idea.actions.GitMergeTool" text="Merge Tool"/>
-      <action id="Git.Push" class="git4idea.actions.GitPush" text="Push Changes"/>
-      <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes"/>
-      <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes"/>
+      <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
+      <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch Changes..."/>
+      <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull Changes..."/>
+      <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..."/>
+      <action id="Git.MergeTool" class="git4idea.actions.GitMergeTool" text="Merge Tool..."/>
+      <action id="Git.Push" class="git4idea.actions.GitPush" text="Push Changes..."/>
+      <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
+      <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
+      <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..."/>
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase ..."/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>

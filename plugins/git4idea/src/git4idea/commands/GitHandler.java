@@ -215,6 +215,10 @@ public abstract class GitHandler {
    */
   @NonNls public static final String REBASE = "rebase";
   /**
+   * The constant for git command {@value}
+   */
+  @NonNls public static final String RESET = "reset";
+  /**
    * Name of environement variable that specifies editor for the git
    */
   @NonNls public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
@@ -226,6 +230,7 @@ public abstract class GitHandler {
    * The environment
    */
   private final Map<String, String> myEnv;
+
 
   /**
    * A constructor
