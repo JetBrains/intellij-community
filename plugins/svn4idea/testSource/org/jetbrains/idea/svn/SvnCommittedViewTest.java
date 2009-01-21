@@ -145,6 +145,7 @@ public class SvnCommittedViewTest extends SvnTestCase {
     checkin();
 
     final String oldPath = absPath(d1);
+    final String oldF11Path = new File(f11.getPath()).getAbsolutePath();
     moveFileInCommand(d1, d2);
     editFileInCommand(myProject, f11, "new");
 
@@ -159,7 +160,7 @@ public class SvnCommittedViewTest extends SvnTestCase {
                                                    new SvnRepositoryLocation(myRepoUrl), 0);
     checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from ..\\d1"),
       new Data(oldPath, FileStatus.DELETED, null),
-      new Data(absPath(f11), FileStatus.MODIFIED, "- moved from ..\\..\\d1\\f11.txt")});
+      new Data(absPath(f11), FileStatus.MODIFIED, "- moved from " + oldF11Path)});
   }
 
   @Test

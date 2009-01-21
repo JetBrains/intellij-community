@@ -207,6 +207,12 @@ public class SvnRenameTest extends SvnTestCase {
 
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+    try {
+      Thread.sleep(300);
+    }
+    catch (InterruptedException e) {
+      //
+    }
     Assert.assertTrue(exceptions.isEmpty());
     Assert.assertTrue(new File(childPath, "a.txt").exists());
     Assert.assertTrue(new File(childPath, "u.txt").exists());
