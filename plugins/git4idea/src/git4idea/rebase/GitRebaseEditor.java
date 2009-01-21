@@ -172,7 +172,11 @@ public class GitRebaseEditor extends DialogWrapper {
       setOKActionEnabled(false);
       return;
     }
-    if (entries.get(0).getAction() == GitRebaseEntry.Action.squash) {
+    int i = 0;
+    while(i<entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.skip ) {
+      i++;
+    }
+    if (entries.get(i).getAction() == GitRebaseEntry.Action.squash) {
       setErrorText(GitBundle.getString("rebase.editor.invalid.squash"));
       setOKActionEnabled(false);
       return;
