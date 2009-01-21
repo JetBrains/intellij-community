@@ -48,6 +48,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   private int myInactiveTimeout; // Number of seconds of inactivity after which IDEA automatically saves all files
   private final PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
+  private boolean myConfirmExtractFiles = true;
   private String myLastProjectLocation;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
@@ -68,6 +69,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_UTFGUESSING = "UTFGuessing";
 
   @NonNls private static final String OPTION_USE_DEFAULT_BROWSER = "useDefaultBrowser";
+  @NonNls private static final String OPTION_CONFIRM_EXTRACT_FILES = "confirmExtractFiles";
   @NonNls private static final String OPTION_USE_CYCLIC_BUFFER = "useCyclicBuffer";
   @NonNls private static final String OPTION_SEARCH_IN_BACKGROUND = "searchInBackground";
   @NonNls private static final String OPTION_CONFIRM_EXIT = "confirmExit";
@@ -295,6 +297,15 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
         }
       }
 
+      if (OPTION_CONFIRM_EXTRACT_FILES.equals(name)) {
+        try {
+          myConfirmExtractFiles = Boolean.valueOf(value).booleanValue();
+        }
+        catch (Exception ex) {
+          myConfirmExtractFiles = true;
+        }
+      }
+
       if (OPTION_SEARCH_IN_BACKGROUND.equals(name)) {
         try {
           mySearchInBackground = Boolean.valueOf(value).booleanValue();
@@ -382,6 +393,11 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     parentNode.addContent(optionElement);
 
     optionElement = new Element(ELEMENT_OPTION);
+    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CONFIRM_EXTRACT_FILES);
+    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myConfirmExtractFiles));
+    parentNode.addContent(optionElement);
+
+    optionElement = new Element(ELEMENT_OPTION);
     optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_SEARCH_IN_BACKGROUND);
     optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(mySearchInBackground));
     parentNode.addContent(optionElement);
@@ -426,7 +442,13 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myUseDefaultBrowser = value;
   }
 
+  public boolean isConfirmExtractFiles() {
+    return myConfirmExtractFiles;
+  }
 
+  public void setConfirmExtractFiles(boolean value) {
+    myConfirmExtractFiles = value;
+  }
 
   public boolean isConfirmExit() {
     return myConfirmExit;

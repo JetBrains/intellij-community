@@ -19,6 +19,8 @@ public class BrowserSettingsPanel extends JPanel {
   private JRadioButton myUseAlternativeBrowser;
   private BrowserSettingsProvider[] mySettingsProviders;
   private TextFieldWithBrowseButton myBrowserPathField;
+  private JCheckBox myConfirmExtractFiles;
+  private JButton myClearExtractedFiles;
 
   public BrowserSettingsPanel() {
     setLayout(new BorderLayout());
@@ -47,6 +49,18 @@ public class BrowserSettingsPanel extends JPanel {
     myBrowserPathField = new TextFieldWithBrowseButton();
     innerPanel2.add(myBrowserPathField, BorderLayout.CENTER);
     genericPanel.add(innerPanel2);
+
+    JPanel innerPanel3 = new JPanel(new BorderLayout());
+    myConfirmExtractFiles = new JCheckBox("Show confirmation before extracting files");
+    myClearExtractedFiles = new JButton("Clear extracted files");
+    myClearExtractedFiles.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        BrowserUtil.clearExtractedFiles();
+      }
+    });
+    innerPanel3.add(myConfirmExtractFiles, BorderLayout.CENTER);
+    innerPanel3.add(myClearExtractedFiles, BorderLayout.EAST);
+    genericPanel.add(innerPanel3);
 
     outerPanel.add(genericPanel);
 
@@ -80,6 +94,7 @@ public class BrowserSettingsPanel extends JPanel {
     GeneralSettings settings = GeneralSettings.getInstance();
     isModified |= !Comparing.strEqual(settings.getBrowserPath(), myBrowserPathField.getText());
     isModified |= settings.isUseDefaultBrowser() != myUseDefaultBrowser.isSelected();
+    isModified |= settings.isConfirmExtractFiles() != myConfirmExtractFiles.isSelected();
 
     if (isModified) {
       return true;
@@ -108,6 +123,7 @@ public class BrowserSettingsPanel extends JPanel {
 
     settings.setBrowserPath(myBrowserPathField.getText());
     settings.setUseDefaultBrowser(myUseDefaultBrowser.isSelected());
+    settings.setConfirmExtractFiles(myConfirmExtractFiles.isSelected());
 
     for (BrowserSettingsProvider provider : mySettingsProviders) {
       provider.apply();
@@ -124,6 +140,7 @@ public class BrowserSettingsPanel extends JPanel {
     else {
       myUseAlternativeBrowser.setSelected(true);
     }
+    myConfirmExtractFiles.setSelected(settings.isConfirmExtractFiles());
 
     updateBrowserField();
 

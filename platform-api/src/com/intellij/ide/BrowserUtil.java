@@ -16,23 +16,36 @@
 package com.intellij.ide;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.ZipUtil;
+import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import javax.swing.*;
+import java.awt.*;
+import java.io.*;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class BrowserUtil {
+  private static final Logger LOG = Logger.getInstance("#" + BrowserUtil.class.getName());
 
   // The pattern for 'scheme' mainly according to RFC1738.
   // We have to violate the RFC since we need to distinguish
@@ -169,7 +182,6 @@ public class BrowserUtil {
                          IdeBundle.message("title.browser.path.not.found"));
         return;
       }
-
     }
     // We do not need to check browserPath under Win32
 
@@ -182,12 +194,12 @@ public class BrowserUtil {
     return new GeneralSettings();
   }
 
-  public static void launchBrowser(final String url, String name) {
-    //noinspection HardCodedStringLiteral
+  public static void launchBrowser(String url, String name) {
     if (url.startsWith("jar:")) {
-      showErrorMessage(IdeBundle.message("error.cannot.show.in.external.browser", url),
-                       IdeBundle.message("title.cannot.start.browser"));
-      return;
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      if (file == null || !(file.getFileSystem() instanceof JarFileSystem)) return;
+      url = extractFiles(file);
+      if (url == null) return;
     }
     if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
       launchBrowser(url, getDefaultBrowserCommand());
@@ -197,11 +209,107 @@ public class BrowserUtil {
     }
   }
 
+  private static String extractFiles(VirtualFile file) {
+    try {
+      JarFileSystem jarFileSystem = (JarFileSystem)file.getFileSystem();
+      VirtualFile jarVirtualFile = jarFileSystem.getVirtualFileForJar(file);
+
+      String targetFilePath = file.getPath();
+      String targetFileRelativePath = targetFilePath.substring(
+        targetFilePath.indexOf(JarFileSystem.JAR_SEPARATOR) + JarFileSystem.JAR_SEPARATOR.length());
+
+      String jarVirtualFileLocationHash = jarVirtualFile.getName() + Integer.toHexString(jarVirtualFile.getUrl().hashCode());
+      final File outputDir = new File(getExtractedFilesDir(), jarVirtualFileLocationHash);
+
+      final String currentTimestamp = String.valueOf(new File(jarVirtualFile.getPath()).lastModified());
+      final File timestampFile = new File(outputDir, ".idea.timestamp");
+
+      String previousTimestamp = null;
+      if (timestampFile.exists()) {
+        previousTimestamp = new String(FileUtil.loadFileText(timestampFile));
+      }
+
+      if (!currentTimestamp.equals(previousTimestamp)) {
+        ConfirmExtractDialog dialog = new ConfirmExtractDialog();
+        if (dialog.isToBeShown()) {
+          dialog.show();
+          if (!dialog.isOK()) return null;
+        }
+        
+        final ZipFile jarFile = jarFileSystem.getJarFile(file);
+        ZipEntry entry = jarFile.getEntry(targetFileRelativePath);
+        if (entry == null) return null;
+        InputStream is = jarFile.getInputStream(entry);
+        try {
+          ZipUtil.extractEntry(entry, is, outputDir);
+        }
+        finally {
+          is.close();
+        }
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            new Task.Backgroundable(null, "Extracting files...", true) {
+              public void run(@NotNull final ProgressIndicator indicator) {
+                final int size = jarFile.size();
+                final int[] counter = new int[]{0};
+
+                class MyFilter implements FilenameFilter {
+                  private final Set<File> myImportantDirs = new HashSet<File>(
+                    Arrays.asList(outputDir, new File(outputDir, "resources")));
+                  private boolean myImportantOnly;
+
+                  private MyFilter(boolean importantOnly) {
+                    myImportantOnly = importantOnly;
+                  }
+
+                  public boolean accept(File dir, String name) {
+                    indicator.checkCanceled();
+                    boolean result = myImportantOnly == myImportantDirs.contains(dir);
+                    if (result) {
+                      indicator.setFraction(((double)counter[0]) / size);
+                      counter[0]++;
+                    }
+                    return result;
+                  }
+                }
+
+                try {
+                  ZipUtil.extract(jarFile, outputDir, new MyFilter(true));
+                  ZipUtil.extract(jarFile, outputDir, new MyFilter(false));
+                  FileUtil.writeToFile(timestampFile, currentTimestamp.getBytes());
+                }
+                catch (IOException ignore) {
+                }
+              }
+            }.queue();
+          }
+        });
+      }
+
+      return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(new File(outputDir, targetFileRelativePath).getPath()));
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      Messages.showErrorDialog("Cannot extract files: " + e.getMessage(), "Error");
+      return null;
+    }
+  }
+
+  public static void clearExtractedFiles() {
+    FileUtil.delete(getExtractedFilesDir());
+  }
+
+  private static File getExtractedFilesDir() {
+    return new File(PathManager.getSystemPath(), "ExtractedFiles");
+  }
+
   public static void launchBrowser(@NonNls final String url) {
     launchBrowser(url, (String)null);
   }
 
-  @NonNls private static String[] getDefaultBrowserCommand() {
+  @NonNls
+  private static String[] getDefaultBrowserCommand() {
     if (SystemInfo.isWindows9x) {
       return new String[]{"command.com", "/c", "start"};
     }
@@ -217,7 +325,6 @@ public class BrowserUtil {
     else {
       return null;
     }
-
   }
 
   public static boolean canStartDefaultBrowser() {
@@ -230,5 +337,44 @@ public class BrowserUtil {
     }
 
     return false;
+  }
+
+  private static class ConfirmExtractDialog extends OptionsDialog {
+    private ConfirmExtractDialog() {
+      super(null);
+      setTitle("Confirmation");
+      init();
+    }
+
+    protected boolean isToBeShown() {
+      return getGeneralSettingsInstance().isConfirmExtractFiles();
+    }
+
+    protected void setToBeShown(boolean value, boolean onOk) {
+      getGeneralSettingsInstance().setConfirmExtractFiles(value);
+    }
+
+    protected boolean shouldSaveOptionsOnCancel() {
+      return true;
+    }
+
+    protected Action[] createActions() {
+      setOKButtonText(CommonBundle.getYesButtonText());
+      return new Action[] {getOKAction(), getCancelAction()};
+    }
+
+    protected JComponent createCenterPanel() {
+      JPanel panel = new JPanel(new BorderLayout());
+      String message = "The files are inside an archive, do you want them to be extracted?";
+      JLabel label = new JLabel(message);
+
+      label.setIconTextGap(10);
+      label.setIcon(Messages.getQuestionIcon());
+
+      panel.add(label, BorderLayout.CENTER);
+      panel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
+
+      return panel;
+    }
   }
 }
