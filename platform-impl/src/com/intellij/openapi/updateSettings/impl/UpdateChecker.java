@@ -334,17 +334,18 @@ public final class UpdateChecker {
     PatchInfo patch = newVersion.findPatchForCurrentBuild();
     if (patch == null) throw new IOException("No patch is available for current version");
 
+    String platform = System.getProperty("idea.platform.prefix", "idea");
+
     String osSuffix = "";
     if (SystemInfo.isWindows) osSuffix = "-win";
     else if (SystemInfo.isMac) osSuffix = "-mac";
     else if (SystemInfo.isUnix) osSuffix = "-unix";
 
-    String fileName = "idea-" + patch.getFromBuild() + "-" + newVersion.getLatestBuild() + "-patch" + osSuffix + ".jar";
+    String fileName = platform + "-" + patch.getFromBuild() + "-" + newVersion.getLatestBuild() + "-patch" + osSuffix + ".jar";
     URLConnection connection = null;
     InputStream in = null;
     OutputStream out = null;
 
-    String platform = System.getProperty("idea.platform.prefix", "idea");
     String patchFileName = "jetbrains.patch.jar." + platform;
     File patchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
     
