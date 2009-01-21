@@ -237,4 +237,21 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   public void writeExternal(Element element) throws WriteExternalException {
     myExternalizable.writeExternal(element);
   }
+
+  @Override
+  public String toString() {
+    return "[" +
+           getForegroundColor() +
+           "," +
+           getBackgroundColor() +
+           "," +
+           getFontType() +
+           "," +
+           getEffectType() +
+           "," +
+           getEffectColor() +
+           "," +
+           getErrorStripeColor() +
+           "]";
+  }
 }

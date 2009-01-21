@@ -241,7 +241,7 @@ public class UpdateHighlightersUtil {
         }
         info.fixMarker = getOrCreate(document, ranges2markersCache, new TextRange(info.fixStartOffset, info.fixEndOffset));
 
-        assert Comparing.equal(info.getTextAttributes(psiFile), highlighter.getTextAttributes());
+        assert Comparing.equal(info.getTextAttributes(psiFile), highlighter.getTextAttributes()) : "Info: "+info.getTextAttributes(psiFile)+"; highlighter:"+highlighter.getTextAttributes();
         
         result.add(info);
       }
