@@ -48,6 +48,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 import java.util.*;
 import java.util.List;
 
@@ -360,9 +362,16 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                     return myProfilesCombo.getSelectedItem();
                 }
 
-                public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+                public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
                     final Collection<CopyrightProfile> copyrights = myProfilesModel.getAllProfiles().values();
                     myProfilesCombo = new ComboBox(copyrights.toArray(new CopyrightProfile[copyrights.size()]), 60);
+                  myProfilesCombo.addItemListener(new ItemListener() {
+                    public void itemStateChanged(final ItemEvent e) {
+                      if (table.isEditing()) {
+                        stopCellEditing();
+                      }
+                    }
+                  });
                     myProfilesCombo.setRenderer(new DefaultListCellRenderer() {
                         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                             Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -409,8 +418,15 @@ public class ProjectSettingsPanel extends PanelWithButtons {
                     return myCombo.getSelectedScope();
                 }
 
-                public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+                public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
                     myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope) value).getName(), false);
+                  myCombo.getComboBox().addItemListener(new ItemListener() {
+                    public void itemStateChanged(final ItemEvent e) {
+                      if (table.isEditing()) {
+                        stopCellEditing();
+                      }
+                    }
+                  });
                     return new CellEditorComponentWithBrowseButton(myCombo, this);
                 }
             };
