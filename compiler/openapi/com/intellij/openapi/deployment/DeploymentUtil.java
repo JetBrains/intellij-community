@@ -144,7 +144,7 @@ public abstract class DeploymentUtil {
     return new File(PathUtil.getCanonicalPath(appendToPath(file.getPath(),outputRelativePath)));
   }
 
-  public abstract ModuleLink createModuleLink(Module dep, Module module);
+  public abstract ModuleLink createModuleLink(@NotNull Module dep, @NotNull Module module);
 
   public abstract LibraryLink createLibraryLink(Library library, @NotNull Module parentModule);
 

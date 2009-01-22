@@ -21,7 +21,5 @@ interface LibraryInfo {
 
   String getLevel();
 
-  void addUrl(String url);
-
   void readExternal(Element element) throws InvalidDataException;
 }

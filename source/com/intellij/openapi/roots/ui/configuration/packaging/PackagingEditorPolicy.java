@@ -24,7 +24,7 @@ public abstract class PackagingEditorPolicy {
   public static final String NOT_APPLICABLE = IdeBundle.message("text.not.applicable");
   private final Module myModule;
 
-  protected PackagingEditorPolicy(final Module module) {
+  protected PackagingEditorPolicy(final @NotNull Module module) {
     myModule = module;
   }
 
@@ -84,6 +84,7 @@ public abstract class PackagingEditorPolicy {
     return getAllowedPackagingMethods(element).length > 0;
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }

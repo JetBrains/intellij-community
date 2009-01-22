@@ -83,16 +83,11 @@ public class LibraryLinkImpl extends LibraryLink {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.LibraryLink");
   private LibraryInfo myLibraryInfo;
-  @Nullable
   private final Project myProject;
 
   public LibraryLinkImpl(@Nullable Library library, @NotNull Module parentModule) {
-    this(library, parentModule.getProject(), parentModule);
-  }
-
-  public LibraryLinkImpl(@Nullable Library library, @Nullable Project project, @Nullable Module parentModule) {
     super(parentModule);
-    myProject = project;
+    myProject = parentModule.getProject();
     if (library == null) {
       myLibraryInfo = new LibraryInfoImpl();
     }
@@ -148,7 +143,8 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   public String getPresentableName() {
-    if (getName() != null) return getName();
+    final String name = getName();
+    if (name != null) return name;
     List<String> urls = getUrls();
     if (urls.isEmpty()) return CompilerBundle.message("linrary.link.empty.library.presentable.name");
     final String url = urls.get(0);
@@ -175,10 +171,6 @@ public class LibraryLinkImpl extends LibraryLink {
       final String text = methodToDescriptionForFiles.get(method);
       return text != null ? text : methodToDescriptionForDirs.get(method);
     }
-  }
-
-  public void addUrl(String url) {
-    myLibraryInfo.addUrl(url);
   }
 
   public List<String> getUrls() {

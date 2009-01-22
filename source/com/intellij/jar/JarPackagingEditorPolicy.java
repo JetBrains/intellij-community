@@ -30,7 +30,7 @@ public class JarPackagingEditorPolicy extends PackagingEditorPolicy {
     PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
   };
 
-  public JarPackagingEditorPolicy(final Module module) {
+  public JarPackagingEditorPolicy(final @NotNull Module module) {
     super(module);
   }
 

@@ -346,7 +346,7 @@ public class BuildJarDialog extends DialogWrapper {
     private final BuildJarSettings myModifiedBuildJarSettings;
     private PackagingEditor myEditor;
 
-    public SettingsEditor(Module module, BuildJarSettings buildJarSettings) {
+    public SettingsEditor(@NotNull Module module, @NotNull BuildJarSettings buildJarSettings) {
       myModule = module;
       myBuildJarSettings = buildJarSettings;
 
@@ -409,7 +409,7 @@ public class BuildJarDialog extends DialogWrapper {
     try {
       from.writeExternal(element);
     }
-    catch (WriteExternalException e) {
+    catch (WriteExternalException ignored) {
     }
     try {
       to.readExternal(element);

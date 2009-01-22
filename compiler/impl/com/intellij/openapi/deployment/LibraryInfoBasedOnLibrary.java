@@ -47,9 +47,6 @@ class LibraryInfoBasedOnLibrary implements LibraryInfo {
     return myLibrary;
   }
 
-  public void addUrl(String url) {
-  }
-
   public void readExternal(Element element) throws InvalidDataException {
   }
 

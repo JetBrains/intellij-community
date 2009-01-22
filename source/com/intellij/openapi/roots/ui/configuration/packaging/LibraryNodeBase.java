@@ -46,9 +46,6 @@ abstract class LibraryNodeBase extends PackagingTreeNode {
 
   public void navigate(final ModuleStructureConfigurable configurable) {
     Module parentModule = myLibraryLink.getParentModule();
-    if (parentModule == null) {
-      return;
-    }
 
     final PackagingArtifact owner = getOwner();
     if (owner != null) {

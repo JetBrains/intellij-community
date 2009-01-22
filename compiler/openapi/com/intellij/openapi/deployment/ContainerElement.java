@@ -21,7 +21,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,14 +29,14 @@ import java.util.Map;
 
 public abstract class ContainerElement implements JDOMExternalizable, Cloneable, ResolvableElement {
   private final Map<String,String> myAttributes = new LinkedHashMap<String, String>();
-  private Module myParentModule;
+  private final Module myParentModule;
   @NonNls public static final String URI_ATTR = "URI";
   @NonNls public static final String PACKAGING_METHOD_ATTR = "method";
   @NonNls public static final String ELEMENT_ATTRIBUTE = "attribute";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   @NonNls public static final String ATTRIBUTE_VALUE = "value";
 
-  protected ContainerElement(@Nullable Module parentModule) {
+  protected ContainerElement(@NotNull Module parentModule) {
     myParentModule = parentModule;
   }
 
@@ -64,12 +64,9 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable,
     return myAttributes.get(name);
   }
 
-  @Nullable
+  @NotNull
   public Module getParentModule() {
     return myParentModule;
-  }
-  public void setParentModule(Module module) {
-    myParentModule = module;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

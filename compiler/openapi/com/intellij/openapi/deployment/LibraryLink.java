@@ -40,8 +40,6 @@ public abstract class LibraryLink extends ContainerElement {
   @Nullable
   public abstract Library getLibrary();
 
-  public abstract void addUrl(String url);
-
   public abstract List<String> getUrls();
   public abstract List<String> getClassesRootUrls();
 

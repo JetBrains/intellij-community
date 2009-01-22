@@ -67,13 +67,13 @@ public class ModuleLinkImpl extends ModuleLink {
     methodToDescription.put(PackagingMethod.INCLUDE_MODULE_IN_BUILD, CompilerBundle.message("packaging.method.description.include.module.in.build"));
   }
 
-  public ModuleLinkImpl(@NotNull Module module, Module parentModule) {
+  public ModuleLinkImpl(@NotNull Module module, @NotNull Module parentModule) {
     super(parentModule);
     myModule = module;
     myModuleName = ModuleUtil.getModuleNameInReadAction(myModule);
   }
 
-  public ModuleLinkImpl(String moduleName, Module parentModule) {
+  public ModuleLinkImpl(String moduleName, @NotNull Module parentModule) {
     super(parentModule);
     myModuleName = moduleName;
   }

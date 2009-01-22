@@ -50,11 +50,6 @@ class LibraryInfoImpl implements LibraryInfo {
     return myLevel;
   }
 
-  public void addUrl(String url) {
-    myUrls.clear();
-    myUrls.add(url);
-  }
-
   @Nullable
   public Library findLibrary(final Project project, final Module module, final @Nullable ModulesProvider provider) {
     if (LibraryLink.MODULE_LEVEL.equals(myLevel)) {

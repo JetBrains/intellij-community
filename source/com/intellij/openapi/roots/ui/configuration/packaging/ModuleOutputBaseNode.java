@@ -34,7 +34,6 @@ abstract class ModuleOutputBaseNode extends PackagingTreeNode {
 
   public void navigate(final ModuleStructureConfigurable configurable) {
     Module parentModule = myModuleLink.getParentModule();
-    if (parentModule == null) return;
 
     PackagingArtifact owner = getOwner();
     if (owner != null) {

@@ -430,7 +430,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     }
   }
 
-  public ModuleLink createModuleLink(Module dep, Module module) {
+  public ModuleLink createModuleLink(@NotNull Module dep, @NotNull Module module) {
     return new ModuleLinkImpl(dep, module);
   }
 

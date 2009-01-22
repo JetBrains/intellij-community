@@ -23,7 +23,7 @@ import java.util.*;
 public class PackagingConfigurationImpl implements PackagingConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.J2EEModuleContainerImpl");
   protected ModulesProvider myDefaultModulesProvider;
-  protected Module myParentModule;
+  protected final Module myParentModule;
   protected final Set<ContainerElement> myContents = new LinkedHashSet<ContainerElement>();
 
   @NonNls public static final String TYPE_ATTRIBUTE_NAME = "type";
@@ -69,7 +69,7 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
     }
   }
 
-  protected ContainerElement createElement(final Element child, final Module module, final String type) throws InvalidDataException {
+  protected ContainerElement createElement(final @NotNull Element child, final @NotNull Module module, final String type) throws InvalidDataException {
     if (MODULE_TYPE.equals(type)) {
       return new ModuleLinkImpl((String)null, module);
     }
