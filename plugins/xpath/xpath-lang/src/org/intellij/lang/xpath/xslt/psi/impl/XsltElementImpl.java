@@ -113,7 +113,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, Navigat
         return nameElement != null ? nameElement.getValue() : null;
     }
 
-    public PsiElement setName(String name) throws IncorrectOperationException {
+    public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
         assert myElement.isValid();
 
         myElement.setAttribute("name", name);
