@@ -107,4 +107,15 @@ public class FieldMayBeFinal {
             }
         }
     }
+
+    static class Test4 {
+        private static String hostName;
+        static {
+            try {
+                hostName = java.net.InetAddress.getLocalHost().getHostName();
+            } catch (Exception ignored) {
+                throw new RuntimeException();
+            }
+        }
+    }
 }

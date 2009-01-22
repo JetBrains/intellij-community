@@ -275,20 +275,21 @@ public class InitializationUtils{
             @NotNull PsiTryStatement tryStatement, PsiVariable variable,
             @NotNull Set<MethodSignature> checkedMethods, boolean strict){
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        if (!blockAssignsVariableOrFails(tryBlock, variable,
-                        checkedMethods, strict)) {
-            return false;
-        }
+        boolean initializedInTryAndCatch =
+                blockAssignsVariableOrFails(tryBlock, variable,
+                        checkedMethods, strict);
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        for (final PsiCodeBlock catchBlock : catchBlocks){
+        for(final PsiCodeBlock catchBlock : catchBlocks){
             if (strict) {
-                if (!blockFails(catchBlock)) {
-                    return false;
-                }
-            } else if (!blockAssignsVariableOrFails(catchBlock, variable,
-                    checkedMethods, strict)) {
-                return false;
+                initializedInTryAndCatch &= blockFails(catchBlock);
+            } else {
+                initializedInTryAndCatch &= blockAssignsVariableOrFails(
+                        catchBlock, variable,
+                        checkedMethods, strict);
             }
+        }
+        if(initializedInTryAndCatch){
+            return true;
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
         return blockAssignsVariableOrFails(finallyBlock, variable,
