@@ -389,7 +389,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void release() {
     if (isReleased) {
-      LOG.error("Double release. First released at: " + myReleasedAt);
+      LOG.error("Double release. First released at:  =====\n" + myReleasedAt+"\n======");
     }
 
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
