@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -272,7 +273,8 @@ public class SvnCommittedViewTest extends SvnTestCase {
   private String printChanges(final Collection<Change> changes) {
     final StringBuilder sb = new StringBuilder("Changes: ");
     for (Change change : changes) {
-      sb.append("'").append(change.getAfterRevision().getFile().getIOFile().getAbsolutePath()).append("' | ");
+      final ContentRevision cr = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
+      sb.append("'").append(cr.getFile().getIOFile().getAbsolutePath()).append("' | ");
     }
     return sb.toString();
   }
