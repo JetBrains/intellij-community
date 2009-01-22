@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Bas Leijdekkers
+ * Copyright 2005-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,14 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreMethodsAccessedFromAnonymousClass = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.only.used.from.inner.class.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiNamedElement element = (PsiNamedElement)infos[0];
@@ -59,6 +61,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
                 "method.only.used.from.inner.class.problem.descriptor", name);
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
@@ -67,11 +70,12 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
                 this, "ignoreMethodsAccessedFromAnonymousClass");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new MethodOnlyUsedFromNestedClassVisitor();
+        return new MethodOnlyUsedFromInnerClassVisitor();
     }
 
-    private class MethodOnlyUsedFromNestedClassVisitor
+    private class MethodOnlyUsedFromInnerClassVisitor
         extends BaseInspectionVisitor {
 
         @Override public void visitMethod(PsiMethod method) {
