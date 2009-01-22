@@ -49,9 +49,9 @@ public class TabbedPaneWrapper implements Disposable {
   public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
     final TabFactory factory;
     if (SwingConstants.BOTTOM == tabPlacement || SwingConstants.TOP == tabPlacement) {
-      factory = new JBTabsFactory(null, null);
+      factory = new JBTabsFactory(this, null, null);
     } else {
-      factory = new JTabbedPaneFactory();
+      factory = new JTabbedPaneFactory(this);
     }
 
     init(tabPlacement, installKeyboardNavigation, factory);
@@ -396,13 +396,17 @@ public class TabbedPaneWrapper implements Disposable {
     }
   }
 
-  protected class TabbedPaneHolder extends JPanel {
-    public TabbedPaneHolder() {
+  protected static class TabbedPaneHolder extends JPanel {
+
+    private TabbedPaneWrapper myWrapper;
+
+    public TabbedPaneHolder(TabbedPaneWrapper wrapper) {
       super(new BorderLayout());
+      myWrapper = wrapper;
     }
 
     public boolean requestDefaultFocus() {
-      final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane.getComponent());
+      final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myWrapper.myTabbedPane.getComponent());
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {
           preferredFocusedComponent.requestFocus();
@@ -423,7 +427,9 @@ public class TabbedPaneWrapper implements Disposable {
 
     public void updateUI() {
       super.updateUI();
-      myTabbedPane.updateUI();
+      if (myWrapper != null) {
+        myWrapper.myTabbedPane.updateUI();
+      }
     }
   }
 
@@ -437,13 +443,19 @@ public class TabbedPaneWrapper implements Disposable {
     TabWrapper createTabWrapper(JComponent component);
   }
 
-  private class JTabbedPaneFactory implements TabFactory {
+  private static class JTabbedPaneFactory implements TabFactory {
+    private TabbedPaneWrapper myWrapper;
+
+    private JTabbedPaneFactory(TabbedPaneWrapper wrapper) {
+      myWrapper = wrapper;
+    }
+
     public TabbedPane createTabbedPane(int tabPlacement) {
       return new TabbedPaneImpl(tabPlacement);
     }
 
     public TabbedPaneHolder createTabbedPaneHolder() {
-      return new TabbedPaneHolder();
+      return new TabbedPaneHolder(myWrapper);
     }
 
     public TabWrapper createTabWrapper(JComponent component) {
@@ -451,12 +463,14 @@ public class TabbedPaneWrapper implements Disposable {
     }
   }
 
-  private class JBTabsFactory implements TabFactory {
+  private static class JBTabsFactory implements TabFactory {
 
     private Project myProject;
     private Disposable myParent;
+    private TabbedPaneWrapper myWrapper;
 
-    public JBTabsFactory(Project project, Disposable parent) {
+    public JBTabsFactory(TabbedPaneWrapper wrapper, Project project, Disposable parent) {
+      myWrapper = wrapper;
       myProject = project;
       myParent = parent;
     }
@@ -466,7 +480,7 @@ public class TabbedPaneWrapper implements Disposable {
     }
 
     public TabbedPaneHolder createTabbedPaneHolder() {
-      return new TabbedPaneHolder() {
+      return new TabbedPaneHolder(myWrapper) {
         @Override
         public boolean requestDefaultFocus() {
           getTabs().requestFocus();
@@ -483,7 +497,7 @@ public class TabbedPaneWrapper implements Disposable {
     }
 
     public JBTabs getTabs() {
-      return ((JBTabsPaneImpl)myTabbedPane).getTabs();
+      return ((JBTabsPaneImpl)myWrapper.myTabbedPane).getTabs();
     }
 
     public void dispose() {
@@ -500,7 +514,7 @@ public class TabbedPaneWrapper implements Disposable {
     }
 
     public AsJBTabs(@Nullable Project project, int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parent) {
-      init(tabPlacement, installKeyboardNavigation, new JBTabsFactory(project, parent));
+      init(tabPlacement, installKeyboardNavigation, new JBTabsFactory(this, project, parent));
     }
 
     public JBTabs getTabs() {
@@ -518,7 +532,7 @@ public class TabbedPaneWrapper implements Disposable {
     }
 
     public AsJTabbedPane(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
-      init(tabPlacement, installKeyboardNavigation, new JTabbedPaneFactory());
+      init(tabPlacement, installKeyboardNavigation, new JTabbedPaneFactory(this));
     }
   }
 

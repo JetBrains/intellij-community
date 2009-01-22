@@ -114,7 +114,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     }
 
     protected TabbedPaneHolder createTabbedPaneHolder() {
-      return new MyTabbedPaneHolder();
+      return new MyTabbedPaneHolder(this);
     }
 
     private class MyTabbedPane extends TabbedPaneImpl {
@@ -247,6 +247,11 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     }
 
     private class MyTabbedPaneHolder extends TabbedPaneHolder implements DataProvider {
+
+      private MyTabbedPaneHolder(TabbedPaneWrapper wrapper) {
+        super(wrapper);
+      }
+
       public Object getData(String dataId) {
         if (DataConstantsEx.CONTENT_MANAGER.equals(dataId)) {
           return myManager;
