@@ -124,6 +124,13 @@ public class SliceUtil {
   }
 
   static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {
+    if (field.hasInitializer()) {
+      PsiExpression initializer = field.getInitializer();
+      if (initializer != null) {
+        SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(initializer), parent, field);
+        if (!processor.process(usage)) return false;
+      }
+    }
     return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         PsiElement element = reference.getElement();
