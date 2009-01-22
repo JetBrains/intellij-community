@@ -36,7 +36,7 @@ import java.util.Map;
 
   private final Project myProject;
 
-  private Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<VirtualFile,Editor>();
+  private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<VirtualFile,Editor>();
   private VirtualFile myActiveFile = null;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
@@ -52,39 +52,39 @@ import java.util.Map;
   }
 
   public void createSplitter(int orientation) {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 
   public void changeSplitterOrientation() {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 
   public void flipTabs() {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 
   public boolean tabsMode() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public boolean isInSplitter() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public boolean hasOpenedFile() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public VirtualFile getCurrentFile() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public boolean isChanged(@NotNull EditorComposite editor) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public EditorWindow getNextWindow(@NotNull EditorWindow window) {
@@ -109,8 +109,7 @@ import java.util.Map;
 
   public void closeAllFiles() {
     final EditorFactory editorFactory = EditorFactory.getInstance();
-    for (VirtualFile file : myVirtualFile2Editor.keySet()) {
-      Editor editor = myVirtualFile2Editor.get(file);
+    for (Editor editor : myVirtualFile2Editor.values()) {
       if (editor != null && !editor.isDisposed()){
         editorFactory.releaseEditor(editor);
       }
@@ -122,26 +121,27 @@ import java.util.Map;
     return openTextEditor(descriptor, false);
   }
 
-  public FileEditorProvider getProvider(FileEditor editor) {
+  private FileEditorProvider getProvider(FileEditor editor) {
     return new FileEditorProvider() {
-      public boolean accept(Project project, VirtualFile file) {
+      public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
         return false;
       }
 
-      public FileEditor createEditor(Project project, VirtualFile file) {
+      @NotNull
+      public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
         return null;
       }
 
-      public void disposeEditor(FileEditor editor) {
+      public void disposeEditor(@NotNull FileEditor editor) {
         //Disposer.dispose(editor);
       }
 
       @NotNull
-      public FileEditorState readState(Element sourceElement, Project project, VirtualFile file) {
+      public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
         return null;
       }
 
-      public void writeState(FileEditorState state, Project project, Element targetElement) {
+      public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
 
       }
 
@@ -150,6 +150,7 @@ import java.util.Map;
         return "";
       }
 
+      @NotNull
       public FileEditorPolicy getPolicy() {
         return null;
       }
@@ -157,7 +158,7 @@ import java.util.Map;
   }
 
   public EditorWindow getCurrentWindow() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public void setCurrentWindow(EditorWindow window) {
@@ -171,11 +172,11 @@ import java.util.Map;
   }
 
   public void unsplitWindow() {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 
   public void unsplitAllWindow() {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 
   @NotNull
@@ -226,6 +227,7 @@ import java.util.Map;
       EditorFactory.getInstance().releaseEditor(editor);
       myVirtualFile2Editor.remove(file);
     }
+    if (file == myActiveFile) myActiveFile = null;
   }
 
   public void closeFile(@NotNull VirtualFile file, @NotNull EditorWindow window) {
@@ -256,7 +258,7 @@ import java.util.Map;
   }
 
   public Editor getEditor(VirtualFile file) {
-    return myVirtualFile2Editor.get(myActiveFile);
+    return myVirtualFile2Editor.get(file);
   }
 
   @NotNull
@@ -331,9 +333,10 @@ import java.util.Map;
 
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
+  @NotNull
   public String getComponentName() {
     return "TestEditorManager";
   }
