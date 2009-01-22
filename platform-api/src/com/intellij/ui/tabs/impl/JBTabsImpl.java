@@ -122,6 +122,17 @@ public class JBTabsImpl extends JComponent
   JBTabsPosition myPosition = JBTabsPosition.top;
 
   private TabsBorder myBorder = new TabsBorder(this);
+  private BaseNavigationAction myNextAction;
+  private BaseNavigationAction myPrevAction;
+
+
+  public JBTabsImpl(@NotNull Project project) {
+    this(project, project);
+  }
+
+  public JBTabsImpl(@NotNull Project project, Disposable parent) {
+    this(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), parent);
+  }
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
@@ -136,8 +147,11 @@ public class JBTabsImpl extends JComponent
     myNavigationActions = new DefaultActionGroup();
 
     if (myActionManager != null) {
-      myNavigationActions.add(new SelectNextAction(this));
-      myNavigationActions.add(new SelectPreviousAction(this));
+      myNextAction = new SelectNextAction(this, myActionManager);
+      myPrevAction = new SelectPreviousAction(this, myActionManager);
+
+      myNavigationActions.add(myNextAction);
+      myNavigationActions.add(myPrevAction);
     }
 
     setUiDecorator(null);
@@ -196,6 +210,15 @@ public class JBTabsImpl extends JComponent
 
     add(mySingleRowLayout.myLeftGhost);
     add(mySingleRowLayout.myRightGhost);
+  }
+
+  public void setNavigationActiondBinding(String prevActionId, String nextActionId) {
+    if (myNextAction != null) {
+      myNextAction.reconnect(nextActionId);
+    }
+    if (myPrevAction != null) {
+      myPrevAction.reconnect(prevActionId);
+    }
   }
 
   public void dispose() {
@@ -2039,9 +2062,11 @@ public class JBTabsImpl extends JComponent
   private static abstract class BaseNavigationAction extends AnAction {
 
     private ShadowAction myShadow;
+    private ActionManager myActionManager;
 
-    protected BaseNavigationAction(final String copyFromID, JComponent c) {
-      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(copyFromID), c);
+    protected BaseNavigationAction(final String copyFromID, JComponent c, ActionManager mgr) {
+      myActionManager = mgr;
+      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), c);
     }
 
     public final void update(final AnActionEvent e) {
@@ -2055,6 +2080,10 @@ public class JBTabsImpl extends JComponent
       if (enabled) {
         _update(e, tabs, selectedIndex);
       }
+    }
+
+    public void reconnect(String actionId) {
+      myShadow.reconnect(myActionManager.getAction(actionId));
     }
 
     protected abstract void _update(AnActionEvent e, final JBTabsImpl tabs, int selectedIndex);
@@ -2073,8 +2102,8 @@ public class JBTabsImpl extends JComponent
 
   private static class SelectNextAction extends BaseNavigationAction {
 
-    public SelectNextAction(JComponent c) {
-      super(IdeActions.ACTION_NEXT_TAB, c);
+    public SelectNextAction(JComponent c, ActionManager mgr) {
+      super(IdeActions.ACTION_NEXT_TAB, c, mgr);
     }
 
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
@@ -2087,8 +2116,8 @@ public class JBTabsImpl extends JComponent
   }
 
   private static class SelectPreviousAction extends BaseNavigationAction {
-    public SelectPreviousAction(JComponent c) {
-      super(IdeActions.ACTION_PREVIOUS_TAB, c);
+    public SelectPreviousAction(JComponent c, ActionManager mgr) {
+      super(IdeActions.ACTION_PREVIOUS_TAB, c, mgr);
     }
 
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {

@@ -150,4 +150,9 @@ public final class ShadowAction implements Disposable {
     return KeymapManager.getInstance();
   }
 
+  public void reconnect(AnAction copyFromAction) {
+    disconnect();
+    myCopyFromAction = copyFromAction;
+    _connect();
+  }
 }

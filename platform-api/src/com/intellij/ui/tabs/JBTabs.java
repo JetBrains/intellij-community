@@ -88,5 +88,8 @@ public interface JBTabs {
   int getIndexOf(@Nullable final TabInfo tabInfo);
 
   void sortTabs(Comparator<TabInfo> comparator);
-  
+
+  void requestFocus();
+
+  void setNavigationActiondBinding(String prevActiobId, String nextActionId);
 }

@@ -34,7 +34,6 @@ public class JBTabsTest {
     });
     tabs.setTestMode(true);
 
-    frame.getContentPane().add(new JTree(), BorderLayout.WEST);
     frame.getContentPane().add(tabs.getComponent(), BorderLayout.CENTER);
 
     JPanel south = new JPanel(new FlowLayout());
@@ -211,7 +210,10 @@ public class JBTabsTest {
 
     //tabs.setBorder(new LineBorder(Color.blue, 2));
     //tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
-    tabs.setBorder(new EmptyBorder(30, 0, 0, 0));
+    tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
+
+    tabs.getPresentation().setTabSidePaintBorder(1).setPaintBorder(0, 0, 0, 0);
+    tabs.getPresentation().setTabsPosition(JBTabsPosition.left);
 
     tabs.setUiDecorator(new UiDecorator() {
       public UiDecoration getDecoration() {

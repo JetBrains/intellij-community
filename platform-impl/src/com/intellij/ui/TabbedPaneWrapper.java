@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
@@ -97,7 +98,11 @@ public class TabbedPaneWrapper implements Disposable {
   }
 
   public synchronized void insertTab(final String title, final Icon icon, final JComponent component, final String tip, final int index) {
-    myTabbedPane.insertTab(title, icon, new TabWrapper(component), tip, index);
+    myTabbedPane.insertTab(title, icon, createTabWrapper(component), tip, index);
+  }
+
+  protected TabWrapper createTabWrapper(JComponent component) {
+    return new TabWrapper(component);
   }
 
   protected TabbedPane createTabbedPane(final int tabPlacement) {
@@ -217,7 +222,7 @@ public class TabbedPaneWrapper implements Disposable {
    */
   public final synchronized void setComponentAt(final int index, final JComponent component) {
     assertIsDispatchThread();
-    myTabbedPane.setComponentAt(index, new TabWrapper(component));
+    myTabbedPane.setComponentAt(index, createTabWrapper(component));
   }
 
   /**
@@ -304,6 +309,8 @@ public class TabbedPaneWrapper implements Disposable {
   public static final class TabWrapper extends JPanel implements DataProvider{
     private JComponent myComponent;
 
+    protected boolean myCustomFocus = true;
+
     public TabWrapper(@NotNull final JComponent component) {
       super(new BorderLayout());
       myComponent = component;
@@ -336,6 +343,7 @@ public class TabbedPaneWrapper implements Disposable {
     }
 
     public boolean requestDefaultFocus() {
+      if (!myCustomFocus) return super.requestDefaultFocus();
       if (myComponent == null) return false; // Just in case someone requests the focus when we're already removed from the Swing tree.
       final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myComponent);
       if (preferredFocusedComponent != null) {
@@ -349,10 +357,15 @@ public class TabbedPaneWrapper implements Disposable {
     }
 
     public void requestFocus() {
-      requestDefaultFocus();
+      if (!myCustomFocus) {
+        super.requestFocus();
+      } else {
+        requestDefaultFocus();
+      }
     }
 
     public boolean requestFocusInWindow() {
+      if (!myCustomFocus) return super.requestFocusInWindow();
       return requestDefaultFocus();
     }
   }
@@ -373,7 +386,7 @@ public class TabbedPaneWrapper implements Disposable {
       super(new BorderLayout());
     }
 
-    public final boolean requestDefaultFocus() {
+    public boolean requestDefaultFocus() {
       final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane.getComponent());
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {
@@ -407,23 +420,42 @@ public class TabbedPaneWrapper implements Disposable {
 
     private Project myProject;
 
-    public AsJBTabs(@Nullable Project project) {
-      myProject = project;
+    public AsJBTabs(@NotNull Project project) {
+      this(project, SwingConstants.TOP);
     }
 
-    public AsJBTabs(@Nullable Project project, int tabPlacement) {
-      super(tabPlacement);
-      myProject = project;
+    public AsJBTabs(@NotNull Project project, int tabPlacement) {
+      this(project, tabPlacement, null, project);
     }
 
-    public AsJBTabs(@Nullable Project project, int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
+    public AsJBTabs(@Nullable Project project, int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parent) {
       super(tabPlacement, installKeyboardNavigation);
       myProject = project;
+      Disposer.register(parent, this);
     }
 
     @Override
     protected TabbedPane createTabbedPane(int tabPlacement) {
       return new JBTabsPaneImpl(myProject, tabPlacement, this);
+    }
+
+    @Override
+    protected TabbedPaneHolder createTabbedPaneHolder() {
+      return new TabbedPaneHolder() {
+        @Override
+        public boolean requestDefaultFocus() {
+          getTabs().requestFocus();
+          return true;
+        }
+
+      };
+    }
+
+    @Override
+    protected TabWrapper createTabWrapper(JComponent component) {
+      final TabWrapper tabWrapper = new TabWrapper(component);
+      tabWrapper.myCustomFocus = false;
+      return tabWrapper;
     }
 
     public JBTabs getTabs() {

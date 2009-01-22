@@ -28,6 +28,7 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
         fireChanged(new ChangeEvent(myTabs));
       }
     }).getPresentation().setPaintFocus(false);
+
     setTabPlacement(tabPlacement);
   }
 
@@ -46,6 +47,7 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   }
 
   public void setKeyboardNavigation(PrevNextActionsDescriptor installKeyboardNavigation) {
+    myTabs.setNavigationActiondBinding(installKeyboardNavigation.getPrevActionId(), installKeyboardNavigation.getNextActionId());
   }
 
   public void addChangeListener(ChangeListener listener) {
