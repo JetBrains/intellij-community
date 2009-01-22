@@ -1,5 +1,6 @@
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -20,6 +21,7 @@ import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,7 @@ import java.util.*;
 import java.util.List;
 
 public class JBTabsImpl extends JComponent
-    implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation {
+  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -86,7 +88,7 @@ public class JBTabsImpl extends JComponent
   private UiDecorator myUiDecorator;
   static final UiDecorator ourDefaultDecorator = new DefautDecorator();
 
-  private boolean myPaintFocus = true;
+  private boolean myPaintFocus;
 
   private boolean myHideTabs = false;
   private @Nullable Project myProject;
@@ -124,6 +126,7 @@ public class JBTabsImpl extends JComponent
   private TabsBorder myBorder = new TabsBorder(this);
   private BaseNavigationAction myNextAction;
   private BaseNavigationAction myPrevAction;
+  private Disposable myParent;
 
 
   public JBTabsImpl(@NotNull Project project) {
@@ -142,7 +145,15 @@ public class JBTabsImpl extends JComponent
     setOpaque(true);
     setPaintBorder(-1, -1, -1, -1);
 
-    Disposer.register(parent, this);
+    myParent = parent;
+    if (myParent != null) {
+      Disposer.register(myParent, this);
+    }
+
+    if (!myTestMode && (myParent == null || myProject == null)) {
+      reinitWhenFirstShown();
+    }
+
 
     myNavigationActions = new DefaultActionGroup();
 
@@ -210,6 +221,28 @@ public class JBTabsImpl extends JComponent
 
     add(mySingleRowLayout.myLeftGhost);
     add(mySingleRowLayout.myRightGhost);
+  }
+
+  private void reinitWhenFirstShown() {
+    UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
+      public void run() {
+        final Project project = tryToFindProject();
+        if (project == null) return;
+
+        if (myParent == null) {
+          myParent = project;
+          Disposer.register(myParent, JBTabsImpl.this);
+        }
+
+        if (myProject == null) {
+          myProject = project;
+        }
+
+        if (myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
+          myFocusManager = IdeFocusManager.getInstance(myProject);
+        }
+      }
+    });
   }
 
   public void setNavigationActiondBinding(String prevActionId, String nextActionId) {
@@ -301,11 +334,13 @@ public class JBTabsImpl extends JComponent
       final int toolbarHeight = data.hToolbar.getPreferredSize().height;
       final Rectangle compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp, deltaWidth, deltaHeight);
       layout(data.hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight);
-    } else if (data.vToolbar != null) {
+    }
+    else if (data.vToolbar != null) {
       final int toolbarWidth = data.vToolbar.getPreferredSize().width;
       final Rectangle compRect = layoutComp(toolbarWidth + deltaX, deltaY, data.comp, deltaWidth, deltaHeight);
       layout(data.vToolbar, compRect.x - toolbarWidth, compRect.y, toolbarWidth, compRect.height);
-    } else {
+    }
+    else {
       layoutComp(deltaX, deltaY, data.comp, deltaWidth, deltaHeight);
     }
   }
@@ -673,7 +708,8 @@ public class JBTabsImpl extends JComponent
   private void queueForRemove(Component c) {
     if (c instanceof JComponent) {
       addToDeferredRemove(c);
-    } else {
+    }
+    else {
       remove(c);
     }
   }
@@ -710,7 +746,8 @@ public class JBTabsImpl extends JComponent
     if (TabInfo.ACTION_GROUP.equals(evt.getPropertyName())) {
       updateSideComponent(tabInfo);
       relayout(false, false);
-    } else if (TabInfo.COMPONENT.equals(evt.getPropertyName())) {
+    }
+    else if (TabInfo.COMPONENT.equals(evt.getPropertyName())) {
       relayout(true, false);
     }
     else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
@@ -783,7 +820,8 @@ public class JBTabsImpl extends JComponent
       final Dimension after = label.getPreferredSize();
       if (after.equals(before)) {
         label.repaint();
-      } else {
+      }
+      else {
         revalidateAndRepaint(false);
       }
     }
@@ -985,7 +1023,7 @@ public class JBTabsImpl extends JComponent
       if (group != null && myTabs.myActionManager != null) {
         final String place = info.getPlace();
         ActionToolbar toolbar =
-            myTabs.myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myTabs.myHorizontalSide);
+          myTabs.myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myTabs.myHorizontalSide);
         toolbar.setTargetComponent(info.getActionsContextComponent());
         final JComponent actionToolbar = toolbar.getComponent();
         add(actionToolbar, BorderLayout.CENTER);
@@ -1014,9 +1052,9 @@ public class JBTabsImpl extends JComponent
       if (myPosition == JBTabsPosition.top || myPosition == JBTabsPosition.bottom) {
         myHeaderFitSize =
           new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
-      } else {
-        myHeaderFitSize =
-          new Dimension(max.myLabel.width + (myHorizontalSide ? 0 : max.myToolbar.width), getSize().height);
+      }
+      else {
+        myHeaderFitSize = new Dimension(max.myLabel.width + (myHorizontalSide ? 0 : max.myToolbar.width), getSize().height);
       }
 
       final Collection<TabLabel> labels = myInfo2Label.values();
@@ -1160,7 +1198,7 @@ public class JBTabsImpl extends JComponent
 
     final GraphicsConfig config = new GraphicsConfig(g);
     config.setAntialiasing(true);
-    
+
     Graphics2D g2d = (Graphics2D)g;
 
 
@@ -1196,7 +1234,7 @@ public class JBTabsImpl extends JComponent
       g2d.setColor(getBackground());
       g2d.fill(shapeInfo.fillPath.getShape());
     }
-    
+
 
     final int alpha;
     int paintTopY = shapeInfo.labelTopY;
@@ -1246,12 +1284,9 @@ public class JBTabsImpl extends JComponent
         shapeInfo.fillPath.transformLine(shapeInfo.fillPath.getX(), paintTopY, shapeInfo.fillPath.getX(), paintBottomY);
 
 
-      g2d.setPaint(new GradientPaint((float)gradientLine.getX1(),
-                                     (float)gradientLine.getY1(),
-                                     shapeInfo.fillPath.transformY1(shapeInfo.from, shapeInfo.to),
-                                     (float)gradientLine.getX2(),
-                                     (float)gradientLine.getY2(),
-                                     shapeInfo.fillPath.transformY1(shapeInfo.to, shapeInfo.from)));
+      g2d.setPaint(new GradientPaint((float)gradientLine.getX1(), (float)gradientLine.getY1(),
+                                     shapeInfo.fillPath.transformY1(shapeInfo.from, shapeInfo.to), (float)gradientLine.getX2(),
+                                     (float)gradientLine.getY2(), shapeInfo.fillPath.transformY1(shapeInfo.to, shapeInfo.from)));
       g2d.fill(shapeInfo.fillPath.getShape());
     }
 
@@ -1369,9 +1404,7 @@ public class JBTabsImpl extends JComponent
     path.lineTo(bottomX, bottomY);
     path.lineTo(topX, bottomY);
 
-    path.quadTo(topX - path.deltaX(getCurveArc() * 2 - 1),
-                bottomY - path.deltaY(Math.abs(bottomY - topY) / 4),
-                topX,
+    path.quadTo(topX - path.deltaX(getCurveArc() * 2 - 1), bottomY - path.deltaY(Math.abs(bottomY - topY) / 4), topX,
                 bottomY - path.deltaY(Math.abs(bottomY - topY) / 2));
 
     path.quadTo(topX + path.deltaX(getCurveArc() - 1), topY + path.deltaY(Math.abs(bottomY - topY) / 4), topX, topY);
@@ -1503,7 +1536,8 @@ public class JBTabsImpl extends JComponent
     g2d.fill(shape.getShape());
 
     g2d.setColor(topBlickColor);
-    g2d.draw(shape.transformLine(leftX + shape.deltaX(arc + 1), topY + shape.deltaY(1), rigthX - shape.deltaX(arc - 1), topY + shape.deltaY(1)));
+    g2d.draw(
+      shape.transformLine(leftX + shape.deltaX(arc + 1), topY + shape.deltaY(1), rigthX - shape.deltaX(arc - 1), topY + shape.deltaY(1)));
 
     g2d.setColor(rightBlockColor);
     g2d.draw(shape.transformLine(rigthX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rigthX - shape.deltaX(1), bottomY));
@@ -1529,7 +1563,8 @@ public class JBTabsImpl extends JComponent
 
     final int boundsX = shape.path.getX() + shape.path.deltaX(shape.insets.left);
 
-    final int boundsY = isHideTabs() ? shape.path.getY() + shape.path.deltaY(shape.insets.top) : shape.labelPath.getMaxY() + shape.path.deltaY(1);
+    final int boundsY =
+      isHideTabs() ? shape.path.getY() + shape.path.deltaY(shape.insets.top) : shape.labelPath.getMaxY() + shape.path.deltaY(1);
 
     final int boundsHeight = Math.abs(shape.path.getMaxY() - boundsY) - shape.insets.bottom - paintBorder.bottom;
     final int boundsWidth = Math.abs(shape.path.getMaxX() - (shape.insets.left + shape.insets.right));
@@ -1541,7 +1576,7 @@ public class JBTabsImpl extends JComponent
           g2d.fill(shaper.reset().doRect(boundsX, boundsY, boundsWidth, 1).getShape());
         }
       }
-      else  {
+      else {
         Color tabFillColor = getActiveTabFillIn();
         if (tabFillColor == null) {
           tabFillColor = shape.path.transformY1(shape.to, shape.from);
@@ -1561,13 +1596,15 @@ public class JBTabsImpl extends JComponent
     g2d.setColor(borderColor);
 
     //bottom
-    g2d.fill(shaper.reset().doRect(boundsX, Math.abs(shape.path.getMaxY() - shape.insets.bottom - paintBorder.bottom), boundsWidth, paintBorder.bottom).getShape());
+    g2d.fill(shaper.reset().doRect(boundsX, Math.abs(shape.path.getMaxY() - shape.insets.bottom - paintBorder.bottom), boundsWidth,
+                                   paintBorder.bottom).getShape());
 
     //left
     g2d.fill(shaper.reset().doRect(boundsX, boundsY, paintBorder.left, boundsHeight).getShape());
 
     //right
-    g2d.fill(shaper.reset().doRect(shape.path.getMaxX() - shape.insets.right - paintBorder.right, boundsY, paintBorder.right, boundsHeight).getShape());
+    g2d.fill(shaper.reset()
+      .doRect(shape.path.getMaxX() - shape.insets.right - paintBorder.right, boundsY, paintBorder.right, boundsHeight).getShape());
 
   }
 
@@ -1711,7 +1748,8 @@ public class JBTabsImpl extends JComponent
     TabInfo toSelect;
     if (forcedSelectionTranfer == null) {
       toSelect = getToSelectOnRemoveOf(info);
-    } else {
+    }
+    else {
       assert myVisibleInfos.contains(forcedSelectionTranfer) : "Cannot find tab for selection transfer, tab=" + forcedSelectionTranfer;
       toSelect = forcedSelectionTranfer;
     }
@@ -2067,6 +2105,7 @@ public class JBTabsImpl extends JComponent
     protected BaseNavigationAction(final String copyFromID, JComponent c, ActionManager mgr) {
       myActionManager = mgr;
       myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), c);
+      setEnabledInModalContext(true);
     }
 
     public final void update(final AnActionEvent e) {
@@ -2290,7 +2329,7 @@ public class JBTabsImpl extends JComponent
   private static class DefautDecorator implements UiDecorator {
     @NotNull
     public UiDecoration getDecoration() {
-      return new UiDecoration(null, new Insets(2, 8, 2, 8));
+      return new UiDecoration(null, new Insets(1, 4, 1, 5));
     }
   }
 
@@ -2350,4 +2389,10 @@ public class JBTabsImpl extends JComponent
   public TimedDeadzone.Length getTabActionsMouseDeadzone() {
     return myTabActionsMouseDeadzone;
   }
+
+  @Nullable
+  private Project tryToFindProject() {
+    return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
+  }
+
 }

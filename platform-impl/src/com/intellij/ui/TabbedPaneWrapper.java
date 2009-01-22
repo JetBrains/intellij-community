@@ -47,7 +47,14 @@ public class TabbedPaneWrapper implements Disposable {
 
 
   public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
-    init(tabPlacement, installKeyboardNavigation, new JTabbedPaneFactory());
+    final TabFactory factory;
+    if (SwingConstants.BOTTOM == tabPlacement || SwingConstants.TOP == tabPlacement) {
+      factory = new JBTabsFactory(null, null);
+    } else {
+      factory = new JTabbedPaneFactory();
+    }
+
+    init(tabPlacement, installKeyboardNavigation, factory);
   }
 
   void init(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, TabFactory tabbedPaneFactory) {
