@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,9 @@ public class IfMayBeConditionalInspection extends BaseInspection {
                 final PsiExpression lhs =
                         thenAssignmentExpression.getLExpression();
                 appendExpressionText(lhs, replacementText);
-                replacementText.append('=');
+                final PsiJavaToken token =
+                        thenAssignmentExpression.getOperationSign();
+                replacementText.append(token.getText());
                 appendExpressionText(condition, replacementText);
                 replacementText.append('?');
                 final PsiExpression thenRhs =
