@@ -1,11 +1,13 @@
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -14,8 +16,11 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -27,6 +32,7 @@ class FoldingUpdate {
   private FoldingUpdate() {
   }
 
+  @Nullable
   public static Runnable updateFoldRegions(final Editor editor, PsiElement file, boolean applyDefaultState) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -42,10 +48,10 @@ class FoldingUpdate {
       file = ((PsiCompiledElement)file).getMirror();
     }
 
-    TreeMap<PsiElement, TextRange> elementsToFoldMap = null;
+    TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = null;
     final PsiElement[] psiRoots = ((PsiFile)file).getPsiRoots();
     for (PsiElement psiRoot : psiRoots) {
-      TreeMap<PsiElement, TextRange> fileElementsToFoldMap = FoldingPolicy.getElementsToFold(psiRoot, document);
+      TreeMap<PsiElement, FoldingDescriptor> fileElementsToFoldMap = FoldingPolicy.getElementsToFold(psiRoot, document);
       if (elementsToFoldMap == null) {
         elementsToFoldMap = fileElementsToFoldMap;
       }
@@ -66,9 +72,9 @@ class FoldingUpdate {
   private static class UpdateFoldRegionsOperation implements Runnable {
     private final Editor myEditor;
     private final boolean myApplyDefaultState;
-    private final TreeMap<PsiElement, TextRange> myElementsToFoldMap;
+    private final TreeMap<PsiElement, FoldingDescriptor> myElementsToFoldMap;
 
-    private UpdateFoldRegionsOperation(Editor editor, TreeMap<PsiElement, TextRange> elementsToFoldMap, boolean applyDefaultState) {
+    private UpdateFoldRegionsOperation(Editor editor, TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean applyDefaultState) {
       myEditor = editor;
       myApplyDefaultState = applyDefaultState;
       myElementsToFoldMap = elementsToFoldMap;
@@ -80,18 +86,19 @@ class FoldingUpdate {
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
       HashMap<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<TextRange, Boolean>();
 
+      List<FoldRegion> toRemove = CollectionFactory.arrayList();
       for (FoldRegion region : foldRegions) {
         PsiElement element = info.getPsiElement(region);
         if (element != null && myElementsToFoldMap.containsKey(element)) {
-          TextRange range = myElementsToFoldMap.get(element);
-          boolean toRemove = !region.isValid() ||
-                             region.getStartOffset() != range.getStartOffset() ||
-                             region.getEndOffset() != range.getEndOffset();
-          if (toRemove) {
-            boolean isExpanded = region.isExpanded();
-            rangeToExpandStatusMap.put(range, isExpanded ? Boolean.TRUE : Boolean.FALSE);
-            foldingModel.removeFoldRegion(region);
-            info.removeRegion(region);
+          final FoldingDescriptor descriptor = myElementsToFoldMap.get(element);
+          if (!region.isValid() ||
+              descriptor.getGroup() != null ||
+              region.getGroup() != null ||
+              region.getStartOffset() != descriptor.getRange().getStartOffset() ||
+              region.getEndOffset() != descriptor.getRange().getEndOffset() ||
+              !region.getPlaceholderText().equals(descriptor.getPlaceholderText())) {
+            rangeToExpandStatusMap.put(descriptor.getRange(), region.isExpanded());
+            toRemove.add(region);
           }
           else {
             myElementsToFoldMap.remove(element);
@@ -104,32 +111,43 @@ class FoldingUpdate {
                                        isExpanded ? Boolean.TRUE : Boolean.FALSE);
           }
           else {
-            foldingModel.removeFoldRegion(region);
-            info.removeRegion(region);
+            toRemove.add(region);
           }
         }
       }
 
-      for (final Map.Entry<PsiElement, TextRange> entry : myElementsToFoldMap.entrySet()) {
+      for (final FoldRegion region : toRemove) {
+        foldingModel.removeFoldRegion(region);
+        info.removeRegion(region);
+      }
+
+      Map<FoldRegion, Boolean> shouldExpand = CollectionFactory.newTroveMap();
+      for (final Map.Entry<PsiElement, FoldingDescriptor> entry : myElementsToFoldMap.entrySet()) {
         ProgressManager.getInstance().checkCanceled();
         PsiElement element = entry.getKey();
-        TextRange range = entry.getValue();
-        String foldingText = FoldingPolicy.getFoldingText(element);
-        FoldRegion region = foldingModel.addFoldRegion(range.getStartOffset(), range.getEndOffset(), foldingText);
-        if (region == null) continue;
-        //region.setGreedyToRight(true); //?
+        final FoldingDescriptor descriptor = entry.getValue();
+        TextRange range = descriptor.getRange();
+        FoldRegion region = new FoldRegionImpl(myEditor, range.getStartOffset(), range.getEndOffset(), descriptor.getPlaceholderText(),
+                                               descriptor.getGroup());
+        if (!foldingModel.addFoldRegion(region)) continue;
+
         info.addRegion(region, element);
 
         if (myApplyDefaultState) {
-          region.setExpanded(!FoldingPolicy.isCollapseByDefault(element) || FoldingUtil.caretInsideRange(myEditor, range));
+          shouldExpand.put(region, !FoldingPolicy.isCollapseByDefault(element) || FoldingUtil.caretInsideRange(myEditor, range));
         }
         else {
-          Boolean status = rangeToExpandStatusMap.get(range);
-          if (status != null) {
-            region.setExpanded(status.booleanValue());
-          }
+          shouldExpand.put(region, rangeToExpandStatusMap.get(range));
+        }
+      }
+
+      for (final FoldRegion region : shouldExpand.keySet()) {
+        final Boolean expanded = shouldExpand.get(region);
+        if (expanded != null) {
+          region.setExpanded(expanded.booleanValue());
         }
       }
     }
+
   }
 }

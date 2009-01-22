@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
@@ -87,35 +88,36 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     final PsiFile psiFile = psiManager.findFile(myFile);
     if (psiFile == null) return;
 
-    Map<PsiElement, TextRange> ranges = null;
+    Map<PsiElement, FoldingDescriptor> ranges = null;
     for(int i = 0; i < myPsiElementsOrRangeMarkers.size(); i++){
       Object o = myPsiElementsOrRangeMarkers.get(i);
-      if (o instanceof PsiElement){
+      if (o instanceof PsiElement) {
         PsiElement element = (PsiElement)o;
         if (!element.isValid()) continue;
+
         if (ranges == null) ranges = buildRanges(editor, psiFile);
-        TextRange range = ranges.get(element);
-        if (range == null) continue;
-        
+        FoldingDescriptor descriptor = ranges.get(element);
+        if (descriptor == null) continue;
+
+        TextRange range = descriptor.getRange();
         FoldRegion region = FoldingUtil.findFoldRegion(editor, range.getStartOffset(), range.getEndOffset());
         if (region != null) {
           boolean state = myExpandedStates.get(i).booleanValue();
           region.setExpanded(state);
         }
       }
-      else if (o instanceof RangeMarker){
+      else if (o instanceof RangeMarker) {
         RangeMarker marker = (RangeMarker)o;
         if (!marker.isValid()) continue;
         FoldRegion region = FoldingUtil.findFoldRegion(editor, marker.getStartOffset(), marker.getEndOffset());
         if (region == null) {
           String placeHolderText = myPlaceholderTexts.get(marker);
-          region = editor.getFoldingModel().addFoldRegion(marker.getStartOffset(), marker.getEndOffset(), placeHolderText);  //may fail to add in case intersecting region exists
+          region = new FoldRegionImpl(editor, marker.getStartOffset(), marker.getEndOffset(), placeHolderText, null);  //may fail to add in case intersecting region exists
+          if (!editor.getFoldingModel().addFoldRegion(region)) return;
         }
 
-        if (region != null) {
-          boolean state = myExpandedStates.get(i).booleanValue();
-          region.setExpanded(state);
-        }
+        boolean state = myExpandedStates.get(i).booleanValue();
+        region.setExpanded(state);
       }
       else{
         LOG.error("o = " + o);
@@ -123,20 +125,20 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     }
   }
 
-  private static Map<PsiElement, TextRange> buildRanges(final Editor editor, final PsiFile psiFile) {
+  private static Map<PsiElement, FoldingDescriptor> buildRanges(final Editor editor, final PsiFile psiFile) {
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiFile.getLanguage());
     final ASTNode node = psiFile.getNode();
     if (node == null) return Collections.emptyMap();
     ChameleonTransforming.transformChildren(node, true);
     final FoldingDescriptor[] descriptors = foldingBuilder.buildFoldRegions(node, editor.getDocument());
-    Map<PsiElement, TextRange> ranges = new HashMap<PsiElement, TextRange>();
+    Map<PsiElement, FoldingDescriptor> ranges = new HashMap<PsiElement, FoldingDescriptor>();
     for (FoldingDescriptor descriptor : descriptors) {
       final ASTNode ast = descriptor.getElement();
       if (ast instanceof ChameleonElement) continue;
 
       final PsiElement psi = ast.getPsi();
       if (psi != null) {
-        ranges.put(psi, descriptor.getRange());
+        ranges.put(psi, descriptor);
       }
     }
     return ranges;

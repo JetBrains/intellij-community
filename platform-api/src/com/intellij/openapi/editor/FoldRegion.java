@@ -16,11 +16,13 @@
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a region of text in the editor which can be folded.
  *
  * @see FoldingModel#addFoldRegion(int, int, String)
+ * @see FoldingModel#addFoldRegion(FoldRegion) 
  * @see FoldingModel#getAllFoldRegions()
  */
 public interface FoldRegion extends RangeMarker {
@@ -46,4 +48,9 @@ public interface FoldRegion extends RangeMarker {
    */
   @NotNull
   String getPlaceholderText();
+
+  Editor getEditor();
+
+  @Nullable
+  FoldingGroup getGroup();
 }

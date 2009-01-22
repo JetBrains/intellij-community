@@ -38,6 +38,8 @@ public interface FoldingModel {
   @Nullable
   FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
 
+  boolean addFoldRegion(@NotNull FoldRegion region);
+
   /**
    * Removes the specified fold region. This method must be called
    * from the <code>Runnable</code> passed to {@link #runBatchFoldingOperation(Runnable)}.

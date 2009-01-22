@@ -2,6 +2,7 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -42,6 +43,12 @@ public class FoldingModelWindow implements FoldingModelEx{
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     return myDelegate.addFoldRegion(myDocumentWindow.injectedToHost(startOffset), myDocumentWindow.injectedToHost(endOffset), placeholderText);
+  }
+
+  public boolean addFoldRegion(@NotNull final FoldRegion region) {
+    return myDelegate.addFoldRegion(new FoldRegionImpl(region.getEditor(), myDocumentWindow.injectedToHost(region.getStartOffset()),
+                                                       myDocumentWindow.injectedToHost(region.getEndOffset()), region.getPlaceholderText(),
+                                                       region.getGroup()));
   }
 
   public void removeFoldRegion(@NotNull FoldRegion region) {

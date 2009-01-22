@@ -27,8 +27,14 @@ public abstract class JavaCodeFoldingSettings {
   public abstract boolean isCollapseImports();
   public abstract void setCollapseImports(boolean value);
 
+  public abstract boolean isCollapseLambdas();
+  public abstract void setCollapseLambdas(boolean value);
+
   public abstract boolean isCollapseMethods();
   public abstract void setCollapseMethods(boolean value);
+
+  public abstract boolean isCollapseConstructorGenericParameters();
+  public abstract void setCollapseConstructorGenericParameters(boolean value);
 
   public abstract boolean isCollapseAccessors();
   public abstract void setCollapseAccessors(boolean value);

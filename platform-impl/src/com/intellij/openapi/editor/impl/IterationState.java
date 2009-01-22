@@ -173,12 +173,10 @@ public final class IterationState {
   }
 
   private boolean skipHighlighter(RangeHighlighterImpl highlighter) {
-    return !highlighter.isValid() ||
-           highlighter.isAfterEndOfLine() ||
-           highlighter.getTextAttributes() == null ||
-           myFoldingModel.isOffsetCollapsed(highlighter.getAffectedAreaStartOffset()) ||
-           myFoldingModel.isOffsetCollapsed(highlighter.getAffectedAreaEndOffset()) ||
-           !highlighter.getEditorFilter().avaliableIn(myEditor);
+    if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes() == null) return true;
+    final FoldRegion region = myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
+    if (region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset())) return true;
+    return !highlighter.getEditorFilter().avaliableIn(myEditor);
   }
 
   public void advance() {

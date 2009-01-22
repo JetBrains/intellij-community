@@ -8,16 +8,21 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingGroup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private boolean myIsExpanded;
-  private final EditorImpl myEditor;
+  private final Editor myEditor;
   private final String myPlaceholderText;
+  private final FoldingGroup myGroup;
 
-  public FoldRegionImpl(EditorImpl editor, int startOffset, int endOffset, String placeholder) {
+  public FoldRegionImpl(Editor editor, int startOffset, int endOffset, String placeholder, FoldingGroup group) {
     super(editor.getDocument(), startOffset, endOffset);
+    myGroup = group;
     myIsExpanded = true;
     myEditor = editor;
     myPlaceholderText = placeholder;
@@ -29,11 +34,21 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   public void setExpanded(boolean expanded) {
     FoldingModelImpl foldingModel = (FoldingModelImpl)myEditor.getFoldingModel();
-    if (expanded){
-      foldingModel.expandFoldRegion(this);
+    if (myGroup == null) {
+      doSetExpanded(expanded, foldingModel, this);
+    } else {
+      for (final FoldRegion region : foldingModel.getGroupedRegions(myGroup)) {
+        doSetExpanded(expanded, foldingModel, region);
+      }
+    }
+  }
+
+  private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region) {
+    if (expanded) {
+      foldingModel.expandFoldRegion(region);
     }
     else{
-      foldingModel.collapseFoldRegion(this);
+      foldingModel.collapseFoldRegion(region);
     }
   }
 
@@ -48,6 +63,15 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   @NotNull
   public String getPlaceholderText() {
     return myPlaceholderText;
+  }
+
+  public Editor getEditor() {
+    return myEditor;
+  }
+
+  @Nullable
+  public FoldingGroup getGroup() {
+    return myGroup;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

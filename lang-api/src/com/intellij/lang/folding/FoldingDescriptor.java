@@ -16,8 +16,12 @@
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines a single folding region in the code.
@@ -30,6 +34,7 @@ public class FoldingDescriptor {
 
   private final ASTNode myElement;
   private final TextRange myRange;
+  @Nullable private final FoldingGroup myGroup;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
@@ -40,9 +45,23 @@ public class FoldingDescriptor {
    * @param range The folded text range.
    */
   public FoldingDescriptor(final ASTNode node, final TextRange range) {
-    myElement = node;
+    this(node, range, null);
+  }
+
+  /**
+   * Creates a folding region related to the specified AST node and covering the specified
+   * text range.
+   * @param node  The node to which the folding region is related. The node is then passed to
+   *              {@link FoldingBuilder#getPlaceholderText(com.intellij.lang.ASTNode)} and
+   *              {@link FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
+   * @param range The folded text range.
+   * @param group Regions with the same group instance expand and collapse together.
+   */
+  public FoldingDescriptor(ASTNode element, TextRange range, @Nullable FoldingGroup group) {
+    myElement = element;
     ProperTextRange.assertProperRange(range);
     myRange = range;
+    myGroup = group;
   }
 
   /**
@@ -60,4 +79,23 @@ public class FoldingDescriptor {
   public TextRange getRange() {
     return myRange;
   }
+
+  @Nullable
+  public FoldingGroup getGroup() {
+    return myGroup;
+  }
+
+  @Nullable
+  public String getPlaceholderText() {
+    final PsiElement psiElement = myElement.getPsi();
+    if (psiElement == null) return null;
+
+    final Language lang = psiElement.getLanguage();
+    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
+    if (foldingBuilder != null) {
+      return foldingBuilder.getPlaceholderText(myElement);
+    }
+    return null;
+  }
+
 }

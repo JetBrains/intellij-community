@@ -42,4 +42,24 @@ public class VisualPosition {
   public String toString() {
     return "VisualPosition: line = " + line + " column = " + column;
   }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof VisualPosition)) return false;
+
+    final VisualPosition that = (VisualPosition)o;
+
+    if (column != that.column) return false;
+    if (line != that.line) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = line;
+    result = 31 * result + column;
+    return result;
+  }
 }

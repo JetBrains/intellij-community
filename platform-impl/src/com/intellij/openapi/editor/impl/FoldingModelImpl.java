@@ -11,6 +11,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -20,13 +21,13 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
+import java.util.List;
 
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
@@ -42,6 +43,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   private int mySavedCaretY;
   private int mySavedCaretShift;
   private boolean myCaretPositionSaved;
+  private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
   private static final Comparator<? super FoldRegion> OUR_COMPARATOR = new Comparator<FoldRegion>() {
     public int compare(final FoldRegion o1, final FoldRegion o2) {
       return o1.getStartOffset() - o2.getStartOffset();
@@ -56,6 +58,33 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myFoldTree = new FoldRegionsTree();
     myFoldRegionsProcessed = false;
     refreshSettings();
+  }
+
+  @NotNull
+  public List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
+    return (List<FoldRegion>)myGroups.get(group);
+  }
+
+  @NotNull
+  public FoldRegion getFirstRegion(@NotNull FoldingGroup group) {
+    final List<FoldRegion> regions = getGroupedRegions(group);
+    FoldRegion main = regions.get(0);
+    for (int i = 1; i < regions.size(); i++) {
+      FoldRegion region = regions.get(i);
+      if (main.getStartOffset() > region.getStartOffset()) {
+        main = region;
+      }
+    }
+    return main;
+  }
+
+  public int getEndOffset(@NotNull FoldingGroup group) {
+    final List<FoldRegion> regions = getGroupedRegions(group);
+    int endOffset = regions.get(0).getEndOffset();
+    for (int i = 1; i < regions.size(); i++) {
+      endOffset = Math.max(endOffset, regions.get(i).getEndOffset());
+    }
+    return endOffset;
   }
 
   public void refreshSettings() {
@@ -81,19 +110,29 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
+    final FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholderText, null);
+    return addFoldRegion(region) ? region : null;
+  }
+
+  public boolean addFoldRegion(@NotNull final FoldRegion region) {
     assertIsDispatchThread();
-    FoldRegion range = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholderText);
     if (isFoldingEnabled()) {
       if (!myIsBatchFoldingProcessing) {
         LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
-        return null;
+        return false;
       }
 
       myFoldRegionsProcessed = true;
-      return myFoldTree.addRegion(range) ? range : null;
+      if (myFoldTree.addRegion(region)) {
+        final FoldingGroup group = region.getGroup();
+        if (group != null) {
+          myGroups.putValue(group, region);
+        }
+        return true;
+      }
     }
 
-    return null;
+    return false;
   }
 
   public void runBatchFoldingOperation(Runnable operation) {
@@ -152,6 +191,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     int line = pos.line;
 
     if (line >= myEditor.getDocument().getLineCount()) return null;
+
+    //leftmost folded block position
+    if (myEditor.xyToVisualPosition(p).equals(myEditor.logicalToVisualPosition(pos))) return null;
+
     int offset = myEditor.logicalPositionToOffset(pos);
 
     return myFoldTree.fetchOutermost(offset);
@@ -162,14 +205,18 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.fetchAllRegionsIncludingInvalid();
   }
 
-  public void removeFoldRegion(final FoldRegion region) {
+  public void removeFoldRegion(@NotNull final FoldRegion region) {
     assertIsDispatchThread();
 
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
     }
 
-    expandFoldRegion(region);
+    region.setExpanded(true);
+    final FoldingGroup group = region.getGroup();
+    if (group != null) {
+      myGroups.removeValue(group, region);
+    }
     myFoldTree.removeRegion(region);
     myFoldRegionsProcessed = true;
   }
@@ -334,11 +381,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     private int[] myCachedStartOffsets;
     private int[] myCachedFoldedLines;
     private int myCachedLastIndex = -1;
-    private ArrayList<FoldRegion> myRegions;  //sorted in tree left-to-right topdown traversal order
-
-    public FoldRegionsTree() {
-      clear();
-    }
+    private ArrayList<FoldRegion> myRegions = CollectionFactory.arrayList();  //sorted in tree left-to-right topdown traversal order
 
     private void clear() {
       myCachedVisible = null;
@@ -349,11 +392,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       myRegions = new ArrayList<FoldRegion>();
     }
 
-    public boolean isFoldingEnabled() {
+    private boolean isFoldingEnabled() {
       return FoldingModelImpl.this.isFoldingEnabled() && myCachedVisible != null;
     }
 
-    public void rebuild() {
+    void rebuild() {
       ArrayList<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
       ArrayList<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
       FoldRegion[] regions = myRegions.toArray(new FoldRegion[myRegions.size()]);
@@ -407,7 +450,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       updateCachedOffsets();
     }
 
-    public void updateCachedOffsets() {
+    void updateCachedOffsets() {
       if (FoldingModelImpl.this.isFoldingEnabled()) {
         if (myCachedVisible == null) {
           rebuild();
@@ -446,7 +489,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       }
     }
 
-    public boolean addRegion(FoldRegion range) {
+    boolean addRegion(FoldRegion range) {
       // During batchProcessing elements are inserted in ascending order, 
       // binary search find acceptable insertion place first time
       int fastIndex = myCachedLastIndex != -1 && myIsBatchFoldingProcessing? myCachedLastIndex + 1:Collections.binarySearch(myRegions, range, OUR_COMPARATOR);
@@ -485,7 +528,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       return true;
     }
 
-    public FoldRegion fetchOutermost(int offset) {
+    FoldRegion fetchOutermost(int offset) {
       if (!isFoldingEnabled()) return null;
 
       final int[] starts = myCachedStartOffsets;
@@ -509,12 +552,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       return null;
     }
 
-    public FoldRegion[] fetchVisible() {
+    FoldRegion[] fetchVisible() {
       if (!isFoldingEnabled()) return new FoldRegion[0];
       return myCachedVisible;
     }
 
-    public FoldRegion[] fetchTopLevel() {
+    FoldRegion[] fetchTopLevel() {
       if (!isFoldingEnabled()) return null;
       return myCachedTopLevelRegions;
     }
@@ -549,7 +592,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       return allCollapsed.toArray(new FoldRegion[allCollapsed.size()]);
     }
 
-    public boolean intersectsRegion(int startOffset, int endOffset) {
+    boolean intersectsRegion(int startOffset, int endOffset) {
       if (!FoldingModelImpl.this.isFoldingEnabled()) return true;
       for (FoldRegion region : myRegions) {
         boolean contains1 = contains(region, startOffset);
@@ -561,17 +604,17 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       return false;
     }
 
-    public FoldRegion[] fetchAllRegions() {
+    FoldRegion[] fetchAllRegions() {
       if (!isFoldingEnabled()) return new FoldRegion[0];
 
       return myRegions.toArray(new FoldRegion[myRegions.size()]);
     }
 
-    public void removeRegion(FoldRegion range) {
+    void removeRegion(FoldRegion range) {
       myRegions.remove(range);
     }
 
-    public int getFoldedLinesCountBefore(int offset) {
+    int getFoldedLinesCountBefore(int offset) {
       int idx = getLastTopLevelIndexBefore(offset);
       if (idx == -1) return 0;
       return myCachedFoldedLines[idx];

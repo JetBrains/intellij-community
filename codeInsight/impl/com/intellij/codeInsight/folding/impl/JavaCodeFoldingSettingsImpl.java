@@ -31,6 +31,23 @@ public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings impleme
     CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS = value;
   }
 
+  @Override
+  public boolean isCollapseLambdas() {
+    return COLLAPSE_CLOSURES;
+  }
+
+  public void setCollapseLambdas(boolean value) {
+    COLLAPSE_CLOSURES = value;
+  }
+
+  public boolean isCollapseConstructorGenericParameters() {
+    return COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS;
+  }
+
+  public void setCollapseConstructorGenericParameters(boolean value) {
+    COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = value;
+  }
+
   public boolean isCollapseMethods() {
     return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
   }
@@ -92,6 +109,8 @@ public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings impleme
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_INNER_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANNOTATIONS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CLOSURES = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
 
   @NotNull
   public File[] getExportFiles() {

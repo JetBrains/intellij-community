@@ -14,6 +14,8 @@ public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFol
     checkBox("COLLAPSE_ACCESSORS", ApplicationBundle.message("checkbox.collapse.simple.property.accessors"));
     checkBox("COLLAPSE_INNER_CLASSES", ApplicationBundle.message("checkbox.collapse.inner.classes"));
     checkBox("COLLAPSE_ANONYMOUS_CLASSES", ApplicationBundle.message("checkbox.collapse.anonymous.classes"));
-    checkBox("COLLAPSE_ANNOTATIONS", "Annotations");
+    checkBox("COLLAPSE_ANNOTATIONS", ApplicationBundle.message("checkbox.collapse.annotations"));
+    checkBox("COLLAPSE_CLOSURES", ApplicationBundle.message("checkbox.collapse.closures"));
+    checkBox("COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS", ApplicationBundle.message("checkbox.collapse.generic.constructor.parameters"));
   }
 }

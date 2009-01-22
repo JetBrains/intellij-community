@@ -7,7 +7,6 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -24,8 +23,8 @@ class FoldingPolicy {
   /**
    * Returns map from element to range to fold, elements are sorted in start offset order
    */
-  public static TreeMap<PsiElement, TextRange> getElementsToFold(PsiElement file, Document document) {
-    TreeMap<PsiElement, TextRange> map = new TreeMap<PsiElement, TextRange>(new Comparator<PsiElement>() {
+  public static TreeMap<PsiElement, FoldingDescriptor> getElementsToFold(PsiElement file, Document document) {
+    TreeMap<PsiElement, FoldingDescriptor> map = new TreeMap<PsiElement, FoldingDescriptor>(new Comparator<PsiElement>() {
       public int compare(PsiElement element, PsiElement element1) {
         int startOffsetDiff = element.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
         return startOffsetDiff == 0 ? element.getTextRange().getEndOffset() - element1.getTextRange().getEndOffset() : startOffsetDiff;
@@ -40,20 +39,11 @@ class FoldingPolicy {
       for (FoldingDescriptor descriptor : foldingDescriptors) {
         ASTNode descriptorNode = descriptor.getElement();
         if (descriptorNode instanceof LeafElement) descriptorNode = ChameleonTransforming.transform((LeafElement)descriptorNode);
-        map.put(SourceTreeToPsiMap.treeElementToPsi(descriptorNode), descriptor.getRange());
+        map.put(SourceTreeToPsiMap.treeElementToPsi(descriptorNode), descriptor);
       }
     }
 
     return map;
-  }
-
-  public static String getFoldingText(PsiElement element) {
-    final Language lang = element.getLanguage();
-    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
-    if (foldingBuilder != null) {
-      return foldingBuilder.getPlaceholderText(element.getNode());
-    }
-    return null;
   }
 
 

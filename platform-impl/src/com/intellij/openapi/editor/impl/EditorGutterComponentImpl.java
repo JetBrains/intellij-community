@@ -652,7 +652,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
       if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
-      if (visibleFoldRegion.getEndOffset() < firstVisibleOffset) continue;
+      if (getEndOffset(visibleFoldRegion) < firstVisibleOffset) continue;
       drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, false);
     }
 
@@ -697,7 +697,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
       if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
-      if (visibleFoldRegion.getEndOffset() < firstVisibleOffset) continue;
+      if (getEndOffset(visibleFoldRegion) < firstVisibleOffset) continue;
       drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, true);
     }
   }
@@ -730,13 +730,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               width;
       int height = width + 2;
 
+      final FoldingGroup group = foldRange.getGroup();
+
+      final boolean drawTop = group == null || ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) == foldRange;
       if (!foldRange.isExpanded()) {
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawSquareWithPlus(g, anchorX, y, width, active, paintBackground);
+          if (drawTop) {
+            drawSquareWithPlus(g, anchorX, y, width, active, paintBackground);
+          }
         }
       }
       else {
-        VisualPosition foldEnd = offsetToLineStartPosition(foldRange.getEndOffset());
+        final int endOffset = getEndOffset(foldRange);
+        VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
         if (foldStart.line == foldEnd.line) {
           drawSquareWithMinus(g, anchorX, y, width, active, paintBackground);
         }
@@ -745,7 +751,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                      myEditor.getDescent();
 
           if (y <= clip.y + clip.height && y + height >= clip.y) {
-            drawDirectedBox(g, anchorX, y, width, height, width - 2, active, paintBackground);
+            if (drawTop) {
+              drawDirectedBox(g, anchorX, y, width, height, width - 2, active, paintBackground);
+            }
           }
 
           if (endY - height <= clip.y + clip.height && endY >= clip.y) {
@@ -754,6 +762,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
     }
+  }
+
+  private int getEndOffset(FoldRegion foldRange) {
+    FoldingGroup group = foldRange.getGroup();
+    return group == null ? foldRange.getEndOffset() : ((FoldingModelImpl)myEditor.getFoldingModel()).getEndOffset(group);
   }
 
   private void drawDirectedBox(Graphics2D g,
@@ -825,7 +838,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void drawFoldingLines(FoldRegion foldRange, Rectangle clip, int width, int anchorX, Graphics2D g) {
     if (foldRange.isExpanded() && foldRange.isValid()) {
       VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
-      VisualPosition foldEnd = offsetToLineStartPosition(foldRange.getEndOffset());
+      VisualPosition foldEnd = offsetToLineStartPosition(getEndOffset(foldRange));
       int startY = myEditor.visibleLineNumberToYPosition(foldStart.line + 1) - myEditor.getDescent();
       int endY = myEditor.visibleLineNumberToYPosition(foldEnd.line) + myEditor.getLineHeight() -
                  myEditor.getDescent();
@@ -919,8 +932,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     FoldRegion[] visibleRanges = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
     for (FoldRegion foldRange : visibleRanges) {
+      final FoldingGroup group = foldRange.getGroup();
+      if (group != null && ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) != foldRange) {
+        continue;
+      }
+
       if (rectByFoldOffset(foldRange.getStartOffset(), anchorWidth, anchorX).contains(x, y)) return foldRange;
-      if (rectByFoldOffset(foldRange.getEndOffset(), anchorWidth, anchorX).contains(x, y)) return foldRange;
+      if ((group == null || foldRange.isExpanded()) && rectByFoldOffset(getEndOffset(foldRange), anchorWidth, anchorX).contains(x, y)) return foldRange;
     }
 
     return null;
