@@ -95,9 +95,9 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
     for (PsiLiteralExpression target : targets) {
       final Object value = target.getValue();
       if (value instanceof String) {
-        final LocalInspectionToolWrapper inspectionTool = (LocalInspectionToolWrapper)((InspectionProfileImpl)inspectionProfile).getToolById(((String)value));
-        if (inspectionTool != null) {
-          final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(inspectionTool.getTool());
+        final InspectionProfileEntry toolById = ((InspectionProfileImpl)inspectionProfile).getToolById(((String)value));
+        if (toolById instanceof LocalInspectionToolWrapper) {
+          final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(((LocalInspectionToolWrapper)toolById).getTool());
           final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
           final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
           tool.initialize(context);
