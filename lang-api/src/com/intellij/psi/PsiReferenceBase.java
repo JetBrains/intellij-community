@@ -49,7 +49,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     mySoft = soft;
   }
 
-  public PsiReferenceBase(T element) {
+  public PsiReferenceBase(@NotNull T element) {
     myElement = element;
     mySoft = false;
   }

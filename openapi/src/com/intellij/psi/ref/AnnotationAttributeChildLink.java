@@ -10,15 +10,21 @@ import com.intellij.psi.PsiChildLink;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
 */
 public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, PsiNameValuePair> {
-  private final String myName;
+  private final String myAttributeName;
 
-  public AnnotationAttributeChildLink(String name) {
-    myName = name;
+  public AnnotationAttributeChildLink(@NotNull @NonNls String attributeName) {
+    myAttributeName = attributeName;
+  }
+
+  @NotNull
+  public String getAttributeName() {
+    return myAttributeName;
   }
 
   @Override
@@ -28,7 +34,7 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
     psiAnnotation.getText();
     for (final PsiNameValuePair attribute : psiAnnotation.getParameterList().getAttributes()) {
       final String attrName = attribute.getName();
-      if (attrName == null && "value".equals(myName) || myName.equals(attrName)) {
+      if (attrName == null && "value".equals(myAttributeName) || myAttributeName.equals(attrName)) {
         return attribute;
       }
     }

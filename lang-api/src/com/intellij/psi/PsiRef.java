@@ -55,6 +55,10 @@ public final class PsiRef<T extends PsiElement> {
     return new PsiRef<Child>(new PsiRefColleague.Imaginary<Child, Parent>(parent, creator));
   }
 
+  public PsiManager getPsiManager() {
+    return myColleague.getPsiManager();
+  }
+
   private interface PsiRefColleague<T extends PsiElement> {
 
     boolean isValid();
@@ -64,6 +68,8 @@ public final class PsiRef<T extends PsiElement> {
 
     @NotNull
     Real<T> makeReal();
+
+    PsiManager getPsiManager();
 
     class Real<T extends PsiElement> implements PsiRefColleague<T> {
       private final T myElement;
@@ -101,6 +107,10 @@ public final class PsiRef<T extends PsiElement> {
       @NotNull
       public Real<T> makeReal() {
         return this;
+      }
+
+      public PsiManager getPsiManager() {
+        return myElement.getManager();
       }
     }
 
@@ -142,8 +152,12 @@ public final class PsiRef<T extends PsiElement> {
       }
 
       @NotNull
-        public Real<Child> makeReal() {
+      public Real<Child> makeReal() {
         return new Real<Child>(myCreator.createChild(myParent.ensurePsiElementExists()));
+      }
+
+      public PsiManager getPsiManager() {
+        return myParent.getPsiManager();
       }
     }
 
