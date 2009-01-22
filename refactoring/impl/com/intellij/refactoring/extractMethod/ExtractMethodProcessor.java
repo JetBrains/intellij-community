@@ -4,6 +4,9 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInspection.dataFlow.RunnerResult;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +17,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -103,6 +107,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
+  private boolean myNullConditionalCheck = false;
 
   public ExtractMethodProcessor(Project project,
                                 Editor editor,
@@ -330,7 +335,21 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     myHasReturnStatementOutput = returnStatementType != null && returnStatementType != PsiType.VOID;
 
-    if (!myHasReturnStatementOutput && checkOutputVariablesCount()) {
+    if (myGenerateConditionalExit && myOutputVariables.length == 1) {
+      if (!(myOutputVariables[0].getType() instanceof PsiPrimitiveType)) {
+        myNullConditionalCheck = true;
+        for (PsiStatement exitStatement : myExitStatements) {
+          if (exitStatement instanceof PsiReturnStatement) {
+            final PsiExpression returnValue = ((PsiReturnStatement)exitStatement).getReturnValue();
+            myNullConditionalCheck &= returnValue == null || returnValue instanceof PsiLiteralExpression &&
+                                      returnValue.getType() == PsiType.NULL;
+          }
+        }
+        myNullConditionalCheck &= isNotNull(myOutputVariables[0]);
+      }
+    }
+
+    if (!myHasReturnStatementOutput && checkOutputVariablesCount() && !myNullConditionalCheck) {
       showMultipleOutputMessage(expressionType);
       return false;
     }
@@ -400,6 +419,33 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return true;
+  }
+
+  private boolean isNotNull(PsiVariable outputVariable) {
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false);
+    final PsiCodeBlock block = myElementFactory.createCodeBlock();
+    for (PsiElement element : myElements) {
+      block.add(element);
+    }
+    final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + outputVariable.getName() + " == null);", null);
+    block.add(statementFromText);
+
+    final RunnerResult rc = dfaRunner.analyzeMethod(block);
+    if (rc == RunnerResult.OK) {
+      if (dfaRunner.problemsDetected()) {
+        final Pair<Set<com.intellij.codeInspection.dataFlow.instructions.Instruction>,Set<com.intellij.codeInspection.dataFlow.instructions.Instruction>>
+          conditionalExpressions = dfaRunner.getConstConditionalExpressions();
+        final Set<com.intellij.codeInspection.dataFlow.instructions.Instruction> falseSet = conditionalExpressions.getSecond();
+        for (com.intellij.codeInspection.dataFlow.instructions.Instruction instruction : falseSet) {
+          if (instruction instanceof BranchingInstruction) {
+            if (((BranchingInstruction)instruction).getPsiAnchor().getText().equals(statementFromText.getCondition().getText())) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   protected boolean checkOutputVariablesCount() {
@@ -612,7 +658,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (myExpression == null) {
       String outVariableName = myOutputVariable != null ? getNewVariableName(myOutputVariable) : null;
       PsiReturnStatement returnStatement;
-      if (myOutputVariable != null) {
+      if (myNullConditionalCheck) {
+        returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return null;", null);
+      } else if (myOutputVariable != null) {
         returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return " + outVariableName + ";", null);
       }
       else if (myGenerateConditionalExit) {
@@ -681,14 +729,39 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       body.addRange(myElements[0], myElements[myElements.length - 1]);
-      if (myGenerateConditionalExit) {
+      if (myNullConditionalCheck) {
+        body.add(myElementFactory.createStatementFromText("return " + myOutputVariable.getName() + ";", null));
+      } else if (myGenerateConditionalExit) {
         body.add(myElementFactory.createStatementFromText("return false;", null));
       }
       else if (!myHasReturnStatement && hasNormalExit && myOutputVariable != null) {
         body.add(returnStatement);
       }
-
-      if (myGenerateConditionalExit) {
+      if (myNullConditionalCheck) {
+        final String varName = myOutputVariable.getName();
+        if (isDeclaredInside(myOutputVariable)) {
+          PsiDeclarationStatement statement = (PsiDeclarationStatement)myElementFactory
+            .createStatementFromText(myOutputVariable.getType().getCanonicalText() + " " + varName + "=x;", null);
+          statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
+          myMethodCall =
+            (PsiMethodCallExpression)((PsiLocalVariable)statement.getDeclaredElements()[0]).getInitializer().replace(myMethodCall);
+        }
+        else {
+          PsiExpressionStatement assignmentExpression =
+            (PsiExpressionStatement)myElementFactory.createStatementFromText(varName + "=x;", null);
+          assignmentExpression = (PsiExpressionStatement)addToMethodCallLocation(assignmentExpression);
+          myMethodCall =
+            (PsiMethodCallExpression)((PsiAssignmentExpression)assignmentExpression.getExpression()).getRExpression().replace(myMethodCall);
+        }
+        PsiIfStatement ifStatement =
+          (PsiIfStatement)myElementFactory.createStatementFromText(myHasReturnStatementOutput || (myGenerateConditionalExit && myFirstExitStatementCopy instanceof PsiReturnStatement &&
+                                                                                                  ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null)
+                                                                   ? "if (" + varName + "==null) return null;"
+                                                                   : "if (" + varName + "==null) return;", null);
+        ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
+        CodeStyleManager.getInstance(myProject).reformat(ifStatement);
+      }
+      else if (myGenerateConditionalExit) {
         PsiIfStatement ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (a) b;", null);
         ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
         myMethodCall = (PsiMethodCallExpression)ifStatement.getCondition().replace(myMethodCall);

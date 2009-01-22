@@ -351,6 +351,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testNullableCheck() throws Exception {
+    doTest();
+  }
+  
+  public void testNullableCheck1() throws Exception {
+    doTest();
+  }
+
+  public void testNullableCheckVoid() throws Exception {
+    doTest();
+  }
+
   private void doPrepareErrorTest(final String expectedMessage) throws Exception {
     String expectedError = null;
     try {
