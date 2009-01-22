@@ -132,6 +132,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       else {
         myPatchSizeLabel.setText(patch.getSize() + "MB");
       }
+      LabelTextReplacingUtil.replaceText(myPanel);
     }
   }
 }
