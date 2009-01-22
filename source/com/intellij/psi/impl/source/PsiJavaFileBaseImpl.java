@@ -5,10 +5,8 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -441,7 +439,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (sourceRoot != null) {
       String relativePath = VfsUtil.getRelativePath(folder, sourceRoot, '/');
       LOG.assertTrue(relativePath != null);
-      final VirtualFile[] files = index.getOrderEntriesForFile(virtualFile).get(0).getFiles(OrderRootType.CLASSES);
+      List<OrderEntry> orderEntries = index.getOrderEntriesForFile(virtualFile);
+      if (orderEntries.isEmpty()) {
+        LOG.error("Inconsistent: " + DirectoryIndex.getInstance(project).getInfoForDirectory(folder).toString());
+      }
+      final VirtualFile[] files = orderEntries.get(0).getFiles(OrderRootType.CLASSES);
       for (VirtualFile rootFile : files) {
         final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
         if (classFile != null) {
