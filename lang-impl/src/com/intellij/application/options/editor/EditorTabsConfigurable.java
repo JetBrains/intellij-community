@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 
 /**
  * @author yole
@@ -33,6 +35,23 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
       UISettings.TABS_NONE,
     }));
     myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
+    myEditorTabPlacement.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        revalidateSingleRowCheckbox();
+      }
+    });
+
+    revalidateSingleRowCheckbox();
+  }
+
+  private void revalidateSingleRowCheckbox() {
+    final int i = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
+    if (SwingUtilities.TOP != i) {
+      myScrollTabLayoutInEditorCheckBox.setSelected(true);
+      myScrollTabLayoutInEditorCheckBox.setEnabled(false);
+    } else {
+      myScrollTabLayoutInEditorCheckBox.setEnabled(true);
+    }
   }
 
   @Nls

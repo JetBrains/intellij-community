@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
@@ -26,8 +25,10 @@ import java.awt.event.MouseListener;
 public class TabbedPaneWrapper implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneWrapper");
   private static final PrevNextActionsDescriptor DEFAULT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_PREVIOUS_TAB);
-  protected final TabbedPane myTabbedPane;
-  protected final JComponent myTabbedPaneHolder;
+  protected TabbedPane myTabbedPane;
+  protected JComponent myTabbedPaneHolder;
+
+  private TabFactory myFactory;
 
   public TabbedPaneWrapper(){
     this(SwingConstants.TOP);
@@ -46,9 +47,16 @@ public class TabbedPaneWrapper implements Disposable {
 
 
   public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
+    init(tabPlacement, installKeyboardNavigation, new JTabbedPaneFactory());
+  }
+
+  void init(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, TabFactory tabbedPaneFactory) {
+    myFactory = tabbedPaneFactory;
+
     myTabbedPane = createTabbedPane(tabPlacement);
     myTabbedPane.putClientProperty(TabbedPaneWrapper.class, myTabbedPane);
     myTabbedPane.setKeyboardNavigation(installKeyboardNavigation);
+
     myTabbedPaneHolder = createTabbedPaneHolder();
     myTabbedPaneHolder.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
     myTabbedPaneHolder.setFocusCycleRoot(true);
@@ -78,7 +86,7 @@ public class TabbedPaneWrapper implements Disposable {
   }
 
   protected TabbedPaneHolder createTabbedPaneHolder() {
-    return new TabbedPaneHolder();
+    return myFactory.createTabbedPaneHolder();
   }
 
   public final JComponent getComponent() {
@@ -102,11 +110,11 @@ public class TabbedPaneWrapper implements Disposable {
   }
 
   protected TabWrapper createTabWrapper(JComponent component) {
-    return new TabWrapper(component);
+    return myFactory.createTabWrapper(component);
   }
 
   protected TabbedPane createTabbedPane(final int tabPlacement) {
-    return new TabbedPaneImpl(tabPlacement);
+    return myFactory.createTabbedPane(tabPlacement);
   }
 
   /**
@@ -416,31 +424,41 @@ public class TabbedPaneWrapper implements Disposable {
     return (TabbedPaneWrapper)tabs.getClientProperty(TabbedPaneWrapper.class);
   }
 
-  public static class AsJBTabs extends TabbedPaneWrapper {
+  private interface TabFactory {
+    TabbedPane createTabbedPane(int tabPlacement);
+    TabbedPaneHolder createTabbedPaneHolder();
+    TabWrapper createTabWrapper(JComponent component);
+  }
+
+  private class JTabbedPaneFactory implements TabFactory {
+    public TabbedPane createTabbedPane(int tabPlacement) {
+      return new TabbedPaneImpl(tabPlacement);
+    }
+
+    public TabbedPaneHolder createTabbedPaneHolder() {
+      return new TabbedPaneHolder();
+    }
+
+    public TabWrapper createTabWrapper(JComponent component) {
+      return new TabWrapper(component);
+    }
+  }
+
+  private class JBTabsFactory implements TabFactory {
 
     private Project myProject;
+    private Disposable myParent;
 
-    public AsJBTabs(@NotNull Project project) {
-      this(project, SwingConstants.TOP);
-    }
-
-    public AsJBTabs(@NotNull Project project, int tabPlacement) {
-      this(project, tabPlacement, null, project);
-    }
-
-    public AsJBTabs(@Nullable Project project, int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parent) {
-      super(tabPlacement, installKeyboardNavigation);
+    public JBTabsFactory(Project project, Disposable parent) {
       myProject = project;
-      Disposer.register(parent, this);
+      myParent = parent;
     }
 
-    @Override
-    protected TabbedPane createTabbedPane(int tabPlacement) {
-      return new JBTabsPaneImpl(myProject, tabPlacement, this);
+    public TabbedPane createTabbedPane(int tabPlacement) {
+      return new JBTabsPaneImpl(myProject, tabPlacement, myParent);
     }
 
-    @Override
-    protected TabbedPaneHolder createTabbedPaneHolder() {
+    public TabbedPaneHolder createTabbedPaneHolder() {
       return new TabbedPaneHolder() {
         @Override
         public boolean requestDefaultFocus() {
@@ -451,8 +469,7 @@ public class TabbedPaneWrapper implements Disposable {
       };
     }
 
-    @Override
-    protected TabWrapper createTabWrapper(JComponent component) {
+    public TabWrapper createTabWrapper(JComponent component) {
       final TabWrapper tabWrapper = new TabWrapper(component);
       tabWrapper.myCustomFocus = false;
       return tabWrapper;
@@ -461,5 +478,41 @@ public class TabbedPaneWrapper implements Disposable {
     public JBTabs getTabs() {
       return ((JBTabsPaneImpl)myTabbedPane).getTabs();
     }
+
+    public void dispose() {
+    }
   }
+
+  public static class AsJBTabs extends TabbedPaneWrapper {
+    public AsJBTabs(@NotNull Project project) {
+      this(project, SwingConstants.TOP);
+    }
+
+    public AsJBTabs(@NotNull Project project, int tabPlacement) {
+      this(project, tabPlacement, DEFAULT_SHORTCUTS, project);
+    }
+
+    public AsJBTabs(@Nullable Project project, int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parent) {
+      init(tabPlacement, installKeyboardNavigation, new JBTabsFactory(project, parent));
+    }
+
+    public JBTabs getTabs() {
+      return ((JBTabsPaneImpl)myTabbedPane).getTabs();
+    }
+  }
+
+  public static class AsJTabbedPane extends TabbedPaneWrapper {
+    public AsJTabbedPane() {
+      this(SwingConstants.TOP);
+    }
+
+    public AsJTabbedPane(int tabPlacement) {
+      this(tabPlacement, DEFAULT_SHORTCUTS);
+    }
+
+    public AsJTabbedPane(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
+      init(tabPlacement, installKeyboardNavigation, new JTabbedPaneFactory());
+    }
+  }
+
 }

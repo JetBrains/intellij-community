@@ -205,15 +205,14 @@ public class JBTabsTest {
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
     tabs.setTabSidePaintBorder(1);
+    tabs.setPaintBorder(0, 0, 0, 0);
+
     tabs.getPresentation().setActiveTabFillIn(Color.white);
     tabs.setGhostsAlwaysVisible(true);
 
     //tabs.setBorder(new LineBorder(Color.blue, 2));
     //tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
     tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
-
-    tabs.getPresentation().setTabSidePaintBorder(1).setPaintBorder(0, 0, 0, 0);
-    tabs.getPresentation().setTabsPosition(JBTabsPosition.left);
 
     tabs.setUiDecorator(new UiDecorator() {
       public UiDecoration getDecoration() {

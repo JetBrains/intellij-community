@@ -286,9 +286,9 @@ public abstract class ShapeTransform {
     @Override
     public Line2D.Float transformLine(int x1, int y1, int x2, int y2) {
       return new Line2D.Float(x2,
-                              Math.abs(y2) - 1,
+                              Math.abs(y2),
                               x1,
-                              Math.abs(y1) - 1);
+                              Math.abs(y1));
     }
   }
 

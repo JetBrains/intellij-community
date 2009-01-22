@@ -104,7 +104,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
 
 
-  private class MyTabbedPaneWrapper extends TabbedPaneWrapper {
+  private class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
     public MyTabbedPaneWrapper(int tabPlacement) {
       super(tabPlacement);
     }
