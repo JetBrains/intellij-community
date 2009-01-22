@@ -3,6 +3,7 @@ package com.intellij.xml.index;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,7 @@ public enum ResourceRelevance {
   public static ResourceRelevance getRelevance(VirtualFile file, Module module, ProjectFileIndex fileIndex) {
     Module moduleForFile = fileIndex.getModuleForFile(file);
     if (moduleForFile != null) { // in module content
-      return module.equals(moduleForFile) ? SOURCE : NONE;
+      return module.equals(moduleForFile) || ModuleManager.getInstance(module.getProject()).isModuleDependent(module, moduleForFile) ? SOURCE : NONE;
     }
     if (fileIndex.isInLibraryClasses(file)) {
       List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(file);
@@ -39,10 +40,11 @@ public enum ResourceRelevance {
         }
       }
     }
-    if (((ExternalResourceManagerImpl)ExternalResourceManager.getInstance()).isUserResource(file)) {
+    ExternalResourceManagerImpl resourceManager = (ExternalResourceManagerImpl)ExternalResourceManager.getInstance();
+    if (resourceManager.isUserResource(file)) {
       return MAPPED;
     }
-    if (((ExternalResourceManagerImpl)ExternalResourceManager.getInstance()).isStandardResource(file)) {
+    if (resourceManager.isStandardResource(file)) {
       return STANDARD;
     }
     return NONE;
