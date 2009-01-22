@@ -28,6 +28,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -124,6 +126,13 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
     myVcsComboBox.getComboBox().setModel(buildVcsWrappersModel(myProject));
     myVcsComboBox.getComboBox().setRenderer(new EditorComboBoxRenderer(myVcsComboBox.getComboBox().getEditor()));
+    myVcsComboBox.getComboBox().addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        if (myDirectoryMappingTable != null && myDirectoryMappingTable.isEditing()) {
+          myDirectoryMappingTable.stopEditing();
+        }
+      }
+    });
     myVcsComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final VcsWrapper vcsWrapper = ((VcsWrapper)myVcsComboBox.getComboBox().getSelectedItem());
