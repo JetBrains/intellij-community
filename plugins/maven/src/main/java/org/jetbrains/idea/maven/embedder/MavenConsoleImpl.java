@@ -138,7 +138,9 @@ public class MavenConsoleImpl extends MavenConsole {
         }
 
         ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        toolWindow.activate(null);
+        if (!toolWindow.isActive())  {
+          toolWindow.activate(null, false);
+        }
       }
     });
   }
