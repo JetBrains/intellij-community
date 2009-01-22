@@ -1030,6 +1030,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public void disposeComposite(EditorWithProviderComposite editor) {
+    if (getAllEditors().length == 0) {
+      setCurrentWindow(null);
+    }
+
     if (editor.equals(getLastSelected())) {
       editor.getSelectedEditor().deselectNotify();
       mySplitters.setCurrentWindow(null, false);
