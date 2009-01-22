@@ -204,7 +204,7 @@ public class JBTabsTest {
     tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.setTabSidePaintBorder(1);
+    tabs.setTabSidePaintBorder(3);
     tabs.setPaintBorder(0, 0, 0, 0);
 
     tabs.getPresentation().setActiveTabFillIn(Color.white);

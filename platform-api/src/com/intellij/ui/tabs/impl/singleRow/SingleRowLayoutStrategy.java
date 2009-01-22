@@ -161,7 +161,7 @@ public abstract class SingleRowLayoutStrategy {
       if (myTabs.isHideTabs()) {
         myTabs.layoutComp(data, 0, 0, 0, 0);
       } else {
-        myTabs.layoutComp(data, 0, 0, 0, -(myTabs.myHeaderFitSize.height + myTabs.getTabsBorder().getEffectiveBorder().top + 1));
+        myTabs.layoutComp(data, 0, 0, 0, -(myTabs.myHeaderFitSize.height + myTabs.getTabsBorder().getEffectiveBorder().top + 2));
       }
     }
 
@@ -275,7 +275,7 @@ public abstract class SingleRowLayoutStrategy {
       if (myTabs.isHideTabs()) {
         myTabs.layoutComp(data, 0, 0, 0, 0);
       } else {
-        myTabs.layoutComp(data, 0, 0, -(myTabs.myHeaderFitSize.width + myTabs.getTabsBorder().getEffectiveBorder().left), 0);
+        myTabs.layoutComp(data, 0, 0, -(myTabs.myHeaderFitSize.width + myTabs.getTabsBorder().getEffectiveBorder().left + 1), 0);
       }
     }
 

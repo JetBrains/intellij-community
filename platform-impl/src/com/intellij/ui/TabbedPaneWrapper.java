@@ -30,8 +30,14 @@ public class TabbedPaneWrapper implements Disposable {
 
   private TabFactory myFactory;
 
+  protected TabbedPaneWrapper(boolean construct) {
+    if (construct) {
+      init(SwingConstants.TOP, DEFAULT_SHORTCUTS, new JTabbedPaneFactory(this));
+    }
+  }
+
   public TabbedPaneWrapper(){
-    this(SwingConstants.TOP);
+    this(true);
   }
 
   /**
@@ -514,6 +520,7 @@ public class TabbedPaneWrapper implements Disposable {
     }
 
     public AsJBTabs(@Nullable Project project, int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parent) {
+      super(false);
       init(tabPlacement, installKeyboardNavigation, new JBTabsFactory(this, project, parent));
     }
 

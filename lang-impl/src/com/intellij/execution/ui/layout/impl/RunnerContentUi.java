@@ -8,9 +8,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -19,6 +19,7 @@ import com.intellij.ui.content.*;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.AbstractLayoutManager;
 import org.jetbrains.annotations.NonNls;
@@ -137,7 +138,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
             }
             return null;
           }
-        }).setInnerInsets(new Insets(1, 0, 0, 0)).setToDrawBorderIfTabsHidden(false).getJBTabs();
+        }).setInnerInsets(new Insets(1, 0, 0, 0)).setToDrawBorderIfTabsHidden(false).setUiDecorator(new UiDecorator() {
+        @NotNull
+        public UiDecoration getDecoration() {
+          return new UiDecoration(null, new Insets(1, 8, 1, 8));
+        }
+      }).getJBTabs();
     rebuildTabPopup();
 
 

@@ -79,7 +79,7 @@ public class GridCellImpl implements GridCell, Disposable {
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(true)
-      .setFocusCycle(false);
+      .setFocusCycle(false).setPaintFocus(true);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
