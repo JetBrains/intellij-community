@@ -18,12 +18,11 @@ package com.intellij.psi;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a Java local variable, method parameter or field.
  */
-public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNameIdentifierOwner {
+public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwner {
   /**
    * Returns the type of the variable.
    *
@@ -43,6 +42,7 @@ public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNameId
    * Returns the initializer for the variable.
    *
    * @return the initializer expression, or null if it has no initializer.
+   * @see {@link #hasInitializer()}
    */
   @Nullable PsiExpression getInitializer();
 
@@ -50,6 +50,9 @@ public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNameId
    * Checks if the variable has an initializer.
    *
    * @return true if the variable has an initializer, false otherwise
+   *
+   * Please note that even when {@link #hasInitializer()} returns true, {@link #getInitializer()} still can return null,
+   *  e.g. for implicit initializer in case of enum constant declaration
    */
   boolean hasInitializer();
 
@@ -70,8 +73,6 @@ public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNameId
    * the initializer does not evaluate to a constant.
    */
   @Nullable Object computeConstantValue();
-
-  @Nullable @NonNls String getName();
 
   /**
    * Returns the identifier declaring the name of the variable.
