@@ -153,6 +153,10 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentSt
     return UnknownSdkType.getInstance(null);
   }
 
+  public Sdk createSdk(final String name, final SdkType sdkType) {
+    return new ProjectJdkImpl(name, sdkType);
+  }
+
   public void loadState(Element element) {
     myJdks.clear();
 

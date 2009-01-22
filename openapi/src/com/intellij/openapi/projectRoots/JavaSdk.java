@@ -17,13 +17,10 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileFilter;
 
 public abstract class JavaSdk extends SdkType implements JavaSdkType, ApplicationComponent {
   public JavaSdk(@NonNls String name) {
@@ -43,32 +40,11 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType, Applicatio
   public abstract Sdk createJdk(@NonNls String jdkName, String home, boolean isJre);
 
   public static boolean checkForJdk(File file) {
-    file = new File(file.getAbsolutePath() + File.separator + "bin");
-    if (!file.exists()) return false;
-    FileFilter fileFilter = new FileFilter() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File f) {
-        if (f.isDirectory()) return false;
-        return Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javac") ||
-               Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javah");
-      }
-    };
-    File[] children = file.listFiles(fileFilter);
-    return children != null && children.length >= 2;
+    return JdkUtil.checkForJdk(file);
   }
 
-  public static boolean checkForJre(String file){
-    File ioFile = new File(new File(file.replace('/', File.separatorChar)).getAbsolutePath() + File.separator + "bin");
-    if (!ioFile.exists()) return false;
-    FileFilter fileFilter = new FileFilter() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File f) {
-        return !f.isDirectory() && Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "java");
-      }
-    };
-    File[] children = ioFile.listFiles(fileFilter);
-    return children != null && children.length >= 1;
+  public static boolean checkForJre(String file) {
+    return JdkUtil.checkForJre(file);
   }
-
 
 }

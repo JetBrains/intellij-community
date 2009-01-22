@@ -55,4 +55,6 @@ public abstract class ProjectJdkTable {
   public abstract void removeListener(Listener listener);
 
   public abstract SdkType getDefaultSdkType();
+
+  public abstract Sdk createSdk(final String name, final SdkType sdkType);
 }
