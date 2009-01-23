@@ -218,8 +218,8 @@ public final class LoadTextUtil {
 
       CharBuffer buffer = CharBuffer.allocate(content.length());
       buffer.append(content);
-      convertLineSeparators(buffer);
-      return buffer;
+      buffer.rewind();
+      return convertLineSeparators(buffer).first;
     }
 
     assert !file.isDirectory() : "'"+file.getPresentableUrl() + "' is directory";
