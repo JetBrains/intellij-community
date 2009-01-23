@@ -3,16 +3,13 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -23,9 +20,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
@@ -36,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -56,12 +51,10 @@ import java.util.concurrent.TimeUnit;
 )
 public class CommittedChangesCache implements PersistentStateComponent<CommittedChangesCache.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesCache");
-  @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
 
   private final Project myProject;
-  private final Map<String, ChangesCacheFile> myCacheFiles = new ConcurrentHashMap<String, ChangesCacheFile>();
   private final MessageBus myBus;
-  private final BackgroundTaskQueue myTaskQueue;
+  private final ProgressManagerQueue myTaskQueue;
   private boolean myRefreshingIncomingChanges = false;
   private int myPendingUpdateCount = 0;
   private State myState = new State();
@@ -74,6 +67,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private MyRefreshRunnable myRefresnRunnable;
 
   private final Map<String, Pair<Long, List<CommittedChangeList>>> myExternallyLoadedChangeLists;
+  private final CachesHolder myCachesHolder;
+  private final RepositoryLocationCache myLocationCache;
 
   public static class State {
     private int myInitialCount = 500;
@@ -124,7 +119,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public CommittedChangesCache(final Project project, final MessageBus bus, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myBus = bus;
-    myTaskQueue = new BackgroundTaskQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
+    myLocationCache = new RepositoryLocationCache(project);
+    myCachesHolder = new CachesHolder(project, myLocationCache);
+    myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
     myVcsManager = vcsManager;
     Disposer.register(project, new Disposable() {
       public void dispose() {
@@ -178,72 +175,93 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return true;
   }
 
+  private class MyProjectChangesLoader implements Runnable {
+    private final ChangeBrowserSettings mySettings;
+    private final int myMaxCount;
+    private final boolean myCacheOnly;
+    private final Consumer<List<CommittedChangeList>> myConsumer;
+    private final Consumer<List<VcsException>> myErrorConsumer;
+
+    private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<CommittedChangeList>();
+    private final List<VcsException> myExceptions = new ArrayList<VcsException>();
+    private boolean myDisposed = false;
+
+    private MyProjectChangesLoader(ChangeBrowserSettings settings, int maxCount, boolean cacheOnly,
+                                   Consumer<List<CommittedChangeList>> consumer, Consumer<List<VcsException>> errorConsumer) {
+      mySettings = settings;
+      myMaxCount = maxCount;
+      myCacheOnly = cacheOnly;
+      myConsumer = consumer;
+      myErrorConsumer = errorConsumer;
+    }
+
+    public void run() {
+      for(AbstractVcs vcs: myVcsManager.getAllActiveVcss()) {
+        final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+        if (provider == null) continue;
+
+        final VcsCommittedListsZipper vcsZipper = provider.getZipper();
+        CommittedListsSequencesZipper zipper = null;
+        if (vcsZipper != null) {
+          zipper = new CommittedListsSequencesZipper(vcsZipper);
+        }
+        boolean zipSupported = zipper != null;
+
+        final List<VirtualFile> roots = myCachesHolder.getAllRootsUnderVcs(vcs);
+
+        for (VirtualFile root : roots) {
+          if (myProject.isDisposed())  return;
+
+          final RepositoryLocation location = myLocationCache.getLocation(vcs, new FilePathImpl(root));
+          if (location == null) continue;
+
+          try {
+            final List<CommittedChangeList> lists = getChanges(mySettings, root, vcs, myMaxCount, myCacheOnly, provider, location);
+            if (lists != null) {
+              if (zipSupported) {
+                zipper.add(location, lists);
+              } else {
+                myResult.addAll(lists);
+              }
+            }
+          }
+          catch (VcsException e) {
+            myExceptions.add(e);
+          }
+          catch(ProcessCanceledException e) {
+            myDisposed = true;
+          }
+        }
+
+        if (zipSupported) {
+          myResult.addAll(zipper.execute());
+        }
+      }
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          LOG.info("FINISHED CommittedChangesCache.getProjectChangesAsync - execution in queue");
+          if (myProject.isDisposed()) {
+            return;
+          }
+          if (myExceptions.size() > 0) {
+            myErrorConsumer.consume(myExceptions);
+          }
+          else if (!myDisposed) {
+            myConsumer.consume(new ArrayList<CommittedChangeList>(myResult));
+          }
+        }
+      }, ModalityState.NON_MODAL);
+    }
+  }
+
   public void getProjectChangesAsync(final ChangeBrowserSettings settings,
                                      final int maxCount,
                                      final boolean cacheOnly,
                                      final Consumer<List<CommittedChangeList>> consumer,
                                      final Consumer<List<VcsException>> errorConsumer) {
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("committed.changes.refresh.progress")) {
-      private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<CommittedChangeList>();
-      private final List<VcsException> myExceptions = new ArrayList<VcsException>();
-      private boolean myDisposed = false;
-
-      public void run(@NotNull final ProgressIndicator indicator) {
-        for(AbstractVcs vcs: myVcsManager.getAllActiveVcss()) {
-          final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-          if (provider == null) continue;
-          final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
-
-          final VcsCommittedListsZipper vcsZipper = provider.getZipper();
-          CommittedListsSequencesZipper zipper = null;
-          if (vcsZipper != null) {
-            zipper = new CommittedListsSequencesZipper(vcsZipper);
-          }
-          boolean zipSupported = zipper != null;
-
-          for (VirtualFile root : roots) {
-            if (myProject.isDisposed())  return;
-
-            final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(root));
-            if (location == null) continue;
-
-            try {
-              final List<CommittedChangeList> lists = getChanges(settings, root, vcs, maxCount, cacheOnly, provider, location);
-              if (lists != null) {
-                if (zipSupported) {
-                  zipper.add(location, lists);
-                } else {
-                  myResult.addAll(lists);
-                }
-              }
-            }
-            catch (VcsException e) {
-              myExceptions.add(e);
-            }
-            catch(ProcessCanceledException e) {
-              myDisposed = true;
-            }
-          }
-
-          if (zipSupported) {
-            myResult.addAll(zipper.execute());
-          }
-        }
-      }
-
-      public void onSuccess() {
-        if (myProject.isDisposed()) {
-          return;
-        }
-        if (myExceptions.size() > 0) {
-          errorConsumer.consume(myExceptions);
-        }
-        else if (!myDisposed) {
-          consumer.consume(new ArrayList<CommittedChangeList>(myResult));
-        }
-      }
-    };
-    myTaskQueue.run(task);
+    final MyProjectChangesLoader loader = new MyProjectChangesLoader(settings, maxCount, cacheOnly, consumer, errorConsumer);
+    myTaskQueue.run(loader);
   }
 
   @Nullable
@@ -256,7 +274,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     if (provider instanceof CachingCommittedChangesProvider) {
       try {
         if (cacheOnly) {
-          ChangesCacheFile cacheFile = getCacheFile(vcs, file, location);
+          ChangesCacheFile cacheFile = myCachesHolder.getCacheFile(vcs, file, location);
           if (!cacheFile.isEmpty()) {
             return cacheFile.readChanges(settings, maxCount);
           }
@@ -278,7 +296,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private boolean canGetFromCache(final AbstractVcs vcs, final ChangeBrowserSettings settings,
                                   final VirtualFile root, final RepositoryLocation location, final int maxCount) throws IOException {
-    ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
+    ChangesCacheFile cacheFile = myCachesHolder.getCacheFile(vcs, root, location);
     if (cacheFile.isEmpty()) {
       return true;   // we'll initialize the cache and check again after that
     }
@@ -322,43 +340,28 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private boolean hasCachesWithEmptiness(final boolean emptiness) {
-    Collection<ChangesCacheFile> caches = getAllCaches();
-    for(ChangesCacheFile cacheFile: caches) {
-      try {
-        if (cacheFile.isEmpty() == emptiness) {
-          return true;
+    final Ref<Boolean> resultRef = new Ref<Boolean>(Boolean.FALSE);
+    myCachesHolder.iterateAllCaches(new NotNullFunction<ChangesCacheFile, Boolean>() {
+      @NotNull
+      public Boolean fun(final ChangesCacheFile changesCacheFile) {
+        try {
+          if (changesCacheFile.isEmpty() == emptiness) {
+            resultRef.set(true);
+            return true;
+          }
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    return false;
-  }
-
-  private List<ChangesCacheFile> getAllCaches() {
-    List<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
-    final VcsRoot[] vcsRoots = ApplicationManager.getApplication().runReadAction(new Computable<VcsRoot[]>() {
-      public VcsRoot[] compute() {
-        return myVcsManager.getAllVcsRoots();
+        catch (IOException e) {
+          LOG.info(e);
+        }
+        return false;
       }
     });
-    for(VcsRoot root: vcsRoots) {
-      final CommittedChangesProvider provider = root.vcs.getCommittedChangesProvider();
-      if (provider instanceof CachingCommittedChangesProvider) {
-        final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(root.path));
-        if (location != null) {
-          ChangesCacheFile cacheFile = getCacheFile(root.vcs, root.path, location);
-          result.add(cacheFile);
-        }
-      }
-    }
-    return result;
+    return resultRef.get();
   }
 
   @Nullable
   public Iterator<ChangesBunch> getBackBunchedIterator(final AbstractVcs vcs, final VirtualFile root, final RepositoryLocation location, final int bunchSize) {
-    final ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
+    final ChangesCacheFile cacheFile = myCachesHolder.getCacheFile(vcs, root, location);
     try {
       if (! cacheFile.isEmpty()) {
         return cacheFile.getBackBunchedIterator(bunchSize);
@@ -375,7 +378,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
                                                           final VirtualFile root,
                                                           final RepositoryLocation location,
                                                           final int maxCount) throws VcsException, IOException {
-    ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
+    ChangesCacheFile cacheFile = myCachesHolder.getCacheFile(vcs, root, location);
     if (cacheFile.isEmpty()) {
       List<CommittedChangeList> changes = initCache(cacheFile);
       if (canGetFromCache(vcs, settings, root, location, maxCount)) {
@@ -394,8 +397,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
   }
 
+  /**
+   * For tests only, progress does not matter
+   */
   public void refreshAllCaches() throws IOException, VcsException {
-    final Collection<ChangesCacheFile> files = getAllCaches();
+    final Collection<ChangesCacheFile> files = myCachesHolder.getAllCaches();
     for(ChangesCacheFile file: files) {
       if (file.isEmpty()) {
         initCache(file);
@@ -434,6 +440,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return changes;
   }
 
+  // todo: fix - would externally loaded nesseccerily for file? i.e. just not efficient now 
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
     final List<CommittedChangeList> newLists = new ArrayList<CommittedChangeList>();
 
@@ -521,7 +528,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private List<CommittedChangeList> loadIncomingChanges() {
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
-    final Collection<ChangesCacheFile> caches = getAllCaches();
+    final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
 
     final MultiMap<AbstractVcs, Pair<RepositoryLocation, List<CommittedChangeList>>> byVcs =
       new MultiMap<AbstractVcs, Pair<RepositoryLocation, List<CommittedChangeList>>>();
@@ -607,8 +614,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer) {
     debug("Loading incoming changes");
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.loading.progress")) {
-      public void run(@NotNull final ProgressIndicator indicator) {
+    final Runnable task = new Runnable() {
+      public void run() {
         final List<CommittedChangeList> list = loadIncomingChanges();
         if (consumer != null) {
           consumer.consume(new ArrayList<CommittedChangeList>(list));
@@ -624,12 +631,12 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
-    debug("Processing updated files");
-    final Collection<ChangesCacheFile> caches = getAllCaches();
-    for(final ChangesCacheFile cache: caches) {
-      myPendingUpdateCount++;
-      final Task.Backgroundable task = new Task.Backgroundable(myProject, "Processing updated files") {
-        public void run(@NotNull final ProgressIndicator indicator) {
+    final Runnable task = new Runnable() {
+      public void run() {
+        debug("Processing updated files");
+        final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
+        for(final ChangesCacheFile cache: caches) {
+          myPendingUpdateCount++;
           try {
             if (cache.isEmpty()) {
               pendingUpdateProcessed();
@@ -639,6 +646,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
             boolean needRefresh = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
             if (needRefresh) {
               debug("Found unaccounted files, requesting refresh");
+              // todo do we need double-queueing here???
               processUpdatedFilesAfterRefresh(cache, updatedFiles);
             }
             else {
@@ -651,9 +659,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
             LOG.error(e);
           }
         }
-      };
-      myTaskQueue.run(task);
-    }
+      }
+    };
+    myTaskQueue.run(task);
   }
 
   private void pendingUpdateProcessed() {
@@ -713,7 +721,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   public boolean refreshIncomingChanges() {
     boolean hasChanges = false;
-    final Collection<ChangesCacheFile> caches = getAllCaches();
+    final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
     for(ChangesCacheFile file: caches) {
       try {
         if (file.isEmpty()) {
@@ -736,48 +744,55 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public void refreshIncomingChangesAsync() {
     debug("Refreshing incoming changes in background");
     myRefreshingIncomingChanges = true;
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.refresh.progress")) {
-      public void run(@NotNull final ProgressIndicator indicator) {
+    final Runnable task = new Runnable() {
+      public void run() {
         refreshIncomingChanges();
-      }
 
-      public void onSuccess() {
-        myRefreshingIncomingChanges = false;
-        debug("Incoming changes refresh complete, clearing cached incoming changes");
-        notifyReloadIncomingChanges();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myRefreshingIncomingChanges = false;
+            debug("Incoming changes refresh complete, clearing cached incoming changes");
+            notifyReloadIncomingChanges();
+          }
+        }, ModalityState.NON_MODAL);
       }
     };
     myTaskQueue.run(task);    
   }
 
   public void refreshAllCachesAsync(final boolean initIfEmpty) {
-    final List<ChangesCacheFile> files = getAllCaches();
-    final RefreshResultConsumer notifyConsumer = new RefreshResultConsumer() {
-      private VcsException myError = null;
-      private int myCount = 0;
+    final Runnable task = new Runnable() {
+      public void run() {
+        final List<ChangesCacheFile> files = myCachesHolder.getAllCaches();
+        final RefreshResultConsumer notifyConsumer = new RefreshResultConsumer() {
+          private VcsException myError = null;
+          private int myCount = 0;
 
-      public void receivedChanges(List<CommittedChangeList> changes) {
-        if (changes.size() > 0) {
-          notifyReloadIncomingChanges();
-        }
-        checkDone();
-      }
+          public void receivedChanges(List<CommittedChangeList> changes) {
+            if (changes.size() > 0) {
+              notifyReloadIncomingChanges();
+            }
+            checkDone();
+          }
 
-      public void receivedError(VcsException ex) {
-        myError = ex;
-        checkDone();
-      }
+          public void receivedError(VcsException ex) {
+            myError = ex;
+            checkDone();
+          }
 
-      private void checkDone() {
-        myCount++;
-        if (myCount == files.size()) {
-          notifyRefreshError(myError);
+          private void checkDone() {
+            myCount++;
+            if (myCount == files.size()) {
+              notifyRefreshError(myError);
+            }
+          }
+        };
+        for(ChangesCacheFile file: files) {
+          refreshCacheAsync(file, initIfEmpty, notifyConsumer, false);
         }
       }
     };
-    for(ChangesCacheFile file: files) {
-      refreshCacheAsync(file, initIfEmpty, notifyConsumer);
-    }
+    myTaskQueue.run(task);
   }
 
   private void notifyReloadIncomingChanges() {
@@ -787,6 +802,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty,
                                  @Nullable final RefreshResultConsumer consumer) {
+    refreshCacheAsync(cache, initIfEmpty, consumer, true);
+  }
+
+  private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty,
+                                 @Nullable final RefreshResultConsumer consumer, final boolean asynch) {
     try {
       if (!initIfEmpty && cache.isEmpty()) {
         return;
@@ -796,8 +816,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       LOG.error(e);
       return;
     }
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("committed.changes.refresh.progress")) {
-      public void run(@NotNull final ProgressIndicator indicator) {
+    final Runnable task = new Runnable() {
+      public void run() {
         try {
           final List<CommittedChangeList> list;
           if (initIfEmpty && cache.isEmpty()) {
@@ -823,40 +843,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         }
       }
     };
-    myTaskQueue.run(task);
-  }
-
-  public ChangesCacheFile getCacheFile(AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
-    final String key = location.getKey();
-    ChangesCacheFile cacheFile = myCacheFiles.get(key);
-    if (cacheFile == null) {
-      cacheFile = new ChangesCacheFile(myProject, getCachePath(location), vcs, root, location);
-      myCacheFiles.put(key, cacheFile);
-    }
-    return cacheFile;
-  }
-
-  public File getCacheBasePath() {
-    File file = new File(PathManager.getSystemPath(), VCS_CACHE_PATH);
-    file = new File(file, myProject.getLocationHash());
-    return file;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private File getCachePath(final RepositoryLocation location) {
-    File file = getCacheBasePath();
-    file.mkdirs();
-    String s = location.getKey();
-    try {
-      final byte[] bytes = MessageDigest.getInstance("MD5").digest(CharsetToolkit.getUtf8Bytes(s));
-      StringBuilder result = new StringBuilder();
-      for (byte aByte : bytes) {
-        result.append(String.format("%02x", aByte));
-      }
-      return new File(file, result.toString());
-    }
-    catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
+    if (asynch) {
+      myTaskQueue.run(task);
+    } else {
+      task.run();
     }
   }
 
@@ -910,6 +900,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
   }
 
+  public CachesHolder getCachesHolder() {
+    return myCachesHolder;
+  }
+
   public void submitExternallyLoaded(final RepositoryLocation location, final long myLastCl, final List<CommittedChangeList> lists) {
     myExternallyLoadedChangeLists.put(location.getKey(), new Pair<Long, List<CommittedChangeList>>(myLastCl, lists));
   }
@@ -934,7 +928,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       final CommittedChangesCache cache = myCache;
       if (cache == null) return;
       cache.refreshAllCachesAsync(false);
-      final List<ChangesCacheFile> list = cache.getAllCaches();
+      final List<ChangesCacheFile> list = cache.getCachesHolder().getAllCaches();
       for(ChangesCacheFile file: list) {
         if (file.getProvider().refreshIncomingWithCommitted()) {
           cache.refreshIncomingChangesAsync();
@@ -942,5 +936,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         }
       }
     }
+  }
+
+  public RepositoryLocationCache getLocationCache() {
+    return myLocationCache;
   }
 }

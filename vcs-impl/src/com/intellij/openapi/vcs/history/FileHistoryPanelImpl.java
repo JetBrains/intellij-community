@@ -1049,41 +1049,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     return null;
   }
 
-  @Nullable
-  private Change[] loadChanges(final VcsFileRevision[] revisions) {
-    final List<S> lists;
-    try {
-      lists = myCommittedChangesProvider.getCommittedChanges(createSettingsForRequest(revisions),
-          myCommittedChangesProvider.getLocationFor(myFilePath, myRepositoryPath), myCommittedChangesProvider.getUnlimitedCountValue());
-    }
-    catch (VcsException e) {
-      LOG.error(e);
-      return null;
-    }
-
-    final List<Change> result = new ArrayList<Change>();
-    for (CommittedChangeList list : lists) {
-      result.addAll(list.getChanges());
-    }
-    return result.toArray(new Change[result.size()]);
-  }
-
-  private U createSettingsForRequest(final VcsFileRevision[] revisions) {
-    final U settings = myCommittedChangesProvider.createDefaultSettings();
-
-    settings.USE_DATE_AFTER_FILTER = false;
-    settings.USE_USER_FILTER = false;
-    settings.USE_DATE_BEFORE_FILTER = false;
-
-    settings.USE_CHANGE_BEFORE_FILTER = true;
-    settings.USE_CHANGE_AFTER_FILTER = true;
-
-    settings.CHANGE_AFTER = revisions[0].getRevisionNumber().asString();
-    settings.CHANGE_BEFORE = (revisions.length == 1) ? ChangeBrowserSettings.HEAD : revisions[1].getRevisionNumber().asString();
-
-    return settings;
-  }
-
   private static class LoadedContentRevision implements ContentRevision {
     private final FilePath myFile;
     private final VcsFileRevision myRevision;

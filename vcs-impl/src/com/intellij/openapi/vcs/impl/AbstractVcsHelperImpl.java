@@ -23,10 +23,7 @@ import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.committed.ChangesBrowserDialog;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTableModel;
+import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
@@ -480,13 +477,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  public void openCommittedChangesTab(final CommittedChangesProvider provider,
+  public void openCommittedChangesTab(final AbstractVcs vcs,
                                       final VirtualFile root,
                                       final ChangeBrowserSettings settings,
                                       final int maxCount,
                                       String title) {
-    final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(root));
-    openCommittedChangesTab(provider, location, settings, maxCount, title);
+    final RepositoryLocation location = CommittedChangesCache.getInstance(myProject).getLocationCache().getLocation(vcs, new FilePathImpl(root));
+    openCommittedChangesTab(vcs.getCommittedChangesProvider(), location, settings, maxCount, title);
   }
 
   public void openCommittedChangesTab(final CommittedChangesProvider provider,

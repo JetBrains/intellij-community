@@ -54,7 +54,8 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     if (vcs != null) {
       final CommittedChangesProvider committedChangesProvider = vcs.getCommittedChangesProvider();
       if (committedChangesProvider != null) {
-        return new CompositeRepositoryLocation(committedChangesProvider, committedChangesProvider.getLocationFor(root));
+        return new CompositeRepositoryLocation(committedChangesProvider,
+                                               CommittedChangesCache.getInstance(myProject).getLocationCache().getLocation(vcs, root));
       }
     }
     return null;

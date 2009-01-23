@@ -49,7 +49,7 @@ public class BrowseChangesAction extends AnAction {
       }
     }
 
-    AbstractVcsHelper.getInstance(project).openCommittedChangesTab(provider, vFile, settings, maxCount, null);
+    AbstractVcsHelper.getInstance(project).openCommittedChangesTab(vcs, vFile, settings, maxCount, null);
   }
 
   public void update(AnActionEvent e) {
