@@ -2,11 +2,9 @@ package com.intellij.execution.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 public class DisposedPsiManagerCheck {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.DisposedPsiManagerCheck");
@@ -27,14 +25,6 @@ public class DisposedPsiManagerCheck {
   }
 
   private void log(@NonNls final String message) {
-    final StringWriter stringWriter = new StringWriter();
-    final PrintWriter writer = new PrintWriter(stringWriter);
-    try {
-      myAllocationPlace.printStackTrace(writer);
-      LOG.error(message + "\n" + stringWriter.toString());
-    }
-    finally {
-      writer.close();
-    }
+    LOG.error(message + "\n" + StringUtil.getThrowableText(myAllocationPlace));
   }
 }

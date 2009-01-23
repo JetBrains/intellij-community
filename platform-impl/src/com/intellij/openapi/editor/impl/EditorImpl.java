@@ -392,12 +392,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       LOG.error("Double release. First released at:  =====\n" + myReleasedAt+"\n======");
     }
 
-    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    final PrintWriter printWriter = new PrintWriter(buffer);
-    new Throwable().printStackTrace(printWriter);
-    printWriter.flush();
-    printWriter.close();
-    myReleasedAt = buffer.toString();
+    myReleasedAt = StringUtil.getThrowableText(new Throwable());
 
     isReleased = true;
     myDocument.removeDocumentListener(myHighlighter);

@@ -450,15 +450,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
 
       RuntimeException creationPoint = new RuntimeException();
-      StringWriter stringWriter = new StringWriter();
-      PrintWriter writer = new PrintWriter(stringWriter);
-      try {
-        creationPoint.printStackTrace(writer);
-      }
-      finally {
-        writer.close();
-      }
-      myCreationPoint = stringWriter.toString();
+      myCreationPoint = StringUtil.getThrowableText(creationPoint);
 
       Map<IFile, StateStorage> fileToStorage = new HashMap<IFile, StateStorage>();
       fileToStorage.clear();

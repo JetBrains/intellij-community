@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 /**
  * @author kir
@@ -43,9 +41,7 @@ public class IdeaLoggingEvent {
   public String getThrowableText() {
     if (myThrowable == null) return "";
     
-    StringWriter stringWriter = new StringWriter();
-    myThrowable.printStackTrace(new PrintWriter(stringWriter));
-    return stringWriter.getBuffer().toString();
+    return StringUtil.getThrowableText(myThrowable);
   }
 
   @NonNls

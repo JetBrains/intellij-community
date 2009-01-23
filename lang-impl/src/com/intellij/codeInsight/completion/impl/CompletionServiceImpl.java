@@ -6,14 +6,12 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 /**
  * @author peter
@@ -61,9 +59,8 @@ public class CompletionServiceImpl extends CompletionService{
       myCurrentCompletion = indicator;
       myTrace = new Throwable();
       if (oldCompletion != null) {
-        final StringWriter writer = new StringWriter();
-        oldTrace.printStackTrace(new PrintWriter(writer));
-        throw new RuntimeException("SHe's not dead yet!\nthis=" + indicator + "\ncurrent=" + oldCompletion + "\ntrace=" + writer.toString());
+        throw new RuntimeException(
+          "SHe's not dead yet!\nthis=" + indicator + "\ncurrent=" + oldCompletion + "\ntrace=" + StringUtil.getThrowableText(oldTrace));
       }
     } else {
       myCurrentCompletion = null;

@@ -18,14 +18,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -139,12 +138,8 @@ public class EditorFactoryImpl extends EditorFactory {
       //Thread.dumpStack();
     }
 
-
-    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    final PrintWriter printWriter = new PrintWriter(buffer);
-    new RuntimeException("Editor created").printStackTrace(printWriter);
-    printWriter.flush();
-    editor.putUserData(EDITOR_CREATOR, buffer.toString());
+    String text = StringUtil.getThrowableText(new RuntimeException("Editor created"));
+    editor.putUserData(EDITOR_CREATOR, text);
 
     return editor;
   }

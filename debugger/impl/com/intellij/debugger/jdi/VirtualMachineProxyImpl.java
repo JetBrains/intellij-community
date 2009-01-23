@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
@@ -18,8 +19,6 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.tools.jdi.VoidValueImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -541,11 +540,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public String getResumeStack() {
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    mySuspendLogger.printStackTrace(pw);
-    pw.flush();
-    return sw.getBuffer().toString();
+    return StringUtil.getThrowableText(mySuspendLogger);
   }
 
   public boolean isPausePressed() {

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -14,8 +15,6 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -276,10 +275,9 @@ public class TabbedPaneImpl extends JTabbedPane implements TabbedPane {
         final Field leadingTabIndexField=tabScrollerValue.getClass().getDeclaredField(LEADING_TAB_INDEX_NAME);
         leadingTabIndexField.setAccessible(true);
         return leadingTabIndexField.getInt(tabScrollerValue);
-      }catch(Exception exc){
-        final StringWriter writer=new StringWriter();
-        exc.printStackTrace(new PrintWriter(writer));
-        throw new IllegalStateException("myUI="+myUI+"; cause="+writer.getBuffer());
+      }catch(Exception exc) {
+        final String writer = StringUtil.getThrowableText(exc);
+        throw new IllegalStateException("myUI=" + myUI + "; cause=" + writer);
       }
     }
 
@@ -303,10 +301,9 @@ public class TabbedPaneImpl extends JTabbedPane implements TabbedPane {
         setLeadingIndexMethod.setAccessible(true);
         setLeadingIndexMethod.invoke(
           tabScrollerValue, Integer.valueOf(getTabPlacement()), Integer.valueOf(leadingIndex));
-      }catch(Exception exc){
-        final StringWriter writer=new StringWriter();
-        exc.printStackTrace(new PrintWriter(writer));
-        throw new IllegalStateException("myUI="+myUI+"; cause="+writer.getBuffer());
+      }catch(Exception exc) {
+        final String writer = StringUtil.getThrowableText(exc);
+        throw new IllegalStateException("myUI=" + myUI + "; cause=" + writer);
       }
     }
   }
