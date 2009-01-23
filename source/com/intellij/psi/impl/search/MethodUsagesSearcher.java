@@ -36,14 +36,18 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
       }
     }
 
-    PsiClass parentClass = method.getContainingClass();
-    if (isStrictSignatureSearch && (parentClass == null
-                                    || parentClass instanceof PsiAnonymousClass
-                                    || parentClass.hasModifierProperty(PsiModifier.FINAL)
-                                    || method.hasModifierProperty(PsiModifier.STATIC)
-                                    || method.hasModifierProperty(PsiModifier.FINAL)
-                                    || method.hasModifierProperty(PsiModifier.PRIVATE))
-      ) {
+    final PsiClass parentClass = method.getContainingClass();
+    boolean needStrictSignatureSearch = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return isStrictSignatureSearch && (parentClass == null
+                                        || parentClass instanceof PsiAnonymousClass
+                                        || parentClass.hasModifierProperty(PsiModifier.FINAL)
+                                        || method.hasModifierProperty(PsiModifier.STATIC)
+                                        || method.hasModifierProperty(PsiModifier.FINAL)
+                                        || method.hasModifierProperty(PsiModifier.PRIVATE));
+      }
+    }).booleanValue();
+    if (needStrictSignatureSearch) {
       return ReferencesSearch.search(method, searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
         public boolean processInReadAction(final PsiReference psiReference) {
           return consumer.process(psiReference);
