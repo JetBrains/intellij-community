@@ -16,15 +16,17 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -41,11 +43,11 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +58,9 @@ import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
 import org.jetbrains.plugins.grails.module.GrailsModuleType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -81,112 +84,123 @@ public class GroovyCompiler implements TranslatingCompiler {
   }
 
   @Nullable
-  public TranslatingCompiler.ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles) {
-    Set<TranslatingCompiler.OutputItem> successfullyCompiled = new HashSet<TranslatingCompiler.OutputItem>();
+  public ExitStatus compile(final CompileContext compileContext, final VirtualFile[] virtualFiles) {
+    Set<OutputItem> successfullyCompiled = new HashSet<OutputItem>();
     Set<VirtualFile> toRecompile = new HashSet<VirtualFile>();
-
-    GeneralCommandLine commandLine;
 
     Map<Module, Set<VirtualFile>> mapModulesToVirtualFiles = buildModuleToFilesMap(compileContext, virtualFiles);
 
     for (Map.Entry<Module, Set<VirtualFile>> entry : mapModulesToVirtualFiles.entrySet()) {
+      final Module module = entry.getKey();
+      final GroovyFacet facet = GroovyFacet.getInstance(module);
+      final Set<VirtualFile> moduleFiles = entry.getValue();
+      if (facet != null && facet.getConfiguration().isCompileGroovyFiles()) {
+        doCompile(compileContext, successfullyCompiled, toRecompile, module, moduleFiles);
+      } else {
+        final ResourceCompiler resourceCompiler = new ResourceCompiler(myProject, CompilerConfiguration.getInstance(myProject));
+        final ExitStatus exitStatus = resourceCompiler.compile(compileContext, moduleFiles.toArray(new VirtualFile[moduleFiles.size()]));
+        successfullyCompiled.addAll(Arrays.asList(exitStatus.getSuccessfullyCompiled()));
+        toRecompile.addAll(Arrays.asList(exitStatus.getFilesToRecompile()));
+      }
+    }
 
-      commandLine = new GeneralCommandLine();
-      final Sdk sdk = ModuleRootManager.getInstance(entry.getKey()).getSdk();
-      assert sdk != null; //verified before
-      SdkType sdkType = sdk.getSdkType();
-      assert sdkType instanceof JavaSdkType;
-      commandLine.setExePath(((JavaSdkType)sdkType).getVMExecutablePath(sdk));
+    return new GroovyCompileExitStatus(successfullyCompiled, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
+  }
+
+  private void doCompile(CompileContext compileContext, Set<OutputItem> successfullyCompiled, Set<VirtualFile> toRecompile, final Module module,
+                         final Set<VirtualFile> toCompile) {
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    assert sdk != null; //verified before
+    SdkType sdkType = sdk.getSdkType();
+    assert sdkType instanceof JavaSdkType;
+    commandLine.setExePath(((JavaSdkType)sdkType).getVMExecutablePath(sdk));
 
 //      for debug
 //      commandLine.addParameter("-Xdebug");
 //      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5557");
 
-      commandLine.addParameter("-cp");
+    commandLine.addParameter("-cp");
 
-      String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
-      final StringBuilder classPathBuilder = new StringBuilder();
-      classPathBuilder.append(rtJarPath);
-      classPathBuilder.append(File.pathSeparator);
+    String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
+    final StringBuilder classPathBuilder = new StringBuilder();
+    classPathBuilder.append(rtJarPath);
+    classPathBuilder.append(File.pathSeparator);
 
-      Module module = entry.getKey();
-      ModuleType moduleType = module.getModuleType();
-      String groovyPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
-      String grailsPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
+    ModuleType moduleType = module.getModuleType();
+    String groovyPath = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    String grailsPath = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
 
-      String libPath =
-        (moduleType instanceof GrailsModuleType && grailsPath.length() > 0 || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
+    String libPath =
+      (moduleType instanceof GrailsModuleType && grailsPath.length() > 0 || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
 
-      libPath = libPath.replace(File.separatorChar, '/');
-      VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
-      if (lib != null) {
-        for (VirtualFile file : lib.getChildren()) {
-          if (required(file.getName())) {
-            classPathBuilder.append(file.getPath());
-            classPathBuilder.append(File.pathSeparator);
-          }
+    libPath = libPath.replace(File.separatorChar, '/');
+    VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
+    if (lib != null) {
+      for (VirtualFile file : lib.getChildren()) {
+        if (required(file.getName())) {
+          classPathBuilder.append(file.getPath());
+          classPathBuilder.append(File.pathSeparator);
         }
-      }
-
-      classPathBuilder.append(getModuleSpecificClassPath(module));
-      commandLine.addParameter(classPathBuilder.toString());
-      commandLine.addParameter(XMX_COMPILER_PROPERTY);
-      //commandLine.addParameter("-Xdebug");
-      //commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
-
-      // Setting up process encoding according to locale
-      final ArrayList<String> list = new ArrayList<String>();
-      CompilerUtil.addLocaleOptions(list, false);
-      commandLine.addParameters(list);
-
-      commandLine.addParameter(GroovycRunner.class.getName());
-
-      try {
-        File fileWithParameters = File.createTempFile("toCompile", "");
-        fillFileWithGroovycParameters(entry.getKey(), entry.getValue(), fileWithParameters);
-
-        commandLine.addParameter(fileWithParameters.getPath());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-
-      GroovycOSProcessHandler processHandler;
-
-      try {
-        processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString());
-
-        processHandler.startNotify();
-        processHandler.waitFor();
-
-        Set<File> toRecompileFiles = processHandler.getToRecompileFiles();
-        for (File toRecompileFile : toRecompileFiles) {
-          final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(toRecompileFile);
-          LOG.assertTrue(vFile != null);
-          toRecompile.add(vFile);
-        }
-
-        for (CompilerMessage compilerMessage : processHandler.getCompilerMessages()) {
-          final CompilerMessageCategory category;
-          category = getMessageCategory(compilerMessage);
-
-          final String url = compilerMessage.getUrl();
-
-          compileContext.addMessage(category, compilerMessage.getMessage(), url.replace('\\', '/'), compilerMessage.getLineNum(),
-                                    compilerMessage.getColumnNum());
-        }
-
-        StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
-        if (unparsedBuffer.length() != 0) compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
-
-        addSuccessfullyCompiled(successfullyCompiled, processHandler);
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
       }
     }
 
-    return new GroovyCompileExitStatus(successfullyCompiled, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
+    classPathBuilder.append(getModuleSpecificClassPath(module));
+    commandLine.addParameter(classPathBuilder.toString());
+    commandLine.addParameter(XMX_COMPILER_PROPERTY);
+    //commandLine.addParameter("-Xdebug");
+    //commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+
+    // Setting up process encoding according to locale
+    final ArrayList<String> list = new ArrayList<String>();
+    CompilerUtil.addLocaleOptions(list, false);
+    commandLine.addParameters(list);
+
+    commandLine.addParameter(GroovycRunner.class.getName());
+
+    try {
+      File fileWithParameters = File.createTempFile("toCompile", "");
+      fillFileWithGroovycParameters(module, toCompile, fileWithParameters);
+
+      commandLine.addParameter(fileWithParameters.getPath());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
+    GroovycOSProcessHandler processHandler;
+
+    try {
+      processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString());
+
+      processHandler.startNotify();
+      processHandler.waitFor();
+
+      Set<File> toRecompileFiles = processHandler.getToRecompileFiles();
+      for (File toRecompileFile : toRecompileFiles) {
+        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(toRecompileFile);
+        LOG.assertTrue(vFile != null);
+        toRecompile.add(vFile);
+      }
+
+      for (CompilerMessage compilerMessage : processHandler.getCompilerMessages()) {
+        final CompilerMessageCategory category;
+        category = getMessageCategory(compilerMessage);
+
+        final String url = compilerMessage.getUrl();
+
+        compileContext.addMessage(category, compilerMessage.getMessage(), url.replace('\\', '/'), compilerMessage.getLineNum(),
+                                  compilerMessage.getColumnNum());
+      }
+
+      StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
+      if (unparsedBuffer.length() != 0) compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
+
+      addSuccessfullyCompiled(successfullyCompiled, processHandler);
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
   }
 
   private static String getModuleSpecificClassPath(final Module module) {
@@ -211,7 +225,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     return buffer.toString();
   }
 
-  private void addSuccessfullyCompiled(Set<OutputItem> successfullyCompiled, GroovycOSProcessHandler processHandler) {
+  private static void addSuccessfullyCompiled(Set<OutputItem> successfullyCompiled, GroovycOSProcessHandler processHandler) {
     Set<OutputItem> toplevel = processHandler.getSuccessfullyCompiled();
     for (OutputItem item : toplevel) { //add closure files
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getOutputPath());
@@ -243,7 +257,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     required.add("commons");
   }
 
-  private boolean required(String name) {
+  private static boolean required(String name) {
     name = name.toLowerCase();
     if (!name.endsWith(".jar")) return false;
 
@@ -260,7 +274,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     return false;
   }
 
-  private CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
+  private static CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
     String category;
     category = compilerMessage.getCategory();
 
@@ -272,11 +286,11 @@ public class GroovyCompiler implements TranslatingCompiler {
     return CompilerMessageCategory.ERROR;
   }
 
-  class GroovyCompileExitStatus implements ExitStatus {
+  static class GroovyCompileExitStatus implements ExitStatus {
     private OutputItem[] myCompiledItems;
     private VirtualFile[] myToRecompile;
 
-    public GroovyCompileExitStatus(Set<TranslatingCompiler.OutputItem> compiledItems, VirtualFile[] toRecompile) {
+    public GroovyCompileExitStatus(Set<OutputItem> compiledItems, VirtualFile[] toRecompile) {
       myToRecompile = toRecompile;
       myCompiledItems = compiledItems.toArray(new OutputItem[compiledItems.size()]);
     }
@@ -449,14 +463,14 @@ public class GroovyCompiler implements TranslatingCompiler {
     return pathsList;
   }
 
-  public PathsList getNonExcludedModuleSourceFolders(Module module) {
+  public static PathsList getNonExcludedModuleSourceFolders(Module module) {
     ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
     PathsList sourceFolders = findAllSourceFolders(contentEntries);
     sourceFolders.getPathList().removeAll(findExcludedFolders(contentEntries));
     return sourceFolders;
   }
 
-  private PathsList findAllSourceFolders(ContentEntry[] contentEntries) {
+  private static PathsList findAllSourceFolders(ContentEntry[] contentEntries) {
     PathsList sourceFolders = new PathsList();
     for (ContentEntry contentEntry : contentEntries) {
       for (SourceFolder folder : contentEntry.getSourceFolders()) {
@@ -471,7 +485,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     return sourceFolders;
   }
 
-  private Set<VirtualFile> findExcludedFolders(ContentEntry[] entries) {
+  private static Set<VirtualFile> findExcludedFolders(ContentEntry[] entries) {
     Set<VirtualFile> excludedFolders = new HashSet<VirtualFile>();
     for (ContentEntry entry : entries) {
       excludedFolders.addAll(Arrays.asList(entry.getExcludeFolderFiles()));

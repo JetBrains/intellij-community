@@ -19,7 +19,6 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
-import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,10 +28,10 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
@@ -41,6 +40,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
+import org.jetbrains.plugins.groovy.config.GroovyFacetConfiguration;
 import org.jetbrains.plugins.groovy.config.GroovySDK;
 import org.jetbrains.plugins.groovy.config.util.GroovySDKPointer;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
@@ -61,22 +61,23 @@ public class GroovyFacetTab extends FacetEditorTab {
   private JButton myNewButton;
   private Module myModule;
   private JPanel myPanel;
+  private JRadioButton myCompile;
+  private JRadioButton myCopyToOutput;
   private FacetEditorContext myEditorContext;
-  private FacetValidatorsManager myValidatorsManager;
 
   private LibraryTable.Listener myLibraryListener;
 
   private String oldGroovyLibName = "";
   private String newGroovyLibName = "";
+  private GroovyFacetConfiguration myConfiguration;
 
-  public GroovyFacetTab(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
+  public GroovyFacetTab(FacetEditorContext editorContext, GroovyFacetConfiguration configuration) {
+    myConfiguration = configuration;
     myModule = editorContext.getModule();
     setUpComboBox();
     myNewButton.setMnemonic(KeyEvent.VK_N);
     myEditorContext = editorContext;
-    myValidatorsManager = validatorsManager;
     setUpComponents();
-    reset();
     myLibraryListener = new MyLibraryTableListener();
     LibraryTablesRegistrar.getInstance().getLibraryTable().addListener(myLibraryListener);
     ProjectLibraryTable.getInstance(myModule.getProject()).addListener(myLibraryListener);
@@ -109,6 +110,10 @@ public class GroovyFacetTab extends FacetEditorTab {
     if (!oldGroovyLibName.equals(newGroovyLibName)) {
       return true;
     }
+    if (myCompile.isSelected() != myConfiguration.isCompileGroovyFiles()) {
+      return true;
+    }
+
     for (GroovySDKComboBox.DefaultGroovySDKComboBoxItem item : myComboBox.getAllItems()) {
       if (item instanceof GroovySDKComboBox.GroovySDKPointerItem) return true;
     }
@@ -166,6 +171,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void apply() throws ConfigurationException {
     oldGroovyLibName = newGroovyLibName;
+    myConfiguration.setCompileGroovyFiles(myCompile.isSelected());
   }
 
   public void reset() {
@@ -189,6 +195,8 @@ public class GroovyFacetTab extends FacetEditorTab {
         myComboBox.selectLibrary(library);
       }
     }
+
+    (myConfiguration.isCompileGroovyFiles() ? myCompile : myCopyToOutput).setSelected(true);
   }
 
   public void disposeUIResources() {

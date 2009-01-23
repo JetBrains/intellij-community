@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -110,6 +111,13 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       }
 
       final Module module = getModuleByFile(context, file);
+
+      if (module != null) {
+        final GroovyFacet facet = GroovyFacet.getInstance(module);
+        if (facet != null && !facet.getConfiguration().isCompileGroovyFiles()) {
+          continue;
+        }
+      }
 
       //top level class
       if (needCreateTopLevelClass) {
