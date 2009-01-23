@@ -1,5 +1,6 @@
 package com.intellij.testFramework;
 
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.highlighter.ModuleFileType;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,19 +33,23 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected void tearDown() throws Exception {
-    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (Module module : myModulesToDispose) {
-          String moduleName = module.getName();
-          if (moduleManager.findModuleByName(moduleName) != null) {
-            moduleManager.disposeModule(module);
+    try {
+      final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          for (Module module : myModulesToDispose) {
+            String moduleName = module.getName();
+            if (moduleManager.findModuleByName(moduleName) != null) {
+              moduleManager.disposeModule(module);
+            }
           }
         }
-      }
-    });
-    myModulesToDispose.clear();
-    super.tearDown();
+      });
+    }
+    finally {
+      myModulesToDispose.clear();
+      super.tearDown();
+    }
   }
 
   protected Module createModule(final File moduleFile) {
