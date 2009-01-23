@@ -214,8 +214,10 @@ public class SvnRenameTest extends SvnTestCase {
       //
     }
     Assert.assertTrue(exceptions.isEmpty());
-    Assert.assertTrue(new File(childPath, "a.txt").exists());
-    Assert.assertTrue(new File(childPath, "u.txt").exists());
+    final File fileA = new File(childPath, "a.txt");
+    Assert.assertTrue(fileA.getAbsolutePath(), fileA.exists());
+    final File fileU = new File(childPath, "u.txt");
+    Assert.assertTrue(fileU.getAbsolutePath(), fileU.exists());
     final File unversionedDirFile = new File(childPath, "uc");
     Assert.assertTrue(unversionedDirFile.exists());
     Assert.assertTrue(new File(unversionedDirFile, "c.txt").exists());

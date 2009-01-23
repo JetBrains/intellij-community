@@ -266,12 +266,12 @@ public class SvnCommittedViewTest extends SvnTestCase {
           break;
         }
       }
-      Assert.assertTrue(printChanges(changes), found);
+      Assert.assertTrue(printChanges(data, changes), found);
     }
   }
 
-  private String printChanges(final Collection<Change> changes) {
-    final StringBuilder sb = new StringBuilder("Changes: ");
+  private String printChanges(final Data data, final Collection<Change> changes) {
+    final StringBuilder sb = new StringBuilder("Data: ").append(data.myLocalPath).append(" Changes: ");
     for (Change change : changes) {
       final ContentRevision cr = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
       sb.append("'").append(cr.getFile().getIOFile().getAbsolutePath()).append("' | ");
