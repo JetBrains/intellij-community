@@ -1,10 +1,9 @@
 package org.jetbrains.idea.maven.embedder;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.plugin.AbstractMojoExecutionException;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -117,15 +116,7 @@ public abstract class MavenConsole {
       }
 
       if (myPrintStrackTrace) {
-        StringWriter writer = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(writer);
-        try {
-          throwable.printStackTrace(printWriter);
-          doPrint(LINE_SEPARATOR + writer.getBuffer().toString(), OutputType.ERROR);
-        }
-        finally {
-          printWriter.close();
-        }
+        doPrint(LINE_SEPARATOR + StringUtil.getThrowableText(throwable), OutputType.ERROR);
       }
       else {
         doPrint(LINE_SEPARATOR +
