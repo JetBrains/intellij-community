@@ -11,14 +11,10 @@ import java.awt.*;
 public class Splash extends JWindow {
   private Icon myImage;
   private JLabel myLabel;
-  private boolean myShowLicenseeInfo;
-  private Color myTextColor;
 
   public Splash(String imageName, final Color textColor) {
-    myTextColor = textColor;
     Icon originalImage = IconLoader.getIcon(imageName);
-    myShowLicenseeInfo = ApplicationInfoImpl.getShadowInstance().showLicenseeInfo();
-    myImage = new MyIcon(originalImage);
+    myImage = new MyIcon(originalImage, textColor);
     myLabel = new JLabel(myImage);
     Container contentPane = getContentPane();
     contentPane.setLayout(new BorderLayout());
@@ -34,26 +30,34 @@ public class Splash extends JWindow {
     myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
   }
 
-  private final class MyIcon implements Icon {
-    private Icon myOriginalIcon;
+  public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {
+    if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
+      g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
+      g.setColor(textColor);
+      g.drawString(LicenseManager.getInstance().licensedToMessage(), x + 20, y + height - 52);
+      g.drawString(LicenseManager.getInstance().licensedRestrictionsMessage(), x + 20, y + height - 32);
+      return true;
+    }
+    return false;
+  }
 
-    public MyIcon(Icon originalIcon) {
+  private static final class MyIcon implements Icon {
+    private Icon myOriginalIcon;
+    private Color myTextColor;
+
+    public MyIcon(Icon originalIcon, Color textColor) {
       myOriginalIcon = originalIcon;
+      myTextColor = textColor;
     }
 
     public void paintIcon(Component c, Graphics g, int x, int y) {
       yeild();
       myOriginalIcon.paintIcon(c, g, x, y);
 
-      if (myShowLicenseeInfo) {
-        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
-        g.setColor(myTextColor);
-        g.drawString(LicenseManager.getInstance().licensedToMessage(), x + 20, y + getIconHeight() - 52);
-        g.drawString(LicenseManager.getInstance().licensedRestrictionsMessage(), x + 20, y + getIconHeight() - 32);
-      }
+      showLicenseeInfo(g, x, y, getIconHeight(), myTextColor);
     }
 
-    private void yeild() {
+    private static void yeild() {
       try {
         Thread.sleep(10);
       }

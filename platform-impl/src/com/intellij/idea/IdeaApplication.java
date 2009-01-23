@@ -24,8 +24,10 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.Splash;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -129,15 +131,48 @@ public class IdeaApplication {
     public void premain(String[] args) {
       if (MainImpl.shouldShowSplash(args)) {
         final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-        final Splash splash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            splash.show();
-          }
-        });
-        mySplash = splash;
+        final Object splashScreen = getSplashScreen();
+        if (splashScreen == null) {
+          final Splash splash = new Splash(appInfo.getLogoUrl(), appInfo.getLogoTextColor());
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              splash.show();
+            }
+          });
+          mySplash = splash;
+        }
+        else {
+          updateSplashScreen(appInfo, splashScreen);
+        }
       }
       initAlloy();
+    }
+
+    private void updateSplashScreen(ApplicationInfoEx appInfo, Object splashScreen) {
+      final Graphics2D graphics;
+      try {
+        final Class<?> aClass = splashScreen.getClass();
+        graphics = (Graphics2D)aClass.getMethod("createGraphics").invoke(splashScreen);
+        final Dimension size = (Dimension)aClass.getMethod("getSize").invoke(splashScreen);
+        if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getLogoTextColor())) {
+          aClass.getMethod("update").invoke(splashScreen);
+        }
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
+    }
+
+    @Nullable
+    private Object getSplashScreen() {
+      //todo[nik] get rid of reflection when (if?) IDEA will be built only under jdk 1.6
+      try {
+        final Class<?> aClass = Class.forName("java.awt.SplashScreen");
+        return aClass.getMethod("getSplashScreen").invoke(null);
+      }
+      catch (Exception e) {
+        return null;
+      }
     }
 
     public void main(String[] args) {
