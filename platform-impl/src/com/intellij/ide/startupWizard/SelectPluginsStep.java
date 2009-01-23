@@ -279,4 +279,9 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     }
     return prev;
   }
+
+  @Override
+  public String getHelpId() {
+    return "plugin.configuration.wizard";
+  }
 }
