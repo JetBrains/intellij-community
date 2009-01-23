@@ -67,7 +67,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
     public final String prefix;
     public final String suffix;
 
-    public Shred(PsiLanguageInjectionHost host, RangeMarker relevantRangeInHost, String prefix, String suffix, TextRange range) {
+    public Shred(@NotNull PsiLanguageInjectionHost host, @NotNull RangeMarker relevantRangeInHost, @NotNull String prefix, @NotNull String suffix, @NotNull TextRange range) {
       this.host = host;
       this.relevantRangeInHost = relevantRangeInHost;
       this.prefix = prefix;
@@ -97,7 +97,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
     }
 
     public boolean isValid() {
-      return relevantRangeInHost.isValid() && host.isValid() /*&& host.getTextRange().containsRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset())*/;
+      return relevantRangeInHost.isValid() && host.isValid();
     }
   }
 }

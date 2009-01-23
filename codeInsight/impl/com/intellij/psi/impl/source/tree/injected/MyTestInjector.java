@@ -31,6 +31,7 @@ public class MyTestInjector {
   private final PsiManager myPsiManager;
   private ConcatenationAwareInjector myQLPrefixedInjector;
   private MultiHostInjector myMultiHostInjector;
+  private ConcatenationAwareInjector myBrokenUpPrefix;
 
   @TestOnly
   public MyTestInjector(PsiManager psiManager) {
@@ -47,6 +48,7 @@ public class MyTestInjector {
     myQLPrefixedInjector = registerForStringVarInitializer(project, ql, "qlPrefixed", "xxx", null);
     myJSInPlaceInjector = registerForStringVarInitializer(project, js, "js", null, null);
     mySeparatedJSInjector = registerForStringVarInitializer(project, js, "jsSeparated", " + ", " + 'separator'");
+    myBrokenUpPrefix = registerForStringVarInitializer(project, js, "jsBrokenPrefix", "xx ", "");
   }
 
   private static ConcatenationAwareInjector registerForStringVarInitializer(@NotNull Project project,
@@ -85,6 +87,8 @@ public class MyTestInjector {
     b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(mySeparatedJSInjector);
     assert b;
     b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myQLPrefixedInjector);
+    assert b;
+    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myBrokenUpPrefix);
     assert b;
     b = InjectedLanguageManager.getInstance(project).unregisterMultiHostInjector(myMultiHostInjector);
     assert b;

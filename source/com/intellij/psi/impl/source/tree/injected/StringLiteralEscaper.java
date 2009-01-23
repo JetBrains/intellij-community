@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 */
 public class StringLiteralEscaper extends LiteralTextEscaper<PsiLiteralExpressionImpl> {
   private int[] outSourceOffsets;
-  private int rangeDisplayStart;
 
   public StringLiteralEscaper(PsiLiteralExpressionImpl host) {
     super(host);
@@ -19,23 +18,15 @@ public class StringLiteralEscaper extends LiteralTextEscaper<PsiLiteralExpressio
 
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
     ProperTextRange.assertProperRange(rangeInsideHost);
-    String hostText = myHost.getText();
-    outSourceOffsets = new int[myHost.getTextLength()+1];
-    int originalLength = outChars.length();
-    PsiLiteralExpressionImpl.parseStringCharacters(hostText, outChars, outSourceOffsets);
-    String subText = hostText.substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
-    outChars.setLength(originalLength);
-    StringBuilder displayCharsInTheStart = new StringBuilder();
-    PsiLiteralExpressionImpl.parseStringCharacters(hostText.substring(0, rangeInsideHost.getStartOffset()),displayCharsInTheStart, null);
-    rangeDisplayStart = displayCharsInTheStart.length();
-
-    return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, null);
+    String subText = rangeInsideHost.substring(myHost.getText());
+    outSourceOffsets = new int[subText.length()+1];
+    return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, outSourceOffsets);
   }
 
   public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-    int off = offsetInDecoded + rangeDisplayStart;
-    int result = off < myHost.getTextLength() ? outSourceOffsets[off] : -1;
-    return result <= rangeInsideHost.getEndOffset() ? result : rangeInsideHost.getEndOffset();
+    int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
+    if (result == -1) return -1;
+    return (result <= rangeInsideHost.getLength() ? result : rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
   }
 
   public boolean isOneLine() {

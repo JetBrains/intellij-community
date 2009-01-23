@@ -234,6 +234,9 @@ public class InjectedLanguageUtil {
     if (injected == null) {
       injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, new CopyOnWriteArrayList<DocumentWindow>());
     }
+    for (DocumentWindow documentWindow : injected) {
+      if (!documentWindow.isValid()) injected.remove(documentWindow);
+    }
     return injected;
   }
 

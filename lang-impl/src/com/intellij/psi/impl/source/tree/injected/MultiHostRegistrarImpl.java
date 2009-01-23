@@ -23,8 +23,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -296,100 +296,38 @@ class MultiHostRegistrarImpl implements MultiHostRegistrar {
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     final StringBuilder catLeafs = new StringBuilder();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
-      int currentHostNum = -1;
-      LeafElement prevElement;
-      String prevElementTail;
-      int prevHostsCombinedLength;
-      TextRange shredHostRange;
-      TextRange rangeInsideHost;
-      String hostText;
-      PsiLanguageInjectionHost.Shred shred;
-      int prefixLength;
-      {
-        incHostNum(0);
-      }
+      private LeafElement prevElement;
+      private String prevElementTail;
 
       protected boolean visitNode(TreeElement element) {
         return true;
       }
 
-      @Override public void visitLeaf(LeafElement leaf) {
+      @Override
+      public void visitLeaf(LeafElement leaf) {
         String leafText = leaf.getText();
         catLeafs.append(leafText);
-        TextRange range = leaf.getTextRange();
-        int startOffsetInHost;
-        while (true) {
-          if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
-            //LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
-            //          "However, parsed element of "+leaf.getClass()+" contains "+(prefixLength-range.getStartOffset()) + " characters from the prefix. " +
-            //          "Parsed text is '"+leaf.getText()+"'");
-          }
-          if (range.getStartOffset() < shredHostRange.getEndOffset() && shredHostRange.getEndOffset() < range.getEndOffset()) {
-            //LOG.error("Suffix must not contain text that will be glued with the element body after parsing. " +
-            //          "However, parsed element of "+leaf.getClass()+" contains "+(range.getEndOffset()-shredHostRange.getEndOffset()) + " characters from the suffix. " +
-            //          "Parsed text is '"+leaf.getText()+"'");
-          }
+        final TextRange leafRange = leaf.getTextRange();
 
-          int start = range.getStartOffset() - prevHostsCombinedLength;
-          if (start < prefixLength) return;
-          int end = range.getEndOffset();
-          if (end > shred.range.getEndOffset() - shred.suffix.length() && end <= shred.range.getEndOffset()) return;
-          startOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(start - prefixLength, rangeInsideHost);
-
-          if (startOffsetInHost != -1 && startOffsetInHost != rangeInsideHost.getEndOffset()) {
-            break;
-          }
-          // no way next leaf might stand more than one shred apart
-          incHostNum(range.getStartOffset());
-        }
-        String leafEncodedText = "";
-        while (true) {
-          if (range.getEndOffset() <= shred.range.getEndOffset()) {
-            int end = range.getEndOffset() - prevHostsCombinedLength;
-            if (end < prefixLength) {
-              leafEncodedText += shred.prefix.substring(0, end);
-            }
-            else {
-              int endOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(end - prefixLength, rangeInsideHost);
-              assert endOffsetInHost != -1;
-              leafEncodedText += hostText.substring(startOffsetInHost, endOffsetInHost);
-            }
-            break;
-          }
-          String rest = hostText.substring(startOffsetInHost, rangeInsideHost.getEndOffset());
-          leafEncodedText += rest;
-          incHostNum(shred.range.getEndOffset());
-          leafEncodedText += shred.prefix;
-          startOffsetInHost = shred.getRangeInsideHost().getStartOffset();
-        }
+        StringBuilder leafEncodedText = constructTextFromHostPSI(leafRange.getStartOffset(), leafRange.getEndOffset(), shreds, escapers);
 
         if (leaf.getElementType() == TokenType.WHITE_SPACE && prevElementTail != null) {
           // optimization: put all garbage into whitespace
-          leafEncodedText = prevElementTail + leafEncodedText;
+          leafEncodedText.insert(0, prevElementTail);
           newTexts.remove(prevElement);
           storeUnescapedTextFor(prevElement, null);
         }
-        if (!Comparing.strEqual(leafText, leafEncodedText)) {
-          newTexts.put(leaf, leafEncodedText);
+        if (!Comparing.equal(leafText, leafEncodedText)) {
+          newTexts.put(leaf, leafEncodedText.toString());
           storeUnescapedTextFor(leaf, leafText);
         }
-        if (leafEncodedText.startsWith(leafText) && leafEncodedText.length() != leafText.length()) {
+        if (StringUtil.startsWith(leafEncodedText, leafText) && leafEncodedText.length() != leafText.length()) {
           prevElementTail = leafEncodedText.substring(leafText.length());
         }
         else {
           prevElementTail = null;
         }
         prevElement = leaf;
-      }
-
-      private void incHostNum(int startOffset) {
-        currentHostNum++;
-        prevHostsCombinedLength = startOffset;
-        shred = shreds.get(currentHostNum);
-        shredHostRange = new ProperTextRange(TextRange.from(shred.prefix.length(), shred.getRangeInsideHost().getLength()));
-        rangeInsideHost = shred.getRangeInsideHost();
-        hostText = shred.host.getText();
-        prefixLength = shredHostRange.getStartOffset();
       }
     });
 
@@ -413,6 +351,49 @@ class MultiHostRegistrarImpl implements MultiHostRegistrar {
         return true;
       }
     });
+  }
+
+  private static StringBuilder constructTextFromHostPSI(int startOffset, int endOffset, Place shreds,
+                                                 List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers) {
+    PsiLanguageInjectionHost.Shred current = shreds.get(0); //todo do not start over
+    int n = 0;
+    StringBuilder text = new StringBuilder(endOffset-startOffset);
+    while (startOffset < endOffset) {
+      TextRange shredRange = current.range;
+      String prefix = current.prefix;
+      if (startOffset >= shredRange.getEndOffset()) {
+        current = shreds.get(++n);
+        continue;
+      }
+      assert startOffset >= shredRange.getStartOffset();
+      if (startOffset - shredRange.getStartOffset() < prefix.length()) {
+        // inside prefix
+        TextRange rangeInPrefix = new TextRange(startOffset - shredRange.getStartOffset(), Math.min(prefix.length(), endOffset - shredRange.getStartOffset()));
+        text.append(prefix, rangeInPrefix.getStartOffset(), rangeInPrefix.getEndOffset());
+        startOffset += rangeInPrefix.getLength();
+        continue;
+      }
+
+      String suffix = current.suffix;
+      if (startOffset < shredRange.getEndOffset() - suffix.length()) {
+        // inside host body, cut out from the host text
+        int startOffsetInHost = escapers.get(n).getOffsetInHost(startOffset - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());
+        int endOffsetCut = Math.min(endOffset, shredRange.getEndOffset() - suffix.length());
+        int endOffsetInHost = escapers.get(n).getOffsetInHost(endOffsetCut - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());
+        if (endOffsetInHost != -1) {
+          text.append(current.host.getText(), startOffsetInHost, endOffsetInHost);
+          startOffset = endOffsetCut;
+          continue;
+        }
+      }
+
+      // inside suffix
+      TextRange rangeInSuffix = new TextRange(suffix.length() - shredRange.getEndOffset() + startOffset, Math.min(suffix.length(), endOffset + suffix.length() - shredRange.getEndOffset()));
+      text.append(suffix, rangeInSuffix.getStartOffset(), rangeInSuffix.getEndOffset());
+      startOffset += rangeInSuffix.getLength();
+    }
+
+    return text;
   }
 
   private static void storeUnescapedTextFor(final LeafElement leaf, final String leafText) {
