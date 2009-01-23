@@ -47,12 +47,16 @@ public class UpdateCopyrightAction extends AnAction {
       }
     }
     else if (files != null && FileUtil.areFiles(files)) {
+      boolean copyrightEnabled  = false;
       for (VirtualFile vfile : files) {
-        final PsiFile file = PsiManager.getInstance(project).findFile(vfile);
-        if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file.getVirtualFile())) {
-          presentation.setEnabled(false);
-          return;
+        if (FileTypeUtil.getInstance().isSupportedFile(vfile)) {
+          copyrightEnabled = true;
+          break;
         }
+      }
+      if (!copyrightEnabled) {
+        presentation.setEnabled(false);
+        return;
       }
 
     }
