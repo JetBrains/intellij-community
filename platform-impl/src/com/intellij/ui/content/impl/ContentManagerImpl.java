@@ -398,7 +398,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Content selectedContent = getSelectedContent();
     int index = getIndexOfContent(selectedContent);
     index = (index - 1 + contentCount) % contentCount;
-    return setSelectedContent(getContent(index));
+    return setSelectedContent(getContent(index), true);
   }
 
   public ActionCallback selectNextContent() {
@@ -407,7 +407,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Content selectedContent = getSelectedContent();
     int index = getIndexOfContent(selectedContent);
     index = (index + 1) % contentCount;
-    return setSelectedContent(getContent(index));
+    return setSelectedContent(getContent(index), true);
   }
 
   public void addContentManagerListener(@NotNull ContentManagerListener l) {
