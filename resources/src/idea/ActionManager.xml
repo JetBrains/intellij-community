@@ -109,6 +109,10 @@
 
     <!-- Analyze -->
 
+    <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction">
+      <add-to-group group-id="AnalyzeMenu" anchor="after" relative-to-action="InspectCode"/>
+    </action>
+
     <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
       <!--<action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"/>-->
