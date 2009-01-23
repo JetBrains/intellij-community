@@ -8,8 +8,8 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.EclipseProjectModel;
 import org.jetbrains.idea.eclipse.EclipseXml;
+import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
 
 import java.util.List;
 
@@ -31,12 +31,12 @@ public class EclipseProjectOpenProcessor extends ProjectOpenProcessorBase {
     //noinspection ConstantConditions
     getBuilder().setRootDirectory(file.getParent().getPath());
 
-    final List<EclipseProjectModel> projects = getBuilder().getList();
+    final List<String> projects = getBuilder().getList();
     if (projects.size() != 1) {
       return false;
     }
     getBuilder().setList(projects);
-    wizardContext.setProjectName(projects.get(0).getName());
+    wizardContext.setProjectName(EclipseProjectFinder.findProjectName(projects.get(0)));
     return true;
   }
 }

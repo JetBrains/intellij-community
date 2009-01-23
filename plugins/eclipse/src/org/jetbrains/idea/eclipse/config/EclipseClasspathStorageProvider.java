@@ -2,14 +2,11 @@ package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
-import com.intellij.openapi.roots.impl.storage.FileSet;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -21,17 +18,23 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.*;
+import org.jetbrains.idea.eclipse.ConversionException;
+import org.jetbrains.idea.eclipse.EclipseXml;
+import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.action.EclipseBundle;
-import org.jetbrains.idea.eclipse.util.JDOM;
+import org.jetbrains.idea.eclipse.reader.EclipseClasspathReader;
 import org.jetbrains.idea.eclipse.util.XmlDocumentSet;
+import org.jetbrains.idea.eclipse.writer.EclipseClasspathWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Vladislav.Kaznacheev
-*/
+ */
 public class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   @NonNls public static final String ID = "eclipse";
   public static final String DESCR = EclipseBundle.message("eclipse.classpath.storage.description");
@@ -62,23 +65,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
   public static boolean isCompatible(final ModuleRootModel model) {
     return model.getContentEntries().length == 1;
-  }
-
-  public static EclipseToIdeaConverter.LibraryResolver createLibraryResolver(final Project project) {
-    final LibraryTable globalLibraryTable =
-      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(LibraryTablesRegistrar.APPLICATION_LEVEL, project);
-    final LibraryTable projectLibraryTable =
-      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(LibraryTablesRegistrar.PROJECT_LEVEL, project);
-
-    return new EclipseToIdeaConverter.LibraryResolver() {
-      public boolean isGlobal(final String name) {
-        return globalLibraryTable.getLibraryByName(name) != null;
-      }
-
-      public boolean isProject(final String name) {
-        return projectLibraryTable.getLibraryByName(name) != null;
-      }
-    };
   }
 
   static void registerFiles(final CachedFileSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
@@ -131,7 +117,8 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       try {
         final XmlDocumentSet documentSet = getDocumentSet(module);
         final Document document = documentSet.read(EclipseXml.PROJECT_FILE);
-        final Element projectNameElement = JDOM.getOrCreateChild(document.getRootElement(), EclipseXml.NAME_TAG);
+        final Element projectNameElement = document.getRootElement().getChild(EclipseXml.NAME_TAG);
+        if (projectNameElement == null) return;
         final String oldModuleName = projectNameElement.getText();
         projectNameElement.setText(module.getName());
         documentSet.write(document, EclipseXml.PROJECT_FILE);
@@ -178,29 +165,60 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       this.module = module;
     }
 
-    public FileSet getFileSet() {
+    public CachedXmlDocumentSet getFileSet() {
       CachedXmlDocumentSet fileCache = EclipseModuleManager.getInstance(module).getDocumentSet();
       return fileCache != null ? fileCache : getFileCache(module);
     }
 
-    public IdeaModuleModel getClasspath(final Element element) throws IOException, InvalidDataException {
+    public Set<String> getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException {
       try {
-        return EclipseToIdeaConverter.convert(element, true, ClasspathStorage.getModuleDir(module), module.getName(), ClasspathStorage.getStorageRootMap(module.getProject(), module),
-                                       getDocumentSet(module), EclipseToIdeaConverter.Options.defValue, EclipseProjectReader.Options.defValue,
-                                       createLibraryResolver(module.getProject()));
+        final HashSet<String> usedVariables = new HashSet<String>();
+        final CachedXmlDocumentSet documentSet = getFileSet();
+        if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
+          final VirtualFile vFile = documentSet.getVFile(EclipseXml.CLASSPATH_FILE);
+          final EclipseClasspathReader classpathReader = new EclipseClasspathReader(vFile.getParent().getPath(), module.getProject());
+          classpathReader.readClasspath(model, new ArrayList<String>(), usedVariables, null,
+                                        documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
+
+          final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
+          if (documentSet.exists(eml)) {
+            EclipseClasspathReader.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
+          }
+        }
+
+        ((RootModelImpl)model).writeExternal(element);
+        return usedVariables;
       }
       catch (ConversionException e) {
         throw new InvalidDataException(e);
       }
+      catch (WriteExternalException e) {
+        throw new InvalidDataException(e);
+      }
+      catch (JDOMException e) {
+        throw new InvalidDataException(e);
+      }
     }
 
-    public void setClasspath(final Element element) throws IOException, WriteExternalException {
+    public void setClasspath(final ModifiableRootModel model) throws IOException, WriteExternalException {
       try {
-        IdeaToEclipseConverter
-          .convert(ClasspathStorage.getModuleDir(module), module.getName(), element, true, ClasspathStorage.getStorageRootMap(module.getProject(), null),
-                   getDocumentSet(module));
+        final Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
+        final EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);
+        final CachedXmlDocumentSet fileSet = getFileSet();
+
+        classpathWriter.writeClasspath(classpathElement, fileSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
+        fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
+
+        final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
+        if (classpathWriter.writeIDEASpecificClasspath(ideaSpecific)) {
+          fileSet.write(new Document(ideaSpecific), model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
+        }
+        fileSet.commit();
       }
       catch (ConversionException e) {
+        throw new WriteExternalException(e.getMessage());
+      }
+      catch (JDOMException e) {
         throw new WriteExternalException(e.getMessage());
       }
     }

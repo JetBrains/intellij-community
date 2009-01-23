@@ -1,32 +1,34 @@
 package org.jetbrains.idea.eclipse.config;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.JDOMException;
-import org.jetbrains.idea.eclipse.util.JDOM;
+import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.idea.eclipse.util.JDOMCompare;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 public class CachedXmlDocumentSet extends CachedFileSet<Document,Document> {
 
   protected Document load(final VirtualFile vFile) throws IOException, JDOMException {
-    InputStream is = null;
+    final InputStream is = vFile.getInputStream();
     try {
-      is = vFile.getInputStream();
-      return JDOM.read (is);
+      return JDOMUtil.loadDocument(is);
     }
     finally {
-      if ( is != null ) {
-        is.close();
-      }
+      is.close();
     }
   }
 
   protected void save(final Document content, OutputStream os ) throws IOException {
-    JDOM.write(content,os);
+    Writer writer = new OutputStreamWriter(os, "UTF-8");
+    try {
+      EclipseJDOMUtil.output(content, writer);
+    }
+    finally {
+      writer.close();
+    }
   }
 
   protected boolean areEqual(Document one, Document two) {

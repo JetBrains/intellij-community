@@ -47,4 +47,9 @@ public interface EclipseXml {
   @NonNls String ATTRIBUTE_TAG = "attribute";
   @NonNls String NAME_ATTR = "name";
   @NonNls String VALUE_ATTR = "value";
+  @NonNls String DOT_CLASSPATH_EXT = "." + CLASSPATH_EXT;
+  @NonNls String DOT_PROJECT_EXT = "." + PROJECT_EXT;
+  @NonNls String FILE_PROTOCOL = "file:/";
+  @NonNls String PLATFORM_PROTOCOL = "platform:/";
+  @NonNls String JAR_PREFIX = "jar:";
 }

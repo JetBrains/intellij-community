@@ -13,57 +13,59 @@ import com.intellij.projectImport.SelectImportedProjectsStep;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.EclipseProjectModel;
+import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<EclipseProjectModel> {
+class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<String> {
   private static final Icon ICON_CONFLICT = IconLoader.getIcon("/actions/cancel.png");
 
   Set<String> duplicateNames;
 
   public SelectEclipseImportedProjectsStep(WizardContext context) {
     super(context);
-    fileChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<EclipseProjectModel>() {
-      public void elementMarkChanged(final EclipseProjectModel element, final boolean isMarked) {
+    fileChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
+      public void elementMarkChanged(final String element, final boolean isMarked) {
         duplicateNames = null;
         fileChooser.repaint();
       }
     });
   }
 
-  private boolean isInConflict(final EclipseProjectModel item) {
+  private boolean isInConflict(final String item) {
     calcDuplicates();
-    return fileChooser.getMarkedElements().contains(item) && duplicateNames.contains(item.getName());
+    return fileChooser.getMarkedElements().contains(item) && duplicateNames.contains(EclipseProjectFinder.findProjectName(item));
   }
 
   private void calcDuplicates() {
     if (duplicateNames == null) {
       duplicateNames = new HashSet<String>();
       Set<String> usedNames = new HashSet<String>();
-      for (EclipseProjectModel model : fileChooser.getMarkedElements()) {
-        if (!usedNames.add(model.getName())) {
-          duplicateNames.add(model.getName());
+      for (String model : fileChooser.getMarkedElements()) {
+        final String projectName = EclipseProjectFinder.findProjectName(model);
+        if (!usedNames.add(projectName)) {
+          duplicateNames.add(projectName);
         }
       }
     }
   }
 
-  protected String getElementText(final EclipseProjectModel item) {
+  protected String getElementText(final String item) {
     StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append(item.getName());
-    String relPath = PathUtil.getRelative(((EclipseImportBuilder)getBuilder()).getParameters().workspace.getRoot(), item.getRoot());
-    if (!relPath.equals(".") && !relPath.equals(item.getName())) {
+    final String projectName = EclipseProjectFinder.findProjectName(item);
+    stringBuilder.append(projectName);
+    String relPath = PathUtil.getRelative(((EclipseImportBuilder)getBuilder()).getParameters().root, item);
+    if (!relPath.equals(".") && !relPath.equals(projectName)) {
       stringBuilder.append(" (").append(relPath).append(")");
     }
     return stringBuilder.toString();
   }
 
   @Nullable
-  protected Icon getElementIcon(final EclipseProjectModel item) {
+  protected Icon getElementIcon(final String item) {
     return isInConflict(item) ? ICON_CONFLICT : null;
   }
 

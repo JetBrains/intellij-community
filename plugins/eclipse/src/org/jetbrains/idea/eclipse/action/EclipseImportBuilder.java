@@ -1,16 +1,21 @@
 package org.jetbrains.idea.eclipse.action;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -18,77 +23,41 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.*;
+import org.jetbrains.idea.eclipse.EclipseXml;
+import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
-import org.jetbrains.idea.eclipse.direct.IdeaXml;
-import org.jetbrains.idea.eclipse.util.Progress;
+import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
+import org.jetbrains.idea.eclipse.reader.EclipseClasspathReader;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author Vladislav.Kaznacheev
- */
-public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectModel> implements EclipseProjectWizardContext {
-
+public class EclipseImportBuilder extends ProjectImportBuilder<String> implements EclipseProjectWizardContext {
   private static final Icon eclipseIcon = IconLoader.getIcon("/images/eclipse.gif");
-
-  static {
-    Progress.defaultImpl = new Progress.Impl() {
-      int myLimit = 0;
-      int myCount;
-
-      public void setPhaseName(String name) {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null && name != null) {
-          indicator.setText(name);
-        }
-      }
-
-      public void startPhase(int limit) {
-        myLimit = limit;
-        myCount = 0;
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.setIndeterminate(myLimit == 0);
-        }
-      }
-
-      public void setText(String text) {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.setText2(text);
-          if (myLimit != 0) {
-            indicator.setFraction((double)(++myCount) / myLimit);
-          }
-        }
-      }
-
-      public boolean isCancelled() {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        return indicator != null && indicator.isCanceled();
-      }
-    };
-  }
+  private static final Logger LOG = Logger.getInstance("#" + EclipseImportBuilder.class.getName());
 
   public static class Parameters {
-    public EclipseWorkspace workspace;
+    public String root;
+    public List<String> workspace;
     public boolean linkConverted;
-    public List<EclipseProjectModel> projectsToConvert = new ArrayList<EclipseProjectModel>();
+    public List<String> projectsToConvert = new ArrayList<String>();
     public boolean openModuleSettings;
-    public EclipseToIdeaConverter.Options converterOptions = new EclipseToIdeaConverter.Options();
+    public Options converterOptions = new Options();
     public Set<String> existingModuleNames;
   }
 
   private Parameters parameters;
 
-  private IdeaProjectModel ideaProjectModel;
 
   public String getName() {
     return EclipseBundle.message("eclipse.name");
@@ -100,40 +69,36 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
 
   @Nullable
   public String getRootDirectory() {
-    return getParameters().workspace == null ? null : getParameters().workspace.getRoot();
+    return getParameters().root;
   }
 
   public boolean setRootDirectory(final String path) {
     ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
-        getParameters().workspace = EclipseWorkspace.load(path, new EclipseProjectReader.Options());
-        if (indicator != null && indicator.isCanceled()) {
-          return;
-        }
-        Collections.sort(getParameters().workspace.getProjects(), new Comparator<EclipseProjectModel>() {
-          public int compare(EclipseProjectModel o1, EclipseProjectModel o2) {
-            return o1.getName().compareToIgnoreCase(o2.getName());
-          }
-        });
+        final ArrayList<String> roots = new ArrayList<String>();
+        EclipseProjectFinder.findModuleRoots(roots, path);
+        getParameters().workspace = roots;
+        getParameters().root = path;
       }
 
       public void onCancel() {
         getParameters().workspace = null;
+        getParameters().root = null;
       }
     });
 
     return getParameters().workspace != null;
   }
 
-  public List<EclipseProjectModel> getList() {
-    return getParameters().workspace.getProjects();
+  public List<String> getList() {
+    return getParameters().workspace;
   }
 
-  public boolean isMarked(final EclipseProjectModel element) {
-    return !getParameters().existingModuleNames.contains(element.getName());
+  public boolean isMarked(final String element) {
+    return !getParameters().existingModuleNames.contains(EclipseProjectFinder.findProjectName(element));
   }
 
-  public void setList(List<EclipseProjectModel> list) {
+  public void setList(List<String> list) {
     getParameters().projectsToConvert = list;
   }
 
@@ -151,33 +116,20 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
   }
 
   public boolean validate(final Project currentProject, final Project dstProject) {
-    final EclipseResolver eclipseResolver = new EclipseResolver() {
-      final Map<String, String> existingModuleRoots = ClasspathStorage.getStorageRootMap(dstProject, null);
-
-      @Nullable
-      public String getProjectNameByPluginId(final String id) {
-        return Util.getProjectNameByPluginId(getParameters().projectsToConvert, id);
-      }
-
-      @Nullable
-      public String getRootByName(final String name) {
-        String root = Util.getRootByName(getParameters().projectsToConvert, name);
-        return root != null ? root : existingModuleRoots.get(name);
-      }
-    };
-
     final Ref<Exception> refEx = new Ref<Exception>();
+    final HashSet<String> variables = new HashSet<String>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
-          ideaProjectModel = EclipseToIdeaConverter.convert(getParameters().projectsToConvert, eclipseResolver,
-                                                            EclipseClasspathStorageProvider.createLibraryResolver(dstProject),
-                                                            getParameters().converterOptions);
-        }
-        catch (ConversionException e) {
-          refEx.set(e);
+          for (String path : getParameters().projectsToConvert) {
+            final Element classpathElement = JDOMUtil.loadDocument(new File(path, EclipseXml.DOT_CLASSPATH_EXT)).getRootElement();
+            EclipseClasspathReader.collectVariables(variables, classpathElement);
+          }
         }
         catch (IOException e) {
+          refEx.set(e);
+        }
+        catch (JDOMException e) {
           refEx.set(e);
         }
       }
@@ -189,7 +141,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
     }
 
     final HashMap<String, String> map = new HashMap<String, String>();
-    for (String v : ideaProjectModel.getVariables()) {
+    for (String v : variables) {
       map.put(v, null);
     }
 
@@ -201,19 +153,44 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
   }
 
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    final Collection<String> libraries = new TreeSet<String>();
+    final Collection<String> unknownLibraries = new TreeSet<String>();
     final List<Module> result = new ArrayList<Module>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        result.addAll(convertModules(project, ideaProjectModel.getModules(), getParameters().linkConverted, getParameters().converterOptions, libraries, model));
+
+    try {
+      final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
+      final ModifiableRootModel[] rootModels = new ModifiableRootModel[getParameters().projectsToConvert.size()];
+      int idx = 0;
+      final Set<String> usedVariables = new HashSet<String>();
+      for (String path : getParameters().projectsToConvert) {
+        String modulesDirectory = getParameters().converterOptions.commonModulesDirectory;
+        if (modulesDirectory == null) {
+          modulesDirectory = path;
+        }
+        final Element classpathElement = JDOMUtil.loadDocument(new File(path, EclipseXml.DOT_CLASSPATH_EXT)).getRootElement();
+        final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
+        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        rootModels[idx++] = rootModel;
+        new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, usedVariables, getParameters().converterOptions.testPattern, classpathElement);
+        ClasspathStorage.setStorageType(module,
+                                      getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
       }
-    });
+      if (model == null) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run(){
+                ProjectRootManagerEx.getInstanceEx(project).multiCommit(moduleModel, rootModels);
+            }
+        });
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
 
-    createEclipseLibrary(project, libraries, IdeaXml.ECLIPSE_LIBRARY);
+    createEclipseLibrary(project, unknownLibraries, IdeaXml.ECLIPSE_LIBRARY);
 
-    if (libraries.size() != 0) {
+    if (unknownLibraries.size() != 0) {
       StringBuffer message = new StringBuffer();
-      for (String name : libraries) {
+      for (String name : unknownLibraries) {
         message.append("\n");
         message.append(name);
       }
@@ -224,7 +201,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
     return result;
   }
 
-  private void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
+  private static void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
     if (libraries.contains(libraryName)) {
       final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
         public Icon getOpenIcon(final VirtualFile virtualFile) {
@@ -262,18 +239,6 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
         }
       }
     }
-  }
-
-  public static List<Module> convertModules(final Project project, final Collection<IdeaModuleModel> modules, boolean link, final EclipseToIdeaConverter.Options converterOptions,
-                                            final Collection<String> libraries,
-                                            final ModifiableModuleModel model) {
-    final ModifiableModuleModel modifiableModuleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
-    final List<Module> convertedModules = EclipseProjectImporter.convertModules(modifiableModuleModel, modules, converterOptions, libraries);
-    for (IdeaModuleModel moduleModel : modules) {
-      ClasspathStorage.setStorageType(modifiableModuleModel.findModuleByName(moduleModel.getName()), link ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
-    }
-    if (model == null) modifiableModuleModel.commit();
-    return convertedModules;
   }
 
   public Parameters getParameters() {
