@@ -27,7 +27,7 @@ public class JavaIdentifier extends LightIdentifier {
   private TextRange myRange;
 
   public JavaIdentifier(PsiManager manager, PsiFile file, TextRange range) {
-    super(manager, file.getText().substring(range.getStartOffset(), range.getEndOffset()));
+    super(manager, range.substring(file.getText()));
     myFile = file;
     myRange = range;
   }

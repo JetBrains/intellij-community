@@ -102,9 +102,7 @@ public class QuickEditAction implements IntentionAction {
     final String prefix = "";//docRange.getPrefix();
     final String suffix = "";//docRange.getSuffix();
 
-    final String fullText = getUnescapedText(
-        docRange.getDelegate().getText().substring(textRange.getStartOffset(), textRange.getEndOffset()), isInsideStringLiteral,
-        isInsideXml);
+    final String fullText = getUnescapedText(textRange.substring(docRange.getDelegate().getText()), isInsideStringLiteral, isInsideXml);
     final Matcher matcher = SPACE_PATTERN.matcher(fullText);
     final String prefixSpace;
     final String suffixSpace;
