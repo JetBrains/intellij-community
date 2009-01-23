@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.ListOrMapConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -160,7 +161,17 @@ public class ArgumentList implements GroovyElementTypes {
         marker.rollbackTo();
         return false;
       }
-    } else {
+    } else if (mLBRACK.equals(builder.getTokenType())) {
+      ListOrMapConstructorExpression.parse(builder);
+      if (mCOLON.equals(builder.getTokenType())) {
+        marker.done(ARGUMENT_LABEL);
+        return true;
+      } else {
+        marker.rollbackTo();
+        return false;
+      }
+    }
+    else {
       marker.drop();
       return false;
     }
