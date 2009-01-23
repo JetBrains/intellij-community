@@ -118,7 +118,7 @@ public class LineFragment extends LineBlock implements Fragment {
 
   public String getText(String text, FragmentSide side) {
     TextRange range = getRange(side);
-    return text.substring(range.getStartOffset(), range.getEndOffset());
+    return range.substring(text);
   }
 
 

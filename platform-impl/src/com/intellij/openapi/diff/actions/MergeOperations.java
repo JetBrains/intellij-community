@@ -128,7 +128,7 @@ public class MergeOperations {
   }
 
   private static String getSubstring(Document document, TextRange range) {
-    return document.getText().substring(range.getStartOffset(), range.getEndOffset());
+    return range.substring(document.getText());
   }
 
   private Document getOtherDocument() {

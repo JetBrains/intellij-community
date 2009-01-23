@@ -393,7 +393,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
 
     public String getCanonicalText() {
       final String text = myElement.getText();
-      return myRange.getEndOffset() < text.length() ? text.substring(myRange.getStartOffset(),myRange.getEndOffset()):"";
+      return myRange.getEndOffset() < text.length() ? myRange.substring(text) : "";
     }
 
     public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {

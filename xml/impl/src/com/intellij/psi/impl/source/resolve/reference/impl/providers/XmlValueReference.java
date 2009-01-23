@@ -29,7 +29,7 @@ public abstract class XmlValueReference implements PsiReference {
   }
 
   public String getCanonicalText() {
-    return myTag.getText().substring(myRange.getStartOffset(),myRange.getEndOffset());
+    return myRange.substring(myTag.getText());
   }
 
   protected void replaceContent(final String str) throws IncorrectOperationException {

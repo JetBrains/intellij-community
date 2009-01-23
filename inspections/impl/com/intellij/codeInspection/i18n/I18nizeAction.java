@@ -182,7 +182,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
 
     TextRange selectedRange = getSelectedRange(editor, psiFile);
     if (selectedRange == null) return null;
-    String text = editor.getDocument().getText().substring(selectedRange.getStartOffset(), selectedRange.getEndOffset());
+    String text = selectedRange.substring(editor.getDocument().getText());
     return new I18nizeQuickFixDialog(project, jspFile, null, text, false, true){
       protected String getTemplateName() {
         return JavaTemplateUtil.TEMPLATE_I18NIZED_JSP_EXPRESSION;

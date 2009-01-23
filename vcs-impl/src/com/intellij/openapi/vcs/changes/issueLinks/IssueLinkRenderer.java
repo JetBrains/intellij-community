@@ -32,7 +32,7 @@ public class IssueLinkRenderer {
       if (textRange.getStartOffset() > pos) {
         myColoredComponent.append(text.substring(pos, textRange.getStartOffset()), baseStyle);
       }
-      myColoredComponent.append(text.substring(textRange.getStartOffset(), textRange.getEndOffset()), getLinkAttributes(baseStyle),
+      myColoredComponent.append(textRange.substring(text), getLinkAttributes(baseStyle),
                                 new TreeLinkMouseListener.BrowserLauncher(match.getTargetUrl()));
       pos = textRange.getEndOffset();
     }

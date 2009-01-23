@@ -76,7 +76,7 @@ public class NameSuggestionsField extends JPanel {
         Editor myEditor = getEditor();
         if (myEditor == null) return;
         for (TextRange wordRange : ranges) {
-          String word = editor.getDocument().getText().substring(wordRange.getStartOffset(), wordRange.getEndOffset());
+          String word = wordRange.substring(editor.getDocument().getText());
           if (!word.equals(getEnteredName())) continue;
           final SelectionModel selectionModel = editor.getSelectionModel();
           myEditor.getSelectionModel().removeSelection();

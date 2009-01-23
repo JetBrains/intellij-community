@@ -26,7 +26,7 @@ public class Word {
   }
 
   public String getText() {
-    return myText.substring(myRange.getStartOffset(), myRange.getEndOffset());
+    return myRange.substring(myText);
   }
 
   public String getPrefix(int fromPosition) {

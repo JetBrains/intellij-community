@@ -504,7 +504,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return new ProperTextRange(startOffset, endOffset);
   }
 
-  public boolean intersects(DocumentWindowImpl documentWindow) {
+  boolean intersects(DocumentWindowImpl documentWindow) {
     int i = 0;
     int j = 0;
     while (i < myShreds.size() && j < documentWindow.myShreds.size()) {
@@ -541,10 +541,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return result;
   }
 
-  private String getRangeText(String hostText, int i) {
-    return myShreds.get(i).prefix +
-           hostText.substring(myShreds.get(i).getHostRangeMarker().getStartOffset(), myShreds.get(i).getHostRangeMarker().getEndOffset()) +
-           myShreds.get(i).suffix;
+  private String getRangeText(String hostText, int hostNum) {
+    PsiLanguageInjectionHost.Shred shred = myShreds.get(hostNum);
+    return shred.prefix +
+           hostText.substring(shred.getHostRangeMarker().getStartOffset(), shred.getHostRangeMarker().getEndOffset()) +
+           shred.suffix;
   }
   private void calculateMinEditSequence(String hostText, String newText, String[] result, int i, int j) {
     String rangeText1 = getRangeText(hostText, i);

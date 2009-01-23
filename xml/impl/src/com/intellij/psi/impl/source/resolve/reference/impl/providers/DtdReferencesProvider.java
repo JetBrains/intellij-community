@@ -199,7 +199,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     public String getCanonicalText() {
-      return myElement.getText().substring(myRange.getStartOffset(),myRange.getEndOffset());
+      return myRange.substring(myElement.getText());
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {

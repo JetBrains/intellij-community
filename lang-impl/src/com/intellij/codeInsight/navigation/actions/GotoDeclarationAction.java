@@ -93,7 +93,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     else if (candidates.size() > 1) {
       PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
       final TextRange range = reference.getRangeInElement();
-      final String refText = reference.getElement().getText().substring(range.getStartOffset(), range.getEndOffset());
+      final String refText = range.substring(reference.getElement().getText());
       String title = MessageFormat.format(titlePattern, refText);
       NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
       return true;

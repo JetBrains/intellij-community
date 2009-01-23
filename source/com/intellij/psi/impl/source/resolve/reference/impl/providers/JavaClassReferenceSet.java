@@ -180,7 +180,7 @@ public class JavaClassReferenceSet {
   }
 
   public void reparse(PsiElement element, final TextRange range) {
-    final String text = element.getText().substring(range.getStartOffset(), range.getEndOffset());
+    final String text = range.substring(element.getText());
     reparse(text, element, false, myContext);
   }
 

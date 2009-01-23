@@ -41,7 +41,7 @@ public abstract class BasicAttributeValueReference implements PsiReference {
   public String getCanonicalText() {
     final String s = myElement.getText();
     if (myRange.getStartOffset() < s.length() && myRange.getEndOffset() <= s.length()) {
-      return s.substring(myRange.getStartOffset(),myRange.getEndOffset());
+      return myRange.substring(s);
     }
     return "";
   }

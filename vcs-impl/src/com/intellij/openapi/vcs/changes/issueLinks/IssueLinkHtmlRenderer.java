@@ -26,7 +26,7 @@ public class IssueLinkHtmlRenderer {
     for(IssueNavigationConfiguration.LinkMatch match: list) {
       TextRange range = match.getRange();
       commentBuilder.append(comment.substring(pos, range.getStartOffset())).append("<a href=\"").append(match.getTargetUrl()).append("\">");
-      commentBuilder.append(comment.substring(range.getStartOffset(), range.getEndOffset())).append("</a>");
+      commentBuilder.append(range.substring(comment)).append("</a>");
       pos = range.getEndOffset();
     }
     commentBuilder.append(comment.substring(pos));
