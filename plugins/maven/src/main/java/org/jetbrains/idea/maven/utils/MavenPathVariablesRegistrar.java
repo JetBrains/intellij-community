@@ -39,7 +39,6 @@ public class MavenPathVariablesRegistrar implements ApplicationComponent {
       String path = macros.getValue(each);
       if (path == null) continue;
       if (new File(path).equals(repository)) return;
-      if (MAVEN_REPOSITORY.equalsIgnoreCase(each)) return;
     }
     macros.setMacro(MAVEN_REPOSITORY, repository.getPath(), "Maven Local Repostiry");
   }
