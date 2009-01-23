@@ -10,8 +10,8 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -33,6 +33,11 @@ public class JBTabsTest {
       }
     });
     tabs.setTestMode(true);
+
+
+    //final JPanel flow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    //frame.getContentPane().add(flow);
+    //flow.add(tabs.getComponent());
 
     frame.getContentPane().add(tabs.getComponent(), BorderLayout.CENTER);
 
@@ -204,14 +209,13 @@ public class JBTabsTest {
     tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.setTabSidePaintBorder(3);
-    tabs.setPaintBorder(0, 0, 0, 0);
+    tabs.setTabSidePaintBorder(5);
+    tabs.setPaintBorder(1, 1, 1, 1);
 
     tabs.getPresentation().setActiveTabFillIn(Color.white);
     tabs.setGhostsAlwaysVisible(true);
 
-    //tabs.setBorder(new LineBorder(Color.blue, 2));
-    //tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
+    //tabs.setBorder(new LineBorder(Color.blue, 5));
     tabs.setBorder(new EmptyBorder(30, 30, 30, 30));
 
     tabs.setUiDecorator(new UiDecorator() {

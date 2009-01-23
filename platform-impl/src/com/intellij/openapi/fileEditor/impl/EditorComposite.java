@@ -95,7 +95,7 @@ public abstract class EditorComposite implements Disposable {
     if(editors.length > 1){
       final TabbedPaneWrapper.AsJBTabs wrapper = new TabbedPaneWrapper.AsJBTabs(fileEditorManager.getProject(), SwingConstants.BOTTOM, new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB,
                                                                                                                    IdeActions.ACTION_PREVIOUS_EDITOR_TAB), this);
-      wrapper.getTabs().getPresentation().setPaintBorder(0, 0, 0, 0).setTabSidePaintBorder(0).setGhostsAlwaysVisible(true).setUiDecorator(new UiDecorator() {
+      wrapper.getTabs().getPresentation().setPaintBorder(0, 0, 0, 0).setTabSidePaintBorder(1).setGhostsAlwaysVisible(true).setUiDecorator(new UiDecorator() {
         @NotNull
         public UiDecoration getDecoration() {
           return new UiDecoration(null, new Insets(0, 8, 0, 8));

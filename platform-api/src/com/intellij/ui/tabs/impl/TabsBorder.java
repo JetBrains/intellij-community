@@ -47,6 +47,10 @@ public class TabsBorder {
     return myTabs;
   }
 
+  public int getTabBorderSize() {
+    return myTabBorderSize;
+  }
+
   public Insets getEffectiveBorder() {
     if (myEffectiveBorder != null && myTabs.getTabsPosition() == myPosition) return (Insets)myEffectiveBorder.clone();
 

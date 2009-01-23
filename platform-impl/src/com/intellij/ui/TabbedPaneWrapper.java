@@ -37,7 +37,7 @@ public class TabbedPaneWrapper implements Disposable {
   }
 
   public TabbedPaneWrapper(){
-    this(true);
+    this(SwingConstants.TOP);
   }
 
   /**

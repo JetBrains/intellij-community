@@ -147,7 +147,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     rebuildTabPopup();
 
 
-    myTabs.getPresentation().setPaintBorder(-1, 0, 0, 0).setPaintFocus(false).setRequestFocusOnLastFocusedComponent(true);
+    myTabs.getPresentation().setPaintBorder(0, 0, 0, 0).setTabSidePaintBorder(2).setPaintFocus(false).setRequestFocusOnLastFocusedComponent(true);
 
     final NonOpaquePanel wrappper = new NonOpaquePanel(new BorderLayout(0, 0));
     wrappper.add(myToolbar, BorderLayout.WEST);
