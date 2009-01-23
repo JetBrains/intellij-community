@@ -300,7 +300,7 @@ public abstract class AbstractFileProcessor
         handleFiles(pfiles);
     }
 
-    private void findFiles(Project project, List<PsiFile> files)
+    private static void findFiles(Project project, List<PsiFile> files)
     {
         Module[] modules = ModuleManager.getInstance(project).getModules();
         for (Module module : modules)
@@ -310,7 +310,7 @@ public abstract class AbstractFileProcessor
 
     }
 
-  private void findFiles(Module module, final List<PsiFile> files) {
+  protected static void findFiles(final Module module, final List<PsiFile> files) {
     final ModuleFileIndex idx = ModuleRootManager.getInstance(module).getFileIndex();
 
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
@@ -319,7 +319,7 @@ public abstract class AbstractFileProcessor
       idx.iterateContentUnderDirectory(root, new ContentIterator() {
         public boolean processFile(final VirtualFile dir) {
           if (dir.isDirectory()) {
-            final PsiDirectory psiDir = PsiManager.getInstance(myProject).findDirectory(dir);
+            final PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(dir);
             if (psiDir != null) {
               findFiles(files, psiDir, false);
             }

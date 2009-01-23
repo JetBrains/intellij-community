@@ -20,12 +20,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UpdateCopyrightAction extends AnAction {
   public void update(AnActionEvent event) {
@@ -63,15 +64,19 @@ public class UpdateCopyrightAction extends AnAction {
     else if ((files == null || files.length != 1) &&
              LangDataKeys.MODULE_CONTEXT.getData(context) == null &&
              PlatformDataKeys.PROJECT_CONTEXT.getData(context) == null) {
-      final PsiElement elem = LangDataKeys.PSI_ELEMENT.getData(context);
-      if (elem == null) {
-        presentation.setEnabled(false);
-        return;
-      }
-
-      if (!(elem instanceof PsiDirectory)) {
-        final PsiFile file = elem.getContainingFile();
-        if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file.getVirtualFile())) {
+      final PsiElement[] elems = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
+      if (elems != null) {
+        boolean copyrightEnabled = false;
+        for (PsiElement elem : elems) {
+          if (!(elem instanceof PsiDirectory)) {
+            final PsiFile file = elem.getContainingFile();
+            if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file.getVirtualFile())) {
+              copyrightEnabled = true;
+              break;
+            }
+          }
+        }
+        if (!copyrightEnabled){
           presentation.setEnabled(false);
           return;
         }
@@ -107,8 +112,17 @@ public class UpdateCopyrightAction extends AnAction {
       }
       final Module modCtx = LangDataKeys.MODULE_CONTEXT.getData(context);
       if (modCtx != null) {
-        if (Messages.showOkCancelDialog(project, "Update copyright for module \'" + modCtx.getName() + "\'?", "Update Copyright", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
         new UpdateCopyrightProcessor(project, module).run();
+        return;
+      }
+
+      final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context);
+      if (modules != null && modules.length > 0) {
+        List<PsiFile> psiFiles = new ArrayList<PsiFile>();
+        for (Module mod : modules) {
+          AbstractFileProcessor.findFiles(mod, psiFiles);
+        }
+        new UpdateCopyrightProcessor(project, null, psiFiles.toArray(new PsiFile[psiFiles.size()])).run();
         return;
       }
 
