@@ -5,20 +5,29 @@ import sys
 import os
 
 
-def sortedNoCase(p_array):
-  def c(x, y):
-    x = x.upper()
-    y = y.upper()
-    if x > y:
-      return 1
-    elif x < y:
-      return -1
-    else:
-      return 0
-  p_array = list(p_array)    
-  p_array.sort(c)
-  return p_array
+version = (
+  (sys.hexversion & (0xff << 24)) >> 24,
+  (sys.hexversion & (0xff << 16)) >> 16
+)
 
+def sortedNoCase(p_array):
+  "Sort an array case insensitevely, returns a sorted copy"
+  p_array = list(p_array)    
+  if version[0] < 3:
+    def c(x, y):
+      x = x.upper()
+      y = y.upper()
+      if x > y:
+        return 1
+      elif x < y:
+        return -1
+      else:
+        return 0
+    p_array.sort(c)
+  else:
+    p_array.sort(key=lambda x: x.upper())
+    
+  return p_array
 
 def find_binaries(paths):
   """

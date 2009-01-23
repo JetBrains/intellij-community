@@ -19,7 +19,7 @@ import os
 import string
 import stat
 import types
-import __builtin__
+#import __builtin__
 
 try:
   import inspect
@@ -43,10 +43,15 @@ else:
 DIGITS = string_mod.digits
 
 if version[0] >= 3:
+  import builtins as the_builtins
   string = "".__class__
   LETTERS = string_mod.ascii_letters
-  STR_TYPES = (getattr(__builtin__, "bytes"), str)
+  STR_TYPES = (getattr(the_builtins, "bytes"), str)
   
+  NUM_TYPES = (int, float)
+  SIMPLEST_TYPES = NUM_TYPES + STR_TYPES + (None.__class__,)
+  EASY_TYPES = NUM_TYPES + STR_TYPES + (None.__class__, dict, tuple, list)
+
   def str_join(a_list, a_str):
     return string.join(a_str, a_list)
     
@@ -54,9 +59,14 @@ if version[0] >= 3:
     exec(source, context)
     
 else: # < 3.0
+  import __builtin__ as the_builtins
   LETTERS = string_mod.letters
-  STR_TYPES = (getattr(__builtin__, "unicode"), str)
+  STR_TYPES = (getattr(the_builtins, "unicode"), str)
   
+  NUM_TYPES = (int, long, float)
+  SIMPLEST_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType,)
+  EASY_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType, dict, tuple, list)
+
   def str_join(a_list, a_str):
     return string_mod.join(a_list, a_str)
 
@@ -121,17 +131,22 @@ def isCallable(x):
 
 
 def sortedNoCase(p_array):
-  def c(x, y):
-    x = x.upper()
-    y = y.upper()
-    if x > y:
-      return 1
-    elif x < y:
-      return -1
-    else:
-      return 0
+  "Sort an array case insensitevely, returns a sorted copy"
   p_array = list(p_array)    
-  p_array.sort(c)
+  if version[0] < 3:
+    def c(x, y):
+      x = x.upper()
+      y = y.upper()
+      if x > y:
+        return 1
+      elif x < y:
+        return -1
+      else:
+        return 0
+    p_array.sort(c)
+  else:
+    p_array.sort(key=lambda x: x.upper())
+    
   return p_array
 
 _prop_types = [type(property())]
@@ -146,12 +161,10 @@ _prop_types = tuple(_prop_types)
 def isProperty(x):
   return isinstance(x, _prop_types)
 
-NUM_TYPES = (int, float)
-SIMPLEST_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType,)
-EASY_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType, dict, tuple, list)
+
 
 FAKE_CLASSOBJ_NAME = "___Classobj"
-BUILTIN_MOD_NAME = "__builtin__" # to avoid typos
+BUILTIN_MOD_NAME = the_builtins.__name__
 
 def isSaneRValue(x):
   return isinstance(x, EASY_TYPES)
@@ -186,7 +199,7 @@ class ModuleRedeclarator(object):
     self.outfile = outfile
     self.indent_size = indent_size
     self._indent_step = " " * indent_size
-    self.imported_modules = {"": __builtin__}
+    self.imported_modules = {"": the_builtins}
     self._defined = {} # contains True for every name defined so far
     
     
@@ -209,9 +222,13 @@ class ModuleRedeclarator(object):
         self.out(line, indent)
       self.out('"""', indent)
 
-  def outDocAttr(self, p_object, indent):
+  def outDocAttr(self, p_object, indent, p_class=None):
     if hasattr(p_object, "__doc__"):
-      self.outDocstring(p_object.__doc__, indent)
+      the_doc = p_object.__doc__
+      if p_class and the_doc == object.__init__.__doc__ and p_object is not object.__init__ and p_class.__doc__:
+        the_doc = p_class.__doc__ # replace stock init's doc with class's
+        the_doc += "\n# (copied from class doc)"
+      self.outDocstring(the_doc, indent)
     else:
       self.out("# no doc", indent)
     
@@ -233,7 +250,42 @@ class ModuleRedeclarator(object):
   }
   if version[0] <= 2:
     for std_file in ("stdin", "stdout", "stderr"):
-      REPLACE_MODULE_VALUES[("sys", std_file)] = "file('')" # 
+      REPLACE_MODULE_VALUES[("sys", std_file)] = "file('')" #
+
+  # Some functions and methods of some builtin classes have special signatures.
+  # {("class", "method"): ("signature_string")}
+  PREDEFINED_BUILTIN_SIGS = {
+    ("object", "__init__"): "(self)",
+    ("str", "__init__"): "(self, x)",
+    ("type", "__init__"): "(self, name, bases=None, dict=None)", # overrides a fake
+    ("int", "__init__"): "(self, x, base=10)",
+    ("list", "__init__"): "(self, seq=())",
+    ("tuple", "__init__"): "(self, seq=())", # overrides a fake
+    ("set", "__init__"): "(self, seq=())",
+    ("dict", "__init__"): "(self, *args, **kwargs)",
+    (None, "min"): "(*args)",
+    (None, "max"): "(*args)",
+  }
+
+  if version[0] < 3:
+    PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1, type2=None)"
+  else:
+    PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1=None, type2=None)"
+
+
+  # Some builtin classes effectively change __init__ signature without overriding it.
+  # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
+  def fake_builtin_init(self): pass # just a callable, sig doesn't matter
+  fake_builtin_init.__doc__ = object.__init__.__doc__ # this forces class's doc to be used instead
+
+  # This is a list of builtin classes to use fake init
+  FAKE_BUILTIN_INITS = (tuple, type)
+
+  # Some builtin methods are decorated, but this is hard to detect.
+  # {("class_name", "method_name"): "@decorator"}
+  KNOWN_DECORATORS = {
+    ("dict", "fromkeys"): "@static",
+  }
 
   def isSkippedInModule(self, p_module, p_value):
     "Returns True if p_value's value must be skipped for module p_module."
@@ -260,7 +312,7 @@ class ModuleRedeclarator(object):
           if suspect is item:
             if mname:
               mname += "."
-            elif self.module is __builtin__: # don't short-circuit builtins 
+            elif self.module is the_builtins: # don't short-circuit builtins 
               return None
             return mname + inner_name
     return None
@@ -361,6 +413,11 @@ class ModuleRedeclarator(object):
 
     # real work
     classname = p_class and p_class.__name__ or None
+    # any decorators?
+    if doing_builtins and p_modname == BUILTIN_MOD_NAME:
+      deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
+      if deco:
+        self.out(deco + " # known case", indent);
     if inspect and inspect.isfunction(p_func):
       args, varg, kwarg, defaults = inspect.getargspec(p_func)
       spec = []
@@ -377,28 +434,12 @@ class ModuleRedeclarator(object):
       if kwarg:
         spec.append("**" + kwarg)
       self.out("def " + p_name + "(" + ", ".join(spec) + "): # reliably restored by inspect", indent);
-      self.outDocAttr(p_func, indent+1)
+      self.outDocAttr(p_func, indent+1, p_class)
       self.out("pass", indent+1);
-    elif doing_builtins and classname == "object" and p_modname == '__builtin__' and p_name == '__init__':
-      self.out("def " + p_name + "(self): # known special case of object constructor", indent)
-      self.outDocAttr(p_func, indent+1)
-      self.out("pass", indent+1);
-    elif doing_builtins and classname in ('list', 'dict', 'set') and p_modname == '__builtin__' and p_name == '__init__':
-      if classname == 'list' or classname == 'set':
-        self.out("def " + p_name + "(self, *args): # known special case of list", indent)
-      else:
-        self.out("def " + p_name + "(self, *args, **kwargs): # known special case of dict", indent)
-      self.outDocAttr(p_func, indent+1)
-      self.out("pass", indent+1);
-    elif doing_builtins and classname == "super" and p_modname == "__builtin__" and p_name == "__init__":
-      # this actually needs to be handled in a special way in the type inference code - super() does not return
-      # an instance of the class 'super'
-      self.out("def " + p_name + "(self, type, obj=None): # known special case of super", indent)
-      self.outDocAttr(p_func, indent+1)
-      self.out("pass", indent+1);
-    elif doing_builtins and not p_class and p_modname == '__builtin__' and p_name in ('min', 'max'):
-      self.out("def " + p_name + "(self, *args): # known special case of " + p_name, indent)
-      self.outDocAttr(p_func, indent+1)
+    elif doing_builtins and p_modname == BUILTIN_MOD_NAME and (classname, p_name) in self.PREDEFINED_BUILTIN_SIGS:
+      spec = self.PREDEFINED_BUILTIN_SIGS[(classname, p_name)]
+      self.out("def " + p_name + spec + ": # known special case of " + (classname and classname+"." or "") + p_name, indent)
+      self.outDocAttr(p_func, indent+1, p_class)
       self.out("pass", indent+1);
     else:
       # __doc__ is our best source of arglist
@@ -474,7 +515,9 @@ class ModuleRedeclarator(object):
                     optargvals.append("="+defval)
               # we may be missng 'self' because doc comment omits it
               if p_class:
-                if not reqargs or not seemsToHaveSelf(reqargs):
+                if self.KNOWN_DECORATORS.get((classname, p_name), None) == "@static":
+                  pass
+                elif not reqargs or not seemsToHaveSelf(reqargs):
                   reqargs.insert(0, "self")
                 else:
                   if sig_note:
@@ -530,7 +573,11 @@ class ModuleRedeclarator(object):
           properties[item_name] = item
         else:
           others[item_name] = item
-        #  
+        #
+      # add fake __init__s to type and tuple to have the right sig
+      if p_class in self.FAKE_BUILTIN_INITS:
+        methods["__init__"] = self.fake_builtin_init
+      #  
       for item_name in sortedNoCase(methods.keys()):
         item =  methods[item_name]
         self.redoFunction(item, item_name, indent+1, p_class, p_modname)
