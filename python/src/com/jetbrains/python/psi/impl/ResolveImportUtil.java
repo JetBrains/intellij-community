@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -102,6 +101,7 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiElement resolvePythonImport2(final PyReferenceExpression importRef, final String referencedName) {
+    if (! importRef.isValid()) return null; // we often catch a reparse while in a process of resolution
     final String the_name = referencedName != null? referencedName : importRef.getName();
     Set being_imported = myBeingImported.get();
     PsiFile containing_file = importRef.getContainingFile();
@@ -406,7 +406,7 @@ public class ResolveImportUtil {
    * @return an array of names ready for getVariants().
    */
   public static Object[] suggestImportVariants(final PyReferenceExpression partial_ref) {
-    List<String> variants = new ArrayList<String>();
+    List<Object> variants = new ArrayList<Object>();
     // are we in "import _" or "from foo import _"?
     PyFromImportStatement maybe_from_import = PsiTreeUtil.getParentOfType(partial_ref, PyFromImportStatement.class);
     if (maybe_from_import != null) {
@@ -467,7 +467,7 @@ public class ResolveImportUtil {
       variants.addAll(visitor.getResult());
     }
 
-    return ArrayUtil.toStringArray(variants);
+    return variants.toArray(new String[variants.size()]);
   }
 
 }
