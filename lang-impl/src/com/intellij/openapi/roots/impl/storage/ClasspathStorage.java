@@ -6,9 +6,7 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -67,8 +65,8 @@ public class ClasspathStorage implements StateStorage {
       try {
         myConverter.getFileSet().listFiles(files);
         for (VirtualFile file : files) {
-          final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
-          virtualFileTracker.addTracker(VfsUtil.pathToUrl(file.getPath()), new VirtualFileAdapter() {
+          final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
+          virtualFileTracker.addTracker(file.getUrl(), new VirtualFileAdapter() {
             public void contentsChanged(final VirtualFileEvent event) {
               listener.storageFileChanged(event, ClasspathStorage.this);
             }
@@ -94,9 +92,10 @@ public class ClasspathStorage implements StateStorage {
 
     try {
       final Module module = ((ModuleRootManagerImpl)component).getModule();
-      final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
-      final ClasspathStorageProvider.Classpath classpath = myConverter.getClasspath(element);
-      final Set<String> macros = classpath.getUsedMacros();
+      final Element element = new Element(COMPONENT_TAG);
+      final ModifiableRootModel model = ((ModuleRootManagerImpl)component).getModifiableModel();
+      final Set<String> macros = myConverter.getClasspath(model, element);
+      model.dispose();
       final HashMap<String, String> map = new HashMap<String, String>();
       for (String v : macros) {
         map.put(v, null);
@@ -120,7 +119,7 @@ public class ClasspathStorage implements StateStorage {
   }
 
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass)
-    throws StateStorage.StateStorageException {
+    throws StateStorageException {
     return true;
   }
 
@@ -130,11 +129,9 @@ public class ClasspathStorage implements StateStorage {
     assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
 
     try {
-      Module module = ((ModuleRootManagerImpl)component).getModule();
-      final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
-      ((ModuleRootManagerImpl.ModuleRootManagerState)state).writeExternal(element);
-      PathMacroManager.getInstance(module).collapsePaths(element);
-      myConverter.setClasspath(element);
+      final ModifiableRootModel model = ((ModuleRootManagerImpl)component).getModifiableModel();
+      myConverter.setClasspath(model);
+      model.dispose();
     }
     catch (WriteExternalException e) {
       throw new StateStorageException(e.getMessage());
@@ -211,7 +208,7 @@ public class ClasspathStorage implements StateStorage {
     mySession = null;
   }
 
-  public void reload(final Set<String> changedComponents) throws StateStorage.StateStorageException {
+  public void reload(final Set<String> changedComponents) throws StateStorageException {
   }
 
   public boolean needsSave() throws StateStorageException {
@@ -308,17 +305,6 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public static Map<String, String> getStorageRootMap(final Project project, final Module moduleBeingLoaded) {
-    final Map<String, String> map = new HashMap<String, String>();
-    for (Module aModule : ModuleManager.getInstance(project).getModules()) {
-      final String storageRoot = getStorageRoot(aModule, moduleBeingLoaded);
-      if (storageRoot != null) {
-        map.put(aModule.getName(), FileUtil.toSystemIndependentName(storageRoot));
-      }
-    }
-    return map;
-  }
-
   private static class DefaultStorageProvider implements ClasspathStorageProvider {
     @NonNls
     public String getID() {
@@ -372,11 +358,11 @@ public class ClasspathStorage implements StateStorage {
           throw new StateStorageException(getDescription());
         }
 
-        public Classpath getClasspath(final Element element) throws IOException, InvalidDataException {
+        public Set<String> getClasspath(final ModifiableRootModel model, final Element element) throws IOException, InvalidDataException {
           throw new InvalidDataException(getDescription());
         }
 
-        public void setClasspath(final Element element) throws IOException, WriteExternalException {
+        public void setClasspath(final ModifiableRootModel model) throws IOException, WriteExternalException {
           throw new WriteExternalException(getDescription());
         }
       };

@@ -36,12 +36,8 @@ public interface ClasspathStorageProvider {
 
     FileSet getFileSet();
 
-    Classpath getClasspath(Element element) throws IOException, InvalidDataException;
+    Set<String> getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException;
 
-    void setClasspath(Element element) throws IOException, WriteExternalException;
-  }
-
-  interface Classpath {
-    Set<String> getUsedMacros();
+    void setClasspath(ModifiableRootModel model) throws IOException, WriteExternalException;
   }
 }
