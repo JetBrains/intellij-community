@@ -395,6 +395,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     final PrintWriter printWriter = new PrintWriter(buffer);
     new Throwable().printStackTrace(printWriter);
+    printWriter.flush();
+    printWriter.close();
     myReleasedAt = buffer.toString();
 
     isReleased = true;
