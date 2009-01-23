@@ -100,6 +100,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testSrcBinJREProject() throws Exception {
+    doTest();
+  }
+
   protected String getBaseTestDataPath() {
     return PathManager.getHomePath() + "/svnPlugins/eclipse/testData";
   }

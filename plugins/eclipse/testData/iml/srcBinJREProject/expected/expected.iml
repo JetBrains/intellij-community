@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root inherit-compiler-output="false">
+  <output url="file://$PROJECT_DIR$/test/out/production/testProject" />
+  <exclude-output />
+  <content url="file://$PROJECT_DIR$/test">
+    <sourceFolder url="file://$PROJECT_DIR$/test/src" isTestSource="false" />
+  </content>
+  <orderEntry type="sourceFolder" forTests="false" />
+  <orderEntry type="inheritedJdk" />
+  <orderEntry type="module" module-name="test1" />
+</root>

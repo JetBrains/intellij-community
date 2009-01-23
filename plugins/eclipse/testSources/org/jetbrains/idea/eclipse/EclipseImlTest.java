@@ -88,5 +88,9 @@ public class EclipseImlTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testSrcBinJREProject() throws Exception {
+    doTest();
+  }
+
 
 }
