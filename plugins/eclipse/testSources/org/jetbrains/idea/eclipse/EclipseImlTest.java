@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2008 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /*
@@ -22,11 +22,13 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,17 +38,16 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.reader.EclipseClasspathReader;
-import org.jetbrains.idea.eclipse.writer.EclipseClasspathWriter;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class EclipseClasspathTest extends IdeaTestCase {
+public class EclipseImlTest extends IdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final File testRoot = new File(getBaseTestDataPath(), getTestPath());
+    final File testRoot = new File(PathManager.getHomePath(), "svnPlugins/eclipse/testData/iml");
     assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
 
     final File currentTestRoot = new File(testRoot, getTestName(true));
@@ -64,19 +65,22 @@ public class EclipseClasspathTest extends IdeaTestCase {
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
         return ModuleManager.getInstance(getProject())
-          .newModule(path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
+          .newModule(new File(path).getParent() + "/temp/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     new EclipseClasspathReader(path, getProject())
       .readClasspath(rootModel, new ArrayList<String>(), new HashSet<String>(), null, classpathElement);
     rootModel.commit();
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final Element resultClasspathElement = new Element(EclipseXml.CLASSPATH_TAG);
-    new EclipseClasspathWriter(model).writeClasspath(resultClasspathElement, classpathElement);
+    final RootModelImpl model = (RootModelImpl)ModuleRootManager.getInstance(module).getModifiableModel();
+    final Element actualImlElement = new Element("root");
+    model.writeExternal(actualImlElement);
     model.dispose();
 
-    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n")), JDOMUtil.areElementsEqual(classpathElement, resultClasspathElement));
+    PathMacroManager.getInstance(getProject()).collapsePaths(actualImlElement);
+
+    final Element expectedIml = JDOMUtil.loadDocument(new File(getProject().getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
+    Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")), JDOMUtil.areElementsEqual(expectedIml, actualImlElement));
   }
 
 
@@ -84,27 +88,5 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
-  public void testPathVariables() throws Exception {
-    doTest();
-  }
 
-  public void testJunit() throws Exception {
-    doTest();
-  }
-
-  public void testSrcBinJRE() throws Exception {
-    doTest();
-  }
-
-  public void testAccessrulez() throws Exception {
-    doTest();
-  }
-
-  protected String getBaseTestDataPath() {
-    return PathManager.getHomePath() + "/svnPlugins/eclipse/testData";
-  }
-
-  protected String getTestPath() {
-    return "round";
-  }
 }

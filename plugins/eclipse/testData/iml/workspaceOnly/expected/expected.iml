@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root inherit-compiler-output="false">
+  <output url="file://$PROJECT_DIR$/test/bin" />
+  <exclude-output />
+  <content url="file://$PROJECT_DIR$/test">
+    <sourceFolder url="file://$PROJECT_DIR$/test/src" isTestSource="false" />
+  </content>
+  <orderEntry type="sourceFolder" forTests="false" />
+  <orderEntry type="inheritedJdk" />
+  <orderEntry type="module-library">
+    <library name="test.jar">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/test/test.jar" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$PROJECT_DIR$//test/testJavadoc.jar!/a" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/test/testSrc.jar" />
+      </SOURCES>
+    </library>
+  </orderEntry>
+  <orderEntry type="module-library">
+    <library name="testOut.jar">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/testOut.jar" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/testOutSrc.jar" />
+      </SOURCES>
+    </library>
+  </orderEntry>
+</root>
