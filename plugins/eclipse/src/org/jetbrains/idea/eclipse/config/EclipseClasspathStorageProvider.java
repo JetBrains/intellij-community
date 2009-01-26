@@ -206,7 +206,14 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);
         final CachedXmlDocumentSet fileSet = getFileSet();
 
-        classpathWriter.writeClasspath(classpathElement, fileSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
+        Element element;
+        try {
+          element = fileSet.read(EclipseXml.CLASSPATH_FILE).getRootElement();
+        }
+        catch (Exception e) {
+          element = null;
+        }
+        classpathWriter.writeClasspath(classpathElement, element);
         fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
 
         final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
@@ -215,9 +222,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         }
       }
       catch (ConversionException e) {
-        throw new WriteExternalException(e.getMessage());
-      }
-      catch (JDOMException e) {
         throw new WriteExternalException(e.getMessage());
       }
     }
