@@ -131,7 +131,7 @@ public class ElementToWorkOn {
     }
 
     if (localVar == null && expr == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.name"));
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
       return null;
     }
