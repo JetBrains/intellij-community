@@ -202,6 +202,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     try {
       dirtyScopeManager = ((VcsDirtyScopeManagerImpl) VcsDirtyScopeManager.getInstanceChecked(myProject));
     }
+    catch(ProcessCanceledException ex) {
+      return;
+    }
     catch(Exception ex) {
       LOG.error(ex);
       return;
