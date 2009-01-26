@@ -238,7 +238,7 @@ public class TypedHandler implements TypedActionHandler {
     // and thus we can use its lexer to insert closing braces etc
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(oldFile);
     for (DocumentWindow documentWindow : injected) {
-      if (documentWindow.containsRange(offset, offset)) {
+      if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
         return InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
       }

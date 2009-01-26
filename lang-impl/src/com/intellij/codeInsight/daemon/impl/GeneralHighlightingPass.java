@@ -168,6 +168,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     // rehighlight all injected PSI regardless the range,
     // since change in one place can lead to invalidation of injected PSI in (completely) other place.
     for (DocumentWindow documentRange : injected) {
+      if (!documentRange.isValid()) continue;
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(documentRange);
       if (file == null) continue;
       PsiElement context = file.getContext();
