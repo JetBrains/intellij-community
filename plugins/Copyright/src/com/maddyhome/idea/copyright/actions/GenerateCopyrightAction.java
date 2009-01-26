@@ -19,9 +19,14 @@ package com.maddyhome.idea.copyright.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.maddyhome.idea.copyright.CopyrightManager;
+import com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
 public class GenerateCopyrightAction extends AnAction
@@ -71,6 +76,15 @@ public class GenerateCopyrightAction extends AnAction
             }
         }
 
+        if (CopyrightManager.getInstance(project).getCopyrightOptions(file) == null) {
+          if (Messages.showOkCancelDialog(project, "No copyright configured for current file. Would you like to edit copyright settings?", "No copyright available", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+            final CopyrightProjectConfigurable projectConfigurable =
+              ShowSettingsUtil.getInstance().findProjectConfigurable(project, CopyrightProjectConfigurable.class);
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, projectConfigurable);
+          } else {
+            return;
+          }
+        }
         new UpdateCopyrightProcessor(project, module, file).run();
     }
 }
