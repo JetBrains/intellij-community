@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -57,7 +58,7 @@ public class RootsCalculator {
 
   private void addRootIfOutsideOfExisting(final List<VirtualFile> roots, final VirtualFile newFile) {
     if (newFile == null || (! newFile.isDirectory())) return;
-    if (! myVcs.isVersionedDirectory(newFile)) return;
+    if ((! ApplicationManager.getApplication().isUnitTestMode()) && (! myVcs.isVersionedDirectory(newFile))) return;
     
     boolean found = false;
     final List<VirtualFile> herselfParentOf = new ArrayList<VirtualFile>();

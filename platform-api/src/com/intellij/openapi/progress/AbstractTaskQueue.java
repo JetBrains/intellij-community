@@ -1,5 +1,6 @@
 package com.intellij.openapi.progress;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.LinkedList;
@@ -28,6 +29,10 @@ public abstract class AbstractTaskQueue<T> {
   protected abstract void runStuff(T stuff);
 
   public void run(final T stuff) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runStuff(stuff);
+      return;
+    }
     boolean impulseGiven = false;
     synchronized (myLock) {
       try {
