@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.popup.NotificationPopup;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -66,25 +67,27 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     setLayout(new BorderLayout());
     setOpaque(true);
 
-    final JPanel refreshPanel = new JPanel(new BorderLayout());
-
     myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem") {
       protected Icon getPassiveIcon() {
         return myEmptyRefreshIcon;
       }
     };
     myEmptyRefreshIcon = new EmptyIcon(myRefreshIcon.getPreferredSize().width, myRefreshIcon.getPreferredSize().height);
-
-    refreshPanel.add(myRefreshIcon, BorderLayout.WEST);
-    add(refreshPanel, BorderLayout.WEST);
+    myInfoAndProgressPanel = new InfoAndProgressPanel(this);
     setRefreshVisible(false);
 
-    myInfoAndProgressPanel = new InfoAndProgressPanel(this);
+    final NonOpaquePanel center = new NonOpaquePanel(new BorderLayout());
+    center.add(myRefreshIcon, BorderLayout.WEST);
+    center.add(myInfoAndProgressPanel, BorderLayout.CENTER);
+
 
     myPatchesPanel = new JPanel(new GridBagLayout());
     myPatchesPanel.setOpaque(false);
-    add(myPatchesPanel, BorderLayout.CENTER);
     setBorder(new EmptyBorder(2, 0, 1, 0));
+
+
+    add(center, BorderLayout.CENTER);
+    add(myPatchesPanel, BorderLayout.EAST);
 
     recreatePatches();
   }
@@ -92,8 +95,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private void recreatePatches() {
     myPatchesPanel.removeAll();
     myPatches.clear();
-
-    addPatch(myInfoAndProgressPanel, false);
 
     addPatch(myPositionPanel, true);
     addPatch(myToggleReadOnlyAttributePanel, true);
