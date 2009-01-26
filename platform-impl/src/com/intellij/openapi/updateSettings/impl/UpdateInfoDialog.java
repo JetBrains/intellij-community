@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 
 import javax.swing.*;
@@ -51,9 +52,14 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   protected String getOkButtonText() {
-    return hasPatch()
-           ? IdeBundle.message("updates.download.and.install.patch.button")
-           : IdeBundle.message("updates.more.info.button");
+    if (hasPatch()) {
+      return ApplicationManager.getApplication().isRestartCapable()
+             ? IdeBundle.message("updates.download.and.install.patch.button.restart")
+             : IdeBundle.message("updates.download.and.install.patch.button");
+    }
+    else {
+      return IdeBundle.message("updates.more.info.button");
+    }
   }
 
   protected JComponent createCenterPanel() {
