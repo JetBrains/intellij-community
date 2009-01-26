@@ -66,7 +66,7 @@ public class FSRecords implements Disposable, Forceable {
   private static final Object lock = new Object();
   private DbConnection myConnection;
 
-  private static int ourLocalModificationCount = 0;
+  private volatile static int ourLocalModificationCount = 0;
 
   private static final int FREE_RECORD_FLAG = 0x100;
   private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
@@ -682,9 +682,7 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public static int getLocalModCount() {
-    synchronized (lock) {
-      return ourLocalModificationCount;
-    }
+    return ourLocalModificationCount; // This is volatile, only modified under Application.runWriteAction() lock.
   }
 
   public static int getModCount() {

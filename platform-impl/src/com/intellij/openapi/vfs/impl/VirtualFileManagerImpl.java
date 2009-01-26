@@ -38,8 +38,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   @NonNls private static final String USER_HOME = "user.home";
   private int myRefreshCount = 0;
+  private final ManagingFS myPersistence;
 
-  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus) {
+  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus, ManagingFS persistence) {
+    myPersistence = persistence;
     for (VirtualFileSystem fileSystem : fileSystems) {
       registerFileSystem(fileSystem);
     }
@@ -113,7 +115,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().assertIsDispatchThread();
       }
 
-      RefreshQueue.getInstance().refresh(asynchronous, true, postAction, ManagingFS.getInstance().getLocalRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
+      RefreshQueue.getInstance().refresh(asynchronous, true, postAction, myPersistence.getLocalRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
 
       //final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
       //for (int i = 0; i < managedRoots.length; i++) {
@@ -309,6 +311,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public long getModificationCount() {
-    return ManagingFS.getInstance().getCheapFileSystemModificationCount();
+    return myPersistence.getCheapFileSystemModificationCount();
   }
 }
