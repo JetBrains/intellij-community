@@ -38,6 +38,9 @@ public interface RunContentManager {
   @Nullable
   RunContentDescriptor getReuseContent(Executor requestor, DataContext dataContext);
 
+  @Nullable
+  RunContentDescriptor findContentDescriptor(Executor requestor, ProcessHandler handler);
+
   void showRunContent(@NotNull Executor executor, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse);
   void showRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
   void hideRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);

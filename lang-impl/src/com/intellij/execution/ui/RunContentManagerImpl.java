@@ -313,6 +313,10 @@ public class RunContentManagerImpl implements RunContentManager {
     return chooseReuseContentForDescriptor(contentManager, runContentDescriptor);
   }
 
+  public RunContentDescriptor findContentDescriptor(final Executor requestor, final ProcessHandler handler) {
+    return getDescriptorBy(handler, requestor);
+  }
+
   public void showRunContent(@NotNull final Executor info, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse) {
     if(contentToReuse != null) {
       descriptor.setAttachedContent(contentToReuse.getAttachedContent());
