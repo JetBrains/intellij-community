@@ -389,4 +389,12 @@ public class GitCloneDialog extends DialogWrapper {
   public JComponent getPreferredFocusedComponent() {
     return myRepositoryURL;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.CloneRepository";
+  }
 }

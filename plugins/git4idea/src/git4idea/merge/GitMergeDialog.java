@@ -217,6 +217,14 @@ public class GitMergeDialog extends DialogWrapper {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.MergeBranches";
+  }  
+
+  /**
    * @return selected root
    */
   public VirtualFile getSelectedRoot() {

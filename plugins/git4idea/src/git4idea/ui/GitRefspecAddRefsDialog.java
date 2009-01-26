@@ -302,6 +302,14 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
     return rc;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.Fetch.AddReference";
+  }
+
 
   /**
    * A remote reference

@@ -417,6 +417,14 @@ public class GitPushDialog extends DialogWrapper {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.Push";
+  }
+
+  /**
    * Create UI components
    */
   private void createUIComponents() {

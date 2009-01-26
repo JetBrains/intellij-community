@@ -295,6 +295,14 @@ public class GitPullDialog extends DialogWrapper {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.Pull";
+  }
+  
+  /**
    * @return remote key
    */
   public String getRemote() {

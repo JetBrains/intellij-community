@@ -210,6 +210,14 @@ public class GitRebaseEditor extends DialogWrapper {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.RebaseCommits";
+  }
+  
+  /**
    * Cancel rebase
    */
   public void cancel() throws IOException {

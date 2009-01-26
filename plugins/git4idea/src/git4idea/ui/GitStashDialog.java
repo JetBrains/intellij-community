@@ -106,4 +106,12 @@ public class GitStashDialog extends DialogWrapper {
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.Stash";
+  }
 }

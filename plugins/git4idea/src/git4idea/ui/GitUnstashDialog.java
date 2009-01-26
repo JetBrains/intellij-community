@@ -349,6 +349,14 @@ public class GitUnstashDialog extends DialogWrapper {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.Unstash";
+  }
+
+  /**
    * Stash information class
    */
   private static class StashInfo {
