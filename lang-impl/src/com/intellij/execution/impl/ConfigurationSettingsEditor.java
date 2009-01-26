@@ -149,6 +149,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
 
   public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettingsImpl settings = getFactory().create();
+    settings.setName(myConfiguration.getName());
     if (myConfigurationEditor instanceof CheckableRunConfigurationEditor) {
       ((CheckableRunConfigurationEditor)myConfigurationEditor).checkEditorData(settings.getConfiguration());
     }
