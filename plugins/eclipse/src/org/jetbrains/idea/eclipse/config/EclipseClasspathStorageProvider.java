@@ -213,7 +213,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         if (classpathWriter.writeIDEASpecificClasspath(ideaSpecific)) {
           fileSet.write(new Document(ideaSpecific), model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
         }
-        fileSet.commit();
       }
       catch (ConversionException e) {
         throw new WriteExternalException(e.getMessage());
