@@ -3,6 +3,7 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
@@ -21,6 +22,7 @@ public class ApplicationManagerEx extends ApplicationManager {
 
   public static void setApplication(Application instance) {
     ourApplication = instance;
+    CachedSingletonsRegistry.cleanupCachedFields();
   }
 
   public static void setApplication(Application instance, Disposable parent) {
@@ -28,8 +30,10 @@ public class ApplicationManagerEx extends ApplicationManager {
     Disposer.register(parent, new Disposable() {
       public void dispose() {
         ourApplication = old;
+        CachedSingletonsRegistry.cleanupCachedFields();
       }
     });
     ourApplication = instance;
+    CachedSingletonsRegistry.cleanupCachedFields();
   }
 }

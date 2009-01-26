@@ -6,6 +6,7 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -175,8 +176,13 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
+  private static FileBasedIndex ourInstance = CachedSingletonsRegistry.markCachedField(FileBasedIndex.class);
   public static FileBasedIndex getInstance() {
-    return ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
+    if (ourInstance == null) {
+      ourInstance = ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
+    }
+
+    return ourInstance;
   }
 
   /**

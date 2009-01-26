@@ -16,7 +16,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -40,7 +42,7 @@ import java.util.Map;
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
-  private Map<Class, Object> myInitializedComponents = new HashMap<Class, Object>();
+  private final Map<Class, Object> myInitializedComponents = new ConcurrentHashMap<Class, Object>(4096);
 
   private boolean myComponentsCreated = false;
 
@@ -143,7 +145,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @SuppressWarnings({"unchecked"})
   @Nullable
-  protected synchronized <T> T getComponentFromContainer(Class<T> interfaceClass) {
+  protected <T> T getComponentFromContainer(Class<T> interfaceClass) {
     final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
     if (initializedComponent != null) return initializedComponent;
 
@@ -151,25 +153,30 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     //  LOG.error("Component requests are not allowed before they are created");
     //}
 
-    if (!myComponentsRegistry.containsInterface(interfaceClass)) {
-      return null;
-    }
-
-    Object lock = myComponentsRegistry.getComponentLock(interfaceClass);
-
-    synchronized (lock) {
-      T component = (T)getPicoContainer().getComponentInstance(interfaceClass.getName());
-      if (component == null) {
-        component = (T)createComponent(interfaceClass);
-      }
-      if (component == null) {
-        LOG.error("Cant create " + interfaceClass);
+    synchronized (this) {
+      if (!myComponentsRegistry.containsInterface(interfaceClass)) {
         return null;
       }
 
-      myInitializedComponents.put(interfaceClass, component);
+      Object lock = myComponentsRegistry.getComponentLock(interfaceClass);
 
-      return component;
+      synchronized (lock) {
+        T dcl = (T)myInitializedComponents.get(interfaceClass);
+        if (dcl != null) return dcl;
+
+        T component = (T)getPicoContainer().getComponentInstance(interfaceClass.getName());
+        if (component == null) {
+          component = (T)createComponent(interfaceClass);
+        }
+
+        if (component == null) {
+          throw new IncorrectOperationException("createComponent() returns null for: " + interfaceClass);
+        }
+
+        myInitializedComponents.put(interfaceClass, component);
+
+        return component;
+      }
     }
   }
 
@@ -320,7 +327,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       myMessageBus = null;
     }
 
-    myInitializedComponents = null;
+    myInitializedComponents.clear();
     myComponentsRegistry = null;
     myPicoContainer = null;
   }

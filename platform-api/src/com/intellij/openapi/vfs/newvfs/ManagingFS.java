@@ -20,6 +20,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +30,13 @@ import java.io.DataOutputStream;
 import java.util.List;
 
 public abstract class ManagingFS implements FileSystemInterface {
+  private static ManagingFS ourInstance = CachedSingletonsRegistry.markCachedField(ManagingFS.class);
+
   public static ManagingFS getInstance() {
-    return ApplicationManager.getApplication().getComponent(ManagingFS.class);
+    if (ourInstance == null) {
+      ourInstance = ApplicationManager.getApplication().getComponent(ManagingFS.class);
+    }
+    return ourInstance;
   }
 
   @Nullable

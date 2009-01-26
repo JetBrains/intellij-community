@@ -1,6 +1,5 @@
 package com.intellij.openapi.fileTypes.ex;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class FileTypeManagerEx extends FileTypeManager{
   public static FileTypeManagerEx getInstanceEx(){
-    return (FileTypeManagerEx) ApplicationManager.getApplication().getComponent(FileTypeManager.class);
+    return (FileTypeManagerEx) getInstance();
   }
 
   public abstract void registerFileType(FileType fileType);
