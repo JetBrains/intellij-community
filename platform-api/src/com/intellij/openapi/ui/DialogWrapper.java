@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
@@ -483,13 +484,18 @@ public abstract class DialogWrapper {
    * method. Therefore you have anough ways to customise the dialog by ovverriding of
    * <code>createActions()</code>, <code>createButtonsPanel()</code> and
    * </code>createJButtonForAction(Action)</code> methods. By default the <code>createActions()</code>
-   * method returns "OK" and "Cancel" action.
+   * method returns "OK" and "Cancel" action. The help action is automatically added is if
+   * {@link #getHelpId()} returns non null value.
    *
    * @see #createSouthPanel
    * @see #createJButtonForAction
    */
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
+    if(getHelpId() == null) {
+      return new Action[]{getOKAction(), getCancelAction()};
+    } else {
+      return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+    }
   }
 
   protected Action[] createLeftSideActions() {
@@ -752,14 +758,32 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * @return the help identifier or null if no help is available.
+   */
+  @Nullable
+  protected String getHelpId() {
+    return null;
+  }
+
+  /**
    * This method is invoked by default implementation of "Help" action.
    * This is convenient place to override functionality of "Help" action.
    * Note that the method does nothing if "Help" action isn't enabled.
+   *
+   * The default implementation shows the help page with id returned
+   * by the method {@link #getHelpId()}. If that method returns null,
+   * the message box with message "no help available" is shown.
    */
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {
-      Messages.showMessageDialog(getContentPane(), UIBundle.message("there.is.no.help.for.this.dialog.error.message"),
-                                 UIBundle.message("no.help.available.dialog.title"), Messages.getInformationIcon());
+      String helpId = getHelpId();
+      if (helpId != null) {
+        HelpManager.getInstance().invokeHelp(helpId);
+      }
+      else {
+        Messages.showMessageDialog(getContentPane(), UIBundle.message("there.is.no.help.for.this.dialog.error.message"),
+                                   UIBundle.message("no.help.available.dialog.title"), Messages.getInformationIcon());
+      }
     }
   }
 
