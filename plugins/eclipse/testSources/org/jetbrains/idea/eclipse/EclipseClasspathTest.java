@@ -46,7 +46,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final File testRoot = new File(getBaseTestDataPath(), getTestPath());
+    final File testRoot = new File(PathManager.getHomePath() + "/svnPlugins/eclipse/testData", "round");
     assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
 
     final File currentTestRoot = new File(testRoot, getTestName(true));
@@ -104,11 +104,12 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
-  protected String getBaseTestDataPath() {
-    return PathManager.getHomePath() + "/svnPlugins/eclipse/testData";
+  public void testSourceFolderOutput() throws Exception {
+    doTest();
   }
 
-  protected String getTestPath() {
-    return "round";
+  public void testMultipleSourceFolders() throws Exception {
+    doTest();
   }
+
 }
