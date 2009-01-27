@@ -281,35 +281,25 @@ public class DocumentationManager {
   @Nullable
   public PsiElement getElementFromLookup(final Editor editor, final PsiFile file) {
 
-    final PsiElement contextElement = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiElement element = null;
-    final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
-
-    if (ref != null) {
-      element = TargetElementUtilBase.getInstance().adjustReference(ref);
-      if (element == null && ref instanceof PsiPolyVariantReference) {
-        element = ref.getElement();
-      }
-    }
-
     final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
 
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
       if (item != null) {
 
+        final PsiElement contextElement = file.findElementAt(editor.getCaretModel().getOffset());
+        final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+
         final DocumentationProvider documentationProvider = getProviderFromElement(file);
 
-        if (documentationProvider!=null) {
-          element = documentationProvider.getDocumentationElementForLookupItem(
-            PsiManager.getInstance(myProject),
-            item.getObject(),
-            ref != null ? ref.getElement():contextElement
-          );
-        }
+        return documentationProvider.getDocumentationElementForLookupItem(
+          PsiManager.getInstance(myProject),
+          item.getObject(),
+          ref != null ? ref.getElement():contextElement
+        );
       }
     }
-    return element;
+    return null;
   }
 
   private boolean fromQuickSearch() {
