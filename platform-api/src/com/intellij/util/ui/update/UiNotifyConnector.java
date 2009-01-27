@@ -18,6 +18,7 @@ package com.intellij.util.ui.update;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     if (isDisposed()) return;
 
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      final Runnable runnable = new Runnable() {
         public void run() {
           if (isDisposed() || myComponent == null) return;
 
@@ -56,7 +57,14 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
             hideNotify();
           }
         }
-      }, ModalityState.current());
+      };
+      final Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        app.invokeLater(runnable, ModalityState.current());
+      } else {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(runnable);
+      }
     }
   }
 

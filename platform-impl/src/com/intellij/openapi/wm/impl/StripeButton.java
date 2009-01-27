@@ -10,7 +10,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.ui.MouseDragHelper;
+import com.intellij.ui.MouseDragHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 

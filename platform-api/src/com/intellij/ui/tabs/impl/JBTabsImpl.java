@@ -3,6 +3,7 @@ package com.intellij.ui.tabs.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
@@ -128,6 +130,8 @@ public class JBTabsImpl extends JComponent
   private Disposable myParent;
 
   private boolean myWasEverShown;
+
+  private boolean myTabDraggingEnabled;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -281,21 +285,22 @@ public class JBTabsImpl extends JComponent
 
       if (myProject == null) {
         final Project project = tryToFindProject();
-        if (project == null) return;
+        if (project != null) {
+          myProject = project;
 
-        if (myParent == null) {
-          myParent = project;
-          Disposer.register(myParent, JBTabsImpl.this);
-        }
-        myProject = project;
+          if (myParent == null) {
+            myParent = project;
+            Disposer.register(myParent, JBTabsImpl.this);
+          }
 
-        if (myParent == null) {
-          myParent = myProject;
-          Disposer.register(myParent, this);
-        }
+          if (myParent == null) {
+            myParent = myProject;
+            Disposer.register(myParent, this);
+          }
 
-        if (myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
-          myFocusManager = IdeFocusManager.getInstance(myProject);
+          if (myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
+            myFocusManager = IdeFocusManager.getInstance(myProject);
+          }
         }
       }
 
@@ -307,11 +312,21 @@ public class JBTabsImpl extends JComponent
             processFocusChange();
           }
         }, FocusEvent.FOCUS_EVENT_MASK, JBTabsImpl.this);
+
+        new MouseDragHelper(this, this) {
+          protected void processDrag(MouseEvent event, Point dragToScreenPoint) {
+            JBTabsImpl.this.processDrag(event, dragToScreenPoint);
+          }
+        }.start();
       }
     }
     finally {
       myWasEverShown = true;
     }
+  }
+
+  private void processDrag(MouseEvent event, Point dragToScreenPoint) {
+    if (!myTabDraggingEnabled) return;    
   }
 
   public void removeNotify() {
@@ -1593,8 +1608,7 @@ public class JBTabsImpl extends JComponent
 
         g2d.setColor(borderColor);
         if (paintBorder.top == 2) {
-          final Line2D.Float line =
-            shape.path.transformLine(boundsX, topY, boundsX + shape.path.deltaX(boundsWidth - 1), topY);
+          final Line2D.Float line = shape.path.transformLine(boundsX, topY, boundsX + shape.path.deltaX(boundsWidth - 1), topY);
 
           g2d.drawLine((int)line.x1, (int)line.y1, (int)line.x2, (int)line.y2);
         }
@@ -2474,6 +2488,7 @@ public class JBTabsImpl extends JComponent
 
   @Nullable
   private Project tryToFindProject() {
+    if (ApplicationManager.getApplication() == null) return null;
     return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
   }
 

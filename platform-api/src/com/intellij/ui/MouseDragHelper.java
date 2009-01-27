@@ -1,4 +1,4 @@
-package com.intellij.util.ui;
+package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.NullableComponent;
