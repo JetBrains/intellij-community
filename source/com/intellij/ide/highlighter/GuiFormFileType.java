@@ -45,7 +45,7 @@ import javax.swing.*;
 
 public class GuiFormFileType implements FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "form";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = DEFAULT_EXTENSION;
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
   @NotNull
   public String getName() {
