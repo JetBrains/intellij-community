@@ -25,7 +25,7 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
   }
 
   protected String getVersionsFilePath() {
-    return PathManager.getConfigPath() + "/" + "module" + getLocationHash() + ".xml";
+    return PathManager.getConfigPath() + "/componentVersions/" + "module" + getLocationHash() + ".xml";
   }
 
   private String getLocationHash() {

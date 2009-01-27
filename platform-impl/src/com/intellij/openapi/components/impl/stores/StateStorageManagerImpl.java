@@ -1,12 +1,14 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
@@ -19,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -38,6 +42,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private final PicoContainer myPicoContainer;
 
   private Map<String, Long> myComponentVersions;
+  private final Object myComponentVersLock = new Object();
 
   private String myVersionsFilePath = null;
 
@@ -111,11 +116,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public long getVersion(String name) {
-    if (myComponentVersions == null) {
-      myComponentVersions = loadVersions();
-    }
-
-    return myComponentVersions.containsKey(name) ? myComponentVersions.get(name).longValue() : 0;
+    Map<String, Long> versions = getComponentVersions();
+    return versions.containsKey(name) ? versions.get(name).longValue() : 0;
   }
 
   public void changeVersionsFilePath(String newPath) {
@@ -124,7 +126,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public void resetLocalVersions(){
-    myComponentVersions = null;
+    synchronized (myComponentVersLock) {
+      myComponentVersions = null;
+    }
   }
 
   private Map<String, Long> loadVersions() {
@@ -133,7 +137,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     TreeMap<String, Long> result = new TreeMap<String, Long>();
-    String filePath = myVersionsFilePath;
+    String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       try {
         Document document = JDOMUtil.loadDocument(new File(filePath));
@@ -147,6 +151,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
     }
     return result;
+  }
+
+  private String getNotNullVersionsFilePath() {
+    if (myVersionsFilePath == null) {
+      myVersionsFilePath = getVersionsFilePath();
+    }
+
+    return myVersionsFilePath;
   }
 
   public static void loadComponentVersions(Map<String, Long> result, Document document) {
@@ -172,11 +184,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected abstract String getVersionsFilePath();
 
   public void changeVersion(String name, long version) {
-    if (myComponentVersions == null) {
-      myComponentVersions = loadVersions();
-    }
-
-    myComponentVersions.put(name, version);
+    getComponentVersions().put(name, version);
   }
 
   @Nullable
@@ -537,22 +545,80 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public void save() {
-    if (myVersionsFilePath == null) {
-      myVersionsFilePath = getVersionsFilePath();
-    }
 
-    if (myVersionsFilePath != null) {
+    deleteOldProjectAndModuleVersionFiles();
+
+    String filePath = getNotNullVersionsFilePath();
+    if (filePath != null) {
+      new File(filePath).mkdirs();
       try {
-        if (myComponentVersions == null) {
-          myComponentVersions = loadVersions();
-        }
-        
-        JDOMUtil.writeDocument(new Document(createComponentVersionsXml(myComponentVersions)), myVersionsFilePath, "\n");
+          JDOMUtil.writeDocument(new Document(createComponentVersionsXml(getComponentVersions())), filePath, "\n");
       }
       catch (IOException e) {
         LOG.info(e);
       }
 
+    }
+  }
+
+  private static void deleteOldProjectAndModuleVersionFiles() {
+    String configPath = PathManager.getConfigPath();
+    File configDir = new File(configPath);
+    File[] configFiles = configDir.listFiles();
+    if (configFiles != null) {
+      for (File configFile : configFiles) {
+        if (isOldProjectOrModuleVersionFile(configFile)) {
+          FileUtil.delete(configFile);
+        }
+      }
+    }
+  }
+
+  private static boolean isOldProjectOrModuleVersionFile(File configFile) {
+    if (!configFile.isFile()) return false;
+
+    if (configFile.getName().equals("appComponentVersions.xml")) return true;
+
+    if (configFile.getName().endsWith(".xml") && (
+      configFile.getName().startsWith("project") || configFile.getName().startsWith("module"))){
+      try {
+        Document document = JDOMUtil.loadDocument(configFile);
+        Element root = document.getRootElement();
+        if (!root.getName().equals("versions")) {
+          return false;
+        }
+
+        List children = root.getChildren();
+        for (Object child : children) {
+          if (!(child instanceof Element)) return false;
+
+          Element element = (Element)child;
+          if (!element.getName().equals("component")) return false;
+
+          if (element.getAttributes().size() != 2) return false;
+
+          if (element.getAttribute("name") == null || element.getAttribute("version") == null) return false;
+        }
+      }
+      catch (JDOMException e) {
+        return false;
+      }
+      catch (IOException e) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private Map<String, Long> getComponentVersions() {
+    synchronized (myComponentVersLock) {
+      if (myComponentVersions == null) {
+        myComponentVersions = loadVersions();
+      }
+      return myComponentVersions;
     }
   }
 

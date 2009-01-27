@@ -1,12 +1,12 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.application.PathManager;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
-import java.util.Map;
 import java.io.IOException;
+import java.util.Map;
 
 class ProjectStateStorageManager extends StateStorageManagerImpl {
   protected Project myProject;
@@ -66,7 +66,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   }
 
   protected String getVersionsFilePath() {
-    return PathManager.getConfigPath() + "/" + "project" + myProject.getLocationHash() + ".xml";
+    return PathManager.getConfigPath() + "/componentVersions/" + "project" + myProject.getLocationHash() + ".xml";
   }
 
   private static boolean isWorkspace(final Map options) {
