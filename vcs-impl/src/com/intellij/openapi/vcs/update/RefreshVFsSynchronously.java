@@ -5,12 +5,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +31,11 @@ public class RefreshVFsSynchronously {
     }
     final int num = getFilesNum(updatedFiles);
 
-    UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, new MyRefreshCallback(num, progressIndicator));
+    wrapIntoLock(new Runnable() {
+      public void run() {
+        UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, new MyRefreshCallback(num, progressIndicator));
+      }
+    });
   }
 
   private static int getFilesNum(final UpdatedFiles files) {
@@ -86,23 +92,49 @@ public class RefreshVFsSynchronously {
       pi.setIndeterminate(false);
     }
     final double num = changes.size();
-    int cnt = 0;
-    for (Change change : changes) {
-      if ((change.getBeforeRevision() != null) &&
-          (change.isMoved() || change.isRenamed() || change.isIsReplaced() || (change.getAfterRevision() == null))) {
-        refreshDeletedOrReplaced(change.getBeforeRevision().getFile().getIOFile());
-      } else if (change.getBeforeRevision() != null) {
-        refresh(change.getBeforeRevision().getFile().getIOFile());
+    
+    wrapIntoLock(new Runnable() {
+      public void run() {
+        int cnt = 0;
+        for (Change change : changes) {
+          if ((change.getBeforeRevision() != null) &&
+              (change.isMoved() || change.isRenamed() || change.isIsReplaced() || (change.getAfterRevision() == null))) {
+            refreshDeletedOrReplaced(change.getBeforeRevision().getFile().getIOFile());
+          } else if (change.getBeforeRevision() != null) {
+            refresh(change.getBeforeRevision().getFile().getIOFile());
+          }
+          if (change.getAfterRevision() != null && (! Comparing.equal(change.getAfterRevision(), change.getBeforeRevision()))) {
+            refresh(change.getAfterRevision().getFile().getIOFile());
+          }
+          if (pi != null) {
+            ++ cnt;
+            pi.setFraction(cnt/num);
+            pi.setText2("Refreshing: " + change.toString());
+          }
+        }
       }
-      if (change.getAfterRevision() != null && (! Comparing.equal(change.getAfterRevision(), change.getBeforeRevision()))) {
-        refresh(change.getAfterRevision().getFile().getIOFile());
-      }
-      if (pi != null) {
-        ++ cnt;
-        pi.setFraction(cnt/num);
-        pi.setText2("Refreshing: " + change.toString());
-      }
+    });
+  }
+
+  private static void wrapIntoLock(final Runnable runnable) {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.startNonCancelableSection();
+      indicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
+      indicator.setText2("");
     }
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        // common lock for all refreshes inside
+        runnable.run();
+        semaphore.up();
+      }
+    });
+    semaphore.waitFor();
   }
 
   private static class MyRefreshCallback implements UpdateFilesHelper.Callback {
