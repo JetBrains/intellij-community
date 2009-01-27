@@ -388,6 +388,10 @@ public class JavaFoldingBuilder implements FoldingBuilder {
   }
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements) {
+    if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas()) {
+      return false;
+    }
+
     boolean isClosure = false;
     if (aClass instanceof PsiAnonymousClass) {
       final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
@@ -431,7 +435,16 @@ public class JavaFoldingBuilder implements FoldingBuilder {
               if (lastLineEnd < firstLineStart) return false;
 
               if (lastLineEnd >= seq.length() || firstLineStart >= seq.length() || firstLineStart < 0) {
-                LOG.assertTrue(false, "llE=" + lastLineEnd + "; fLS=" + firstLineStart + "; len=" + seq.length() + "rE=" + rangeEnd + "; class=" + baseClass.getName());
+                LOG.assertTrue(false, "llE=" +
+                                      lastLineEnd +
+                                      "; fLS=" +
+                                      firstLineStart +
+                                      "; len=" +
+                                      seq.length() +
+                                      "rE=" +
+                                      rangeEnd +
+                                      "; class=" +
+                                      baseClass.getName());
               }
 
               boolean oneLine = false;
@@ -446,7 +459,8 @@ public class JavaFoldingBuilder implements FoldingBuilder {
                   rangeEnd = CharArrayUtil.shiftBackward(seq, rangeEnd - 1, " \n\t") + 1;
                   oneLine = true;
                 }
-              } else {
+              }
+              else {
                 //foldElements.add(new FoldingDescriptor(body.getNode(), new TextRange(rangeStart, rangeEnd))); //...
               }
 
@@ -460,20 +474,22 @@ public class JavaFoldingBuilder implements FoldingBuilder {
               }, ", ");
               final String prettySpace = oneLine ? " " : "";
               @NonNls final String lambdas = baseClass.getName() + "(" + params + ") {" + prettySpace;
-              foldElements.add(new FoldingDescriptor(expression.getNode(), new TextRange(expression.getTextRange().getStartOffset(), rangeStart), group) {
-                @Override
-                public String getPlaceholderText() {
-                  return lambdas;
-                }
-              });
-
-              if (rbrace != null) {
-                foldElements.add(new FoldingDescriptor(rbrace.getNode(), new TextRange(rangeEnd, expression.getTextRange().getEndOffset()), group) {
+              foldElements.add(
+                new FoldingDescriptor(expression.getNode(), new TextRange(expression.getTextRange().getStartOffset(), rangeStart), group) {
                   @Override
                   public String getPlaceholderText() {
-                    return prettySpace + "}";
+                    return lambdas;
                   }
                 });
+
+              if (rbrace != null) {
+                foldElements
+                  .add(new FoldingDescriptor(rbrace.getNode(), new TextRange(rangeEnd, expression.getTextRange().getEndOffset()), group) {
+                    @Override
+                    public String getPlaceholderText() {
+                      return prettySpace + "}";
+                    }
+                  });
               }
               addCodeBlockFolds(body, foldElements, document);
             }
