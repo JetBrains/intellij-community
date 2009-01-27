@@ -132,6 +132,7 @@ public class JBTabsImpl extends JComponent
   private boolean myWasEverShown;
 
   private boolean myTabDraggingEnabled;
+  private DragHelper myDragHelper;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -313,11 +314,8 @@ public class JBTabsImpl extends JComponent
           }
         }, FocusEvent.FOCUS_EVENT_MASK, JBTabsImpl.this);
 
-        new MouseDragHelper(this, this) {
-          protected void processDrag(MouseEvent event, Point dragToScreenPoint) {
-            JBTabsImpl.this.processDrag(event, dragToScreenPoint);
-          }
-        }.start();
+        myDragHelper = new DragHelper(this);
+        //myDragHelper.start();
       }
     }
     finally {
@@ -325,9 +323,6 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private void processDrag(MouseEvent event, Point dragToScreenPoint) {
-    if (!myTabDraggingEnabled) return;    
-  }
 
   public void removeNotify() {
     super.removeNotify();
@@ -1695,6 +1690,11 @@ public class JBTabsImpl extends JComponent
     //  }
     //}
     mySingleRowLayout.myMoreIcon.paintIcon(this, g);
+
+    //g.setColor(Color.red);
+    //if (myDragHelper.myDragRec != null) {
+    //  ((Graphics2D)g).draw(myDragHelper.myDragRec);
+    //}
   }
 
   private void drawSeparator(Graphics g, TabInfo info) {
@@ -2492,4 +2492,91 @@ public class JBTabsImpl extends JComponent
     return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
   }
 
+  public JBTabsPresentation setTabDraggingEnabled(boolean enabled) {
+    myTabDraggingEnabled = enabled;
+    return this;
+  }
+
+  public boolean isTabDraggingEnabled() {
+    return myTabDraggingEnabled && isSingleRow();
+  }
+
+  private static class DragHelper extends MouseDragHelper {
+
+    JBTabsImpl myTabs;
+
+    TabInfo myDragSource;
+    TabInfo myDragTarget;
+
+    Rectangle myDragRec;
+
+    Dimension myHoldDelta;
+
+    public DragHelper(JBTabsImpl tabs) {
+      super(tabs, tabs);
+      myTabs = tabs;
+    }
+
+    protected void processDrag(MouseEvent event, Point targetScreenPoint) {
+      if (!myTabs.isTabDraggingEnabled()) return;
+
+      final Point point = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), myTabs);
+
+      if (isDragJustStarted()) {
+        final TabLabel label = findLabel(point);
+        final Rectangle labelBounds = label.getBounds();
+
+        myHoldDelta = new Dimension(point.x - labelBounds.x, point.y - labelBounds.y);
+        myDragSource = label.getInfo();
+        myDragRec = new Rectangle(point, labelBounds.getSize());
+      }
+      else {
+        myDragRec.x = point.x;
+        myDragRec.y = point.y;
+      }
+
+      myDragRec.x -= myHoldDelta.width;
+      myDragRec.y -= myHoldDelta.height;
+
+
+      final TabLabel topLeft = findLabel(new Point(myDragRec.x, myDragRec.y));
+      final TabLabel bottomLeft = findLabel(new Point(myDragRec.x, myDragRec.y + myDragRec.height));
+      final TabLabel topRight = findLabel(new Point(myDragRec.x + myDragRec.width, myDragRec.y));
+      final TabLabel bottomRight = findLabel(new Point(myDragRec.x + myDragRec.width, myDragRec.y + myDragRec.height));
+
+      final TabLabel targetLabel = findMostOverlapping(topLeft, bottomLeft, topRight, bottomRight);
+
+    }
+
+    private TabLabel findMostOverlapping(TabLabel... labels) {
+      return null;
+    }
+
+    private TabLabel findLabel(Point dragPoint) {
+      return findLabel(myTabs.findComponentAt(dragPoint));
+    }
+
+    @Nullable
+    private TabLabel findLabel(Component c) {
+      Component eachParent = c;
+      while (eachParent != null && eachParent != myTabs) {
+        if (eachParent instanceof TabLabel) return (TabLabel)eachParent;
+        eachParent = eachParent.getParent();
+      }
+
+      return null;
+    }
+
+
+    @Override
+    protected boolean canStartDragging(JComponent dragComponent, Point dragComponentPoint) {
+      return findLabel(dragComponentPoint) != null;
+    }
+
+    @Override
+    protected void processDragFinish(MouseEvent even) {
+      myDragSource = null;
+      myDragRec = null;
+    }
+  }
 }

@@ -96,29 +96,28 @@ final class EditorTabbedContainer implements Disposable {
           }
         }
       }
-    }).getPresentation().setUiDecorator(new UiDecorator() {
+    }).getPresentation().setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
       @NotNull
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
-    }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL)
-        .setGhostsAlwaysVisible(true)
-        .setTabLabelActionsAutoHide(false)
-        .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())
-        .setPaintFocus(false).getJBTabs().addListener(new TabsListener.Adapter() {
-      public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
-        final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-        final FileEditor oldEditor = editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject());
-        if (oldEditor != null) {
-          oldEditor.deselectNotify();
-        }
+    }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
+      .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())
+      .setPaintFocus(false).getJBTabs()
+      .addListener(new TabsListener.Adapter() {
+        public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
+          final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+          final FileEditor oldEditor = editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject());
+          if (oldEditor != null) {
+            oldEditor.deselectNotify();
+          }
 
-        final FileEditor newEditor = editorManager.getSelectedEditor((VirtualFile)newSelection.getObject());
-        if (newEditor != null) {
-          newEditor.selectNotify();
+          final FileEditor newEditor = editorManager.getSelectedEditor((VirtualFile)newSelection.getObject());
+          if (newEditor != null) {
+            newEditor.selectNotify();
+          }
         }
-      }
-    });
+      });
 
     setTabPlacement(UISettings.getInstance().EDITOR_TAB_PLACEMENT);
 
@@ -162,7 +161,7 @@ final class EditorTabbedContainer implements Disposable {
   }
 
   public ActionCallback removeTabAt(final int componentIndex, int indexToSelect) {
-    TabInfo toSelect = indexToSelect >=0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
+    TabInfo toSelect = indexToSelect >= 0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
     final ActionCallback callback = myTabs.removeTab(myTabs.getTabAt(componentIndex), toSelect);
     return myProject.isOpen() ? callback : new ActionCallback.Done();
   }
