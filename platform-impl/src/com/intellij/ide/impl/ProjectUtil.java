@@ -44,7 +44,10 @@ public class ProjectUtil {
   }
 
   public static void updateLastProjectLocation(final String projectFilePath) {
-    File lastProjectLocation = new File(projectFilePath).getParentFile();
+    File lastProjectLocation = new File(projectFilePath);
+    if (lastProjectLocation.isFile()) {
+      lastProjectLocation = lastProjectLocation.getParentFile(); //for directory based project storages
+    }
     if (lastProjectLocation == null) { // the immediate parent of the ipr file
       return;
     }

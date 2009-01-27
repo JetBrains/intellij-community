@@ -18,6 +18,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -41,6 +42,11 @@ public class WizardContext {
   private Sdk myProjectJdk;
   private ProjectBuilder myProjectBuilder;
   private List<Listener> myListeners = new ArrayList<Listener>();
+  private StorageScheme myProjectStorageFormat = StorageScheme.DEFAULT;
+
+  public void setProjectStorageFormat(StorageScheme format) {
+    myProjectStorageFormat = format;
+  }
 
   public static interface Listener {
     void buttonsUpdateRequested();
@@ -130,5 +136,9 @@ public class WizardContext {
 
   public String getPresentationName() {
     return myProject == null ? IdeBundle.message("project.new.wizard.project.identification") : IdeBundle.message("project.new.wizard.module.identification");
+  }
+
+  public StorageScheme getProjectStorageFormat() {
+    return myProjectStorageFormat;
   }
 }
