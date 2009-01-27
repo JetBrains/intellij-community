@@ -154,6 +154,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
     final Collection<String> unknownLibraries = new TreeSet<String>();
+    final Collection<String> unknownJdks = new TreeSet<String>();
     final List<Module> result = new ArrayList<Module>();
 
     try {
@@ -170,7 +171,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         rootModels[idx++] = rootModel;
-        new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, usedVariables, getParameters().converterOptions.testPattern, classpathElement);
+
+        new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, getParameters().converterOptions.testPattern, classpathElement);
         ClasspathStorage.setStorageType(module,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
       }
@@ -188,14 +190,25 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
     createEclipseLibrary(project, unknownLibraries, IdeaXml.ECLIPSE_LIBRARY);
 
-    if (unknownLibraries.size() != 0) {
-      StringBuffer message = new StringBuffer();
+    StringBuffer message = new StringBuffer();
+    if (!unknownLibraries.isEmpty()) {
+      message.append(EclipseBundle.message("eclipse.import.warning.undefinded.libraries"));
       for (String name : unknownLibraries) {
-        message.append("\n");
-        message.append(name);
+        message.append("\n").append(name);
       }
-      Messages
-        .showErrorDialog(project, EclipseBundle.message("eclipse.import.warning.undefinded.libraries", message.toString()), getTitle());
+    }
+    if (!unknownJdks.isEmpty()) {
+      if (message.length() > 0){
+        message.append("\nand jdks");
+      } else {
+        message.append("Imported project refers to unknown jdks");
+      }
+      for (String unknownJdk : unknownJdks) {
+        message.append("\n").append(unknownJdk);
+      }
+    }
+    if (message.length() > 0) {
+      Messages.showErrorDialog(project, message.toString(), getTitle());
     }
 
     return result;

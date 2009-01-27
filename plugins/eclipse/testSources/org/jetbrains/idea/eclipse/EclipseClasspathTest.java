@@ -69,7 +69,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     new EclipseClasspathReader(path, getProject())
-      .readClasspath(rootModel, new ArrayList<String>(), new HashSet<String>(), null, classpathElement);
+      .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), null, classpathElement);
     rootModel.commit();
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final Element resultClasspathElement = new Element(EclipseXml.CLASSPATH_TAG);
