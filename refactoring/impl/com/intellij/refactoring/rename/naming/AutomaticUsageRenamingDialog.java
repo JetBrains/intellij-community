@@ -385,10 +385,12 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
         if (myTable.isEditing()) return;
 
         int row = myTable.getSelectionModel().getAnchorSelectionIndex();
-        myShouldRename[row] = !myShouldRename[row];
-        fireTableDataChanged();
-        repaintTable();
-        myTable.requestFocus();
+        if (row >= 0 && row < getElementCount()) {
+          myShouldRename[row] = !myShouldRename[row];
+          fireTableDataChanged();
+          repaintTable();
+          myTable.requestFocus();
+        }
       }
     }
 
