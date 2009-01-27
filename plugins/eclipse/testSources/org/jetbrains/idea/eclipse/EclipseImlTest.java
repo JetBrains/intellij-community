@@ -65,7 +65,7 @@ public class EclipseImlTest extends IdeaTestCase {
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
         return ModuleManager.getInstance(getProject())
-          .newModule(new File(path).getParent() + "/temp/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
+          .newModule(new File(path).getParent() + File.separator + EclipseProjectFinder.findProjectName(path) + File.separator + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -77,7 +77,9 @@ public class EclipseImlTest extends IdeaTestCase {
     model.writeExternal(actualImlElement);
     model.dispose();
 
+    PathMacroManager.getInstance(module).collapsePaths(actualImlElement);
     PathMacroManager.getInstance(getProject()).collapsePaths(actualImlElement);
+
 
     final Element expectedIml = JDOMUtil.loadDocument(new File(getProject().getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
     Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")), JDOMUtil.areElementsEqual(expectedIml, actualImlElement));
