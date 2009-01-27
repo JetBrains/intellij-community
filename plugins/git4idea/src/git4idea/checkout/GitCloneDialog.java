@@ -373,14 +373,6 @@ public class GitCloneDialog extends DialogWrapper {
    * {@inheritDoc}
    */
   @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   protected String getDimensionServiceKey() {
     return "GitCloneDialog";
   }
