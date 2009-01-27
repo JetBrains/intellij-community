@@ -18,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  *  @author dsl
@@ -29,7 +27,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentEntryImpl");
   private final VirtualFilePointer myRoot;
   @NonNls static final String ELEMENT_NAME = "content";
-  private final TreeSet<SourceFolder> mySourceFolders = new TreeSet<SourceFolder>(ContentFolderComparator.INSTANCE);
+  private final LinkedHashSet<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
   private final TreeSet<ExcludeFolder> myExcludeFolders = new TreeSet<ExcludeFolder>(ContentFolderComparator.INSTANCE);
   private final TreeSet<ExcludedOutputFolder> myExcludedOutputFolders = new TreeSet<ExcludedOutputFolder>(ContentFolderComparator.INSTANCE);
   @NonNls private static final String URL_ATTR = "url";
@@ -203,7 +201,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return f;
   }
 
-  private <T extends ContentFolder> void assertCanRemoveFrom(T f, TreeSet<T> ff) {
+  private <T extends ContentFolder> void assertCanRemoveFrom(T f, Set<T> ff) {
     getRootModel().assertWritable();
     LOG.assertTrue(ff.contains(f));
   }

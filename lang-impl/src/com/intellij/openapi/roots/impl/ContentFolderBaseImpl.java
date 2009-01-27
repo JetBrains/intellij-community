@@ -80,4 +80,15 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   public int compareTo(ContentFolderBaseImpl folder) {
     return getUrl().compareTo(folder.getUrl());
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof ContentFolderBaseImpl)) return false;
+    return compareTo((ContentFolderBaseImpl)obj) == 0;
+  }
+
+  @Override
+  public int hashCode() {
+    return getUrl().hashCode();
+  }
 }
