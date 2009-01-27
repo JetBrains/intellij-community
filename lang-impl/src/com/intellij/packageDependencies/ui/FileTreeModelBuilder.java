@@ -203,7 +203,7 @@ public class FileTreeModelBuilder {
     VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
     final VirtualFile containingDirectory = vFile.getParent();
-    LOG.assertTrue(containingDirectory != null);
+    LOG.assertTrue(containingDirectory != null, "physical: " + file.isPhysical() + ", " + file.getViewProvider().isPhysical());
     return getModuleDirNode(file.getContainingDirectory(), myFileIndex.getModuleForFile(vFile), null);
   }
 
