@@ -36,6 +36,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
@@ -47,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -64,7 +64,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private final FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
   private final Object myStubLock = PsiLock.LOCK;
-  private WeakReference<StubTree> myStub;
+  private SoftReference<StubTree> myStub;
   protected final PsiManagerEx myManager;
   private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
   public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
@@ -550,7 +550,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      myStub = new WeakReference<StubTree>(stubHolder);
+      myStub = new SoftReference<StubTree>(stubHolder);
       StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
       base.setPsi(this);
 
