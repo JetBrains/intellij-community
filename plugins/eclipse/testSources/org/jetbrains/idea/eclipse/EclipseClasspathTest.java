@@ -112,4 +112,8 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testEmptySrc() throws Exception {
+    doTest();
+  }
+
 }

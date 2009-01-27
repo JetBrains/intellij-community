@@ -95,4 +95,8 @@ public class EclipseImlTest extends IdeaTestCase {
   }
 
 
+  public void testEmptySrc() throws Exception {
+    doTest();
+  }
+
 }
