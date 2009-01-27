@@ -147,5 +147,7 @@ public interface CompileContext extends UserDataHolder {
    */
   boolean isMake();
 
+  boolean isRebuild();
+
   Project getProject();
 }

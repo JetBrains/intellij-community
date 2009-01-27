@@ -47,6 +47,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private CompileScope myCompileScope;
   private final DependencyCache myDependencyCache;
   private final boolean myMake;
+  private final boolean myIsRebuild;
   private boolean myRebuildRequested = false;
   private String myRebuildReason;
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
@@ -62,12 +63,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   public CompileContextImpl(Project project,
                             CompilerTask indicator,
                             CompileScope compileScope,
-                            DependencyCache dependencyCache, boolean isMake) {
+                            DependencyCache dependencyCache, boolean isMake, boolean isRebuild) {
     myProject = project;
     myTask = indicator;
     myCompileScope = compileScope;
     myDependencyCache = dependencyCache;
     myMake = isMake;
+    myIsRebuild = isRebuild;
     myStartCompilationStamp = System.currentTimeMillis();
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     myProjectCompileScope = new ProjectCompileScope(myProject);
@@ -293,6 +295,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   public boolean isMake() {
     return myMake;
+  }
+
+  public boolean isRebuild() {
+    return myIsRebuild;
   }
 
   public void addScope(final CompileScope additionalScope) {

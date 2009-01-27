@@ -109,4 +109,8 @@ public class DummyCompileContext implements CompileContext {
   public boolean isMake() {
     return false; // stub implementation
   }
+
+  public boolean isRebuild() {
+    return false;
+  }
 }

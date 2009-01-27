@@ -14,8 +14,8 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -119,6 +119,10 @@ public class CompileContextExProxy implements CompileContextEx {
 
   public boolean isMake() {
     return myDelegate.isMake();
+  }
+
+  public boolean isRebuild() {
+    return myDelegate.isRebuild();
   }
 
   public <T> T getUserData(final Key<T> key) {
