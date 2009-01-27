@@ -29,14 +29,14 @@ public class CompilationClasspathTest extends CompilerTestCase{
   public void testClasspathWithOnlyProductionSet() {
     doSetup(false, true, false);
 
-    final CompileContextImpl context = new CompileContextImpl(getProject(), null, null, null, false);
+    final CompileContextImpl context = new CompileContextImpl(getProject(), null, null, null, false, false);
     final Set<VirtualFile> files = context.getTestOutputDirectories();
     assertTrue(files.isEmpty());
   }
 
   public void testClasspathWithOnlyTestsSet() throws IOException {
     doSetup(true, false, true);
-    final CompileContextImpl context = new CompileContextImpl(getProject(), null, null, null, false);
+    final CompileContextImpl context = new CompileContextImpl(getProject(), null, null, null, false, false);
     final Set<VirtualFile> files = context.getTestOutputDirectories();
     
     assertTrue(files.size() == 1);
@@ -45,7 +45,7 @@ public class CompilationClasspathTest extends CompilerTestCase{
 
   public void testClasspathProductionAndTestsDiffer() throws IOException {
     doSetup(true, true, false);
-    final CompileContextImpl context = new CompileContextImpl(getProject(), null, null, null, false);
+    final CompileContextImpl context = new CompileContextImpl(getProject(), null, null, null, false, false);
     final Set<VirtualFile> files = context.getTestOutputDirectories();
     
     assertTrue(files.size() == 1);
@@ -55,7 +55,7 @@ public class CompilationClasspathTest extends CompilerTestCase{
   
   public void testClasspathProductionAndTestsAreSame() throws IOException {
     doSetup(true, false, false);
-    final CompileContextImpl context = new CompileContextImpl(getProject(), null, null, null, false);
+    final CompileContextImpl context = new CompileContextImpl(getProject(), null, null, null, false, false);
     final Set<VirtualFile> files = context.getTestOutputDirectories();
     
     assertEquals(myClassesDir, myTestsOutput);
