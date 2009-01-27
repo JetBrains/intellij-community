@@ -269,8 +269,20 @@ public class DocumentationManager {
         element = adjusted;
       }
     }
+    
     if (element == null && editor != null) {
       element = getElementFromLookup(editor, file);
+      
+      if (element == null) {
+        final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+
+        if (ref != null) {
+          element = TargetElementUtilBase.getInstance().adjustReference(ref);
+          if (element == null && ref instanceof PsiPolyVariantReference) {
+            element = ref.getElement();
+          }
+        }
+      }
     }
 
     storeOriginalElement(myProject, contextElement, element);
