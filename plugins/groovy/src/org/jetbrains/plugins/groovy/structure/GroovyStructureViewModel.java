@@ -5,6 +5,8 @@ import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -61,5 +63,44 @@ public class GroovyStructureViewModel extends TextEditorBasedStructureViewModel 
   @NotNull
   protected Class[] getSuitableClasses() {
     return SUITABLE_CLASSES;
+  }
+
+  protected Object findAcceptableElement(PsiElement element) {
+    while (element != null && !(element instanceof PsiDirectory)) {
+      if (isSuitable(element)) {
+        if (element instanceof GroovyFileBase && ((GroovyFileBase)element).getTypeDefinitions().length == 1) {
+          return ((GroovyFileBase)element).getTypeDefinitions()[0];
+        }
+        return element;
+      }
+      element = element.getParent();
+    }
+    return null;
+  }
+
+  @Override
+  protected boolean isSuitable(final PsiElement element) {
+    if (super.isSuitable(element)) {
+      if (element instanceof GrMethod) {
+        GrMethod method = (GrMethod)element;
+        PsiElement parent = method.getParent().getParent();
+        if (parent instanceof GrTypeDefinition) {
+          return ((GrTypeDefinition)parent).getQualifiedName() != null;
+        }
+      }
+      else if (element instanceof GrVariable) {
+        GrVariable field = (GrVariable)element;
+        PsiElement parent = field.getParent().getParent().getParent();
+        if (parent instanceof GrTypeDefinition) {
+          return ((GrTypeDefinition)parent).getQualifiedName() != null;
+        }
+      }
+      else if (element instanceof GrTypeDefinition) {
+        return ((GrTypeDefinition)element).getQualifiedName() != null;
+      } else if (element instanceof GroovyFileBase) {
+        return true;
+      }
+    }
+    return false;
   }
 }
