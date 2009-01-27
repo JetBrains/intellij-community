@@ -5,6 +5,8 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -68,20 +70,25 @@ public class TreeViewUtil {
    *                      otherwise the package is considered as empty if all direct children that it has are directories
    */
   public static boolean isEmptyMiddlePackage(PsiDirectory dir, boolean strictlyEmpty) {
-    final PsiElement[] children = dir.getChildren();
-    if (children.length == 0) {
+    final VirtualFile[] files = dir.getVirtualFile().getChildren();
+    if (files.length == 0) {
       return false;
     }
-    final int subpackagesCount = getSubpackagesCount(dir);
-    return strictlyEmpty ? children.length == 1 && children.length == subpackagesCount : children.length == subpackagesCount;
-  }
-
-  private static int getSubpackagesCount(PsiDirectory dir) {
-    int count = 0;
-    final PsiDirectory[] subdirs = dir.getSubdirectories();
-    for (final PsiDirectory subdir : subdirs) {
-      count += JavaDirectoryService.getInstance().getPackage(subdir) != null ? 1 : 0;
+    PsiManager manager = dir.getManager();
+    int subpackagesCount = 0;
+    int directoriesCount = 0;
+    for (VirtualFile file : files) {
+      if (FileTypeManager.getInstance().isFileIgnored(file.getName())) continue;
+      if (!file.isDirectory()) return false;
+      PsiDirectory childDir = manager.findDirectory(file);
+      if (childDir != null) {
+        directoriesCount++;
+        if (strictlyEmpty && directoriesCount > 1) return false;
+        if (JavaDirectoryService.getInstance().getPackage(childDir) != null) {
+          subpackagesCount++;
+        }
+      }
     }
-    return count;
+    return directoriesCount == subpackagesCount;
   }
 }
