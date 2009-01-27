@@ -2,7 +2,9 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.*;
+import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -25,10 +27,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public class JavaFoldingBuilder implements FoldingBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
+  private static final String[] SMILEYS = {"<:->", "<:-)>", "<:P>", "<:-P>", "<\u263a>", "<\u263b>", "<~>", "</>", "<->"};
+  private static final String SMILEY = SMILEYS[new Random().nextInt(SMILEYS.length)];
 
   public FoldingDescriptor[] buildFoldRegions(final ASTNode node, final Document document) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
@@ -141,6 +147,9 @@ public class JavaFoldingBuilder implements FoldingBuilder {
     }
     else if (element instanceof PsiAnnotation) {
       return "@{...}";
+    }
+    if (element instanceof PsiReferenceParameterList) {
+      return SMILEY;
     }
     return "...";
   }
@@ -325,28 +334,57 @@ public class JavaFoldingBuilder implements FoldingBuilder {
 
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
-        PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-        if (classReference == null) {
-          final PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
-          if (anonymousClass != null) {
-            classReference = anonymousClass.getBaseClassReference();
-          }
-        }
-
-        if (classReference != null) {
-          final PsiReferenceParameterList list = classReference.getParameterList();
-          if (list != null) {
-            final String text = list.getText();
-            if (text.startsWith("<") && text.endsWith(">") && text.length() > getPlaceholderText(list.getNode()).length()) {
-              final TextRange range = list.getTextRange();
-              addFoldRegion(foldElements, list, document, true, new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
-            }
-          }
-        }
+        addGenericParametersFolding(expression, foldElements, document);
 
         super.visitNewExpression(expression);
       }
     });
+  }
+
+  private void addGenericParametersFolding(PsiNewExpression expression, List<FoldingDescriptor> foldElements, Document document) {
+    final PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiVariable)) {
+      return;
+    }
+
+    final PsiType declType = ((PsiVariable)parent).getType();
+    if (!(declType instanceof PsiClassType)) {
+      return;
+    }
+
+    final PsiType[] parameters = ((PsiClassType)declType).getParameters();
+    if (parameters.length == 0) {
+      return;
+    }
+
+
+
+    PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+    if (classReference == null) {
+      final PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
+      if (anonymousClass != null) {
+        classReference = anonymousClass.getBaseClassReference();
+
+        if (seemsLikeLambda(anonymousClass.getSuperClass())) {
+          return;
+        }
+      }
+    }
+
+    if (classReference != null) {
+      final PsiReferenceParameterList list = classReference.getParameterList();
+      if (list != null) {
+        if (!Arrays.equals(list.getTypeArguments(), parameters)) {
+          return;
+        }
+
+        final String text = list.getText();
+        if (text.startsWith("<") && text.endsWith(">") && text.length() > 5) { //5 seems reasonable
+          final TextRange range = list.getTextRange();
+          addFoldRegion(foldElements, list, document, true, new TextRange(range.getStartOffset(), range.getEndOffset()));
+        }
+      }
+    }
   }
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements) {
@@ -446,7 +484,9 @@ public class JavaFoldingBuilder implements FoldingBuilder {
     return isClosure;
   }
 
-  private static boolean seemsLikeLambda(final PsiClass baseClass) {
+  private static boolean seemsLikeLambda(@Nullable final PsiClass baseClass) {
+    if (baseClass == null) return false;
+
     if (!baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     for (final PsiMethod method : baseClass.getConstructors()) {
       if (method.getParameterList().getParametersCount() > 0) return false;
