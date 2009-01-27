@@ -107,6 +107,7 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     final Border border2 = BorderFactory.createLineBorder(Color.BLACK);
     myParametersTable.setBorder(border2);
+    myParametersTable.setBackground(Color.WHITE);
 
     myTypeLabel.setLabelFor(myTypeComboBox);
     myClassLabel.setLabelFor(myClassComboBox);

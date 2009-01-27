@@ -227,7 +227,8 @@ public class PsiUtil {
         if (type == null) {
           result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(call));
         } else {
-          result.add(type);
+          PsiType unboxedType = TypesUtil.unboxPrimitiveTypeWraperAndEraseGenerics(type);
+          result.add(unboxedType);
         }
       }
 
