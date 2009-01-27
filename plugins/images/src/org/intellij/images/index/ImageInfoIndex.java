@@ -48,7 +48,7 @@ public class ImageInfoIndex implements FileBasedIndexExtension {
     public Map<Integer, ImageInfo> map(FileContent inputData) {
       final ImageInfo info = fetchImageInfo(inputData.getContent());
       //noinspection unchecked
-      return info == null ? Collections.EMPTY_MAP : Collections.singletonMap(FileBasedIndex.getFileId(inputData.getFile()), info);
+      return info == null ? Collections.EMPTY_MAP : Collections.singletonMap(Math.abs(FileBasedIndex.getFileId(inputData.getFile())), info);
     }
   };
 
