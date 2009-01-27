@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -19,6 +20,8 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MavenProjectConfigurator {
   private Project myProject;
@@ -32,7 +35,6 @@ public class MavenProjectConfigurator {
   private Map<MavenProjectModel, String> myMavenProjectToModuleName = new HashMap<MavenProjectModel, String>();
   private Map<MavenProjectModel, String> myMavenProjectToModulePath = new HashMap<MavenProjectModel, String>();
   private List<Module> myCreatedModules = new ArrayList<Module>();
-
 
   public MavenProjectConfigurator(Project p,
                                   MavenProjectsTree projectsTree,
@@ -49,11 +51,11 @@ public class MavenProjectConfigurator {
 
     myModuleModel = model != null ? model : ModuleManager.getInstance(myProject).getModifiableModel();
     mapModulesToMavenProjects();
-    configSettings();
     deleteObsoleteModules();
     configModules(postTasks, modulesProvider);
     configModuleGroups();
     refreshResolvedArtifacts();
+    configSettings();
     if (model == null) commit();
 
     return postTasks;
@@ -94,6 +96,46 @@ public class MavenProjectConfigurator {
 
   private void configSettings() {
     ((ProjectEx)myProject).setSavePathsRelative(true);
+
+    String level = getTargetLevel();
+    if (level != null) {
+      String options = JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING;
+      Pattern pattern = Pattern.compile("(-target ([\\d\\.]+))");
+      Matcher matcher = pattern.matcher(options);
+
+      if (matcher.find()) {
+        String value = matcher.group(2);
+        if (level.compareToIgnoreCase(value) < 0) {
+          StringBuffer buffer = new StringBuffer();
+          matcher.appendReplacement(buffer, "-target " + level);
+          matcher.appendTail(buffer);
+          options = buffer.toString();
+        }
+      }
+      else {
+        if (!StringUtil.isEmptyOrSpaces(options)) options += " ";
+        options += "-target " + level;
+      }
+      JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = options;
+    }
+  }
+
+  private String getTargetLevel() {
+    String result = null;
+    for (MavenProjectModel each : myMavenTree.getProjects()) {
+      String targetString = each.findPluginConfigurationValue("org.apache.maven.plugins",
+                                                              "maven-compiler-plugin",
+                                                              "target");
+      if (targetString != null) {
+        if (result == null) {
+          result = targetString;
+        }
+        else {
+          if (targetString.compareTo(result) < 0) result = targetString;
+        }
+      }
+    }
+    return result;
   }
 
   private void deleteObsoleteModules() {
@@ -241,11 +283,11 @@ public class MavenProjectConfigurator {
         if (module == null) {
           // todo: IDEADEV-30669 hook
           String message = "Module " + name + "not found.";
-          message += "\nmavenProject="+each.getFile();
+          message += "\nmavenProject=" + each.getFile();
           module = myMavenProjectToModule.get(each);
           message += "\nmyMavenProjectToModule=" + (module == null ? null : module.getName());
-          message += "\nmyMavenProjectToModuleName=" +myMavenProjectToModuleName.get(each);
-          message += "\nmyMavenProjectToModulePath=" +myMavenProjectToModulePath.get(each);
+          message += "\nmyMavenProjectToModuleName=" + myMavenProjectToModuleName.get(each);
+          message += "\nmyMavenProjectToModulePath=" + myMavenProjectToModulePath.get(each);
           MavenLog.LOG.warn(message);
           return;
         }

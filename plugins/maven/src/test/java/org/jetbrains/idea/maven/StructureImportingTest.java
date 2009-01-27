@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -576,6 +577,94 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
   private LanguageLevel getLanguageLevelForProject() {
     return LanguageLevelModuleExtension.getInstance(getModule("project")).getLanguageLevel();
+  }
+
+  public void testSettingTargetLevel() throws Exception {
+    JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m";
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "        <configuration>" +
+                  "          <target>1.3</target>" +
+                  "        </configuration>" +
+                  "     </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertEquals("-Xmm500m -Xms128m -target 1.3", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING);
+  }
+
+  public void testRewritingTargetLevel() throws Exception {
+    JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -target 1.5 -Xms128m";
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "        <configuration>" +
+                  "          <target>1.3</target>" +
+                  "        </configuration>" +
+                  "     </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertEquals("-Xmm500m -target 1.3 -Xms128m", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING);
+  }
+
+  public void testSettingTargetLevelAtMinimalSpecified() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<build>" +
+                          "  <plugins>" +
+                          "    <plugin>" +
+                          "      <artifactId>maven-compiler-plugin</artifactId>" +
+                          "        <configuration>" +
+                          "          <target>1.3</target>" +
+                          "        </configuration>" +
+                          "     </plugin>" +
+                          "  </plugins>" +
+                          "</build>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<build>" +
+                          "  <plugins>" +
+                          "    <plugin>" +
+                          "      <artifactId>maven-compiler-plugin</artifactId>" +
+                          "        <configuration>" +
+                          "          <target>1.5</target>" +
+                          "        </configuration>" +
+                          "     </plugin>" +
+                          "  </plugins>" +
+                          "</build>");
+
+    importProject();
+
+    assertEquals("-target 1.3", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING);
   }
 
   public void testProjectWithBuiltExtension() throws Exception {
