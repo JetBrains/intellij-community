@@ -506,8 +506,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     final StreamProvider[] providers = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager()
         .getStreamProviders(RoamingType.GLOBAL);
     for (StreamProvider provider : providers) {
-      Document document = StorageUtil.loadDocument(provider.loadContent(schemePath, RoamingType.GLOBAL));
-      if (document != null) return document;
+      if (provider.isEnabled()) {
+        Document document = StorageUtil.loadDocument(provider.loadContent(schemePath, RoamingType.GLOBAL));
+        if (document != null) return document;
+      }
     }
 
     return null;

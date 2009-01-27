@@ -79,34 +79,38 @@ public class CompoundShelfFileProcesor {
     Collection<String> result = new LinkedHashSet<String>();
 
     for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      String[] subFiles = serverStreamProvider.listSubFiles(FILE_SPEC);
-      result.addAll(Arrays.asList(subFiles));
+      if (serverStreamProvider.isEnabled()) {
+        String[] subFiles = serverStreamProvider.listSubFiles(FILE_SPEC);
+        result.addAll(Arrays.asList(subFiles));
+      }
     }
     return new ArrayList<String>(result);
   }
 
   public String copyFileFromServer(final String serverFileName, final List<String> localFileNames) {
     for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      try {
-        File file = new File(new File(myShelfPath), serverFileName);
-        if (!file.exists()) {
-          InputStream stream = serverStreamProvider.loadContent(FILE_SPEC + serverFileName, PER_USER);
-          if (stream != null) {
+      if (serverStreamProvider.isEnabled()) {
+        try {
+          File file = new File(new File(myShelfPath), serverFileName);
+          if (!file.exists()) {
+            InputStream stream = serverStreamProvider.loadContent(FILE_SPEC + serverFileName, PER_USER);
+            if (stream != null) {
 
-            file.getParentFile().mkdirs();
-            FileOutputStream out = new FileOutputStream(file);
-            try {
-              FileUtil.copy(stream, out);
-            }
-            finally {
-              out.close();
-              stream.close();
+              file.getParentFile().mkdirs();
+              FileOutputStream out = new FileOutputStream(file);
+              try {
+                FileUtil.copy(stream, out);
+              }
+              finally {
+                out.close();
+                stream.close();
+              }
             }
           }
         }
-      }
-      catch (IOException e) {
-        //ignore
+        catch (IOException e) {
+          //ignore
+        }
       }
     }
     localFileNames.add(serverFileName);
@@ -126,17 +130,19 @@ public class CompoundShelfFileProcesor {
   }
 
   private void renameFileOnProvider(final String newName, final String oldFilePath, final String newFilePath, final StreamProvider serverStreamProvider) {
-    try {
-      InputStream stream = serverStreamProvider.loadContent(oldFilePath, PER_USER);
-      if (stream != null) {
-        File file = new File(myShelfPath + "/" + newName);
-        copyFileToStream(stream, file);
-        serverStreamProvider.deleteFile(oldFilePath,PER_USER);
-        copyFileContentToProviders(newFilePath, serverStreamProvider, file);
+    if (serverStreamProvider.isEnabled()) {
+      try {
+        InputStream stream = serverStreamProvider.loadContent(oldFilePath, PER_USER);
+        if (stream != null) {
+          File file = new File(myShelfPath + "/" + newName);
+          copyFileToStream(stream, file);
+          serverStreamProvider.deleteFile(oldFilePath,PER_USER);
+          copyFileContentToProviders(newFilePath, serverStreamProvider, file);
+        }
       }
-    }
-    catch (IOException e) {
-      LOG.info(e);
+      catch (IOException e) {
+        LOG.info(e);
+      }
     }
   }
 
@@ -144,7 +150,9 @@ public class CompoundShelfFileProcesor {
       throws IOException {
     FileInputStream input = new FileInputStream(file);
     try {
-      serverStreamProvider.saveContent(newFilePath, input, file.length(), PER_USER, true);
+      if (serverStreamProvider.isEnabled()) {
+        serverStreamProvider.saveContent(newFilePath, input, file.length(), PER_USER, true);
+      }
     }
     finally {
       input.close();
@@ -215,7 +223,9 @@ public class CompoundShelfFileProcesor {
   public void delete(final String name) {
     FileUtil.delete(new File(getBaseIODir(), name));
     for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      serverStreamProvider.deleteFile(FILE_SPEC + name, PER_USER);
+      if (serverStreamProvider.isEnabled()) {
+        serverStreamProvider.deleteFile(FILE_SPEC + name, PER_USER);
+      }
     }
 
   }

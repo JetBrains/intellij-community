@@ -258,7 +258,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
-        streamProvider.saveContent(fileSpec, content, size, roamingType, async);
+        if (streamProvider.isEnabled()) {
+          streamProvider.saveContent(fileSpec, content, size, roamingType, async);
+        }
       }
       catch (ConnectException e) {
         LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
@@ -274,7 +276,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   public void deleteFile(final String fileSpec, final RoamingType roamingType) {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
-        streamProvider.deleteFile(fileSpec, roamingType);
+        if (streamProvider.isEnabled()) {
+          streamProvider.deleteFile(fileSpec, roamingType);
+        }
       }
       catch (Exception e) {
         LOG.debug(e);
@@ -299,9 +303,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
-        InputStream content = streamProvider.loadContent(fileSpec, roamingType);
+        if (streamProvider.isEnabled()) {
+          InputStream content = streamProvider.loadContent(fileSpec, roamingType);
 
-        if (content != null) return content;
+          if (content != null) return content;
+        }
       }
       catch (ConnectException e) {
         LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());

@@ -186,7 +186,9 @@ public class StorageUtil {
     byte[] content = printDocument(copy);
     ByteArrayInputStream in = new ByteArrayInputStream(content);
     try {
-      streamProvider.saveContent(fileSpec, in, content.length, roamingType, async);
+      if (streamProvider.isEnabled()) {
+        streamProvider.saveContent(fileSpec, in, content.length, roamingType, async);
+      }
     }
     finally {
       in.close();

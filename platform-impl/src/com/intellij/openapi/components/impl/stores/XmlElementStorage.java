@@ -151,7 +151,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     if (!myIsProjectSettings && useProvidersData) {
       for (RoamingType roamingType : RoamingType.values()) {
-        if (roamingType != RoamingType.DISABLED) {
+        if (roamingType != RoamingType.DISABLED && roamingType != RoamingType.GLOBAL) {
           try {
             if (myStreamProvider.isEnabled()) {
               final Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
@@ -803,11 +803,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myProviderVersions = new TreeMap<String, Long>();
     for (RoamingType type : RoamingType.values()) {
       Document doc = null;
-      try {
-        doc = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec + ".ver", type));
-      }
-      catch (IOException e) {
-        LOG.debug(e);
+      if (myStreamProvider.isEnabled()) {
+        try {
+          doc = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec + ".ver", type));
+        }
+        catch (IOException e) {
+          LOG.debug(e);
+        }
       }
       if (doc != null) {
         StateStorageManagerImpl.loadComponentVersions(myProviderVersions, doc);
