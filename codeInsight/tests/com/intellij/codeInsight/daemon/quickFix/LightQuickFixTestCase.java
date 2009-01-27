@@ -14,13 +14,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.regex.Pattern;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BEFORE_PREFIX = "before";
+  private static QuickFixTestCase myWrapper;
 
   protected boolean shouldBeAvailableAfterExecution() {
     return false;
@@ -38,32 +40,34 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return parseActionHint(file, contents);
   }
 
-  protected void doTestFor(final String testName) {
+  private static void doTestFor(final String testName, final QuickFixTestCase quickFixTestCase) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final String relativePath = getBasePath() + "/" + BEFORE_PREFIX + testName;
-            final String testFullPath = getTestDataPath().replace(File.separatorChar, '/') + relativePath;
+            final String relativePath = quickFixTestCase.getBasePath() + "/" + BEFORE_PREFIX + testName;
+            final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
             final File ioFile = new File(testFullPath);
             try {
               String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)), "\n");
-              configureFromFileText(ioFile.getName(), contents);
-              bringRealEditorBack();
-              final Pair<String, Boolean> pair = parseActionHintImpl(getFile(), contents);
+              quickFixTestCase.configureFromFileText(ioFile.getName(), contents);
+              quickFixTestCase.bringRealEditorBack();
+              final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
               final String text = pair.getFirst();
               final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
 
-              beforeActionStarted(testName, contents);
+              quickFixTestCase.beforeActionStarted(testName, contents);
 
               try {
-                doAction(text, actionShouldBeAvailable, testFullPath, testName);
+                myWrapper = quickFixTestCase;
+                quickFixTestCase.doAction(text, actionShouldBeAvailable, testFullPath, testName);
               }
               finally {
-                afterActionCompleted(testName, contents);
+                myWrapper = null;
+                quickFixTestCase.afterActionCompleted(testName, contents);
               }
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               e.printStackTrace();
               fail();
             }
@@ -102,17 +106,18 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return Pair.create(text, actionShouldBeAvailable);
   }
 
-  protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
+  public static void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName,
+                              QuickFixTestCase quickFixTestCase)
     throws Exception {
-    IntentionAction action = findActionWithText(text);
+    IntentionAction action = quickFixTestCase.findActionWithText(text);
     if (action == null) {
       if (actionShouldBeAvailable) {
-        List<IntentionAction> actions = getAvailableActions();
+        List<IntentionAction> actions = quickFixTestCase.getAvailableActions();
         List<String> texts = new ArrayList<String>();
         for (IntentionAction intentionAction : actions) {
           texts.add(intentionAction.getText());
         }
-        Collection<HighlightInfo> infos = doHighlighting();
+        Collection<HighlightInfo> infos = quickFixTestCase.doHighlighting();
         fail("Action with text '" + text + "' is not available in test " + testFullPath+"\nAvailable actions: "+texts+"\n"+actions+"\nErrors:"+infos);
       }
     }
@@ -120,16 +125,21 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       if (!actionShouldBeAvailable) {
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
-      invoke(action);
-      if (!shouldBeAvailableAfterExecution()) {
-        final IntentionAction afterAction = findActionWithText(text);
+      quickFixTestCase.invoke(action);
+      if (!quickFixTestCase.shouldBeAvailableAfterExecution()) {
+        final IntentionAction afterAction = quickFixTestCase.findActionWithText(text);
         if (afterAction != null) {
           fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
         }
       }
-      final String expectedFilePath = getBasePath() + "/after" + testName;
-      checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
+      final String expectedFilePath = quickFixTestCase.getBasePath() + "/after" + testName;
+      quickFixTestCase.checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
     }
+  }
+
+  protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
+    throws Exception {
+    doAction(text, actionShouldBeAvailable, testFullPath, testName, myWrapper);
   }
 
   protected void invoke(IntentionAction action) throws IncorrectOperationException {
@@ -137,8 +147,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected IntentionAction findActionWithText(final String text) {
-    final List<IntentionAction> actions = getAvailableActions();
-    return findActionWithText(actions, text);
+    return findActionWithText(getAvailableActions(), text);
   }
 
   public static IntentionAction findActionWithText(final List<IntentionAction> actions, final String text) {
@@ -150,10 +159,10 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return null;
   }
 
-  protected void doAllTests() throws Exception {
-    assertNotNull("getBasePath() should not return null!", getBasePath());
+  public static void doAllTests(QuickFixTestCase testCase) throws Exception {
+    assertNotNull("getBasePath() should not return null!", testCase.getBasePath());
 
-    final String testDirPath = getTestDataPath().replace(File.separatorChar, '/') + getBasePath();
+    final String testDirPath = testCase.getTestDataPath().replace(File.separatorChar, '/') + testCase.getBasePath();
     File testDir = new File(testDirPath);
     final File[] files = testDir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, @NonNls String name) {
@@ -167,9 +176,73 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
     for (File file : files) {
       final String testName = file.getName().substring(BEFORE_PREFIX.length());
-      doTestFor(testName);
+      doTestFor(testName, testCase);
     }
     assertTrue("Test files not found in "+testDirPath,files.length != 0);
+  }
+
+  protected void doAllTests() throws Exception {
+    doAllTests(new QuickFixTestCase() {
+      public String getBasePath() {
+        return LightQuickFixTestCase.this.getBasePath();
+      }
+
+      public String getTestDataPath() {
+        return LightQuickFixTestCase.this.getTestDataPath();
+      }
+
+      public Pair<String, Boolean> parseActionHintImpl(PsiFile file, String contents) {
+        return LightQuickFixTestCase.this.parseActionHintImpl(file, contents);
+      }
+
+      public void beforeActionStarted(String testName, String contents) {
+        LightQuickFixTestCase.this.beforeActionStarted(testName, contents);
+      }
+
+      public void afterActionCompleted(String testName, String contents) {
+        LightQuickFixTestCase.this.afterActionCompleted(testName, contents);
+      }
+
+      public void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName) throws Exception {
+        LightQuickFixTestCase.this.doAction(text, actionShouldBeAvailable, testFullPath, testName);
+      }
+
+      public void checkResultByFile(String s, String expectedFilePath, boolean b) throws Exception {
+        LightQuickFixTestCase.this.checkResultByFile(s, expectedFilePath, b);
+      }
+
+      public IntentionAction findActionWithText(String text) {
+        return LightQuickFixTestCase.this.findActionWithText(text);
+      }
+
+      public boolean shouldBeAvailableAfterExecution() {
+        return LightQuickFixTestCase.this.shouldBeAvailableAfterExecution();
+      }
+
+      public void invoke(IntentionAction action) {
+        LightQuickFixTestCase.this.invoke(action);
+      }
+
+      public List<HighlightInfo> doHighlighting() {
+        return LightQuickFixTestCase.this.doHighlighting();
+      }
+
+      public List<IntentionAction> getAvailableActions() {
+        return LightQuickFixTestCase.this.getAvailableActions();
+      }
+
+      public void configureFromFileText(String name, String contents) throws IOException {
+        LightQuickFixTestCase.configureFromFileText(name, contents);
+      }
+
+      public PsiFile getFile() {
+        return LightQuickFixTestCase.getFile();
+      }
+
+      public void bringRealEditorBack() {
+        LightQuickFixTestCase.bringRealEditorBack();
+      }
+    });
   }
 
   protected List<IntentionAction> getAvailableActions() {

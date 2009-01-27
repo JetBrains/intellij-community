@@ -32,6 +32,7 @@ import com.intellij.testFramework.PsiTestData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.injected.editor.EditorWindow;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -113,7 +114,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {
-    final String extension = fileType.getDefaultExtension();
+    return configureByText(fileType, text, null);
+  }
+
+  protected PsiFile configureByText(final FileType fileType, @NonNls final String text, final String _extension) throws Throwable {
+    final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
 
     File dir = createTempDirectory();
     final File tempFile = File.createTempFile("aaa", "." + extension, dir);
@@ -466,6 +471,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       newFileText1 = document1.getText();
     }
 
+    if (myEditor instanceof EditorWindow) {
+      myEditor = ((EditorWindow)myEditor).getDelegate();
+      myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
+    }
+    
     String text = myFile.getText();
     text = StringUtil.convertLineSeparators(text, "\n");
 
