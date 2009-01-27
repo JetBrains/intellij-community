@@ -76,7 +76,7 @@ public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> {
   }
 
   protected VcsContext prepareDataFromContext(final AnActionEvent e) {
-    return VcsContextWrapper.createCachedInstanceOn(e);
+    return forceSyncUpdate(e) ? VcsContextWrapper.createInstanceOn(e) : VcsContextWrapper.createCachedInstanceOn(e);
   }
 
   protected void performUpdate(final Presentation presentation, final VcsContext data) {
