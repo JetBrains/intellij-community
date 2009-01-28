@@ -42,8 +42,9 @@ public class GroovyLexer extends LookAheadLexer {
 
   @Override
   protected void lookAhead(Lexer baseLexer) {
-    if (baseLexer.getTokenType() == mDOT) {
-      addToken(mDOT);
+    final IElementType type = baseLexer.getTokenType();
+    if (type == mDOT || type == kIMPORT || type == kPACKAGE) {
+      addToken(type);
       baseLexer.advance();
       while (baseLexer.getTokenType() == mWS) {
         addToken(mWS);

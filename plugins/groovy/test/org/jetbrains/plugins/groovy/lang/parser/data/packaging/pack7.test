@@ -1,0 +1,8 @@
+package as
+-----
+Groovy script
+  Package definition
+    PsiElement(package)('package')
+    PsiWhiteSpace(' ')
+    Reference element
+      PsiElement(identifier)('as')

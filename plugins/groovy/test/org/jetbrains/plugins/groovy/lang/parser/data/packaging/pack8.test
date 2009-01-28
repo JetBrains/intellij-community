@@ -1,0 +1,11 @@
+import def.as
+-----
+Groovy script
+  Import statement
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    Reference element
+      Reference element
+        PsiElement(identifier)('def')
+      PsiElement(.)('.')
+      PsiElement(identifier)('as')
