@@ -94,7 +94,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       final Module module = entry.getKey();
       final GroovyFacet facet = GroovyFacet.getInstance(module);
       final Set<VirtualFile> moduleFiles = entry.getValue();
-      if (facet != null && facet.getConfiguration().isCompileGroovyFiles()) {
+      if (facet == null || facet.getConfiguration().isCompileGroovyFiles()) {
         doCompile(compileContext, successfullyCompiled, toRecompile, module, moduleFiles);
       } else {
         final ResourceCompiler resourceCompiler = new ResourceCompiler(myProject, CompilerConfiguration.getInstance(myProject));
