@@ -89,6 +89,9 @@ public class TreeViewUtil {
         }
       }
     }
+    if (strictlyEmpty) {
+      return directoriesCount == subpackagesCount && directoriesCount == 1;
+    }
     return directoriesCount == subpackagesCount;
   }
 }
