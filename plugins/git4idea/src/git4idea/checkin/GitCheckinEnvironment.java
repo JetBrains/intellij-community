@@ -34,10 +34,10 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
+import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.GitFileUtils;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -149,71 +149,76 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes);
-    for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
-      Set<FilePath> files = new HashSet<FilePath>();
-      final VirtualFile root = entry.getKey();
-      try {
-        File messageFile = createMessageFile(root, message);
+    try {
+      for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
+        Set<FilePath> files = new HashSet<FilePath>();
+        final VirtualFile root = entry.getKey();
         try {
-          final Set<FilePath> added = new HashSet<FilePath>();
-          final Set<FilePath> removed = new HashSet<FilePath>();
-          for (Change change : entry.getValue()) {
-            switch (change.getType()) {
-              case NEW:
-              case MODIFICATION:
-                added.add(change.getAfterRevision().getFile());
-                break;
-              case DELETED:
-                removed.add(change.getBeforeRevision().getFile());
-                break;
-              case MOVED:
-                added.add(change.getAfterRevision().getFile());
-                removed.add(change.getBeforeRevision().getFile());
-                break;
-              default:
-                throw new IllegalStateException("Unknown change type: " + change.getType());
-            }
-          }
+          File messageFile = createMessageFile(root, message);
           try {
-            if (updateIndex(myProject, root, added, removed, exceptions)) {
-              try {
-                files.addAll(added);
-                files.addAll(removed);
-                commit(myProject, root, files, messageFile, myNextCommitAuthor).run();
+            final Set<FilePath> added = new HashSet<FilePath>();
+            final Set<FilePath> removed = new HashSet<FilePath>();
+            for (Change change : entry.getValue()) {
+              switch (change.getType()) {
+                case NEW:
+                case MODIFICATION:
+                  added.add(change.getAfterRevision().getFile());
+                  break;
+                case DELETED:
+                  removed.add(change.getBeforeRevision().getFile());
+                  break;
+                case MOVED:
+                  added.add(change.getAfterRevision().getFile());
+                  removed.add(change.getBeforeRevision().getFile());
+                  break;
+                default:
+                  throw new IllegalStateException("Unknown change type: " + change.getType());
               }
-              catch (VcsException ex) {
-                if (!isMergeCommit(ex)) {
-                  throw ex;
+            }
+            try {
+              if (updateIndex(myProject, root, added, removed, exceptions)) {
+                try {
+                  files.addAll(added);
+                  files.addAll(removed);
+                  commit(myProject, root, files, messageFile, myNextCommitAuthor).run();
                 }
-                if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
-                  throw ex;
+                catch (VcsException ex) {
+                  if (!isMergeCommit(ex)) {
+                    throw ex;
+                  }
+                  if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
+                    throw ex;
+                  }
+                }
+              }
+              if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
+                // push
+                Collection<VcsException> problems = GitHandlerUtil.doSynchronouslyWithExceptions(GitPushUtils.preparePush(myProject, root));
+                for (VcsException e : problems) {
+                  if (!isNoOrigin(e)) {
+                    // no origin exception just means that push was not applicable to the repository
+                    exceptions.add(e);
+                  }
                 }
               }
             }
-            if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
-              // push
-              Collection<VcsException> problems = GitHandlerUtil.doSynchronouslyWithExceptions(GitPushUtils.preparePush(myProject, root));
-              for (VcsException e : problems) {
-                if (!isNoOrigin(e)) {
-                  // no origin exception just means that push was not applicable to the repository
-                  exceptions.add(e);
-                }
+            finally {
+              if (!messageFile.delete()) {
+                log.warn("Failed to remove temporary file: " + messageFile);
               }
             }
           }
-          finally {
-            if (!messageFile.delete()) {
-              log.warn("Failed to remove temporary file: " + messageFile);
-            }
+          catch (VcsException e) {
+            exceptions.add(e);
           }
         }
-        catch (VcsException e) {
-          exceptions.add(e);
+        catch (IOException ex) {
+          exceptions.add(new VcsException("Creation of commit message file failed", ex));
         }
       }
-      catch (IOException ex) {
-        exceptions.add(new VcsException("Creation of commit message file failed", ex));
-      }
+    }
+    finally {
+      GitUtil.refreshFiles(myProject, sortedChanges.keySet());
     }
     return exceptions;
   }
