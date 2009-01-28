@@ -823,29 +823,12 @@ public class FileBasedIndex implements ApplicationComponent {
     IndexingStamp.flushCache();
   }
 
-  //private final TIntHashSet myInvalidationInProgress = new TIntHashSet();
-
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
 
     setDataBufferingEnabled(false);
 
     final int inputId = Math.abs(getFileId(file));
-
-    //if ("Stubs".equals(indexId.toString())) {
-    //  synchronized (myInvalidationInProgress) {
-    //    if (currentFC == null) {
-    //      if (!myInvalidationInProgress.contains(inputId)) {
-    //        LOG.assertTrue(false);
-    //      }
-    //    }
-    //    else {
-    //      if (myInvalidationInProgress.contains(inputId)) {
-    //        LOG.assertTrue(false);
-    //      }
-    //    }
-    //  }
-    //}
 
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
@@ -913,7 +896,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     public void beforeContentsChange(final VirtualFileEvent event) {
-      scheduleInvalidation(event.getFile(), true); 
+      scheduleInvalidation(event.getFile(), true);
     }
 
     public void contentsChanged(final VirtualFileEvent event) {
@@ -925,7 +908,9 @@ public class FileBasedIndex implements ApplicationComponent {
         // indexes may depend on file name
         final VirtualFile file = event.getFile();
         if (!file.isDirectory()) {
-          scheduleInvalidation(file, true);
+          // name change may lead to filetype change so the file might become not indexable
+          // in general case have to 'unindex' the file and index it again if needed after the name has been changed
+          scheduleInvalidation(file, false);
         }
       }
     }
@@ -1016,10 +1001,6 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
         }
-        //synchronized (myInvalidationInProgress) {
-        //  myInvalidationInProgress.remove(fileId);
-        //}
-
         IndexingStamp.flushCache();
 
         if (!affectedIndices.isEmpty()) {
@@ -1033,10 +1014,6 @@ public class FileBasedIndex implements ApplicationComponent {
             });
           }
           else {
-            //synchronized (myInvalidationInProgress) {
-            //  myInvalidationInProgress.add(fileId);
-            //}
-
             // first check if there is an unprocessed content from previous events
             byte[] content = myFileContentAttic.remove(file);
             try {
@@ -1069,10 +1046,6 @@ public class FileBasedIndex implements ApplicationComponent {
                       }
                     }
                   }
-
-                  //synchronized (myInvalidationInProgress) {
-                  //  myInvalidationInProgress.remove(fileId);
-                  //}
 
                   IndexingStamp.flushCache();
                   if (unexpectedError != null) {

@@ -51,6 +51,10 @@ public final class FileContent extends UserDataHolderBase {
     fileName = file.getName();
   }
 
+  public FileType getFileType() {
+    return myFileType;
+  }
+
   public VirtualFile getFile() {
     return myFile;
   }

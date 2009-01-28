@@ -186,6 +186,22 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     if (allKeys.size() > 0) {
       final Lock writeLock = getWriteLock();
+
+      //if (getClass().getName().contains("StubUpdatingIndex")) {
+      //  final VirtualFile file = IndexInfrastructure.findFileById((PersistentFS)ManagingFS.getInstance(), inputId);
+      //  System.out.print("FILE [" + inputId+ "]=" + (file != null? file.getPresentableUrl() : "null"));
+      //  if (oldData.containsKey(inputId)) {
+      //    System.out.print(" REMOVE");
+      //  }
+      //  if (newData.containsKey(inputId)) {
+      //    System.out.print(" ADD");
+      //  }
+      //  System.out.println("");
+      //  if (allKeys.size() > 1) {
+      //    System.out.println("More than one key for stub updating index: " + allKeys);
+      //  }
+      //}
+
       for (Key key : allKeys) {
         assert key != null : "Null keys are not allowed. Index: " + myIndexId; 
         // remove outdated values

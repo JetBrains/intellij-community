@@ -65,8 +65,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   private final DataIndexer<IdIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileContent>() {
     @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
-      final VirtualFile file = inputData.getFile();
-      final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
+      final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(inputData.getFileType());
       if (indexer != null) {
         return indexer.map(inputData);
       }

@@ -85,7 +85,7 @@ public class TodoIndex implements CustomImplementationFileBasedIndexExtension<To
     @NotNull
     public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
-      final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = IdTableBuilding.getTodoIndexer(file.getFileType(), file);
+      final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = IdTableBuilding.getTodoIndexer(inputData.getFileType(), file);
       if (indexer != null) {
         return indexer.map(inputData);
       }
