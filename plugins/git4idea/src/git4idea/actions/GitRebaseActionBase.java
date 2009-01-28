@@ -1,12 +1,14 @@
 package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitRabaseLineListener;
 import git4idea.rebase.GitRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorMain;
 import git4idea.rebase.GitRebaseEditorService;
@@ -35,6 +37,8 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     final VirtualFile root = h.workingDirectoryFile();
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
     GitRebaseEditorHandler editor = service.getHandler(project, root);
+    GitRabaseLineListener resultListener = new GitRabaseLineListener();
+    h.addLineListener(resultListener);
     configureEditor(editor);
     affectedRoots.add(root);
     try {
@@ -44,9 +48,40 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     }
     finally {
       editor.close();
+      final GitRabaseLineListener.Result result = resultListener.getResult();
+      String messageId;
+      boolean isError = true;
+      switch(result.status) {
+        case CONFLICT:
+          messageId = "rebase.result.conflict";
+          break;
+        case ERROR:
+          messageId = "rebase.result.error";
+          break;
+        case CANCELLED:
+          isError = false;
+          messageId = "rebase.result.cancelled";
+          // we do not need to show a message if editing was cancelled.
+          exceptions.clear();
+          break;
+        case EDIT:
+          isError = false;
+          messageId = "rebase.result.amend";
+          break;
+        case FINISHED:
+        default:
+          messageId = null;
+      }
+      if(messageId != null) {
+        String message = GitBundle.message(messageId, result.current, result.total);
+        String title = GitBundle.message(messageId+".title");
+        if(isError) {
+          Messages.showErrorDialog(project, message, title);
+        } else {
+          Messages.showInfoMessage(project, message, title);
+        }
+      }
     }
-
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   /**
