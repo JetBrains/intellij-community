@@ -2,23 +2,25 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression, Constants {
+public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl");
 
   public PsiBinaryExpressionImpl() {
-    super(BINARY_EXPRESSION);
+    super(JavaElementType.BINARY_EXPRESSION);
   }
 
   @NotNull
@@ -40,12 +42,22 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     return getOperationSign().getTokenType();
   }
 
-  public PsiType getType() {
-    PsiExpression lOperand = getLOperand();
-    PsiExpression rOperand = getROperand();
-    if (rOperand == null) return null;
+  private static final Key<ParameterizedCachedValue<PsiType, PsiBinaryExpressionImpl>> TYPE_KEY = Key.create("TYPE_KEY");
+  private static final ParameterizedCachedValueProvider<PsiType,PsiBinaryExpressionImpl> TYPE_PROVIDER = new ParameterizedCachedValueProvider<PsiType, PsiBinaryExpressionImpl>() {
+    public CachedValueProvider.Result<PsiType> compute(PsiBinaryExpressionImpl param) {
+      PsiExpression lOperand = param.getLOperand();
+      PsiExpression rOperand = param.getROperand();
+      if (rOperand == null) return null;
 
-    return getType(lOperand.getType(), rOperand.getType(), SourceTreeToPsiMap.psiElementToTree(getOperationSign()).getElementType());
+      PsiType rType = rOperand.getType();
+      PsiType lType = lOperand.getType();
+      PsiType result = getType(lType, rType, SourceTreeToPsiMap.psiElementToTree(param.getOperationSign()).getElementType());
+
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+    }
+  };
+  public PsiType getType() {
+    return getManager().getCachedValuesManager().getParameterizedCachedValue(this, TYPE_KEY, TYPE_PROVIDER, false, this);
   }
 
   public ASTNode findChildByRole(int role) {
@@ -58,7 +70,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
         return getFirstChildNode();
 
       case ChildRole.ROPERAND:
-        return EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+        return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
 
       case ChildRole.OPERATION_SIGN:
         return TreeUtil.findChild(this, OUR_OPERATIONS_BIT_SET);
@@ -67,21 +79,22 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
+    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       if (child == getFirstChildNode()) return ChildRole.LOPERAND;
       if (child == getLastChildNode()) return ChildRole.ROPERAND;
       return ChildRoleBase.NONE;
     }
-    else if (OUR_OPERATIONS_BIT_SET.contains(child.getElementType())) {
+    if (OUR_OPERATIONS_BIT_SET.contains(child.getElementType())) {
       return ChildRole.OPERATION_SIGN;
     }
-    else {
-      return ChildRoleBase.NONE;
-    }
+    return ChildRoleBase.NONE;
   }
 
   private static final TokenSet OUR_OPERATIONS_BIT_SET =
-    TokenSet.create(OROR, ANDAND, OR, XOR, AND, EQEQ, NE, LT, GT, LE, GE, LTLT, GTGT, GTGTGT, PLUS, MINUS, ASTERISK, DIV, PERC);
+    TokenSet.create(JavaTokenType.OROR, JavaTokenType.ANDAND, JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.EQEQ,
+                    JavaTokenType.NE, JavaTokenType.LT, JavaTokenType.GT, JavaTokenType.LE, JavaTokenType.GE, JavaTokenType.LTLT,
+                    JavaTokenType.GTGT, JavaTokenType.GTGTGT, JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV,
+                    JavaTokenType.PERC);
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
@@ -98,7 +111,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
 
   @Nullable
   public static PsiType getType(PsiType lType, PsiType rType, IElementType sign) {
-    if (sign == PLUS) {
+    if (sign == JavaTokenType.PLUS) {
       // evaluate right argument first, since '+-/*%' is left associative and left operand tends to be bigger
       if (rType == null) return null;
       if (rType.equalsToText("java.lang.String")) {
@@ -110,20 +123,27 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
       }
       return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
     }
-    if (sign == MINUS || sign == ASTERISK || sign == DIV || sign == PERC) {
+    if (sign == JavaTokenType.MINUS || sign == JavaTokenType.ASTERISK || sign == JavaTokenType.DIV || sign == JavaTokenType.PERC) {
       if (lType == null && rType == null) return null;
       return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
     }
-    if (sign == LTLT || sign == GTGT || sign == GTGTGT) {
+    if (sign == JavaTokenType.LTLT || sign == JavaTokenType.GTGT || sign == JavaTokenType.GTGTGT) {
       if (lType == PsiType.BYTE || lType == PsiType.CHAR || lType == PsiType.SHORT) {
         return PsiType.INT;
       }
       return lType;
     }
-    if (sign == EQEQ || sign == NE || sign == LT || sign == GT || sign == LE || sign == GE || sign == OROR || sign == ANDAND) {
+    if (sign == JavaTokenType.EQEQ ||
+        sign == JavaTokenType.NE ||
+        sign == JavaTokenType.LT ||
+        sign == JavaTokenType.GT ||
+        sign == JavaTokenType.LE ||
+        sign == JavaTokenType.GE ||
+        sign == JavaTokenType.OROR ||
+        sign == JavaTokenType.ANDAND) {
       return PsiType.BOOLEAN;
     }
-    if (sign == OR || sign == XOR || sign == AND) {
+    if (sign == JavaTokenType.OR || sign == JavaTokenType.XOR || sign == JavaTokenType.AND) {
       if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
       if (rType instanceof PsiClassType) rType = PsiPrimitiveType.getUnboxedType(rType);
 
