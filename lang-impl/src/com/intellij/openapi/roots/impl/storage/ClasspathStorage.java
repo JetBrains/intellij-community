@@ -286,8 +286,8 @@ public class ClasspathStorage implements StateStorage {
     }
     else {
       module.setOption(CLASSPATH_OPTION, storageID);
-
-      final String relPath = FileUtil.getRelativePath(new File(getModuleDir(module)), new File(getStorageRoot(module, null)));
+      final String storageRoot = getStorageRoot(module, null);
+      final String relPath = storageRoot != null ? FileUtil.getRelativePath(new File(getModuleDir(module)), new File(storageRoot)) : null;
       if (relPath != null && !relPath.equals(".")) {
         module.setOption(CLASSPATH_DIR_OPTION, relPath);
       }
