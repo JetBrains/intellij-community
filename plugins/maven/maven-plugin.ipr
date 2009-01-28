@@ -445,8 +445,5 @@
       <setting name="state" value="2" />
     </Base>
   </component>
-  <UsedPathMacros>
-    <macro name="IDEA_HOME" />
-  </UsedPathMacros>
 </project>
 
