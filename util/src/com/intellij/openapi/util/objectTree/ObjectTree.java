@@ -24,14 +24,16 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
-  private final Set<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
-  private final Map<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY);
+  private final THashSet<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
+  private final THashMap<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY);
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
   private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
@@ -100,18 +102,24 @@ public final class ObjectTree<T> {
   }
 
   public final boolean executeAll(@NotNull T object, boolean disposeTree, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
-    ObjectNode<T> node = getNode(object);
-    if (node == null) {
-      if (processUnregistered) {
-        executeUnregistered(object, action);
-        return true;
+    try {
+      ObjectNode<T> node = getNode(object);
+      if (node == null) {
+        if (processUnregistered) {
+          executeUnregistered(object, action);
+          return true;
+        }
+        else {
+          return false;
+        }
       }
       else {
-        return false;
+        return node.execute(disposeTree, action);
       }
     }
-    else {
-      return node.execute(disposeTree, action);
+    finally {
+      myObject2NodeMap.compact();
+      myRootObjects.compact();
     }
   }
 
