@@ -52,7 +52,7 @@ public class GroovycRunner {
   public static final String MESSAGES_START = "%%m";
 
   public static final String MESSAGES_END = "/%m";
-  public static final String SEPARATOR = "%$%";
+  public static final String SEPARATOR = "#";
 
   private GroovycRunner() {
   }

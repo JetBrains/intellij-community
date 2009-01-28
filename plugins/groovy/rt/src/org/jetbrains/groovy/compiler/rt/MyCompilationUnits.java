@@ -14,19 +14,19 @@ package org.jetbrains.groovy.compiler.rt;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.codehaus.groovy.control.*;
-import org.codehaus.groovy.control.messages.*;
-import org.codehaus.groovy.ast.ClassNode;
-import org.codehaus.groovy.ast.ASTNode;
-import org.codehaus.groovy.syntax.SyntaxException;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.io.File;
-import java.io.IOException;
 
 import groovy.lang.GroovyRuntimeException;
+import org.codehaus.groovy.ast.ASTNode;
+import org.codehaus.groovy.control.*;
+import org.codehaus.groovy.control.messages.*;
+import org.codehaus.groovy.syntax.SyntaxException;
+import org.codehaus.groovy.tools.GroovyClass;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class MyCompilationUnits {
@@ -86,14 +86,12 @@ public class MyCompilationUnits {
       SourceUnit sourceUnit = (SourceUnit) iterator.next();
       String fileName = sourceUnit.getName();
       System.out.println("source: " + fileName);
-      List listOfClasses = sourceUnit.getAST().getClasses();
+      final List listOfClasses = compilationUnit.getClasses();
       System.out.println(listOfClasses);
 
-      for (int i = 0; i < listOfClasses.size(); i++) {
-        Object className = listOfClasses.get(i);
-        ClassNode classNode = (ClassNode) className;
-
-        String pathToClass = classNode.getName().replace('.', File.separatorChar);
+      for (final Object elem : listOfClasses) {
+        final String name = ((GroovyClass)elem).getName();
+        String pathToClass = name.replace('.', File.separatorChar);
 
         String outputPathClass = outputPath + File.separator + pathToClass + ".class";
         outputPathClass = outputPathClass.replace(File.separatorChar, '/');
