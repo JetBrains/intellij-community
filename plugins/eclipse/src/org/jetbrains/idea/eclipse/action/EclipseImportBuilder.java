@@ -95,6 +95,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   }
 
   public boolean isMarked(final String element) {
+    if (getParameters().projectsToConvert != null) {
+      return getParameters().projectsToConvert.contains(element);
+    }
     return !getParameters().existingModuleNames.contains(EclipseProjectFinder.findProjectName(element));
   }
 

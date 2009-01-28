@@ -64,6 +64,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     getParameters().converterOptions.commonModulesDirectory = projectFilesDir;
     getParameters().converterOptions.testPattern = wildcardToRegexp(myTestSourcesMask.getText());
     getParameters().linkConverted = myLinkCheckBox.isSelected();
+    getParameters().projectsToConvert = null;
   }
 
   public void updateStep() {
