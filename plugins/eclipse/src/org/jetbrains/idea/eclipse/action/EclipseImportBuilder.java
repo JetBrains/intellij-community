@@ -159,6 +159,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     Options.saveProjectStorageDir(project, getParameters().converterOptions.commonModulesDirectory);
     final Collection<String> unknownLibraries = new TreeSet<String>();
     final Collection<String> unknownJdks = new TreeSet<String>();
+    final Set<String> refsToModules = new HashSet<String>();
     final List<Module> result = new ArrayList<Module>();
 
     try {
@@ -176,7 +177,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         rootModels[idx++] = rootModel;
 
-        new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, getParameters().converterOptions.testPattern, classpathElement);
+        new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
+                                                                getParameters().converterOptions.testPattern, classpathElement);
         ClasspathStorage.setStorageType(module,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
       }
@@ -211,6 +213,18 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         message.append("\n").append(unknownJdk);
       }
     }
+
+
+    refsToModules.removeAll(getParameters().existingModuleNames);
+    refsToModules.removeAll(getParameters().projectsToConvert);
+    if (!refsToModules.isEmpty()) {
+      if (message.length() > 0) message.append("\n");
+      message.append("Unknown modules detected");
+      for (String module : refsToModules) {
+        message.append("\n").append(module);
+      }
+    }
+
     if (message.length() > 0) {
       Messages.showErrorDialog(project, message.toString(), getTitle());
     }

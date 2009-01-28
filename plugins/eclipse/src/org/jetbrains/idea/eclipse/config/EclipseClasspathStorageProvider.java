@@ -195,7 +195,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
           final VirtualFile vFile = documentSet.getVFile(EclipseXml.CLASSPATH_FILE);
           final EclipseClasspathReader classpathReader = new EclipseClasspathReader(vFile.getParent().getPath(), module.getProject());
-          classpathReader.readClasspath(model, new ArrayList<String>(), usedVariables, usedVariables, null,
+          classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
                                         documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
 
           final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
