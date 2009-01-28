@@ -155,4 +155,12 @@ public class GitResetDialog extends DialogWrapper {
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "gitResetHead";
+  }
 }
