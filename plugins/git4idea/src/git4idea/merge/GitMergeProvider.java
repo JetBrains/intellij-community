@@ -36,6 +36,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,13 +91,20 @@ public class GitMergeProvider implements MergeProvider2 {
     VcsRunnable runnable = new VcsRunnable() {
       @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
-        GitContentRevision original = new GitContentRevision(path, new GitRevisionNumber(":" + ORIGINAL_REVNUM), myProject, file.getCharset());
+        GitContentRevision original =
+          new GitContentRevision(path, new GitRevisionNumber(":" + ORIGINAL_REVNUM), myProject, file.getCharset());
         GitContentRevision current = new GitContentRevision(path, new GitRevisionNumber(":" + YOURS_REVNUM), myProject, file.getCharset());
         GitContentRevision last = new GitContentRevision(path, new GitRevisionNumber(":" + THEIRS_REVNUM), myProject, file.getCharset());
-        mergeData.ORIGINAL = original.getContent().getBytes();
-        mergeData.CURRENT = current.getContent().getBytes();
-        mergeData.LAST = last.getContent().getBytes();
-        mergeData.LAST_REVISION_NUMBER = new GitRevisionNumber(THEIRS_REVISION);
+        final String encoding = file.getCharset().name();
+        try {
+          mergeData.ORIGINAL = original.getContent().getBytes(encoding);
+          mergeData.CURRENT = current.getContent().getBytes(encoding);
+          mergeData.LAST = last.getContent().getBytes(encoding);
+          mergeData.LAST_REVISION_NUMBER = new GitRevisionNumber(THEIRS_REVISION);
+        }
+        catch (UnsupportedEncodingException ex) {
+          throw new IllegalStateException("Unexpected encoding failure file ecoding does not exists: "+encoding, ex);
+        }
       }
     };
     VcsUtil.runVcsProcessWithProgress(runnable, GitBundle.message("merge.load.files"), false, myProject);
@@ -162,9 +170,13 @@ public class GitMergeProvider implements MergeProvider2 {
      * The conflict status
      */
     enum Status {
-      /** the file was modified on the branch */
+      /**
+       * the file was modified on the branch
+       */
       MODIFIED,
-      /** the file was deleted on the branch */
+      /**
+       * the file was deleted on the branch
+       */
       DELETED, }
   }
 
