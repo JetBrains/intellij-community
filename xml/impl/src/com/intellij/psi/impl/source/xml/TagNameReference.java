@@ -112,10 +112,15 @@ public class TagNameReference implements PsiReference {
           newElementName = newElementName.substring(0, index);
         }
       }
-      newElementName = (namespacePrefix.length() > 0 ? namespacePrefix + ":":namespacePrefix) + newElementName;
+      newElementName = prependNamespacePrefix(newElementName, namespacePrefix);
     }
     element.setName(newElementName);
     return element;
+  }
+
+  private static String prependNamespacePrefix(String newElementName, String namespacePrefix) {
+    newElementName = (namespacePrefix.length() > 0 ? namespacePrefix + ":":namespacePrefix) + newElementName;
+    return newElementName;
   }
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
@@ -126,9 +131,19 @@ public class TagNameReference implements PsiReference {
       metaData = owner.getMetaData();
 
       if (metaData instanceof XmlElementDescriptor){
-        getTagElement().setName(metaData.getName(getElement()));
+        return getTagElement().setName(metaData.getName(getElement())); // TODO: need to evaluate new ns prefix
       }
-    } 
+    } else if (element instanceof PsiFile) {
+      final XmlTag tagElement = getTagElement();
+      if (tagElement == null || !myStartTagFlag) return tagElement;
+      String newElementName = ((PsiFile)element).getName();
+      final int index = newElementName.lastIndexOf('.');
+
+      // TODO: need to evaluate new ns prefix
+      newElementName = prependNamespacePrefix(newElementName.substring(0, index), tagElement.getNamespacePrefix());
+
+      return getTagElement().setName(newElementName);
+    }
 
     throw new IncorrectOperationException("Cant bind to not a xml element definition!"+element+","+metaData);
   }
