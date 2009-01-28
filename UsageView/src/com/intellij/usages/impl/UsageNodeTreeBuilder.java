@@ -20,6 +20,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -52,8 +53,10 @@ class UsageNodeTreeBuilder {
     return true;
   }
 
-  synchronized UsageNode appendUsage(Usage usage) {
+  @Nullable
+  UsageNode appendUsage(Usage usage) {
     if (!isVisible(usage)) return null;
+
     GroupNode lastGroupNode = myRoot;
     for (int i = 0; i < myGroupingRules.length; i++) {
       final UsageGroupingRule rule = myGroupingRules[i];
@@ -62,6 +65,7 @@ class UsageNodeTreeBuilder {
         lastGroupNode = lastGroupNode.addGroup(group, i);
       }
     }
+
     return lastGroupNode.addUsage(usage);
   }
 }

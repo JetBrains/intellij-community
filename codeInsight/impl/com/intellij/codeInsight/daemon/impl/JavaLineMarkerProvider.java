@@ -39,6 +39,14 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
   private static final Icon IMPLEMENTED_INTERFACE_MARKER_RENDERER = IMPLEMENTED_METHOD_MARKER_RENDERER;
   private static final Icon SUBCLASSED_CLASS_MARKER_RENDERER = OVERRIDEN_METHOD_MARKER_RENDERER;
 
+  private final DaemonCodeAnalyzerSettings myDaemonSettings;
+  private final EditorColorsManager myColorsManager;
+
+  public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
+    myDaemonSettings = daemonSettings;
+    myColorsManager = colorsManager;
+  }
+
   @Nullable
   public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
@@ -55,7 +63,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       }
     }
 
-    if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
+    if (myDaemonSettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
       PsiElement element1 = element;
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
@@ -77,7 +85,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
 
         if (drawSeparator) {
           LineMarkerInfo info = new LineMarkerInfo(element, element.getTextRange().getStartOffset(), null, Pass.UPDATE_ALL, NullableFunction.NULL, null);
-          EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+          EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
           return info;

@@ -18,9 +18,9 @@ package com.intellij.openapi.util.text;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
@@ -1370,8 +1370,8 @@ public class StringUtil {
     }
     else if (v2 == null) return 1;
 
-    String[] part1 = v1.split("\\.");
-    String[] part2 = v2.split("\\.");
+    String[] part1 = v1.split("[\\.\\_\\-]");
+    String[] part2 = v2.split("[\\.\\_\\-]");
 
     int idx = 0;
     for (; idx < part1.length && idx < part2.length; idx++) {

@@ -19,6 +19,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import gnu.trove.THashMap;
 
 import java.util.Collection;
@@ -27,14 +30,16 @@ import java.util.Set;
 
 public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> {
   private static final int NUM_LOCKS = 256;
-  private static final Object[] ourLocks = new Object[NUM_LOCKS];
+  private static final JBReentrantReadWriteLock[] ourLocks = new JBReentrantReadWriteLock[NUM_LOCKS];
   private static int ourLockAllocationCounter = 0;
 
-  private final Object mutex = allocateLock();
+  private final JBReentrantReadWriteLock mutex = allocateLock();
+  private final JBLock r = mutex.readLock();
+  private final JBLock w = mutex.writeLock();
 
   static {
     for (int i = 0; i < ourLocks.length; i++) {
-      ourLocks[i] = new Object();
+      ourLocks[i] = LockFactory.createReadWriteLock();
     }
   }
 
@@ -49,86 +54,138 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> {
     super(initialCapacity, loadFactor);
   }
 
-  private static Object allocateLock() {
+  private static JBReentrantReadWriteLock allocateLock() {
     ourLockAllocationCounter = (ourLockAllocationCounter + 1) % NUM_LOCKS;
     return ourLocks[ourLockAllocationCounter];
   }
 
   public int size() {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return super.size();
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public boolean isEmpty() {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return super.isEmpty();
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public boolean containsKey(Object key) {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return super.containsKey(key);
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public boolean containsValue(Object value) {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return super.containsValue(value);
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public V get(Object key) {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return super.get(key);
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public V put(K key, V value) {
-    synchronized (mutex) {
+    w.lock();
+    try {
       return super.put(key, value);
+    }
+    finally {
+      w.unlock();
     }
   }
 
   public V remove(Object key) {
-    synchronized (mutex) {
+    w.lock();
+    try {
       return super.remove(key);
+    }
+    finally {
+      w.unlock();
     }
   }
 
   public void putAll(Map<? extends K, ? extends V> map) {
-    synchronized (mutex) {
+    w.lock();
+    try {
       super.putAll(map);
+    }
+    finally {
+      w.unlock();
     }
   }
 
   public void clear() {
-    synchronized (mutex) {
+    w.lock();
+    try {
       super.clear();
+    }
+    finally {
+      w.unlock();
     }
   }
 
   public LockPoolSynchronizedMap<K, V> clone() {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return (LockPoolSynchronizedMap<K,V>)super.clone();
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public Set<K> keySet() {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return super.keySet();
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public Set<Map.Entry<K, V>> entrySet() {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return super.entrySet();
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public Collection<V> values() {
-    synchronized (mutex) {
+    r.lock();
+    try {
       return super.values();
+    }
+    finally {
+      r.unlock();
     }
   }
 }

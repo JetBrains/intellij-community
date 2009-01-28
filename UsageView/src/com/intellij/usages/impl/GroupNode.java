@@ -36,6 +36,7 @@ import java.util.*;
  */
 public class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   private static final NodeComparator COMPARATOR = new NodeComparator();
+  private final Object lock = new Object();
   private final UsageGroup myGroup;
   private final int myRuleIndex;
   private final Map<UsageGroup, GroupNode> mySubgroupNodes = new THashMap<UsageGroup, GroupNode>();
@@ -60,20 +61,22 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   public GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex) {
-    GroupNode node = mySubgroupNodes.get(group);
-    if (node == null) {
-      final GroupNode node1 = node = new GroupNode(group, ruleIndex, getBuilder());
-      mySubgroupNodes.put(group, node);
+    synchronized (lock) {
+      GroupNode node = mySubgroupNodes.get(group);
+      if (node == null) {
+        final GroupNode node1 = node = new GroupNode(group, ruleIndex, getBuilder());
+        mySubgroupNodes.put(group, node);
 
-      if (!getBuilder().isDetachedMode()) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            myTreeModel.insertNodeInto(node1, GroupNode.this, getNodeInsertionIndex(node1));
-          }
-        });
+        if (!getBuilder().isDetachedMode()) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              myTreeModel.insertNodeInto(node1, GroupNode.this, getNodeInsertionIndex(node1));
+            }
+          });
+        }
       }
+      return node;
     }
-    return node;
   }
 
   private UsageViewTreeModelBuilder getBuilder() {
@@ -81,11 +84,13 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   public void removeAllChildren() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    super.removeAllChildren();
-    mySubgroupNodes.clear();
-    myRecursiveUsageCount = 0;
-    myUsageNodes.clear();
+    synchronized (lock) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      super.removeAllChildren();
+      mySubgroupNodes.clear();
+      myRecursiveUsageCount = 0;
+      myUsageNodes.clear();
+    }
     myTreeModel.reload(this);
   }
 
@@ -134,12 +139,16 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   public UsageNode addUsage(Usage usage) {
-    UsageNode mergedWith = tryMerge(usage);
-    if (mergedWith != null) {
-      return mergedWith;
+    final UsageNode node;
+    synchronized (lock) {
+      UsageNode mergedWith = tryMerge(usage);
+      if (mergedWith != null) {
+        return mergedWith;
+      }
+      node = new UsageNode(usage, getBuilder());
+      myUsageNodes.add(node);
     }
-    final UsageNode node = new UsageNode(usage, getBuilder());
-    myUsageNodes.add(node);
+
     if (!getBuilder().isDetachedMode()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

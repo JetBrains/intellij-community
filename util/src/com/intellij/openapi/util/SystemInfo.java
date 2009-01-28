@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SystemInfo {
   private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
@@ -88,5 +90,9 @@ public class SystemInfo {
 
   private static boolean isLeopard() {
     return isMac && isTiger() && !OS_VERSION.startsWith("10.4");
+  }
+
+  public static boolean isJavaVersionAtLeast(String v) {
+    return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 }

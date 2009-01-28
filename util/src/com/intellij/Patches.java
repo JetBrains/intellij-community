@@ -97,7 +97,7 @@ public class Patches {
    * With this flag true, API is wrapped with alternative implementation via early days Doug Lea's API.
    * @see com.intellij.util.concurrency.LockFactory
    */
-  public static final boolean APPLE_BUG_ID_5359442 = SystemInfo.isMac;
+  public static final boolean APPLE_BUG_ID_5359442 = SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.5.0_16"));
 
   /**
    * Index out of bounds at apple.laf.AquaTabbedPaneUI.tabForCoordinate
