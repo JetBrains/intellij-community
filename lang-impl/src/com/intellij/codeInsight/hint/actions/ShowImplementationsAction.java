@@ -66,7 +66,10 @@ public class ShowImplementationsAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
+    performForContext(e.getDataContext());
+  }
+
+  public void performForContext(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
@@ -138,7 +141,7 @@ public class ShowImplementationsAction extends AnAction {
     showImplementations(impls, project, text, editor, file);
   }
 
-  private static void updateElementImplementations(final PsiElement element, final Editor editor, final Project project, final PsiFile file) {
+  protected void updateElementImplementations(final PsiElement element, final Editor editor, final Project project, final PsiFile file) {
     PsiElement[] impls = null;
     String text = "";
     if (element != null) {
@@ -151,7 +154,7 @@ public class ShowImplementationsAction extends AnAction {
     showImplementations(impls, project, text, editor, file);
   }
 
-  private static void showImplementations(final PsiElement[] impls, final Project project, final String text,
+  protected void showImplementations(final PsiElement[] impls, final Project project, final String text,
                                           final Editor editor,
                                           final PsiFile file) {
     if (impls == null || impls.length == 0) return;
