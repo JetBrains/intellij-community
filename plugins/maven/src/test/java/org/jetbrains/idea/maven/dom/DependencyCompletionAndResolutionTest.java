@@ -2,16 +2,26 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
-import com.intellij.openapi.fileChooser.TestFileChooserFactory;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileTextField;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.Dependency;
 import org.jetbrains.idea.maven.dom.model.MavenModel;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionWithIndicesTestCase {
   @Override
@@ -417,7 +427,6 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                     "  </dependency>" +
                     "</dependencies>");
 
-
     PsiReference ref = getReferenceAtCaret(m1);
     assertNotNull(ref);
     assertEquals(getPsiFile(m2), ref.resolve());
@@ -536,7 +545,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
     VirtualFile libFile = LocalFileSystem.getInstance().findFileByPath(libPath);
 
-    TestFileChooserFactory factory = new TestFileChooserFactory();
+    MyFileChooserFactory factory = new MyFileChooserFactory();
     factory.setFiles(new VirtualFile[]{libFile});
     ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setTestFileChooserFactory(factory);
 
@@ -965,5 +974,46 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "</dependencies>");
 
     checkHighlighting();
+  }
+
+  private static class MyFileChooserFactory extends FileChooserFactory {
+    private VirtualFile[] myFiles;
+
+    public void setFiles(VirtualFile[] files) {
+      myFiles = files;
+    }
+
+    public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project) {
+      return new MyFileChooserDialog(myFiles);
+    }
+
+    public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Component parent) {
+      return new MyFileChooserDialog(myFiles);
+    }
+
+    public FileTextField createFileTextField(FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
+      throw new UnsupportedOperationException();
+    }
+
+    public FileTextField createFileTextField(FileChooserDescriptor descriptor, Disposable parent) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void installFileCompletion(JTextField field, FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  private static class MyFileChooserDialog implements FileChooserDialog {
+    private VirtualFile[] myFiles;
+
+    public MyFileChooserDialog(VirtualFile[] files) {
+      myFiles = files;
+    }
+
+    @NotNull
+    public VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
+      return myFiles;
+    }
   }
 }
