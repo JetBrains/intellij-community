@@ -337,7 +337,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       if (extendsClassesTypes.length > 0) {
         text.append("extends ");
-        text.append(computeTypeText(extendsClassesTypes[0]));
+        text.append(computeTypeText(extendsClassesTypes[0], false));
         text.append(" ");
       }
       PsiClassType[] implementsTypes = typeDefinition.getImplementsListTypes();
@@ -347,7 +347,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         int i = 0;
         while (i < implementsTypes.length) {
           if (i > 0) text.append(", ");
-          text.append(computeTypeText(implementsTypes[i]));
+          text.append(computeTypeText(implementsTypes[i], false));
           text.append(" ");
           i++;
         }
@@ -435,7 +435,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           text.append(" extends ");
           for (int j = 0; j < extendsListTypes.length; j++) {
             if (j > 0) text.append(" & ");
-            text.append(computeTypeText(extendsListTypes[j]));
+            text.append(computeTypeText(extendsListTypes[j], false));
           }
         }
       }
@@ -473,7 +473,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
-      String typeText = getTypeText(substitutor.substitute(superParams[j].getType()));
+      String typeText = getTypeText(substitutor.substitute(superParams[j].getType()), false);
       text.append("(").append(typeText).append(")").append(getDefaultValueText(typeText));
     }
   }
@@ -548,7 +548,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
               text.append(" throws ");
               for (int i = 0; i < throwsTypes.length; i++) {
                 if (i > 0) text.append(", ");
-                text.append(getTypeText(substitutor.substitute(throwsTypes[i])));
+                text.append(getTypeText(substitutor.substitute(throwsTypes[i]), false));
               }
             }
           }
@@ -647,7 +647,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       if (retType == null) retType = TypesUtil.getJavaLangObject((GrMethod) method);
     } else retType = method.getReturnType();
 
-    text.append(getTypeText(retType));
+    text.append(getTypeText(retType, false));
     text.append(" ");
 
     //append method name
@@ -665,7 +665,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       if (i > 0) text.append(", ");  //append ','
 
-      text.append(getTypeText(parameter.getType()));
+      text.append(getTypeText(parameter.getType(), i == parameters.length - 1));
       text.append(" ");
       text.append(parameter.getName());
 
@@ -679,7 +679,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("{\n");
       text.append("    return ");
 
-      text.append(getDefaultValueText(getTypeText(retType)));
+      text.append(getDefaultValueText(getTypeText(retType, false)));
 
       text.append(";");
 
@@ -733,22 +733,22 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (typeElement == null) {
       return "java.lang.Object";
     } else {
-      return computeTypeText(typeElement.getType());
+      return computeTypeText(typeElement.getType(), false);
     }
   }
 
-  private String getTypeText(PsiType type) {
+  private String getTypeText(PsiType type, boolean allowVarargs) {
     if (type == null) {
       return "java.lang.Object";
     } else {
-      return computeTypeText(type);
+      return computeTypeText(type, allowVarargs);
     }
   }
 
-  private String computeTypeText(PsiType type) {
+  private static String computeTypeText(PsiType type, boolean allowVarargs) {
     if (type instanceof PsiArrayType) {
-      String componentText = computeTypeText(((PsiArrayType) type).getComponentType());
-      if (type instanceof PsiEllipsisType) return componentText + "...";
+      String componentText = computeTypeText(((PsiArrayType) type).getComponentType(), false);
+      if (allowVarargs && type instanceof PsiEllipsisType) return componentText + "...";
       return componentText + "[]";
     }
 
