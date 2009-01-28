@@ -17,4 +17,10 @@ public class CharUsedInArithmeticContext {
     boolean compare(char c1, char c2) {
         return c1 != c2;
     }
+
+    public static void checkDigit(int ch) {
+		if (ch < '0' || ch > '9') {
+			throw new RuntimeException("unexpected: " + ch);
+		}
+	}
 }

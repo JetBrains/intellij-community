@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +33,14 @@ import java.util.List;
 
 public class CharUsedInArithmeticContextInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "char.used.in.arithmetic.context.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -78,13 +81,14 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
 
     private static class CharUsedInArithmeticContentFix
             extends InspectionGadgetsFix {
-        
+
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "char.used.in.arithmetic.context.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -116,6 +120,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
                     "char.used.in.arithmetic.context.cast.quickfix", typeText);
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -130,6 +135,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     }
 
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CharUsedInArithmeticContextVisitor();
     }
@@ -145,8 +151,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
                 return;
             }
             final IElementType tokenType = expression.getOperationTokenType();
-            if (JavaTokenType.EQEQ.equals(tokenType) ||
-                    JavaTokenType.NE.equals(tokenType)) {
+            if (ComparisonUtils.isComparisonOperation(tokenType)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();

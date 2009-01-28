@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class ExpectedTypeUtils{
                 expectedType = null;
             } else if(isArithmeticOperation(tokenType)){
                 expectedType = type;
-            } else if(isComparisonOperation(tokenType)){
+            } else if(ComparisonUtils.isComparisonOperation(tokenType)){
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 final PsiType lhsType = lhs.getType();
                 if(ClassUtils.isPrimitive(lhsType)){
@@ -347,18 +347,21 @@ public class ExpectedTypeUtils{
                 @NotNull PsiReferenceExpression referenceExpression){
             //Dave, do we need this at all? -> I think we do -- Bas
             if(calculateTypeForComplexReferences){
-                final PsiManager manager = referenceExpression.getManager();
+                final Project project = referenceExpression.getProject();
                 final JavaResolveResult resolveResult =
                         referenceExpression.advancedResolve(false);
                 final PsiElement element = resolveResult.getElement();
                 PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+                final JavaPsiFacade psiFacade =
+                        JavaPsiFacade.getInstance(project);
                 if(element instanceof PsiField){
                     final PsiField field = (PsiField) element;
                     if (!isAccessibleFrom(field, referenceExpression)) {
                         return;
                     }
                     final PsiClass aClass = field.getContainingClass();
-                  final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+                    final PsiElementFactory factory =
+                            psiFacade.getElementFactory();
                     expectedType = factory.createType(aClass, substitutor);
                 } else if(element instanceof PsiMethod){
                     final PsiMethod method = (PsiMethod) element;
@@ -376,7 +379,8 @@ public class ExpectedTypeUtils{
                     } else{
                         aClass = method.getContainingClass();
                     }
-                  final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+                    final PsiElementFactory factory =
+                            psiFacade.getElementFactory();
                     expectedType = factory.createType(aClass, substitutor);
                 } else{
                     expectedType = null;
@@ -403,11 +407,11 @@ public class ExpectedTypeUtils{
             final PsiMethod[] allMethods = aClass.getAllMethods();
             PsiMethod topSuper = null;
             for(PsiMethod superMethod : allMethods){
-                final PsiClass superClass=superMethod.getContainingClass();
+                final PsiClass superClass = superMethod.getContainingClass();
                 if(!isAccessibleFrom(superMethod, element)){
                     continue;
                 }
-                if(superClass.equals(aClass)){
+                if(aClass.equals(superClass)){
                     continue;
                 }
                 PsiSubstitutor superClassSubstitutor = TypeConversionUtil
@@ -460,18 +464,13 @@ public class ExpectedTypeUtils{
             if(member.hasModifierProperty(PsiModifier.PRIVATE)){
                 return false;
             }
-            return ClassUtils.inSamePackage(containingClass, 
+            return ClassUtils.inSamePackage(containingClass,
                     referencingLocation);
         }
 
         private static boolean isArithmeticOperation(
                 @NotNull IElementType sign){
             return arithmeticOps.contains(sign);
-        }
-
-        private static boolean isComparisonOperation(
-                @NotNull IElementType sign){
-            return comparisonOps.contains(sign);
         }
 
         private static boolean isBooleanOperation(
@@ -561,11 +560,13 @@ public class ExpectedTypeUtils{
             private final StringBuilder typeString = new StringBuilder();
             private boolean modified = false;
 
+            @Override
             public Object visitType(PsiType type) {
                 typeString.append(type.getCanonicalText());
                 return super.visitType(type);
             }
 
+            @Override
             public Object visitWildcardType(PsiWildcardType wildcardType) {
                 if (wildcardType.isExtends()) {
                     final PsiType extendsBound = wildcardType.getExtendsBound();
@@ -583,6 +584,7 @@ public class ExpectedTypeUtils{
                 return super.visitWildcardType(wildcardType);
             }
 
+            @Override
             public Object visitClassType(PsiClassType classType) {
                 final PsiClassType rawType = classType.rawType();
                 typeString.append(rawType.getCanonicalText());

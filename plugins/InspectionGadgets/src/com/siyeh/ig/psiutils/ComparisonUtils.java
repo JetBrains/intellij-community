@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,10 @@ public class ComparisonUtils {
                 (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
+        return isComparisonOperation(tokenType);
+    }
+
+    public static boolean isComparisonOperation(IElementType tokenType) {
         return s_comparisonTokens.contains(tokenType);
     }
 
