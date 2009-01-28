@@ -16,7 +16,7 @@ import java.util.List;
 public class MavenFoldersConfigurator {
   private MavenProjectModel myMavenProject;
   private MavenImportingSettings myImportingSettings;
-  private RootModelAdapter myModel;
+  private MavenRootModelAdapter myModel;
 
   public static void updateProjectFolders(final Project project, final boolean updateTargetFoldersOnly) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
@@ -29,7 +29,7 @@ public class MavenFoldersConfigurator {
           MavenProjectModel project = manager.findProject(each);
           if (project == null) continue;
 
-          RootModelAdapter a = new RootModelAdapter(each, null);
+          MavenRootModelAdapter a = new MavenRootModelAdapter(each, null);
           new MavenFoldersConfigurator(project, settings, a).config(updateTargetFoldersOnly);
 
           ModifiableRootModel model = a.getRootModel();
@@ -49,7 +49,7 @@ public class MavenFoldersConfigurator {
     });
   }
 
-  public MavenFoldersConfigurator(MavenProjectModel mavenProject, MavenImportingSettings settings, RootModelAdapter model) {
+  public MavenFoldersConfigurator(MavenProjectModel mavenProject, MavenImportingSettings settings, MavenRootModelAdapter model) {
     myMavenProject = mavenProject;
     myImportingSettings = settings;
     myModel = model;

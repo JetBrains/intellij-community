@@ -92,7 +92,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     File sourceDir = new File(myProjectRoot.getPath(), "target/src");
     sourceDir.mkdirs();
 
-    RootModelAdapter adapter = new RootModelAdapter(getModule("project"), null);
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(getModule("project"), null);
     adapter.addSourceFolder(sourceDir.getPath(), false);
     adapter.getRootModel().commit();
 
@@ -116,7 +116,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    RootModelAdapter adapter = new RootModelAdapter(getModule("project"), null);
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(getModule("project"), null);
     adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                             new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
     adapter.getRootModel().commit();

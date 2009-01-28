@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +27,7 @@ import java.util.regex.Pattern;
 public class MavenProjectConfigurator {
   private Project myProject;
   private ModifiableModuleModel myModuleModel;
+  private ProjectLibrariesProvider myLibrariesProvider;
   private MavenProjectsTree myMavenTree;
   private Map<VirtualFile, Module> myFileToModuleMapping;
   private MavenImportingSettings myImportingSettings;
@@ -50,12 +52,15 @@ public class MavenProjectConfigurator {
     List<PostProjectConfigurationTask> postTasks = new ArrayList<PostProjectConfigurationTask>();
 
     myModuleModel = model != null ? model : ModuleManager.getInstance(myProject).getModifiableModel();
+    myLibrariesProvider = new ProjectLibrariesProvider(myProject);
+
     mapModulesToMavenProjects();
     deleteObsoleteModules();
     configModules(postTasks, modulesProvider);
     configModuleGroups();
     refreshResolvedArtifacts();
     configSettings();
+    removeUnusedProjectLibraries();
     if (model == null) commit();
 
     return postTasks;
@@ -245,8 +250,8 @@ public class MavenProjectConfigurator {
                                        mavenProject,
                                        myMavenProjectToModuleName,
                                        myImportingSettings,
-                                       modulesProvider
-    );
+                                       modulesProvider,
+                                       myLibrariesProvider);
   }
 
   private void removeExistingIml(String path) {
@@ -307,6 +312,20 @@ public class MavenProjectConfigurator {
                && (createTopLevelGroup || depth > 1);
       }
     });
+  }
+
+  private void removeUnusedProjectLibraries() {
+    List<Library> mavenLibraries = new ArrayList<Library>();
+    for (Library each : myLibrariesProvider.getAllLibraries()) {
+      if (MavenRootModelAdapter.isMavenLibrary(each)) mavenLibraries.add(each);
+    }
+    mavenLibraries.removeAll(myLibrariesProvider.getUsedLibraries());
+
+    for (Library each : mavenLibraries) {
+      if (!MavenRootModelAdapter.isChangedByUser(each)) {
+        myLibrariesProvider.removeLibrary(each);
+      }
+    }
   }
 
   private void commit() {

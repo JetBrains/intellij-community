@@ -14,7 +14,6 @@ import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class DependenciesImportingTest extends MavenImportingTestCase {
@@ -264,7 +263,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <version>1</version>" +
                   "  </dependency>" +
                   "</dependencies>");
-    
+
     assertModuleModuleDeps("project");
   }
 
@@ -1072,17 +1071,9 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
-    Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName("Maven: junit:junit:4.0");
-    Library.ModifiableModel model = lib.getModifiableModel();
-    for (String each : model.getUrls(OrderRootType.SOURCES)) {
-      model.removeRoot(each, OrderRootType.SOURCES);
-    }
-    for (String each : model.getUrls(JavadocOrderRootType.getInstance())) {
-      model.removeRoot(each, JavadocOrderRootType.getInstance());
-    }
-    model.addRoot("file://foo.sources", OrderRootType.SOURCES);
-    model.addRoot("file://foo.javadoc", JavadocOrderRootType.getInstance());
-    model.commit();
+    clearLibraryRoots("Maven: junit:junit:4.0", OrderRootType.SOURCES, JavadocOrderRootType.getInstance());
+    addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.SOURCES, "file://foo.sources");
+    addLibraryRoot("Maven: junit:junit:4.0", JavadocOrderRootType.getInstance(), "file://foo.javadoc");
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1095,6 +1086,151 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
                        "file://foo.sources",
                        "file://foo.javadoc");
+  }
+
+  public void testRemovingUnusedLibraries() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>group</groupId>" +
+                     "    <artifactId>lib1</artifactId>" +
+                     "    <version>1</version>" +
+                     "  </dependency>" +
+                     "  <dependency>" +
+                     "    <groupId>group</groupId>" +
+                     "    <artifactId>lib2</artifactId>" +
+                     "    <version>1</version>" +
+                     "  </dependency>" +
+                     "</dependencies>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+                         "<version>2</version>" +
+
+                         "<dependencies>" +
+                         "  <dependency>" +
+                         "    <groupId>group</groupId>" +
+                         "    <artifactId>lib2</artifactId>" +
+                         "    <version>1</version>" +
+                         "  </dependency>" +
+                         "  <dependency>" +
+                         "    <groupId>group</groupId>" +
+                         "    <artifactId>lib3</artifactId>" +
+                         "    <version>1</version>" +
+                         "  </dependency>" +
+                         "  <dependency>" +
+                         "    <groupId>group</groupId>" +
+                         "    <artifactId>lib4</artifactId>" +
+                         "    <version>1</version>" +
+                         "  </dependency>" +
+                         "</dependencies>");
+
+    importProject();
+    assertProjectLibraries("Maven: group:lib1:1",
+                           "Maven: group:lib2:1",
+                           "Maven: group:lib3:1",
+                           "Maven: group:lib4:1");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>group</groupId>" +
+                     "    <artifactId>lib2</artifactId>" +
+                     "    <version>1</version>" +
+                     "  </dependency>" +
+                     "</dependencies>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    updateModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+                         "<version>2</version>" +
+
+                         "<dependencies>" +
+                         "  <dependency>" +
+                         "    <groupId>group</groupId>" +
+                         "    <artifactId>lib3</artifactId>" +
+                         "    <version>1</version>" +
+                         "  </dependency>" +
+                         "</dependencies>");
+
+    importProject();
+    assertProjectLibraries("Maven: group:lib2:1",
+                           "Maven: group:lib3:1");
+  }
+
+  public void testDoNoRemoveUnusedLibraryIfItWasChanged() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib1</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib2</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib3</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: group:lib1:1",
+                           "Maven: group:lib2:1",
+                           "Maven: group:lib3:1");
+
+    addLibraryRoot("Maven: group:lib1:1", JavadocOrderRootType.getInstance(), "file://foo.bar");
+    clearLibraryRoots("Maven: group:lib2:1", JavadocOrderRootType.getInstance());
+    addLibraryRoot("Maven: group:lib2:1", JavadocOrderRootType.getInstance(), "file://foo.baz");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
+    importProject();
+
+    assertProjectLibraries("Maven: group:lib1:1",
+                           "Maven: group:lib2:1");
+  }
+
+  private void clearLibraryRoots(String libraryName, OrderRootType... types) {
+    Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+    Library.ModifiableModel model = lib.getModifiableModel();
+    for (OrderRootType eachType : types) {
+      for (String each : model.getUrls(eachType)) {
+        model.removeRoot(each, eachType);
+      }
+    }
+    model.commit();
+  }
+
+  private void addLibraryRoot(String libraryName, OrderRootType type, String path) {
+    Library lib = ProjectLibraryTable.getInstance(myProject).getLibraryByName(libraryName);
+    Library.ModifiableModel model = lib.getModifiableModel();
+    model.addRoot(path, type);
+    model.commit();
   }
 
   public void testEjbDependenciesInJarProject() throws Exception {
@@ -1119,13 +1255,5 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
     assertModuleLibDeps("project", "Maven: foo:foo:ejb:1", "Maven: foo:bar:ejb-client:client:1");
-  }
-
-  private void assertProjectLibraries(String... expectedNames) {
-    List<String> actualNames = new ArrayList<String>();
-    for (Library each : ProjectLibraryTable.getInstance(myProject).getLibraries()) {
-      actualNames.add(each.getName());
-    }
-    assertUnorderedElementsAreEqual(actualNames, expectedNames);
   }
 }

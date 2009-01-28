@@ -3,12 +3,8 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -22,11 +18,11 @@ import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 
-public class RootModelAdapter {
+public class MavenRootModelAdapter {
   private static final String MAVEN_LIB_PREFIX = "Maven: ";
   private final ModifiableRootModel myRootModel;
 
-  public RootModelAdapter(Module module, final ModulesProvider modulesProvider) {
+  public MavenRootModelAdapter(Module module, final ModulesProvider modulesProvider) {
     if (modulesProvider != null) {
       final ModuleRootModel rootModel = modulesProvider.getRootModel(module);
       if (rootModel instanceof ModifiableRootModel) {
@@ -65,8 +61,7 @@ public class RootModelAdapter {
     for (OrderEntry e : myRootModel.getOrderEntries()) {
       if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) continue;
       if (e instanceof LibraryOrderEntry) {
-        String name = ((LibraryOrderEntry)e).getLibraryName();
-        if (name == null || !name.startsWith(MAVEN_LIB_PREFIX)) continue;
+        if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
       }
       if (e instanceof ModuleOrderEntry) {
         Module m = ((ModuleOrderEntry)e).getModule();
@@ -202,40 +197,31 @@ public class RootModelAdapter {
     return ModuleManager.getInstance(myRootModel.getProject()).findModuleByName(moduleName);
   }
 
-  public void addLibraryDependency(MavenArtifact artifact, boolean isExportable, final LibraryTableModifiableModelProvider table) {
+  public void addLibraryDependency(MavenArtifact artifact, boolean isExportable, ProjectLibrariesProvider provider) {
     String libraryName = makeLibraryName(artifact);
 
-    LibrariesModifiableModel modifiableModel = null;
-    if (table != null) {
-      modifiableModel = (LibrariesModifiableModel)table.getModifiableModel();
-    }
-
-    Library library = modifiableModel != null
-                      ? modifiableModel.getLibraryByName(libraryName)
-                      : getLibraryTable().getLibraryByName(libraryName);
+    Library library = provider.getLibraryByName(libraryName);
     if (library == null) {
-      library = modifiableModel != null ? modifiableModel.createLibrary(libraryName) : getLibraryTable().createLibrary(libraryName);
-
-      Library.ModifiableModel libraryModel = modifiableModel != null
-                                             ? modifiableModel.getLibraryModifiableModel(library)
-                                             : library.getModifiableModel();
+      library = provider.createLibrary(libraryName);
+      Library.ModifiableModel libraryModel = provider.getModifiableModel(library);
 
       String artifactPath = artifact.getFile().getPath();
 
-      setUrl(libraryModel, getUrl(artifactPath, null), OrderRootType.CLASSES);
-      setUrl(libraryModel, getUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER), OrderRootType.SOURCES);
-      setUrl(libraryModel, getUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER), JavadocOrderRootType.getInstance());
+      setUrl(libraryModel, makeUrl(artifactPath, null), OrderRootType.CLASSES);
+      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.SOURCES_CLASSIFIER), OrderRootType.SOURCES);
+      setUrl(libraryModel, makeUrl(artifactPath, MavenConstants.JAVADOC_CLASSIFIER), JavadocOrderRootType.getInstance());
 
-      if (modifiableModel == null) libraryModel.commit();
+      provider.commit(libraryModel);
     }
 
+    provider.markLibraryAsUsed(library);
     myRootModel.addLibraryEntry(library).setExported(isExportable);
 
     removeOldLibraryDependency(artifact);
   }
 
   @Nullable
-  private String getUrl(String artifactPath, String classifier) {
+  private String makeUrl(String artifactPath, String classifier) {
     String path = artifactPath;
 
     if (classifier != null) {
@@ -250,6 +236,27 @@ public class RootModelAdapter {
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, normalizedPath) + JarFileSystem.JAR_SEPARATOR;
   }
 
+  public static boolean isChangedByUser(Library library) {
+    String[] classRoots = library.getUrls(OrderRootType.CLASSES);
+    if (classRoots.length != 1) return true;
+
+    String suffix = ".jar" + JarFileSystem.JAR_SEPARATOR;
+    String classes = classRoots[0];
+    if (!classes.endsWith(suffix)) return true;
+
+    String path = classes.substring(0, classes.length() - suffix.length());
+    String sourcesPath = path + "-" + MavenConstants.SOURCES_CLASSIFIER + suffix;
+    String javadocPath = path + "-" + MavenConstants.JAVADOC_CLASSIFIER + suffix;
+
+    for (String each : library.getUrls(OrderRootType.SOURCES)) {
+      if (!FileUtil.pathsEqual(each, sourcesPath)) return true;
+    }
+    for (String each : library.getUrls(JavadocOrderRootType.getInstance())) {
+      if (!FileUtil.pathsEqual(each, javadocPath)) return true;
+    }
+    return false;
+  }
+
   private void removeOldLibraryDependency(MavenArtifact artifact) {
     Library lib = findLibrary(artifact, false);
     if (lib == null) return;
@@ -257,10 +264,6 @@ public class RootModelAdapter {
     if (entry == null) return;
 
     myRootModel.removeOrderEntry(entry);
-  }
-
-  private LibraryTable getLibraryTable() {
-    return ProjectLibraryTable.getInstance(myRootModel.getProject());
   }
 
   private void setUrl(Library.ModifiableModel libraryModel, @Nullable String newUrl, OrderRootType type) {
@@ -288,6 +291,11 @@ public class RootModelAdapter {
 
   private String makeLibraryName(MavenArtifact artifact) {
     return MAVEN_LIB_PREFIX + artifact.getMavenId().toString();
+  }
+
+  public static boolean isMavenLibrary(Library library) {
+    String name = library.getName();
+    return name != null && name.startsWith(MAVEN_LIB_PREFIX);
   }
 
   public void setLanguageLevel(LanguageLevel level) {

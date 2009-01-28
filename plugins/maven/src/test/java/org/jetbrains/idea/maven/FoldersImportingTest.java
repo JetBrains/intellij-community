@@ -5,7 +5,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.project.RootModelAdapter;
+import org.jetbrains.idea.maven.project.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
@@ -65,7 +65,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    RootModelAdapter adapter = new RootModelAdapter(getModule("project"), null);
+    MavenRootModelAdapter adapter = new MavenRootModelAdapter(getModule("project"), null);
     adapter.addSourceFolder(dir1.getPath(), false);
     adapter.addExcludedFolder(dir2.getPath());
     adapter.getRootModel().commit();

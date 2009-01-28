@@ -8,6 +8,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -239,6 +241,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
 
     assertOrderedElementsAreEqual(actual, expectedDeps);
+  }
+
+  public void assertProjectLibraries(String... expectedNames) {
+    List<String> actualNames = new ArrayList<String>();
+    for (Library each : ProjectLibraryTable.getInstance(myProject).getLibraries()) {
+      String name = each.getName();
+      actualNames.add(name == null ? "<unnamed>" : name);
+    }
+    assertUnorderedElementsAreEqual(actualNames, expectedNames);
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {
