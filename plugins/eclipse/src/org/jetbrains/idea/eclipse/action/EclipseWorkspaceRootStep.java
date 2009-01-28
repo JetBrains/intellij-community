@@ -26,6 +26,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   private EclipseProjectWizardContext myContext;
   private EclipseImportBuilder.Parameters myParameters;
 
+
   public EclipseWorkspaceRootStep(final WizardContext context) {
     super(context);
     myWorkspaceRootComponent.addBrowseFolderListener(EclipseBundle.message("eclipse.import.title.select.workspace"), "", null,
@@ -39,7 +40,8 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
         final boolean dedicated = rbModulesDedicated.isSelected();
         myDirComponent.setEnabled(dedicated);
         if (dedicated && myDirComponent.getText().length() == 0) {
-          myDirComponent.setText(FileUtil.toSystemDependentName(myWorkspaceRootComponent.getText()));
+          final String remoteStorage = Options.getProjectStorageDir(context.getProject());
+          myDirComponent.setText(remoteStorage != null ? remoteStorage : FileUtil.toSystemDependentName(myWorkspaceRootComponent.getText()));
         }
       }
     };
@@ -72,11 +74,12 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     myWorkspaceRootComponent.setText(path.replace('/', File.separatorChar));
     myWorkspaceRootComponent.getTextField().selectAll();
 
-    final boolean colocated = StringUtil.isEmptyOrSpaces(getParameters().converterOptions.commonModulesDirectory);
+    final String storageDir = Options.getProjectStorageDir(getWizardContext().getProject());
+    final boolean colocated = StringUtil.isEmptyOrSpaces(getParameters().converterOptions.commonModulesDirectory) && StringUtil.isEmptyOrSpaces(storageDir);
     rbModulesColocated.setSelected(colocated);
     rbModulesDedicated.setSelected(!colocated);
     myDirComponent.setEnabled(!colocated);
-    myDirComponent.setText(getParameters().converterOptions.commonModulesDirectory);
+    myDirComponent.setText(StringUtil.isEmptyOrSpaces(getParameters().converterOptions.commonModulesDirectory) ? storageDir : getParameters().converterOptions.commonModulesDirectory);
 
     myTestSourcesMask.setText(regexpToWildcard(getParameters().converterOptions.testPattern));
 

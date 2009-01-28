@@ -20,6 +20,8 @@
  */
 package org.jetbrains.idea.eclipse.action;
 
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 public class Options {
@@ -30,4 +32,17 @@ public class Options {
   public boolean reuseOutputPaths = false;
 
   public static Options defValue = new Options();
+
+
+  public static final String ECLIPSE_REMOTE_PROJECT_STORAGE = "eclipse.remote.project.storage";
+  public static String getProjectStorageDir(Project project){
+    if (project == null) return null;
+    return PropertiesComponent.getInstance(project).getValue(ECLIPSE_REMOTE_PROJECT_STORAGE);
+  }
+
+  public static void saveProjectStorageDir(Project project, String dir) {
+    if (project != null) {
+      PropertiesComponent.getInstance(project).setValue(ECLIPSE_REMOTE_PROJECT_STORAGE, dir);
+    }
+  }
 }
