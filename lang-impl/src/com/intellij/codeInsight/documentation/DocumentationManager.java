@@ -318,17 +318,13 @@ public class DocumentationManager {
     return myPreviouslyFocused != null && myPreviouslyFocused.getParent() instanceof ChooseByNameBase.JPanelProvider;
   }
 
-  private DocumentationCollector getDefaultCollector(@NotNull final PsiElement _element, @Nullable final PsiElement originalElement) {
-    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(_element.getProject());
+  private DocumentationCollector getDefaultCollector(@NotNull final PsiElement element, @Nullable final PsiElement originalElement) {
     return new DocumentationCollector() {
-      private final SmartPsiElementPointer element = smartPointerManager.createSmartPsiElementPointer(_element);
-      private final SmartPsiElementPointer original = originalElement == null ? null : smartPointerManager.createSmartPsiElementPointer(originalElement);
 
       @Nullable
       public String getDocumentation() throws Exception {
-        PsiElement element1 = element.getElement();
-        final DocumentationProvider provider = getProviderFromElement(element1, original == null ? null : original.getElement());
-        if (provider != null && myParameterInfoController != null) {
+        final DocumentationProvider provider = getProviderFromElement(element, originalElement);
+        if (myParameterInfoController != null) {
           final Object[] objects = myParameterInfoController.getSelectedElements();
 
           if (objects.length > 0) {
@@ -357,13 +353,13 @@ public class DocumentationManager {
           }
         }
 
-        final SmartPsiElementPointer originalElement = element1 != null ? element1.getUserData(ORIGINAL_ELEMENT_KEY) : null;
-        return provider != null ? provider.generateDoc(element1, originalElement != null ? originalElement.getElement() : null) : null;
+        final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
+        return provider.generateDoc(element, originalElement != null ? originalElement.getElement() : null);
       }
 
       @Nullable
       public PsiElement getElement() {
-        return element.getElement();
+        return element.isValid() ? element : null;
       }
     };
   }
@@ -485,7 +481,14 @@ public class DocumentationManager {
   }
 
   @NotNull
-  private static DocumentationProvider getProviderFromElement(final PsiElement element, PsiElement originalElement) {
+  private static DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
+    if (element != null && !element.isValid()) {
+      element = null;
+    }
+    if (originalElement != null && !originalElement.isValid()) {
+      originalElement = null;
+    }
+
     if (originalElement == null) {
       originalElement = getOriginalElement(element);
     }
