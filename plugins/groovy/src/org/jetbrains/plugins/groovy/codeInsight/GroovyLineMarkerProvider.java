@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.groovy.codeInsight;
 
-import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.psi.PsiElement;
 
 import java.util.Collection;
@@ -12,6 +14,10 @@ import java.util.List;
  * Same logic as for Java LMP
  */
 public class GroovyLineMarkerProvider extends JavaLineMarkerProvider{
+  public GroovyLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
+    super(daemonSettings, colorsManager);
+  }
+
   @Override
   public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
     return super.getLineMarkerInfo(element);
