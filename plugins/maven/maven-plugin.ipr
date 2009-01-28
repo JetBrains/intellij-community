@@ -45,6 +45,7 @@
       <entry name="?*.html" />
       <entry name="?*.dtd" />
       <entry name="?*.tld" />
+      <entry name="?*.xsd" />
     </wildcardResourcePatterns>
   </component>
   <component name="CopyrightManager" default="">
@@ -364,7 +365,7 @@
     <option name="UNLOCK_ON_CHECKIN" value="false" />
   </component>
   <component name="SvnBranchConfigurationManager">
-    <option name="myVersion" value="123" />
+    <option name="myVersion" value="124" />
     <option name="mySupportsUserInfoFilter" value="true" />
   </component>
   <component name="SvnChangesBrowserSettings">
