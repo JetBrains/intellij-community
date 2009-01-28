@@ -2,11 +2,11 @@ package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,6 +50,11 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
+    final String incompatibleLibrary = hasIncompatibleLibrary(model);
+    if (incompatibleLibrary != null) {
+      throw new ConfigurationException(
+        "Library \'" + incompatibleLibrary + "\' is incompatible with eclipse format: has too many classes roots");
+    }
     if (!isCompatible(model)) {
       throw new ConfigurationException(EclipseBundle.message("eclipse.export.too.many.content.roots", model.getModule().getName()));
     }
@@ -65,6 +70,19 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
   public static boolean isCompatible(final ModuleRootModel model) {
     return model.getContentEntries().length == 1;
+  }
+
+  @Nullable
+  public static String hasIncompatibleLibrary(ModuleRootModel model) {
+    for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
+        final Library library = ((LibraryOrderEntry)entry).getLibrary();
+        if (library == null || entry.getUrls(OrderRootType.CLASSES).length != 1 || library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
+          return entry.getPresentableName();
+        }
+      }
+    }
+    return null;
   }
 
   static void registerFiles(final CachedFileSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {

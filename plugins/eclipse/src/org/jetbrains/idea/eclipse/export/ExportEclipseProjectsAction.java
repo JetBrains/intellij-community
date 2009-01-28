@@ -46,7 +46,8 @@ public class ExportEclipseProjectsAction extends AnAction {
     List<Module> modules = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!EclipseClasspathStorageProvider.ID.equals(ClasspathStorage.getStorageType(module)) &&
-          EclipseClasspathStorageProvider.isCompatible(ModuleRootManager.getInstance(module))) {
+          EclipseClasspathStorageProvider.isCompatible(ModuleRootManager.getInstance(module)) &&
+          EclipseClasspathStorageProvider.hasIncompatibleLibrary(ModuleRootManager.getInstance(module)) == null) {
         modules.add(module);
       }
     }
