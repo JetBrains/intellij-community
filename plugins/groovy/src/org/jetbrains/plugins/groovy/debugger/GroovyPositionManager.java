@@ -295,7 +295,7 @@ public class GroovyPositionManager implements PositionManager {
     String fileName = plainName;
     for (ScriptPositionManagerHelper helper : myRegistry.getScriptHelpers()) {
       if (helper.isAppropriateScriptFile(groovyFile)) {
-        fileName = helper.getRuntimeScriptName(plainName);
+        fileName = helper.getRuntimeScriptName(plainName, groovyFile);
         break;
       }
     }

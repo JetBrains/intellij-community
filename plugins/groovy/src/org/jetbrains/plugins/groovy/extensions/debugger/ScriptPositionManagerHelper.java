@@ -4,6 +4,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * Class to extend debugger functionality to handle various Groovy scripts
@@ -26,7 +27,7 @@ public interface ScriptPositionManagerHelper {
    * @return Runtime script name
    */
   @NotNull
-  String getRuntimeScriptName(@NotNull String originalName);
+  String getRuntimeScriptName(@NotNull String originalName, GroovyFile groovyFile);
 
 
   /**
