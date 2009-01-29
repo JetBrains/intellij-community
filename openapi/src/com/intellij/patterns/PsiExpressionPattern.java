@@ -4,9 +4,7 @@
 
 package com.intellij.patterns;
 
-import com.intellij.psi.JavaResolveResult;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,15 +24,13 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
     });
   }
 
-  public Self methodCall(final ElementPattern methodPattern) {
-    return with(new PatternCondition<T>("methodCall") {
-      public boolean accepts(@NotNull final T element, final ProcessingContext context) {
-        if (element instanceof PsiMethodCallExpression) {
-          final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(true);
-          for (JavaResolveResult result : results) {
-            if (methodPattern.getCondition().accepts(result.getElement(), context)) {
-              return true;
-            }
+  public PsiMethodCallPattern methodCall(final ElementPattern<? extends PsiMethod> method) {
+    return new PsiMethodCallPattern().and(this).with(new PatternCondition<PsiMethodCallExpression>("methodCall") {
+      public boolean accepts(@NotNull PsiMethodCallExpression callExpression, ProcessingContext context) {
+        final JavaResolveResult[] results = callExpression.getMethodExpression().multiResolve(true);
+        for (JavaResolveResult result : results) {
+          if (method.getCondition().accepts(result.getElement(), context)) {
+            return true;
           }
         }
         return false;
@@ -42,6 +38,18 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
     });
   }
 
+  public Self skipParentheses(final ElementPattern<? extends PsiExpression> expressionPattern) {
+    return with(new PatternCondition<T>("skipParentheses") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        PsiExpression expression = t;
+        while (expression instanceof PsiParenthesizedExpression) {
+          expression = ((PsiParenthesizedExpression)expression).getExpression();
+        }
+        return expressionPattern.accepts(expression, context);
+      }
+    });
+  }
 
   public static class Capture<T extends PsiExpression> extends PsiExpressionPattern<T, Capture<T>> {
     public Capture(final Class<T> aClass) {

@@ -4,6 +4,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ProcessingContext;
@@ -26,7 +27,7 @@ public class PsiTypePattern extends ObjectPattern<PsiType,PsiTypePattern> {
     });
   }
 
-  public PsiTypePattern classType(final ElementPattern pattern) {
+  public PsiTypePattern classType(final ElementPattern<? extends PsiClass> pattern) {
     return with(new PatternCondition<PsiType>("classType") {
       public boolean accepts(@NotNull final PsiType psiType, final ProcessingContext context) {
         return psiType instanceof PsiClassType &&

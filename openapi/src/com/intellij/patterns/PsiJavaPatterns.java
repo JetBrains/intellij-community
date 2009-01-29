@@ -35,9 +35,14 @@ public class PsiJavaPatterns extends StandardPatterns{
   }
 
   public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression() {
+    return literalExpression(null);
+  }
+
+  public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(final ElementPattern value) {
     return new PsiJavaElementPattern.Capture<PsiLiteralExpression>(new InitialPatternCondition<PsiLiteralExpression>(PsiLiteralExpression.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof PsiLiteralExpression;
+        return o instanceof PsiLiteralExpression
+               && (value == null || value.accepts(((PsiLiteralExpression)o).getValue(), context));
       }
     });
   }
@@ -66,12 +71,20 @@ public class PsiJavaPatterns extends StandardPatterns{
     return new PsiNameValuePairPattern();
   }
 
+  public static PsiTypePattern psiType() {
+    return new PsiTypePattern();
+  }
+
   public static PsiExpressionPattern.Capture<PsiExpression> psiExpression() {
     return new PsiExpressionPattern.Capture<PsiExpression>(PsiExpression.class);
   }
 
   public static PsiBinaryExpressionPattern psiBinaryExpression() {
     return new PsiBinaryExpressionPattern();
+  }
+
+  public static PsiTypeCastExpressionPattern psiTypeCastExpression() {
+    return new PsiTypeCastExpressionPattern();
   }
 
   public static PsiJavaElementPattern.Capture<PsiReferenceExpression> psiReferenceExpression() {
