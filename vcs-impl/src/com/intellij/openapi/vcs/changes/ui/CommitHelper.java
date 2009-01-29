@@ -327,7 +327,10 @@ public class CommitHelper {
     public Runnable postRefresh() {
       return new Runnable() {
         public void run() {
-          myAction.finish();
+          // to be completely sure
+          if (myAction != null) {
+            myAction.finish();
+          }
           if (!myProject.isDisposed()) {
             // after vcs refresh is completed, outdated notifiers should be removed if some exists...
             final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
