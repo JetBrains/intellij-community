@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -194,7 +195,11 @@ public class QuickfixUtil {
     settings.setName(referenceExpression.getName());
 
     if (isCall(referenceExpression)) {
-      final PsiType[] types = PsiUtil.getArgumentTypes(referenceExpression, false, false);
+      List<PsiType> unboxedTypes = new ArrayList<PsiType>();
+      for (PsiType type : PsiUtil.getArgumentTypes(referenceExpression, false, false)) {
+        unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWraperAndEraseGenerics(type));
+      }
+      final PsiType[] types = unboxedTypes.toArray(new PsiType[unboxedTypes.size()]);
       final String[] names = getMethodArgumentsNames(referenceExpression.getProject(), types);
       final List<MyPair> pairs = swapArgumentsAndTypes(names, types);
 
