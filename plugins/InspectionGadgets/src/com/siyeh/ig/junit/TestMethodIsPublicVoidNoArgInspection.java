@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "test.method.is.public.void.no.arg.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "TestMethodWithIncorrectSignature";
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
+        final boolean isStatic = ((Boolean)infos[1]).booleanValue();
+        if (isStatic) {
+            return InspectionGadgetsBundle.message(
+                    "test.method.is.public.void.no.arg.problem.descriptor3");
+        }
         final boolean takesArguments = ((Boolean)infos[0]).booleanValue();
         if (takesArguments) {
             return InspectionGadgetsBundle.message(
@@ -49,6 +57,7 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TestMethodIsPublicVoidNoArgVisitor();
     }
@@ -70,13 +79,16 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
             }
             final PsiParameterList parameterList = method.getParameterList();
             final boolean takesArguments;
+            final boolean isStatic;
             if (parameterList.getParametersCount() == 0) {
                 takesArguments = false;
-                if (returnType.equals(PsiType.VOID) &&
+                isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+                if (!isStatic && returnType.equals(PsiType.VOID) &&
                         method.hasModifierProperty(PsiModifier.PUBLIC)) {
                     return;
                 }
             } else {
+                isStatic = false;
                 takesArguments = true;
             }
             final PsiClass targetClass = method.getContainingClass();
@@ -87,7 +99,8 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
                     return;
                 }
             }
-            registerMethodError(method, Boolean.valueOf(takesArguments));
+            registerMethodError(method, Boolean.valueOf(takesArguments),
+                    Boolean.valueOf(isStatic));
         }
     }
 }
