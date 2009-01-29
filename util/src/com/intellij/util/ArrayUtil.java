@@ -360,6 +360,12 @@ public class ArrayUtil {
     }
     return newArray;
   }
+  
+  public static void reverse(char[] array) {
+    for (int i = 0; i < array.length; i++) {
+      swap(array, array.length - i - 1, i);
+    }
+  }
 
   public static int lexicographicCompare(@NotNull String[] obj1, @NotNull String[] obj2) {
     for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
@@ -393,6 +399,11 @@ public class ArrayUtil {
 
   public static void swap(int[] array, int i1, int i2) {
     final int t = array[i1];
+    array[i1] = array[i2];
+    array[i2] = t;
+  }
+  public static void swap(char[] array, int i1, int i2) {
+    final char t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }

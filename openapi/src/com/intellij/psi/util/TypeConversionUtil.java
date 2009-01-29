@@ -34,7 +34,7 @@ import java.util.Set;
 public class TypeConversionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.TypeConversionUtil");
 
-  private static final boolean[][] IS_ASSIGNABLE_BIT_SET = new boolean[][]{
+  private static final boolean[][] IS_ASSIGNABLE_BIT_SET = {
     {true, true, false, true, true, true, true}, // byte
     {false, true, false, true, true, true, true}, // short
     {false, false, true, true, true, true, true}, // char
@@ -89,8 +89,8 @@ public class TypeConversionUtil {
         return boxedType != null && areTypesConvertible(boxedType, toType);
       }
       if (!fromIsPrimitive) {
-        if (fromTypeRank == toTypeRank) return true;
-        return fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK && fromTypeRank < toTypeRank;
+        return fromTypeRank == toTypeRank ||
+               fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK && fromTypeRank < toTypeRank;
       }
       return fromTypeRank == toTypeRank ||
              fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK;
@@ -1130,7 +1130,7 @@ public class TypeConversionUtil {
     Object cast(Object operand);
   }
 
-  private static final Caster[][] caster = new Caster[][]{
+  private static final Caster[][] caster = {
     {
       new Caster() {
         public Object cast(Object operand) {
