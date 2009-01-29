@@ -21,6 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,8 +70,7 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
             //note: no call to super;
             @NonNls final String methodName = method.getName();
             if (!methodName.startsWith("test") &&
-                    !AnnotationUtil.isAnnotated(method,
-                            "org.junit.Test", true)) {
+                    !TestUtils.isJUnit4TestMethod(method)) {
                 return;
             }
             final PsiType returnType = method.getReturnType();

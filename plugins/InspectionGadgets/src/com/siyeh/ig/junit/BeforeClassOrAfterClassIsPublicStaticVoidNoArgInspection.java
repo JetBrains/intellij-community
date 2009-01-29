@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,37 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "BeforeOrAfterWithIncorrectSignature";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "before.class.or.after.class.is.public.static.void.no.arg.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "before.class.or.after.class.is.public.static.void.no.arg.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor();
     }
@@ -51,10 +55,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
 
         @Override public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
-            if (!AnnotationUtil.isAnnotated(method,
-                    "org.junit.BeforeClass", true) &&
-                    !AnnotationUtil.isAnnotated(method,
-                            "org.junit.AfterClass", true)) {
+            if (!TestUtils.isJUnit4BeforeClassOrAfterClassMethod(method)) {
                 return;
             }
             final PsiType returnType = method.getReturnType();

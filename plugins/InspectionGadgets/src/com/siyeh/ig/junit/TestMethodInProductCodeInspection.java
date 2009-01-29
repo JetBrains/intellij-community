@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,23 +25,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestMethodInProductCodeInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "test.method.in.product.code.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "JUnitTestMethodInProductSource";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "test.method.in.product.code.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new TestCaseInProductCodeVisitor();
     }
@@ -52,10 +55,8 @@ public class TestMethodInProductCodeInspection extends BaseInspection {
 
         @Override public void visitMethod(PsiMethod method) {
             final PsiClass containingClass = method.getContainingClass();
-            if (TestUtils.isTest(containingClass)) {
-                return;
-            }
-            if (!AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
+            if (TestUtils.isTest(containingClass) ||
+                    !TestUtils.isJUnit4TestMethod(method)) {
                 return;
             }
             registerMethodError(method);

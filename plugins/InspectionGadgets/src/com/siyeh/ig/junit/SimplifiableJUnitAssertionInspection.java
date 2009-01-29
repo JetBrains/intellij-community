@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -31,6 +30,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,9 +103,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiMethod containingMethod =
                     PsiTreeUtil.getParentOfType(callExpression, PsiMethod.class);
-            if (containingMethod != null &&
-                    AnnotationUtil.isAnnotated(containingMethod,
-                            "org.junit.Test", true)) {
+            if (TestUtils.isJUnit4TestMethod(containingMethod)) {
                 newExpression.append("org.junit.Assert.");
             }
             newExpression.append("fail(");
@@ -172,8 +170,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                     callExpression, PsiMethod.class);
-            if (containingMethod != null && AnnotationUtil.isAnnotated(
-                    containingMethod, "org.junit.Test", true)) {
+            if (TestUtils.isJUnit4TestMethod(containingMethod)) {
                 newExpression.append("org.junit.Assert.");
             }
             newExpression.append("assertEquals(");
@@ -236,8 +233,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                     callExpression, PsiMethod.class);
-            if (containingMethod != null && AnnotationUtil.isAnnotated(
-                    containingMethod, "org.junit.Test", true)) {
+            if (TestUtils.isJUnit4TestMethod(containingMethod)) {
                 newExpression.append("org.junit.Assert.");
             }
             final String methodName = methodExpression.getReferenceName();
@@ -298,8 +294,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                     callExpression, PsiMethod.class);
-            if (containingMethod != null && AnnotationUtil.isAnnotated(
-                    containingMethod, "org.junit.Test", true)) {
+            if (TestUtils.isJUnit4TestMethod(containingMethod)) {
                 newExpression.append("org.junit.Assert.");
             }
             final String methodName = methodExpression.getReferenceName();
@@ -368,8 +363,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                     callExpression, PsiMethod.class);
-            if (containingMethod != null && AnnotationUtil.isAnnotated(
-                    containingMethod, "org.junit.Test", true)) {
+            if (TestUtils.isJUnit4TestMethod(containingMethod)) {
                 newExpression.append("org.junit.Assert.");
             }
             newExpression.append("assert");

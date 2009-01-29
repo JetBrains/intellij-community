@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,22 +47,26 @@ public class MethodMayBeStaticInspection extends BaseInspection {
      */
     public boolean m_ignoreEmptyMethods = true;
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "method.may.be.static.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "method.may.be.static.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
         return new ChangeModifierFix(PsiModifier.STATIC);
     }
 
+    @Override
     public JComponent createOptionsPanel(){
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -73,6 +77,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
         return optionsPanel;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new MethodCanBeStaticVisitor();
     }
@@ -118,7 +123,8 @@ public class MethodMayBeStaticInspection extends BaseInspection {
                     !method.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
             }
-            if(TestUtils.isJUnitTestMethod(method)){
+            if(TestUtils.isJUnitTestMethod(method) ||
+                    TestUtils.isJUnit4BeforeOrAfterMethod(method)){
                 return;
             }
             final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =

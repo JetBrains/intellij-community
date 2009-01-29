@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,10 @@ public class TestUtils {
         super();
     }
 
-    public static boolean isTest(@NotNull PsiClass aClass) {
+    public static boolean isTest(@Nullable PsiClass aClass) {
+        if (aClass == null) {
+            return false;
+        }
         final PsiManager manager = aClass.getManager();
         final PsiFile file = aClass.getContainingFile();
         final VirtualFile virtualFile = file.getVirtualFile();
@@ -49,14 +52,26 @@ public class TestUtils {
     public static boolean isPartOfJUnitTestMethod(@NotNull PsiElement element) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(element,
                 PsiMethod.class);
+        return method != null && isJUnitTestMethod(method);
+    }
+
+    public static boolean isJUnit4BeforeOrAfterMethod(
+            @NotNull PsiMethod method) {
+        return AnnotationUtil.isAnnotated(method, "org.junit.Before", true) ||
+                AnnotationUtil.isAnnotated(method, "org.junit.After", true);
+    }
+
+    public static boolean isJUnit4BeforeClassOrAfterClassMethod(
+            @NotNull PsiMethod method) {
+        return AnnotationUtil.isAnnotated(method, "org.junit.BeforeClass", true) ||
+                AnnotationUtil.isAnnotated(method, "org.junit.AfterClass", true);
+    }
+
+    public static boolean isJUnitTestMethod(@Nullable PsiMethod method) {
         if (method == null) {
             return false;
         }
-        return isJUnitTestMethod(method);
-    }
-
-    public static boolean isJUnitTestMethod(@NotNull PsiMethod method) {
-        if(AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
+        if (isJUnit4TestMethod(method)) {
             return true;
         }
         final String methodName = method.getName();
@@ -81,6 +96,11 @@ public class TestUtils {
         }
         final PsiClass targetClass = method.getContainingClass();
         return isJUnitTestClass(targetClass);
+    }
+
+    public static boolean isJUnit4TestMethod(@Nullable PsiMethod method) {
+        return method != null &&
+                AnnotationUtil.isAnnotated(method, "org.junit.Test", true);
     }
 
     public static boolean isJUnitTestClass(@Nullable PsiClass targetClass){

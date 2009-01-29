@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -138,7 +137,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
         @Override
         public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
-            if (!AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
+            if (TestUtils.isJUnit4TestMethod(method)) {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
