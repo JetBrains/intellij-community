@@ -165,7 +165,7 @@ public class ShowImplementationsAction extends AnAction {
     }
 
     int index = 0;
-    if (file != null && impls.length > 1) {
+    if (editor != null && file != null && impls.length > 1) {
       final VirtualFile virtualFile = file.getVirtualFile();
       final PsiFile containingFile = impls[0].getContainingFile();
       if (virtualFile != null && containingFile != null && virtualFile.equals(containingFile.getVirtualFile())) {
