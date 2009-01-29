@@ -255,6 +255,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myListners.add(l);
   }
 
+  protected Dimension getPanelPrefferedSize() {
+    return new Dimension(800, 600);
+  }
+
   public JComponent createComponent() {
     reinintWholePanelIfNeeded();
 
@@ -263,7 +267,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     SwingUtilities.updateComponentTreeUI(myWholePanel);
     final JPanel panel = new JPanel(new BorderLayout()) {
       public Dimension getPreferredSize() {
-        return new Dimension(800, 600);
+        return getPanelPrefferedSize();
       }
     };
     panel.add(myWholePanel, BorderLayout.CENTER);
