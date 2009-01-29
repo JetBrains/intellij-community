@@ -67,7 +67,7 @@ public class GitUtil {
     return vfile;
   }
 
- /**
+  /**
    * Sort files by Git root
    *
    * @param virtualFiles files to sort
@@ -240,7 +240,9 @@ public class GitUtil {
                 throw new IllegalStateException("The file name encoding is unsuported: " + encoding);
               }
             }
-            throw new VcsException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
+            else {
+              throw new VcsException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
+            }
         }
       }
       else {
@@ -252,6 +254,7 @@ public class GitUtil {
 
   /**
    * Check if character is octal digit
+   *
    * @param ch a character to test
    * @return true if the octal digit, false otherwise
    */
