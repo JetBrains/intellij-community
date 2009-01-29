@@ -19,7 +19,7 @@ import org.intellij.lang.xpath.context.NamespaceContext;
 
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -28,7 +28,6 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,18 +106,13 @@ public class XsltNamespaceContext implements NamespaceContext {
     }
 
     public static IntentionAction[] getUnresolvedNamespaceFixesStatic(PsiReference reference, String localName) {
-        try {
-            final XmlElementFactory factory = XmlElementFactory.getInstance(reference.getElement().getProject());
-            final XmlTag tag = factory.createTagFromText("<" + reference.getCanonicalText() + ":" + localName + " />", StdLanguages.XML);
+        final XmlElementFactory factory = XmlElementFactory.getInstance(reference.getElement().getProject());
+        final XmlTag tag = factory.createTagFromText("<" + reference.getCanonicalText() + ":" + localName + " />", StdLanguages.XML);
 
-            final XmlFile xmlFile = PsiTreeUtil.getContextOfType(reference.getElement(), XmlFile.class, true);
-            return new IntentionAction[]{
-                    new MyCreateNSDeclarationAction(tag, reference.getCanonicalText(), xmlFile)
-            };
-        } catch (Throwable e) {
-            Logger.getInstance(XsltNamespaceContext.class.getName()).error("Can not instantiate CreateNSDeclarationIntentionAction", e);
-            return new IntentionAction[0];
-        }
+        final XmlFile xmlFile = PsiTreeUtil.getContextOfType(reference.getElement(), XmlFile.class, true);
+        return new IntentionAction[]{
+                new MyCreateNSDeclarationAction(tag, reference.getCanonicalText(), xmlFile)
+        };
     }
 
     static class MyCreateNSDeclarationAction extends CreateNSDeclarationIntentionFix {
