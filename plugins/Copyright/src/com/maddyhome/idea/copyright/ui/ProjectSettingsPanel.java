@@ -48,8 +48,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
@@ -116,7 +116,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         initPanel();
 
         myScopesLink.setVisible(!myProject.isDefault());
-        myScopesLink.setHyperlinkText("Select Scopes to add new scopes or modify existent ones");
+        myScopesLink.setHyperlinkText("Select Scopes to add new scopes or modify existing ones");
         myScopesLink.addHyperlinkListener(new HyperlinkListener() {
           public void hyperlinkUpdate(final HyperlinkEvent e) {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -306,7 +306,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
       public CopyrightProfile getProfile() {
             if (myProfileName != null) {
-              myProfile = myProfilesModel.getAllProfiles().get(myProfile != null ? myProfile.getName() : myProfileName);
+              myProfile = myProfilesModel.getAllProfiles().get(getProfileName());
             }
             return myProfile;
         }
@@ -325,8 +325,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         }
 
       public String getProfileName() {
-        if (myProfile != null) return myProfile.getName();
-        return myProfileName;
+        return myProfile != null ? myProfile.getName() : myProfileName;
       }
     }
 
