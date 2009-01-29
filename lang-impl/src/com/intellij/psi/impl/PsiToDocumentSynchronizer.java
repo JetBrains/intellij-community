@@ -42,7 +42,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
-  private static interface DocSyncAction {
+  private interface DocSyncAction {
     void syncDocument(Document document, PsiTreeChangeEventImpl event);
   }
 
@@ -405,7 +405,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
                               end- effectiveOffset + documentOffset);
       }
 
-      final Pair<MutableTextRange, StringBuffer> pair = new Pair<MutableTextRange, StringBuffer>(new MutableTextRange(start, end), fragmentBuffer);
+      MutableTextRange newRange = new MutableTextRange(start, end);
+      final Pair<MutableTextRange, StringBuffer> pair = new Pair<MutableTextRange, StringBuffer>(newRange, fragmentBuffer);
+      for (Pair<MutableTextRange, StringBuffer> affectedFragment : myAffectedFragments) {
+        MutableTextRange range = affectedFragment.getFirst();
+        assert end <= range.getStartOffset() || range.getEndOffset() <= start : "Range :"+range+"; Added: "+newRange;
+      }
       myAffectedFragments.add(pair);
       return pair;
     }

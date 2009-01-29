@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +100,7 @@ public class BraceEnforcer extends JavaRecursiveElementVisitor {
     buf.append("\n}");
     final int oldTextLength = statement.getTextLength();
     try {
-      CodeEditUtil.replaceChild((CompositeElement)SourceTreeToPsiMap.psiElementToTree(statement),
+      CodeEditUtil.replaceChild(SourceTreeToPsiMap.psiElementToTree(statement),
                                 SourceTreeToPsiMap.psiElementToTree(blockCandidate),
                                 SourceTreeToPsiMap.psiElementToTree(factory.createStatementFromText(buf.toString(), null)));
       CodeStyleManager.getInstance(statement.getProject()).reformat(statement, true);

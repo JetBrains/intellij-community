@@ -2,7 +2,6 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
@@ -45,10 +44,6 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
       }
     });
     return result;
-  }
-
-  public ItemPresentation getPresentation() {
-    return this;
   }
 
   public String getPresentableText() {

@@ -123,7 +123,6 @@ import java.util.HashSet;
       ourTestCase = null;
       fail(message);
     }
-    ourTestCase = this;
     IdeaLogger.ourErrorsOccurred = null;
 
     LOG.info(getClass().getName() + ".setUp()");
@@ -137,6 +136,7 @@ import java.util.HashSet;
     setUpProject();
     markProjectCreationPlace();
     storeSettings();
+    ourTestCase = this;
   }
 
   public Project getProject() {
