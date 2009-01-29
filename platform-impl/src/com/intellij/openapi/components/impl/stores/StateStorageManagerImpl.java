@@ -550,7 +550,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
-      new File(filePath).mkdirs();
+      new File(filePath).getParentFile().mkdirs();
       try {
           JDOMUtil.writeDocument(new Document(createComponentVersionsXml(getComponentVersions())), filePath, "\n");
       }
