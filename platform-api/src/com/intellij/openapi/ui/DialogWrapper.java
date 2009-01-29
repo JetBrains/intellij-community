@@ -124,7 +124,7 @@ public abstract class DialogWrapper {
    */
   protected DialogWrapper(Project project, boolean canBeParent) {
     ensureEventDispatchThread();
-    myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent);
+    myPeer = createPeer(project, canBeParent);
     createDefaultActions();
   }
 
@@ -141,7 +141,7 @@ public abstract class DialogWrapper {
 
   protected DialogWrapper(boolean canBeParent, boolean toolkitModalIfPossible) {
     ensureEventDispatchThread();
-    myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, toolkitModalIfPossible);
+    myPeer = createPeer(canBeParent, toolkitModalIfPossible);
     createDefaultActions();
   }
 
@@ -152,7 +152,7 @@ public abstract class DialogWrapper {
    */
   protected DialogWrapper(Component parent, boolean canBeParent) {
     ensureEventDispatchThread();
-    myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
+    myPeer = createPeer(parent, canBeParent);
     createDefaultActions();
   }
 
@@ -361,6 +361,17 @@ public abstract class DialogWrapper {
     }
   }
 
+  protected DialogWrapperPeer createPeer(final Component parent, final boolean canBeParent) {
+    return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
+  }
+
+  protected DialogWrapperPeer createPeer(boolean canBeParent, boolean toolkitModalIfPossible) {
+    return DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, toolkitModalIfPossible);
+  }
+
+  protected DialogWrapperPeer createPeer(final Project project, final boolean canBeParent) {
+    return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent);
+  }
 
   protected JComponent createTitlePane() {
     return null;

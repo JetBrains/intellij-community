@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -13,8 +14,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkListener;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AddTestProcessAction extends AnAction {
@@ -25,43 +26,46 @@ public class AddTestProcessAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project p = (Project)e.getData(DataKey.create(DataConstantsEx.PROJECT));
     if (p != null) {
-      ToolWindowManager.getInstance(p).notifyByBalloon("TODO", MessageType.INFO, "Started. <a href=\"#a\">Click me!</a>", null, new HyperlinkListener() {
-        public void hyperlinkUpdate(final HyperlinkEvent e) {
-          System.out.println(e);
-        }
-      });
+      ToolWindowManager.getInstance(p)
+        .notifyByBalloon("TODO", MessageType.INFO, "Started. <a href=\"#a\">Click me!</a>", null, new HyperlinkListener() {
+          public void hyperlinkUpdate(final HyperlinkEvent e) {
+            System.out.println(e);
+          }
+        });
     }
 
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    new Task.Backgroundable(project, "Test Process", true) {
+    new Task.Backgroundable(project, "Test Process", true, PerformInBackgroundOption.DEAF) {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
+          indicator.setText("welcome!");
+
           Thread.currentThread().sleep(6000);
 
-            countTo(1000, new Count() {
-              public void onCount(int each) {
-                indicator.setText("Found: " + each / 20 + 1);
-                if (each / 10.0 == Math.round(each / 10.0)) {
-                  indicator.setText(null);
-                }
-                indicator.setFraction(each / 1000.0);
-
-                try {
-                  Thread.currentThread().sleep(100);
-                }
-                catch (InterruptedException e1) {
-                  e1.printStackTrace();
-                }
-
-                indicator.checkCanceled();
-                indicator.setText2("bla bla bla");
+          countTo(1000, new Count() {
+            public void onCount(int each) {
+              indicator.setText("Found: " + each / 20 + 1);
+              if (each / 10.0 == Math.round(each / 10.0)) {
+                indicator.setText(null);
               }
-            });
+              indicator.setFraction(each / 1000.0);
+
+              try {
+                Thread.currentThread().sleep(100);
+              }
+              catch (InterruptedException e1) {
+                e1.printStackTrace();
+              }
+
+              indicator.checkCanceled();
+              indicator.setText2("bla bla bla");
+            }
+          });
           indicator.stop();
         }
         catch (ProcessCanceledException e1) {
           try {
-            Thread.currentThread().sleep(10000);
+            Thread.currentThread().sleep(2000);
             indicator.stop();
           }
           catch (InterruptedException e2) {
@@ -76,7 +80,7 @@ public class AddTestProcessAction extends AnAction {
     }.queue();
   }
 
-  private void countTo(int top, Count count)  {
+  private void countTo(int top, Count count) {
     for (int i = 0; i < top; i++) {
       count.onCount(i);
     }

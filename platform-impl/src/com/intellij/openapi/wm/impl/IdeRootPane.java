@@ -228,6 +228,6 @@ public class IdeRootPane extends JRootPane{
   }
 
   public boolean isOptimizedDrawingEnabled() {
-    return !myGlassPane.hasPainters();
+    return !myGlassPane.hasPainters() && myGlassPane.getComponentCount() == 0;
   }
 }

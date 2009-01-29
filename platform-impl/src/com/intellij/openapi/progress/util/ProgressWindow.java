@@ -7,11 +7,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
+import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
+import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
@@ -207,13 +210,22 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     myInstallFunAlarm.cancelAllRequests();
 
     super.stop();
-    if (myDialog != null) {
 
-      myDialog.hide();
+    if (myDialog != null) {
+      final Window dialogWindow = SwingUtilities.getWindowAncestor(myDialog.getPanel());
+      final boolean sameWindow = dialogWindow instanceof IdeFrame;
+      if (!sameWindow) {
+        myDialog.hide();
+      }
+
       if (myDialog.wasShown()) {
         myFocusTrackback.restoreFocus();
       } else {
         myFocusTrackback.consume();
+      }
+
+      if (sameWindow) {
+        myDialog.hide();
       }
     }
 
@@ -410,8 +422,9 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           draggedTo.x -= myLastClicked.x;
           draggedTo.y -= myLastClicked.y;
 
-          final Window wnd = SwingUtilities.getWindowAncestor(myPanel);
-          wnd.setLocation(draggedTo);
+          if (myPopup != null) {
+            myPopup.setLocation(draggedTo);
+          }
         }
       });
 
@@ -511,12 +524,13 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (myPopup != null) {
-            if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
-              final FocusTrackback focusTrackback = ((DialogWrapperPeerImpl)myPopup.getPeer()).getFocusTrackback();
+            if (myPopup.getPeer() instanceof FocusTrackbackProvider) {
+              final FocusTrackback focusTrackback = ((FocusTrackbackProvider)myPopup.getPeer()).getFocusTrackback();
               if (focusTrackback != null) {
                 focusTrackback.consume();
               }
             }
+
             myCancelButton.requestFocus();
           }
         }
@@ -538,6 +552,48 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       public MyDialogWrapper(Component parent) {
         super(parent, false);
         init();
+      }
+
+      @Override
+      protected DialogWrapperPeer createPeer(final Component parent, final boolean canBeParent) {
+        if (System.getProperty("vintage.progress") == null) {
+          try {
+            return new GlassPaneDialogWrapperPeer(this, parent, canBeParent);
+          }
+          catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
+            return super.createPeer(parent, canBeParent);
+          }
+        } else {
+          return super.createPeer(parent, canBeParent);
+        }
+      }
+
+      @Override
+      protected DialogWrapperPeer createPeer(final boolean canBeParent, final boolean toolkitModalIfPossible) {
+        if (System.getProperty("vintage.progress") == null) {
+          try {
+            return new GlassPaneDialogWrapperPeer(this, canBeParent);
+          }
+          catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
+            return super.createPeer(canBeParent, toolkitModalIfPossible);
+          }
+        } else {
+          return super.createPeer(canBeParent, toolkitModalIfPossible);
+        }
+      }
+
+      @Override
+      protected DialogWrapperPeer createPeer(final Project project, final boolean canBeParent) {
+        if (System.getProperty("vintage.progress") == null) {
+          try {
+            return new GlassPaneDialogWrapperPeer(this, project, canBeParent);
+          }
+          catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
+            return super.createPeer(project, canBeParent);
+          }
+        } else {
+          return super.createPeer(project, canBeParent);
+        }
       }
 
       protected void init() {
@@ -582,9 +638,13 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myDialog.myFunPanel.add(c, BorderLayout.CENTER);
     }
 
-    final Window wnd = SwingUtilities.windowForComponent(myDialog.myPanel);
-    if (wnd != null) { // Can be null if just hidden
-      wnd.pack();
+    if (myDialog.myPopup != null && !(myDialog.myPopup.getPeer() instanceof GlassPaneDialogWrapperPeer)) { // TODO[spL]: remove
+      final Window wnd = SwingUtilities.windowForComponent(myDialog.myPanel);
+      if (wnd != null) { // Can be null if just hidden
+        wnd.pack();
+      }
+    } else {
+      myDialog.myPopup.validate();
     }
   }
 

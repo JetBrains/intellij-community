@@ -4,7 +4,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeGlassPane;
 
 import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
@@ -16,7 +15,7 @@ import java.awt.event.MouseWheelEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane, IdeEventQueue.EventDispatcher, Painter.Listener {
+public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher, Painter.Listener {
 
   private Set<EventListener> myMouseListeners = new LinkedHashSet<EventListener>();
   private JRootPane myRootPane;
@@ -31,6 +30,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane, IdeEventQu
     myRootPane = rootPane;
     setOpaque(false);
     setVisible(false);
+    setLayout(null);
   }
 
   public boolean dispatch(final AWTEvent e) {
@@ -53,7 +53,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane, IdeEventQu
       return false;
     }
 
-    if (isVisible()) {
+    if (isVisible() && getComponentCount() == 0) {
       boolean cursorSet = false;
       MouseEvent me = (MouseEvent)e;
       if (me.getComponent() != null) {
@@ -183,7 +183,7 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
   private void deactivateIfNeeded() {
     if (!isVisible()) return;
 
-    if (myPainters.size() == 0 && myMouseListeners.size() == 0) {
+    if (myPainters.size() == 0 && myMouseListeners.size() == 0 && getComponentCount() == 0) {
       IdeEventQueue.getInstance().removeDispatcher(this);
       setVisible(false);
     }
@@ -192,7 +192,7 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
   private void activateIfNeeded() {
     if (isVisible()) return;
 
-    if (myPainters.size() > 0 || myMouseListeners.size() > 0) {
+    if (myPainters.size() > 0 || myMouseListeners.size() > 0 || getComponentCount() > 0) {
       IdeEventQueue.getInstance().addDispatcher(this, null);
       setVisible(true);
     }
@@ -218,6 +218,19 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
     myPainters.remove(painter);
     myPainter2Component.remove(painter);
     painter.removeListener(this);
+    deactivateIfNeeded();
+  }
+
+  @Override
+  public Component add(final Component comp) {
+    final Component result = super.add(comp);
+    activateIfNeeded();
+    return result; 
+  }
+
+  @Override
+  public void remove(final Component comp) {
+    super.remove(comp);
     deactivateIfNeeded();
   }
 

@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -43,7 +42,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DialogWrapperPeerImpl extends DialogWrapperPeer {
+public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTrackbackProvider {
   public static Object HAVE_INITIAL_SELECTION = new Object();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
