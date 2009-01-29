@@ -154,7 +154,10 @@ public class CommitHelper {
       processor.customRefresh();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          processor.postRefresh();
+          final Runnable runnable = processor.postRefresh();
+          if (runnable != null) {
+            runnable.run();
+          }
         }
       });
     }
