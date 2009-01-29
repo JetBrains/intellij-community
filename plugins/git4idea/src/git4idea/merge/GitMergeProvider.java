@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
+import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitFileUtils;
@@ -36,7 +36,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,19 +91,27 @@ public class GitMergeProvider implements MergeProvider2 {
     VcsRunnable runnable = new VcsRunnable() {
       @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
-        GitContentRevision original =
-          new GitContentRevision(path, new GitRevisionNumber(":" + ORIGINAL_REVNUM), myProject, file.getCharset());
-        GitContentRevision current = new GitContentRevision(path, new GitRevisionNumber(":" + YOURS_REVNUM), myProject, file.getCharset());
-        GitContentRevision last = new GitContentRevision(path, new GitRevisionNumber(":" + THEIRS_REVNUM), myProject, file.getCharset());
-        final String encoding = file.getCharset().name();
+        GitFileRevision original =
+          new GitFileRevision(myProject, path, new GitRevisionNumber(":" + ORIGINAL_REVNUM));
+        GitFileRevision current =
+          new GitFileRevision(myProject, path, new GitRevisionNumber(":" + YOURS_REVNUM));
+        GitFileRevision last =
+          new GitFileRevision(myProject, path, new GitRevisionNumber(":" + THEIRS_REVNUM));
         try {
-          mergeData.ORIGINAL = original.getContent().getBytes(encoding);
-          mergeData.CURRENT = current.getContent().getBytes(encoding);
-          mergeData.LAST = last.getContent().getBytes(encoding);
+          try {
+            mergeData.ORIGINAL = original.getContent();
+          }
+          catch(Exception ex) {
+            /// unable to load original revsion, use the current instead
+            /// This could happen in case if rebasing.
+            mergeData.ORIGINAL = file.contentsToByteArray();
+          }
+          mergeData.CURRENT = current.getContent();
+          mergeData.LAST = last.getContent();
           mergeData.LAST_REVISION_NUMBER = new GitRevisionNumber(THEIRS_REVISION);
         }
-        catch (UnsupportedEncodingException ex) {
-          throw new IllegalStateException("Unexpected encoding failure file ecoding does not exists: "+encoding, ex);
+        catch (IOException e) {
+          throw new IllegalStateException("Failed to load file content", e);
         }
       }
     };
