@@ -46,7 +46,7 @@ import java.util.Map;
 /**
  * @author cdr
 */
-class MultiHostRegistrarImpl implements MultiHostRegistrar {
+public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   Places result;
   private Language myLanguage;
   private List<PsiLanguageInjectionHost> injectionHosts;
@@ -295,7 +295,7 @@ class MultiHostRegistrarImpl implements MultiHostRegistrar {
                                  final Place shreds) {
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     final StringBuilder catLeafs = new StringBuilder();
-    ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
+    ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementWalkingVisitor(){
       private LeafElement prevElement;
       private String prevElementTail;
 
@@ -345,7 +345,7 @@ class MultiHostRegistrarImpl implements MultiHostRegistrar {
       String newText = entry.getValue();
       leaf.setText(newText);
     }
-    ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
+    ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementWalkingVisitor(){
       protected boolean visitNode(TreeElement element) {
         element.clearCaches();
         return true;

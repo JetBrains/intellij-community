@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.RecursiveTreeElementVisitor;
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 
@@ -181,7 +181,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     }
 
     private void restoreCaretPosition(final PsiFile file) {
-      ((TreeElement)file.getNode()).acceptTree(new RecursiveTreeElementVisitor() {
+      ((TreeElement)file.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor() {
         protected boolean visitNode(TreeElement element) {
           PsiElement el = element.getPsi();
           Integer offset = el.getCopyableUserData(CARET_POS_KEY);

@@ -164,7 +164,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
               break;
             case ChangeInfo.CONTENTS_CHANGED:
               if(!CodeEditUtil.isNodeGenerated(affectedChild))
-                ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementVisitor(){
+                ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor(){
                   protected boolean visitNode(TreeElement element) {
                     if(CodeEditUtil.isNodeGenerated(element)){
                       postponeFormatting(viewProvider, element);
@@ -402,21 +402,22 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
       final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
       if (fileElement == null || ((PsiFile)fileElement.getPsi()).getViewProvider() != provider) continue;
       final boolean isGenerated = CodeEditUtil.isNodeGenerated(node);
+
       ((TreeElement)node).acceptTree(new RecursiveTreeElementVisitor() {
         boolean inGeneratedContext = !isGenerated;
-        protected boolean visitNode(TreeElement current) {
-          if(nodesToProcess.contains(current)) return false;
-          final boolean currentNodeGenerated = CodeEditUtil.isNodeGenerated(current);
-          CodeEditUtil.setNodeGenerated(current, false);
+        protected boolean visitNode(TreeElement element) {
+          if(nodesToProcess.contains(element)) return false;
+          final boolean currentNodeGenerated = CodeEditUtil.isNodeGenerated(element);
+          CodeEditUtil.setNodeGenerated(element, false);
           if(currentNodeGenerated && !inGeneratedContext){
-            rangesToProcess.put(document.createRangeMarker(current.getTextRange()), new ReformatAction());
+            rangesToProcess.put(document.createRangeMarker(element.getTextRange()), new ReformatAction());
             inGeneratedContext = true;
           }
           if(!currentNodeGenerated && inGeneratedContext){
-            if(current.getElementType() == TokenType.WHITE_SPACE) return false;
-            final int oldIndent = CodeEditUtil.getOldIndentation(current);
+            if(element.getElementType() == TokenType.WHITE_SPACE) return false;
+            final int oldIndent = CodeEditUtil.getOldIndentation(element);
             LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined");
-            rangesToProcess.put(document.createRangeMarker(current.getTextRange()), new ReindentAction(oldIndent));
+            rangesToProcess.put(document.createRangeMarker(element.getTextRange()), new ReindentAction(oldIndent));
             inGeneratedContext = false;
           }
           return true;
@@ -442,7 +443,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     final Document document = key.getDocument();
     for (final FileElement fileElement : ((SingleRootFileViewProvider)key).getKnownTreeRoots()) {
       fileElement.acceptTree(
-        new RecursiveTreeElementVisitor(){
+        new RecursiveTreeElementWalkingVisitor(){
           protected boolean visitNode(TreeElement element) {
             if(CodeEditUtil.isMarkedToReformatBefore(element)) {
               CodeEditUtil.markToReformatBefore(element, false);
