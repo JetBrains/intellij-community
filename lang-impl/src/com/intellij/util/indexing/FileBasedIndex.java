@@ -4,7 +4,10 @@ import com.intellij.AppTopics;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -37,7 +40,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -63,7 +65,6 @@ public class FileBasedIndex implements ApplicationComponent {
   @NonNls
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
-  private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new HashMap<ID<?,?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNeedContentLoading = new HashSet<ID<?, ?>>();
 
@@ -83,14 +84,14 @@ public class FileBasedIndex implements ApplicationComponent {
   private final ChangedFilesUpdater myChangedFilesUpdater;
 
   private final List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
-  
+
   public static final int OK = 1;
   public static final int REQUIRES_REBUILD = 2;
   public static final int REBUILD_IN_PROGRESS = 3;
   private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
 
   private final VirtualFileManagerEx myVfManager;
-  private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
+  private final Semaphore myUnsavedDataIndexingSemaphore = new Semaphore();
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private final FileContentStorage myFileContentAttic;
@@ -114,7 +115,6 @@ public class FileBasedIndex implements ApplicationComponent {
       public void transactionStarted(final Document doc, final PsiFile file) {
         if (file != null) {
           myTransactionMap.put(doc, file);
-          myUpToDateIndices.clear();
         }
       }
 
@@ -129,12 +129,6 @@ public class FileBasedIndex implements ApplicationComponent {
       }
 
       public void fileTypesChanged(final FileTypeEvent event) {
-      }
-    });
-
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
-      public void writeActionStarted(Object action) {
-        myUpToDateIndices.clear();
       }
     });
 
@@ -214,7 +208,6 @@ public class FileBasedIndex implements ApplicationComponent {
         final IndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));
-        myUnsavedDataIndexingSemaphores.put(name, new Semaphore());
         myExtentions.put(name, extension);
         break;
       }
@@ -263,7 +256,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
     return result;
   }
-  
+
   private static File getRegisteredIndicesFile() {
     return new File(PathManager.getIndexRoot(), "registered");
   }
@@ -296,7 +289,7 @@ public class FileBasedIndex implements ApplicationComponent {
       assert index != null;
       index.dispose();
     }
-    
+
     myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
     myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
 
@@ -351,12 +344,12 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<Integer>();
-  
+
   public void disableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
     myUpToDateCheckState.set(currentValue == null? 1 : currentValue.intValue() + 1);
   }
-  
+
   public void enableUpToDateCheckForCurrentThread() {
     final Integer currentValue = myUpToDateCheckState.get();
     if (currentValue != null) {
@@ -369,7 +362,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
   }
-  
+
   private boolean isUpToDateCheckEnabled() {
     final Integer value = myUpToDateCheckState.get();
     return value == null || value.intValue() == 0;
@@ -377,7 +370,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   public <K> void ensureUpToDate(final ID<K, ?> indexId) {
     myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
-    
+
     if (isUpToDateCheckEnabled()) {
       try {
         checkRebuild(indexId);
@@ -420,7 +413,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return files;
   }
 
-  
+
   public interface ValueProcessor<V> {
     void process(VirtualFile file, V value);
   }
@@ -429,7 +422,7 @@ public class FileBasedIndex implements ApplicationComponent {
                                    ValueProcessor<V> processor, final VirtualFileFilter filter) {
     processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
   }
-  
+
   private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, boolean ensureValueProcessedOnce,
                                         @Nullable final VirtualFile restrictToFile, ValueProcessor<V> processor,
                                         final VirtualFileFilter filter) {
@@ -439,15 +432,15 @@ public class FileBasedIndex implements ApplicationComponent {
       if (index == null) {
         return;
       }
-  
+
       final Lock readLock = index.getReadLock();
       try {
         readLock.lock();
         final ValueContainer<V> container = index.getData(dataKey);
-  
+
         if (restrictToFile != null) {
           if (!(restrictToFile instanceof VirtualFileWithId)) return;
-          
+
           final int restrictedFileId = getFileId(restrictToFile);
           for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
@@ -490,11 +483,11 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
   }
-  
+
   public interface AllValuesProcessor<V> {
     void process(final int inputId, V value);
   }
-  
+
   public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor) {
     try {
       ensureUpToDate(indexId);
@@ -564,7 +557,7 @@ public class FileBasedIndex implements ApplicationComponent {
           }
         }
       };
-      
+
       final Application application = ApplicationManager.getApplication();
       if (application.isUnitTestMode()) {
         rebuildRunnable.run();
@@ -580,9 +573,9 @@ public class FileBasedIndex implements ApplicationComponent {
             }.queue();
           }
         });
-      }    
+      }
     }
-    
+
     if (myRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
       throw new ProcessCanceledException();
     }
@@ -609,16 +602,11 @@ public class FileBasedIndex implements ApplicationComponent {
   private void indexUnsavedDocuments(ID<?, ?> indexId) throws StorageException {
     myChangedFilesUpdater.forceUpdate();
 
-    if (myUpToDateIndices.contains(indexId)) {
-      return; // no need to index unsaved docs
-    }
-
     final Set<Document> documents = getUnsavedOrTransactedDocuments();
     if (!documents.isEmpty()) {
       // now index unsaved data
       setDataBufferingEnabled(true);
-      final Semaphore semaphore = myUnsavedDataIndexingSemaphores.get(indexId);
-      semaphore.down();
+      myUnsavedDataIndexingSemaphore.down();
       try {
         for (Document document : documents) {
           indexUnsavedDocument(document, indexId);
@@ -633,14 +621,13 @@ public class FileBasedIndex implements ApplicationComponent {
         throw e;
       }
       finally {
-        semaphore.up();
-        
-        while (!semaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
+        myUnsavedDataIndexingSemaphore.up();
+
+        while (!myUnsavedDataIndexingSemaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
           if (Thread.holdsLock(PsiLock.LOCK)) {
-            break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
+            break; // hack. Most probably that other indexing threas is waiting for PsiLock, which we're are holding.
           }
         }
-        myUpToDateIndices.add(indexId); // safe to set the flag here, becase it will be cleared under the WriteAction
       }
     }
   }
@@ -975,7 +962,7 @@ public class FileBasedIndex implements ApplicationComponent {
       if (file.isDirectory()) {
         if (isMock(file) || myManagingFS.wereChildrenAccessed(file)) {
           for (VirtualFile child : file.getChildren()) {
-            scheduleInvalidation(child, saveContent); 
+            scheduleInvalidation(child, saveContent);
           }
         }
       }
@@ -1154,11 +1141,11 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     };
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
-    
+
     public void forceUpdate() {
       ensureAllInvalidateTasksCompleted();
 
-      final boolean alreadyAquired = myAlreadyAquired.get().booleanValue();
+      final Boolean alreadyAquired = myAlreadyAquired.get();
       //assert !alreadyAquired : "forceUpdate() is not reentrant!";
 
       if (alreadyAquired) {
@@ -1166,20 +1153,17 @@ public class FileBasedIndex implements ApplicationComponent {
       }
 
       myAlreadyAquired.set(Boolean.TRUE);
-      final VirtualFile[] files = queryNeededFiles();
-      if (files.length > 0) {
-        myForceUpdateSemaphore.down();
-        try {
-          for (VirtualFile file: files) {
-            processFileImpl(new com.intellij.ide.startup.FileContent(file));
-          }
+      myForceUpdateSemaphore.down();
+      try {
+        for (VirtualFile file: queryNeededFiles()) {
+          processFileImpl(new com.intellij.ide.startup.FileContent(file));
         }
-        finally {
-          myForceUpdateSemaphore.up();
-          myAlreadyAquired.set(Boolean.FALSE);
+      }
+      finally {
+        myForceUpdateSemaphore.up();
+        myAlreadyAquired.set(Boolean.FALSE);
 
-          myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
-        }
+        myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
       }
     }
 
