@@ -79,7 +79,7 @@ public class GitRabaseLineListener extends GitLineHandlerAdapter {
     else {
       total = current = 0;
     }
-    return new Result(myStatus, total, current);
+    return new Result(myStatus == null? Status.ERROR: myStatus, total, current);
   }
 
   /**
