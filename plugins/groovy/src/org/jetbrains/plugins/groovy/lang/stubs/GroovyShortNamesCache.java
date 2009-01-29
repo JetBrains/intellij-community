@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -99,18 +98,19 @@ public class GroovyShortNamesCache implements PsiShortNamesCache {
 
   @NotNull
   public PsiClass[] getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    //Collecting all classes
-    final Collection<PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
-    final Collection<PsiClass> scriptClasses = getScriptClassesByFQName(name, scope);
-    scriptClasses.addAll(classes);
+    final Collection<PsiClass> result = getScriptClassesByFQName(name, scope);
 
-    ArrayList<PsiClass> list = new ArrayList<PsiClass>();
-    for (PsiClass psiClass : scriptClasses) {
-      if (name.equals(psiClass.getQualifiedName())) {
-        list.add(psiClass);
+    final Collection<PsiClass> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, scope);
+    if (!classes.isEmpty()) {
+      //hashcode doesn't guarantee equals
+      for (PsiClass psiClass : classes) {
+        if (name.equals(psiClass.getQualifiedName())) {
+          result.add(psiClass);
+        }
       }
     }
-    return list.toArray(new PsiClass[classes.size()]);
+
+    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
   private Collection<PsiClass> getAllScriptClasses(String name, GlobalSearchScope scope) {
