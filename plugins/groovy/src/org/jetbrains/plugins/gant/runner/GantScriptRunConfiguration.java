@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
   public String scriptParams;
   public String targets;
   public String scriptPath;
-  public String workDir = ".";
+  public String workDir;
 
   @NonNls public static final String GANT_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   @NonNls public static final String GANT_MAIN = "gant.Gant";
@@ -71,6 +72,7 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
 
   public GantScriptRunConfiguration(GantScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project), factory);
+    workDir = PathUtil.getLocalPath(project.getBaseDir());
     this.factory = factory;
   }
 
@@ -108,9 +110,11 @@ public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
     vmParams = JDOMExternalizer.readString(element, "vmparams");
     scriptParams = JDOMExternalizer.readString(element, "params");
     targets = JDOMExternalizer.readString(element, "targets");
-    workDir = JDOMExternalizer.readString(element, "workDir");
+    final String wrk = JDOMExternalizer.readString(element, "workDir");
+    if (!".".equals(wrk)) {
+      workDir = wrk;
+    }
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
-    workDir = getWorkDir();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

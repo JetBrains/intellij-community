@@ -64,7 +64,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public boolean isDebugEnabled;
   public String scriptParams;
   public String scriptPath;
-  public String workDir = ".";
+  public String workDir;
   public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
 
@@ -77,6 +77,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
   public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project), factory);
+    workDir = PathUtil.getLocalPath(project.getBaseDir());
     this.factory = factory;
   }
 
@@ -110,9 +111,11 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     scriptPath = JDOMExternalizer.readString(element, "path");
     vmParams = JDOMExternalizer.readString(element, "vmparams");
     scriptParams = JDOMExternalizer.readString(element, "params");
-    workDir = JDOMExternalizer.readString(element, "workDir");
+    final String wrk = JDOMExternalizer.readString(element, "workDir");
+    if (!".".equals(wrk)) {
+      workDir = wrk;
+    }
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
-    workDir = getWorkDir();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
