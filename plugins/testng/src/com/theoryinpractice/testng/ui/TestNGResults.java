@@ -224,17 +224,19 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     }
 
     public void addTestResult(TestResultMessage result, List<Printable> output, int exceptionMark) {
+        if (failedToStart != null) {
+          output.addAll(failedToStart.getOutput());
+          exceptionMark += failedToStart.getExceptionMark();
+        }
+
         TestProxy testCase = started.get(result);
         if (testCase != null) {
-          if (failedToStart != null) {
-            output.addAll(failedToStart.getOutput());
-            exceptionMark += failedToStart.getExceptionMark();
-          }
           testCase.setResultMessage(result);
           failedToStart = null;
         } else {
-          failedToStart = new TestProxy(); //do not remember testresultmessage: test hierarchy is not set
-          testCase = failedToStart;
+          //do not remember testresultmessage: test hierarchy is not set
+          testCase = new TestProxy();
+          failedToStart = testCase;
         }
 
         testCase.setOutput(output);
