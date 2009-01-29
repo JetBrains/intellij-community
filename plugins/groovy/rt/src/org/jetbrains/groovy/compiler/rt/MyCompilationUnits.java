@@ -89,7 +89,8 @@ public class MyCompilationUnits {
       final List listOfClasses = compilationUnit.getClasses();
       System.out.println(listOfClasses);
 
-      for (final Object elem : listOfClasses) {
+      for (int i = 0; i < listOfClasses.size(); i++) {
+        Object elem = listOfClasses.get(i);
         final String name = ((GroovyClass)elem).getName();
         String pathToClass = name.replace('.', File.separatorChar);
 
