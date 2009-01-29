@@ -389,7 +389,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     try {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(getMethod().getProject());
-      final String fieldName = styleManager.suggestVariableName(VariableKind.FIELD, parameterName, null, type).names[0];
+      final String fieldName = styleManager.suggestVariableName(VariableKind.FIELD, styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER), null, type).names[0];
       PsiField field = myElementFactory.createField(fieldName, type);
 
       final PsiModifierList modifierList = field.getModifierList();
