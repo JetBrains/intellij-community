@@ -4,10 +4,7 @@ import com.intellij.AppTopics;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -40,6 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -65,6 +63,7 @@ public class FileBasedIndex implements ApplicationComponent {
   @NonNls
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
+  private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new HashMap<ID<?,?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNeedContentLoading = new HashSet<ID<?, ?>>();
 
@@ -91,7 +90,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
 
   private final VirtualFileManagerEx myVfManager;
-  private final Semaphore myUnsavedDataIndexingSemaphore = new Semaphore();
+  private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private final FileContentStorage myFileContentAttic;
@@ -115,6 +114,7 @@ public class FileBasedIndex implements ApplicationComponent {
       public void transactionStarted(final Document doc, final PsiFile file) {
         if (file != null) {
           myTransactionMap.put(doc, file);
+          myUpToDateIndices.clear();
         }
       }
 
@@ -129,6 +129,12 @@ public class FileBasedIndex implements ApplicationComponent {
       }
 
       public void fileTypesChanged(final FileTypeEvent event) {
+      }
+    });
+
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+      public void writeActionStarted(Object action) {
+        myUpToDateIndices.clear();
       }
     });
 
@@ -208,6 +214,7 @@ public class FileBasedIndex implements ApplicationComponent {
         final IndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));
+        myUnsavedDataIndexingSemaphores.put(name, new Semaphore());
         myExtentions.put(name, extension);
         break;
       }
@@ -601,12 +608,17 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private void indexUnsavedDocuments(ID<?, ?> indexId) throws StorageException {
     myChangedFilesUpdater.forceUpdate();
-    
+
+    if (myUpToDateIndices.contains(indexId)) {
+      return; // no need to index unsaved docs
+    }
+
     final Set<Document> documents = getUnsavedOrTransactedDocuments();
     if (!documents.isEmpty()) {
       // now index unsaved data
       setDataBufferingEnabled(true);
-      myUnsavedDataIndexingSemaphore.down();
+      final Semaphore semaphore = myUnsavedDataIndexingSemaphores.get(indexId);
+      semaphore.down();
       try {
         for (Document document : documents) {
           indexUnsavedDocument(document, indexId);
@@ -621,13 +633,14 @@ public class FileBasedIndex implements ApplicationComponent {
         throw e;
       }
       finally {
-        myUnsavedDataIndexingSemaphore.up();
+        semaphore.up();
         
-        while (!myUnsavedDataIndexingSemaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
+        while (!semaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
           if (Thread.holdsLock(PsiLock.LOCK)) {
-            break; // hack. Most probably that other indexing threas is waiting for PsiLock, which we're are holding.
+            break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
           }
         }
+        myUpToDateIndices.add(indexId); // safe to set the flag here, becase it will be cleared under the WriteAction
       }
     }
   }
@@ -1145,7 +1158,7 @@ public class FileBasedIndex implements ApplicationComponent {
     public void forceUpdate() {
       ensureAllInvalidateTasksCompleted();
 
-      final Boolean alreadyAquired = myAlreadyAquired.get();
+      final boolean alreadyAquired = myAlreadyAquired.get().booleanValue();
       //assert !alreadyAquired : "forceUpdate() is not reentrant!";
 
       if (alreadyAquired) {
@@ -1153,17 +1166,20 @@ public class FileBasedIndex implements ApplicationComponent {
       }
 
       myAlreadyAquired.set(Boolean.TRUE);
-      myForceUpdateSemaphore.down();
-      try {
-        for (VirtualFile file: queryNeededFiles()) {
-          processFileImpl(new com.intellij.ide.startup.FileContent(file));
+      final VirtualFile[] files = queryNeededFiles();
+      if (files.length > 0) {
+        myForceUpdateSemaphore.down();
+        try {
+          for (VirtualFile file: files) {
+            processFileImpl(new com.intellij.ide.startup.FileContent(file));
+          }
         }
-      }
-      finally {
-        myForceUpdateSemaphore.up();
-        myAlreadyAquired.set(Boolean.FALSE);
+        finally {
+          myForceUpdateSemaphore.up();
+          myAlreadyAquired.set(Boolean.FALSE);
 
-        myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
+          myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
+        }
       }
     }
 
