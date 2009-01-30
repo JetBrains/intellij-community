@@ -98,9 +98,13 @@ public class TabLabel extends JPanel {
 
   public void paintImage(Graphics g) {
     final Rectangle b = getBounds();
-    g.translate(b.x, b.y);
-
-    doPaint(g);
+    final Graphics lG = g.create(b.x, b.y, b.width, b.height);
+    try {
+      doPaint(lG);
+    }
+    catch (Exception e) {
+      lG.dispose();
+    }
   }
 
   private void doPaint(Graphics g) {
