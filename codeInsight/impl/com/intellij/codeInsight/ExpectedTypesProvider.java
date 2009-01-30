@@ -831,7 +831,7 @@ public class ExpectedTypesProvider {
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
           substitutor = info.inferTypeArguments(forCompletion);
-          if (!info.isStaticsScopeCorrect() && method != null && !method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) continue;
+          if (!info.isStaticsScopeCorrect() && method != null && !method.hasModifierProperty(PsiModifier.STATIC)) continue;
         }
         else {
           substitutor = candidateInfo.getSubstitutor();

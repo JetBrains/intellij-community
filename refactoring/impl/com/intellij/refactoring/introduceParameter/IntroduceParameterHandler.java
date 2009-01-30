@@ -248,6 +248,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   }
 
   private static boolean isLibraryInterfaceMethod(final PsiMethod method) {
-    return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT) && !method.getManager().isInProject(method);
+    return method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.getManager().isInProject(method);
   }
 }

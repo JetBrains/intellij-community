@@ -64,8 +64,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
               Object o = item.getObject();
               if (!(o instanceof PsiField)) continue;
               PsiField field = (PsiField) o;
-              if (!(field.getModifierList().hasModifierProperty(PsiModifier.STATIC) &&
-                  field.getInitializer() != null &&
+              if (!(field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() != null &&
                   ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), null, false) != null)) continue;
             }
 

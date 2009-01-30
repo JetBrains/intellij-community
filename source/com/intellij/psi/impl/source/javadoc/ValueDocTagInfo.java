@@ -51,7 +51,7 @@ public class ValueDocTagInfo implements JavadocTagInfo {
             return JavaErrorMessages.message("javadoc.value.field.required");
           }
           PsiField field = (PsiField) target;
-          if (!field.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+          if (!field.hasModifierProperty(PsiModifier.STATIC)) {
             return JavaErrorMessages.message("javadoc.value.static.field.required");
           }
           if (field.getInitializer() == null ||

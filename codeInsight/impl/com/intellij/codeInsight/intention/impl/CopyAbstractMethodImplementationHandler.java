@@ -91,7 +91,7 @@ public class CopyAbstractMethodImplementationHandler {
     for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass, mySourceClass.getUseScope(), true)) {
       if (!inheritor.isInterface()) {
         PsiMethod method = ImplementAbstractMethodAction.findExistingImplementation(inheritor, myMethod);
-        if (method != null && !method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT)) {
+        if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
           mySourceMethods.add(method);
         }
         else if (method == null) {
