@@ -12,7 +12,7 @@ public class JUnit3FrameworkDescriptor extends JavaTestFrameworkDescriptor {
   }
 
   protected String getMarkerClassFQName() {
-    return getDefaultSuperClass();
+    return "junit.framework.TestCase";
   }
 
   public String getLibraryPath() {
@@ -24,23 +24,16 @@ public class JUnit3FrameworkDescriptor extends JavaTestFrameworkDescriptor {
     return "junit.framework.TestCase";
   }
 
-  @Nullable
-  public String getSetUpAnnotation() {
-    return null;
-  }
-
-  @Nullable
-  public String getTearDownAnnotation() {
-    return null;
-  }
-
-  @Nullable
-  public String getTestAnnotation() {
-    return null;
-  }
-
   public boolean isTestClass(PsiClass clazz) {
     return JUnitUtil.isJUnit3TestClass(clazz);
+  }
+
+  public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit3 SetUp Method.java");
+  }
+
+  public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit3 TearDown Method.java");
   }
 
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {

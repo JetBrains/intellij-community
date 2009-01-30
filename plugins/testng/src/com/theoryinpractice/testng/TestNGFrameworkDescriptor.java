@@ -13,7 +13,7 @@ public class TestNGFrameworkDescriptor extends JavaTestFrameworkDescriptor {
   }
 
   protected String getMarkerClassFQName() {
-    return getTestAnnotation();
+    return "org.testng.annotations.Test";
   }
 
   public String getLibraryPath() {
@@ -30,23 +30,16 @@ public class TestNGFrameworkDescriptor extends JavaTestFrameworkDescriptor {
     return null;
   }
 
-  @Nullable
-  public String getSetUpAnnotation() {
-    return "org.testng.annotations.BeforeTest";
-  }
-
-  @Nullable
-  public String getTearDownAnnotation() {
-    return "org.testng.annotations.AfterTest";
-  }
-
-  @Nullable
-  public String getTestAnnotation() {
-    return "org.testng.annotations.Test";
-  }
-
   public boolean isTestClass(PsiClass clazz) {
     return TestNGUtil.isTestNGClass(clazz);
+  }
+
+  public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("TestNG SetUp Method.java");
+  }
+
+  public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("TestNG TearDown Method.java");
   }
 
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {

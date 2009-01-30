@@ -12,7 +12,7 @@ public class JUnit4FrameworkDescriptor extends JavaTestFrameworkDescriptor {
   }
 
   protected String getMarkerClassFQName() {
-    return getTestAnnotation();
+    return "org.junit.Test";
   }
 
   public String getLibraryPath() {
@@ -24,23 +24,16 @@ public class JUnit4FrameworkDescriptor extends JavaTestFrameworkDescriptor {
     return null;
   }
 
-  @Nullable
-  public String getSetUpAnnotation() {
-    return "org.junit.Before";
-  }
-
-  @Nullable
-  public String getTearDownAnnotation() {
-    return "org.junit.After";
-  }
-
-  @Nullable
-  public String getTestAnnotation() {
-    return "org.junit.Test";
-  }
-
   public boolean isTestClass(PsiClass clazz) {
     return JUnitUtil.isJUnit4TestClass(clazz);
+  }
+
+  public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit4 SetUp Method.java");
+  }
+
+  public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit4 TearDown Method.java");
   }
 
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
