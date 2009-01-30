@@ -22,10 +22,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -323,8 +320,8 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
-  public boolean isVersionedDirectory(VirtualFile dir) {
-    return dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null;
+  public ThreeStateBoolean isVersionedDirectory(VirtualFile dir) {
+    return ThreeStateBoolean.getInstance(dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null);
   }
 
   /**

@@ -834,9 +834,9 @@ public class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  public boolean isVersionedDirectory(final VirtualFile dir) {
+  public ThreeStateBoolean isVersionedDirectory(final VirtualFile dir) {
     final VirtualFile child = dir.findChild(".svn");
-    return child != null && child.isDirectory();
+    return ThreeStateBoolean.getInstance(child != null && child.isDirectory());
   }
 
   @NotNull
