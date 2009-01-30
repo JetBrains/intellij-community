@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
@@ -212,20 +211,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     super.stop();
 
     if (myDialog != null) {
-      final Window dialogWindow = SwingUtilities.getWindowAncestor(myDialog.getPanel());
-      final boolean sameWindow = dialogWindow instanceof IdeFrame;
-      if (!sameWindow) {
-        myDialog.hide();
-      }
-
+      myDialog.hide();
       if (myDialog.wasShown()) {
         myFocusTrackback.restoreFocus();
       } else {
         myFocusTrackback.consume();
-      }
-
-      if (sameWindow) {
-        myDialog.hide();
       }
     }
 
