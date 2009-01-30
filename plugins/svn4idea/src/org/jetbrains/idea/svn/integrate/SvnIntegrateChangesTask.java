@@ -318,8 +318,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
 
     if (! clb.getChanges().isEmpty()) {
-      CommitChangeListDialog.commitAlienChanges(myProject, clb.getChanges(), myVcs,
-              SvnBundle.message("action.Subversion.integrate.changes.alien.commit.changelist.title"), myMerger.getComment());
+      CommitChangeListDialog.commitAlienChanges(myProject, clb.getChanges(), myVcs, myMerger.getComment(), myMerger.getComment());
     }
   }
 }
