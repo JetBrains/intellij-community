@@ -10,7 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.List;
 import java.util.ArrayList;
 
-public class TestIntergationUtils {
+public class TestIntegrationUtils {
   public static boolean isTest(PsiElement element) {
     PsiClass klass = findOuterClass(element);
     return klass != null && TestUtil.isTestClass(klass);

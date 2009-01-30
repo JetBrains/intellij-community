@@ -22,7 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFrameworkDescriptor;
-import com.intellij.testIntegration.TestIntergationUtils;
+import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,7 +162,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   private void addMethod(PsiClass targetClass, String name, String annotation) throws IncorrectOperationException {
-    targetClass.add(TestIntergationUtils.createMethod(targetClass, name, annotation));
+    targetClass.add(TestIntegrationUtils.createMethod(targetClass, name, annotation));
   }
 
   public boolean startInWriteAction() {

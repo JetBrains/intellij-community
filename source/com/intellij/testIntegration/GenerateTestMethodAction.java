@@ -2,18 +2,23 @@ package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
+import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -35,12 +40,12 @@ public class GenerateTestMethodAction extends BaseGenerateAction {
   private static PsiClass findTargetClass(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
-    return TestIntergationUtils.findOuterClass(element);
+    return TestIntegrationUtils.findOuterClass(element);
   }
 
   @Override
   protected boolean isValidForClass(PsiClass targetClass) {
-    return TestIntergationUtils.isTest(targetClass) && findDescriptor(targetClass) != null;
+    return TestIntegrationUtils.isTest(targetClass) && findDescriptor(targetClass) != null;
   }
 
   private static TestFrameworkDescriptor findDescriptor(PsiClass targetClass) {
@@ -55,21 +60,20 @@ public class GenerateTestMethodAction extends BaseGenerateAction {
   private static class MyHandler implements CodeInsightActionHandler {
     public void invoke(Project project, Editor editor, PsiFile file) {
       try {
-        PsiMethod method = generateTestMethod(editor, file);
-        runMethodTemplate(project, editor, method);
+        PsiClass targetClass = findTargetClass(editor, file);
+        PsiMethod method = generateDummyMethod(editor, file, targetClass);
+        runMethodTemplate(project, editor, file, targetClass, method);
       }
       catch (IncorrectOperationException e) {
         throw new RuntimeException(e);
       }
     }
 
-    private PsiMethod generateTestMethod(Editor editor, PsiFile file) throws IncorrectOperationException {
-      PsiClass targetClass = findTargetClass(editor, file);
+    private PsiMethod generateDummyMethod(Editor editor, PsiFile file, PsiClass targetClass) throws IncorrectOperationException {
       List<GenerationInfo> members = new ArrayList<GenerationInfo>();
 
-      TestFrameworkDescriptor d = findDescriptor(targetClass);
-
-      final PsiMethod method = TestIntergationUtils.createMethod(targetClass, "test", d.getTestAnnotation());
+      PsiElementFactory f = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
+      final PsiMethod method = f.createMethod("dummy", PsiType.VOID);
       final PsiMethod[] result = new PsiMethod[1];
 
       members.add(new GenerationInfo() {
@@ -94,7 +98,7 @@ public class GenerateTestMethodAction extends BaseGenerateAction {
 
       PsiClass classAtCursor = PsiTreeUtil.getParentOfType(file.findElementAt(result), PsiClass.class, false);
 
-      while(classAtCursor != null && !(classAtCursor.getParent() instanceof PsiFile)) {
+      while (classAtCursor != null && !(classAtCursor.getParent() instanceof PsiFile)) {
         result = classAtCursor.getTextRange().getEndOffset();
         classAtCursor = PsiTreeUtil.getParentOfType(classAtCursor, PsiClass.class);
       }
@@ -102,41 +106,61 @@ public class GenerateTestMethodAction extends BaseGenerateAction {
       return result;
     }
 
-    private void runMethodTemplate(Project project, final Editor editor, final PsiMethod method) {
-      Template template = TemplateManager.getInstance(project).createTemplate("", "");
+    private void runMethodTemplate(final Project project, final Editor editor, PsiFile file, PsiClass targetClass, final PsiMethod method) {
+      Template template = createMethodTemplate(project, targetClass);
 
-      ConstantNode name = new ConstantNode("Name");
-      template.addVariable("", name, name, true);
-
-      editor.getCaretModel().moveToOffset(method.getNameIdentifier().getTextRange().getEndOffset());
+      final TextRange range = method.getTextRange();
+      editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
+      editor.getCaretModel().moveToOffset(range.getStartOffset());
 
       TemplateManager.getInstance(project).startTemplate(editor, template, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              selectMethodContent(editor, method);
+              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+              PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+              PsiElement method = psi.findElementAt(range.getStartOffset());
+
+              if (method != null) {
+                method = PsiTreeUtil.getParentOfType(method, PsiMethod.class, false);
+                if (method != null) {
+                  CreateFromUsageUtils.setupEditor((PsiMethod)method, editor);
+                }
+              }
             }
           });
         }
       });
     }
 
-    private void selectMethodContent(Editor editor, PsiMethod method) {
-      PsiElement bodyElementToSelect = method.getBody().getFirstBodyElement();
-      while (bodyElementToSelect != null && !(bodyElementToSelect instanceof PsiComment)) {
-        bodyElementToSelect = bodyElementToSelect.getNextSibling();
-      }
-      TextRange range;
-      if (bodyElementToSelect != null) {
-        range = bodyElementToSelect.getTextRange();
+    private Template createMethodTemplate(Project project, PsiClass targetClass) {
+      TestFrameworkDescriptor descriptor = findDescriptor(targetClass);
+
+      String templateName = FileUtil.getNameWithoutExtension(descriptor.getTestMethodFileTemplateDescriptor().getFileName());
+      FileTemplate fileTemplate = FileTemplateManager.getInstance().getTemplate(templateName);
+      Template template = TemplateManager.getInstance(project).createTemplate("", "");
+
+      String templateText = fileTemplate.getText();
+      int index = templateText.indexOf("${NAME}");
+
+      if (index == -1) {
+        template.addTextSegment(templateText);
       }
       else {
-        range = new TextRange(method.getBody().getLBrace().getTextRange().getEndOffset(),
-                              method.getBody().getRBrace().getTextRange().getStartOffset());
+        String nameString = "Name";
+        if (index > 0) {
+          if (Character.isWhitespace(templateText.charAt(index - 1))) {
+            nameString = nameString.toLowerCase();
+          }
+        }
+        template.addTextSegment(templateText.substring(0, index));
+        Expression name = new ConstantNode(nameString);
+        template.addVariable("", name, name, true);
+        template.addTextSegment(templateText.substring(index + "${NAME}".length(), templateText.length()));
       }
-      editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-      editor.getCaretModel().moveToOffset(range.getEndOffset());
+
+      return template;
     }
 
     public boolean startInWriteAction() {

@@ -41,7 +41,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;
   private FileTemplateTab myTemplatesList;
-  private FileTemplateTab myPatternsList;
+  private FileTemplateTab myIncludesList;
   private FileTemplateTab myCodeTemplatesList;
   private FileTemplateTab myJ2eeTemplatesList;
   private JComponent myToolBar;
@@ -144,7 +144,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
         onListSelectionChanged();
       }
     };
-    myPatternsList = new FileTemplateTabAsList(INCLUDES_TITLE) {
+    myIncludesList = new FileTemplateTabAsList(INCLUDES_TITLE) {
       public void onTemplateSelected() {
         onListSelectionChanged();
       }
@@ -156,7 +156,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     };
     myCurrentTab = myTemplatesList;
 
-    List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myPatternsList, myCodeTemplatesList));
+    List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
     final Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
     factories.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class)));
@@ -354,7 +354,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     if (myCurrentTab == myTemplatesList) {
       defDesc = FileTemplateManagerImpl.getInstance().getDefaultTemplateDescription();
     }
-    else if (myCurrentTab == myPatternsList) {
+    else if (myCurrentTab == myIncludesList) {
       defDesc = FileTemplateManagerImpl.getInstance().getDefaultIncludeDescription();
     }
     if (myEditor.getTemplate() != template) {
@@ -427,7 +427,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     FileTemplate[] internals = templateManager.getInternalTemplates();
     FileTemplate[] templatesAndInternals = ArrayUtil.mergeArrays(internals, templates, FileTemplate.class);
     myTemplatesList.init(templatesAndInternals);
-    myPatternsList.init(templateManager.getAllPatterns());
+    myIncludesList.init(templateManager.getAllPatterns());
     myCodeTemplatesList.init(templateManager.getAllCodeTemplates());
     if (myJ2eeTemplatesList != null) {
       myJ2eeTemplatesList.init(templateManager.getAllJ2eeTemplates());
@@ -538,11 +538,11 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
 
     // Apply patterns
     newModifiedItems = new ArrayList<FileTemplate>();
-    templates = myPatternsList.getTemplates();
+    templates = myIncludesList.getTemplates();
     for (FileTemplate template : templates) {
       newModifiedItems.add(template);
     }
-    apply(newModifiedItems, myPatternsList.savedTemplates, PATTERN_ID, templatesManager.getAllPatterns());
+    apply(newModifiedItems, myIncludesList.savedTemplates, PATTERN_ID, templatesManager.getAllPatterns());
 
     //Apply code templates
     newModifiedItems = new ArrayList<FileTemplate>();

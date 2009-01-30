@@ -1,5 +1,6 @@
 package com.intellij.testIntegration;
 
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
@@ -27,4 +28,6 @@ public interface TestFrameworkDescriptor {
   String getTestAnnotation();
 
   boolean isTestClass(PsiElement element);
+
+  FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
 }

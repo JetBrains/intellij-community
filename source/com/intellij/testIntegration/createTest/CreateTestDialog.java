@@ -30,7 +30,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFrameworkDescriptor;
-import com.intellij.testIntegration.TestIntergationUtils;
+import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -183,7 +183,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void updateMethodsTable() {
-    List<MemberInfo> methods = TestIntergationUtils.extractClassMethods(
+    List<MemberInfo> methods = TestIntegrationUtils.extractClassMethods(
         myTargetClass, myShowInheritedMethodsBox.isSelected());
 
     Set<PsiMember> selectedMethods = new HashSet<PsiMember>();

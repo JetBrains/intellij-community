@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
   public PsiClass findSourceElement(PsiElement element) {
-    return TestIntergationUtils.findOuterClass(element);
+    return TestIntegrationUtils.findOuterClass(element);
   }
 
   @NotNull
@@ -155,6 +155,6 @@ public class JavaTestFinder implements TestFinder {
   }
 
   public boolean isTest(PsiElement element) {
-    return TestIntergationUtils.isTest(element);
+    return TestIntegrationUtils.isTest(element);
   }
 }
