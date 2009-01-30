@@ -403,6 +403,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
 
     public boolean existedEarlier(IFile file) {
+      if (myBackup == null) return false;
       return myBackup.containsKey(file);
     }
 
