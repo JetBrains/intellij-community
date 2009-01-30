@@ -145,11 +145,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
 
     protected int getSyncEndOffset() {
-      return super.getSyncEndOffset() - (myDocument != null ? myDocument.injectedToHost(0):0);
+      int syncEndOffset = super.getSyncEndOffset();
+      return (myDocument != null ? myDocument.hostToInjected(syncEndOffset):syncEndOffset);
     }
 
     protected int getSyncStartOffset() {
-      return super.getSyncStartOffset() - (myDocument != null ? myDocument.injectedToHost(0):0);
+      int syncStartOffset = super.getSyncStartOffset();
+      return (myDocument != null ? myDocument.hostToInjected(syncStartOffset):syncStartOffset);
     }
   }
 
