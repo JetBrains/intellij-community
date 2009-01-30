@@ -154,11 +154,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
                                                                 final IElementType outerElementType) {
     final CharSequence buffer = lexer.getBufferSequence();
     final int tokenStart = lexer.getTokenStart();
-    if (tokenStart < 0 || tokenStart >= buffer.length()) {
+    if (tokenStart < 0 || tokenStart > buffer.length()) {
       LOG.assertTrue(false, "Invalid start: " + tokenStart + "; " + lexer);
     }
     final int tokenEnd = lexer.getTokenEnd();
-    if (tokenEnd < 0 || tokenEnd >= buffer.length()) {
+    if (tokenEnd < 0 || tokenEnd > buffer.length()) {
       LOG.assertTrue(false, "Invalid end: " + tokenEnd + "; " + lexer);
     }
 
