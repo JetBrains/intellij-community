@@ -244,6 +244,10 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     console.setCloseable(false);
     attachNotificationTo(console);
 
+    if (myConsole != null) {
+      Disposer.register(this, myConsole);
+    }
+
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (myConsole instanceof ConsoleView) {
       AnAction[] actions = ((ConsoleView)myConsole).createUpDownStacktraceActions();
@@ -251,6 +255,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
         consoleActions.add(goaction);
       }
     }
+
 
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
