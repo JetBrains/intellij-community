@@ -79,7 +79,7 @@ public class FormatterUtil {
     }
   }
 
-  private static ASTNode getLastChildOf(ASTNode element) {
+  public static ASTNode getLastChildOf(ASTNode element) {
     if (element == null) {
       return null;
     }
