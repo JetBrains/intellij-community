@@ -76,14 +76,14 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   }
 
-  private final ThreadLocal<Boolean> myEvaluationIsInProgress = new ThreadLocal<Boolean>() {
+  private static final ThreadLocal<Boolean> myEvaluationIsInProgress = new ThreadLocal<Boolean>() {
     @Override
     protected Boolean initialValue() {
       return Boolean.FALSE;
     }
   };
 
-  public void evaluateDeferred(final Runnable runnable) {
+  public static void evaluateDeferred(final Runnable runnable) {
     try {
       myEvaluationIsInProgress.set(Boolean.TRUE);
       ApplicationManager.getApplication().runReadAction(runnable);

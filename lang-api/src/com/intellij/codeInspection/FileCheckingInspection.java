@@ -20,11 +20,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 31.10.2005
- * Time: 13:48:35
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public interface FileCheckingInspection {
   @Nullable

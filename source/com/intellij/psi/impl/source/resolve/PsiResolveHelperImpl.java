@@ -668,7 +668,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return result;
   }
 
-  private final ThreadLocal<List<PsiMethodCallExpression>> myBlockedForInferenceMethodCalls = new ThreadLocal<List<PsiMethodCallExpression>>() {
+  private static final ThreadLocal<List<PsiMethodCallExpression>> myBlockedForInferenceMethodCalls = new ThreadLocal<List<PsiMethodCallExpression>>() {
     protected List<PsiMethodCallExpression> initialValue() {
       return new ArrayList<PsiMethodCallExpression>(2);
     }

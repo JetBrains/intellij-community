@@ -77,7 +77,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
   public Icon evaluate() {
     final Icon[] evaluated = new Icon[1];
-    ((IconDeferrerImpl)IconDeferrer.getInstance()).evaluateDeferred(new Runnable() {
+    IconDeferrerImpl.evaluateDeferred(new Runnable() {
       public void run() {
         evaluated[0] = nonNull(myEvaluator.fun(myParam));
       }

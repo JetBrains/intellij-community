@@ -28,7 +28,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private final Project myProject;
-  private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
+  private static final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
   private volatile boolean myInitialized;
   private ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;

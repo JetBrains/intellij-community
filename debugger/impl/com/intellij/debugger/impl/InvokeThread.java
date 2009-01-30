@@ -14,13 +14,13 @@ import java.util.concurrent.*;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class InvokeThread<E> {
-  public static enum Priority {
+  public enum Priority {
     HIGH, NORMAL, LOW
   }
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.InvokeThread");
   private final String myWorkerThreadName;
 
-  private static ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<WorkerThreadRequest>();
+  private static final ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<WorkerThreadRequest>();
 
   public static final class WorkerThreadRequest<E> implements Runnable {
     private final InvokeThread<E> myOwner;

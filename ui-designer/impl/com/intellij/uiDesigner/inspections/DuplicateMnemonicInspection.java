@@ -22,7 +22,7 @@ import java.util.List;
  * @author yole
  */
 public class DuplicateMnemonicInspection extends BaseFormInspection {
-  private ThreadLocal<HashMap<IRootContainer, MnemonicMap>> myContainerMnemonicMap = new ThreadLocal<HashMap<IRootContainer, MnemonicMap>>() {
+  private static final ThreadLocal<HashMap<IRootContainer, MnemonicMap>> myContainerMnemonicMap = new ThreadLocal<HashMap<IRootContainer, MnemonicMap>>() {
     @Override
     protected HashMap<IRootContainer, MnemonicMap> initialValue() {
       return new HashMap<IRootContainer, MnemonicMap>();

@@ -62,7 +62,7 @@ public class AnnotationUtil {
   public static final Set<String> ALL_ANNOTATIONS;
 
   @NonNls private static final String[] SIMPLE_NAMES =
-    new String[]{NOT_NULL_SIMPLE_NAME, NULLABLE_SIMPLE_NAME, NON_NLS_SIMPLE_NAME, PROPERTY_KEY_SIMPLE_NAME, TEST_ONLY_SIMPLE_NAME,
+    {NOT_NULL_SIMPLE_NAME, NULLABLE_SIMPLE_NAME, NON_NLS_SIMPLE_NAME, PROPERTY_KEY_SIMPLE_NAME, TEST_ONLY_SIMPLE_NAME,
       "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   static {
@@ -179,12 +179,12 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, false, new THashSet<PsiMethod>());
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, false, null);
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy,
                                     boolean skipExternal) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, new HashSet<PsiMethod>());
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, null);
   }
 
   private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
@@ -212,8 +212,8 @@ public class AnnotationUtil {
     }
     if (checkHierarchy && listOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)listOwner;
-      if (processed.contains(method)) return false;
-      processed.add(method);
+      if (processed == null) processed = new THashSet<PsiMethod>();
+      if (!processed.add(method)) return false;
       final PsiMethod[] superMethods = method.findSuperMethods();
       for (PsiMethod superMethod : superMethods) {
         if (isAnnotated(superMethod, annotationFQN, checkHierarchy, skipExternal, processed)) return true;
