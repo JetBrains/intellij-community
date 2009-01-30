@@ -32,7 +32,7 @@ public class ResolveImportUtil {
   private ResolveImportUtil() {
   }
 
-  static ThreadLocal<Set> myBeingImported = new ThreadLocal<Set>() {
+  private static final ThreadLocal<Set> myBeingImported = new ThreadLocal<Set>() {
     @Override protected Set initialValue() {
       return new HashSet();
     }
