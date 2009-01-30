@@ -36,7 +36,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
@@ -79,24 +78,9 @@ public class FormatterUtil {
     }
   }
 
-  public static ASTNode getLastChildOf(ASTNode element) {
-    if (element == null) {
-      return null;
-    }
-    if (element instanceof LeafElement) {
-      return element;
-    }
-    else {
-      final ASTNode node = element.getLastChildNode();
-      if (node instanceof LeafElement) ChameleonTransforming.transform((LeafElement)node);
-      final ASTNode lastChild = element.getLastChildNode();
-      if (lastChild == null) {
-        return element;
-      }
-      else {
-        return getLastChildOf(lastChild);
-      }
-    }
+  @Nullable
+  private static ASTNode getLastChildOf(ASTNode element) {
+    return TreeUtil.getLastChild(element);
   }
 
   private static boolean isWhiteSpaceElement(ASTNode treePrev) {

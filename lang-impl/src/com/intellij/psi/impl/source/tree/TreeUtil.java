@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -506,6 +507,27 @@ public class TreeUtil {
     final CompositeElement parent = start.getTreeParent();
     if (parent == null) return null;
     return prevLeaf(parent, commonParent);
+  }
+
+  @Nullable
+  public static ASTNode getLastChild(final ASTNode element) {
+    if (element == null) {
+      return null;
+    }
+    if (element instanceof LeafElement) {
+      return element;
+    }
+    else {
+      final ASTNode node = element.getLastChildNode();
+      if (node instanceof LeafElement) ChameleonTransforming.transform((LeafElement)node);
+      final ASTNode lastChild = element.getLastChildNode();
+      if (lastChild == null) {
+        return element;
+      }
+      else {
+        return getLastChild(lastChild);
+      }
+    }
   }
 
   public static final class CommonParentState {
