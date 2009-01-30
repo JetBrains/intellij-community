@@ -6,7 +6,10 @@ import com.intellij.codeInspection.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
@@ -25,10 +28,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AddSuppressInspectionFix extends SuppressIntentionAction {
   private String myID;
+  private String myAlternativeID;
   private String myKey;
 
   public AddSuppressInspectionFix(HighlightDisplayKey key) {
     this(key.getID());
+    myAlternativeID = HighlightDisplayKey.getAlternativeID(key);
   }
 
   public AddSuppressInspectionFix(String ID) {
@@ -78,14 +83,14 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {
-        addSuppressAnnotation(project, editor, container, modifierList, myID);
+        addSuppressAnnotation(project, editor, container, modifierList, getID(container));
       }
     }
     else {
       PsiDocComment docComment = container.getDocComment();
       PsiManager manager = PsiManager.getInstance(project);
       if (docComment == null) {
-        String commentText = "/** @" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID + "*/";
+        String commentText = "/** @" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container) + "*/";
         docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText, null);
         PsiElement firstChild = container.getFirstChild();
         container.addBefore(docComment, firstChild);
@@ -95,11 +100,11 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
         if (noInspectionTag != null) {
           final PsiDocTagValue valueElement = noInspectionTag.getValueElement();
           String tagText = "@" + SuppressionUtil
-              .SUPPRESS_INSPECTIONS_TAG_NAME + " " + (valueElement != null ? valueElement.getText() + "," : "") + myID;
+              .SUPPRESS_INSPECTIONS_TAG_NAME + " " + (valueElement != null ? valueElement.getText() + "," : "") + getID(container);
           noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
         }
         else {
-          String tagText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
+          String tagText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container);
           docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
         }
       }
@@ -151,5 +156,18 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
 
   public boolean startInWriteAction() {
     return true;
+  }
+
+  public String getID(PsiElement place) {
+    if (myAlternativeID != null) {
+      final Module module = ModuleUtil.findModuleForPsiElement(place);
+      if (module != null) {
+        if (!ClasspathStorage.getStorageType(module).equals(ClasspathStorage.DEFAULT_STORAGE)) {
+          return myAlternativeID;
+        }
+      }
+    }
+
+    return myID;
   }
 }

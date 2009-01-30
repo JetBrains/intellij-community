@@ -28,6 +28,7 @@ public class HighlightDisplayKey {
 
   private static final HashMap<String,HighlightDisplayKey> ourMap = new HashMap<String, HighlightDisplayKey>();
   private static final Map<HighlightDisplayKey, String> ourKeyToDisplayNameMap = new HashMap<HighlightDisplayKey, String>();
+  private static final Map<HighlightDisplayKey, String> ourKeyToAlternativeIDMap = new HashMap<HighlightDisplayKey, String>();
 
   private final String myName;
   private final String myID;
@@ -81,5 +82,17 @@ public class HighlightDisplayKey {
 
   public String getID(){
     return myID;
+  }
+
+  public static HighlightDisplayKey register(String shortName, String displayName, String id, String alternativeID) {
+    final HighlightDisplayKey key = register(shortName, displayName, id);
+    if (alternativeID != null) {
+      ourKeyToAlternativeIDMap.put(key, alternativeID);
+    }
+    return key;
+  }
+
+  public static String getAlternativeID(HighlightDisplayKey key) {
+    return ourKeyToAlternativeIDMap.get(key);
   }
 }

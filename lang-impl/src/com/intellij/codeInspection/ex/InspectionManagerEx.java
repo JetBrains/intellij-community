@@ -185,7 +185,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     if (tool instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)tool).isSuppressedFor(place);
     }
-    return isSuppressed(place, tool.getID());
+    return isSuppressed(place, tool.getID()) || isSuppressed(place, tool.getAlternativeID());
   }
 
   public static boolean canRunInspections(final Project project, final boolean online) {
@@ -198,6 +198,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public static boolean isSuppressed(PsiElement psiElement, String id) {
+    if (id == null) return false;
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       if (!factory.isToCheckMember(psiElement, id)) {
         return true;

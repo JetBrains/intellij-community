@@ -420,7 +420,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         final String shortName = tool.getShortName();
         if (HighlightDisplayKey.find(shortName) == null) {
           if (tool instanceof LocalInspectionToolWrapper) {
-            HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+            HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID(),((LocalInspectionToolWrapper)tool).getTool().getAlternativeID());
           } else {
             HighlightDisplayKey.register(shortName);
           }

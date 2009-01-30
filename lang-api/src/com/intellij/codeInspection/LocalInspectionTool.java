@@ -24,6 +24,12 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return getShortName();
   }
 
+  @NonNls
+  @Nullable
+  public String getAlternativeID() {
+    return null;
+  }
+
   /**
    * Override this method and return true if your inspection (unlike almost all others)
    * must be called for every element in the whole file for each change, whatever small it was.

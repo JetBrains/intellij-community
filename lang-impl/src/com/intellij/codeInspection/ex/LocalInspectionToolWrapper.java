@@ -71,7 +71,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       final PsiElement elt = descriptor.getPsiElement();
       if (elt == null) continue;
       if (filterSuppressed) {
-        if (refManager.isDeclarationsFound() && getContext().isSuppressed(elt, myTool.getID())) {
+        if (refManager.isDeclarationsFound() && (getContext().isSuppressed(elt, myTool.getID()) || getContext().isSuppressed(elt, myTool.getAlternativeID()))) {
           continue;
         }
         if (InspectionManagerEx.inspectionResultSuppressed(elt, myTool)) continue;

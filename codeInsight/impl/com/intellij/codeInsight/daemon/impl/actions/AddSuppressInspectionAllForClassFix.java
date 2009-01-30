@@ -29,9 +29,7 @@ public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFi
     super(ID);
   }
 
-  public AddSuppressInspectionAllForClassFix(final String id) {
-   super(id);
-  }
+
 
   @Nullable
   protected PsiDocCommentOwner getContainer(final PsiElement element) {

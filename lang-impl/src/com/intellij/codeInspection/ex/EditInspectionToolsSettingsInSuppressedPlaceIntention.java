@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
     return InspectionsBundle.message("edit.inspection.options", myDisplayName);
   }
 
+  @Nullable
   private static String getSuppressedId(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
@@ -69,6 +71,7 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
     return myId != null;
   }
 
+  @Nullable
   private InspectionProfileEntry getTool(final Project project, final PsiFile file) {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile(file);

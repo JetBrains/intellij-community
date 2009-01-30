@@ -124,6 +124,6 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
   }
 
   public boolean isSuppressedFor(final PsiElement element) {
-    return SuppressManager.getInstance().isSuppressedFor(element, getID());
+    return SuppressManager.getInstance().isSuppressedFor(element, getID()) || SuppressManager.getInstance().isSuppressedFor(element, getAlternativeID());
   }
 }
