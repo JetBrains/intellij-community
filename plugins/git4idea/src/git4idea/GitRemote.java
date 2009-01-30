@@ -255,6 +255,9 @@ public final class GitRemote {
      */
     @Nullable
     public String getRemoteForLocal(final String localBranchName) {
+      if(localBranchName == null) {
+        return null;
+      }
       return myBranchMapping.get(localBranchName);
     }
 
