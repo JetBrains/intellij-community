@@ -1,7 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.changes.local.*;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,12 +15,12 @@ public class Modifier implements ChangeListsWriteOperations {
   private final ChangeListWorker myWorker;
   private boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
-  private final EventDispatcher<ChangeListListener> myDispatcher;
+  private final DelayedNotificator myNotificator;
 
-  public Modifier(final ChangeListWorker worker, final EventDispatcher<ChangeListListener> dispatcher) {
+  public Modifier(final ChangeListWorker worker, final DelayedNotificator notificator) {
     myWorker = worker;
+    myNotificator = notificator;
     myCommandQueue = new LinkedList<ChangeListCommand>();
-    myDispatcher = dispatcher;
   }
 
   public LocalChangeList addChangeList(@NotNull final String name, final String comment) {
@@ -55,7 +54,7 @@ public class Modifier implements ChangeListsWriteOperations {
       // notify after change lsist are synchronized
     } else {
       // notify immediately
-      command.doNotify(myDispatcher);
+      myNotificator.callNotify(command);
     }
   }
 
@@ -96,7 +95,7 @@ public class Modifier implements ChangeListsWriteOperations {
   public void apply(final ChangeListWorker worker) {
     for (ChangeListCommand command : myCommandQueue) {
       command.apply(worker);
-      command.doNotify(myDispatcher);
+      myNotificator.callNotify(command);
     }
   }
 }

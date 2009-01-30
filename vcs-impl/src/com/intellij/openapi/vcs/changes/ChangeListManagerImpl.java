@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -23,7 +24,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.Topic;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +72,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private boolean myShowLocalChangesInvalidated;
 
+  private final DelayedNotificator myDelayedNotificator;
+
   private VcsListener myVcsListener = new VcsListener() {
     public void directoryMappingChanged() {
       VcsDirtyScopeManager.getInstanceChecked(myProject).markEverythingDirty();
@@ -92,7 +94,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, new ActualUpdater());
 
     myWorker = new ChangeListWorker(myProject);
-    myModifier = new Modifier(myWorker, myListeners);
+    myDelayedNotificator = new DelayedNotificator(myListeners, ourUpdateAlarm);
+    myModifier = new Modifier(myWorker, myDelayedNotificator);
   }
 
   public void projectOpened() {
