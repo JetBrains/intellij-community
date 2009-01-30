@@ -539,4 +539,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   public boolean hasModifierProperty(@NonNls @NotNull final String name) {
     return false;
   }
+
+  public PsiQualifiedNamedElement getContainer() {
+    return getParentPackage();
+  }
 }

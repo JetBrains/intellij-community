@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> implements PsiClass {
+public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> implements PsiClass, PsiQualifiedNamedElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsClassImpl");
 
   private volatile Map<String, PsiField> myCachedFieldsMap = null;
@@ -542,5 +542,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   @NotNull
   public SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);
+  }
+
+  public PsiQualifiedNamedElement getContainer() {
+    final PsiFile file = getContainingFile();
+    final PsiDirectory dir;
+    return file == null ? null : (dir = file.getContainingDirectory()) == null
+                                 ? null : JavaDirectoryService.getInstance().getPackage(dir);
   }
 }

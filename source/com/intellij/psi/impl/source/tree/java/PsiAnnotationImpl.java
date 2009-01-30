@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> implements PsiAnnotation {
+public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> implements PsiAnnotation, PsiQualifiedNamedElement {
   public PsiAnnotationImpl(final PsiAnnotationStub stub) {
     super(stub, JavaStubElementTypes.ANNOTATION);
   }
@@ -75,5 +75,12 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
 
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
+  }
+
+  @Nullable
+  public PsiQualifiedNamedElement getContainer() {
+    final String fqn = getQualifiedName();
+    final PsiClass cls = fqn == null ? null : JavaPsiFacade.getInstance(getProject()).findClass(fqn, getResolveScope());
+    return cls instanceof PsiQualifiedNamedElement ? (PsiQualifiedNamedElement)cls : null;
   }
 }
