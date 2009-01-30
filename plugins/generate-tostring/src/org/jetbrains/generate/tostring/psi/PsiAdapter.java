@@ -644,12 +644,12 @@ public abstract class PsiAdapter {
         // is it public static void main(String[] args)
         for (PsiMethod method : methods) {
             // must be public
-            if (!method.getModifierList().hasModifierProperty("public")) {
+            if (!method.hasModifierProperty("public")) {
                 continue;
             }
 
             // must be static
-            if (!method.getModifierList().hasModifierProperty("static")) {
+            if (!method.hasModifierProperty("static")) {
                 continue;
             }
 
@@ -960,14 +960,14 @@ public abstract class PsiAdapter {
         // is it public boolean equals(Object o)
         for (PsiMethod method : methods) {
             // must be public
-            if (!method.getModifierList().hasModifierProperty("public")) {
+            if (!method.hasModifierProperty("public")) {
                 continue;
             }
 
             // must not be static
-            if (method.getModifierList().hasModifierProperty("static")) {
-                continue;
-            }
+          if (method.hasModifierProperty("static")) {
+            continue;
+          }
 
             // must have boolean as return type
             PsiType returnType = method.getReturnType();
@@ -1007,14 +1007,14 @@ public abstract class PsiAdapter {
         // is it public int hashCode()
         for (PsiMethod method : methods) {
             // must be public
-            if (!method.getModifierList().hasModifierProperty("public")) {
+            if (!method.hasModifierProperty("public")) {
                 continue;
             }
 
             // must not be static
-            if (method.getModifierList().hasModifierProperty("static")) {
-                continue;
-            }
+          if (method.hasModifierProperty("static")) {
+            continue;
+          }
 
             // must have int as return type
             PsiType returnType = method.getReturnType();

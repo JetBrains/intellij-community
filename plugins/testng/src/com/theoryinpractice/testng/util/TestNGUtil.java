@@ -164,7 +164,7 @@ public class TestNGUtil implements TestFramework
       PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false, true)) {
         //even if it has a global test, we ignore private methods
-        boolean isPrivate = element.getModifierList().hasModifierProperty(PsiModifier.PRIVATE);
+        boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
         return !isPrivate;
       }
       if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;

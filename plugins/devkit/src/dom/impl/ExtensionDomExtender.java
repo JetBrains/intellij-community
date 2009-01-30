@@ -105,7 +105,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static void registerXmlb(final DomExtensionsRegistrar registrar, final PsiClass beanClass) {
     final PsiField[] fields = beanClass.getAllFields();
     for (PsiField field : fields) {
-      if (field.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
         registerField(registrar, field);
       }
     }

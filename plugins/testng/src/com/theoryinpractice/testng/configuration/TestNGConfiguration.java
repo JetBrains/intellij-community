@@ -215,7 +215,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
           throw new RuntimeConfigurationException("Invalid method '" + data.getMethodName() + "'specified");
         }
         for (PsiMethod method : methods) {
-          if (!method.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
+          if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
             throw new RuntimeConfigurationException("Non public method '" + data.getMethodName() + "'specified");
           }
         }
