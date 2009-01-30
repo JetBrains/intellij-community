@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.ThreeStateBoolean;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +59,7 @@ public class RootsCalculator {
 
   private void addRootIfOutsideOfExisting(final List<VirtualFile> roots, final VirtualFile newFile) {
     if (newFile == null || (! newFile.isDirectory())) return;
-    if ((! ApplicationManager.getApplication().isUnitTestMode()) && (! myVcs.isVersionedDirectory(newFile))) return;
+    if ((! ApplicationManager.getApplication().isUnitTestMode()) && (ThreeStateBoolean.no.equals(myVcs.isVersionedDirectory(newFile)))) return;
     
     boolean found = false;
     final List<VirtualFile> herselfParentOf = new ArrayList<VirtualFile>();

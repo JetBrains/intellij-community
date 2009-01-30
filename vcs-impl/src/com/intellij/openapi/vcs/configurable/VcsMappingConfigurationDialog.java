@@ -5,21 +5,18 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.options.ConfigurationException;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
 
 /**
  * @author yole
@@ -131,7 +128,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       final VcsWrapper wrapper = (VcsWrapper)myVCSComboBox.getSelectedItem();
       if (oldText.length() == 0 && wrapper.getOriginal() == null) {
         for(AbstractVcs vcs: ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
-          if (vcs.isVersionedDirectory(chosenFile)) {
+          if (ThreeStateBoolean.yes.equals(vcs.isVersionedDirectory(chosenFile))) {
             myVCSComboBox.setSelectedItem(new VcsWrapper(vcs));
             break;
           }

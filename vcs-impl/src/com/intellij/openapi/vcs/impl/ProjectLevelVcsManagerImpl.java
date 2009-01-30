@@ -875,7 +875,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Nullable
   public AbstractVcs findVersioningVcs(VirtualFile file) {
     for(AbstractVcs vcs: getAllVcss()) {
-      if (vcs.isVersionedDirectory(file)) {
+      if (ThreeStateBoolean.yes.equals(vcs.isVersionedDirectory(file))) {
         return vcs;
       }
     }
