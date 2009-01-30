@@ -28,7 +28,7 @@
           </grid>
         </constraints>
         <properties>
-          <text value="&amp;Keep .ipr and .iml files in"/>
+          <text value="&amp;Keep project files in"/>
         </properties>
       </component>
       <component id="d7aa1" class="javax.swing.JCheckBox" binding="myUseExhaustiveSearchCheckBox">
