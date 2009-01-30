@@ -2,6 +2,7 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.tabs.TabInfo;
 
+import java.awt.*;
 import java.util.List;
 
 public abstract class LayoutPassInfo {
@@ -24,4 +25,6 @@ public abstract class LayoutPassInfo {
   public abstract TabInfo getTabAt(int row, int column);
 
   public abstract boolean hasCurveSpaceFor(final TabInfo tabInfo);
+  
+  public abstract Rectangle getHeaderRectangle();
 }

@@ -2,7 +2,9 @@ package com.intellij.ui.tabs.impl;
 
 import java.awt.*;
 
-public class TabLayout {
+public abstract class TabLayout {
+  private Rectangle myHeaderRect;
+
   public ShapeTransform createShapeTransform(Dimension dimension) {
     return createShapeTransform(new Rectangle(0, 0, dimension.width, dimension.height));
   }
@@ -14,4 +16,5 @@ public class TabLayout {
   public boolean isSideComponentOnTabs() {
     return false;
   }
+
 }

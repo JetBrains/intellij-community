@@ -9,9 +9,9 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.util.ui.Centerizer;
 
 import javax.swing.*;
@@ -19,6 +19,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel {
   private SimpleColoredComponent myLabel = new SimpleColoredComponent();
@@ -31,6 +32,8 @@ public class TabLabel extends JPanel {
 
   private Wrapper myLabelPlaceholder = new Wrapper();
   private JBTabsImpl myTabs;
+
+  private BufferedImage myImage;
 
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     myTabs = tabs;
@@ -88,6 +91,19 @@ public class TabLabel extends JPanel {
   }
 
   public void paint(final Graphics g) {
+    if (myTabs.getSelectedInfo() != myInfo) {
+      doPaint(g);      
+    }
+  }
+
+  public void paintImage(Graphics g) {
+    final Rectangle b = getBounds();
+    g.translate(b.x, b.y);
+
+    doPaint(g);
+  }
+
+  private void doPaint(Graphics g) {
     final JBTabsPosition pos = myTabs.getTabsPosition();
 
     int dX = 0, dXs = 0, dY = 0, dYs = 0;
@@ -352,5 +368,10 @@ public class TabLabel extends JPanel {
     if (myActionPanel != null) {
       myActionPanel.toggleShowActtions(show);
     }
+  }
+
+  @Override
+  public String toString() {
+    return myInfo.getText();
   }
 }

@@ -132,29 +132,6 @@ public class SingleRowLayout extends TabLayout {
       getStrategy().layoutComp(data);
     }
 
-    //data.compPosition = getStrategy().getComponentPosition(data);
-    //
-    //if (selectedToolbar != null) {
-    //  Rectangle tb = getStrategy().getToolbarRec(data, selectedToolbar);
-    //  if (tb != null) {
-    //    myTabs.layout(selectedToolbar, tb);
-    //  }
-    //}
-
-
-
-    //if (selected != null) {
-    //  final JComponent comp = selected.getComponent();
-    //  Point point = getStrategy().getCompPoint(data);
-    //  Dimension sizeDelta = getStrategy().getCompSizeDelta(data);
-    //
-    //  //todo: kirillk - remove magic
-    //  final int compY = point.y + (myTabs.isStealthModeEffective() ? 1 : 0);
-    //
-    //  myTabs.layoutComp(point.x, compY, comp, sizeDelta.width, sizeDelta.height);
-    //}
-
-
     if (data.toLayout.size() > 0 && myTabs.myVisibleInfos.size() > 0) {
       final int left = myTabs.myVisibleInfos.indexOf(data.toLayout.get(0));
       final int right = myTabs.myVisibleInfos.indexOf(data.toLayout.get(data.toLayout.size() - 1));
@@ -164,6 +141,18 @@ public class SingleRowLayout extends TabLayout {
       myMoreIcon.setPaintedIcons(false, false);
     }
 
+    data.tabRectangle = new Rectangle();
+
+    if (data.toLayout.size() > 0) {
+      final TabLabel firstLabel = myTabs.myInfo2Label.get(data.toLayout.get(0));
+      final TabLabel lastLabel = myTabs.myInfo2Label.get(data.toLayout.get(data.toLayout.size() - 1));
+      if (firstLabel != null && lastLabel != null) {
+        data.tabRectangle.x = firstLabel.getBounds().x;
+        data.tabRectangle.y = firstLabel.getBounds().y;
+        data.tabRectangle.width = (int)lastLabel.getBounds().getMaxX() - data.tabRectangle.x;
+        data.tabRectangle.height = (int)lastLabel.getBounds().getMaxY() - data.tabRectangle.y;
+      }
+    }
 
     myLastSingRowLayout = data;
     return data;
@@ -335,5 +324,4 @@ public class SingleRowLayout extends TabLayout {
       }
     }
   }
-
 }

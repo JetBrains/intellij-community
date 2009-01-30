@@ -57,4 +57,9 @@ public class TablePassInfo extends LayoutPassInfo {
     final TableRow row = myInfo2Row.get(tabInfo);
     return row.myColumns.indexOf(tabInfo) < row.myColumns.size() - 1;
   }
+
+  @Override
+  public Rectangle getHeaderRectangle() {
+    return (Rectangle)toFitRec.clone();
+  }
 }

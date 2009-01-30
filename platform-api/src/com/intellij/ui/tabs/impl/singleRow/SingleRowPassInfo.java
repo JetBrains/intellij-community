@@ -34,6 +34,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
 
   private JBTabsImpl myTabs;
   public JComponent comp;
+  public Rectangle tabRectangle;
 
   public SingleRowPassInfo(SingleRowLayout layout) {
     myTabs = layout.myTabs;
@@ -62,6 +63,10 @@ public class SingleRowPassInfo extends LayoutPassInfo {
 
   public TabInfo getTabAt(final int row, final int column) {
     return myTabs.myVisibleInfos.get(column);
+  }
+
+  public Rectangle getHeaderRectangle() {
+    return (Rectangle)tabRectangle.clone();
   }
 
   public boolean hasCurveSpaceFor(final TabInfo tabInfo) {

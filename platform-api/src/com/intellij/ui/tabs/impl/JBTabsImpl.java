@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
@@ -40,8 +39,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class JBTabsImpl extends JComponent
-  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation {
+public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -82,7 +80,7 @@ public class JBTabsImpl extends JComponent
 
 
   private TabLayout myLayout = mySingleRowLayout;
-  private LayoutPassInfo myLastLayoutPass;
+  LayoutPassInfo myLastLayoutPass;
 
   public boolean myForcedRelayout;
 
@@ -315,7 +313,7 @@ public class JBTabsImpl extends JComponent
         }, FocusEvent.FOCUS_EVENT_MASK, JBTabsImpl.this);
 
         myDragHelper = new DragHelper(this);
-        //myDragHelper.start();
+        myDragHelper.start();
       }
     }
     finally {
@@ -1084,6 +1082,9 @@ public class JBTabsImpl extends JComponent
         layout(label, insets.left, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
       }
 
+
+      moveDraggedTabLabel();
+
       myTabActionsAutoHideListener.processMouseOver();
     }
     finally {
@@ -1091,6 +1092,20 @@ public class JBTabsImpl extends JComponent
     }
 
     applyResetComponents();
+  }
+
+  void moveDraggedTabLabel() {
+    if (myDragHelper != null && myDragHelper.myDragRec != null) {
+      final TabLabel selectedLabel = myInfo2Label.get(getSelectedInfo());
+      if (selectedLabel != null) {
+        final Rectangle bounds = selectedLabel.getBounds();
+        if (isHorizontalTabs()) {
+          selectedLabel.setBounds(myDragHelper.myDragRec.x, bounds.y, bounds.width, bounds.height);
+        } else {
+          selectedLabel.setBounds(bounds.x, myDragHelper.myDragRec.y, bounds.width, bounds.height);
+        }
+      }
+    }
   }
 
   private Dimension computeHeaderFitSize() {
@@ -1211,15 +1226,16 @@ public class JBTabsImpl extends JComponent
 
     if (myVisibleInfos.size() == 0) return;
 
-    final GraphicsConfig config = new GraphicsConfig(g);
-    config.setAntialiasing(true);
-
     Graphics2D g2d = (Graphics2D)g;
 
+    final GraphicsConfig config = new GraphicsConfig(g2d);
+    config.setAntialiasing(true);
 
-    g.setColor(getBackground());
-    final Rectangle clip = g.getClipBounds();
-    g.fillRect(clip.x, clip.y, clip.width, clip.height);
+
+
+    g2d.setColor(getBackground());
+    final Rectangle clip = g2d.getClipBounds();
+    g2d.fillRect(clip.x, clip.y, clip.width, clip.height);
 
     final TabInfo selected = getSelectedInfo();
 
@@ -1240,9 +1256,22 @@ public class JBTabsImpl extends JComponent
 
     }
 
-    if (selected == null) return;
-    if (getSelectedLabel() == null) return;
+    config.setAntialiasing(false);
 
+    if (isSideComponentVertical()) {
+      Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
+      if (toolbarComp != null && !toolbarComp.isEmpty()) {
+        Rectangle toolBounds = toolbarComp.getBounds();
+        g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR);
+        g2d.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
+      }
+    }
+
+    config.restore();
+  }
+
+  private void paintSelectionAndBorder(Graphics2D g2d) {
+    if (getSelectedLabel() == null) return;
 
     final ShapeInfo shapeInfo = computeSelectedLabelShape();
     if (!isHideTabs()) {
@@ -1313,18 +1342,6 @@ public class JBTabsImpl extends JComponent
     }
 
     paintBorder(g2d, shapeInfo, borderColor);
-
-    config.setAntialiasing(false);
-    if (isSideComponentVertical()) {
-      Toolbar toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
-      if (toolbarComp != null && !toolbarComp.isEmpty()) {
-        Rectangle toolBounds = toolbarComp.getBounds();
-        g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR);
-        g.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
-      }
-    }
-
-    config.restore();
   }
 
   private ShapeInfo computeSelectedLabelShape() {
@@ -1653,8 +1670,6 @@ public class JBTabsImpl extends JComponent
       return;
     }
 
-    //System.out.println("JBTabsImpl.paint clip=" + clip);
-
     if (myPaintBlocked) {
       if (myImage != null) {
         g.drawImage(myImage, 0, 0, getWidth(), getHeight(), null);
@@ -1668,47 +1683,17 @@ public class JBTabsImpl extends JComponent
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
-    //if (isSingleRow() && myLastSingRowLayout != null) {
-    //  final List<TabInfo> infos = myLastSingRowLayout.toLayout;
-    //  for (int i = 1; i < infos.size(); i++) {
-    //    final TabInfo each = infos.get(i);
-    //    if (getSelectedInfo() != each && getSelectedInfo() != infos.get(i - 1)) {
-    //      drawSeparator(g, each);
-    //    }
-    //  }
-    //}
-    //else if (!isSingleRow() && myLastTableLayout != null) {
-    //  final List<TableRow> table = myLastTableLayout.table;
-    //  for (TableRow eachRow : table) {
-    //    final List<TabInfo> infos = eachRow.myColumns;
-    //    for (int i = 1; i < infos.size(); i++) {
-    //      final TabInfo each = infos.get(i);
-    //      if (getSelectedInfo() != each && getSelectedInfo() != infos.get(i - 1)) {
-    //        drawSeparator(g, each);
-    //      }
-    //    }
-    //  }
-    //}
+    final GraphicsConfig config = new GraphicsConfig(g);
+    config.setAntialiasing(true);
+    paintSelectionAndBorder((Graphics2D)g);
+    config.restore();
+
+    final TabLabel selected = getSelectedLabel();
+    if (selected != null) {
+      selected.paintImage(g);
+    }
+
     mySingleRowLayout.myMoreIcon.paintIcon(this, g);
-
-    //g.setColor(Color.red);
-    //if (myDragHelper.myDragRec != null) {
-    //  ((Graphics2D)g).draw(myDragHelper.myDragRec);
-    //}
-  }
-
-  private void drawSeparator(Graphics g, TabInfo info) {
-    final TabLabel label = myInfo2Label.get(info);
-    if (label == null) return;
-    final Rectangle bounds = label.getBounds();
-
-    final double height = bounds.height * 0.85d;
-    final double delta = bounds.height - height;
-
-    final int y1 = (int)(bounds.y + delta) + 1;
-    final int x1 = bounds.x;
-    final int y2 = (int)(bounds.y + bounds.height - delta);
-    UIUtil.drawVDottedLine((Graphics2D)g, x1, y1, y2, getBackground(), Color.gray);
   }
 
   private Max computeMaxSize() {
@@ -1968,6 +1953,8 @@ public class JBTabsImpl extends JComponent
 
   @Nullable
   private void updateContainer(boolean forced, final boolean layoutNow) {
+    final TabLabel selectedLabel = getSelectedLabel();
+
     for (TabInfo each : myVisibleInfos) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
@@ -2011,7 +1998,7 @@ public class JBTabsImpl extends JComponent
     return c.getRootPane() != null;
   }
 
-  private void relayout(boolean forced, final boolean layoutNow) {
+  void relayout(boolean forced, final boolean layoutNow) {
     if (!myForcedRelayout) {
       myForcedRelayout = forced;
     }
@@ -2501,82 +2488,28 @@ public class JBTabsImpl extends JComponent
     return myTabDraggingEnabled && isSingleRow();
   }
 
-  private static class DragHelper extends MouseDragHelper {
+  void reallocate(TabInfo source, TabInfo target, boolean before) {
+    if (source == target || source == null || target == null) return;
 
-    JBTabsImpl myTabs;
+    final int targetIndex = myVisibleInfos.indexOf(target);
+    final int sourceIndex = myVisibleInfos.indexOf(source);
 
-    TabInfo myDragSource;
-    TabInfo myDragTarget;
+    boolean needsValidation = false;
 
-    Rectangle myDragRec;
+    myVisibleInfos.remove(source);
+    myVisibleInfos.add(targetIndex, source);
+    needsValidation = true;
 
-    Dimension myHoldDelta;
+    //if (before && targetIndex < sourceIndex || !before && targetIndex > sourceIndex) {
+    //}
 
-    public DragHelper(JBTabsImpl tabs) {
-      super(tabs, tabs);
-      myTabs = tabs;
+    if (needsValidation) {
+      invalidate();
+      relayout(true, true);
     }
+  }
 
-    protected void processDrag(MouseEvent event, Point targetScreenPoint) {
-      if (!myTabs.isTabDraggingEnabled()) return;
-
-      final Point point = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), myTabs);
-
-      if (isDragJustStarted()) {
-        final TabLabel label = findLabel(point);
-        final Rectangle labelBounds = label.getBounds();
-
-        myHoldDelta = new Dimension(point.x - labelBounds.x, point.y - labelBounds.y);
-        myDragSource = label.getInfo();
-        myDragRec = new Rectangle(point, labelBounds.getSize());
-      }
-      else {
-        myDragRec.x = point.x;
-        myDragRec.y = point.y;
-      }
-
-      myDragRec.x -= myHoldDelta.width;
-      myDragRec.y -= myHoldDelta.height;
-
-
-      final TabLabel topLeft = findLabel(new Point(myDragRec.x, myDragRec.y));
-      final TabLabel bottomLeft = findLabel(new Point(myDragRec.x, myDragRec.y + myDragRec.height));
-      final TabLabel topRight = findLabel(new Point(myDragRec.x + myDragRec.width, myDragRec.y));
-      final TabLabel bottomRight = findLabel(new Point(myDragRec.x + myDragRec.width, myDragRec.y + myDragRec.height));
-
-      final TabLabel targetLabel = findMostOverlapping(topLeft, bottomLeft, topRight, bottomRight);
-
-    }
-
-    private TabLabel findMostOverlapping(TabLabel... labels) {
-      return null;
-    }
-
-    private TabLabel findLabel(Point dragPoint) {
-      return findLabel(myTabs.findComponentAt(dragPoint));
-    }
-
-    @Nullable
-    private TabLabel findLabel(Component c) {
-      Component eachParent = c;
-      while (eachParent != null && eachParent != myTabs) {
-        if (eachParent instanceof TabLabel) return (TabLabel)eachParent;
-        eachParent = eachParent.getParent();
-      }
-
-      return null;
-    }
-
-
-    @Override
-    protected boolean canStartDragging(JComponent dragComponent, Point dragComponentPoint) {
-      return findLabel(dragComponentPoint) != null;
-    }
-
-    @Override
-    protected void processDragFinish(MouseEvent even) {
-      myDragSource = null;
-      myDragRec = null;
-    }
+  boolean isHorizontalTabs() {
+    return getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
   }
 }
