@@ -41,7 +41,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     myMode = mode;
     myNamePathComponent = new NamePathComponent(
       IdeBundle.message("label.project.name"),
-      IdeBundle.message("label.component.file.location", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      IdeBundle.message("label.project.files.location"),
       IdeBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
       IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
       true, false

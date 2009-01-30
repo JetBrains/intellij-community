@@ -4,6 +4,7 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
+import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -51,6 +52,7 @@ public class ImportMode extends WizardMode {
       for (ModuleWizardStep step : steps) {
         sequence.addCommonStep(step);
       }
+      sequence.addCommonStep(new ProjectNameStep(context, sequence, this));
       stepSequence.addSpecificSteps(provider.getId(), sequence);
     }
     return stepSequence;
