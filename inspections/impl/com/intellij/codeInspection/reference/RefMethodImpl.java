@@ -19,12 +19,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
-  private static final ArrayList<RefMethod> EMPTY_METHOD_LIST = new ArrayList<RefMethod>(0);
+  private static final List<RefMethod> EMPTY_METHOD_LIST = Collections.emptyList();
   private static final RefParameter[] EMPTY_PARAMS_ARRAY = new RefParameter[0];
 
   private static final int IS_APPMAIN_MASK = 0x10000;
@@ -124,10 +122,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private void checkForSuperCall(PsiMethod method) {
     if (isConstructor()) {
-      boolean isBaseExplicitlyCalled = false;
       PsiCodeBlock body = method.getBody();
       if (body == null) return;
       PsiStatement[] statements = body.getStatements();
+      boolean isBaseExplicitlyCalled = false;
       if (statements.length > 0) {
         PsiStatement first = statements[0];
         if (first instanceof PsiExpressionStatement) {
@@ -280,7 +278,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     @NonNls final String name = method.getName();
     if (getOwnerClass().isTestCase() && name.startsWith("test")) return;
 
-    if (getSuperMethods().size() == 0) {
+    if (getSuperMethods().isEmpty()) {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
       if (throwsList.length > 0) {
         myUnThrownExceptions = new ArrayList<PsiClass>(throwsList.length);
@@ -345,7 +343,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public boolean hasSuperMethods() {
-    return getSuperMethods().size() > 0 || isLibraryOverride(new HashSet<RefMethod>());
+    return !getSuperMethods().isEmpty() || isLibraryOverride(new HashSet<RefMethod>());
   }
 
   public boolean isReferenced() {
@@ -493,7 +491,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void updateReturnValueTemplate(PsiExpression expression) {
     if (myReturnValueTemplate == null) return;
 
-    if (getSuperMethods().size() > 0) {
+    if (!getSuperMethods().isEmpty()) {
       for (final RefMethod refMethod : getSuperMethods()) {
         RefMethodImpl refSuper = (RefMethodImpl)refMethod;
         refSuper.updateReturnValueTemplate(expression);
@@ -529,7 +527,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void updateParameterValues(PsiExpression[] args) {
     if (isExternalOverride()) return;
 
-    if (getSuperMethods().size() > 0) {
+    if (!getSuperMethods().isEmpty()) {
       for (RefMethod refSuper : getSuperMethods()) {
         ((RefMethodImpl)refSuper).updateParameterValues(args);
       }
@@ -556,7 +554,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void updateThrowsList(PsiClassType exceptionType) {
-    if (getSuperMethods().size() > 0) {
+    if (!getSuperMethods().isEmpty()) {
       for (RefMethod refSuper : getSuperMethods()) {
         ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
       }
@@ -575,7 +573,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         }
       }
 
-      if (myUnThrownExceptions.size() == 0) myUnThrownExceptions = null;
+      if (myUnThrownExceptions.isEmpty()) myUnThrownExceptions = null;
     }
   }
 

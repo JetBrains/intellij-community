@@ -295,8 +295,8 @@ public class InspectionTree extends Tree {
   }
 
   private class SelectionPath {
-    private Object[] myPath;
-    private int[] myIndicies;
+    private final Object[] myPath;
+    private final int[] myIndicies;
 
     public SelectionPath(TreePath path) {
       myPath = path.getPath();

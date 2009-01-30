@@ -57,72 +57,73 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
                                                 InspectionManager manager,
                                                 GlobalInspectionContext globalContext,
                                                 ProblemDescriptionsProcessor processor) {
-    if (refEntity instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refEntity;
+    if (!(refEntity instanceof RefMethod)) {
+      return null;
+    }
+    final RefMethod refMethod = (RefMethod)refEntity;
 
-      if (!isBodyEmpty(refMethod)) return null;
-      if (refMethod.isConstructor()) return null;
-      if (refMethod.isSyntheticJSP()) return null;
+    if (!isBodyEmpty(refMethod)) return null;
+    if (refMethod.isConstructor()) return null;
+    if (refMethod.isSyntheticJSP()) return null;
 
-      for (RefMethod refSuper : refMethod.getSuperMethods()) {
-        if (checkElement(refSuper, scope, manager, globalContext, processor) != null) return null;
+    for (RefMethod refSuper : refMethod.getSuperMethods()) {
+      if (checkElement(refSuper, scope, manager, globalContext, processor) != null) return null;
+    }
+
+    String message = null;
+    boolean needToDeleteHierarchy = false;
+    if (refMethod.isOnlyCallsSuper() && !refMethod.isFinal()) {
+      RefMethod refSuper = findSuperWithBody(refMethod);
+      final RefJavaUtil refUtil = RefJavaUtil.getInstance();
+      if (refSuper != null && Comparing.strEqual(refMethod.getAccessModifier(), refSuper.getAccessModifier())){
+        if (Comparing.strEqual(refSuper.getAccessModifier(), PsiModifier.PROTECTED) //protected modificator gives access to method in another package
+            && !Comparing.strEqual(refUtil.getPackageName(refSuper), refUtil.getPackageName(refMethod))) return null;
       }
-
-      String message = null;
-      boolean needToDeleteHierarchy = false;
-      if (refMethod.isOnlyCallsSuper() && !refMethod.isFinal()) {
-        RefMethod refSuper = findSuperWithBody(refMethod);
-        final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-        if (refSuper != null && Comparing.strEqual(refMethod.getAccessModifier(), refSuper.getAccessModifier())){
-          if (Comparing.strEqual(refSuper.getAccessModifier(), PsiModifier.PROTECTED) //protected modificator gives access to method in another package
-              && !Comparing.strEqual(refUtil.getPackageName(refSuper), refUtil.getPackageName(refMethod))) return null;
-        }
-        if (refSuper == null || refUtil.compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
-          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
-        }
+      if (refSuper == null || refUtil.compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
+        message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
       }
-      else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
+    }
+    else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
 
-        message = InspectionsBundle.message("inspection.empty.method.problem.descriptor1");
-      }
-      else if (areAllImplementationsEmpty(refMethod)) {
-        if (refMethod.hasBody()) {
-          if (refMethod.getDerivedMethods().isEmpty()) {
-            if (refMethod.getSuperMethods().isEmpty()) {
-              message = InspectionsBundle.message("inspection.empty.method.problem.descriptor2");
-            }
-          }
-          else {
-            needToDeleteHierarchy = true;
-            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor3");
+      message = InspectionsBundle.message("inspection.empty.method.problem.descriptor1");
+    }
+    else if (areAllImplementationsEmpty(refMethod)) {
+      if (refMethod.hasBody()) {
+        if (refMethod.getDerivedMethods().isEmpty()) {
+          if (refMethod.getSuperMethods().isEmpty()) {
+            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor2");
           }
         }
         else {
-          if (!refMethod.getDerivedMethods().isEmpty()) {
-            needToDeleteHierarchy = true;
-            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor4");
-          }
+          needToDeleteHierarchy = true;
+          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor3");
         }
       }
-
-      if (message != null) {
-        final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
-        fixes.add(getFix(processor, needToDeleteHierarchy));
-        SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
-          public boolean process(final String qualifiedName) {
-            fixes.add(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
-              QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
-              QuickFixBundle.message("fix.add.special.annotation.family"),
-              EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
-            return true;
-          }
-        });
-
-        final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message,
-                                                                             fixes.toArray(new LocalQuickFix[fixes.size()]),
-                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        return new ProblemDescriptor[]{descriptor};
+      else {
+        if (!refMethod.getDerivedMethods().isEmpty()) {
+          needToDeleteHierarchy = true;
+          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor4");
+        }
       }
+    }
+
+    if (message != null) {
+      final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+      fixes.add(getFix(processor, needToDeleteHierarchy));
+      SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
+        public boolean process(final String qualifiedName) {
+          fixes.add(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
+            QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
+            QuickFixBundle.message("fix.add.special.annotation.family"),
+            EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
+          return true;
+        }
+      });
+
+      final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message,
+                                                                           fixes.toArray(new LocalQuickFix[fixes.size()]),
+                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      return new ProblemDescriptor[]{descriptor};
     }
 
     return null;

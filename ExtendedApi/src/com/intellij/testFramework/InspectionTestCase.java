@@ -39,6 +39,7 @@ import java.io.CharArrayReader;
 import java.io.File;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class InspectionTestCase extends PsiTestCase {
@@ -194,8 +195,8 @@ public abstract class InspectionTestCase extends PsiTestCase {
   }
 
   protected static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
-    ArrayList<Object> expectedProblems = new ArrayList<Object>(expectedDoc.getRootElement().getChildren("problem"));
-    ArrayList<Object> reportedProblems = new ArrayList<Object>(doc.getRootElement().getChildren("problem"));
+    List<Element> expectedProblems = new ArrayList<Element>(expectedDoc.getRootElement().getChildren("problem"));
+    List<Element> reportedProblems = new ArrayList<Element>(doc.getRootElement().getChildren("problem"));
 
     Element[] expectedArrayed = expectedProblems.toArray(new Element[expectedProblems.size()]);
     boolean failed = false;
