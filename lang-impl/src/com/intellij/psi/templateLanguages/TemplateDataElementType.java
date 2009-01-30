@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -35,6 +36,7 @@ import javax.swing.*;
  * @author peter
  */
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.templateLanguages.TemplateDataElementType");
 
   private final static LanguageExtension<TreePatcher> TREE_PATCHER = new LanguageExtension<TreePatcher>("com.intellij.lang.treePatcher", new SimpleTreePatcher()); 
 
@@ -150,8 +152,17 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
   protected OuterLanguageElementImpl createOuterLanguageElement(final Lexer lexer, final CharTable table,
                                                                 final IElementType outerElementType) {
-    return new OuterLanguageElementImpl(outerElementType, lexer.getBufferSequence(),
-                                                                            lexer.getTokenStart(), lexer.getTokenEnd(), table);
+    final CharSequence buffer = lexer.getBufferSequence();
+    final int tokenStart = lexer.getTokenStart();
+    if (tokenStart < 0 || tokenStart >= buffer.length()) {
+      LOG.assertTrue(false, "Invalid start: " + tokenStart + "; " + lexer);
+    }
+    final int tokenEnd = lexer.getTokenEnd();
+    if (tokenEnd < 0 || tokenEnd >= buffer.length()) {
+      LOG.assertTrue(false, "Invalid end: " + tokenEnd + "; " + lexer);
+    }
+
+    return new OuterLanguageElementImpl(outerElementType, buffer, tokenStart, tokenEnd, table);
   }
 
   private PsiFile createFromText(final Language language, CharSequence text, PsiManager manager) {
