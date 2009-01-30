@@ -77,6 +77,11 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return HighlightInfoType.UNUSED_SYMBOL_ID;
   }
 
+  @Override
+  public String getAlternativeID() {
+    return "unused";
+  }
+
   public boolean isEnabledByDefault() {
     return true;
   }
