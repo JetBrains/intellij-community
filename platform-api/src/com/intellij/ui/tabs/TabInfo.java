@@ -23,6 +23,7 @@ public final class TabInfo {
 
   public static final String ALERT_STATUS = "alertStatus";
   public static final String HIDDEN = "hidden";
+  public static final String ENABLED = "enabled";
 
   private JComponent myComponent;
   private JComponent myPreferredFocusableComponent;
@@ -57,6 +58,8 @@ public final class TabInfo {
 
   private SimpleTextAttributes myDefaultAttributes;
   private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(IconLoader.getIcon("/nodes/tabAlert.png"));
+
+  private boolean myEnabled = true;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -255,6 +258,16 @@ public final class TabInfo {
 
   public boolean isHidden() {
     return myHidden;
+  }
+
+  public void setEnabled(boolean enabled) {
+    boolean old = myEnabled;
+    myEnabled = enabled;
+    myChangeSupport.firePropertyChange(ENABLED, old, myEnabled);
+  }
+
+  public boolean isEnabled() {
+    return myEnabled;
   }
 
   public TabInfo setDefaultStyle(final int style) {

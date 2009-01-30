@@ -7,10 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
@@ -45,7 +42,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
   ActionManager myActionManager;
   public final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
-  final Set<TabInfo> myHiddenInfos = new HashSet<TabInfo>();
+  final Map<TabInfo, Integer> myHiddenInfos = new HashMap<TabInfo, Integer>();
 
   TabInfo mySelectedInfo;
   public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<TabInfo, TabLabel>();
@@ -594,6 +591,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     removeDeferred();
     updateListeners();
     updateTabActions(false);
+    updateEnabling();
   }
 
   private boolean isMyChildIsFocusedNow() {
@@ -775,6 +773,25 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       updateHiding();
       relayout(false, false);
     }
+    else if (TabInfo.ENABLED.equals(evt.getPropertyName())) {
+      updateEnabling();
+    }
+  }
+
+  private void updateEnabling() {
+    final List<TabInfo> all = getTabs();
+    for (TabInfo each : all) {
+      final TabLabel eachLabel = myInfo2Label.get(each);
+      eachLabel.setTabEnabled(each.isEnabled());
+    }
+
+    final TabInfo selected = getSelectedInfo();
+    if (selected != null && !selected.isEnabled()) {
+      final TabInfo toSelect = getToSelectOnRemoveOf(selected);
+      if (toSelect != null) {
+        select(toSelect, myFocusManager.getFocusedDescendantFor(this) != null);
+      }
+    }
   }
 
   private void updateHiding() {
@@ -783,19 +800,19 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     Iterator<TabInfo> visible = myVisibleInfos.iterator();
     while (visible.hasNext()) {
       TabInfo each = visible.next();
-      if (each.isHidden() && !myHiddenInfos.contains(each)) {
-        myHiddenInfos.add(each);
+      if (each.isHidden() && !myHiddenInfos.containsKey(each)) {
+        myHiddenInfos.put(each, myVisibleInfos.indexOf(each));
         visible.remove();
         update = true;
       }
     }
 
 
-    Iterator<TabInfo> hidden = myHiddenInfos.iterator();
+    Iterator<TabInfo> hidden = myHiddenInfos.keySet().iterator();
     while (hidden.hasNext()) {
       TabInfo each = hidden.next();
-      if (!each.isHidden() && myHiddenInfos.contains(each)) {
-        myVisibleInfos.add(each);
+      if (!each.isHidden() && myHiddenInfos.containsKey(each)) {
+        myVisibleInfos.add(getIndexInVisibleArray(each), each);
         hidden.remove();
         update = true;
       }
@@ -804,11 +821,28 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     if (update) {
       myAllTabs = null;
-      if (mySelectedInfo != null && myHiddenInfos.contains(mySelectedInfo)) {
+      if (mySelectedInfo != null && myHiddenInfos.containsKey(mySelectedInfo)) {
         mySelectedInfo = getToSelectOnRemoveOf(mySelectedInfo);
       }
       updateAll(true, false);
     }
+  }
+
+  private int getIndexInVisibleArray(TabInfo each) {
+    Integer index = myHiddenInfos.get(each);
+    if (index == null) {
+      index = Integer.valueOf(myVisibleInfos.size());
+    }
+
+    if (index > myVisibleInfos.size()) {
+      index = myVisibleInfos.size();
+    }
+
+    if (index.intValue() < 0) {
+      index = 0;
+    }
+
+    return index.intValue();
   }
 
   private void updateIcon(final TabInfo tabInfo) {
@@ -918,8 +952,37 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     if (myVisibleInfos.size() == 1) return null;
 
     int index = myVisibleInfos.indexOf(info);
-    if (index > 0) return myVisibleInfos.get(index - 1);
-    if (index < myVisibleInfos.size() - 1) return myVisibleInfos.get(index + 1);
+
+    TabInfo result = null;
+    if (index > 0) {
+      result = findEnabledBackward(index - 1);
+    }
+
+    if (result == null) {
+      result = findEnabledForward(index + 1);
+    }
+
+    return result;
+  }
+
+  private TabInfo findEnabledForward(int from) {
+    int index = from;
+    while (index < myVisibleInfos.size() && index >= 0) {
+      final TabInfo each = myVisibleInfos.get(index);
+      if (each.isEnabled()) return each;
+      index++;
+    }
+
+    return null;
+  }
+
+  private TabInfo findEnabledBackward(int from) {
+    int index = from;
+    while (index >= 0 && from < myVisibleInfos.size()) {
+      final TabInfo each = myVisibleInfos.get(index);
+      if (each.isEnabled()) return each;
+      index--;
+    }
 
     return null;
   }
@@ -939,7 +1002,10 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     ArrayList<TabInfo> result = new ArrayList<TabInfo>();
     result.addAll(myVisibleInfos);
-    result.addAll(myHiddenInfos);
+
+    for (TabInfo each : myHiddenInfos.keySet()) {
+      result.add(getIndexInVisibleArray(each), each);
+    }
 
     myAllTabs = result;
 
@@ -1186,7 +1252,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       reset(each, resetLabels);
     }
 
-    for (TabInfo each : myHiddenInfos) {
+    for (TabInfo each : myHiddenInfos.keySet()) {
       reset(each, resetLabels);
     }
 
@@ -1711,37 +1777,39 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return max;
   }
 
-  @Nullable
-  private JComponent getSelectedComponent() {
-    final TabInfo selection = getSelectedInfo();
-    if (selection != null) {
-      final JComponent c = selection.getComponent();
-      if (c != null && c.getParent() == this) return c;
-    }
-
-    return null;
-  }
-
   public Dimension getMinimumSize() {
-    final JComponent c = getSelectedComponent();
-    return c != null ? c.getMinimumSize() : new Dimension(0, 0);
-  }
-
-  public Dimension getMaximumSize() {
-    final JComponent c = getSelectedComponent();
-    return c != null ? c.getMaximumSize() : super.getPreferredSize();
+    return computeSize(new Transform<JComponent, Dimension>() {
+      public Dimension transform(JComponent component) {
+        return component.getMinimumSize();
+      }
+    }, 1);
   }
 
   public Dimension getPreferredSize() {
-    final JComponent c = getSelectedComponent();
+    return computeSize(new Transform<JComponent, Dimension>() {
+      public Dimension transform(JComponent component) {
+        return component.getPreferredSize();
+      }
+    }, 3);
+  }
+
+  private Dimension computeSize(Transform<JComponent, Dimension> transform, int tabCount) {
     Dimension size = new Dimension();
-    if (c != null) {
-      final Dimension prefSize = c.getPreferredSize();
-      size.width = prefSize.width;
-      size.height = prefSize.height;
+    for (TabInfo each : myVisibleInfos) {
+      final JComponent c = each.getComponent();
+      if (c != null) {
+        final Dimension eachSize = transform.transform(c);
+        size.width = Math.max(eachSize.width, size.width);
+        size.height = Math.max(eachSize.height, size.height);
+      }
     }
 
-    Dimension header = computeHeaderPreferredSize(3);
+    addHeaderSize(size, tabCount);
+    return size;
+  }
+
+  private void addHeaderSize(Dimension size, final int tabsCount) {
+    Dimension header = computeHeaderPreferredSize(tabsCount);
 
     size.height += header.height;
     size.width += header.width;
@@ -1749,8 +1817,6 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     final Insets insets = getLayoutInsets();
     size.width += (insets.left + insets.right + 1);
     size.height += (insets.top + insets.bottom + 1);
-
-    return size;
   }
 
   private Dimension computeHeaderPreferredSize(int tabsCount) {
@@ -2226,11 +2292,11 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
-      e.getPresentation().setEnabled(tabs.myVisibleInfos.size() > 0 && selectedIndex < tabs.myVisibleInfos.size() - 1);
+      e.getPresentation().setEnabled(tabs.findEnabledForward(selectedIndex + 1) != null);
     }
 
     protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
-      tabs.select(tabs.myVisibleInfos.get(selectedIndex + 1), true);
+      tabs.select(tabs.findEnabledForward(selectedIndex + 1), true);
     }
   }
 
@@ -2240,11 +2306,11 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
-      e.getPresentation().setEnabled(tabs.myVisibleInfos.size() > 0 && selectedIndex > 0);
+      e.getPresentation().setEnabled(tabs.findEnabledBackward(selectedIndex - 1) != null);
     }
 
     protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
-      tabs.select(tabs.myVisibleInfos.get(selectedIndex - 1), true);
+      tabs.select(tabs.findEnabledBackward(selectedIndex - 1), true);
     }
   }
 

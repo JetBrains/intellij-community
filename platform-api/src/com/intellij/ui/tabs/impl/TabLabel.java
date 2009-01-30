@@ -57,7 +57,7 @@ public class TabLabel extends JPanel {
 
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
-        if (myTabs.isSelectionClick(e, false)) {
+        if (myTabs.isSelectionClick(e, false) && myInfo.isEnabled()) {
           myTabs.select(info, true);
         }
         else {
@@ -373,5 +373,9 @@ public class TabLabel extends JPanel {
   @Override
   public String toString() {
     return myInfo.getText();
+  }
+
+  public void setTabEnabled(boolean enabled) {
+    myLabel.setEnabled(enabled);
   }
 }

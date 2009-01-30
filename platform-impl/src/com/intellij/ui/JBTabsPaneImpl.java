@@ -137,7 +137,7 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   }
 
   public void setEnabledAt(int index, boolean enabled) {
-    myTabs.getTabAt(index).setHidden(!enabled);
+    myTabs.getTabAt(index).setEnabled(enabled);
   }
 
   public int getTabLayoutPolicy() {
