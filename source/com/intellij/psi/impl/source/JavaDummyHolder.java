@@ -114,7 +114,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   }
 
 
-  public void setOriginalFile(final PsiFile originalFile) {
+  public void setOriginalFile(@NotNull final PsiFile originalFile) {
     super.setOriginalFile(originalFile);
     putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, PsiUtil.getLanguageLevel(originalFile));
   }
