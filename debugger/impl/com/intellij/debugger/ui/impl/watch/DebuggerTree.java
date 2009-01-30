@@ -36,8 +36,6 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TreeSpeedSearch;
 import com.sun.jdi.*;
 
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Collections;
@@ -73,12 +71,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       }
     };
     model.setRoot(getNodeFactory().getDefaultNode());
-    model.addTreeModelListener(new TreeModelListener() {
-      public void treeNodesChanged     (TreeModelEvent event) { myTipManager.hideTooltip(); }
-      public void treeNodesInserted    (TreeModelEvent event) { myTipManager.hideTooltip(); }
-      public void treeNodesRemoved     (TreeModelEvent event) { myTipManager.hideTooltip(); }
-      public void treeStructureChanged (TreeModelEvent event) { myTipManager.hideTooltip(); }
-    });
+    //model.addTreeModelListener(new TreeModelListener() {
+    //  public void treeNodesChanged     (TreeModelEvent event) { myTipManager.hideTooltip(); }
+    //  public void treeNodesInserted    (TreeModelEvent event) { myTipManager.hideTooltip(); }
+    //  public void treeNodesRemoved     (TreeModelEvent event) { myTipManager.hideTooltip(); }
+    //  public void treeStructureChanged (TreeModelEvent event) { myTipManager.hideTooltip(); }
+    //});
 
     setModel(model);
 

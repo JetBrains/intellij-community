@@ -34,17 +34,17 @@ public class DebuggerTreeBase extends DnDAwareTree {
   private JComponent myCurrentTooltip;
   private Point myCurrentPosition;
 
-  protected final TipManager myTipManager;
+  //protected final TipManager myTipManager;
 
   public DebuggerTreeBase(TreeModel model, Project project) {
     super(model);
     myProject = project;
 
-    myTipManager = new TipManager(this, new TipManager.TipFactory() {
-          public JComponent createToolTip(MouseEvent e) {
-            return DebuggerTreeBase.this.createToolTip(e);
-          }
-        });
+    //myTipManager = new TipManager(this, new TipManager.TipFactory() {
+    //      public JComponent createToolTip(MouseEvent e) {
+    //        return DebuggerTreeBase.this.createToolTip(e);
+    //      }
+    //    });
 
     UIUtil.setLineStyleAngled(this);
     setRootVisible(false);
@@ -302,7 +302,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
   }
 
   public void dispose() {
-    myTipManager.dispose();
+    //myTipManager.dispose();
   }
 
 }

@@ -26,7 +26,7 @@ public class TipManager implements Disposable, PopupMenuListener {
 
   private volatile boolean myIsDisposed = false;
   private boolean myPopupShown;
-  private TipManager.myHideCanceller myHideCanceller;
+  private HideCanceller myHideCanceller;
 
   public static interface TipFactory {
     JComponent createToolTip (MouseEvent e);
@@ -230,7 +230,7 @@ public class TipManager implements Disposable, PopupMenuListener {
     myGP.addMousePreprocessor(myMouseListener, this);
     myGP.addMouseMotionPreprocessor(myMouseMotionListener, this);
 
-    myHideCanceller = new myHideCanceller();
+    myHideCanceller = new HideCanceller();
     Toolkit.getDefaultToolkit().addAWTEventListener(myHideCanceller, MouseEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
@@ -247,7 +247,7 @@ public class TipManager implements Disposable, PopupMenuListener {
     myMouseMotionListener = null;
   }
 
-  private class myHideCanceller implements AWTEventListener {
+  private class HideCanceller implements AWTEventListener {
 
     public void eventDispatched(AWTEvent event) {
       if (myCurrentTooltip == null) return;
