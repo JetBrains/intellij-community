@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
@@ -92,18 +93,29 @@ public class TabLabel extends JPanel {
 
   public void paint(final Graphics g) {
     if (myTabs.getSelectedInfo() != myInfo) {
-      doPaint(g);      
+      myImage = null;
+      doPaint(g);
+    } else if (!SystemInfo.isMac) {
+      myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+      final Graphics2D lg = myImage.createGraphics();
+      doPaint(lg);
+      lg.dispose();
     }
   }
 
   public void paintImage(Graphics g) {
     final Rectangle b = getBounds();
-    final Graphics lG = g.create(b.x, b.y, b.width, b.height);
-    try {
-      doPaint(lG);
-    }
-    catch (Exception e) {
-      lG.dispose();
+    if (myImage != null) {
+      g.drawImage(myImage, b.x, b.y, getWidth(), getHeight(), null);
+    } else {
+      final Graphics lG = g.create(b.x, b.y, b.width, b.height);
+      try {
+        lG.setColor(Color.red);
+        doPaint(lG);
+      }
+      finally {
+        lG.dispose();
+      }
     }
   }
 
