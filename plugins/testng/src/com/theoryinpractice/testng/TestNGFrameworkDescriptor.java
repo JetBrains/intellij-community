@@ -3,6 +3,7 @@ package com.theoryinpractice.testng;
 import com.intellij.testIntegration.JavaTestFrameworkDescriptor;
 import com.intellij.util.PathUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,5 +47,9 @@ public class TestNGFrameworkDescriptor extends JavaTestFrameworkDescriptor {
 
   public boolean isTestClass(PsiClass clazz) {
     return TestNGUtil.isTestNGClass(clazz);
+  }
+
+  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("TestNG Test Method.java");
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.execution.junit;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.testIntegration.JavaTestFrameworkDescriptor;
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 public class JUnit4FrameworkDescriptor extends JavaTestFrameworkDescriptor {
@@ -40,5 +41,9 @@ public class JUnit4FrameworkDescriptor extends JavaTestFrameworkDescriptor {
 
   public boolean isTestClass(PsiClass clazz) {
     return JUnitUtil.isJUnit4TestClass(clazz);
+  }
+
+  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("JUnit4 Test Method.java");
   }
 }
