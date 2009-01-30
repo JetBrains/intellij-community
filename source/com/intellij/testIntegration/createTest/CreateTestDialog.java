@@ -384,7 +384,7 @@ public class CreateTestDialog extends DialogWrapper {
     return myGenerateBeforeBox.isSelected();
   }
 
-  public TestFrameworkDescriptor getSelectedTestDescriptor() {
+  public TestFrameworkDescriptor getSelectedTestFrameworkDescriptor() {
     return mySelectedTestDescriptor;
   }
 

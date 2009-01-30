@@ -18,16 +18,11 @@ public interface TestFrameworkDescriptor {
   @Nullable
   String getDefaultSuperClass();
 
-  @Nullable
-  String getSetUpAnnotation();
-
-  @Nullable
-  String getTearDownAnnotation();
-
-  @Nullable
-  String getTestAnnotation();
-
   boolean isTestClass(PsiElement element);
+
+  FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor();
+
+  FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor();
 
   FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
 }

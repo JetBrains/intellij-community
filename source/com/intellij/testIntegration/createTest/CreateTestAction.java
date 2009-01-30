@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -13,9 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -98,13 +97,14 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
               PsiClass targetClass = JavaDirectoryService.getInstance().createClass(d.getTargetDirectory(), d.getClassName());
               addSuperClass(targetClass, project, d.getSuperClassName());
-              addTestMethods(targetClass,
-                             d.getSelectedTestDescriptor(),
+              Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+
+              addTestMethods(editor,
+                             targetClass,
+                             d.getSelectedTestFrameworkDescriptor(),
                              d.getSelectedMethods(),
                              d.shouldGeneratedBefore(),
                              d.shouldGeneratedAfter());
-
-              CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
             }
             catch (IncorrectOperationException e) {
               showErrorLater(project, d.getClassName());
@@ -146,23 +146,27 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
   }
 
-  private void addTestMethods(PsiClass targetClass,
+  private void addTestMethods(Editor editor,
+                              PsiClass targetClass,
                               TestFrameworkDescriptor descriptor,
                               MemberInfo[] methods,
                               boolean generateBefore,
                               boolean generateAfter) throws IncorrectOperationException {
-    if (generateBefore) addMethod(targetClass, "setUp", descriptor.getSetUpAnnotation());
-    if (generateAfter) addMethod(targetClass, "tearDown", descriptor.getTearDownAnnotation());
-
+    if (generateBefore) {
+      generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, "setUp");
+    }
+    if (generateAfter) {
+      generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, "tearUp");
+    }
     for (MemberInfo m : methods) {
-      addMethod(targetClass,
-                "test" + StringUtil.capitalize(m.getMember().getName()),
-                descriptor.getTestAnnotation());
+      generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, editor, m.getMember().getName());
     }
   }
 
-  private void addMethod(PsiClass targetClass, String name, String annotation) throws IncorrectOperationException {
-    targetClass.add(TestIntegrationUtils.createMethod(targetClass, name, annotation));
+  private void generateMethod(TestIntegrationUtils.MethodKind methodKind, TestFrameworkDescriptor descriptor, PsiClass targetClass, Editor editor, String name) {
+    PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass.getProject()));
+    PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true);
   }
 
   public boolean startInWriteAction() {
