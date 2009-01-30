@@ -31,6 +31,7 @@ import com.intellij.ui.popup.StackingPopupDispatcherImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -791,7 +792,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
     }
 
-    private static class DialogRootPane extends JRootPane {
+    private class DialogRootPane extends JRootPane implements DataProvider {
 
       private boolean myGlassPaneIsSet;
 
@@ -802,15 +803,21 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       @Override
       public void setGlassPane(final Component glass) {
-        //todo [kirillk] to remove as new options editor is done
-        if (myGlassPaneIsSet && "true".equalsIgnoreCase(System.getProperty("new.options.editor"))) {
+        if (myGlassPaneIsSet) {
           LOG.warn("Setting of glass pane for DialogWrapper is prohibited", new Exception());
           return;
         }
 
         super.setGlassPane(glass);
       }
+
+      public Object getData(@NonNls String dataId) {
+        final DialogWrapper wrapper = myDialogWrapper.get();
+        return PlatformDataKeys.UI_DISPOSABLE.getName().equals(dataId) ? wrapper.getDisposable() : null;
+      }
     }
+
+
   }
 
   private static void setupSelectionOnPreferredComponent(final JComponent component) {

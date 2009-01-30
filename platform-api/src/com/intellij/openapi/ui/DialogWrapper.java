@@ -1076,4 +1076,8 @@ public abstract class DialogWrapper {
       throw new IllegalStateException("The DialogWrapper can be used only on event dispatch thread.");
     }
   }
+
+  public final Disposable getDisposable() {
+    return myDisposable;
+  }
 }

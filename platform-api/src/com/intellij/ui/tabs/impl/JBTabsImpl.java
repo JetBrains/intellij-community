@@ -149,9 +149,6 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     setPaintBorder(-1, -1, -1, -1);
 
     myParent = parent;
-    if (myParent != null) {
-      Disposer.register(myParent, this);
-    }
 
     myNavigationActions = new DefaultActionGroup();
 
@@ -188,20 +185,12 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       }
     });
 
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        removeTimerUpdate();
-      }
-    });
-
     myAnimator = new Animator("JBTabs Attractions", 2, 500, true, 0, -1) {
       public void paintNow(final float frame, final float totalFrames, final float cycle) {
         repaintAttractions();
       }
     };
     myAnimator.setTakInitialDelay(false);
-
-    Disposer.register(this, myAnimator);
 
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
@@ -282,26 +271,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         }
       }
 
-      if (myProject == null) {
-        final Project project = tryToFindProject();
-        if (project != null) {
-          myProject = project;
-
-          if (myParent == null) {
-            myParent = project;
-            Disposer.register(myParent, JBTabsImpl.this);
-          }
-
-          if (myParent == null) {
-            myParent = myProject;
-            Disposer.register(myParent, this);
-          }
-
-          if (myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
-            myFocusManager = IdeFocusManager.getInstance(myProject);
-          }
-        }
-      }
+      initialize();
 
 
       if (!myWasEverShown) {
@@ -318,6 +288,33 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
     finally {
       myWasEverShown = true;
+    }
+  }
+
+  private void initialize() {
+    if (myProject == null) {
+      myProject = tryToFindProject();
+    }
+
+    if (myParent == null) {
+      myParent = tryToFindUiDisposable();      
+    }
+
+    if (myParent != null) {
+      Disposer.register(myParent, this);
+
+      Disposer.register(this, new Disposable() {
+        public void dispose() {
+          removeTimerUpdate();
+        }
+      });
+
+      Disposer.register(this, myAnimator);
+    }
+
+
+    if (myProject != null && myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
+      myFocusManager = IdeFocusManager.getInstance(myProject);
     }
   }
 
@@ -2477,6 +2474,12 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private Project tryToFindProject() {
     if (ApplicationManager.getApplication() == null) return null;
     return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
+  }
+
+  @Nullable
+  private Disposable tryToFindUiDisposable() {
+    if (ApplicationManager.getApplication() == null) return null;
+    return PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
   }
 
   public JBTabsPresentation setTabDraggingEnabled(boolean enabled) {
