@@ -63,7 +63,12 @@ public class AutoBoxingInspection extends BaseInspection {
         return InspectionGadgetsBundle.message("auto.boxing.display.name");
     }
 
-    @NotNull
+    @Override
+    public String getAlternativeID() {
+      return "boxing";
+    }
+
+  @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "auto.boxing.problem.descriptor");
