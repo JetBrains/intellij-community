@@ -96,8 +96,8 @@ public class TypeInferenceHelper {
     return null;
   }
 
-  private ThreadLocal<Map<String, PsiType>> myCurrentEnvironment = new ThreadLocal<Map<String, PsiType>>();
-  private ThreadLocal<Set<GroovyPsiElement>> myScopesBeingInferred = new ThreadLocal<Set<GroovyPsiElement>>();
+  private static final ThreadLocal<Map<String, PsiType>> myCurrentEnvironment = new ThreadLocal<Map<String, PsiType>>();
+  private static final ThreadLocal<Set<GroovyPsiElement>> myScopesBeingInferred = new ThreadLocal<Set<GroovyPsiElement>>();
 
   public PsiType doWithInferenceDisabled(Computable<PsiType> computable) {
     return doInference(computable, Collections.<String, PsiType>emptyMap());

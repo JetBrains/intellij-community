@@ -356,7 +356,7 @@ public class GroovyPsiManager implements ProjectComponent {
     return myArrayClass;
   }
 
-  ThreadLocal<List<PsiElement>> myElementsWithTypesBeingInferred = new ThreadLocal<List<PsiElement>>() {
+  private static final ThreadLocal<List<PsiElement>> myElementsWithTypesBeingInferred = new ThreadLocal<List<PsiElement>>() {
     protected List<PsiElement> initialValue() {
       return new ArrayList<PsiElement>();
     }
