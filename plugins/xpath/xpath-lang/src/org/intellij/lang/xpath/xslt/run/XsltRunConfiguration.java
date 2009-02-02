@@ -462,12 +462,12 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         return mySuggestedName;
     }
 
-    public XsltRunConfiguration initFromFile(XmlFile file) {
-        assert XsltSupport.isXsltFile(file);
+    public XsltRunConfiguration initFromFile(@NotNull XmlFile file) {
+        assert XsltSupport.isXsltFile(file) : "Not an XSLT file: " + file.getName();
         mySuggestedName = file.getName();
 
         final VirtualFile virtualFile = file.getVirtualFile();
-        assert virtualFile != null;
+        assert virtualFile != null : "No VirtualFile for " + file.getName();
 
         setXsltFile(virtualFile);
 

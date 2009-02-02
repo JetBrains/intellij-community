@@ -38,9 +38,6 @@ import java.io.File;
 public class XsltRunConfigType implements ConfigurationType, LocatableConfigurationType {
     private final ConfigurationFactory myFactory = new MyConfigurationFactory();
 
-    public XsltRunConfigType() {
-    }
-
     public String getDisplayName() {
         return "XSLT";
     }
@@ -63,17 +60,6 @@ public class XsltRunConfigType implements ConfigurationType, LocatableConfigurat
         return new ConfigurationFactory[]{ myFactory };
     }
 
-    @NotNull
-    public String getComponentName() {
-        return "XSLT-Support.RunConfigType";
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
-    }
-
     private class MyConfigurationFactory extends ConfigurationFactory {
         public MyConfigurationFactory() {
             super(XsltRunConfigType.this);
@@ -90,23 +76,19 @@ public class XsltRunConfigType implements ConfigurationType, LocatableConfigurat
         if (file != null) {
             if (file.isPhysical() && XsltSupport.isXsltFile(file)) {
                 final Project project = file.getProject();
-                return RunManager.getInstance(project).createRunConfiguration(file.getName(), new MyConfigurationFactory() {
-                    @Override
-                    public RunConfiguration createConfiguration(String name, RunConfiguration template) {
-                        return ((XsltRunConfiguration)super.createConfiguration(name, template)).initFromFile(file);
-                    }
-                });
+                final RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(file.getName(), myFactory);
+                ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(file);
+                return settings;
             }
         }
-        //noinspection ConstantConditions
         return null;
     }
 
     public boolean isConfigurationByLocation(RunConfiguration runConfiguration, Location location) {
-        return isConfigurationByElement(runConfiguration, location.getProject(), location.getPsiElement());
+        return isConfigurationByElement(runConfiguration, location.getPsiElement());
     }
 
-    public boolean isConfigurationByElement(RunConfiguration configuration, Project project, PsiElement element) {
+    public boolean isConfigurationByElement(RunConfiguration configuration, PsiElement element) {
         final XmlFile file = PsiTreeUtil.getParentOfType(element, XmlFile.class, false);
         if (configuration instanceof XsltRunConfiguration) {
             if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {
