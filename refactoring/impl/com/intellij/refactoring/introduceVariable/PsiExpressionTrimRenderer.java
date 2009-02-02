@@ -6,7 +6,7 @@ package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.psi.*;
 
-class PsiExpressionTrimRenderer extends JavaRecursiveElementVisitor {
+class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisitor {
   private final StringBuffer myBuf;
 
   public PsiExpressionTrimRenderer(final StringBuffer buf) {

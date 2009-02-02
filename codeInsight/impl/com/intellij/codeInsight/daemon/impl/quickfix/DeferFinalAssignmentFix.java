@@ -161,7 +161,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
   }
 
   private static void collectReferences(PsiElement context, final PsiVariable variable, final List<PsiReferenceExpression> references) {
-    context.accept(new JavaRecursiveElementVisitor() {
+    context.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
         super.visitReferenceExpression(expression);

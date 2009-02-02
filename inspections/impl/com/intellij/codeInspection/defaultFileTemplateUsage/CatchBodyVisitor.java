@@ -21,7 +21,7 @@ import java.util.Properties;
 /**
  * @author cdr
  */
-class CatchBodyVisitor extends JavaRecursiveElementVisitor {
+class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.CatchBodyVisitor");
 
   Collection<ProblemDescriptor> myProblemDescriptors;

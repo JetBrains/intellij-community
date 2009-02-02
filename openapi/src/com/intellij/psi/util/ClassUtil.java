@@ -88,7 +88,7 @@ public class ClassUtil {
   }
 
   public static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass) {
-    final int[] result = new int[]{-1};
+    final int[] result = {-1};
     final PsiClass containingClass = getContainerClass(psiClass);
     if (containingClass != null) {
       containingClass.accept(new JavaRecursiveElementVisitor() {
@@ -220,7 +220,7 @@ public class ClassUtil {
                                        final String externalName,
                                        final PsiClass psiClass,
                                        final boolean jvmCompatible) {
-    final int nextIdx = externalName.indexOf("$");
+    final int nextIdx = externalName.indexOf('$');
     if (nextIdx > -1) {
       final PsiClass anonymousClass = findNonQualifiedClassByIndex(externalName.substring(0, nextIdx), psiClass, jvmCompatible);
       if (anonymousClass == null) return null;

@@ -685,7 +685,7 @@ public class SystemBuilder {
     else if (element instanceof PsiMethod) {
       final PsiType reType = getType(element);
 
-      element.accept(new JavaRecursiveElementVisitor() {
+      element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReturnStatement(final PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
 
@@ -706,7 +706,7 @@ public class SystemBuilder {
       final PsiAnchor anchor = PsiAnchor.create(root);
 
       if (!myVisitedConstructions.contains(anchor)) {
-        root.accept(new JavaRecursiveElementVisitor() {
+        root.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
 

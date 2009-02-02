@@ -82,7 +82,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       }
     }
     final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();
-    final JavaRecursiveElementVisitor visitor = new TypeParametersVisitor(typeParamSet);
+    final JavaRecursiveElementWalkingVisitor visitor = new TypeParametersVisitor(typeParamSet);
     for (ParameterTablePanel.VariableData parameter : parameters) {
       parameter.variable.accept(visitor);
     }
@@ -293,7 +293,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   }
 
 
-  private static class ParamUsageVisitor extends JavaRecursiveElementVisitor {
+  private static class ParamUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     private final Set<PsiParameter> paramsToMerge = new HashSet<PsiParameter>();
     private final Set<PsiReferenceExpression> parameterUsages = new HashSet<PsiReferenceExpression>(4);
 
@@ -323,7 +323,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     }
   }
 
-  private static class NameUsageVisitor extends JavaRecursiveElementVisitor {
+  private static class NameUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean nameUsed = false;
     private final String paramName;
 
@@ -422,7 +422,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     return visitor.getFieldAssigned();
   }
 
-  private static class ParamAssignmentFinder extends JavaRecursiveElementVisitor {
+  private static class ParamAssignmentFinder extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiParameter param;
 

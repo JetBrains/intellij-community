@@ -207,7 +207,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         }
 
         final Ref<PsiClass> newClassRef = new Ref<PsiClass>();
-        stmt.accept(new JavaRecursiveElementVisitor() {
+        stmt.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override public void visitClass(PsiClass aClass) {
             newClassRef.set(aClass);
           }

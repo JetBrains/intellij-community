@@ -102,7 +102,7 @@ public class InlineToAnonymousClassHandler {
           return "Class cannot be inlined because it has usages of methods not inherited from its superclass or interface";
         }
       }
-      if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
         return "Class cannot be inlined because it has static methods";
       }
     }
@@ -164,7 +164,7 @@ public class InlineToAnonymousClassHandler {
 
   private static PsiReturnStatement findReturnStatement(final PsiMethod method) {
     final Ref<PsiReturnStatement> stmt = Ref.create(null);
-    method.accept(new JavaRecursiveElementVisitor() {
+    method.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReturnStatement(final PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         stmt.set(statement);

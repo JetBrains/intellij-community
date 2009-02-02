@@ -174,7 +174,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       final PsiSubstitutor superClassSubstitutor =
         TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, targetClass, PsiSubstitutor.EMPTY);
       final PsiClassType targetClassType = elementFactory.createType(targetClass, superClassSubstitutor);
-      targetClass.accept(new JavaRecursiveElementVisitor() {
+      targetClass.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitTypeElement(final PsiTypeElement typeElement) {
           super.visitTypeElement(typeElement);

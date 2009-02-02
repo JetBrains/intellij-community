@@ -273,7 +273,7 @@ public class PositionManagerImpl implements PositionManager {
     return null;
   }
 
-  private class MethodFinder extends JavaRecursiveElementVisitor {
+  private class MethodFinder extends JavaRecursiveElementWalkingVisitor {
     private final String myClassName;
     private PsiClass myCompiledClass;
     private final String myMethodSignature;

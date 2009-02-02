@@ -180,7 +180,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  private static class ReferencedElementsCollector extends JavaRecursiveElementVisitor {
+  private static class ReferencedElementsCollector extends JavaRecursiveElementWalkingVisitor {
     private Set<PsiElement> myResult = new HashSet<PsiElement>();
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -257,7 +257,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   }
 
 
-  public static class AnySupers extends JavaRecursiveElementVisitor {
+  public static class AnySupers extends JavaRecursiveElementWalkingVisitor {
     private boolean myResult = false;
     @Override public void visitSuperExpression(PsiSuperExpression expression) {
       myResult = true;
@@ -272,7 +272,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public class AnySameNameVariables extends JavaRecursiveElementVisitor {
+  public class AnySameNameVariables extends JavaRecursiveElementWalkingVisitor {
     private String conflict = null;
 
     public String getConflict() {

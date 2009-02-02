@@ -96,7 +96,7 @@ public class Util {
     final PsiMethod[] allMethods = ArrayUtil.append(overridingMethods, method);
 
     final TIntHashSet suspects = new TIntHashSet();
-    expr.accept(new JavaRecursiveElementVisitor() {
+    expr.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();

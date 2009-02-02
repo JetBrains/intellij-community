@@ -329,7 +329,7 @@ class InlineToAnonymousConstructorProcessor {
 
     final List<Pair<PsiReferenceExpression, PsiParameter>> parameterReferences = new ArrayList<Pair<PsiReferenceExpression, PsiParameter>>();
     final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
-    argument.accept(new JavaRecursiveElementVisitor() {
+    argument.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement psiElement = expression.resolve();
@@ -391,7 +391,7 @@ class InlineToAnonymousConstructorProcessor {
   private void replaceReferences(final PsiMember method,
                                  final PsiType[] substitutedParameters, final PsiVariable outerClassLocal) throws IncorrectOperationException {
     final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
-    method.accept(new JavaRecursiveElementVisitor() {
+    method.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();

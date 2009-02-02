@@ -252,7 +252,7 @@ public class ExceptionUtil {
   @NotNull
   public static PsiClassType[] getUnhandledExceptions(PsiElement[] elements) {
     final List<PsiClassType> array = new ArrayList<PsiClassType>();
-    PsiElementVisitor visitor = new JavaRecursiveElementVisitor() {
+    PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitCallExpression(PsiCallExpression expression) {
         addExceptions(array, getUnhandledExceptions(expression, null));
         visitElement(expression);

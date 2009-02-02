@@ -115,7 +115,7 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
 
       //noinspection unchecked
       final List<PsiMethod> methods = new OrderedSet<PsiMethod>(TObjectHashingStrategy.CANONICAL);
-      final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
+      final PsiElementVisitor methodCollector = new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitAnonymousClass(PsiAnonymousClass aClass) { /*skip annonymous classes*/ }
 
         @Override public void visitStatement(PsiStatement statement) {

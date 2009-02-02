@@ -140,7 +140,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   private boolean initializerDependsOnMoved(PsiElement initializer) {
     final boolean [] dependsOnMoved = new boolean[]{false};
-    initializer.accept(new JavaRecursiveElementVisitor(){
+    initializer.accept(new JavaRecursiveElementWalkingVisitor(){
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
@@ -598,7 +598,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return true;
   }
 
-  private class NecessaryAccessorsVisitor extends JavaRecursiveElementVisitor {
+  private class NecessaryAccessorsVisitor extends JavaRecursiveElementWalkingVisitor {
     private final Set<PsiField> fieldsNeedingGetter = new HashSet<PsiField>();
     private final Set<PsiField> fieldsNeedingSetter = new HashSet<PsiField>();
 

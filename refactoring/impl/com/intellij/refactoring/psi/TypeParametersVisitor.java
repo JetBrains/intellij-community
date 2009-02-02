@@ -5,7 +5,7 @@ import com.intellij.psi.*;
 import java.util.Set;
 
 @SuppressWarnings({"AssignmentToCollectionOrArrayFieldFromParameter"})
-public class TypeParametersVisitor extends JavaRecursiveElementVisitor {
+public class TypeParametersVisitor extends JavaRecursiveElementWalkingVisitor {
    private final Set<PsiTypeParameter> params;
 
    public TypeParametersVisitor(Set<PsiTypeParameter> params) {

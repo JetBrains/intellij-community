@@ -108,7 +108,7 @@ public class JavaUnresolvableLocalCollisionDetector {
     }
   }
 
-  public static class ConflictingLocalVariablesVisitor extends JavaRecursiveElementVisitor {
+  public static class ConflictingLocalVariablesVisitor extends JavaRecursiveElementWalkingVisitor {
     protected final String myName;
     protected CollidingVariableVisitor myCollidingNameVisitor;
 

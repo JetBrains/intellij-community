@@ -277,7 +277,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       tempExpr = elementFactory.createExpressionFromText(text, parent);
 
       final boolean [] hasErrors = new boolean[1];
-      final JavaRecursiveElementVisitor errorsVisitor = new JavaRecursiveElementVisitor() {
+      final JavaRecursiveElementWalkingVisitor errorsVisitor = new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(final PsiElement element) {
           if (hasErrors[0]) {

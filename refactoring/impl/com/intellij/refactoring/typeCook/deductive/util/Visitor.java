@@ -9,7 +9,7 @@ import com.intellij.psi.*;
  * Time: 6:44:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class Visitor extends JavaRecursiveElementVisitor {
+public abstract class Visitor extends JavaRecursiveElementWalkingVisitor {
   @Override public void visitPackage(final PsiPackage aPackage) {
     final PsiDirectory[] dirs = aPackage.getDirectories();
 

@@ -19,7 +19,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
     if (findIn != null) {
       findIn.accept(
-        new JavaRecursiveElementVisitor() {
+        new JavaRecursiveElementWalkingVisitor() {
           @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           }
 

@@ -12,7 +12,7 @@ import com.intellij.util.containers.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-class PackageLocalsUsageCollector extends JavaRecursiveElementVisitor {
+class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
   private final HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
   private final PsiElement[] myElementsToMove;
   private final List<String> myConflicts;

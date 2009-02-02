@@ -13,10 +13,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
-  private PsiElement myTarget;
-  private PsiClassType[] myClassTypes;
-  private PsiElement myPlace;
-  private Condition<PsiType> myTypeFilter;
+  private final PsiElement myTarget;
+  private final PsiClassType[] myClassTypes;
+  private final PsiElement myPlace;
+  private final Condition<PsiType> myTypeFilter;
 
   public HighlightExceptionsHandler(final Editor editor, final PsiFile file, final PsiElement target, final PsiClassType[] classTypes,
                                     final PsiElement place, final Condition<PsiType> typeFilter) {
@@ -52,7 +52,7 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
 
   private void addExceptionThrownPlaces(final PsiType type) {
     if (type instanceof PsiClassType) {
-      myPlace.accept(new JavaRecursiveElementVisitor() {
+      myPlace.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
         }

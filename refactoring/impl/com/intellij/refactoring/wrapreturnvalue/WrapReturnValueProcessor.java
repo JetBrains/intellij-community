@@ -152,7 +152,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
         assert methodBody != null;
         final Set<PsiType> returnTypes = new HashSet<PsiType>();
         returnTypes.add(method.getReturnType());
-        methodBody.accept(new JavaRecursiveElementVisitor() {
+        methodBody.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitReturnStatement(final PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
@@ -178,7 +178,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
             final PsiCodeBlock body = constructor.getBody();
             LOG.assertTrue(body != null);
             final boolean[] found = new boolean[1];
-            body.accept(new JavaRecursiveElementVisitor() {
+            body.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
               public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
                 super.visitAssignmentExpression(expression);
@@ -235,7 +235,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     beanClassBuilder.setTypeArguments(typeParams);
     beanClassBuilder.setClassName(className);
     beanClassBuilder.setPackageName(packageName);
-    beanClassBuilder.setStatic(myCreateInnerClass && method.getModifierList().hasModifierProperty(PsiModifier.STATIC));
+    beanClassBuilder.setStatic(myCreateInnerClass && method.hasModifierProperty(PsiModifier.STATIC));
     final PsiType returnType = method.getReturnType();
     beanClassBuilder.setValueType(returnType);
 
@@ -284,7 +284,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   }
 
 
-  private class ReturnSearchVisitor extends JavaRecursiveElementVisitor {
+  private class ReturnSearchVisitor extends JavaRecursiveElementWalkingVisitor {
     private final List<FixableUsageInfo> usages;
     private final String type;
     private final PsiMethod myMethod;

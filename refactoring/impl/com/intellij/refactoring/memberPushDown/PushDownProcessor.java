@@ -120,7 +120,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();
-      member.accept(new JavaRecursiveElementVisitor() {
+      member.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           encodeRef(expression, movedMembers, expression);
           super.visitReferenceExpression(expression);
@@ -179,7 +179,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     }
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-    member.accept(new JavaRecursiveElementVisitor() {
+    member.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         decodeRef(expression, factory, targetClass, expression);
         super.visitReferenceExpression(expression);

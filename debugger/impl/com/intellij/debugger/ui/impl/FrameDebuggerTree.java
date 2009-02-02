@@ -253,7 +253,7 @@ public class FrameDebuggerTree extends DebuggerTree {
 
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
     final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
-    element.accept(new JavaRecursiveElementVisitor() {
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();
         if (originalRange.intersects(stRange)) {
@@ -382,7 +382,7 @@ public class FrameDebuggerTree extends DebuggerTree {
 
   }
 
-  private static class VariablesCollector extends JavaRecursiveElementVisitor {
+  private static class VariablesCollector extends JavaRecursiveElementWalkingVisitor {
     private final Set<String> myVisibleLocals;
     private final TextRange myLineRange;
     private final Set<TextWithImports> myExpressions;
@@ -471,7 +471,7 @@ public class FrameDebuggerTree extends DebuggerTree {
     
     private boolean hasSideEffects(PsiElement element) {
       final AtomicBoolean rv = new AtomicBoolean(false);
-      element.accept(new JavaRecursiveElementVisitor() {
+      element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitPostfixExpression(final PsiPostfixExpression expression) {
           rv.set(true);
         }

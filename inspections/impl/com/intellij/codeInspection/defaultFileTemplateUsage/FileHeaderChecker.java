@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -48,7 +48,7 @@ public class FileHeaderChecker {
       final int startOffset = matcher.start(1);
       final int endOffset = matcher.end(1);
       final Ref<PsiDocComment> docComment = new Ref<PsiDocComment>();
-      file.accept(new JavaRecursiveElementVisitor(){
+      file.accept(new JavaRecursiveElementWalkingVisitor(){
         @Override public void visitElement(PsiElement element) {
           if (docComment.get() != null) return;
           TextRange range = element.getTextRange();

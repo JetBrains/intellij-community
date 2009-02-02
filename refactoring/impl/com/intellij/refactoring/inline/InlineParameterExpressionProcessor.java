@@ -109,7 +109,7 @@ public class InlineParameterExpressionProcessor {
   public static final Key<Boolean> CREATE_LOCAL_FOR_TESTS = Key.create("CREATE_INLINE_PARAMETER_LOCAL_FOR_TESTS");
 
   private void processParameterInitializer() {
-    myInitializer.accept(new JavaRecursiveElementVisitor() {
+    myInitializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
@@ -196,7 +196,7 @@ public class InlineParameterExpressionProcessor {
   private boolean replaceLocals(final PsiExpression expression,
                                 final Map<PsiElement, PsiElement> elementsToReplace) {
     final Ref<Boolean> refCannotEvaluate = new Ref<Boolean>();
-    expression.accept(new JavaRecursiveElementVisitor() {
+    expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();

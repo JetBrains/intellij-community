@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -56,7 +55,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
 
     PsiFile[] roots = file.getPsiRoots();
     for (PsiFile root : roots) {
-      root.accept(new JavaRecursiveElementVisitor() {
+      root.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           if (isParameterizedReference(expression)) return;
           PsiExpression qualifierExpression = expression.getQualifierExpression();

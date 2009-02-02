@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiUtil;
 public class JavaDependenciesVisitorFactory extends DependenciesVisitorFactory {
   @Override
   public PsiElementVisitor createVisitor(final DependenciesBuilder.DependencyProcessor processor) {
-    return new JavaRecursiveElementVisitor() {
+    return new JavaRecursiveElementWalkingVisitor() {
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {

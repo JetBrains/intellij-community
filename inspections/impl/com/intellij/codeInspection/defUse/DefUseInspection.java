@@ -116,7 +116,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       }
     }
 
-    body.accept(new JavaRecursiveElementVisitor() {
+    body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitClass(PsiClass aClass) {
       }
 

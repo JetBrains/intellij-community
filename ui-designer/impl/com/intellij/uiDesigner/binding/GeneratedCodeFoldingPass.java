@@ -82,7 +82,7 @@ public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
     return AsmCodeGenerator.SETUP_METHOD_NAME.equals(call.getMethodExpression().getReferenceName());
   }
 
-  private class MyFoldingVisitor extends JavaRecursiveElementVisitor {
+  private class MyFoldingVisitor extends JavaRecursiveElementWalkingVisitor {
     private final ProgressIndicator myProgress;
     private PsiElement myLastElement;
 

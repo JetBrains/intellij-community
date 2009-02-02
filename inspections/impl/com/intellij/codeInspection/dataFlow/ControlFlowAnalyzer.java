@@ -370,7 +370,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement initialization = statement.getInitialization();
     if (initialization != null) {
       initialization.accept(this);
-      initialization.accept(new JavaRecursiveElementVisitor() {
+      initialization.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
         }
@@ -1336,7 +1336,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (dfaValue instanceof DfaVariableValue) {
       DfaVariableValue dfaVariable = (DfaVariableValue)dfaValue;
       PsiVariable psiVariable = dfaVariable.getPsiVariable();
-      if (psiVariable instanceof PsiField && !psiVariable.getModifierList().hasModifierProperty(PsiModifier.FINAL)) {
+      if (psiVariable instanceof PsiField && !psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
         addField(dfaVariable);
       }
     }

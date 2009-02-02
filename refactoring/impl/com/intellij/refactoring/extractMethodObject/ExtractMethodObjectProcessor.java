@@ -158,7 +158,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(body != null);
     final List<PsiLocalVariable> vars = new ArrayList<PsiLocalVariable>();
     final Map<PsiElement, PsiElement> replacementMap = new LinkedHashMap<PsiElement, PsiElement>();
-    body.accept(new JavaRecursiveElementVisitor() {
+    body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReturnStatement(final PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
@@ -280,7 +280,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private PsiMethodCallExpression replaceMethodCallExpression(final String inferredTypeArguments,
                                                               final PsiMethodCallExpression methodCallExpression)
       throws IncorrectOperationException {
-    @NonNls final String staticqualifier = getMethod().getModifierList().hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields() ? getInnerClassName() : null;
+    @NonNls final String staticqualifier =
+      getMethod().hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields() ? getInnerClassName() : null;
     @NonNls String newReplacement;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
@@ -356,8 +357,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiCodeBlock methodBody = getMethod().getBody();
     LOG.assertTrue(methodBody != null);
     replacedMethodBody.replace(methodBody);
-    newMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, innerClass.getModifierList().hasModifierProperty(PsiModifier.STATIC)
-                                                                        && notHasGeneratedFields());
+    newMethod.getModifierList().setModifierProperty(PsiModifier.STATIC,
+                                                    innerClass.hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields());
     myInnerMethod = (PsiMethod)innerClass.add(newMethod);
   }
 

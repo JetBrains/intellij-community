@@ -320,7 +320,7 @@ public final class FormSourceCodeGenerator {
                                                                final LwRootContainer rootContainer,
                                                                @Nullable final Ref<Boolean> callsThisConstructor) {
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    element.accept(new JavaRecursiveElementVisitor() {
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceElement(expression);
         final PsiElement psiElement = expression.resolve();

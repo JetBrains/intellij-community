@@ -27,7 +27,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassFix");
   private final PsiVariable myVariable;
   private final PsiClass myClass;
-  private int myFixType;
+  private final int myFixType;
   private static final int MAKE_ARRAY = 2;
   private static final int COPY_TO_FINAL = 1;
   private static final int MAKE_FINAL = 0;
@@ -205,7 +205,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   private static void collectReferences(PsiElement context, final PsiVariable variable, final List<PsiReferenceExpression> references) {
-    context.accept(new JavaRecursiveElementVisitor() {
+    context.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
         super.visitReferenceExpression(expression);

@@ -324,7 +324,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
   }
 
   private void addCodeBlockFolds(PsiElement scope, final List<FoldingDescriptor> foldElements, final Document document) {
-    scope.accept(new JavaRecursiveElementVisitor() {
+    scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitClass(PsiClass aClass) {
         if (!addClosureFolding(aClass, document, foldElements)) {
           addToFold(foldElements, aClass, document, true);

@@ -398,7 +398,7 @@ public class CreateFromUsageUtils {
     PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 
     final List<PsiReferenceExpression> result = new ArrayList<PsiReferenceExpression>();
-    JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
+    JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       public List getResult() {
         return result;
       }

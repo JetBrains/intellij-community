@@ -102,7 +102,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static void removeReadFields(PsiClass aClass, final Set<PsiField> candidates, final Set<PsiField> usedFields) {
-    aClass.accept(new JavaRecursiveElementVisitor() {
+    aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (!candidates.isEmpty()) super.visitElement(element);
@@ -159,7 +159,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static void removeFieldsReferencedFromInitializers(final PsiClass aClass, final Set<PsiField> candidates) {
-    aClass.accept(new JavaRecursiveElementVisitor() {
+    aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitMethod(PsiMethod method) {
         //do not go inside method
       }

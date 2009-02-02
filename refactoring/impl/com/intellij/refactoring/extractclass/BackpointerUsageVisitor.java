@@ -8,7 +8,7 @@ import com.intellij.psi.*;
 
 import java.util.List;
 
-class BackpointerUsageVisitor extends JavaRecursiveElementVisitor {
+class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
   private PsiMember myCause = null;
 
   private final List<PsiField> myFields;

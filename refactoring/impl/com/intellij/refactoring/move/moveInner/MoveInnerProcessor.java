@@ -326,7 +326,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final ArrayList<String> conflicts = new ArrayList<String>();
 
-    class Visitor extends JavaRecursiveElementVisitor {
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
       private final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
 
       @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {

@@ -428,7 +428,7 @@ public class PullUpHelper {
     return commonInitializerCandidate;
   }
 
-  private static class ParametersAndMovedFieldsUsedCollector extends JavaRecursiveElementVisitor {
+  private static class ParametersAndMovedFieldsUsedCollector extends JavaRecursiveElementWalkingVisitor {
     private final Set<PsiField> myMovedFields;
     private final Set<PsiField> myUsedFields;
 
@@ -462,7 +462,7 @@ public class PullUpHelper {
     }
   }
 
-  private class IsMovableInitializerVisitor extends JavaRecursiveElementVisitor {
+  private class IsMovableInitializerVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean myIsMovable = true;
 
     public boolean isMovable() {
@@ -637,7 +637,7 @@ public class PullUpHelper {
     }
   }
 
-  private class ExplicitSuperDeleter extends JavaRecursiveElementVisitor {
+  private class ExplicitSuperDeleter extends JavaRecursiveElementWalkingVisitor {
     private final ArrayList<PsiExpression> mySupersToDelete = new ArrayList<PsiExpression>();
     private final ArrayList<PsiSuperExpression> mySupersToChangeToThis = new ArrayList<PsiSuperExpression>();
 

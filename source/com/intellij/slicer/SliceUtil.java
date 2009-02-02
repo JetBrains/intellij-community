@@ -109,7 +109,7 @@ public class SliceUtil {
     if (body == null) return true;
 
     final Collection<PsiExpression> expressions = new THashSet<PsiExpression>();
-    body.accept(new JavaRecursiveElementVisitor() {
+    body.accept(new JavaRecursiveElementWalkingVisitor() {
       public void visitReturnStatement(final PsiReturnStatement statement) {
         PsiExpression returnValue = statement.getReturnValue();
         if (!(returnValue instanceof PsiReferenceExpression)) return;

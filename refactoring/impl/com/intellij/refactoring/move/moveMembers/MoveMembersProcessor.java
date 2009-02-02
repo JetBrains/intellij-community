@@ -244,11 +244,11 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @Nullable
   private PsiElement getAnchor(final PsiMember member) {
-    if (member instanceof PsiField && member.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+    if (member instanceof PsiField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> referencedFields = new ArrayList<PsiField>();
       final PsiExpression psiExpression = ((PsiField)member).getInitializer();
       if (psiExpression != null) {
-        psiExpression.accept(new JavaRecursiveElementVisitor() {
+        psiExpression.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitReferenceExpression(final PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);

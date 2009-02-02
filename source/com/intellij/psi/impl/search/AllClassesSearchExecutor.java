@@ -61,7 +61,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     if (scopeRoot == null) return true;
     final boolean[] stopped = new boolean[]{false};
 
-    scopeRoot.accept(new JavaRecursiveElementVisitor() {
+    scopeRoot.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (!stopped[0]) {
           visitElement(expression);

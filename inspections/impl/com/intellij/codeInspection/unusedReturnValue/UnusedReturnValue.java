@@ -133,7 +133,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       final PsiCodeBlock body = psiMethod.getBody();
       assert body != null;
       final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
-      body.accept(new JavaRecursiveElementVisitor(){
+      body.accept(new JavaRecursiveElementWalkingVisitor(){
         @Override
         public void visitReturnStatement(final PsiReturnStatement statement) {
           super.visitReturnStatement(statement);

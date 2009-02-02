@@ -138,7 +138,7 @@ public class RefactoringUtil {
       }
 
       try {
-        place.accept(new JavaRecursiveElementVisitor() {
+        place.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override public void visitClass(PsiClass aClass) {
 
           }
@@ -903,7 +903,7 @@ public class RefactoringUtil {
 
   public static List<PsiVariable> collectReferencedVariables(PsiElement scope) {
     final List<PsiVariable> result = new ArrayList<PsiVariable>();
-    scope.accept(new JavaRecursiveElementVisitor() {
+    scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiElement element = expression.resolve();
         if (element instanceof PsiVariable) {
@@ -1112,7 +1112,7 @@ public class RefactoringUtil {
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<PsiElement>();
     for (final PsiElement scope : scopes) {
-      scope.accept(new JavaRecursiveElementVisitor() {
+      scope.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
           final PsiElement resolved = reference.resolve();
@@ -1202,7 +1202,7 @@ public class RefactoringUtil {
     final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {
       if (element == null) continue;
-      element.accept(new JavaRecursiveElementVisitor() {
+      element.accept(new JavaRecursiveElementWalkingVisitor() {
 
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);

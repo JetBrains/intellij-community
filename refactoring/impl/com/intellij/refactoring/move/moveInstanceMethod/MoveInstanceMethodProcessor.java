@@ -137,7 +137,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
     final PsiCodeBlock body = myMethod.getBody();
     if (body != null) {
-      body.accept(new JavaRecursiveElementVisitor() {
+      body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitNewExpression(PsiNewExpression expression) {
           if (MoveInstanceMembersUtil.getClassReferencedByThis(expression) != null) {
             usages.add(new InternalUsageInfo(expression));
@@ -301,7 +301,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       return createThisExpr(manager);
     }
 
-    expression.accept(new JavaRecursiveElementVisitor() {
+    expression.accept(new JavaRecursiveElementWalkingVisitor() {
 
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);

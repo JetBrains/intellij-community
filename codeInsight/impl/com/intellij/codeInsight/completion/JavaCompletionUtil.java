@@ -522,7 +522,7 @@ public class JavaCompletionUtil {
     final List<String> unresolvedRefs = new ArrayList<String>();
 
     if (parentOfType != null) {
-      parentOfType.accept(new JavaRecursiveElementVisitor() {
+      parentOfType.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression reference) {
           final PsiElement parent = reference.getParent();
           if (parent instanceof PsiReference) return;

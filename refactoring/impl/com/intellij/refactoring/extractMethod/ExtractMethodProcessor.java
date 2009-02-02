@@ -471,7 +471,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void checkLocalClasses(final PsiMethod container) throws PrepareFailedException {
     final List<PsiClass> localClasses = new ArrayList<PsiClass>();
-    container.accept(new JavaRecursiveElementVisitor() {
+    container.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitClass(final PsiClass aClass) {
         localClasses.add(aClass);
       }

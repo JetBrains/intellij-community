@@ -86,7 +86,7 @@ public final class Match {
 
     if (myDeclarationCorrespondence.get(psiVariable) == null) {
       final boolean [] valueDependsOnReplacedScope = new boolean[1];
-      value.accept(new JavaRecursiveElementVisitor() {
+      value.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReferenceExpression(final PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);

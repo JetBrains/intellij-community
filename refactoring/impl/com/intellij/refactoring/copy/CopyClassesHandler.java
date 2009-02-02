@@ -142,7 +142,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
 
   private static void replaceClassOccurrences(final PsiClass newClass, final PsiClass oldClass) throws IncorrectOperationException {
     final List<PsiJavaCodeReferenceElement> selfReferences = new ArrayList<PsiJavaCodeReferenceElement>();
-    newClass.accept(new JavaRecursiveElementVisitor() {
+    newClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
