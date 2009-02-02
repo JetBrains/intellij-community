@@ -252,7 +252,9 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       CheckUtil.checkWritable(this);
       ((ASTDelegatePsiElement) getParent()).deleteChildInternal(getNode());
     }
-    super.delete();
+    else {
+      super.delete();
+    }
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {
