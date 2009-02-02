@@ -30,7 +30,7 @@ public class InspectDebuggerTree extends DebuggerTree{
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu popupMenu = createPopupMenu();
         if (popupMenu != null) {
-          //myTipManager.registerPopup(popupMenu.getComponent()).show(comp, x, y);
+          myTipManager.registerPopup(popupMenu.getComponent()).show(comp, x, y);
         }
       }
     };
