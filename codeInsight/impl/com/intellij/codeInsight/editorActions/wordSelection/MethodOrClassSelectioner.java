@@ -1,10 +1,9 @@
 package com.intellij.codeInsight.editorActions.wordSelection;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.codeInsight.editorActions.SelectWordUtil;
 
 import java.util.List;
 
@@ -54,9 +53,12 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
 
     if (e instanceof PsiClass) {
       int start = CodeBlockOrInitializerSelectioner.findOpeningBrace(children);
-      int end = CodeBlockOrInitializerSelectioner.findClosingBrace(children, start);
+      // in non-Java PsiClasses, there can be no opening brace
+      if (start != 0) {
+        int end = CodeBlockOrInitializerSelectioner.findClosingBrace(children, start);
 
-      result.addAll(expandToWholeLine(editorText, new TextRange(start, end)));
+        result.addAll(expandToWholeLine(editorText, new TextRange(start, end)));
+      }
     }
 
 
