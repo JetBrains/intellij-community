@@ -103,4 +103,8 @@ public class MultiMap<K, V> {
     }
     return result;
   }
+
+  public void clear() {
+    myMap.clear();
+  }
 }
