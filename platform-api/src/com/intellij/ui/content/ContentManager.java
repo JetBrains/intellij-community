@@ -37,9 +37,12 @@ public interface ContentManager extends Disposable {
 
   boolean removeContent(@NotNull Content content, final boolean dispose);
 
-  ActionCallback setSelectedContent(@NotNull Content content);
-  ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus);
-  ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
+  void setSelectedContent(@NotNull Content content);
+  ActionCallback setSelectedContentCB(@NotNull Content content);
+  void setSelectedContent(@NotNull Content content, boolean requestFocus);
+  ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus);
+  void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
+  ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
 
   void addSelectedContent(@NotNull Content content);
 

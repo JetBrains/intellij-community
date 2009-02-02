@@ -175,10 +175,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void removeFromSelection(@NotNull final Content content) { }
     public ActionCallback selectNextContent() { return new ActionCallback.Done();}
     public ActionCallback selectPreviousContent() { return new ActionCallback.Done();}
-    public ActionCallback setSelectedContent(@NotNull final Content content) { return new ActionCallback.Done();}
-    public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus) { return new ActionCallback.Done();}
+    public void setSelectedContent(@NotNull final Content content) { }
+    public ActionCallback setSelectedContentCB(@NotNull Content content) { return new ActionCallback.Done(); }
+    public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) { }
+    public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus) { return new ActionCallback.Done();}
 
-    public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
+    public void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus) {
+    }
+
+    public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
       return new ActionCallback.Done();
     }
 

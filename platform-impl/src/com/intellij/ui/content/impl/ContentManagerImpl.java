@@ -332,11 +332,19 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return mySelection.isEmpty() ? null : mySelection.get(0);
   }
 
-  public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus) {
-    return setSelectedContent(content, requestFocus, true);
+  public void setSelectedContent(@NotNull Content content, boolean requestFocus) {
+    setSelectedContentCB(content, requestFocus);
   }
 
-  public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
+  public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus) {
+    return setSelectedContentCB(content, requestFocus, true);
+  }
+
+  public void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus) {
+    setSelectedContentCB(content, requestFocus, forcedFocus);
+  }
+
+  public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
     if (isSelected(content) && requestFocus) {
       return requestFocus(content, forcedFocus);
     }
@@ -387,9 +395,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return focused;
   }
 
+  public ActionCallback setSelectedContentCB(@NotNull Content content) {
+    return setSelectedContentCB(content, false);
+  }
 
-  public ActionCallback setSelectedContent(@NotNull final Content content) {
-    return setSelectedContent(content, false);
+  public void setSelectedContent(@NotNull final Content content) {
+    setSelectedContentCB(content); 
   }
 
   public ActionCallback selectPreviousContent() {
@@ -398,7 +409,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Content selectedContent = getSelectedContent();
     int index = getIndexOfContent(selectedContent);
     index = (index - 1 + contentCount) % contentCount;
-    return setSelectedContent(getContent(index), true);
+    return setSelectedContentCB(getContent(index), true);
   }
 
   public ActionCallback selectNextContent() {
@@ -407,7 +418,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Content selectedContent = getSelectedContent();
     int index = getIndexOfContent(selectedContent);
     index = (index + 1) % contentCount;
-    return setSelectedContent(getContent(index), true);
+    return setSelectedContentCB(getContent(index), true);
   }
 
   public void addContentManagerListener(@NotNull ContentManagerListener l) {

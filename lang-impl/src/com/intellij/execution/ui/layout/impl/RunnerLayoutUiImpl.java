@@ -145,7 +145,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
   public ActionCallback selectAndFocus(@Nullable final Content content, final boolean forced) {
     if (content == null) return new ActionCallback.Rejected();
 
-    return getContentManager().setSelectedContent(content, true, forced);
+    return getContentManager().setSelectedContentCB(content, true, forced);
   }
 
   public boolean removeContent(final Content content, final boolean dispose) {
