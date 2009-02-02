@@ -237,6 +237,13 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     if (myDialog != null) {
       myBackgrounded = true;
       myDialog.background();
+
+      if (myDialog.wasShown()) {
+        myFocusTrackback.restoreFocus();
+      } else {
+        myFocusTrackback.consume();
+      }
+      
       myDialog = null;
     }
   }
