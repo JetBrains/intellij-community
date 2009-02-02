@@ -2,9 +2,9 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -12,7 +12,8 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,22 +43,28 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     return getOperationSign().getTokenType();
   }
 
-  private static final Key<ParameterizedCachedValue<PsiType, PsiBinaryExpressionImpl>> TYPE_KEY = Key.create("TYPE_KEY");
-  private static final ParameterizedCachedValueProvider<PsiType,PsiBinaryExpressionImpl> TYPE_PROVIDER = new ParameterizedCachedValueProvider<PsiType, PsiBinaryExpressionImpl>() {
-    public CachedValueProvider.Result<PsiType> compute(PsiBinaryExpressionImpl param) {
-      PsiExpression lOperand = param.getLOperand();
-      PsiExpression rOperand = param.getROperand();
-      if (rOperand == null) return null;
-
+  private static PsiType doGetType(PsiBinaryExpressionImpl param) {
+    PsiExpression lOperand = param.getLOperand();
+    PsiExpression rOperand = param.getROperand();
+    PsiType result;
+    if (rOperand == null) {
+      result = null;
+    }
+    else {
       PsiType rType = rOperand.getType();
       PsiType lType = lOperand.getType();
-      PsiType result = getType(lType, rType, SourceTreeToPsiMap.psiElementToTree(param.getOperationSign()).getElementType());
+      result = getType(lType, rType, SourceTreeToPsiMap.psiElementToTree(param.getOperationSign()).getElementType());
+    }
+    return result;
+  }
 
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+  private static final Function<PsiExpression,PsiType> MY_TYPE_EVALUATOR = new Function<PsiExpression, PsiType>() {
+    public PsiType fun(PsiExpression expression) {
+      return doGetType((PsiBinaryExpressionImpl)expression);
     }
   };
   public PsiType getType() {
-    return getManager().getCachedValuesManager().getParameterizedCachedValue(this, TYPE_KEY, TYPE_PROVIDER, false, this);
+    return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);
   }
 
   public ASTNode findChildByRole(int role) {
