@@ -221,7 +221,7 @@ public class BreakpointsConfigurationDialogFactory {
         panel.resetBreakpoints();
       }
       updateAllTabTitles();
-      if (myLastSelectedTabIndex >= myTabbedPane.getTabCount() && myLastSelectedTabIndex < 0) {
+      if (myLastSelectedTabIndex >= myTabbedPane.getTabCount() || myLastSelectedTabIndex < 0) {
         myLastSelectedTabIndex = 0;
       }
       myTabbedPane.setSelectedIndex(myLastSelectedTabIndex);

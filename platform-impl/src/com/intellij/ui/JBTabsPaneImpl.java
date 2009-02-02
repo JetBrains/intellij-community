@@ -97,11 +97,22 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   }
 
   public void setSelectedIndex(int index) {
-    myTabs.select(myTabs.getTabAt(index), false);
+    myTabs.select(getTabAt(index), false);
   }
 
   public void removeTabAt(int index) {
-    myTabs.removeTab(myTabs.getTabAt(index));
+    myTabs.removeTab(getTabAt(index));
+  }
+
+  private TabInfo getTabAt(int index) {
+    checkIndex(index);
+    return myTabs.getTabAt(index);
+  }
+
+  private void checkIndex(int index) {
+    if (index < 0 || index >= getTabCount()) {
+      throw new ArrayIndexOutOfBoundsException("tabCount=" + getTabCount() + " index=" + index);
+    }
   }
 
   public void revalidate() {
@@ -109,35 +120,35 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   }
 
   public Color getForegroundAt(int index) {
-    return myTabs.getTabAt(index).getDefaultForeground();
+    return getTabAt(index).getDefaultForeground();
   }
 
   public void setForegroundAt(int index, Color color) {
-    myTabs.getTabAt(index).setDefaultForeground(color);
+    getTabAt(index).setDefaultForeground(color);
   }
 
   public Component getComponentAt(int i) {
-    return myTabs.getTabAt(i).getComponent();
+    return getTabAt(i).getComponent();
   }
 
   public void setTitleAt(int index, String title) {
-    myTabs.getTabAt(index).setText(title);
+    getTabAt(index).setText(title);
   }
 
   public void setToolTipTextAt(int index, String toolTipText) {
-    myTabs.getTabAt(index).setTooltipText(toolTipText);
+    getTabAt(index).setTooltipText(toolTipText);
   }
 
   public void setComponentAt(int index, Component c) {
-    myTabs.getTabAt(index).setComponent(c);
+    getTabAt(index).setComponent(c);
   }
 
   public void setIconAt(int index, Icon icon) {
-    myTabs.getTabAt(index).setIcon(icon);
+    getTabAt(index).setIcon(icon);
   }
 
   public void setEnabledAt(int index, boolean enabled) {
-    myTabs.getTabAt(index).setEnabled(enabled);
+    getTabAt(index).setEnabled(enabled);
   }
 
   public int getTabLayoutPolicy() {
@@ -161,7 +172,7 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   }
 
   public String getTitleAt(int i) {
-    return myTabs.getTabAt(i).getText();
+    return getTabAt(i).getText();
   }
 
   public void removeAll() {
