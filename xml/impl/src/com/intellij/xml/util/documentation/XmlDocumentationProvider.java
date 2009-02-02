@@ -1,23 +1,25 @@
 package com.intellij.xml.util.documentation;
 
 import com.intellij.codeInsight.completion.XmlCompletionData;
+import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
-import com.intellij.lang.Language;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
@@ -71,7 +73,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     return super.getUrlFor(element, originalElement);
   }
 
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, final PsiElement originalElement) {
     if (element instanceof XmlElementDecl) {
       PsiElement curElement = findPreviousComment(element);
 
@@ -81,9 +83,31 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     } else if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
-      XmlUtil.processXmlElements(tag,processor, true);
       String name = tag.getAttributeValue(NAME_ATTR_NAME);
       String typeName = null;
+
+      if (originalElement != null && originalElement.getParent() instanceof XmlAttributeValue) {
+        String toSearch = StringUtil.stripQuotesAroundValue(originalElement.getText());
+        XmlTag enumerationTag;
+        
+        if (XmlUtil.ENUMERATION_TAG_NAME.equals(tag.getLocalName())) {
+          enumerationTag = tag;
+          name = enumerationTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME);
+        } else {
+          enumerationTag = findEnumerationValue(toSearch, tag);
+          name = toSearch;
+        }
+
+        if (enumerationTag != null) {
+          XmlUtil.processXmlElements(enumerationTag,processor, true);
+
+          if (processor.result != null) {
+            typeName = XmlBundle.message("xml.javadoc.enumeration.value.message");
+          }
+        }
+      }
+
+      if (processor.result == null) XmlUtil.processXmlElements(tag,processor, true);
 
       if (processor.result == null) {
         XmlTag declaration = getComplexOrSimpleTypeDefinition(element, originalElement);
@@ -91,7 +115,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
         if (declaration != null) {
           XmlUtil.processXmlElements(declaration,processor, true);
           name = declaration.getAttributeValue(NAME_ATTR_NAME);
-          typeName = declaration.getName();
+          typeName = XmlBundle.message("xml.javadoc.complex.type.message");
         }
       }
       if (processor.result == null) {
@@ -137,6 +161,20 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     }
 
     return super.generateDoc(element, originalElement);
+  }
+
+  private static XmlTag findEnumerationValue(final String text, XmlTag tag) {
+    final Ref<XmlTag> enumerationTag = new Ref<XmlTag>();
+
+    XmlUtil.processEnumerationValues(tag, new Processor<XmlTag>() {
+      public boolean process(XmlTag xmlTag) {
+        if (text.equals(xmlTag.getAttributeValue(XmlUtil.VALUE_ATTR_NAME))) {
+          enumerationTag.set(xmlTag);
+        }
+        return true;
+      }
+    });
+    return enumerationTag.get();
   }
 
   static String generateHtmlAdditionalDocTemplate(@NotNull PsiElement element) {
@@ -259,11 +297,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     if (str == null) return null;
     StringBuilder buf = new StringBuilder(str.length() + 20);
 
-    if (typeName==null) {
-      DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),name,buf);
-    } else {
-      DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.complex.type.message"),name,buf);
-    }
+    DocumentationUtil.formatEntityName(typeName == null ? XmlBundle.message("xml.javadoc.tag.name.message"):typeName,name,buf);
 
     final String indent = "  ";
     final StringBuilder builder = buf.append(XmlBundle.message("xml.javadoc.description.message")).append(indent).
@@ -358,7 +392,16 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     }
 
     if (object instanceof String && originalElement != null) {
-      return findDeclWithName((String)object, originalElement);
+      PsiElement result = findDeclWithName((String)object, originalElement);
+      
+      if (result == null && element instanceof XmlTag && originalElement.getParent() instanceof XmlAttributeValue) {
+        XmlElementDescriptor descriptor = ((XmlTag)element).getDescriptor();
+
+        if (descriptor != null && descriptor.getDeclaration() instanceof XmlTag) {
+          result = findEnumerationValue((String)object, (XmlTag)descriptor.getDeclaration());
+        }
+      }
+      return result;
     }
     if (object instanceof XmlElementDescriptor) {
       return ((XmlElementDescriptor)object).getDeclaration();

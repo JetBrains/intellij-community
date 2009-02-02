@@ -41,10 +41,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.xml.*;
@@ -130,6 +127,8 @@ public class XmlUtil {
   private static final ThreadLocal<String> XML_FILE_IN_PROGRESS = new ThreadLocal<String>();
   public static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
   public static final  @NonNls String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
+  @NonNls public static final String VALUE_ATTR_NAME = "value";
+  @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
 
 
   private XmlUtil() {
@@ -1046,22 +1045,31 @@ public class XmlUtil {
   }
 
   public static boolean collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+    return processEnumerationValues(element, new Processor<XmlTag>() {
+      public boolean process(XmlTag xmlTag) {
+        variants.add(xmlTag.getAttributeValue(VALUE_ATTR_NAME));
+        return true;
+      }
+    });
+  }
+
+  public static boolean processEnumerationValues(final XmlTag element, final Processor<XmlTag> tagProcessor) {
     boolean exaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {
       @NonNls final String localName = tag.getLocalName();
 
-      if (localName.equals("enumeration")) {
-        final String attributeValue = tag.getAttributeValue("value");
-        if (attributeValue != null) variants.add(attributeValue);
+      if (localName.equals(ENUMERATION_TAG_NAME)) {
+        final String attributeValue = tag.getAttributeValue(VALUE_ATTR_NAME);
+        if (attributeValue != null) tagProcessor.process(tag);
       }
       else if (localName.equals("union")) {
         exaustiveEnum = false;
-        collectEnumerationValues(tag, variants);
+        processEnumerationValues(tag, tagProcessor);
       }
       else if (!localName.equals("annotation")) {
         // don't go into annotation
-        exaustiveEnum &= collectEnumerationValues(tag, variants);
+        exaustiveEnum &= processEnumerationValues(tag, tagProcessor);
       }
     }
     return exaustiveEnum;
