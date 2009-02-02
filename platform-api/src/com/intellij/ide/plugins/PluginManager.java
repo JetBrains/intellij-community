@@ -356,7 +356,7 @@ public class PluginManager {
                                      final boolean checkModuleDependencies) {
     for (PluginId id: descriptor.getDependentPluginIds()) {
       if (!checkModuleDependencies && isModuleDependency(id)) {
-        return false;
+        continue;
       }
       if (id.equals(on)) {
         return true;
