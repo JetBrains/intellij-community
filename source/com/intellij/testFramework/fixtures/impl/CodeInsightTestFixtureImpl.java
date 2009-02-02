@@ -847,7 +847,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myFile = myPsiManager.findFile(copy);
     setContext(myFile, myFileContext);
     myEditor = createEditor(copy);
-    assert myEditor != null;
+    assert myEditor != null : "Editor couldn't be created for file: " + copy.getPath() + ", use copyFileToProject(..) method for this file instead of configureByFile(..)" ;
     int offset = -1;
     if (loader.caretMarker != null) {
       offset = loader.caretMarker.getStartOffset();
