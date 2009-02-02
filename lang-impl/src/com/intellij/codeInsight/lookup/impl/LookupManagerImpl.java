@@ -19,6 +19,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -93,13 +94,32 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     return showLookup(editor, items, "", itemPreferencePolicy);
   }
 
+  public Lookup showLookup(Editor editor,
+                           LookupElement[] items,
+                           LookupItemPreferencePolicy itemPreferencePolicy,
+                           @Nullable String bottomText) {
+    return showLookup(editor, items, itemPreferencePolicy);
+  }
+
   public Lookup showLookup(final Editor editor, final LookupElement[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy) {
     final LookupImpl lookup = createLookup(editor, items, prefix, itemPreferencePolicy);
     lookup.show();
     return lookup;
   }
 
+  public Lookup showLookup(Editor editor,
+                           LookupElement[] items,
+                           String prefix,
+                           LookupItemPreferencePolicy itemPreferencePolicy,
+                           @Nullable String bottomText) {
+    return showLookup(editor, items, prefix, itemPreferencePolicy);
+  }
+
   public LookupImpl createLookup(final Editor editor, final LookupElement[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy) {
+    return createLookup(editor, items, prefix, itemPreferencePolicy, null);
+  }
+
+  public LookupImpl createLookup(final Editor editor, LookupElement[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
