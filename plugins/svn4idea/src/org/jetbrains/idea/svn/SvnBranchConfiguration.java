@@ -122,7 +122,7 @@ public class SvnBranchConfiguration {
 
   @Nullable
   public String getBaseUrl(String url) {
-    if (url.startsWith(myTrunkUrl)) {
+    if ((myTrunkUrl != null) && url.startsWith(myTrunkUrl)) {
       return myTrunkUrl;
     }
     for(String branchUrl: myBranchUrls) {
