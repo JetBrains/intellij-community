@@ -36,7 +36,8 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation {
+public class JBTabsImpl extends JComponent
+  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -260,28 +261,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         myListenerAdded = true;
       }
 
-      if (!myTestMode) {
-        final IdeGlassPane gp = IdeGlassPaneUtil.find(this);
-        if (gp != null) {
-          gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, this);
-          myGlassPane = gp;
-        }
-      }
-
       initialize();
-
-
-      if (!myWasEverShown) {
-        UIUtil.addAwtListener(new AWTEventListener() {
-          public void eventDispatched(final AWTEvent event) {
-            if (mySingleRowLayout.myMorePopup != null) return;
-            processFocusChange();
-          }
-        }, FocusEvent.FOCUS_EVENT_MASK, JBTabsImpl.this);
-
-        myDragHelper = new DragHelper(this);
-        myDragHelper.start();
-      }
     }
     finally {
       myWasEverShown = true;
@@ -294,7 +274,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
     if (myParent == null) {
-      myParent = tryToFindUiDisposable();      
+      myParent = tryToFindUiDisposable();
     }
 
     if (myParent != null) {
@@ -307,11 +287,30 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       });
 
       Disposer.register(this, myAnimator);
-    }
 
+      if (!myTestMode) {
+        final IdeGlassPane gp = IdeGlassPaneUtil.find(this);
+        if (gp != null) {
+          gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, this);
+          myGlassPane = gp;
+        }
+      }
 
-    if (myProject != null && myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
-      myFocusManager = IdeFocusManager.getInstance(myProject);
+      if (!myWasEverShown) {
+        UIUtil.addAwtListener(new AWTEventListener() {
+          public void eventDispatched(final AWTEvent event) {
+            if (mySingleRowLayout.myMorePopup != null) return;
+            processFocusChange();
+          }
+        }, FocusEvent.FOCUS_EVENT_MASK, JBTabsImpl.this);
+
+        myDragHelper = new DragHelper(this);
+        myDragHelper.start();
+      }
+
+      if (myProject != null && myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
+        myFocusManager = IdeFocusManager.getInstance(myProject);
+      }
     }
   }
 
@@ -1164,7 +1163,8 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         final Rectangle bounds = selectedLabel.getBounds();
         if (isHorizontalTabs()) {
           selectedLabel.setBounds(myDragHelper.myDragRec.x, bounds.y, bounds.width, bounds.height);
-        } else {
+        }
+        else {
           selectedLabel.setBounds(bounds.x, myDragHelper.myDragRec.y, bounds.width, bounds.height);
         }
       }
@@ -1293,7 +1293,6 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     final GraphicsConfig config = new GraphicsConfig(g2d);
     config.setAntialiasing(true);
-
 
 
     g2d.setColor(getBackground());

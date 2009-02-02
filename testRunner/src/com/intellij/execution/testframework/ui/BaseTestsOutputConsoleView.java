@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class BaseTestsOutputConsoleView implements ConsoleView, ObservableConsoleView {
-  private final ConsoleView myConsole;
+  private ConsoleView myConsole;
   private TestsOutputConsolePrinter myPrinter;
   private TestConsoleProperties myProperties;
 
@@ -26,6 +26,9 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     myProperties = properties;
     myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(properties.getProject()).getConsole();
     myPrinter = new TestsOutputConsolePrinter(myConsole, properties);
+
+    Disposer.register(this, myProperties);
+    Disposer.register(this, myConsole);
   }
 
   public void print(final String s, final ConsoleViewContentType contentType) {
@@ -88,11 +91,9 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   public void dispose() {
-    Disposer.dispose(myConsole);
     myPrinter = null;
-
-    myProperties.dispose();
     myProperties = null;
+    myConsole = null;
   }
 
   public void addChangeListener(final ChangeListener listener, final Disposable parent) {

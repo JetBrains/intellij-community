@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
@@ -16,7 +17,7 @@ import com.intellij.util.config.Storage;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public abstract class TestConsoleProperties extends StoringPropertyContainer {
+public abstract class TestConsoleProperties extends StoringPropertyContainer implements Disposable {
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
   public static final BooleanProperty SELECT_FIRST_DEFECT = new BooleanProperty("selectFirtsDefect", false);
   public static final BooleanProperty TRACK_RUNNING_TEST = new BooleanProperty("trackRunningTest", true);
