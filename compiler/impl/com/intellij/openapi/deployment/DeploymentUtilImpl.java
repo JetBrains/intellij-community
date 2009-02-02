@@ -396,7 +396,8 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                              null, -1, -1);
         }
         else {
-          LOG.error("invalid method " + packagingMethod);
+          LOG.info("invalid packaging method " + packagingMethod + " for module '" + ModuleUtil.getModuleNameInReadAction(childModule)
+                   + "' in module '" + ModuleUtil.getModuleNameInReadAction(module) + "'");
         }
       }
     }
