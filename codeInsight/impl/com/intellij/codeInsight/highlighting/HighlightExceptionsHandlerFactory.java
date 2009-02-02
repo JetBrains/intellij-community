@@ -32,14 +32,17 @@ public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandler
     return null;
   }
 
+  @Nullable
   private static HighlightUsagesHandlerBase createHighlightTryHandler(final Editor editor,
                                                                       final PsiFile file,
                                                                       final PsiElement target,
                                                                       final PsiElement parent) {
     final PsiTryStatement tryStatement = (PsiTryStatement)parent;
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
-    final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(), tryStatement.getTryBlock());
-    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes, tryStatement.getTryBlock(), Condition.TRUE);
+    final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+    if (tryBlock == null) return null;
+    final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
+    return new HighlightExceptionsHandler(editor, file, target, psiClassTypes, tryBlock, Condition.TRUE);
   }
 
   @Nullable
