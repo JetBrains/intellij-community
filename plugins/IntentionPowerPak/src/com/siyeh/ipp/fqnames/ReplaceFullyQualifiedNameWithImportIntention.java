@@ -125,7 +125,7 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
     }
 
     private static class QualificationRemover
-            extends JavaRecursiveElementVisitor {
+            extends JavaRecursiveElementWalkingVisitor {
 
         private final String fullyQualifiedText;
         private final List<PsiJavaCodeReferenceElement> shortenedElements =

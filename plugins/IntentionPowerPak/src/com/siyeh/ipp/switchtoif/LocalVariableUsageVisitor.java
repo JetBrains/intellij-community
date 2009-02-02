@@ -15,12 +15,12 @@
  */
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReferenceExpression;
 
-class LocalVariableUsageVisitor extends JavaRecursiveElementVisitor {
+class LocalVariableUsageVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiLocalVariable m_var;
     private boolean m_used = false;

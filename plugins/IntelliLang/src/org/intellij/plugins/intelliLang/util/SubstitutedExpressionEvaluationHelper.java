@@ -95,7 +95,7 @@ public class SubstitutedExpressionEvaluationHelper {
   public static String computeExpression(@NotNull final PsiExpression e, @Nullable List<PsiExpression> nonConstant) {
     final StringBuilder builder = new StringBuilder();
     final List<PsiExpression> list = nonConstant != null ? nonConstant : new SmartList<PsiExpression>();
-    final PsiElementVisitor processor = new JavaRecursiveElementVisitor() {
+    final PsiElementVisitor processor = new JavaRecursiveElementWalkingVisitor() {
       SubstitutedExpressionEvaluationHelper helper = new SubstitutedExpressionEvaluationHelper(e.getProject());
       @Override
       public void visitConditionalExpression(PsiConditionalExpression expression) {

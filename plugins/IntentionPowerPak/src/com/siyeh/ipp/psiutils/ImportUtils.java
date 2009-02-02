@@ -236,7 +236,7 @@ public class ImportUtils{
     }
 
     private static class ClassReferenceVisitor
-            extends JavaRecursiveElementVisitor{
+            extends JavaRecursiveElementWalkingVisitor{
 
         private final String m_name;
         private final String fullyQualifiedName;

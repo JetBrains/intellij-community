@@ -15,12 +15,12 @@
  */
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiLabeledStatement;
 import com.intellij.psi.PsiReferenceExpression;
 
-class LabelSearchVisitor extends JavaRecursiveElementVisitor {
+class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final String m_labelName;
     private boolean m_used = false;

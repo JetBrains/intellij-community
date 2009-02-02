@@ -218,7 +218,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
     }
 
     private static void convertJUnitConstructor(PsiMethod method) {
-      method.accept(new JavaRecursiveElementVisitor() {
+      method.accept(new JavaRecursiveElementWalkingVisitor() {
 
         @Override
         public void visitExpressionStatement(PsiExpressionStatement statement) {

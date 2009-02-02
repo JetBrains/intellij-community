@@ -65,7 +65,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
         }
     }
 
-    private static class ClassCollector extends JavaRecursiveElementVisitor {
+    private static class ClassCollector extends JavaRecursiveElementWalkingVisitor {
 
         private final String importedPackageName;
         private final Set<PsiClass> importedClasses = new HashSet();
