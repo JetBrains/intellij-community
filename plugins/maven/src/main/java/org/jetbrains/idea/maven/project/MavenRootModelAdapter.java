@@ -240,13 +240,15 @@ public class MavenRootModelAdapter {
     String[] classRoots = library.getUrls(OrderRootType.CLASSES);
     if (classRoots.length != 1) return true;
 
-    String suffix = ".jar" + JarFileSystem.JAR_SEPARATOR;
     String classes = classRoots[0];
-    if (!classes.endsWith(suffix)) return true;
 
-    String path = classes.substring(0, classes.length() - suffix.length());
-    String sourcesPath = path + "-" + MavenConstants.SOURCES_CLASSIFIER + suffix;
-    String javadocPath = path + "-" + MavenConstants.JAVADOC_CLASSIFIER + suffix;
+    int dotPos = classes.lastIndexOf(".");
+    if (dotPos == -1) return true;
+    String path = classes.substring(0, dotPos);
+
+    String jarSuffix = ".jar" + JarFileSystem.JAR_SEPARATOR;
+    String sourcesPath = path + "-" + MavenConstants.SOURCES_CLASSIFIER + jarSuffix;
+    String javadocPath = path + "-" + MavenConstants.JAVADOC_CLASSIFIER + jarSuffix;
 
     for (String each : library.getUrls(OrderRootType.SOURCES)) {
       if (!FileUtil.pathsEqual(each, sourcesPath)) return true;

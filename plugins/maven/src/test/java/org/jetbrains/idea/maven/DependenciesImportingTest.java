@@ -1177,7 +1177,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
 
                   "<dependencies>" +
                   "  <dependency>" +
@@ -1213,6 +1212,73 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertProjectLibraries("Maven: group:lib1:1",
                            "Maven: group:lib2:1");
+  }
+
+  public void testRemovingUnusedNonJARLibrary() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>war</packaging>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib1</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <type>ear</type>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib2</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <type>war</type>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: group:lib1:ear:1",
+                           "Maven: group:lib2:war:1");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>war</packaging>");
+    importProject();
+
+    assertProjectLibraries();
+  }
+  
+  public void testRemovingUnusedLibraryWithClassifier() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>war</packaging>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib1</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <classifier>tests</classifier>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib2</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <type>war</type>" +
+                  "    <classifier>tests</classifier>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: group:lib1:tests:1",
+                           "Maven: group:lib2:war:tests:1");
+
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>war</packaging>");
+    importProject();
+
+    assertProjectLibraries();
   }
 
   private void clearLibraryRoots(String libraryName, OrderRootType... types) {
