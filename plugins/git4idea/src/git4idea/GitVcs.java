@@ -320,8 +320,8 @@ public class GitVcs extends AbstractVcs {
    * {@inheritDoc}
    */
   @Override
-  public ThreeStateBoolean isVersionedDirectory(VirtualFile dir) {
-    return ThreeStateBoolean.getInstance(dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null);
+  public boolean isVersionedDirectory(VirtualFile dir) {
+    return dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null;
   }
 
   /**
