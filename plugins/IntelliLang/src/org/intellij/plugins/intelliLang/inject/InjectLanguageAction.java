@@ -246,7 +246,7 @@ public class InjectLanguageAction implements IntentionAction {
     if (tag != null) {
       final XmlTagInjection injection = new XmlTagInjection();
       injection.setInjectedLanguageId(languageId);
-      injection.setTagName(tag.getName());
+      injection.setTagName(tag.getLocalName());
       injection.setTagNamespace(tag.getNamespace());
       doEditInjection(project, injection);
       return true;
@@ -260,9 +260,9 @@ public class InjectLanguageAction implements IntentionAction {
     if (tag != null) {
       final XmlAttributeInjection injection = new XmlAttributeInjection();
       injection.setInjectedLanguageId(languageId);
-      injection.setAttributeName(attribute.getName());
+      injection.setAttributeName(attribute.getLocalName());
       injection.setAttributeNamespace(attribute.getNamespace());
-      injection.setTagName(tag.getName());
+      injection.setTagName(tag.getLocalName());
       injection.setTagNamespace(tag.getNamespace());
       doEditInjection(project, injection);
       return true;
