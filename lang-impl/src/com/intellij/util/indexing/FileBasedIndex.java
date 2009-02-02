@@ -52,6 +52,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -616,31 +617,36 @@ public class FileBasedIndex implements ApplicationComponent {
     final Set<Document> documents = getUnsavedOrTransactedDocuments();
     if (!documents.isEmpty()) {
       // now index unsaved data
-      setDataBufferingEnabled(true);
-      final Semaphore semaphore = myUnsavedDataIndexingSemaphores.get(indexId);
-      semaphore.down();
+      final Lock storageLock = setDataBufferingEnabled(true);
       try {
-        for (Document document : documents) {
-          indexUnsavedDocument(document, indexId);
-        }
-      }
-      catch (StorageException e) {
-        setDataBufferingEnabled(false); // revert to original state
-        throw e;
-      }
-      catch (ProcessCanceledException e) {
-        setDataBufferingEnabled(false); // revert to original state
-        throw e;
-      }
-      finally {
-        semaphore.up();
-
-        while (!semaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
-          if (Thread.holdsLock(PsiLock.LOCK)) {
-            break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
+        final Semaphore semaphore = myUnsavedDataIndexingSemaphores.get(indexId);
+        semaphore.down();
+        try {
+          for (Document document : documents) {
+            indexUnsavedDocument(document, indexId);
           }
         }
-        myUpToDateIndices.add(indexId); // safe to set the flag here, becase it will be cleared under the WriteAction
+        catch (StorageException e) {
+          setDataBufferingEnabled(false).unlock(); // revert to original state
+          throw e;
+        }
+        catch (ProcessCanceledException e) {
+          setDataBufferingEnabled(false).unlock(); // revert to original state
+          throw e;
+        }
+        finally {
+          semaphore.up();
+
+          while (!semaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
+            if (Thread.holdsLock(PsiLock.LOCK)) {
+              break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
+            }
+          }
+          myUpToDateIndices.add(indexId); // safe to set the flag here, becase it will be cleared under the WriteAction
+        }
+      }
+      finally {
+        storageLock.unlock();
       }
     }
   }
@@ -747,7 +753,10 @@ public class FileBasedIndex implements ApplicationComponent {
     return findLatestKnownPsiForUncomittedDocument(document);
   }
 
-  private void setDataBufferingEnabled(final boolean enabled) {
+  private Lock myStorageLock = new ReentrantLock();
+
+  private Lock setDataBufferingEnabled(final boolean enabled) {
+    myStorageLock.lock();
     if (!enabled) {
       synchronized (myLastIndexedDocStamps) {
         myLastIndexedDocStamps.clear();
@@ -760,6 +769,7 @@ public class FileBasedIndex implements ApplicationComponent {
       final IndexStorage indexStorage = index.getStorage();
       ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
+    return myStorageLock;
   }
 
   private void dropUnregisteredIndices() {
@@ -839,27 +849,32 @@ public class FileBasedIndex implements ApplicationComponent {
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
 
-    setDataBufferingEnabled(false);
+    final Lock lock = setDataBufferingEnabled(false);
 
-    final int inputId = Math.abs(getFileId(file));
+    try {
+      final int inputId = Math.abs(getFileId(file));
 
-    final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-    assert index != null;
+      final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+      assert index != null;
 
-    index.update(inputId, currentFC, oldFC);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        if (file.isValid()) {
-          if (currentFC != null) {
-            IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
-          }
-          else {
-            // mark the file as unindexed
-            IndexingStamp.update(file, indexId, -1L);
+      index.update(inputId, currentFC, oldFC);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          if (file.isValid()) {
+            if (currentFC != null) {
+              IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+            }
+            else {
+              // mark the file as unindexed
+              IndexingStamp.update(file, indexId, -1L);
+            }
           }
         }
-      }
-    });
+      });
+    }
+    finally {
+      lock.unlock();
+    }
   }
 
   public static int getFileId(final VirtualFile file) {
