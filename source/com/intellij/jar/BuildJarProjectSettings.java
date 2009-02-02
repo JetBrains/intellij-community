@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.DummyCompileContext;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
@@ -33,10 +35,12 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
+import com.intellij.CommonBundle;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -176,7 +180,7 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
         if (progressIndicator != null) {
           progressIndicator.setText(IdeBundle.message("jar.build.progress", presentableJarPath));
         }
-        buildJar(module, buildJarSettings,progressIndicator);
+        buildJar(module, buildJarSettings,progressIndicator, null);
         WindowManager.getInstance().getStatusBar(myProject).setInfo(IdeBundle.message("jar.build.success.message", presentableJarPath));
       }
     }
@@ -192,7 +196,8 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
     }
   }
 
-  static void buildJar(final Module module, final BuildJarSettings buildJarSettings, final ProgressIndicator progressIndicator) throws IOException {
+  static void buildJar(final Module module, final BuildJarSettings buildJarSettings, final ProgressIndicator progressIndicator,
+                       @Nullable CompileContext context) throws IOException {
     String jarPath = buildJarSettings.getJarUrl();
     final File jarFile = new File(VfsUtil.urlToPath(jarPath));
     jarFile.delete();
@@ -210,7 +215,21 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
     }
 
     // write temp file and rename it to the jar to avoid deployment of incomplete jar. SCR #30303
-    final File tempFile = File.createTempFile("___"+ FileUtil.getNameWithoutExtension(jarFile), JAR_EXTENSION, jarFile.getParentFile());
+    final File tempFile;
+    try {
+      tempFile = File.createTempFile("___"+ FileUtil.getNameWithoutExtension(jarFile), JAR_EXTENSION, jarFile.getParentFile());
+    }
+    catch (IOException e) {
+      final String errorMessage =
+          IdeBundle.message("error.message.jar.build.cannot.create.temporary.file.in.0", jarFile.getParentFile().getAbsolutePath());
+      if (context != null) {
+        context.addMessage(CompilerMessageCategory.ERROR, errorMessage, null, -1, -1);
+      }
+      else {
+        Messages.showErrorDialog(module.getProject(), errorMessage, CommonBundle.getErrorTitle());
+      }
+      return;
+    }
     final JarOutputStream jarOutputStream = manifest == null ?
                                             new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile))) :
                                             new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)), manifest);

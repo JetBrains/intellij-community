@@ -226,7 +226,7 @@ public class JarCompiler implements PackagingCompiler {
         MyProcItem procItem = (MyProcItem)item;
         Module module = procItem.getModule();
         BuildJarSettings jarSettings = BuildJarSettings.getInstance(module);
-        BuildJarProjectSettings.buildJar(module, jarSettings, context.getProgressIndicator());
+        BuildJarProjectSettings.buildJar(module, jarSettings, context.getProgressIndicator(), context);
       }
     }
     catch (IOException e) {
