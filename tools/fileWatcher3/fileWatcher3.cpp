@@ -266,7 +266,9 @@ void StopRoot(WatchRootInfo *info)
 
 void UpdateRoots()
 {
-	bool haveUsedRoots = false;
+	bool haveUnwatchableRoots = false;
+	char infoBuffer [256];
+	strcpy_s(infoBuffer, "UNWATCHEABLE\n");
 	for(int i=0; i<ROOT_COUNT; i++)
 	{
 		if (watchRootInfos [i].bInitialized && (!watchRootInfos [i].bUsed || watchRootInfos [i].bFailed))
@@ -276,18 +278,13 @@ void UpdateRoots()
 		}
 		if (watchRootInfos [i].bUsed)
 		{
-			if (!haveUsedRoots)
-			{
-				haveUsedRoots = true;
-				EnterCriticalSection(&csOutput);
-				puts("UNWATCHEABLE");
-			}
-
 			char rootPath[8];
 			sprintf_s(rootPath, 8, "%c:\\", watchRootInfos [i].driveLetter);
 			if (!IsWatchable(rootPath))
 			{
-				puts(rootPath);
+				haveUnwatchableRoots = true;
+				strcat_s(infoBuffer, rootPath);
+				strcat_s(infoBuffer, "\n");
 				continue;
 			}
 			if (!watchRootInfos [i].bInitialized)
@@ -297,9 +294,11 @@ void UpdateRoots()
 			PrintMountPoints(rootPath);
 		}
 	}
-	if (haveUsedRoots)
+	if (haveUnwatchableRoots)
 	{
-		puts("#");
+		strcat_s(infoBuffer, "#");
+		EnterCriticalSection(&csOutput);
+		puts(infoBuffer);
 		fflush(stdout);
 		LeaveCriticalSection(&csOutput);
 	}
