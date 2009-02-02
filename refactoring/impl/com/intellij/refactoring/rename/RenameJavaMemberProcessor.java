@@ -141,6 +141,11 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
           // an initializer existing 'in the air' validates the invariant (IDEADEV-28840)
           initializer.delete();
         }
+      } else if (prototype instanceof PsiField) {
+        final PsiExpression initializer = ((PsiField)prototype).getInitializer();
+        if (initializer != null) {
+          initializer.delete();
+        }
       }
       prototype = (PsiMember) memberToRename.getContainingClass().add(prototype);
 
