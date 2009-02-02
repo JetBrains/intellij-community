@@ -2494,7 +2494,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final List<PsiVariable> vars = new ArrayList<PsiVariable>();
     final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("_.java", s1);
 
-    file.acceptChildren(new JavaRecursiveElementVisitor() {
+    file.acceptChildren(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitVariable(final PsiVariable variable) {
         super.visitVariable(variable);
         vars.add(variable);

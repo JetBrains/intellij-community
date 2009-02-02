@@ -404,7 +404,7 @@ class CompilingVisitor {
     }
   }
 
-  private class MyJavaVisitor extends JavaRecursiveElementVisitor {
+  private class MyJavaVisitor extends JavaRecursiveElementWalkingVisitor {
     @Override public void visitDocTag(PsiDocTag psiDocTag) {
       super.visitDocTag(psiDocTag);
 

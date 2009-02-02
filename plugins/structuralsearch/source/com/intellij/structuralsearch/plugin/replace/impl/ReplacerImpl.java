@@ -559,7 +559,7 @@ public class ReplacerImpl {
     }
   }
 
-  static class ModifierListOwnerCollector extends JavaRecursiveElementVisitor {
+  static class ModifierListOwnerCollector extends JavaRecursiveElementWalkingVisitor {
     HashMap<String,PsiNamedElement> namedElements = new HashMap<String,PsiNamedElement>(1);
 
     @Override public void visitClass(PsiClass aClass) {
