@@ -108,7 +108,7 @@ public class TagNameReference implements PsiReference {
       if (index != -1) {
         final PsiElement psiElement = resolve();
         
-        if (psiElement instanceof PsiFile || psiElement.isEquivalentTo(psiElement.getContainingFile())) {
+        if (psiElement instanceof PsiFile || (psiElement != null && psiElement.isEquivalentTo(psiElement.getContainingFile()))) {
           newElementName = newElementName.substring(0, index);
         }
       }
