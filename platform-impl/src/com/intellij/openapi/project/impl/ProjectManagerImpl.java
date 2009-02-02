@@ -476,26 +476,23 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void askToReloadProjectIfConfigFilesChangedExternally() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (!myChangedProjectFiles.isEmpty() && myReloadBlockCount == 0) {
-          Set<Project> projects = myChangedProjectFiles.keySet();
-          List<Project> projectsToReload = new ArrayList<Project>();
+    if (!myChangedProjectFiles.isEmpty() && myReloadBlockCount == 0) {
+      Set<Project> projects = myChangedProjectFiles.keySet();
+      List<Project> projectsToReload = new ArrayList<Project>();
 
-          for (Project project : projects) {
-            if (shouldReloadProject(project)) {
-              projectsToReload.add(project);
-            }
-          }
-
-          for (final Project projectToReload : projectsToReload) {
-            reloadProjectImpl(projectToReload, false, false);
-          }
-
-          myChangedProjectFiles.clear();
+      for (Project project : projects) {
+        if (shouldReloadProject(project)) {
+          projectsToReload.add(project);
         }
       }
-    }, ModalityState.NON_MODAL);
+
+      for (final Project projectToReload : projectsToReload) {
+        reloadProjectImpl(projectToReload, false, false);
+      }
+
+      myChangedProjectFiles.clear();
+    }
+
   }
 
   private boolean tryToReloadApplication(){
@@ -614,8 +611,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void scheduleReloadApplicationAndProject() {
-    if (!tryToReloadApplication()) return;
-    askToReloadProjectIfConfigFilesChangedExternally();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (!tryToReloadApplication()) return;
+        askToReloadProjectIfConfigFilesChangedExternally();
+      }
+
+    }, ModalityState.NON_MODAL);
+
   }
 
   public void setCurrentTestProject(@Nullable final Project project) {
