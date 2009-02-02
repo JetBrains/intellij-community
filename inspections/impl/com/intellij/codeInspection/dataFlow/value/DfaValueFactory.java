@@ -89,12 +89,13 @@ public class DfaValueFactory {
     }
     else {
       final Object value = ConstantExpressionEvaluator.computeConstantExpression(psiExpression, new THashSet<PsiVariable>(), false);
-      if (value != null) {
+      PsiType type = psiExpression.getType();
+      if (value != null && type != null) {
         if (value instanceof String) {
-          result  = getNotNullFactory().create(psiExpression.getType()); // Non-null string literal.
+          result  = getNotNullFactory().create(type); // Non-null string literal.
         }
         else {
-          result = getConstFactory().createFromValue(value, psiExpression.getType());
+          result = getConstFactory().createFromValue(value, type);
         }
       }
     }
