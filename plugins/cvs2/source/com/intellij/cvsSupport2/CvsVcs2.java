@@ -421,9 +421,9 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   }
 
   @Override
-  public ThreeStateBoolean isVersionedDirectory(final VirtualFile dir) {
+  public boolean isVersionedDirectory(final VirtualFile dir) {
     final VirtualFile child = dir.findChild("CVS");
-    return ThreeStateBoolean.getInstance(child != null && child.isDirectory());
+    return child != null && child.isDirectory();
   }
 
   public CvsCheckoutProvider getCheckoutProvider() {

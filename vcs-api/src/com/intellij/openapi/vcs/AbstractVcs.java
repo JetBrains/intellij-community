@@ -309,14 +309,19 @@ public abstract class AbstractVcs {
    * project VCS configuration). For example, for CVS this checks the presense of "CVS" admin directories.
    * This method is used for VCS autodetection during initial project creation and VCS configuration.
    *
-   * Method can also return a value {@link ThreeStateBoolean#z} which means that VCS does not implement detection
-   *
    * @param dir the directory to check.
-   * @return ThreeStateBoolean.yes if the directory is managed by the specified VCS, ThreeStateBoolean.no otherwise, or
-   * ThreeStateBoolean.z if detection is not defined
+   * @return <code>true</code> if directory is managed by this VCS
    */
-  public ThreeStateBoolean isVersionedDirectory(VirtualFile dir) {
-    return ThreeStateBoolean.no;
+  public boolean isVersionedDirectory(VirtualFile dir) {
+    return false;
+  }
+
+  /**
+   * If VCS does not implement detection whether directory is versioned ({@link #isVersionedDirectory(com.intellij.openapi.vfs.VirtualFile)}),
+   * it should return <code>false</code>. Otherwise return <code>true</code>
+   */
+  public boolean supportsVersionedStateDetection() {
+    return true;
   }
 
   /**

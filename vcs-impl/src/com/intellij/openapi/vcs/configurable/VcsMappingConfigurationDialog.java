@@ -128,7 +128,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       final VcsWrapper wrapper = (VcsWrapper)myVCSComboBox.getSelectedItem();
       if (oldText.length() == 0 && wrapper.getOriginal() == null) {
         for(AbstractVcs vcs: ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
-          if (ThreeStateBoolean.yes.equals(vcs.isVersionedDirectory(chosenFile))) {
+          if (vcs.isVersionedDirectory(chosenFile)) {
             myVCSComboBox.setSelectedItem(new VcsWrapper(vcs));
             break;
           }
