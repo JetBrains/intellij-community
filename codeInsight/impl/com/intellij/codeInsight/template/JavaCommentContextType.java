@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,10 @@ public class JavaCommentContextType extends TemplateContextType {
     FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.JAVA) {
       PsiElement element = file.findElementAt(offset);
-      return PsiTreeUtil.getParentOfType(element, PsiComment.class) != null;
+      if (element instanceof PsiWhiteSpace && offset > 0) {
+        element = file.findElementAt(offset-1);
+      }
+      return PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
     }
     return false;
   }

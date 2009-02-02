@@ -22,6 +22,9 @@ public class JavaCodeContextType extends TemplateContextType {
     FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.JAVA) {
       PsiElement element = file.findElementAt(offset);
+      if (element instanceof PsiWhiteSpace && offset > 0) {
+        element = file.findElementAt(offset-1);
+      }
       return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) == null &&
              !(element instanceof PsiJavaToken && ((PsiJavaToken) element).getTokenType() == JavaTokenType.STRING_LITERAL);
     }
