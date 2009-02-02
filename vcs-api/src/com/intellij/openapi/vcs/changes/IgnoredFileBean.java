@@ -23,6 +23,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +114,8 @@ public class IgnoredFileBean {
       if (myPathIsAbsolute) {
         return StringUtil.startsWithIgnoreCase(ioFileAbsPath, myAbsolutePath);
       }
-      final File file = new File(baseDir, myPath);
+      final File file = FileUtil.createFileByRelativePath(baseDir, myPath);
+      if (file == null) return false;
       String absPath = file.getAbsolutePath();
       absPath = IgnoreSettingsType.UNDER_DIR.equals(myType) ? absPath + "/" : absPath;
       return StringUtil.startsWithIgnoreCase(ioFileAbsPath, absPath);
