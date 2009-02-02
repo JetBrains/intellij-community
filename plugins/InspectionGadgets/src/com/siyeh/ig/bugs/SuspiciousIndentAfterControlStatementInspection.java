@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,21 @@ import org.jetbrains.annotations.NotNull;
 public class SuspiciousIndentAfterControlStatementInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "suspicious.indent.after.control.statement.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "suspicious.indent.after.control.statement.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SuspiciousIndentAfterControlStatementVisitor();
     }
@@ -49,12 +52,14 @@ public class SuspiciousIndentAfterControlStatementInspection
             checkLoopStatement(statement);
         }
 
-        @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        @Override public void visitDoWhileStatement(
+                PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             checkLoopStatement(statement);
         }
 
-        @Override public void visitForeachStatement(PsiForeachStatement statement) {
+        @Override public void visitForeachStatement(
+                PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             checkLoopStatement(statement);
         }
@@ -73,13 +78,15 @@ public class SuspiciousIndentAfterControlStatementInspection
                 final PsiStatement thenStatement = statement.getThenBranch();
                 if (thenStatement instanceof PsiBlockStatement) {
                     return;
+                } else if (thenStatement != null) {
+                    if (!isWhitespaceSuspicious(statement, thenStatement)) {
+                        return;
+                    }
                 }
-            }
-            //if (elseStatement != null) {
-            //    return;
-            //}
-            if (!isWhiteSpaceSuspicious(statement)) {
-                return;
+            } else {
+                if (!isWhitespaceSuspicious(statement, elseStatement)) {
+                    return;
+                }
             }
             final PsiStatement nextStatement =
                     PsiTreeUtil.getNextSiblingOfType(statement,
@@ -95,7 +102,7 @@ public class SuspiciousIndentAfterControlStatementInspection
             if (body instanceof PsiBlockStatement) {
                 return;
             }
-            if (!isWhiteSpaceSuspicious(statement)) {
+            if (!isWhitespaceSuspicious(statement, body)) {
                 return;
             }
             final PsiStatement nextStatement =
@@ -107,10 +114,28 @@ public class SuspiciousIndentAfterControlStatementInspection
             registerStatementError(nextStatement);
         }
 
-        private static boolean isWhiteSpaceSuspicious(PsiStatement statement) {
-            final PsiElement prevSibling1 = statement.getPrevSibling();
-            if (!(prevSibling1 instanceof PsiWhiteSpace)) {
-                return false;
+        private static boolean isWhitespaceSuspicious(PsiStatement statement,
+                                                      PsiStatement body) {
+            final boolean lineBreakBeforeBody;
+            PsiElement prevSibling = body.getPrevSibling();
+            if (!(prevSibling instanceof PsiWhiteSpace)) {
+                lineBreakBeforeBody = false;
+                prevSibling = statement.getPrevSibling();
+                if (!(prevSibling instanceof PsiWhiteSpace)) {
+                    return false;
+                }
+            } else {
+                final String text = prevSibling.getText();
+                final int lineBreakIndex = getLineBreakIndex(text);
+                if (lineBreakIndex < 0) {
+                    lineBreakBeforeBody = false;
+                    prevSibling = statement.getPrevSibling();
+                    if (!(prevSibling instanceof PsiWhiteSpace)) {
+                        return false;
+                    }
+                } else {
+                    lineBreakBeforeBody = true;
+                }
             }
             final PsiStatement nextStatement =
                     PsiTreeUtil.getNextSiblingOfType(statement,
@@ -118,26 +143,30 @@ public class SuspiciousIndentAfterControlStatementInspection
             if (nextStatement == null) {
                 return false;
             }
-            final String text1 = prevSibling1.getText();
-            final int index1 = getLineIndex(text1);
-            final String indent1 = text1.substring(index1 + 1);
-            if (indent1.length() == 0) {
+            final String text = prevSibling.getText();
+            final int index = getLineBreakIndex(text);
+            if (index < 0) {
                 return false;
             }
-            final PsiElement prevSibling2 = nextStatement.getPrevSibling();
-            if (!(prevSibling2 instanceof PsiWhiteSpace)) {
+            final String indent = text.substring(index + 1);
+            final PsiElement nextSibling = nextStatement.getPrevSibling();
+            if (!(nextSibling instanceof PsiWhiteSpace)) {
                 return false;
             }
-            final String text2 = prevSibling2.getText();
-            final int index2 = getLineIndex(text2);
-            final String indent2 = text2.substring(index2 + 1);
-            if (indent2.length() == 0) {
+            final String nextText = nextSibling.getText();
+            final int nextIndex = getLineBreakIndex(nextText);
+            if (nextIndex < 0) {
                 return false;
             }
-            return !indent1.equals(indent2);
+            final String nextIndent = nextText.substring(nextIndex + 1);
+            if (lineBreakBeforeBody) {
+                return indent.equals(nextIndent);
+            } else {
+                return !indent.equals(nextIndent);
+            }
         }
 
-        private static int getLineIndex(String text) {
+        private static int getLineBreakIndex(String text) {
             final int newLineIndex1 = text.lastIndexOf('\n');
             final int carriageReturnIndex1 = text.lastIndexOf('\r');
             return Math.max(newLineIndex1, carriageReturnIndex1);
