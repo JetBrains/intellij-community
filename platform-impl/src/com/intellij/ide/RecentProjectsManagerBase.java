@@ -1,5 +1,6 @@
 package com.intellij.ide;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -52,6 +53,12 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     myState = state;
     if (myState.lastPath != null && !new File(myState.lastPath).exists()) {
       myState.lastPath = null;
+    }
+    if (myState.lastPath != null) {
+      File lastFile = new File(myState.lastPath);
+      if (lastFile.isDirectory() && !new File(lastFile, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
+        myState.lastPath = null;
+      }
     }
   }
 

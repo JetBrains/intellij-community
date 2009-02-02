@@ -191,6 +191,12 @@ public class ProjectUtil {
       return null;
     }
 
+    if (file.isDirectory() && !new File(file, DIRECTORY_BASED_PROJECT_DIR).exists()) {
+      Messages.showMessageDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle(),
+                                 Messages.getErrorIcon());
+      return null;
+    }
+
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       if (isSameProject(path, project)) {
