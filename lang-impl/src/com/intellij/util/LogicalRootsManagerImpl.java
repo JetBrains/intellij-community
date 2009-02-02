@@ -43,8 +43,8 @@ import java.util.*;
  */
 public class LogicalRootsManagerImpl extends LogicalRootsManager {
   private Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> myRoots = null;
-  private final MultiValuesMap<LogicalRootType,NotNullFunction> myProviders = new MultiValuesMap<LogicalRootType, NotNullFunction>();
-  private final MultiValuesMap<FileType,LogicalRootType> myFileTypes2RootTypes = new MultiValuesMap<FileType, LogicalRootType>();
+  private final MultiValuesMap<LogicalRootType, NotNullFunction> myProviders = new MultiValuesMap<LogicalRootType, NotNullFunction>();
+  private final MultiValuesMap<FileType, LogicalRootType> myFileTypes2RootTypes = new MultiValuesMap<FileType, LogicalRootType>();
   private final ModuleManager myModuleManager;
   private final Project myProject;
 
@@ -55,7 +55,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(ProjectTopics.LOGICAL_ROOTS, new LogicalRootListener() {
       public void logicalRootsChanged() {
-        myRoots = null;
+        clear();
         //updateCache(moduleManager);
       }
     });
@@ -79,20 +79,28 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     });
   }
 
-  private void updateCache(final ModuleManager moduleManager) {
-    myRoots = new THashMap<Module, MultiValuesMap<LogicalRootType, LogicalRoot>>();
+  private synchronized void clear() {
+    myRoots = null;
+  }
 
-    final Module[] modules = moduleManager.getModules();
-    for (Module module : modules) {
-      final MultiValuesMap<LogicalRootType, LogicalRoot> map = new MultiValuesMap<LogicalRootType, LogicalRoot>();
-      for (Map.Entry<LogicalRootType, Collection<NotNullFunction>> entry : myProviders.entrySet()) {
-        final Collection<NotNullFunction> functions = entry.getValue();
-        for (NotNullFunction function : functions) {
-          map.putAll(entry.getKey(), (List<LogicalRoot>)function.fun(module));
+  private synchronized  Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> getRoots(final ModuleManager moduleManager) {
+    if (myRoots == null) {
+      myRoots = new THashMap<Module, MultiValuesMap<LogicalRootType, LogicalRoot>>();
+
+      final Module[] modules = moduleManager.getModules();
+      for (Module module : modules) {
+        final MultiValuesMap<LogicalRootType, LogicalRoot> map = new MultiValuesMap<LogicalRootType, LogicalRoot>();
+        for (Map.Entry<LogicalRootType, Collection<NotNullFunction>> entry : myProviders.entrySet()) {
+          final Collection<NotNullFunction> functions = entry.getValue();
+          for (NotNullFunction function : functions) {
+            map.putAll(entry.getKey(), (List<LogicalRoot>) function.fun(module));
+          }
         }
+        myRoots.put(module, map);
       }
-      myRoots.put(module, map);
     }
+
+    return myRoots;
   }
 
   @Nullable
@@ -121,11 +129,8 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   }
 
   public List<LogicalRoot> getLogicalRoots(@NotNull final Module module) {
-    if (myRoots == null) {
-      updateCache(myModuleManager);
-    }
-
-    final MultiValuesMap<LogicalRootType, LogicalRoot> valuesMap = myRoots.get(module);
+    final Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> roots = getRoots(myModuleManager);
+    final MultiValuesMap<LogicalRootType, LogicalRoot> valuesMap = roots.get(module);
     if (valuesMap == null) {
       return Collections.emptyList();
     }
@@ -141,11 +146,8 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   }
 
   public <T extends LogicalRoot> List<T> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType<T> type) {
-    if (myRoots == null) {
-      updateCache(myModuleManager);
-    }
-
-    final MultiValuesMap<LogicalRootType, LogicalRoot> map = myRoots.get(module);
+    final Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> roots = getRoots(myModuleManager);
+    final MultiValuesMap<LogicalRootType, LogicalRoot> map = roots.get(module);
     if (map == null) {
       return Collections.emptyList();
     }
@@ -169,6 +171,6 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
 
   public <T extends LogicalRoot> void registerLogicalRootProvider(@NotNull final LogicalRootType<T> rootType, @NotNull NotNullFunction<Module, List<T>> provider) {
     myProviders.put(rootType, provider);
-    myRoots = null;
+    clear();
   }
 }
