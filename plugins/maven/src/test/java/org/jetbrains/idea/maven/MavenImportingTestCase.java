@@ -14,6 +14,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
@@ -358,5 +360,29 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void removeFromLocalRepository(String relativePath) throws IOException {
     FileUtil.delete(new File(getRepositoryPath(), relativePath));
+  }
+
+  protected Sdk setupJdkForModule(String moduleName) {
+    ModifiableRootModel m = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
+
+    File file = new File(myDir, "mockJdk");
+    file.mkdirs();
+
+    String oldValue = System.setProperty("idea.testingFramework.mockJDK", file.getPath());
+    Sdk sdk;
+    try {
+      sdk = JavaSdkImpl.getMockJdk("java 1.5");
+    }
+    finally {
+      if (oldValue == null) {
+        System.clearProperty("idea.testingFramework.mockJDK");
+      } else {
+        System.setProperty("idea.testingFramework.mockJDK", oldValue);
+      }
+    }
+
+    m.setSdk(sdk);
+    m.commit();
+    return sdk;
   }
 }

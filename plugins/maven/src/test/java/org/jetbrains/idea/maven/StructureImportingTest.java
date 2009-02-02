@@ -3,9 +3,7 @@ package org.jetbrains.idea.maven;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -46,10 +44,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     getModule("project").setSavePathsRelative(false);
-    ModifiableRootModel m = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
-    Sdk sdk = JavaSdkImpl.getMockJdk15("java 1.5");
-    m.setSdk(sdk);
-    m.commit();
+    Sdk sdk = setupJdkForModule("project");
 
     importProject();
     assertFalse(getModule("project").isSavePathsRelative());

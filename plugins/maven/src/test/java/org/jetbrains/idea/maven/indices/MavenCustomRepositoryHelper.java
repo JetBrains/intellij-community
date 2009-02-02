@@ -27,8 +27,8 @@ public class MavenCustomRepositoryHelper {
   }
 
   private String getOriginalTestDataPath() {
-    String path = PathManager.getHomePath() + "/svnPlugins/maven/src/test/data";
-    return FileUtil.toSystemIndependentName(path);
+    String sourcesDir = System.getProperty("maven.sources.dir", PathManager.getHomePath() + "/svnPlugins/maven");
+    return FileUtil.toSystemIndependentName(sourcesDir + "/src/test/data");
   }
 
   public String getTestDataPath(String relativePath) {

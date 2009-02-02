@@ -4,9 +4,6 @@ import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -371,9 +368,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
   private void compileModules(String... modules) {
     for (String each : modules) {
-      ModifiableRootModel model = ModuleRootManager.getInstance(getModule(each)).getModifiableModel();
-      model.setSdk(JavaSdkImpl.getMockJdk15("java 1.5"));
-      model.commit();
+      setupJdkForModule(each);
     }
 
     List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentSourceRoots());
