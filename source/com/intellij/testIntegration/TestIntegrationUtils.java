@@ -11,6 +11,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -21,10 +22,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class TestIntegrationUtils {
+  private static final Logger LOG = Logger.getInstance("#" + TestIntegrationUtils.class.getName());
+
   public enum MethodKind {
     SET_UP {
       public FileTemplateDescriptor getFileTemplateDescriptor(TestFrameworkDescriptor frameworkDescriptor) {
@@ -154,24 +159,38 @@ public class TestIntegrationUtils {
     FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);
     Template template = TemplateManager.getInstance(targetClass.getProject()).createTemplate("", "");
 
-    String templateText = fileTemplate.getText();
-    int index = templateText.indexOf("${NAME}");
-
-    if (index == -1) {
-      template.addTextSegment(templateText);
+    String templateText;
+    try {
+      templateText = fileTemplate.getText(new Properties());
     }
-    else {
+    catch (IOException e) {
+      LOG.warn(e);
+      templateText = fileTemplate.getText();
+    }
+
+    int from = 0;
+    while(true) {
+      int index = templateText.indexOf("${NAME}", from);
+      if (index == -1) break;
+
+      template.addTextSegment(templateText.substring(from, index));
+
       if (index > 0 && !Character.isWhitespace(templateText.charAt(index - 1))) {
         name = StringUtil.capitalize(name);
       }
       else {
         name = StringUtil.decapitalize(name);
       }
-      template.addTextSegment(templateText.substring(0, index));
-      Expression nameExpr = new ConstantNode(name);
-      template.addVariable("", nameExpr, nameExpr, !automatic);
-      template.addTextSegment(templateText.substring(index + "${NAME}".length(), templateText.length()));
+      if (from == 0) {
+        Expression nameExpr = new ConstantNode(name + index);
+        template.addVariable("name", nameExpr, nameExpr, !automatic);
+      } else {
+        template.addVariableSegment("name");
+      }
+
+      from = index + "${NAME}".length();
     }
+    template.addTextSegment(templateText.substring(from, templateText.length()));
 
     return template;
   }
