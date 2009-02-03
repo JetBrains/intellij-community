@@ -17,7 +17,7 @@ package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.PsiUtil;
 
 public class ErrorUtil{
@@ -43,7 +43,7 @@ public class ErrorUtil{
 		return visitor.containsErrorElement();
 	}
 
-    private static class ErrorElementVisitor extends PsiRecursiveElementVisitor{
+    private static class ErrorElementVisitor extends PsiRecursiveElementWalkingVisitor {
         private boolean containsErrorElement = false;
 
         @Override public void visitErrorElement(PsiErrorElement element){
