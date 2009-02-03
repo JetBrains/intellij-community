@@ -22,14 +22,12 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MavenRunnerSettings implements Cloneable {
 
@@ -50,14 +48,12 @@ public class MavenRunnerSettings implements Cloneable {
     this.runMavenInBackground = runMavenInBackground;
   }
 
-
   @NotNull
   public String getJreName() {
     if (StringUtil.isEmpty(jreName)) {
-      jreName = collectJdkNamesAndDescriptions().get(0).getFirst();
+      jreName = getDefaultJdkName();
     }
     return jreName;
-
   }
 
   public void setJreName(@Nullable String jreName) {
@@ -97,7 +93,7 @@ public class MavenRunnerSettings implements Cloneable {
   public List<Pair<String, String>> collectJdkNamesAndDescriptions() {
     List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
 
-    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+    for (Sdk projectJdk : getDefinedJdks()) {
       String name = projectJdk.getName();
       result.add(new Pair<String, String>(name, name));
     }
@@ -106,6 +102,27 @@ public class MavenRunnerSettings implements Cloneable {
     result.add(new Pair<String, String>(USE_JAVA_HOME, RunnerBundle.message("maven.java.home.env")));
 
     return result;
+  }
+
+  public String getDefaultJdkName() {
+    List<Sdk> definedJdks = getDefinedJdks();
+    if (definedJdks.isEmpty()) {
+      return USE_INTERNAL_JAVA;
+    }
+
+    SortedList<Sdk> sorted = new SortedList<Sdk>(new Comparator<Sdk>() {
+      public int compare(Sdk o1, Sdk o2) {
+        return o2.getVersionString().compareTo(o1.getVersionString());
+      }
+    });
+    sorted.addAll(definedJdks);
+    return sorted.get(0).getName();
+  }
+
+  private List<Sdk> getDefinedJdks() {
+    ProjectJdkTable table = ProjectJdkTable.getInstance();
+    List<Sdk> definedJdks = table.getSdksOfType(table.getDefaultSdkType());
+    return definedJdks;
   }
 
   public boolean equals(final Object o) {

@@ -364,14 +364,26 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected Sdk setupJdkForModule(String moduleName) {
     ModifiableRootModel m = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
+    Sdk sdk = createJdk("Java 1.5");
+    m.setSdk(sdk);
+    m.commit();
+    return sdk;
+  }
 
-    File file = new File(myDir, "mockJdk");
-    file.mkdirs();
+  protected Sdk createJdk(String versionName) {
+    File file;
+    try {
+      file = FileUtil.createTempFile(myDir, "mockJdk", null, false);
+      file.mkdirs();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
     String oldValue = System.setProperty("idea.testingFramework.mockJDK", file.getPath());
     Sdk sdk;
     try {
-      sdk = JavaSdkImpl.getMockJdk("java 1.5");
+      sdk = JavaSdkImpl.getMockJdk(versionName);
     }
     finally {
       if (oldValue == null) {
@@ -380,9 +392,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
         System.setProperty("idea.testingFramework.mockJDK", oldValue);
       }
     }
-
-    m.setSdk(sdk);
-    m.commit();
     return sdk;
   }
 }
