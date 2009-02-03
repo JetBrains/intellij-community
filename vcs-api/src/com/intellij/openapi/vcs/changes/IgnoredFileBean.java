@@ -102,7 +102,7 @@ public class IgnoredFileBean {
       final File file = new File(myPath);
       myAbsolutePath = file.getAbsolutePath();
       if (IgnoreSettingsType.UNDER_DIR.equals(myType)) {
-        myAbsolutePath += "/";
+        myAbsolutePath += File.separatorChar;
       }
       myPathIsAbsolute = file.isAbsolute();
     }
@@ -117,7 +117,7 @@ public class IgnoredFileBean {
       final File file = FileUtil.createFileByRelativePath(baseDir, myPath);
       if (file == null) return false;
       String absPath = file.getAbsolutePath();
-      absPath = IgnoreSettingsType.UNDER_DIR.equals(myType) ? absPath + "/" : absPath;
+      absPath = IgnoreSettingsType.UNDER_DIR.equals(myType) ? absPath + File.separatorChar : absPath;
       return StringUtil.startsWithIgnoreCase(ioFileAbsPath, absPath);
     }
     return false;

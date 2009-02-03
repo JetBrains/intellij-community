@@ -80,7 +80,7 @@ public class IgnoredFilesComponent {
         }
       }
       String absIoPath = new File(file.getPath()).getAbsolutePath();
-      absIoPath = file.isDirectory() ? (absIoPath + "/") : absIoPath;
+      absIoPath = file.isDirectory() ? (absIoPath + File.separatorChar) : absIoPath;
       for(IgnoredFileBean bean: myFilesToIgnore) {
         if (filePath != null) {
           final String prefix = bean.getPath();
