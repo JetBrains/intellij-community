@@ -136,21 +136,19 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     if (selfModifierList != null) {
       return selfModifierList;
     }
-    else {
-      PsiField firstField = findFirstFieldInDeclaration();
-      if (firstField == this) {
-        if (!isValid()) throw new PsiInvalidElementAccessException(this);
+    PsiField firstField = findFirstFieldInDeclaration();
+    if (firstField == this) {
+      if (!isValid()) throw new PsiInvalidElementAccessException(this);
 
-        final PsiField lastResort = findFirstFieldByTree();
-        if (lastResort == this) {
-          throw new IllegalStateException("Missing modifier list for sequence of fields: '" + getText() + "'");
-        }
-
-        firstField = lastResort;
+      final PsiField lastResort = findFirstFieldByTree();
+      if (lastResort == this) {
+        throw new IllegalStateException("Missing modifier list for sequence of fields: '" + getText() + "'");
       }
 
-      return firstField.getModifierList();
+      firstField = lastResort;
     }
+
+    return firstField.getModifierList();
   }
 
   @Nullable

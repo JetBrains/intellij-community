@@ -59,7 +59,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (isStatic) {
       ref = (PsiReferenceExpression)factory.createExpressionFromText("A." + name, context);
-      qualifier = (PsiReferenceExpression)ref.getQualifierExpression();
+      qualifier = (PsiJavaCodeReferenceElement)ref.getQualifierExpression();
       final PsiReferenceExpression classReference = factory.createReferenceExpression(containingClass);
       qualifier.replace(classReference);
     }
@@ -78,8 +78,8 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
   }
 
   protected static void findMemberHidesOuterMemberCollisions(final PsiMember member, final String newName, final List<UsageInfo> result) {
-    final PsiMember patternMember;
     if (member instanceof PsiCompiledElement) return;
+    final PsiMember patternMember;
     if (member instanceof PsiMethod) {
       PsiMethod patternMethod = (PsiMethod) member.copy();
       try {
@@ -129,7 +129,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
   }
 
-  protected void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<? super MemberHidesStaticImportUsageInfo> result) {
+  protected static void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<? super MemberHidesStaticImportUsageInfo> result) {
     final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
     PsiMember prototype = (PsiMember)memberToRename.copy();
     try {
@@ -177,7 +177,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
   }
 
-  protected void qualifyStaticImportReferences(final List<MemberHidesStaticImportUsageInfo> staticImportHides)
+  protected static void qualifyStaticImportReferences(final List<MemberHidesStaticImportUsageInfo> staticImportHides)
       throws IncorrectOperationException {
     for (MemberHidesStaticImportUsageInfo info : staticImportHides) {
       final PsiReference ref = info.getReference();
