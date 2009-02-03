@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +61,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private final InjectedLanguageManagerImpl myInjectedManager;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
+  private static final RecursiveTreeElementWalkingVisitor CLEAR_CACHES_VISITOR = new RecursiveTreeElementWalkingVisitor(){
+    protected boolean visitNode(TreeElement element) {
+      element.clearCaches();
+      return true;
+    }
+  };
 
   MultiHostRegistrarImpl(@NotNull Project project, @NotNull InjectedLanguageManagerImpl injectedManager, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
     myProject = project;
@@ -158,8 +163,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     return this;
   }
 
+  //public static int count;
   private static final Key<ASTNode> TREE_HARD_REF = Key.create("TREE_HARD_REF");
   public void doneInjecting() {
+    //count++;
     try {
       if (shreds.isEmpty()) {
         throw new IllegalStateException("Seems you haven't called addPlace()");
@@ -293,114 +300,24 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private static void patchLeafs(final ASTNode parsedNode,
                                  final List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
                                  final Place shreds) {
-    final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
-    final StringBuilder catLeafs = new StringBuilder();
-    ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementWalkingVisitor(){
-      private LeafElement prevElement;
-      private String prevElementTail;
-
-      protected boolean visitNode(TreeElement element) {
-        return true;
-      }
-
-      @Override
-      public void visitLeaf(LeafElement leaf) {
-        String leafText = leaf.getText();
-        catLeafs.append(leafText);
-        final TextRange leafRange = leaf.getTextRange();
-
-        StringBuilder leafEncodedText = constructTextFromHostPSI(leafRange.getStartOffset(), leafRange.getEndOffset(), shreds, escapers);
-
-        if (leaf.getElementType() == TokenType.WHITE_SPACE && prevElementTail != null) {
-          // optimization: put all garbage into whitespace
-          leafEncodedText.insert(0, prevElementTail);
-          newTexts.remove(prevElement);
-          storeUnescapedTextFor(prevElement, null);
-        }
-        if (!Comparing.equal(leafText, leafEncodedText)) {
-          newTexts.put(leaf, leafEncodedText.toString());
-          storeUnescapedTextFor(leaf, leafText);
-        }
-        if (StringUtil.startsWith(leafEncodedText, leafText) && leafEncodedText.length() != leafText.length()) {
-          prevElementTail = leafEncodedText.substring(leafText.length());
-        }
-        else {
-          prevElementTail = null;
-        }
-        prevElement = leaf;
-      }
-    });
+    LeafPatcher patcher = new LeafPatcher(shreds, escapers);
+    ((TreeElement)parsedNode).acceptTree(patcher);
 
     String nodeText = parsedNode.getText();
-    assert nodeText.equals(catLeafs.toString()) : "Malformed PSI structure: leaf texts do not add up to the whole file text." +
+    assert nodeText.equals(patcher.catLeafs.toString()) : "Malformed PSI structure: leaf texts do not add up to the whole file text." +
                                                   "\nFile text (from tree)  :'"+nodeText+"'" +
                                                   "\nFile text (from PSI)   :'"+parsedNode.getPsi().getText()+"'" +
-                                                  "\nLeaf texts concatenated:'"+catLeafs+"';" +
+                                                  "\nLeaf texts concatenated:'"+ patcher.catLeafs +"';" +
                                                   "\nFile root: "+parsedNode+
                                                   "\nLanguage: "+parsedNode.getPsi().getLanguage()+
                                                   "\nHost file: "+shreds.get(0).host.getContainingFile().getVirtualFile()
         ;
-    for (Map.Entry<LeafElement, String> entry : newTexts.entrySet()) {
+    for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
       LeafElement leaf = entry.getKey();
       String newText = entry.getValue();
       leaf.setText(newText);
     }
-    ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementWalkingVisitor(){
-      protected boolean visitNode(TreeElement element) {
-        element.clearCaches();
-        return true;
-      }
-    });
-  }
-
-  private static StringBuilder constructTextFromHostPSI(int startOffset, int endOffset, Place shreds,
-                                                 List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers) {
-    PsiLanguageInjectionHost.Shred current = shreds.get(0); //todo do not start over
-    int n = 0;
-    StringBuilder text = new StringBuilder(endOffset-startOffset);
-    while (startOffset < endOffset) {
-      TextRange shredRange = current.range;
-      String prefix = current.prefix;
-      if (startOffset >= shredRange.getEndOffset()) {
-        current = shreds.get(++n);
-        continue;
-      }
-      assert startOffset >= shredRange.getStartOffset();
-      if (startOffset - shredRange.getStartOffset() < prefix.length()) {
-        // inside prefix
-        TextRange rangeInPrefix = new TextRange(startOffset - shredRange.getStartOffset(), Math.min(prefix.length(), endOffset - shredRange.getStartOffset()));
-        text.append(prefix, rangeInPrefix.getStartOffset(), rangeInPrefix.getEndOffset());
-        startOffset += rangeInPrefix.getLength();
-        continue;
-      }
-
-      String suffix = current.suffix;
-      if (startOffset < shredRange.getEndOffset() - suffix.length()) {
-        // inside host body, cut out from the host text
-        int startOffsetInHost = escapers.get(n).getOffsetInHost(startOffset - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());
-        int endOffsetCut = Math.min(endOffset, shredRange.getEndOffset() - suffix.length());
-        int endOffsetInHost = escapers.get(n).getOffsetInHost(endOffsetCut - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());
-        if (endOffsetInHost != -1) {
-          text.append(current.host.getText(), startOffsetInHost, endOffsetInHost);
-          startOffset = endOffsetCut;
-          continue;
-        }
-      }
-
-      // inside suffix
-      TextRange rangeInSuffix = new TextRange(suffix.length() - shredRange.getEndOffset() + startOffset, Math.min(suffix.length(), endOffset + suffix.length() - shredRange.getEndOffset()));
-      text.append(suffix, rangeInSuffix.getStartOffset(), rangeInSuffix.getEndOffset());
-      startOffset += rangeInSuffix.getLength();
-    }
-
-    return text;
-  }
-
-  private static void storeUnescapedTextFor(final LeafElement leaf, final String leafText) {
-    PsiElement psi = leaf.getPsi();
-    if (psi != null) {
-      psi.putUserData(InjectedLanguageManagerImpl.UNESCAPED_TEXT, leafText);
-    }
+    ((TreeElement)parsedNode).acceptTree(CLEAR_CACHES_VISITOR);
   }
 
   private static PsiFile registerDocument(final DocumentWindowImpl documentWindow,
