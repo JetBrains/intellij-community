@@ -362,7 +362,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     private final MergeSourceRenderer myRenderer;
 
     private MergeSourceColumnInfo(final MyHistorySession session) {
-      super("Merge sources");
+      super("Merge Sources");
       myRenderer = new MergeSourceRenderer(session);
     }
 
