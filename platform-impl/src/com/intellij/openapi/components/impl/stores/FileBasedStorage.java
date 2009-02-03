@@ -112,8 +112,10 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   private static void requestAllChildren(final VirtualFile configDir) {
-    for (VirtualFile file : configDir.getChildren()) {
-      requestAllChildren(file);
+    if (!"componentVersions".equals(configDir.getName())) {
+      for (VirtualFile file : configDir.getChildren()) {
+        requestAllChildren(file);
+      }
     }
   }
 
