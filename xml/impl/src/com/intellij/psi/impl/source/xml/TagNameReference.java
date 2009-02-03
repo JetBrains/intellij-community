@@ -43,8 +43,9 @@ public class TagNameReference implements PsiReference {
   }
 
   public PsiElement getElement() {
-    final XmlTag tag = PsiTreeUtil.getParentOfType(myNameElement.getPsi(), XmlTag.class);
-    return tag != null ? tag:myNameElement.getPsi();
+    PsiElement element = myNameElement.getPsi();
+    final PsiElement parent = element.getParent();
+    return parent instanceof XmlTag ? parent : element;
   }
 
   protected XmlTag getTagElement() {
