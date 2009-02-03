@@ -79,6 +79,11 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
     return null; //todo
   }
 
+  @NotNull
+  public void setDeclaredAttributeValue(@NonNls String attributeName, PsiAnnotationMemberValue value) {
+    throw new UnsupportedOperationException("Method setDeclaredAttributeValue is not yet implemented in " + getClass().getName());
+  }
+
   @Nullable
   public PsiMetaData getMetaData() {
     return null;

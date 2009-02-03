@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.Iterator;
@@ -57,6 +58,11 @@ public class LightModifierList extends LightElement implements PsiModifierList {
 
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return null;
+  }
+
+  @NotNull
+  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    throw new UnsupportedOperationException("Method addAnnotation is not yet implemented in " + getClass().getName());
   }
 
   public String getText() {

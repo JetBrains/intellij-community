@@ -159,4 +159,9 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
 
     return null;
   }
+
+  @NotNull
+  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    throw new UnsupportedOperationException("Method addAnnotation is not yet implemented in " + getClass().getName());
+  }
 }

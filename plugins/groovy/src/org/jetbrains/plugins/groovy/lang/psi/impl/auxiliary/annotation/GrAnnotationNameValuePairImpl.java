@@ -67,6 +67,12 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return findChildByClass(GrAnnotationMemberValue.class);
   }
 
+  @NotNull
+  public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
+    getValue().replace(newValue);
+    return getValue();
+  }
+
   public PsiReference getReference() {
     return this;
   }
