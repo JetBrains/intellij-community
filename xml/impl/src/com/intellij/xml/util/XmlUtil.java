@@ -1283,14 +1283,20 @@ public class XmlUtil {
   public static String generateDocumentDTD(XmlDocument doc) {
     final Map<String, List<String>> tags = new LinkedHashMap<String, List<String>>();
     final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<String, List<MyAttributeInfo>>();
-    final XmlTag rootTag = doc.getRootTag();
-    computeTag(rootTag, tags, attributes);
 
-    // For supporting not welformed XML
-    for (PsiElement element = rootTag != null ? rootTag.getNextSibling() : null; element != null; element = element.getNextSibling()) {
-      if (element instanceof XmlTag) {
-        computeTag((XmlTag)element, tags, attributes);
+    try {
+      XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, true);
+      final XmlTag rootTag = doc.getRootTag();
+      computeTag(rootTag, tags, attributes);
+
+      // For supporting not welformed XML
+      for (PsiElement element = rootTag != null ? rootTag.getNextSibling() : null; element != null; element = element.getNextSibling()) {
+        if (element instanceof XmlTag) {
+          computeTag((XmlTag)element, tags, attributes);
+        }
       }
+    } finally {
+      XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, false);
     }
 
     final StringBuilder buffer = new StringBuilder();

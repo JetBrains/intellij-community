@@ -70,6 +70,11 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   }
 
   public static XmlEntityDecl resolveEntity(final XmlElement element, final String text, PsiFile targetFile) {
+    if (targetFile instanceof XmlFile) {
+      XmlDocument document = ((XmlFile)targetFile).getDocument();
+      if (document != null && document.getUserData(DISABLE_ENTITY_EXPAND) != null) return null;
+    }
+    
     final String entityName = text.substring(1, text.length() - 1);
 
     final PsiElement targetElement = targetFile != null ? targetFile : element;
@@ -106,6 +111,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     }
     return map;
   }
+
+  private static final Key<Boolean> DISABLE_ENTITY_EXPAND = Key.create("disable.entity.expand");
 
   private static CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName, PsiFile contextFile) {
     if (targetElement.getUserData(EVALUATION_IN_PROCESS) != null) {
@@ -161,13 +168,15 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           deps.size() == 1 &&
           ((XmlFile)targetElement).getFileType() != StdFileTypes.DTD
          ) {
-        final XmlTag rootTag = ((XmlFile)targetElement).getDocument().getRootTag();
+        XmlDocument document = ((XmlFile)targetElement).getDocument();
+        final XmlTag rootTag = document.getRootTag();
 
-        if (rootTag != null) {
+        if (rootTag != null && document.getUserData(DISABLE_ENTITY_EXPAND) == null) {
           final XmlElementDescriptor descriptor = rootTag.getDescriptor();
 
             if (descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor)) {
-              final PsiFile containingFile = descriptor.getDeclaration().getContainingFile();
+              PsiElement element = descriptor.getDeclaration();
+              final PsiFile containingFile = element != null ? element.getContainingFile():null;
               final XmlFile descriptorFile = containingFile instanceof XmlFile ? (XmlFile)containingFile:null;
 
               if (descriptorFile != null &&
@@ -230,5 +239,10 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       }
     }
 
+  }
+
+  public static void setNoEntityExpandOutOfDocument(XmlDocument doc, boolean b) {
+    if (b) doc.putUserData(DISABLE_ENTITY_EXPAND, Boolean.TRUE);
+    else doc.putUserData(DISABLE_ENTITY_EXPAND, null);
   }
 }

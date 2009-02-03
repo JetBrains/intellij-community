@@ -162,7 +162,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return descriptorFile.getName().equals(otherName);
   }
 
-  public XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
+  private XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
     final XmlFile containingFile = XmlUtil.getContainingFile(this);
     final XmlProlog prolog = getProlog();
     final XmlDoctype doctype = prolog != null ? prolog.getDoctype() : null;
