@@ -957,6 +957,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     public void actionPerformed(AnActionEvent e) {
       VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
       VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      if ((revision == null) || (revisionVirtualFile == null)) return;
       try {
         final FileAnnotation annotation = myAnnotationProvider.annotate(revisionVirtualFile, revision);
         AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, revisionVirtualFile);
