@@ -245,7 +245,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     anAction.getTemplatePresentation().setText(stub.getText());
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
-      setIconFromClass(anAction.getClass(), iconPath, stub.getClassName(), anAction.getTemplatePresentation(), stub.getPluginId());
+      setIconFromClass(anAction.getClass(), anAction.getClass().getClassLoader(), iconPath, stub.getClassName(), anAction.getTemplatePresentation(), stub.getPluginId());
     }
 
     myId2Action.put(stub.getId(), obj);
@@ -370,7 +370,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
     try {
       final Class actionClass = Class.forName(className, true, loader);
-      setIconFromClass(actionClass, iconPath, className, presentation, pluginId);
+      setIconFromClass(actionClass, loader, iconPath, className, presentation, pluginId);
     }
     catch (ClassNotFoundException e) {
       LOG.error(e);
@@ -382,10 +382,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  private static void setIconFromClass(@NotNull final Class actionClass, @NotNull final String iconPath, final String className,
+  private static void setIconFromClass(@NotNull final Class actionClass, @NotNull ClassLoader classLoader, @NotNull final String iconPath, final String className,
                                        final Presentation presentation, final PluginId pluginId) {
     //try to find icon in idea class path
-    final Icon icon = IconLoader.findIcon(iconPath, actionClass);
+    Icon icon = IconLoader.findIcon(iconPath, actionClass);
+    if (icon == null) icon = IconLoader.findIcon(iconPath, classLoader);
     if (icon == null) {
      reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action class='" + className + "'");
     }
