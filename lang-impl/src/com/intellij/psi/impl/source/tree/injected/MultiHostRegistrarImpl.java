@@ -211,7 +211,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       catch (RuntimeException e) {
         throw new RuntimeException("Patch error, lang="+myLanguage+";\n "+myHostVirtualFile+"; places:"+injectionHosts+";\n ranges:"+shreds, e);
       }
-      assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
+      assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars+"\n"+myLanguage+";\n "+myHostVirtualFile;
 
       ((FileElement)parsedNode).setManager((PsiManagerEx)myPsiManager);
 
