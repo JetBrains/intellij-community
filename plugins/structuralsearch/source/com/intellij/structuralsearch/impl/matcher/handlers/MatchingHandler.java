@@ -110,7 +110,7 @@ public abstract class MatchingHandler extends MatchPredicate {
     return (RegExpPredicate)findRegExpPredicate(handler.getPredicate());
   }
 
-  static class ClearStateVisitor extends PsiRecursiveElementVisitor {
+  static class ClearStateVisitor extends PsiRecursiveElementWalkingVisitor {
     private CompiledPattern pattern;
 
     ClearStateVisitor() {
@@ -126,7 +126,7 @@ public abstract class MatchingHandler extends MatchPredicate {
          ) {
         MatchingHandler handler = pattern.getHandlerSimple(element);
         if (handler instanceof SubstitutionHandler) {
-          ((SubstitutionHandler)handler).reset();
+          handler.reset();
         }
       }
       super.visitElement(element);
