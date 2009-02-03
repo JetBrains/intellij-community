@@ -16,7 +16,7 @@
 package com.siyeh.ig.classmetrics;
 
 import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.JComponent;
 

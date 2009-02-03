@@ -25,7 +25,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

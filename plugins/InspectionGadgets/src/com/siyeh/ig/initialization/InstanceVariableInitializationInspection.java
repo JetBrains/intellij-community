@@ -18,6 +18,7 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.*;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,7 +27,6 @@ import com.siyeh.ig.fixes.MakeInitializerExplicitFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

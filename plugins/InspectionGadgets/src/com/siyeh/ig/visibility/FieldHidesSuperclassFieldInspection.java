@@ -17,6 +17,7 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -24,7 +25,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

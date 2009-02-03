@@ -28,7 +28,7 @@ import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

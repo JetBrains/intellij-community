@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

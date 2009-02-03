@@ -17,11 +17,11 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
