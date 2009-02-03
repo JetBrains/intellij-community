@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,24 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.VariablePassedAsArgumentVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedArrayReadWriteInspection extends BaseInspection{
 
+    @Override
     @NotNull
     public String getID(){
         return "MismatchedReadAndWriteOfArray";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "mismatched.read.write.array.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final boolean written = ((Boolean)infos[0]).booleanValue();
@@ -50,10 +52,17 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
         }
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
+    public boolean runForWholeFile(){
+        return true;
+    }
+    
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new MismatchedArrayReadWriteVisitor();
     }
@@ -122,8 +131,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
             if(VariableAccessUtils.variableIsReturned(variable, context)){
                 return true;
             }
-            if(variableIsWrittenAsMethodArgument(variable,
-                    context)){
+            if(variableIsWrittenAsMethodArgument(variable, context)) {
                 return true;
             }
             return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
@@ -189,9 +197,8 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
             private final boolean write;
             private boolean passed = false;
 
-            public VariablePassedAsArgumentVisitor(
+            VariablePassedAsArgumentVisitor(
                     @NotNull PsiVariable variable, boolean write){
-                super();
                 this.variable = variable;
                 this.write = write;
             }
@@ -276,9 +283,5 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
                 return passed;
             }
         }
-    }
-
-    public boolean runForWholeFile(){
-        return true;
     }
 }

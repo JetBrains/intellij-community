@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,33 +18,25 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
+
     private boolean assigned = false;
     private final PsiVariable variable;
 
     public ArrayContentsAssignedVisitor(@NotNull PsiVariable variable) {
-        super();
         this.variable = variable;
     }
 
-    @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
-        if(assigned)
-        {
+    @Override public void visitAssignmentExpression(
+            @NotNull PsiAssignmentExpression assignment){
+        if(assigned) {
             return;
         }
         super.visitAssignmentExpression(assignment);
-        final PsiExpression arg = assignment.getLExpression();
-        if(!(arg instanceof PsiArrayAccessExpression)){
-            return;
-        }
-        PsiExpression arrayExpression =
-                ((PsiArrayAccessExpression) arg).getArrayExpression();
-        while (arrayExpression instanceof PsiArrayAccessExpression) {
-            final PsiArrayAccessExpression arrayAccessExpression =
-                    (PsiArrayAccessExpression)arrayExpression;
-            arrayExpression = arrayAccessExpression.getArrayExpression();
-        }
+        final PsiExpression lhs = assignment.getLExpression();
+        final PsiExpression arrayExpression = getDeepArrayExpression(lhs);
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
@@ -57,7 +49,11 @@ public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
         }
     }
 
-    @Override public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
+    @Override public void visitPrefixExpression(
+            @NotNull PsiPrefixExpression expression){
+        if(assigned) {
+            return;
+        }
         super.visitPrefixExpression(expression);
         final PsiJavaToken operationSign = expression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
@@ -65,12 +61,8 @@ public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
                 tokenType.equals(JavaTokenType.MINUSMINUS))){
             return;
         }
-        final PsiExpression arg = expression.getOperand();
-        if(!(arg instanceof PsiArrayAccessExpression)){
-            return;
-        }
-        final PsiExpression arrayExpression =
-                ((PsiArrayAccessExpression) arg).getArrayExpression();
+        final PsiExpression operand = expression.getOperand();
+        final PsiExpression arrayExpression = getDeepArrayExpression(operand);
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
@@ -82,7 +74,11 @@ public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
             assigned = true;
         }
     }
-    @Override public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
+    @Override public void visitPostfixExpression(
+            @NotNull PsiPostfixExpression expression){
+        if(assigned) {
+            return;
+        }
         super.visitPostfixExpression(expression);
         final PsiJavaToken operationSign = expression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
@@ -90,12 +86,8 @@ public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
                 tokenType.equals(JavaTokenType.MINUSMINUS))){
             return;
         }
-        final PsiExpression arg = expression.getOperand();
-        if(!(arg instanceof PsiArrayAccessExpression)){
-            return;
-        }
-        final PsiExpression arrayExpression =
-                ((PsiArrayAccessExpression) arg).getArrayExpression();
+        final PsiExpression operand = expression.getOperand();
+        final PsiExpression arrayExpression = getDeepArrayExpression(operand);
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
@@ -106,6 +98,22 @@ public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
         if(referent.equals(variable)){
             assigned = true;
         }
+    }
+
+    @Nullable
+    private static PsiExpression getDeepArrayExpression(
+            PsiExpression expression) {
+        if (!(expression instanceof PsiArrayAccessExpression)) {
+            return null;
+        }
+        PsiExpression arrayExpression =
+                ((PsiArrayAccessExpression) expression).getArrayExpression();
+        while (arrayExpression  instanceof PsiArrayAccessExpression) {
+            final PsiArrayAccessExpression arrayAccessExpression =
+                    (PsiArrayAccessExpression)arrayExpression;
+            arrayExpression = arrayAccessExpression.getArrayExpression();
+        }
+        return arrayExpression;
     }
 
     public boolean isAssigned() {
