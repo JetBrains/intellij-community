@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -108,7 +109,11 @@ public class ObjectUtils {
   }
 
   @NotNull
-  public static <T> T assertNotNull(@NotNull final T t) {
+  public static <T> T assertNotNull(@Nullable final T t) {
+    return _assertNotNull(t);
+  }
+
+  @NotNull private static <T> T _assertNotNull(@NotNull T t) {
     return t;
   }
 
