@@ -23,7 +23,7 @@ public class ExceptionUtil {
   private ExceptionUtil() {}
 
   @NotNull
-  public static PsiClassType[] getThrownExceptions(PsiElement[] elements) {
+  public static PsiClassType[] getThrownExceptions(@NotNull PsiElement[] elements) {
     List<PsiClassType> array = new ArrayList<PsiClassType>();
     for (PsiElement element : elements) {
       PsiClassType[] exceptions = getThrownExceptions(element);
@@ -34,7 +34,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static PsiClassType[] getThrownCheckedExceptions(PsiElement[] elements) {
+  public static PsiClassType[] getThrownCheckedExceptions(@NotNull PsiElement[] elements) {
     PsiClassType[] exceptions = getThrownExceptions(elements);
     if (exceptions.length == 0) return exceptions;
     exceptions = filterOutUncheckedExceptions(exceptions);
@@ -52,7 +52,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  private static PsiClassType[] getThrownExceptions(PsiElement element) {
+  private static PsiClassType[] getThrownExceptions(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
       return PsiClassType.EMPTY_ARRAY; // filter class declaration in code
     }
@@ -168,13 +168,13 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static PsiClassType[] collectUnhandledExceptions(PsiElement element, PsiElement topElement) {
+  public static PsiClassType[] collectUnhandledExceptions(@NotNull PsiElement element, PsiElement topElement) {
     final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null);
     return set == null ? PsiClassType.EMPTY_ARRAY : set.toArray(new PsiClassType[set.size()]);
   }
 
   @Nullable
-  private static Set<PsiClassType> collectUnhandledExceptions(PsiElement element, PsiElement topElement, Set<PsiClassType> foundExceptions) {
+  private static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element, PsiElement topElement, Set<PsiClassType> foundExceptions) {
     PsiClassType[] unhandledExceptions = null;
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
