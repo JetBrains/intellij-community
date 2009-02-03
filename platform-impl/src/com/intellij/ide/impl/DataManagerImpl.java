@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class DataManagerImpl extends DataManager implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataManagerImpl");
-  private Map<String, GetDataRule> myDataConstantToRuleMap = new THashMap<String, GetDataRule>();
+  private final Map<String, GetDataRule> myDataConstantToRuleMap = new THashMap<String, GetDataRule>();
   private WindowManagerEx myWindowManager;
 
   public DataManagerImpl() {

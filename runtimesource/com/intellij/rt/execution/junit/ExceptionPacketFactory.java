@@ -5,7 +5,7 @@ import com.intellij.rt.execution.junit.segments.Packet;
 import junit.framework.Test;
 
 public class ExceptionPacketFactory implements PacketFactory {
-  private Throwable myAssertion;
+  private final Throwable myAssertion;
   private int myState;
 
   public ExceptionPacketFactory(int state, Throwable assertion) {

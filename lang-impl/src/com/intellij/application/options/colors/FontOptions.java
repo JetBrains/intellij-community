@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
-  private ColorAndFontOptions myOptions;
+  private final ColorAndFontOptions myOptions;
 
   private JTextField myEditorFontSizeField;
 

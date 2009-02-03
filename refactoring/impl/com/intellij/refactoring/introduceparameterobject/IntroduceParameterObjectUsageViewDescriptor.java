@@ -8,7 +8,7 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 
 class IntroduceParameterObjectUsageViewDescriptor extends UsageViewDescriptorAdapter {
 
-   private PsiMethod method;
+   private final PsiMethod method;
 
     IntroduceParameterObjectUsageViewDescriptor(PsiMethod method) {
 

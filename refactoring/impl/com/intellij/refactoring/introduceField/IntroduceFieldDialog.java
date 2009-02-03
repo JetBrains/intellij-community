@@ -34,13 +34,13 @@ class IntroduceFieldDialog extends DialogWrapper {
   private static boolean ourLastCbFinalState = false;
   private static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
-  private Project myProject;
+  private final Project myProject;
   private final PsiClass myParentClass;
   private final PsiExpression myInitializerExpression;
   private final PsiLocalVariable myLocalVariable;
   private final boolean myIsCurrentMethodConstructor;
   private final boolean myIsInvokedOnDeclaration;
-  private boolean myWillBeDeclaredStatic;
+  private final boolean myWillBeDeclaredStatic;
   private final int myOccurrencesCount;
   private final boolean myAllowInitInMethod;
   private final boolean myAllowInitInMethodIfAll;
@@ -468,7 +468,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
   private NameSuggestionsGenerator createGenerator() {
     return new NameSuggestionsGenerator() {
-      private JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+      private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         VariableKind variableKind = myWillBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
 

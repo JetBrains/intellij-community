@@ -603,7 +603,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
 
-  private StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
+  private final StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
     public Storage[] selectStorages(final Storage[] storages, final Object component, final StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
         OrderedSet<Storage> result = new OrderedSet<Storage>();

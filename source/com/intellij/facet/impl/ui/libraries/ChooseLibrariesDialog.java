@@ -18,7 +18,7 @@ import java.util.List;
  * @author nik
  */
 public class ChooseLibrariesDialog extends DialogWrapper {
-  private LibraryElementChooser myChooser;
+  private final LibraryElementChooser myChooser;
 
   public ChooseLibrariesDialog(final Component parent, final List<Library> libraries) {
     super(parent, true);

@@ -18,8 +18,8 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
 
   private final boolean myIsPersistent;
   private RefEntity myRefElement;
-  private String myFQName;
-  private String myType;
+  private final String myFQName;
+  private final String myType;
 
   public SmartRefElementPointerImpl(RefEntity ref, boolean isPersistent) {
       myIsPersistent = isPersistent;

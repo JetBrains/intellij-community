@@ -39,9 +39,9 @@ import java.util.*;
 public class DirectoryBasedStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DirectoryBasedStorage");
 
-  private TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-  private IFile myDir;
-  private StateSplitter mySplitter;
+  private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+  private final IFile myDir;
+  private final StateSplitter mySplitter;
 
   private Object mySession;
   private MyStorageData myStorageData = null;

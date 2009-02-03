@@ -21,29 +21,29 @@ import java.awt.*;
 
 public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform.Facade, DataProvider {
 
-  private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
-  private Splitter mySplitter = new Splitter(true);
+  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
+  private final Splitter mySplitter = new Splitter(true);
 
-  private HashMap<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new HashMap<PlaceInGrid, GridCellImpl>();
+  private final HashMap<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new HashMap<PlaceInGrid, GridCellImpl>();
 
-  private Placeholder myLeft = new Placeholder();
-  private Placeholder myCenter = new Placeholder();
-  private Placeholder myRight = new Placeholder();
-  private Placeholder myBottom = new Placeholder();
+  private final Placeholder myLeft = new Placeholder();
+  private final Placeholder myCenter = new Placeholder();
+  private final Placeholder myRight = new Placeholder();
+  private final Placeholder myBottom = new Placeholder();
 
-  private String mySessionName;
+  private final String mySessionName;
 
-  private List<Content> myContents = new ArrayList<Content>();
-  private Map<Content, GridCellImpl> myContent2Cell = new java.util.HashMap<Content, GridCellImpl>();
+  private final List<Content> myContents = new ArrayList<Content>();
+  private final Map<Content, GridCellImpl> myContent2Cell = new java.util.HashMap<Content, GridCellImpl>();
 
-  private Comparator<Content> myContentComparator = new Comparator<Content>() {
+  private final Comparator<Content> myContentComparator = new Comparator<Content>() {
     public int compare(final Content o1, final Content o2) {
       return getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
     }
   };
 
   private boolean myLastUiStateWasRestored;
-  private ViewContextEx myViewContext;
+  private final ViewContextEx myViewContext;
 
   public GridImpl(ViewContextEx viewContext, String sessionName) {
     myViewContext = viewContext;

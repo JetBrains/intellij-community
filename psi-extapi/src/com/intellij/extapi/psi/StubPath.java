@@ -7,8 +7,8 @@ import com.intellij.psi.tree.IElementType;
 
 public class StubPath {
   private final StubPath myParentPath;
-  private String myId;
-  private IElementType myType;
+  private final String myId;
+  private final IElementType myType;
 
 
   public StubPath(final StubPath parentPath, final String id, final IElementType type) {

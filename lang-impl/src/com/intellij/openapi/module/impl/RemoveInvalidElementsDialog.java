@@ -22,7 +22,7 @@ public class RemoveInvalidElementsDialog<E extends RemoveInvalidElementsDialog.E
   private JPanel myContentPanel;
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
-  private Map<JCheckBox, E> myCheckboxes = new HashMap<JCheckBox, E>();
+  private final Map<JCheckBox, E> myCheckboxes = new HashMap<JCheckBox, E>();
 
   private RemoveInvalidElementsDialog(final String title, String description, final Project project, Collection<E> errors) {
     super(project, true);

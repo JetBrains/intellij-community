@@ -62,7 +62,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    */
   private boolean myAdjustTheSameSize;
 
-  private ActionButtonLook myButtonLook = null;
+  private final ActionButtonLook myButtonLook = null;
   private final DataManager myDataManager;
   protected final ActionManagerEx myActionManager;
 

@@ -17,8 +17,8 @@ public class KeywordParser extends BaseTokenParser {
   private final HashSet[] myKeywordSets = new HashSet[CustomHighlighterTokenType.KEYWORD_TYPE_COUNT];
   private final int mySmartUpdateShift;
   private final boolean myIgnoreCase;
-  private BitSet myFirstCharacters = new BitSet();
-  private BitSet myCharacters = new BitSet();
+  private final BitSet myFirstCharacters = new BitSet();
+  private final BitSet myCharacters = new BitSet();
 
   public KeywordParser(Set[] keywordSets, boolean ignoreCase) {
     LOG.assertTrue(keywordSets.length == myKeywordSets.length);

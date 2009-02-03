@@ -25,7 +25,7 @@ import java.util.List;
 
 public class LineReader {
   private int myPos = -1;
-  private int[] myBuffer = new int[2];
+  private final int[] myBuffer = new int[2];
   private final InputStream myInputStream;
   private boolean myAtEnd = false;
 

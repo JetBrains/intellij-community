@@ -19,8 +19,8 @@ import java.util.Comparator;
  * @author nik
 */
 public class AddFacetActionGroup extends ActionGroup {
-  private boolean myFromPopup;
-  private FacetEditorFacade myEditor;
+  private final boolean myFromPopup;
+  private final FacetEditorFacade myEditor;
   private AnAction[] myCachedChildren;
 
   public AddFacetActionGroup(final String groupName, final boolean fromPopup, final FacetEditorFacade editor) {

@@ -44,11 +44,11 @@ public class BrowsersConfiguration extends BrowserSettingsProvider implements Ap
     FIREFOX(XmlBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", IconLoader.getIcon("/xml/browsers/firefox16.png")),
     CHROME(XmlBundle.message("browsers.chrome"), "chrome", null, null, IconLoader.getIcon("/xml/browsers/chrome16.png"));
 
-    private String myName;
-    private String myWindowsPath;
-    private String myLinuxPath;
-    private String myMacPath;
-    private Icon myIcon;
+    private final String myName;
+    private final String myWindowsPath;
+    private final String myLinuxPath;
+    private final String myMacPath;
+    private final Icon myIcon;
 
     BrowserFamily(final String name, final String windowsPath, final String linuxPath, final String macPath, final Icon icon) {
       myName = name;
@@ -83,7 +83,7 @@ public class BrowsersConfiguration extends BrowserSettingsProvider implements Ap
   }
 
   private WebBrowsersPanel mySettingsPanel;
-  private Map<BrowserFamily, Pair<String, Boolean>> myBrowserToPathMap = new HashMap<BrowserFamily, Pair<String, Boolean>>();
+  private final Map<BrowserFamily, Pair<String, Boolean>> myBrowserToPathMap = new HashMap<BrowserFamily, Pair<String, Boolean>>();
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState() {

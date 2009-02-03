@@ -35,7 +35,7 @@ public class XmlTagInplaceRenamer {
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
 
-  private Editor myEditor;
+  private final Editor myEditor;
 
   private final static Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<XmlTagInplaceRenamer>();
   private ArrayList<RangeHighlighter> myHighlighters;

@@ -8,12 +8,12 @@ import java.awt.*;
 
 public abstract class MoreIcon {
 
-  private ActiveIcon myLeft =
+  private final ActiveIcon myLeft =
     new ActiveIcon(IconLoader.getIcon("/general/comboArrowLeft.png"), IconLoader.getIcon("/general/comboArrowLeftPassive.png"));
-  private ActiveIcon myRight =
+  private final ActiveIcon myRight =
     new ActiveIcon(IconLoader.getIcon("/general/comboArrowRight.png"), IconLoader.getIcon("/general/comboArrowRightPassive.png"));
 
-  private int myGap = 2;
+  private final int myGap = 2;
   private boolean myLeftPainted;
   private boolean myRightPainted;
 

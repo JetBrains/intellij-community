@@ -11,7 +11,7 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlDocumentChangedImpl implements XmlDocumentChanged {
-  private XmlDocument myDocument;
+  private final XmlDocument myDocument;
 
   public XmlDocumentChangedImpl(@NotNull XmlDocument document) {
     myDocument = document;

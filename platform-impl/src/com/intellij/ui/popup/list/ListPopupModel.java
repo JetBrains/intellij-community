@@ -16,15 +16,15 @@ import java.util.List;
 
 class ListPopupModel extends AbstractListModel {
 
-  private List myOriginalList;
-  private List<Object> myFilteredList = new ArrayList<Object>();
+  private final List myOriginalList;
+  private final List<Object> myFilteredList = new ArrayList<Object>();
 
-  private ElementFilter myFilter;
-  private ListPopupStep myStep;
+  private final ElementFilter myFilter;
+  private final ListPopupStep myStep;
 
   private int myFullMatchIndex = -1;
   private int myStartsWithIndex = -1;
-  private SpeedSearch mySpeedSearch;
+  private final SpeedSearch mySpeedSearch;
 
   public ListPopupModel(ElementFilter filter, SpeedSearch speedSearch, ListPopupStep step) {
     myFilter = filter;

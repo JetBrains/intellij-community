@@ -89,8 +89,8 @@ public final class CommandProcessor implements Runnable {
   }
 
   private static class CommandGroup {
-    private List<FinalizableCommand> myList;
-    private Condition myExpireCondition;
+    private final List<FinalizableCommand> myList;
+    private final Condition myExpireCondition;
 
     private CommandGroup(final List<FinalizableCommand> list, final Condition expireCondition) {
       myList = list;

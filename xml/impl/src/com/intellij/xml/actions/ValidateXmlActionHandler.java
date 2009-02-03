@@ -64,7 +64,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private ErrorReporter myErrorReporter;
   private Object myParser;
   private XmlResourceResolver myXmlResourceResolver;
-  private boolean myForceChecking;
+  private final boolean myForceChecking;
   @NonNls
   private static final String ENTITY_RESOLVER_PROPERTY_NAME = "http://apache.org/xml/properties/internal/entity-resolver";
   @NonNls
@@ -146,7 +146,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   }
 
   public class TestErrorReporter extends ErrorReporter {
-    private ArrayList<String> errors = new ArrayList<String>(3);
+    private final ArrayList<String> errors = new ArrayList<String>(3);
 
     public boolean isStopOnUndeclaredResource() {
       return true;
@@ -167,7 +167,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   }
 
   class StdErrorReporter extends ErrorReporter {
-    private NewErrorTreeViewPanel myErrorsView;
+    private final NewErrorTreeViewPanel myErrorsView;
     private final String CONTENT_NAME = XmlBundle.message("xml.validate.tab.content.title");
     private boolean myErrorsDetected = false;
 
@@ -281,7 +281,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
     private class CloseListener extends ContentManagerAdapter {
       private Content myContent;
-      private ContentManager myContentManager;
+      private final ContentManager myContentManager;
 
       public CloseListener(Content content, ContentManager contentManager) {
         myContent = content;

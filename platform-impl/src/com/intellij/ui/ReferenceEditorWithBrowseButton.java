@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor{
   private final Function<String,Document> myFactory;
-  private List<DocumentListener> myDocumentListeners = new CopyOnWriteArrayList<DocumentListener>();
+  private final List<DocumentListener> myDocumentListeners = new CopyOnWriteArrayList<DocumentListener>();
 
   public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener, final Project project, final Function<String,Document> factory, String text) {
     this(browseActionListener, new EditorTextField(factory.fun(text), project, StdFileTypes.JAVA), factory);

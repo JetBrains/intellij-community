@@ -189,16 +189,16 @@ public class FacetDetectionProcessor {
 
   private class MyFacetDetectorRegistry<C extends FacetConfiguration> implements FacetDetectorForWizardRegistry<C> {
     private final FacetType<?, C> myFacetType;
-    private int myLevel;
+    private final int myLevel;
 
     public MyFacetDetectorRegistry(final FacetType<?, C> facetType) {
       myFacetType = facetType;
-      myLevel = 0;
+      int level = 0;
       FacetTypeId<?> typeId = facetType.getUnderlyingFacetType();
       Set<FacetTypeId> parentTypes = new HashSet<FacetTypeId>();
       parentTypes.add(facetType.getId());
       while (typeId != null) {
-        myLevel++;
+        level++;
         FacetType<?,?> underlying = FacetTypeRegistry.getInstance().findFacetType(typeId);
         LOG.assertTrue(underlying != null, "Cannot find underlying facet type by id: " + typeId + " (for facet " + facetType.getId() + ")");
         typeId = underlying.getUnderlyingFacetType();
@@ -207,6 +207,7 @@ public class FacetDetectionProcessor {
           break;
         }
       }
+      myLevel=level;
     }
 
     public void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter,

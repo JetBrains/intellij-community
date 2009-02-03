@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class XmlFoldingBuilder implements FoldingBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.xml.XmlFoldingBuilder");
-  private static TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
+  private static final TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
     final PsiElement psiElement = node.getPsi();

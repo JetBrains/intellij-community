@@ -18,7 +18,7 @@ public class CopyPasteUtil {
   }
 
   public static class DefaultCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    private AbstractTreeUpdater myUpdater;
+    private final AbstractTreeUpdater myUpdater;
 
     public DefaultCopyPasteListener(final AbstractTreeUpdater updater) {
       myUpdater = updater;

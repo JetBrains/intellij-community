@@ -12,7 +12,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 
 public class StructureViewSelectInTarget implements SelectInTarget {
-  private Project myProject;
+  private final Project myProject;
 
   public StructureViewSelectInTarget(Project project) {
     myProject = project;

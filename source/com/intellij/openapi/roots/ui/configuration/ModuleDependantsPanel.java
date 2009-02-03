@@ -20,7 +20,7 @@ import com.intellij.ui.OrderPanel;
  * Dead code now
  */
 public class ModuleDependantsPanel extends OrderPanel<ModifiableRootModel> {
-  private Module myModule;
+  private final Module myModule;
 
   public ModuleDependantsPanel(final Module module) {
     super(ModifiableRootModel.class, true);

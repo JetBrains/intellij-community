@@ -9,7 +9,7 @@ import java.util.Set;
  * @author yole
  */
 public class RecursiveRootPolicy<R> extends RootPolicy<R> {
-  private Set<Module> myProcessedModules = new HashSet<Module>();
+  private final Set<Module> myProcessedModules = new HashSet<Module>();
 
   public R visitModuleOrderEntry(final ModuleOrderEntry moduleOrderEntry, final R value) {
     final Module module = moduleOrderEntry.getModule();

@@ -36,9 +36,9 @@ public class SubmittedReportInfo {
     FAILED
   }
 
-  private String myURL;
-  private String myLinkText;
-  private SubmissionStatus myStatus;
+  private final String myURL;
+  private final String myLinkText;
+  private final SubmissionStatus myStatus;
 
   /**
    * Create new submission status bean

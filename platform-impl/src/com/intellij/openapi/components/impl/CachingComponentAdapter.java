@@ -16,7 +16,7 @@ public class CachingComponentAdapter extends DecoratingComponentAdapter {
   private volatile Object cached;
   private boolean disposed;
   private boolean started;
-  private boolean delegateHasLifecylce;
+  private final boolean delegateHasLifecylce;
   private final Object lock = new Object();
 
   public CachingComponentAdapter(ComponentAdapter delegate) {

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LightMemberReference extends LightElement implements PsiJavaCodeReferenceElement {
   private final PsiMember myRefMember;
-  private PsiSubstitutor mySubstitutor;
+  private final PsiSubstitutor mySubstitutor;
 
   private LightReferenceParameterList myParameterList;
 

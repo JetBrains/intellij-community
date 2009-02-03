@@ -267,7 +267,7 @@ public class ListUtil {
     void remove(ModelType model, int index);
   }
 
-  private static ListModelExtension DEFAULT_MODEL = new ListModelExtension<DefaultListModel>() {
+  private static final ListModelExtension DEFAULT_MODEL = new ListModelExtension<DefaultListModel>() {
     public Object get(DefaultListModel model, int index) {
       return model.get(index);
     }
@@ -277,7 +277,7 @@ public class ListUtil {
     }
   };
 
-  private static ListModelExtension SORTED_MODEL = new ListModelExtension<SortedListModel>() {
+  private static final ListModelExtension SORTED_MODEL = new ListModelExtension<SortedListModel>() {
     public Object get(SortedListModel model, int index) {
       return model.get(index);
     }

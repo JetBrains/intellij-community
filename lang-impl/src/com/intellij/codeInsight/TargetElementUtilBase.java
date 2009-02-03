@@ -253,5 +253,5 @@ public class TargetElementUtilBase {
     return elementEvaluator == null || elementEvaluator.includeSelfInGotoImplementation(element);
   }
 
-  private LanguageExtension<TargetElementEvaluator> targetElementEvaluator = new LanguageExtension<TargetElementEvaluator>("com.intellij.targetElementEvaluator");
+  private final LanguageExtension<TargetElementEvaluator> targetElementEvaluator = new LanguageExtension<TargetElementEvaluator>("com.intellij.targetElementEvaluator");
 }

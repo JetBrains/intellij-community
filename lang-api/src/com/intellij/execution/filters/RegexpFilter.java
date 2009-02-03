@@ -39,12 +39,12 @@ public class RegexpFilter implements Filter {
   @NonNls private static final String FILE_PATH_REGEXP = "((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)";
   private static final String NUMBER_REGEXP = "([0-9]+)";
 
-  private int myFileRegister;
-  private int myLineRegister;
-  private int myColumnRegister;
+  private final int myFileRegister;
+  private final int myLineRegister;
+  private final int myColumnRegister;
 
-  private Pattern myPattern;
-  private Project myProject;
+  private final Pattern myPattern;
+  private final Project myProject;
   @NonNls private static final String FILE_STR = "file";
   @NonNls private static final String LINE_STR = "line";
   @NonNls private static final String COLUMN_STR = "column";

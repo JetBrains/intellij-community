@@ -49,17 +49,17 @@ public class ModuleEditor implements Place.Navigator {
   private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
   private String myName;
-  private Module myModule;
+  private final Module myModule;
 
-  private List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
+  private final List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
   private ModifiableRootModel myModifiableRootModelProxy;
 
-  private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
+  private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
 
   private History myHistory;
 
-  private ProjectFacetsConfigurator myFacetsConfigurator;
+  private final ProjectFacetsConfigurator myFacetsConfigurator;
 
   public ModuleEditor(Project project, ModulesProvider modulesProvider, ProjectFacetsConfigurator facetsConfigurator,
                       @NotNull Module module) {

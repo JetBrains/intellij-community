@@ -20,7 +20,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
  */
 public class EditScopesDialog extends SingleConfigurableEditor {
   private NamedScope mySelectedScope;
-  private boolean myCheckShared;
+  private final boolean myCheckShared;
 
   public EditScopesDialog(final Project project, final boolean checkShared) {
     super(project, ScopeChooserConfigurable.getInstance(project), "scopes");

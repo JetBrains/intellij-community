@@ -35,7 +35,7 @@ public abstract class CommandLineState implements RunnableState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
   private TextConsoleBuilder myConsoleBuilder;  
 
-  private ExecutionEnvironment myEnvironment;
+  private final ExecutionEnvironment myEnvironment;
 
   protected CommandLineState(ExecutionEnvironment environment) {
     myEnvironment = environment;

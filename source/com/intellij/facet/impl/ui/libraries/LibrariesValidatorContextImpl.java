@@ -21,8 +21,8 @@ import com.intellij.openapi.module.Module;
  * @author nik
  */
 public class LibrariesValidatorContextImpl implements LibrariesValidatorContext {
-  private Module myModule;
-  private LibrariesContainer myLibrariesContainer;
+  private final Module myModule;
+  private final LibrariesContainer myLibrariesContainer;
 
   public LibrariesValidatorContextImpl(final @NotNull Module module) {
     myModule = module;

@@ -28,8 +28,8 @@ public class EditMigrationDialog extends DialogWrapper{
   private JButton myMoveDownButton;
   private JTextField myNameField;
   private JTextArea myDescriptionTextArea;
-  private Project myProject;
-  private MigrationMap myMigrationMap;
+  private final Project myProject;
+  private final MigrationMap myMigrationMap;
 
   public EditMigrationDialog(Project project, MigrationMap migrationMap) {
     super(project, true);

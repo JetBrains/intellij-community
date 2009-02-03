@@ -86,10 +86,10 @@ public class CustomizationUtil {
 
   private static class CachedAction extends ActionGroup {
     private boolean myForceUpdate;
-    private ActionGroup myGroup;
+    private final ActionGroup myGroup;
     private AnAction[] myChildren;
-    private CustomActionsSchema mySchema;
-    private String myDefaultGroupName;
+    private final CustomActionsSchema mySchema;
+    private final String myDefaultGroupName;
     public CachedAction(String shortName, boolean popup, final ActionGroup group, CustomActionsSchema schema, String defaultGroupName) {
       super(shortName, popup);
       myGroup = group;

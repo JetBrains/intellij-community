@@ -33,14 +33,14 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
   private final Set<Object> myResultNames = new THashSet<Object>();
   private final List<CompletionElement> myResults;
   private final PsiElement myElement;
-  private PsiElement myScope;
+  private final PsiElement myScope;
   private CodeInsightSettings mySettings = null;
   private final ElementFilter myFilter;
   private boolean myMembersFlag = false;
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
-  private PrefixMatcher myMatcher;
-  private boolean myCheckAccess;
+  private final PrefixMatcher myMatcher;
+  private final boolean myCheckAccess;
 
   public JavaCompletionProcessor(PsiElement element, ElementFilter filter, final boolean checkAccess){
     myCheckAccess = checkAccess;
@@ -49,12 +49,12 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
     myElement = element;
     myMatcher = element.getUserData(JavaCompletionContributor.PREFIX_MATCHER);
     myFilter = filter;
-    myScope = element;
-    if (JavaResolveUtil.isInJavaDoc(myElement))
-      myMembersFlag = true;
-    while(myScope != null && !(myScope instanceof PsiFile || myScope instanceof PsiClass)){
-      myScope = myScope.getContext();
+    PsiElement scope = element;
+    if (JavaResolveUtil.isInJavaDoc(myElement)) myMembersFlag = true;
+    while(scope != null && !(scope instanceof PsiFile) && !(scope instanceof PsiClass)){
+      scope = scope.getContext();
     }
+    myScope = scope;
     if (!(element.getContainingFile() instanceof PsiJavaFile)) {
       myMembersFlag = true;
     }

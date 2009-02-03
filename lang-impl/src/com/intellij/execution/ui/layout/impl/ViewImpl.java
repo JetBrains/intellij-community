@@ -80,10 +80,10 @@ public class ViewImpl implements View {
 
   public static class Default {
 
-    private String myID;
-    private int myTabID;
-    private PlaceInGrid myPlaceInGrid;
-    private boolean myMinimizedInGrid;
+    private final String myID;
+    private final int myTabID;
+    private final PlaceInGrid myPlaceInGrid;
+    private final boolean myMinimizedInGrid;
 
     public Default(final String ID, final int tabID, final PlaceInGrid placeInGrid, final boolean minimizedInGrid) {
       myID = ID;

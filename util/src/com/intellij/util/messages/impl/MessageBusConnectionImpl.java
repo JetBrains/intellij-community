@@ -40,7 +40,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     }
   };
   private MessageHandler myDefaultHandler;
-  private Map<Topic, Object> mySubscriptions = new HashMap<Topic, Object>();
+  private final Map<Topic, Object> mySubscriptions = new HashMap<Topic, Object>();
 
   public MessageBusConnectionImpl(MessageBusImpl bus) {
     myBus = bus;

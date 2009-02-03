@@ -22,8 +22,8 @@ package com.intellij.openapi.vfs.newvfs.events;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 
 public abstract class VFileEvent {
-  private boolean myIsFromRefresh;
-  private Object myRequestor;
+  private final boolean myIsFromRefresh;
+  private final Object myRequestor;
 
   public VFileEvent(Object requestor, final boolean isFromRefresh) {
     myRequestor = requestor;

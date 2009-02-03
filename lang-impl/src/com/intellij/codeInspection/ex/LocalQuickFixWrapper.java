@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
  * @author max
  */
 public class LocalQuickFixWrapper extends QuickFixAction {
-  private QuickFix myFix;
+  private final QuickFix myFix;
   private String myText;
   public LocalQuickFixWrapper(QuickFix fix, DescriptorProviderInspection tool) {
     super(fix.getName(), tool);

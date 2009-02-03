@@ -27,7 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FrameStateManagerImpl extends FrameStateManager implements ApplicationComponent,PropertyChangeListener {
 
-  private CopyOnWriteArrayList<FrameStateListener> myListeners = new CopyOnWriteArrayList<FrameStateListener>();
+  private final CopyOnWriteArrayList<FrameStateListener> myListeners = new CopyOnWriteArrayList<FrameStateListener>();
 
   private boolean myShouldSynchronize;
   private final Alarm mySyncAlarm;

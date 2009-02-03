@@ -21,7 +21,7 @@ import java.util.List;
 public class ActionMacro implements JDOMExternalizable {
   private String myName;
 
-  private ArrayList<ActionDescriptor> myActions = new ArrayList<ActionDescriptor>();
+  private final ArrayList<ActionDescriptor> myActions = new ArrayList<ActionDescriptor>();
   @NonNls
   public static final String MACRO_ACTION_PREFIX = "Macro.";
   @NonNls
@@ -196,7 +196,7 @@ public class ActionMacro implements JDOMExternalizable {
   }
 
   public static class IdActionDescriptor implements ActionDescriptor {
-    private String actionId;
+    private final String actionId;
 
     public IdActionDescriptor(String id) {
       this.actionId = id;

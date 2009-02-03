@@ -11,7 +11,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 class MoveMemberViewDescriptor implements UsageViewDescriptor {
-  private PsiElement[] myElementsToMove;
+  private final PsiElement[] myElementsToMove;
 
   public MoveMemberViewDescriptor(PsiElement[] elementsToMove) {
     myElementsToMove = elementsToMove;

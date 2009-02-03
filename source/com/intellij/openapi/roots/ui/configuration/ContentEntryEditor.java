@@ -28,9 +28,9 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
   private final ModifiableRootModel myRootModel;
   private boolean myIsSelected;
   private ContentRootPanel myContentRootPanel;
-  private JPanel myMainPanel;
-  private EventDispatcher<ContentEntryEditorListener> myEventDispatcher;
-  private CompilerModuleExtension myCompilerExtension;
+  private final JPanel myMainPanel;
+  private final EventDispatcher<ContentEntryEditorListener> myEventDispatcher;
+  private final CompilerModuleExtension myCompilerExtension;
 
   public static interface ContentEntryEditorListener extends EventListener{
     void editingStarted(ContentEntryEditor editor);

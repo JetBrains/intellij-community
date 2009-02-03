@@ -8,7 +8,7 @@ import com.intellij.pom.tree.events.ReplaceChangeInfo;
 
 public class ReplaceChangeInfoImpl extends ChangeInfoImpl implements ReplaceChangeInfo {
   private ASTNode myReplaced;
-  private ASTNode myChanged;
+  private final ASTNode myChanged;
 
   public ReplaceChangeInfoImpl(ASTNode changed) {
     super(REPLACE, changed);

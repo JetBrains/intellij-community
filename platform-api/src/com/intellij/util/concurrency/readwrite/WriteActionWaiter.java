@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 
 public class WriteActionWaiter extends AbstractWaiter implements ApplicationListener {
 
-  private Runnable myActionRunnable;
+  private final Runnable myActionRunnable;
 
   public WriteActionWaiter(Runnable aActionRunnable) {
     myActionRunnable = aActionRunnable;

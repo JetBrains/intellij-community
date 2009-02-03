@@ -7,7 +7,7 @@ import javax.swing.filechooser.FileFilter;
 import java.io.File;
 
 public class FileTypeFilter extends FileFilter {
-  private FileType myType;
+  private final FileType myType;
 
   public FileTypeFilter(FileType fileType) {
     myType = fileType;
@@ -24,5 +24,5 @@ public class FileTypeFilter extends FileFilter {
     return myDescription;
   }
 
-  private String myDescription;
+  private final String myDescription;
 }

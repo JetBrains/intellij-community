@@ -358,7 +358,7 @@ public abstract class ShapeTransform {
   }
 
   private static class Painter extends JLabel {
-    private ShapeTransform myT;
+    private final ShapeTransform myT;
 
     private Painter(String text, ShapeTransform transform) {
       setText(text);

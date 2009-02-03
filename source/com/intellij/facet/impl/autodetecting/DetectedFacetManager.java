@@ -343,7 +343,7 @@ public class DetectedFacetManager implements Disposable {
 
   private static class AttentionComponent extends SimpleColoredComponent {
     private static final int BLINKING_DELAY = 300;
-    private Alarm myBlinkingAlarm = new Alarm();
+    private final Alarm myBlinkingAlarm = new Alarm();
     private boolean myIconVisible;
     private boolean myActive;
     private DetectedFacetManager myManager;

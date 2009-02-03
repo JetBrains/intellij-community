@@ -55,7 +55,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    * Default dialog's actions.
    */
   private WindowManagerEx myWindowManager;
-  private java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
+  private final java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
   private Project myProject;
 
   /**
@@ -431,7 +431,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private MyDialog.MyWindowListener myWindowListener;
     private MyDialog.MyComponentListener myComponentListener;
 
-    private WeakReference<Project> myProject;
+    private final WeakReference<Project> myProject;
 
     public MyDialog(Dialog owner, DialogWrapper dialogWrapper, Project project) {
       super(owner);
@@ -794,7 +794,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     private class DialogRootPane extends JRootPane implements DataProvider {
 
-      private boolean myGlassPaneIsSet;
+      private final boolean myGlassPaneIsSet;
 
       private DialogRootPane() {
         setGlassPane(new IdeGlassPaneImpl(this));

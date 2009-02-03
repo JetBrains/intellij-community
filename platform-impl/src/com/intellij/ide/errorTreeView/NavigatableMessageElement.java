@@ -13,9 +13,9 @@ import com.intellij.pom.Navigatable;
 public class NavigatableMessageElement extends ErrorTreeElement{
   private final GroupingElement myParent;
   private final String[] myMessage;
-  private Navigatable myNavigatable;
-  private String myExportText;
-  private String myRendererTextPrefix;
+  private final Navigatable myNavigatable;
+  private final String myExportText;
+  private final String myRendererTextPrefix;
 
   public NavigatableMessageElement(ErrorTreeElementKind kind,
                                  GroupingElement parent,

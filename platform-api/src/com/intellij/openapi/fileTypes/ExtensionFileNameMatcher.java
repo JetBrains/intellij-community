@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class ExtensionFileNameMatcher implements FileNameMatcher {
-  private String myExtension;
+  private final String myExtension;
                          
   public ExtensionFileNameMatcher(@NotNull @NonNls String extension) {
     myExtension = extension.toLowerCase();

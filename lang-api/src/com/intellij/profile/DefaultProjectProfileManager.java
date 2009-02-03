@@ -47,14 +47,14 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   @NonNls private static final String NAME = "name";
 
   protected Project myProject;
-  private LinkedHashMap<NamedScope, String> myScopeToProfileMap = new LinkedHashMap<NamedScope, String>();
-  private String myProfileType;
+  private final LinkedHashMap<NamedScope, String> myScopeToProfileMap = new LinkedHashMap<NamedScope, String>();
+  private final String myProfileType;
 
   public String PROJECT_PROFILE;
   protected ApplicationProfileManager myApplicationProfileManager;
   public boolean USE_PROJECT_LEVEL_SETTINGS = false;
   protected Map<String, Profile> myProfiles = new HashMap<String, Profile>();
-  private DependencyValidationManager myHolder;
+  private final DependencyValidationManager myHolder;
 
   public DefaultProjectProfileManager(final Project project, final String profileType, final DependencyValidationManager holder) {
     myProject = project;

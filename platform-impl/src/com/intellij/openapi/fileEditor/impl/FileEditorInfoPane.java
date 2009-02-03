@@ -20,7 +20,7 @@ public class FileEditorInfoPane extends JPanel {
   private final JPanel myCards;
   private final JButton myPrevButton;
   private final JButton myNextButton;
-  private java.util.List<JComponent> myComponents;
+  private final java.util.List<JComponent> myComponents;
   private final JPanel myButtonsPanel;
 
   public FileEditorInfoPane() {

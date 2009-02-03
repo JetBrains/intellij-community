@@ -59,7 +59,7 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
   }
 
   public static class Impl extends SimpleTreeStructure {
-    private SimpleNode myRoot;
+    private final SimpleNode myRoot;
 
     public Impl(SimpleNode root) {
       myRoot = root;

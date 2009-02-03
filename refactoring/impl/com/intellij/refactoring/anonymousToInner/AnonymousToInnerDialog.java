@@ -32,7 +32,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
   private EditorTextField myNameField;
   private final ParameterTablePanel.VariableData[] myVariableData;
-  private Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<PsiVariable, VariableInfo>();
+  private final Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<PsiVariable, VariableInfo>();
   private JCheckBox myCbMakeStatic;
 
   public AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos,

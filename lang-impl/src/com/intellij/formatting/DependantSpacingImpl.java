@@ -4,8 +4,8 @@ import com.intellij.openapi.util.TextRange;
 
 public class DependantSpacingImpl extends SpacingImpl {
   private final TextRange myDependance;
-  private static int DEPENDENCE_CONTAINS_LF_MASK = 0x10;
-  private static int LF_WAS_USED_MASK = 0x20;
+  private static final int DEPENDENCE_CONTAINS_LF_MASK = 0x10;
+  private static final int LF_WAS_USED_MASK = 0x20;
 
   public DependantSpacingImpl(final int minSpaces,
                               final int maxSpaces,

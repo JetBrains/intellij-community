@@ -25,8 +25,8 @@ import java.io.*;
 import java.net.URL;
 
 class FileLoader extends Loader {
-  private File myRootDir;
-  private String myRootDirAbsolutePath;
+  private final File myRootDir;
+  private final String myRootDirAbsolutePath;
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   FileLoader(URL url) throws IOException {

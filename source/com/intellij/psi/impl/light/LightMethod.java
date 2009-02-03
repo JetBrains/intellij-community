@@ -21,8 +21,8 @@ import java.util.List;
  * @author ven
  */
 public class LightMethod extends LightElement implements PsiMethod {
-  private PsiMethod myMethod;
-  private PsiClass myContainingClass;
+  private final PsiMethod myMethod;
+  private final PsiClass myContainingClass;
 
   public LightMethod(PsiManager manager, PsiMethod method, PsiClass containingClass) {
     super(manager, StdFileTypes.JAVA.getLanguage());

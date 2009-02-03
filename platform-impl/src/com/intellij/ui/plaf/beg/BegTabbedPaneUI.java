@@ -9,8 +9,8 @@ import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import java.awt.*;
 
 public class BegTabbedPaneUI extends MetalTabbedPaneUI {
-  private static Color LIGHT = new Color(247, 243, 239);
-  private static Color DARK = new Color(189, 187, 182);
+  private static final Color LIGHT = new Color(247, 243, 239);
+  private static final Color DARK = new Color(189, 187, 182);
 
   private boolean myNoIconSpace = false;
   private boolean myPaintContentBorder = true;

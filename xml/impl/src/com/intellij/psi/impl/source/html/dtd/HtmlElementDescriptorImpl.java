@@ -14,9 +14,9 @@ import java.util.HashMap;
  * @by Maxim.Mossienko
  */
 public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
-  private XmlElementDescriptor myDelegate;
-  private boolean myRelaxed;
-  private boolean myCaseSensitive;
+  private final XmlElementDescriptor myDelegate;
+  private final boolean myRelaxed;
+  private final boolean myCaseSensitive;
 
   public HtmlElementDescriptorImpl(XmlElementDescriptor _delegate, boolean relaxed, boolean caseSensitive) {
     myDelegate = _delegate;

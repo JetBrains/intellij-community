@@ -24,10 +24,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariableSettings {
-  private Project myProject;
+  private final Project myProject;
   private final PsiExpression myExpression;
   private final int myOccurrencesCount;
-  private boolean myAnyLValueOccurences;
+  private final boolean myAnyLValueOccurences;
   private final boolean myDeclareFinalIfAll;
   private final TypeSelectorManager myTypeSelectorManager;
   private final IntroduceVariableHandler.Validator myValidator;

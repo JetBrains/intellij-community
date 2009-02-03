@@ -45,8 +45,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CustomFileHighlighter extends SyntaxHighlighterBase {
-  private static Map<IElementType, TextAttributesKey> ourKeys;
-  private SyntaxTable myTable;
+  private static final Map<IElementType, TextAttributesKey> ourKeys;
+  private final SyntaxTable myTable;
 
   public CustomFileHighlighter(SyntaxTable table) {
     myTable = table;

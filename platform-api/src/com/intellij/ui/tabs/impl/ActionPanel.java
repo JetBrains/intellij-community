@@ -16,14 +16,14 @@ import java.util.List;
 
 class ActionPanel extends NonOpaquePanel {
 
-  private ActionGroup myGroup;
-  private List<ActionButton> myButtons = new ArrayList<ActionButton>();
-  private TabInfo myTabInfo;
-  private JBTabsImpl myTabs;
+  private final ActionGroup myGroup;
+  private final List<ActionButton> myButtons = new ArrayList<ActionButton>();
+  private final TabInfo myTabInfo;
+  private final JBTabsImpl myTabs;
 
   private boolean myAutoHide;
 
-  private int myGap = 2;
+  private final int myGap = 2;
 
   public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Pass<MouseEvent> pass) {
     myTabs = tabs;

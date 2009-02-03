@@ -29,9 +29,9 @@ import java.awt.event.ActionEvent;
  * To change this template use Options | File Templates.
  */
 public class HTTPProxySettingsDialog extends DialogWrapper {
-  private HTTPProxySettingsPanel panel;
-  private Action okAction;
-  private Action cancelAction;
+  private final HTTPProxySettingsPanel panel;
+  private final Action okAction;
+  private final Action cancelAction;
 
   public HTTPProxySettingsDialog() {
     super(false);

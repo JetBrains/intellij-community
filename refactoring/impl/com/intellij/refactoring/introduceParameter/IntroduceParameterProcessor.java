@@ -181,7 +181,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   }
 
   private static class ReferencedElementsCollector extends JavaRecursiveElementWalkingVisitor {
-    private Set<PsiElement> myResult = new HashSet<PsiElement>();
+    private final Set<PsiElement> myResult = new HashSet<PsiElement>();
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);

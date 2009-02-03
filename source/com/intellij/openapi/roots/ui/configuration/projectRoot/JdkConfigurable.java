@@ -24,8 +24,8 @@ import javax.swing.*;
  * Date: 05-Jun-2006
  */
 public class JdkConfigurable extends NamedConfigurable<Sdk> implements Place.Navigator {
-  private ProjectJdkImpl myProjectJdk;
-  private SdkEditor mySdkEditor;
+  private final ProjectJdkImpl myProjectJdk;
+  private final SdkEditor mySdkEditor;
 
   public JdkConfigurable(final ProjectJdkImpl projectJdk,
                          final ProjectJdksModel configurable,

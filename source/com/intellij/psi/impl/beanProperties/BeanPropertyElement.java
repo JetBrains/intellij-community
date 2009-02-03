@@ -24,7 +24,7 @@ import javax.swing.*;
  * @author peter
 */
 public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
-  private PsiMethod myMethod;
+  private final PsiMethod myMethod;
   private final String myName;
 
   public BeanPropertyElement(final PsiMethod method, final String name) {

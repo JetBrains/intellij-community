@@ -37,9 +37,9 @@ public class CalloutComponent {
 
   private static final int POINTER_LENGTH = 20;
 
-  private JDialog myFrame;
+  private final JDialog myFrame;
 
-  private JComponent myInnerComponent;
+  private final JComponent myInnerComponent;
 
   private ComponentListener myComponentListener;
   private WindowListener myWindowListener;
@@ -50,7 +50,7 @@ public class CalloutComponent {
   protected JComponent myTargetComponent;
   protected Window myTargetWindow;
   protected Pointer myPointerComponent;
-  private KeyboardFocusManager myKeyboardFocusManager;
+  private final KeyboardFocusManager myKeyboardFocusManager;
 
   public CalloutComponent(JComponent component) {
     super();
@@ -343,7 +343,7 @@ public class CalloutComponent {
   }
 
   private class Pointer extends NonOpaquePanel {
-    private int myOrientation;
+    private final int myOrientation;
 
     public Pointer(int orientation) {
       myOrientation = orientation;

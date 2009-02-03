@@ -9,7 +9,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 public class TipDialog extends DialogWrapper{
-  private TipPanel myTipPanel;
+  private final TipPanel myTipPanel;
 
   public TipDialog(){
     super(true);

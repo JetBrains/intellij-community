@@ -59,9 +59,9 @@ import java.util.Set;
     }
 )
 public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {
-  private Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
-  private Project myProject;
-  private SeverityRegistrar mySeverityRegistrar;
+  private final Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
+  private final Project myProject;
+  private final SeverityRegistrar mySeverityRegistrar;
   private StatusBarEx myStatusBar;
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
 

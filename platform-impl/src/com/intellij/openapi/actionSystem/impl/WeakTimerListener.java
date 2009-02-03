@@ -10,8 +10,8 @@ import java.lang.ref.WeakReference;
  * @author Vladimir Kondratyev
  */
 public class WeakTimerListener implements TimerListener {
-  private ActionManagerEx myManager;
-  private WeakReference<TimerListener> myRef;
+  private final ActionManagerEx myManager;
+  private final WeakReference<TimerListener> myRef;
 
   public WeakTimerListener(ActionManagerEx manager, TimerListener delegate) {
     myManager = manager;

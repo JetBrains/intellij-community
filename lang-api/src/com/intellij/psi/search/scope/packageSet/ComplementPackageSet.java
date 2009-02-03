@@ -18,7 +18,7 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.psi.PsiFile;
 
 public class ComplementPackageSet implements PackageSet {
-  private PackageSet myComplementarySet;
+  private final PackageSet myComplementarySet;
 
   public ComplementPackageSet(PackageSet set) {
     myComplementarySet = set;

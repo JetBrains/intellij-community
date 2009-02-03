@@ -184,7 +184,7 @@ public class Alarm implements Disposable {
     private Runnable myTask;
     private final ModalityState myModalityState;
     private Future<?> myFuture;
-    private int myDelay;
+    private final int myDelay;
 
     private Request(final Runnable task, final ModalityState modalityState, int delayMillis) {
       myTask = task;

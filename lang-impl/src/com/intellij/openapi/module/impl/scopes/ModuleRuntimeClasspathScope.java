@@ -20,9 +20,9 @@ import java.util.Set;
  */
 public class ModuleRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
-  private boolean myIncludeTests;
-  private LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
-  private Module myModule;
+  private final boolean myIncludeTests;
+  private final LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
+  private final Module myModule;
 
   public ModuleRuntimeClasspathScope(final Module module, boolean includeTests) {
     myModule = module;

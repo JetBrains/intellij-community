@@ -11,7 +11,7 @@ import com.intellij.codeInsight.template.TextResult;
  *
  */
 public class ConstantNode extends Expression {
-  private Result myValue;
+  private final Result myValue;
 
   public ConstantNode(String value) {
     myValue = new TextResult(value);

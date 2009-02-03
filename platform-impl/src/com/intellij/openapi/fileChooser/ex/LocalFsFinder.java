@@ -45,8 +45,8 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
   public static class FileChooserFilter implements LookupFilter {
 
-    private FileChooserDescriptor myDescriptor;
-    private boolean myShowHidden;
+    private final FileChooserDescriptor myDescriptor;
+    private final boolean myShowHidden;
 
     public FileChooserFilter(final FileChooserDescriptor descriptor, boolean showHidden) {
       myDescriptor = descriptor;
@@ -61,8 +61,8 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
   }
 
   public static class VfsFile implements LookupFile {
-    private VirtualFile myFile;
-    private LocalFsFinder myFinder;
+    private final VirtualFile myFile;
+    private final LocalFsFinder myFinder;
 
     private String myMacro;
 
@@ -137,7 +137,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
   }
 
   public static class IoFile extends VfsFile {
-    private File myIoFile;
+    private final File myIoFile;
 
     public IoFile(final File ioFile) {
       super(null, null);

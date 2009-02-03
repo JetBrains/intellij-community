@@ -392,7 +392,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
   private static class MyUserObject{
     private boolean myInCycle;
-    private Module myModule;
+    private final Module myModule;
 
     public MyUserObject(final boolean inCycle, final Module module) {
       myInCycle = inCycle;

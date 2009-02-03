@@ -13,7 +13,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
   private final FileTypeManager myFileTypeManager;
-  private PsiModificationTracker myModificationTracker;
+  private final PsiModificationTracker myModificationTracker;
   private long myOutOfCodeBlockModificationCount;
 
   protected ProjectViewPsiTreeChangeListener(Project project) {

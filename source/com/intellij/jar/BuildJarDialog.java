@@ -344,7 +344,7 @@ public class BuildJarDialog extends DialogWrapper {
     private final Module myModule;
     private final BuildJarSettings myBuildJarSettings;
     private final BuildJarSettings myModifiedBuildJarSettings;
-    private PackagingEditor myEditor;
+    private final PackagingEditor myEditor;
 
     public SettingsEditor(@NotNull Module module, @NotNull BuildJarSettings buildJarSettings) {
       myModule = module;

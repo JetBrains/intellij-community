@@ -7,7 +7,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
 
 public class FoldingTransferableData implements TextBlockTransferableData, Serializable {
-  private FoldingData[] myFoldingDatas;
+  private final FoldingData[] myFoldingDatas;
 
   public FoldingTransferableData(final FoldingData[] foldingDatas) {
     myFoldingDatas = foldingDatas;

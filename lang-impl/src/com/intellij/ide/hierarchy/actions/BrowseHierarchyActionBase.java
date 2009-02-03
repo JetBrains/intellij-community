@@ -24,7 +24,7 @@ import java.awt.*;
  * @author yole
  */
 public abstract class BrowseHierarchyActionBase extends AnAction {
-  private LanguageExtension<HierarchyProvider> myExtension;
+  private final LanguageExtension<HierarchyProvider> myExtension;
 
   protected BrowseHierarchyActionBase(final LanguageExtension<HierarchyProvider> extension) {
     myExtension = extension;

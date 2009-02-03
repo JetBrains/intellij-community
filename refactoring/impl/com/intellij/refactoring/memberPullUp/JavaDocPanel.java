@@ -20,7 +20,7 @@ public class JavaDocPanel extends JPanel {
   private JRadioButton myRbJavaDocAsIs = null;
   private JRadioButton myRbJavaDocMove = null;
   private JRadioButton myRbJavaDocCopy = null;
-  private TitledBorder myBorder;
+  private final TitledBorder myBorder;
 
   public JavaDocPanel(String title) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

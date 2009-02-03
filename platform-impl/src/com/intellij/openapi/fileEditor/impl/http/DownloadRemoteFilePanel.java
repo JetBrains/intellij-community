@@ -38,8 +38,8 @@ public class DownloadRemoteFilePanel {
   private JButton myChangeProxySettingsButton;
   private final Project myProject;
   private final HttpVirtualFile myVirtualFile;
-  private MergingUpdateQueue myProgressUpdatesQueue;
-  private MyDownloadingListener myDownloadingListener;
+  private final MergingUpdateQueue myProgressUpdatesQueue;
+  private final MyDownloadingListener myDownloadingListener;
 
   public DownloadRemoteFilePanel(final Project project, final HttpVirtualFile virtualFile) {
     myProject = project;

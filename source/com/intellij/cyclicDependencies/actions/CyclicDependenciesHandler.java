@@ -19,8 +19,8 @@ import javax.swing.*;
  * Date: Jan 31, 2005
  */
 public class CyclicDependenciesHandler {
-  private Project myProject;
-  private AnalysisScope myScope;
+  private final Project myProject;
+  private final AnalysisScope myScope;
 
   public CyclicDependenciesHandler(Project project, AnalysisScope scope) {
     myProject = project;

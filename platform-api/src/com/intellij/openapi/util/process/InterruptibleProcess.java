@@ -25,8 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class InterruptibleProcess extends InterruptibleActivity {
   private final Process myProcess;
-  private InputStream myInputStream;
-  private InputStream myErrorStream;
+  private final InputStream myInputStream;
+  private final InputStream myErrorStream;
   private int myExitCode;
 
   protected InterruptibleProcess(final Process process, final long timeout, final TimeUnit timeUnit) {
@@ -70,7 +70,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
   }
 
   private class InputStreamWrapper extends InputStream {
-    private InputStream myDelegate;
+    private final InputStream myDelegate;
 
     public InputStreamWrapper(final InputStream delegate) {
       myDelegate = delegate;

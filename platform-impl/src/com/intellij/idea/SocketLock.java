@@ -29,7 +29,7 @@ public class SocketLock {
   private static final int[] FORBIDDEN_PORTS = new int[]{6953, 6969, 6970};
 
   private ServerSocket mySocket;
-  private List myLockedPaths = new ArrayList();
+  private final List myLockedPaths = new ArrayList();
   private boolean myIsDialogShown = false;
   @NonNls private static final String LOCALHOST = "localhost";
   @NonNls private static final String LOCK_THREAD_NAME = "Lock thread";

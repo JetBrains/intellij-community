@@ -41,7 +41,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   private final MemberSelectionPanel myNonNullPanel;
   private final HashMap<PsiElement, MemberInfo> myFieldsToNonNull;
 
-  private int myTestBoxedStep;
+  private final int myTestBoxedStep;
 
   private final MemberInfo[] myClassFields;
   private static final MyMemberInfoFilter MEMBER_INFO_FILTER = new MyMemberInfoFilter();
@@ -56,12 +56,12 @@ public class GenerateEqualsWizard extends AbstractWizard {
     for (MemberInfo myClassField : myClassFields) {
       myClassField.setChecked(true);
     }
-    myTestBoxedStep = 0;
+    int testBoxedStep = 0;
     if (needEquals) {
       myEqualsPanel =
         new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.equals.fields.chooser.title"), myClassFields, null);
       myEqualsPanel.getTable().setMemberInfoModel(new EqualsMemberInfoModel());
-      myTestBoxedStep+=2;
+      testBoxedStep+=2;
     }
     else {
       myEqualsPanel = null;
@@ -82,12 +82,13 @@ public class GenerateEqualsWizard extends AbstractWizard {
       if (needEquals) {
         updateHashCodeMemberInfos(myClassFields);
       }
-      myTestBoxedStep++;
+      testBoxedStep++;
     }
     else {
       myHashCodePanel = null;
       myFieldsToHashCode = null;
     }
+    myTestBoxedStep=testBoxedStep;
     myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"),
                                               new MemberInfo[0], null);
     myFieldsToNonNull = createFieldToMemberInfoMap(false);
@@ -275,7 +276,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   private static class InstanceofOptionStep extends StepAdapter {
-    private JComponent myPanel;
+    private final JComponent myPanel;
 
     private InstanceofOptionStep() {
       final JCheckBox checkbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses"));
@@ -380,7 +381,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   private static class HashCodeMemberInfoModel implements MemberInfoModel {
-    private MemberInfoTooltipManager myTooltipManager = new MemberInfoTooltipManager(new MemberInfoTooltipManager.TooltipProvider() {
+    private final MemberInfoTooltipManager myTooltipManager = new MemberInfoTooltipManager(new MemberInfoTooltipManager.TooltipProvider() {
       public String getTooltip(MemberInfo memberInfo) {
         if (isMemberEnabled(memberInfo)) return null;
         if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");

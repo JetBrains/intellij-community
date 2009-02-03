@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ModuleGroupConfigurable extends NamedConfigurable<ModuleGroup> {
-  private ModuleGroup myModuleGroup;
+  private final ModuleGroup myModuleGroup;
 
   public ModuleGroupConfigurable(final ModuleGroup moduleGroup) {
     myModuleGroup = moduleGroup;

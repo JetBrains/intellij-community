@@ -28,8 +28,8 @@ import javax.swing.*;
  * Date: 04-Jun-2006
  */
 public class ModuleConfigurable extends NamedConfigurable<Module> implements Place.Navigator {
-  private Module myModule;
-  private ModulesConfigurator myConfigurator;
+  private final Module myModule;
+  private final ModulesConfigurator myConfigurator;
   private String myModuleName;
 
   public ModuleConfigurable(ModulesConfigurator modulesConfigurator,

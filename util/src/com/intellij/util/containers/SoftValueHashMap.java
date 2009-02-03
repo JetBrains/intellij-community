@@ -24,8 +24,8 @@ import java.util.Map;
 import java.util.Set;
 
 public final class SoftValueHashMap<K,V> implements Map<K,V>{
-  private THashMap<K,MyReference<K,V>> myMap;
-  private ReferenceQueue<MyReference<K,V>> myQueue = new ReferenceQueue<MyReference<K,V>>();
+  private final THashMap<K,MyReference<K,V>> myMap;
+  private final ReferenceQueue<MyReference<K,V>> myQueue = new ReferenceQueue<MyReference<K,V>>();
 
   private static class MyReference<K,V> extends SoftReference<V> {
     final K key;

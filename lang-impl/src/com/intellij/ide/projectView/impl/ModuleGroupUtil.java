@@ -63,8 +63,8 @@ public class ModuleGroupUtil {
   }
 
   public static class ParentChildRelation<T> {
-    private T myParent;
-    private T myChild;
+    private final T myParent;
+    private final T myChild;
 
     public ParentChildRelation(final T parent, final T child) {
       myParent = parent;

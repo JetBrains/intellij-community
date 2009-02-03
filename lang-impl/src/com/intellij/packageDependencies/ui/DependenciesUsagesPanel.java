@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 public class DependenciesUsagesPanel extends UsagesPanel {
-  private List<DependenciesBuilder> myBuilders;
+  private final List<DependenciesBuilder> myBuilders;
 
   public DependenciesUsagesPanel(Project project, final List<DependenciesBuilder> builders) {
     super(project);

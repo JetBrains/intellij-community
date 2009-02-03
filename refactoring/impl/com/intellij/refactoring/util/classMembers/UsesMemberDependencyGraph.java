@@ -26,7 +26,7 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
   protected HashSet<PsiMember> myDependencies = null;
   protected HashMap<PsiMember,HashSet<PsiMember>> myDependenciesToDependentMap = null;
   private final boolean myRecursive;
-  private MemberDependenciesStorage myMemberDependenciesStorage;
+  private final MemberDependenciesStorage myMemberDependenciesStorage;
 
   public UsesMemberDependencyGraph(PsiClass aClass, PsiClass superClass, boolean recursive) {
     myRecursive = recursive;

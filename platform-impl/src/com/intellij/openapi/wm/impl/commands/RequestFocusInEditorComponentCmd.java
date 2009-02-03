@@ -17,8 +17,8 @@ import java.awt.*;
 public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
   private final FileEditorManagerEx myEditorManager;
   private final JComponent myComponent;
-  private boolean myForced;
-  private ActionCallback myDoneCallback;
+  private final boolean myForced;
+  private final ActionCallback myDoneCallback;
 
   public RequestFocusInEditorComponentCmd(@NotNull final FileEditorManagerEx editorManager, final Runnable finishCallBack, boolean forced){
     super(finishCallBack);

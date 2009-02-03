@@ -19,8 +19,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public class MergingLexerAdapter extends LexerBase {
-  private Lexer myOriginal;
-  private TokenSet myTokensToMerge;
+  private final Lexer myOriginal;
+  private final TokenSet myTokensToMerge;
   private IElementType myTokenType;
   private int myState;
   private int myTokenStart;
@@ -111,10 +111,10 @@ public class MergingLexerAdapter extends LexerBase {
   }
 
   private static class MyLexerPosition implements LexerPosition{
-    private int myOffset;
-    private IElementType myTokenType;
-    private LexerPosition myOriginalPosition;
-    private int myOldState;
+    private final int myOffset;
+    private final IElementType myTokenType;
+    private final LexerPosition myOriginalPosition;
+    private final int myOldState;
 
     public MyLexerPosition(final int offset, final IElementType tokenType, final LexerPosition originalPosition, int oldState) {
       myOffset = offset;

@@ -30,20 +30,20 @@ class HTMLTextPainter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.HTMLTextPainter");
 
   private int myOffset = 0;
-  private EditorHighlighter myHighlighter;
-  private String myText;
-  private String myFileName;
-  private String myHTMLFileName;
+  private final EditorHighlighter myHighlighter;
+  private final String myText;
+  private final String myFileName;
+  private final String myHTMLFileName;
   private int mySegmentEnd;
-  private PsiFile myPsiFile;
+  private final PsiFile myPsiFile;
   private int lineCount;
   private int myFirstLineNumber;
-  private boolean myPrintLineNumbers;
+  private final boolean myPrintLineNumbers;
   private int myColumn;
-  private LineMarkerInfo[] myMethodSeparators;
+  private final LineMarkerInfo[] myMethodSeparators;
   private int myCurrentMethodSeparator;
-  private Project myProject;
-  private Map<TextAttributes, String> myStyleMap = new HashMap<TextAttributes, String>();
+  private final Project myProject;
+  private final Map<TextAttributes, String> myStyleMap = new HashMap<TextAttributes, String>();
 
   public HTMLTextPainter(PsiFile psiFile, Project project, String dirName, boolean printLineNumbers) {
     myProject = project;

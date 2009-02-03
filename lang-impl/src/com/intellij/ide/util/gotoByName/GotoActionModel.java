@@ -26,14 +26,14 @@ public class GotoActionModel implements ChooseByNameModel {
   private final Project myProject;
   private final Component myContextComponent;
 
-  private ActionManager myActionManager = ActionManager.getInstance();
+  private final ActionManager myActionManager = ActionManager.getInstance();
 
   private static final EmptyIcon EMPTY_ICON = new EmptyIcon(18, 18);
 
   private String myPattern;
 
   private Pattern myCompiledPattern;
-  private PatternMatcher myMatcher = new Perl5Matcher();
+  private final PatternMatcher myMatcher = new Perl5Matcher();
 
 
   public GotoActionModel(Project project, final Component component) {

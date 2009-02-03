@@ -165,8 +165,8 @@ public class ReentrantWriterPreferenceReadWriteLock extends WriterPreferenceRead
   }
 
   private static final class ThreadToCountMap{
-    private ArrayList<Thread> myThreads = new ArrayList<Thread>();
-    private TIntArrayList myCounters = new TIntArrayList();
+    private final ArrayList<Thread> myThreads = new ArrayList<Thread>();
+    private final TIntArrayList myCounters = new TIntArrayList();
 
     private Thread myLastThread = null; // optimization
     private int myLastCounter;

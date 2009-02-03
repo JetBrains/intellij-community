@@ -51,8 +51,8 @@ public class Conditions {
     }
   }
   private static class And<T> implements Condition<T>  {
-    private Condition<T> t1;
-    private Condition<T> t2;
+    private final Condition<T> t1;
+    private final Condition<T> t2;
 
     public And(final Condition<T> t1, final Condition<T> t2) {
       this.t1 = t1;
@@ -64,8 +64,8 @@ public class Conditions {
     }
   }
   private static class Or<T> implements Condition<T>  {
-    private Condition<T> t1;
-    private Condition<T> t2;
+    private final Condition<T> t1;
+    private final Condition<T> t2;
 
     public Or(final Condition<T> t1, final Condition<T> t2) {
       this.t1 = t1;

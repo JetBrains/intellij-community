@@ -44,14 +44,14 @@ import java.util.List;
  * Date: 13-Apr-2006
  */
 public class QuickListsPanel extends JPanel implements Configurable, MasterDetails {
-  private DefaultListModel myQuickListsModel = new DefaultListModel();
+  private final DefaultListModel myQuickListsModel = new DefaultListModel();
   private JList myQuickListsList = new JList(myQuickListsModel);
-  private JPanel myRightPanel = new JPanel(new BorderLayout());
+  private final JPanel myRightPanel = new JPanel(new BorderLayout());
   private int myCurrentIndex = -1;
   private QuickListPanel myQuickListPanel = null;
 
 
-  private KeymapPanel myKeymapPanel;
+  private final KeymapPanel myKeymapPanel;
   private JComponent myToolbar;
   private DetailsComponent myDetailsComponent;
   private JScrollPane myListScrollPane;

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class MigrationMap {
   private String myName;
   private String myDescription;
-  private ArrayList<MigrationMapEntry> myEntries = new ArrayList<MigrationMapEntry>();
+  private final ArrayList<MigrationMapEntry> myEntries = new ArrayList<MigrationMapEntry>();
 
   public MigrationMap() {
 

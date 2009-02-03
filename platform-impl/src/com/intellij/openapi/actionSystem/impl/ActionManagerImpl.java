@@ -94,8 +94,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
   @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
 
-  private List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
-  private Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<AnAction, DataContext>();
+  private final List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
+  private final Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<AnAction, DataContext>();
   private Runnable myPreloadActionsRunnable;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
@@ -541,7 +541,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  private static Map<String, ResourceBundle> ourBundlesCache = new HashMap<String, ResourceBundle>();
+  private static final Map<String, ResourceBundle> ourBundlesCache = new HashMap<String, ResourceBundle>();
 
   private static ResourceBundle getBundle(final ClassLoader loader, final String resBundleName) {
 

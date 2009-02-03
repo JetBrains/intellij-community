@@ -15,7 +15,7 @@ import java.util.Set;
 public class PackageNode extends PackageDependenciesNode {
 
   private String myPackageName;
-  private String myPackageQName;
+  private final String myPackageQName;
   private final PsiPackage myPackage;
 
 
@@ -25,10 +25,11 @@ public class PackageNode extends PackageDependenciesNode {
     if (myPackageName == null || myPackageName.length() == 0) {
       myPackageName = CyclicDependenciesPanel.DEFAULT_PACKAGE_ABBREVIATION;
     }
-    myPackageQName = aPackage.getQualifiedName();
-    if (myPackageQName.length() == 0) {
-      myPackageQName = null;
+    String packageQName = aPackage.getQualifiedName();
+    if (packageQName.length() == 0) {
+      packageQName = null;
     }
+    myPackageQName = packageQName;
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {

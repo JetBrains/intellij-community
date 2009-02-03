@@ -23,7 +23,7 @@ import java.util.Map;
  * @author nik
  */
 public class FacetModificationTrackingServiceImpl extends FacetModificationTrackingService {
-  private Map<Facet, Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
+  private final Map<Facet, Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
     new THashMap<Facet, Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>>>();
 
   public FacetModificationTrackingServiceImpl(final Module module) {

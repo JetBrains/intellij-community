@@ -41,9 +41,9 @@ import java.awt.event.ItemListener;
 
 public class Messages {
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
-  private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
+  private static final TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
 
-  private static Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
   protected static final String OK_BUTTON = CommonBundle.getOkButtonText();
   protected static final String YES_BUTTON = CommonBundle.getYesButtonText();
   protected static final String NO_BUTTON = CommonBundle.getNoButtonText();

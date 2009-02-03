@@ -28,7 +28,7 @@ import java.util.List;
  * @author nik
  */
 public class AddFrameworkSupportDialog extends DialogWrapper {
-  private AddSupportForFrameworksPanel myAddSupportPanel;
+  private final AddSupportForFrameworksPanel myAddSupportPanel;
   private final Module myModule;
 
   private AddFrameworkSupportDialog(@NotNull Module module, final String contentRootPath, final List<FrameworkSupportProvider> providers) {

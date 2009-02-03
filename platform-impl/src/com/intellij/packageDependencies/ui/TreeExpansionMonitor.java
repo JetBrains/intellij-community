@@ -40,9 +40,9 @@ public abstract class TreeExpansionMonitor<T> {
     };
   }
 
-  private Set<TreePath> myExpandedPaths = new HashSet<TreePath>();
+  private final Set<TreePath> myExpandedPaths = new HashSet<TreePath>();
   private List<T> mySelectionNodes = new ArrayList<T>();
-  private JTree myTree;
+  private final JTree myTree;
   private boolean myFrozen = false;
 
   protected TreeExpansionMonitor(JTree tree) {

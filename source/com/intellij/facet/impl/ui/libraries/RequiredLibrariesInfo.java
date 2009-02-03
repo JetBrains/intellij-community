@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class RequiredLibrariesInfo {
 
-  private List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
+  private final List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
 
   public RequiredLibrariesInfo() {}
 
@@ -67,8 +67,8 @@ public class RequiredLibrariesInfo {
   }
 
   public static class RequiredClassesNotFoundInfo {
-    private String[] myClassNames;
-    private LibraryInfo[] myLibraryInfos;
+    private final String[] myClassNames;
+    private final LibraryInfo[] myLibraryInfos;
 
     public RequiredClassesNotFoundInfo(final String[] classNames, final LibraryInfo[] libraryInfos) {
       myClassNames = classNames;

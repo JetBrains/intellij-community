@@ -35,7 +35,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
 
   public String myExternalName;
   public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
-  private static ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
+  private static final ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
 
   private TextAttributesKey(String externalName) {
     myExternalName = externalName;

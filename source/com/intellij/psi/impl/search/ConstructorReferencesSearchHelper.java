@@ -20,7 +20,7 @@ import com.intellij.util.Processor;
  * @author max
  */
 public class ConstructorReferencesSearchHelper {
-  private PsiManager myManager;
+  private final PsiManager myManager;
 
   public ConstructorReferencesSearchHelper(final PsiManager manager) {
     myManager = manager;

@@ -206,7 +206,7 @@ public final class IconLoader {
 
   private static final class CachedImageIcon implements Icon {
     private Object myRealIcon;
-    private URL myUrl;
+    private final URL myUrl;
 
     public CachedImageIcon(URL url) {
       myUrl = url;

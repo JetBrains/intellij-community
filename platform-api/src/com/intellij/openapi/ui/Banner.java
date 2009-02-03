@@ -20,11 +20,11 @@ import java.util.Set;
 public class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
   private int myBannerMinHeight;
-  private JComponent myText = new MyText();
+  private final JComponent myText = new MyText();
 
-  private NonOpaquePanel myActionsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
+  private final NonOpaquePanel myActionsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
 
-  private Map<Action, LinkLabel> myActions = new HashMap<Action, LinkLabel>();
+  private final Map<Action, LinkLabel> myActions = new HashMap<Action, LinkLabel>();
 
   public Banner() {
     setLayout(new BorderLayout());

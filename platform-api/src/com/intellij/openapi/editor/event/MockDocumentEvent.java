@@ -19,8 +19,8 @@ import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
 
 public class MockDocumentEvent extends DocumentEvent {
-  private int myOffset;
-  private long myTimestamp;
+  private final int myOffset;
+  private final long myTimestamp;
 
   public MockDocumentEvent(Document document, int offset) {
     super(document);

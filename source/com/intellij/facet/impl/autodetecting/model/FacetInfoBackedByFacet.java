@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class FacetInfoBackedByFacet implements FacetInfo2<Module> {
-  private Facet myFacet;
+  private final Facet myFacet;
   private final ProjectFacetInfoSet myProjectFacetSet;
 
   FacetInfoBackedByFacet(@NotNull Facet facet, final ProjectFacetInfoSet projectFacetSet) {

@@ -33,7 +33,7 @@ public class BrowseFilesListener implements ActionListener {
   private final JTextField myTextField;
   private final String myTitle;
   private final String myDescription;
-  private FileChooserDescriptor myChooserDescriptor;
+  private final FileChooserDescriptor myChooserDescriptor;
   public static final FileChooserDescriptor SINGLE_DIRECTORY_DESCRIPTOR = new FileChooserDescriptor(false, true, false, false, false, false);
   public static final FileChooserDescriptor SINGLE_FILE_DESCRIPTOR = new FileChooserDescriptor(true, false, false, false, false, false);
 

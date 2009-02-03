@@ -39,9 +39,9 @@ import java.util.List;
  */
 public class DtdReferencesProvider extends PsiReferenceProvider {
   static class ElementReference implements PsiReference, LocalQuickFixProvider, EmptyResolveMessageProvider {
-    private XmlElement myElement;
+    private final XmlElement myElement;
     private XmlElement myNameElement;
-    private TextRange myRange;
+    private final TextRange myRange;
     @NonNls private static final String ELEMENT_DECLARATION_NAME = "ELEMENT";
 
     public ElementReference(final XmlElement element, final XmlElement nameElement) {
@@ -160,8 +160,8 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   }
 
   static class EntityReference implements PsiReference,LocalQuickFixProvider, EmptyResolveMessageProvider {
-    private PsiElement myElement;
-    private TextRange myRange;
+    private final PsiElement myElement;
+    private final TextRange myRange;
     @NonNls private static final String ENTITY_DECLARATION_NAME = "ENTITY";
 
     EntityReference(PsiElement element) {

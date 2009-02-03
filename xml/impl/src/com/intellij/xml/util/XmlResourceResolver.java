@@ -44,13 +44,13 @@ import java.util.Map;
  */
 public class XmlResourceResolver implements XMLEntityResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlResourceResolver");
-  private XmlFile myFile;
-  private Project myProject;
-  private Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
+  private final XmlFile myFile;
+  private final Project myProject;
+  private final Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
   private boolean myStopOnUnDeclaredResource;
   @NonNls
   public static final String FILE_PREFIX = "file://";
-  private ValidateXmlActionHandler.ErrorReporter myErrorReporter;
+  private final ValidateXmlActionHandler.ErrorReporter myErrorReporter;
 
   public XmlResourceResolver(XmlFile _xmlFile, Project _project, final ValidateXmlActionHandler.ErrorReporter errorReporter) {
     myFile = _xmlFile;

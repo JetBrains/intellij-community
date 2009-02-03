@@ -13,7 +13,7 @@ import javax.swing.*;
  */
 public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
   private final FacetStructureConfigurable myFacetStructureConfigurable;
-  private FacetType myFacetType;
+  private final FacetType myFacetType;
 
   public FacetTypeConfigurable(final FacetStructureConfigurable facetStructureConfigurable, final FacetType facetType) {
     myFacetStructureConfigurable = facetStructureConfigurable;

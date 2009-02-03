@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
-  private PsiMethod myMethod;
+  private final PsiMethod myMethod;
   private final String myProcessedElementsHeader;
 
   public ChangeSignatureViewDescriptor(PsiMethod method) {

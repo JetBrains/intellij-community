@@ -24,8 +24,8 @@ import java.awt.event.*;
  * @author yole
  */
 public class PaletteComponentList extends JList {
-  private Project myProject;
-  private PaletteGroup myGroup;
+  private final Project myProject;
+  private final PaletteGroup myGroup;
   private int myHoverIndex = -1;
   private int myBeforeClickSelectedRow = -1;
   private int myDropTargetIndex = -1;
@@ -253,8 +253,8 @@ public class PaletteComponentList extends JList {
   }
 
   private class MoveFocusAction extends AbstractAction {
-    private Action defaultAction;
-    private boolean focusNext;
+    private final Action defaultAction;
+    private final boolean focusNext;
 
     public MoveFocusAction(Action defaultAction, boolean focusNext) {
       this.defaultAction = defaultAction;
@@ -285,8 +285,8 @@ public class PaletteComponentList extends JList {
   }
 
   private class ChangeColumnAction extends AbstractAction {
-    private Action defaultAction;
-    private boolean selectNext;
+    private final Action defaultAction;
+    private final boolean selectNext;
 
     public ChangeColumnAction(Action defaultAction, boolean selectNext) {
       this.defaultAction = defaultAction;

@@ -20,7 +20,7 @@ import java.util.Map;
  *         Time: 11:38:46 PM
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
-  private Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<Language, LineMarkerProvider>();
+  private final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<Language, LineMarkerProvider>();
 
   public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
     if (element instanceof PsiWhiteSpace) return null;

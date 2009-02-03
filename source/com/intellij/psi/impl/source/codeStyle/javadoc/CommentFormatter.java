@@ -18,9 +18,9 @@ public class CommentFormatter {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter");
 
-  private CodeStyleSettings mySettings;
-  private JDParser myParser;
-  private Project myProject;
+  private final CodeStyleSettings mySettings;
+  private final JDParser myParser;
+  private final Project myProject;
 
   public CommentFormatter(Project project) {
     mySettings = CodeStyleSettingsManager.getSettings(project);

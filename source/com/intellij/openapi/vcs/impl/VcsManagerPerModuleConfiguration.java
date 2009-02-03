@@ -14,7 +14,7 @@ import org.jdom.Element;
  * @author mike
  */
 public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, ModuleComponent {
-  private Module myModule;
+  private final Module myModule;
   public String ACTIVE_VCS_NAME = "";
   public boolean USE_PROJECT_VCS = true;
 

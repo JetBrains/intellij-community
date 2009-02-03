@@ -32,8 +32,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   private static final Icon MERGE_ICON = IconLoader.getIcon("/modules/merge.png");
   private static final Icon SPLIT_ICON = IconLoader.getIcon("/modules/split.png");
   
-  private ElementsChooser<T> myEntriesChooser;
-  private JList myDependenciesList;
+  private final ElementsChooser<T> myEntriesChooser;
+  private final JList myDependenciesList;
   private final ModuleInsight myInsight;
   
   private final Comparator<T> COMPARATOR = new Comparator<T>() {

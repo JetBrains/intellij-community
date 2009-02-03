@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
 
-  private FileTemplate myTemplate;
+  private final FileTemplate myTemplate;
 
   public CreateFromTemplateAction(FileTemplate template){
     super(template.getName(), null, FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension()).getIcon());

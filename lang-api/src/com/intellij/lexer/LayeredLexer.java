@@ -35,11 +35,11 @@ public class LayeredLexer extends LexerBase {
   private int myBufferEnd;
   private int myState;
 
-  private Lexer myBaseLexer;
-  private Map<IElementType, Lexer> myStartTokenToLayerLexer = new HashMap<IElementType, Lexer>();
+  private final Lexer myBaseLexer;
+  private final Map<IElementType, Lexer> myStartTokenToLayerLexer = new HashMap<IElementType, Lexer>();
   private Lexer myCurrentLayerLexer;
-  private HashSet<Lexer> mySelfStoppingLexers = new HashSet<Lexer>(1);
-  private HashMap<Lexer, IElementType[]> myStopTokens = new HashMap<Lexer,IElementType[]>(1);
+  private final HashSet<Lexer> mySelfStoppingLexers = new HashSet<Lexer>(1);
+  private final HashMap<Lexer, IElementType[]> myStopTokens = new HashMap<Lexer,IElementType[]>(1);
 
 
   public LayeredLexer(Lexer baseLexer) {

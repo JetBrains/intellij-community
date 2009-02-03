@@ -12,7 +12,7 @@ import java.awt.*;
  * @author Yura Cangea
  */
 public class ModifyKeywordDialog extends DialogWrapper {
-  private JTextField myKeywordName = new JTextField();
+  private final JTextField myKeywordName = new JTextField();
 
   public ModifyKeywordDialog(Component parent, String initialValue) {
     super(parent, false);

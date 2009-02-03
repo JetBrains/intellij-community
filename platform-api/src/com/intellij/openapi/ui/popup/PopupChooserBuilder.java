@@ -37,9 +37,9 @@ import java.util.ArrayList;
  * @author max
  */
 public class PopupChooserBuilder {
-  private JComponent myChooserComponent;
+  private final JComponent myChooserComponent;
   private String myTitle;
-  private ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<KeyStroke>();
+  private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<KeyStroke>();
   private Runnable myItemChoosenRunnable;
   private JComponent mySouthComponent;
 
@@ -326,7 +326,7 @@ public class PopupChooserBuilder {
 
   private class MyListWrapper extends JScrollPane implements DataProvider {
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-    private JList myList;
+    private final JList myList;
 
     public MyListWrapper(final JList list) {
       super(list);

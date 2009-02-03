@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 
 public class ExportToTextFileToolbarAction extends ExportToTextFileAction {
-  private ExporterToTextFile myExporterToTextFile;
+  private final ExporterToTextFile myExporterToTextFile;
 
   public ExportToTextFileToolbarAction(ExporterToTextFile exporterToTextFile) {
     myExporterToTextFile = exporterToTextFile;

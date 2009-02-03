@@ -28,7 +28,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   private Document myDocument;
   private Project myProject;
   private EditorTextField myEditorField = null;
-  private ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
+  private final ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private boolean myIsListenerInstalled = false;
   private boolean myInheritSwingFont = true;
   private final FileType myFileType;

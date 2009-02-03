@@ -10,7 +10,7 @@ import java.awt.*;
  * @author yole
  */
 public class WolfChangesFileNameDecorator extends ChangesFileNameDecorator {
-  private WolfTheProblemSolver myProblemSolver;
+  private final WolfTheProblemSolver myProblemSolver;
 
   public WolfChangesFileNameDecorator(final WolfTheProblemSolver problemSolver) {
     myProblemSolver = problemSolver;

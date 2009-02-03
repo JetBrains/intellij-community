@@ -8,7 +8,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class ExtractClassUsageViewDescriptor implements UsageViewDescriptor {
-    private PsiClass aClass;
+    private final PsiClass aClass;
 
     ExtractClassUsageViewDescriptor(PsiClass aClass) {
         super();

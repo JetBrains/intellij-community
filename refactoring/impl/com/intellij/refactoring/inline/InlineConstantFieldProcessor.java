@@ -28,7 +28,7 @@ import java.util.HashSet;
 class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineConstantFieldProcessor");
   private PsiField myField;
-  private PsiReferenceExpression myRefExpr;
+  private final PsiReferenceExpression myRefExpr;
   private final boolean myInlineThisOnly;
 
   public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {

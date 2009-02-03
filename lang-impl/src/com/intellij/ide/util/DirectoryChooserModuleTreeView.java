@@ -39,8 +39,8 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private final Map<Module, DefaultMutableTreeNode> myModuleNodes = new HashMap<Module, DefaultMutableTreeNode>();
   private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<ModuleGroup, DefaultMutableTreeNode>();
   private final DefaultMutableTreeNode myRootNode;
-  private ProjectFileIndex myFileIndex;
-  private Project myProject;
+  private final ProjectFileIndex myFileIndex;
+  private final Project myProject;
 
   public DirectoryChooserModuleTreeView(Project project) {
     myRootNode = new DefaultMutableTreeNode();

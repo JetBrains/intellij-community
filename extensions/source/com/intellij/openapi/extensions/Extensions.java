@@ -173,9 +173,9 @@ public class Extensions {
   }
 
   private static class AreaClassConfiguration {
-    private String myClassName;
-    private String myParentClassName;
-    private Throwable myCreationPoint;
+    private final String myClassName;
+    private final String myParentClassName;
+    private final Throwable myCreationPoint;
 
     AreaClassConfiguration(String className, String parentClassName) {
       myCreationPoint = new Throwable();

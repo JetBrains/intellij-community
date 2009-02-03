@@ -29,7 +29,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String,String> myMacros = new HashMap<String, String>();
   private final Map<String,String> myMacrosDescriptions = new HashMap<String, String>();
-  private JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
+  private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
 
   @NonNls
   public static final String MACRO_ELEMENT = "macro";

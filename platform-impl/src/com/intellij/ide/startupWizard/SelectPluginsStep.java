@@ -27,10 +27,10 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   private JButton myEnableAllButton;
   private JButton myDisableAllButton;
   private final List<IdeaPluginDescriptor> myPlugins = new ArrayList<IdeaPluginDescriptor>();
-  private Set<String> myDisabledPluginIds;
+  private final Set<String> myDisabledPluginIds;
   private final String myRequirePlugin;
 
-  private static String[] ourSuffixes = new String[] { "integration", "support", "plugin" };
+  private static final String[] ourSuffixes = new String[] { "integration", "support", "plugin" };
 
   public SelectPluginsStep(final String title, final Set<String> disabledPluginIds, final String requirePlugin) {
     super(title, "Select the plugins to enable. Disabling unused plugins will improve IDE startup speed and performance.\n\nTo change plugin settings later, go to Settings | Plugins.",
@@ -38,7 +38,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     myDisabledPluginIds = disabledPluginIds;
     myRequirePlugin = requirePlugin;
     myPluginsList.setCellRenderer(new ListCellRenderer() {
-      private JCheckBox myCheckbox = new JCheckBox();
+      private final JCheckBox myCheckbox = new JCheckBox();
 
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,

@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent;
  * @author ven
  */
 public class SimpleFieldChooser extends DialogWrapper {
-  private PsiField[] myFields;
+  private final PsiField[] myFields;
   private JList myList;
 
   public SimpleFieldChooser(PsiField[] members, Project project) {

@@ -21,8 +21,8 @@ import java.util.Map;
 
 public class GraphicsConfig {
 
-  private Graphics2D myG;
-  private Map myHints;
+  private final Graphics2D myG;
+  private final Map myHints;
 
   public GraphicsConfig(Graphics g) {
     myG = (Graphics2D)g;

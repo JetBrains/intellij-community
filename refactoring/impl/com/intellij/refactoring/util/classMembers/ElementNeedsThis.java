@@ -7,7 +7,7 @@ import com.intellij.psi.*;
  */
 public class ElementNeedsThis extends ClassThisReferencesVisitor {
   private boolean myResult = false;
-  private PsiElement myMember;
+  private final PsiElement myMember;
 
   public ElementNeedsThis(PsiClass aClass, PsiElement member) {
     super(aClass);

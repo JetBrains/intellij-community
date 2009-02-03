@@ -17,8 +17,8 @@ import javax.swing.*;
  * @author nik
  */
 public class LibrariesValidationComponentImpl implements LibrariesValidationComponent {
-  private EventDispatcher<ValidityListener> myDispatcher = EventDispatcher.create(ValidityListener.class);
-  private FacetErrorPanel myErrorPanel;
+  private final EventDispatcher<ValidityListener> myDispatcher = EventDispatcher.create(ValidityListener.class);
+  private final FacetErrorPanel myErrorPanel;
   private final FacetLibrariesValidatorImpl myLibrariesValidator;
   private final Module myModule;
 

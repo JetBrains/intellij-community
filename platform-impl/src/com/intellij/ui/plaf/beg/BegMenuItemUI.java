@@ -26,18 +26,18 @@ import java.lang.reflect.Method;
  * @author Vladimir Kondratyev
  */
 public class BegMenuItemUI extends BasicMenuItemUI {
-  private static Rectangle b = new Rectangle(0, 0, 0, 0);
-  private static Rectangle j = new Rectangle();
-  private static Rectangle d = new Rectangle();
+  private static final Rectangle b = new Rectangle(0, 0, 0, 0);
+  private static final Rectangle j = new Rectangle();
+  private static final Rectangle d = new Rectangle();
   private int myMaxGutterIconWidth;
   private int a;
   private static Rectangle i = new Rectangle();
   private int k;
   private int e;
-  private static Rectangle c = new Rectangle();
-  private static Rectangle h = new Rectangle();
-  private static Rectangle l = new Rectangle();
-  private static Rectangle f = new Rectangle(32767, 32767);
+  private static final Rectangle c = new Rectangle();
+  private static final Rectangle h = new Rectangle();
+  private static final Rectangle l = new Rectangle();
+  private static final Rectangle f = new Rectangle(32767, 32767);
   @NonNls public static final String PLAY_SOUND_METHOD = "playSound";
   @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";

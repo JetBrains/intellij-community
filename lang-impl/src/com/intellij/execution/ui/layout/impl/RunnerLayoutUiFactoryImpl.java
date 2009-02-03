@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class RunnerLayoutUiFactoryImpl extends RunnerLayoutUi.Factory {
-  private Project myProject;
+  private final Project myProject;
 
   public RunnerLayoutUiFactoryImpl(Project project) {
     myProject = project;

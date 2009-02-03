@@ -48,7 +48,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls private static final String ELEMENT_KEYWORDS4 = "keywords4";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls public static final String ELEMENT_EXTENSIONMAP = "extensionMap";
-  private ExternalInfo myExternalInfo = new ExternalInfo();
+  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   public AbstractFileType(SyntaxTable syntaxTable) {
     mySyntaxTable = syntaxTable;

@@ -38,7 +38,7 @@ public class OldXmlParsing implements XmlElementType {
   public static final TokenSet XML_COMMENT_BIT_SET =
     TokenSet.create(new IElementType[]{XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END});
 
-  private ParsingContext myContext;
+  private final ParsingContext myContext;
   private int myLastTokenEnd = -1;
 
   public OldXmlParsing(ParsingContext context) {

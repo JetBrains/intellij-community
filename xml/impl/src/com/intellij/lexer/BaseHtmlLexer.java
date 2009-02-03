@@ -31,7 +31,7 @@ abstract class BaseHtmlLexer extends LexerBase {
   private boolean seenAttribute;
   private boolean seenStyle;
   private boolean seenScript;
-  private boolean caseInsensitive;
+  private final boolean caseInsensitive;
   private boolean seenContentType;
 
   static final TokenSet TOKENS_TO_MERGE = TokenSet.create(XmlTokenType.XML_COMMENT_CHARACTERS, XmlTokenType.XML_WHITE_SPACE, XmlTokenType.XML_REAL_WHITE_SPACE,
@@ -153,7 +153,7 @@ abstract class BaseHtmlLexer extends LexerBase {
     }
   }
 
-  private HashMap<IElementType,TokenHandler> tokenHandlers = new HashMap<IElementType, TokenHandler>();
+  private final HashMap<IElementType,TokenHandler> tokenHandlers = new HashMap<IElementType, TokenHandler>();
 
   protected BaseHtmlLexer(Lexer _baseLexer, boolean _caseInsensitive)  {
     baseLexer = _baseLexer;

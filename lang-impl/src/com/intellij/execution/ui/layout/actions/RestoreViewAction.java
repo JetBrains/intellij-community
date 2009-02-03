@@ -9,8 +9,8 @@ import com.intellij.ui.content.Content;
 
 public class RestoreViewAction extends AnAction {
 
-  private Content myContent;
-  private CellTransform.Restore myRestoreAction;
+  private final Content myContent;
+  private final CellTransform.Restore myRestoreAction;
 
   public RestoreViewAction(final Content content, CellTransform.Restore restore) {
     myContent = content;

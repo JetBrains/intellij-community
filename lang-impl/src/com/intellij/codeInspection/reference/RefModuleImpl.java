@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * Date: 09-Jan-2006
  */
 public class RefModuleImpl extends RefEntityImpl implements RefModule {
-  private Module myModule;
+  private final Module myModule;
 
   protected RefModuleImpl(Module module, final RefManager manager) {
     super(module.getName(), manager);

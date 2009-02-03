@@ -32,13 +32,13 @@ import java.util.NoSuchElementException;
 
 class ClassPath {
   private final Stack<URL> myUrls = new Stack<URL>();
-  private ArrayList<Loader> myLoaders = new ArrayList<Loader>();
-  private HashMap<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
+  private final ArrayList<Loader> myLoaders = new ArrayList<Loader>();
+  private final HashMap<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
   private final ClasspathCache myCache = new ClasspathCache();
 
   @NonNls private static final String FILE_PROTOCOL = "file";
   private static final boolean myDebugTime = false;
-  private boolean myCanLockJars;
+  private final boolean myCanLockJars;
   private final boolean myCanUseCache;
   private static final long NS_THRESHOLD = 10000000L;
 

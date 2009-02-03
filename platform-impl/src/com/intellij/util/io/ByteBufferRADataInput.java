@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 public class ByteBufferRADataInput implements RandomAccessDataInput {
   private static final Logger LOG = Logger.getInstance("com.intellij.util.io.ByteBufferRADataInput");
 
-  private MappedBufferWrapper myBuffer;
+  private final MappedBufferWrapper myBuffer;
 
   public ByteBufferRADataInput(MappedBufferWrapper buffer) {
     myBuffer = buffer;

@@ -21,7 +21,7 @@ import org.jdom.Element;
  * @author Alexander Kireyev
  */
 public class SortingException extends RuntimeException {
-  private Element[] myConflictingElements;
+  private final Element[] myConflictingElements;
 
   public SortingException(String message, Element[] conflictingElements) {
     super(message);

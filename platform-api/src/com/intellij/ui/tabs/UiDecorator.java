@@ -10,8 +10,8 @@ public interface UiDecorator {
   UiDecoration getDecoration();
 
   class UiDecoration {
-    private @Nullable Font myLabelFont;
-    private @Nullable Insets myLabelInsets;
+    private @Nullable final Font myLabelFont;
+    private @Nullable final Insets myLabelInsets;
 
     public UiDecoration(final Font labelFont, final Insets labelInsets) {
       myLabelFont = labelFont;

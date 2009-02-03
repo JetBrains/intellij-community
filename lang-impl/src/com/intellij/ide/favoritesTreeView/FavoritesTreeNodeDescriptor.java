@@ -18,7 +18,7 @@ import com.intellij.psi.SmartPsiElementPointer;
  * Date: Feb 15, 2005
  */
 public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode> {
-  private AbstractTreeNode myElement;
+  private final AbstractTreeNode myElement;
   public static final FavoritesTreeNodeDescriptor[] EMPTY_ARRAY = new FavoritesTreeNodeDescriptor[0];
 
   public FavoritesTreeNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AbstractTreeNode element) {

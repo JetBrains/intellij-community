@@ -29,9 +29,9 @@ import java.util.List;
  * @author ven
  */
 public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
-  private Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix");
+  private final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix");
 
-  private PsiClass myClass;
+  private final PsiClass myClass;
 
   public CreateConstructorMatchingSuperFix(PsiClass aClass) {
     myClass = aClass;

@@ -35,9 +35,9 @@ import java.util.Map;
 public class ProjectJdkTableImpl extends ProjectJdkTable implements PersistentStateComponent<Element>, ExportableComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl");
 
-  private ArrayList<Sdk> myJdks = new ArrayList<Sdk>();
+  private final ArrayList<Sdk> myJdks = new ArrayList<Sdk>();
 
-  private EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
+  private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   @NonNls private static final String ELEMENT_JDK = "jdk";
 

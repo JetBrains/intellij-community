@@ -32,7 +32,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
 
   public Insets insets;
 
-  private JBTabsImpl myTabs;
+  private final JBTabsImpl myTabs;
   public JComponent comp;
   public Rectangle tabRectangle;
 

@@ -11,8 +11,8 @@ import java.util.*;
  * @author peter
  */
 public abstract class AutomaticUsageRenamer<T> {
-  private String myOldName;
-  private String myNewName;
+  private final String myOldName;
+  private final String myNewName;
   private final Map<T, String> myRenames = new LinkedHashMap<T, String>();
   private final List<T> myElements = new ArrayList<T>();
   private final Map<T, List<RenameableUsage>> myReferences = new HashMap<T, List<RenameableUsage>>();

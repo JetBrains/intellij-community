@@ -32,7 +32,7 @@ public class JdkChooserPanel extends JPanel {
   private JList myList = null;
   private DefaultListModel myListModel = null;
   private Sdk myCurrentJdk;
-  private Project myProject;
+  private final Project myProject;
   private SdkType[] myAllowedJdkTypes = null;
 
   public JdkChooserPanel(Project project) {

@@ -26,14 +26,14 @@ import java.util.*;
  * @author yole
  */
 public class PaletteWindow extends JPanel implements DataProvider {
-  private Project myProject;
-  private ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<PaletteGroupHeader>();
-  private PaletteItemProvider[] myProviders;
-  private PaletteWindow.MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
-  private Set<PaletteGroup> myGroups = new HashSet<PaletteGroup>();
-  private JTabbedPane myTabbedPane = new JTabbedPane();
-  private JScrollPane myScrollPane = new JScrollPane();
-  private MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
+  private final Project myProject;
+  private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<PaletteGroupHeader>();
+  private final PaletteItemProvider[] myProviders;
+  private final PaletteWindow.MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
+  private final Set<PaletteGroup> myGroups = new HashSet<PaletteGroup>();
+  private final JTabbedPane myTabbedPane = new JTabbedPane();
+  private final JScrollPane myScrollPane = new JScrollPane();
+  private final MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
   private PaletteGroupHeader myLastFocusedGroup;
 
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.palette";

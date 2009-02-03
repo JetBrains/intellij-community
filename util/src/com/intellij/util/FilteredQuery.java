@@ -28,7 +28,7 @@ import java.util.List;
  * @author max
  */
 public class FilteredQuery<T> implements Query<T> {
-  private Query<T> myOriginal;
+  private final Query<T> myOriginal;
   private final Condition<T> myFilter;
 
   public FilteredQuery(final Query<T> original, Condition<T> filter) {

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class CallReferenceUsageInfo extends UsageInfo {
-  private PsiCallReference myReference;
+  private final PsiCallReference myReference;
 
   public CallReferenceUsageInfo(@NotNull PsiCallReference reference) {
     super(reference);

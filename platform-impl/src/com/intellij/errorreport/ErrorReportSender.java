@@ -42,10 +42,10 @@ public class ErrorReportSender {
   }
 
   class SendTask {
-    private Project myProject;
+    private final Project myProject;
     private NotifierBean notifierBean;
     private ErrorBean errorBean;
-    private Throwable throwable;
+    private final Throwable throwable;
     private ExceptionBean exceptionBean;
 
     public SendTask(final Project project, Throwable throwable) {

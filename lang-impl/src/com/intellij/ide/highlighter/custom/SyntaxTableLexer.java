@@ -11,17 +11,17 @@ import com.intellij.util.text.CharArrayUtil;
  * @version 1.0
  */
 public class SyntaxTableLexer extends LexerBase {
-  private SyntaxTable table;
+  private final SyntaxTable table;
 
-  private PosBufferTokenizer tokenizer;
+  private final PosBufferTokenizer tokenizer;
 
   private IElementType tokenType;
   private int tokenStart;
   private int tokenEnd;
 
-  private String lineComment;
-  private String startComment;
-  private String endComment;
+  private final String lineComment;
+  private final String startComment;
+  private final String endComment;
 
   private CharSequence buffer;
   private int startOffset;

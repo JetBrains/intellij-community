@@ -29,11 +29,11 @@ import java.util.Map;
  */
 public class DefaultConfigurationSettingsEditor implements Configurable {
 
-  @NonNls private DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
-  private JTree myTree = new JTree(myRoot);
-  private Project myProject;
-  private Map<ConfigurationType, Configurable> myStoredComponents = new HashMap<ConfigurationType, Configurable>();
-  private ConfigurationType mySelection;
+  @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
+  private final JTree myTree = new JTree(myRoot);
+  private final Project myProject;
+  private final Map<ConfigurationType, Configurable> myStoredComponents = new HashMap<ConfigurationType, Configurable>();
+  private final ConfigurationType mySelection;
 
   public DefaultConfigurationSettingsEditor(Project project, ConfigurationType selection) {
     myProject = project;

@@ -22,11 +22,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public final class ActionMenu extends JMenu {
-  private String myPlace;
-  private DataContext myContext;
-  private ActionGroup myGroup;
-  private PresentationFactory myPresentationFactory;
-  private Presentation myPresentation;
+  private final String myPlace;
+  private final DataContext myContext;
+  private final ActionGroup myGroup;
+  private final PresentationFactory myPresentationFactory;
+  private final Presentation myPresentation;
   /**
    * Defines whether menu shows its mnemonic or not.
    */

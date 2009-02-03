@@ -21,7 +21,7 @@ import javax.swing.tree.TreePath;
 abstract class CurrentFileTodosPanel extends TodoPanel{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.todo.CurrentFileTodosPanel");
 
-  private MyFileEditorManagerListener myFileEditorManagerListener;
+  private final MyFileEditorManagerListener myFileEditorManagerListener;
 
   public CurrentFileTodosPanel(Project project,TodoPanelSettings settings,Content content){
     super(project,settings,true,content);

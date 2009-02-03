@@ -19,7 +19,7 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 public class LightEnumerationAdapter implements Enumeration{
-  private LightEnumeration myEnum;
+  private final LightEnumeration myEnum;
   private Object myCurrent;
 
   public LightEnumerationAdapter(LightEnumeration enumeration){

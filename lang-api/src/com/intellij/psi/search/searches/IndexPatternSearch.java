@@ -37,7 +37,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
   public static IndexPatternSearch INDEX_PATTERN_SEARCH_INSTANCE;
 
   public static class SearchParameters {
-    private PsiFile myFile;
+    private final PsiFile myFile;
     private IndexPattern myPattern;
     private IndexPatternProvider myPatternProvider;
     private TextRange myRange;

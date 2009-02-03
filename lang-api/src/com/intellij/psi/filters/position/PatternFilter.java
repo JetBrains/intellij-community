@@ -11,7 +11,7 @@ import com.intellij.psi.filters.ElementFilter;
  * @author peter
  */
 public class PatternFilter implements ElementFilter {
-  private ElementPattern<?> myPattern;
+  private final ElementPattern<?> myPattern;
 
   public PatternFilter(final ElementPattern<?> pattern) {
     myPattern = pattern;

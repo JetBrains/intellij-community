@@ -90,9 +90,9 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
   private static class InvokeTemplateAction extends AnAction {
-    private TemplateImpl myTemplate;
-    private Editor myEditor;
-    private Project myProject;
+    private final TemplateImpl myTemplate;
+    private final Editor myEditor;
+    private final Project myProject;
 
     public InvokeTemplateAction(final TemplateImpl template, final Editor editor, final Project project, final Set<Character> usedMnemonicsSet) {
       super(extractMnemonic(template, usedMnemonicsSet) + template.getDescription());

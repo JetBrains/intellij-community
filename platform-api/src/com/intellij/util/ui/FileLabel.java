@@ -26,7 +26,7 @@ public class FileLabel extends JLabel {
   protected File myFile;
   private boolean myShowIcon = true;
   private static final int PREFFERED_TEXT_LENGTH = 50;
-  private FilePathSplittingPolicy myPolicy = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR;
+  private final FilePathSplittingPolicy myPolicy = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR;
 
   public FileLabel() {
   }

@@ -23,8 +23,8 @@ public class MigrationDialog extends DialogWrapper{
   private JButton myEditMapButton;
   private JButton myNewMapButton;
   private JButton myRemoveMapButton;
-  private Project myProject;
-  private MigrationMapSet myMigrationMapSet;
+  private final Project myProject;
+  private final MigrationMapSet myMigrationMapSet;
   private JLabel promptLabel;
   private JSeparator mySeparator;
   private JScrollPane myDescriptionScroll;

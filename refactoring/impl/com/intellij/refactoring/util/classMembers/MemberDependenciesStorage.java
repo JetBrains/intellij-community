@@ -9,7 +9,7 @@ import java.util.HashSet;
 class MemberDependenciesStorage {
   protected final PsiClass myClass;
   private final PsiClass mySuperClass;
-  private HashMap<PsiMember,HashSet<PsiMember>> myDependencyGraph;
+  private final HashMap<PsiMember,HashSet<PsiMember>> myDependencyGraph;
 
   MemberDependenciesStorage(PsiClass aClass, PsiClass superClass) {
     myClass = aClass;
@@ -29,7 +29,7 @@ class MemberDependenciesStorage {
   }
 
   class DependentMembersCollector extends ClassMemberReferencesVisitor {
-    private HashSet<PsiMember> myCollection = new HashSet<PsiMember>();
+    private final HashSet<PsiMember> myCollection = new HashSet<PsiMember>();
 
     DependentMembersCollector() {
       super(myClass);

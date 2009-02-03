@@ -25,9 +25,9 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   @NonNls private static final String ELEMENT_NAME = "deploymentDescriptor";
   @NonNls private static final String ID_ATTRIBUTE = "name";
   @NonNls private static final String URL_ATTRIBUTE = "url";
-  private MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFileInfo>();
+  private final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFileInfo>();
   private @Nullable ConfigFileContainerImpl myContainer;
-  private ConfigFileMetaDataProvider myMetaDataProvider;
+  private final ConfigFileMetaDataProvider myMetaDataProvider;
 
   public ConfigFileInfoSetImpl(final @NotNull ConfigFileContainerImpl container) {
     myContainer = container;

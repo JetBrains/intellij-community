@@ -20,7 +20,7 @@ import java.awt.*;
 
 public class HorizontalBox extends JPanel {
 
-  private Box myBox;
+  private final Box myBox;
 
   public HorizontalBox() {
     setLayout(new BorderLayout());

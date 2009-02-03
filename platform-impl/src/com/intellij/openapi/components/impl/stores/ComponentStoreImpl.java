@@ -26,8 +26,8 @@ import java.util.*;
 abstract class ComponentStoreImpl implements IComponentStore {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
-  private Map<String, Object> myComponents = Collections.synchronizedMap(new TreeMap<String, Object>());
-  private List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
+  private final Map<String, Object> myComponents = Collections.synchronizedMap(new TreeMap<String, Object>());
+  private final List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
   @Nullable private SaveSessionImpl mySession;
 
   @Deprecated

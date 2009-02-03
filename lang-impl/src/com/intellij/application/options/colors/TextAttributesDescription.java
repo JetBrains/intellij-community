@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class TextAttributesDescription extends ColorAndFontDescription {
-  private TextAttributes myAttributes;
+  private final TextAttributes myAttributes;
 
   public TextAttributesDescription(String name,
                                    String group,

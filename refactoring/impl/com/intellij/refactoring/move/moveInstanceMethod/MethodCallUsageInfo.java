@@ -8,8 +8,8 @@ import com.intellij.usageView.UsageInfo;
  * @author ven
  */
 public class MethodCallUsageInfo extends UsageInfo {
-  private PsiMethodCallExpression myMethodCallExpression;
-  private boolean myIsInternal;
+  private final PsiMethodCallExpression myMethodCallExpression;
+  private final boolean myIsInternal;
 
   public MethodCallUsageInfo(final PsiReferenceExpression referenceExpression, final boolean internal) {
     super(referenceExpression);

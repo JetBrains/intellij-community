@@ -34,7 +34,7 @@ import java.util.Map;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener {
-  private Map<MemberInfo, PsiMember> myMember2CauseMap = new HashMap<MemberInfo, PsiMember>();
+  private final Map<MemberInfo, PsiMember> myMember2CauseMap = new HashMap<MemberInfo, PsiMember>();
   private final PsiClass sourceClass;
   private final MemberInfo[] memberInfo;
   private final JTextField classNameField;

@@ -15,18 +15,18 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public class IdeaMenuUI extends BasicMenuUI{
-  private static Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
-  private static Rectangle ourTextRect = new Rectangle();
-  private static Rectangle ourArrowIconRect = new Rectangle();
+  private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
+  private static final Rectangle ourTextRect = new Rectangle();
+  private static final Rectangle ourArrowIconRect = new Rectangle();
   private int myMaxGutterIconWidth;
   private int a;
   private static Rectangle ourPreferredSizeRect = new Rectangle();
   private int k;
   private int e;
-  private static Rectangle ourAcceleratorRect = new Rectangle();
-  private static Rectangle ourCheckIconRect = new Rectangle();
-  private static Rectangle ourIconRect = new Rectangle();
-  private static Rectangle ourViewRect = new Rectangle(32767, 32767);
+  private static final Rectangle ourAcceleratorRect = new Rectangle();
+  private static final Rectangle ourCheckIconRect = new Rectangle();
+  private static final Rectangle ourIconRect = new Rectangle();
+  private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {

@@ -33,7 +33,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private JButton myRemoveButton;
 
   private DefaultListModel myExcludePackagesModel;
-  @NonNls private static Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
+  @NonNls private static final Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
 
   public JavaAutoImportOptions() {
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);

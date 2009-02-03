@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
-  private List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
+  private final List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
   private boolean myExtensionsLoaded = false;
 
   public void registerPage(ColorSettingsPage page) {

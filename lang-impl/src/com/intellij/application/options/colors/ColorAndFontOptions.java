@@ -704,8 +704,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
 
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
-    private TextAttributes myAttributesToApply;
-    private TextAttributesKey key;
+    private final TextAttributes myAttributesToApply;
+    private final TextAttributesKey key;
 
     public SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, EditorColorsScheme scheme, Icon icon,
                                            String toolTip) {
@@ -737,7 +737,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private static class GetSetColor {
     private final ColorKey myKey;
-    private EditorColorsScheme myScheme;
+    private final EditorColorsScheme myScheme;
     private boolean isModified = false;
     private Color myColor;
 

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
 */
 public class MethodPropertyReference extends BasicAttributeValueReference {
-  private boolean myReadable;
+  private final boolean myReadable;
 
   public MethodPropertyReference(final PsiElement element, boolean readable) {
     super(element);

@@ -44,7 +44,7 @@ import java.util.Set;
  */
 public class InspectionsOptionsToolbarAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ui.actions.SuppressInspectionToolbarAction");
-  private InspectionResultsView myView;
+  private final InspectionResultsView myView;
 
   public InspectionsOptionsToolbarAction(final InspectionResultsView view) {
     super(getToolOptions(null), getToolOptions(null), IconLoader.getIcon("/general/inspectionsOff.png"));

@@ -26,7 +26,7 @@ import java.util.Vector;
  * @author ven
  */
 public class MethodNode extends CheckedTreeNode {
-  private PsiMethod myMethod;
+  private final PsiMethod myMethod;
   private boolean myOldChecked;
 
   public MethodNode(final PsiMethod method) {

@@ -12,7 +12,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class UsesDependencyMemberInfoModel extends DependencyMemberInfoModel {
-  private PsiClass myClass;
+  private final PsiClass myClass;
 
   public UsesDependencyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive) {
     super(new UsesMemberDependencyGraph(aClass, superClass, recursive), ERROR);

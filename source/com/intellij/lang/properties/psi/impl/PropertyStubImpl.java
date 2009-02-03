@@ -10,7 +10,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 
 public class PropertyStubImpl extends StubBase<Property> implements PropertyStub {
-  private String myKey;
+  private final String myKey;
 
   public PropertyStubImpl(final StubElement parent, final String key) {
     super(parent, PropertiesElementTypes.PROPERTY);

@@ -19,7 +19,7 @@ import javax.swing.*;
  * Date: 05-Jun-2006
  */
 public class JdksConfigurable extends NamedConfigurable<ProjectJdksModel> {
-  private ProjectJdksModel myJdkTableConfigurable;
+  private final ProjectJdksModel myJdkTableConfigurable;
   public static final String JDKS = ProjectBundle.message("jdks.node.display.name");
   public static final Icon ICON = IconLoader.getIcon("/modules/jdks.png");
 

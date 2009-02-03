@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NonNls;
  * @author mike
  */
 class ExceptionTagInfo implements JavadocTagInfo {
-  private String myName;
+  private final String myName;
 
   public ExceptionTagInfo(@NonNls String name) {
     myName = name;

@@ -25,8 +25,8 @@ import com.intellij.util.ArrayUtil;
  * @author max
  */
 public class IntToIntSetMap {
-  private TIntIntHashMap mySingle;
-  private TIntObjectHashMap<TIntHashSet> myMulti;
+  private final TIntIntHashMap mySingle;
+  private final TIntObjectHashMap<TIntHashSet> myMulti;
 
 
   public IntToIntSetMap(int initialCapacity, float loadfactor) {

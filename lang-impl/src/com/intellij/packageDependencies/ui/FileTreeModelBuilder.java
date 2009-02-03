@@ -32,23 +32,23 @@ import java.util.Set;
 
 public class FileTreeModelBuilder {
   private static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
-  private ProjectFileIndex myFileIndex;
-  private PsiManager myPsiManager;
-  private Project myProject;
+  private final ProjectFileIndex myFileIndex;
+  private final PsiManager myPsiManager;
+  private final Project myProject;
   private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.TreeModelBuilder");
 
-  private boolean myShowModuleGroups;
-  private boolean myShowModules;
+  private final boolean myShowModuleGroups;
+  private final boolean myShowModules;
 
-  private boolean myFlattenPackages;
-  private boolean myCompactEmptyMiddlePackages;
+  private final boolean myFlattenPackages;
+  private final boolean myCompactEmptyMiddlePackages;
   private boolean myShowFiles;
-  private Marker myMarker;
-  private boolean myAddUnmarkedFiles;
-  private PackageDependenciesNode myRoot;
-  private Map<PsiDirectory,DirectoryNode> myModuleDirNodes = new HashMap<PsiDirectory, DirectoryNode>();
-  private Map<Module, ModuleNode> myModuleNodes = new HashMap<Module, ModuleNode>();
-  private Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<String, ModuleGroupNode>();
+  private final Marker myMarker;
+  private final boolean myAddUnmarkedFiles;
+  private final PackageDependenciesNode myRoot;
+  private final Map<PsiDirectory,DirectoryNode> myModuleDirNodes = new HashMap<PsiDirectory, DirectoryNode>();
+  private final Map<Module, ModuleNode> myModuleNodes = new HashMap<Module, ModuleNode>();
+  private final Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<String, ModuleGroupNode>();
   private int myScannedFileCount = 0;
   private int myTotalFileCount = 0;
   private int myMarkedFileCount = 0;

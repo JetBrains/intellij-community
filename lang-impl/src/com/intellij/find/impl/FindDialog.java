@@ -70,7 +70,7 @@ final class FindDialog extends DialogWrapper {
   private ComboBox myFileFilter;
   private JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
-  private Map<EditorTextField, DocumentAdapter> myComboBoxListeners = new HashMap<EditorTextField, DocumentAdapter>();
+  private final Map<EditorTextField, DocumentAdapter> myComboBoxListeners = new HashMap<EditorTextField, DocumentAdapter>();
 
   private Action myFindAllAction;
   private JRadioButton myRbCustomScope;

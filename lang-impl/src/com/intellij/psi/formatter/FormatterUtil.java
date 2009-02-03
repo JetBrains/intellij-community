@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FormatterUtil {
-  private static List<FormatterUtilHelper> ourHelpers = new CopyOnWriteArrayList<FormatterUtilHelper>();
+  private static final List<FormatterUtilHelper> ourHelpers = new CopyOnWriteArrayList<FormatterUtilHelper>();
 
   private FormatterUtil() {
   }

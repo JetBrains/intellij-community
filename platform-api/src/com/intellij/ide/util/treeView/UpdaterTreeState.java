@@ -12,7 +12,7 @@ import java.util.*;
 
 public class UpdaterTreeState {
 
-  private AbstractTreeUi myUi;
+  private final AbstractTreeUi myUi;
   protected WeakHashMap<Object, Object> myToSelect = new WeakHashMap<Object, Object>();
   protected WeakHashMap<Object, Condition> myAdjustedSelection = new WeakHashMap<Object, Condition>();
   protected WeakHashMap<Object, Object> myDisposedElements = new WeakHashMap<Object, Object>();

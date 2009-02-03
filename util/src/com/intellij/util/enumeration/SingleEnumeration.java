@@ -19,8 +19,8 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 public class SingleEnumeration implements Enumeration{
-  private Object myValue;
-  private boolean myAdvanced;
+  private final Object myValue;
+  private final boolean myAdvanced;
 
   public SingleEnumeration(Object value){
     myValue = value;

@@ -23,8 +23,8 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   private final PsiManagerImpl myManager;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
-  private long myModificationStamp;
-  private FileType myFileType;
+  private final long myModificationStamp;
+  private final FileType myFileType;
   private final FileViewProvider myViewProvider;
 
   public PsiBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {

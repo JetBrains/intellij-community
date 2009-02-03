@@ -67,9 +67,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private boolean myLeftCtrlPressed = false;
   private boolean myRightAltPressed = false;
 
-  private KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
+  private final KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
 
-  private KeyProcessorContext myContext = new KeyProcessorContext();
+  private final KeyProcessorContext myContext = new KeyProcessorContext();
 
   public IdeKeyEventDispatcher(){
     Disposer.register(ApplicationManager.getApplication(), this);
@@ -416,7 +416,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return false;
   }
 
-  private ActionProcessor myActionProcessor = new ActionProcessor() {
+  private final ActionProcessor myActionProcessor = new ActionProcessor() {
     public AnActionEvent createEvent(final InputEvent inputEvent, final DataContext context, final String place, final Presentation presentation,
                                      final ActionManager manager) {
       return new AnActionEvent(inputEvent, context, place, presentation, manager, 0);

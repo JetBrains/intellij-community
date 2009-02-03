@@ -16,8 +16,8 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class FilterGetter implements ContextGetter{
-  private ContextGetter myBaseGetter;
-  private ElementFilter myFilter;
+  private final ContextGetter myBaseGetter;
+  private final ElementFilter myFilter;
 
   public FilterGetter(ContextGetter baseGetter, ElementFilter filter){
     myBaseGetter = baseGetter;

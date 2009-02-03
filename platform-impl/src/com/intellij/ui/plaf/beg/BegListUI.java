@@ -16,7 +16,7 @@ public class BegListUI extends BasicListUI {
   }
 
   public class PatchedInputHandler extends MouseInputHandler {
-    private JList myList;
+    private final JList myList;
 
     PatchedInputHandler(JList list) {
       myList = list;

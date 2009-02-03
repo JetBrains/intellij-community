@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
 
-  private CopyOnWriteArrayList<IdePopupEventDispatcher> myDispatchStack = new CopyOnWriteArrayList<IdePopupEventDispatcher>();
+  private final CopyOnWriteArrayList<IdePopupEventDispatcher> myDispatchStack = new CopyOnWriteArrayList<IdePopupEventDispatcher>();
 
   boolean isPopupActive() {
     for (IdePopupEventDispatcher each : myDispatchStack) {

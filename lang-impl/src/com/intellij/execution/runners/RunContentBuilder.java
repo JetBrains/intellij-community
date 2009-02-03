@@ -48,15 +48,15 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   private final Project myProject;
   private final ArrayList<Disposable> myDisposeables = new ArrayList<Disposable>();
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
-  private Icon myRerunIcon = DEFAULT_RERUN_ICON;
-  private boolean myReuseProhibited = false;
+  private final Icon myRerunIcon = DEFAULT_RERUN_ICON;
+  private final boolean myReuseProhibited = false;
   private ExecutionResult myExecutionResult;
 
   private final LogFilesManager myManager;
 
   private RunnerLayoutUi myUi;
-  private Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
-  private Executor myExecutor;
+  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
+  private final Executor myExecutor;
   private ExecutionEnvironment myEnvironment;
 
   public RunContentBuilder(final Project project, final ProgramRunner runner, Executor executor) {

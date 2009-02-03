@@ -34,7 +34,7 @@ public abstract class Surface extends JPanel implements Printable {
   start
   ,
   frame;
-  private Toolkit toolkit;
+  private final Toolkit toolkit;
   private boolean perfMonitor
   ,
   outputPerf;

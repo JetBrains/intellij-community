@@ -14,7 +14,7 @@ public class ExportToHTMLDialog extends DialogWrapper{
   private JCheckBox myCbOpenInBrowser;
   private final Project myProject;
   private TextFieldWithBrowseButton myTargetDirectoryField;
-  private boolean myCanBeOpenInBrowser;
+  private final boolean myCanBeOpenInBrowser;
 
   public ExportToHTMLDialog(Project project, final boolean canBeOpenInBrowser) {
     super(project, true);

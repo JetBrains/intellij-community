@@ -27,8 +27,8 @@ public class StoppableLexerAdapter implements Lexer {
     boolean stopsAt(IElementType token, int start, int end);
   }
 
-  private Lexer myOriginal;
-  private StoppingCondition myCondition;
+  private final Lexer myOriginal;
+  private final StoppingCondition myCondition;
   private boolean myStopped = false;
 
   public Lexer getOriginal() {

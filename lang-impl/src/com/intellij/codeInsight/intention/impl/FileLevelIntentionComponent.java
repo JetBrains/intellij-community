@@ -30,9 +30,9 @@ public class FileLevelIntentionComponent extends JPanel {
   private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
   private static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
 
-  private ArrayList<HighlightInfo.IntentionActionDescriptor> myIntentions;
-  private Project myProject;
-  private Editor myEditor;
+  private final ArrayList<HighlightInfo.IntentionActionDescriptor> myIntentions;
+  private final Project myProject;
+  private final Editor myEditor;
 
   public FileLevelIntentionComponent(final String description,
                                      final HighlightSeverity severity,

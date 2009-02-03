@@ -28,7 +28,7 @@ import java.util.Map;
     }
 )
 public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager implements PersistentStateComponent<FacetEditorsStateManagerImpl.FacetEditorsStateBean>{
-  private Map<String, Object> myFacetTypeStates = new HashMap<String, Object>();
+  private final Map<String, Object> myFacetTypeStates = new HashMap<String, Object>();
   private FacetEditorsStateBean myBean = new FacetEditorsStateBean();
 
   public <T> void saveState(@NotNull final FacetType<?, ?> type, final T state) {

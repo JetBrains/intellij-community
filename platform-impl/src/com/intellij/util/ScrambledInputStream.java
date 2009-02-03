@@ -5,7 +5,7 @@ import java.io.InputStream;
 
 public class ScrambledInputStream extends InputStream{
   private static final int MASK = ScrambledOutputStream.MASK;
-  private InputStream myOriginalStream;
+  private final InputStream myOriginalStream;
 
   public ScrambledInputStream(InputStream originalStream) {
     myOriginalStream = originalStream;

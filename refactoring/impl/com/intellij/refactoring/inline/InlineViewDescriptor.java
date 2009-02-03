@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 class InlineViewDescriptor implements UsageViewDescriptor{
 
-  private PsiElement myElement;
+  private final PsiElement myElement;
 
   public InlineViewDescriptor(PsiElement element) {
     myElement = element;

@@ -62,8 +62,8 @@ public class TemplateEditorUtil {
   }
 
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
-    private Lexer myLexer;
-    private SyntaxHighlighter myOriginalHighlighter;
+    private final Lexer myLexer;
+    private final SyntaxHighlighter myOriginalHighlighter;
 
     public TemplateHighlighter(SyntaxHighlighter original) {
       myOriginalHighlighter = original;

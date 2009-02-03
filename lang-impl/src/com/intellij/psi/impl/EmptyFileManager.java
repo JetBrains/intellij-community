@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 class EmptyFileManager implements FileManager {
-  private PsiManagerImpl myManager;
+  private final PsiManagerImpl myManager;
 
   EmptyFileManager(final PsiManagerImpl manager) {
     myManager = manager;

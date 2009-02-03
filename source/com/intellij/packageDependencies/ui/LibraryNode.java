@@ -14,7 +14,7 @@ public class LibraryNode extends PackageDependenciesNode {
   private static final Icon JDK_ICON_OPEN = IconLoader.getIcon("/nodes/ppJdkOpen.png");
   private static final Icon JDK_ICON_CLOSED = IconLoader.getIcon("/nodes/ppJdkClosed.png");
 
-  private OrderEntry myLibraryOrJdk;
+  private final OrderEntry myLibraryOrJdk;
 
   public LibraryNode(OrderEntry libraryOrJdk) {
     myLibraryOrJdk = libraryOrJdk;

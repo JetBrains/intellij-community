@@ -45,29 +45,29 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
   private final Project myProject;
   private final PsiClass myClass;
 
-  private PsiField[] myFields;
-  private boolean[] myCheckedMarks;
-  private boolean[] myFinalMarks;
-  private String[] myFieldNames;
-  private String[] myGetterNames;
-  private PsiMethod[] myGetterPrototypes;
-  private String[] mySetterNames;
-  private PsiMethod[] mySetterPrototypes;
+  private final PsiField[] myFields;
+  private final boolean[] myCheckedMarks;
+  private final boolean[] myFinalMarks;
+  private final String[] myFieldNames;
+  private final String[] myGetterNames;
+  private final PsiMethod[] myGetterPrototypes;
+  private final String[] mySetterNames;
+  private final PsiMethod[] mySetterPrototypes;
 
   private JTable myTable;
   private MyTableModel myTableModel;
 
-  private JCheckBox myCbEncapsulateGet = new JCheckBox();
-  private JCheckBox myCbEncapsulateSet = new JCheckBox();
-  private JCheckBox myCbUseAccessorsWhenAccessible = new JCheckBox();
-  private JRadioButton myRbFieldPrivate = new JRadioButton();
-  private JRadioButton myRbFieldProtected = new JRadioButton();
-  private JRadioButton myRbFieldPackageLocal = new JRadioButton();
-  private JRadioButton myRbFieldAsIs = new JRadioButton();
-  private JRadioButton myRbAccessorPublic = new JRadioButton();
-  private JRadioButton myRbAccessorProtected = new JRadioButton();
-  private JRadioButton myRbAccessorPrivate = new JRadioButton();
-  private JRadioButton myRbAccessorPackageLocal = new JRadioButton();
+  private final JCheckBox myCbEncapsulateGet = new JCheckBox();
+  private final JCheckBox myCbEncapsulateSet = new JCheckBox();
+  private final JCheckBox myCbUseAccessorsWhenAccessible = new JCheckBox();
+  private final JRadioButton myRbFieldPrivate = new JRadioButton();
+  private final JRadioButton myRbFieldProtected = new JRadioButton();
+  private final JRadioButton myRbFieldPackageLocal = new JRadioButton();
+  private final JRadioButton myRbFieldAsIs = new JRadioButton();
+  private final JRadioButton myRbAccessorPublic = new JRadioButton();
+  private final JRadioButton myRbAccessorProtected = new JRadioButton();
+  private final JRadioButton myRbAccessorPrivate = new JRadioButton();
+  private final JRadioButton myRbAccessorPackageLocal = new JRadioButton();
   private static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
 
   {

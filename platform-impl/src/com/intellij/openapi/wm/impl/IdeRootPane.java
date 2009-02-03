@@ -38,8 +38,8 @@ public class IdeRootPane extends JRootPane{
   private JComponent myToolbar;
   private StatusBarImpl myStatusBar;
 
-  private JPanel myNorthPanel = new JPanel(new GridBagLayout());
-  private List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
+  private final JPanel myNorthPanel = new JPanel(new GridBagLayout());
+  private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
 
   /**
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.
@@ -47,14 +47,14 @@ public class IdeRootPane extends JRootPane{
   private ToolWindowsPane myToolWindowsPane;
   private final MyUISettingsListenerImpl myUISettingsListener;
   private JPanel myContentPane;
-  private ActionManager myActionManager;
-  private UISettings myUISettings;
+  private final ActionManager myActionManager;
+  private final UISettings myUISettings;
 
   private static Component myWelcomePane;
-  private boolean myGlassPaneInitialized;
-  private IdeGlassPaneImpl myGlassPane;
+  private final boolean myGlassPaneInitialized;
+  private final IdeGlassPaneImpl myGlassPane;
 
-  private Application myApplication;
+  private final Application myApplication;
 
   IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager,
               final Application application, final String[] commandLineArgs){

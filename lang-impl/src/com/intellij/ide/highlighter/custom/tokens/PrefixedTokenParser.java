@@ -6,7 +6,7 @@ import com.intellij.psi.tree.IElementType;
  * @author dsl
  */
 public abstract class PrefixedTokenParser extends BaseTokenParser {
-  private char[] myPrefix;
+  private final char[] myPrefix;
   private final IElementType myTokenType;
 
   public PrefixedTokenParser(String prefix, IElementType tokenType) {

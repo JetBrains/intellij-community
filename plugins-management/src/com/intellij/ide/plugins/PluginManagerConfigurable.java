@@ -28,7 +28,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   public boolean TREE_VIEW = false;
 
   private PluginManagerMain myPluginManagerMain;
-  private PluginManagerUISettings myUISettings;
+  private final PluginManagerUISettings myUISettings;
 
   public static PluginManagerConfigurable getInstance() {
     return ShowSettingsUtil.getInstance().findApplicationConfigurable(PluginManagerConfigurable.class);

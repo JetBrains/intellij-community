@@ -24,7 +24,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private String myDescription;
   private JComponent myComponent;
   private Icon myIcon;
-  private PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
+  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private ContentManager myManager = null;
   private boolean myIsLocked = false;
   private boolean myPinnable = true;
@@ -38,7 +38,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   private AlertIcon myAlertIcon;
 
-  private boolean myAlerting = false;
+  private final boolean myAlerting = false;
   private JComponent myActionsContextComponent;
   private JComponent mySearchComponent;
 

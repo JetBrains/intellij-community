@@ -32,9 +32,9 @@ class OptionTagBinding implements Binding {
 
   private final static Logger LOG = Logger.getInstance("#" + OptionTagBinding.class.getName());
 
-  private Accessor accessor;
-  private String myName;
-  private Binding myBinding;
+  private final Accessor accessor;
+  private final String myName;
+  private final Binding myBinding;
 
   public OptionTagBinding(Accessor accessor, XmlSerializerImpl xmlSerializer) {
     this.accessor = accessor;

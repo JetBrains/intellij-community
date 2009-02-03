@@ -22,8 +22,8 @@ import java.util.Set;
  */
 public class FacetTypeRegistryImpl extends FacetTypeRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetTypeRegistryImpl");
-  private Map<String, FacetTypeId> myTypeIds = new HashMap<String, FacetTypeId>();
-  private Map<FacetTypeId, FacetType> myFacetTypes = new HashMap<FacetTypeId, FacetType>();
+  private final Map<String, FacetTypeId> myTypeIds = new HashMap<String, FacetTypeId>();
+  private final Map<FacetTypeId, FacetType> myFacetTypes = new HashMap<FacetTypeId, FacetType>();
   private boolean myExtensionsLoaded = false;
 
   public synchronized void registerFacetType(FacetType facetType) {

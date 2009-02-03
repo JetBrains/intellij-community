@@ -18,7 +18,7 @@ import java.nio.charset.Charset;
  * To change this template use Options | File Templates.
  */
 public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
-  private boolean myCaseSensitive;
+  private final boolean myCaseSensitive;
 
   public HtmlAttributeValueGetter(boolean _caseSensitive) {
     myCaseSensitive = _caseSensitive;

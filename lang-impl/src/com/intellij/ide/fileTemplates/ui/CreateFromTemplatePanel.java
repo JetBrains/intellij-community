@@ -25,15 +25,15 @@ public class CreateFromTemplatePanel{
   private JPanel myMainPanel;
   private JPanel myAttrPanel;
   private JTextField myFilenameField;
-  private String[] myUnsetAttributes;
-  private ArrayList<Pair<String, JTextField>> myAttributes = new ArrayList<Pair<String,JTextField>>();
+  private final String[] myUnsetAttributes;
+  private final ArrayList<Pair<String, JTextField>> myAttributes = new ArrayList<Pair<String,JTextField>>();
 
   private int myLastRow = 0;
 
   private int myHorisontalMargin = -1;
   private int myVerticalMargin = -1;
-  private boolean myMustEnterName;
-  private AttributesDefaults myAttributesDefaults;
+  private final boolean myMustEnterName;
+  private final AttributesDefaults myAttributesDefaults;
 
   public CreateFromTemplatePanel(final String[] unsetAttributes, final boolean mustEnterName,
                                  @Nullable final AttributesDefaults attributesDefaults){

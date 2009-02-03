@@ -14,7 +14,7 @@ class ByteBufferMapWriteHandler<V> {
 
   private final int[] myKeyHashes;
   private final int myMod;
-  private DataOutput myOut;
+  private final DataOutput myOut;
 
   public ByteBufferMapWriteHandler(DataOutput stream, /*ByteBufferMap.KeyProvider keyProvider, */ByteBufferMap.ValueProvider<V> valueProvider, WriteableMap<V> map, double searchFactor) {
     myValueProvider = valueProvider;

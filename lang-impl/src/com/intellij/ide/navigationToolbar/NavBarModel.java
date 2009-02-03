@@ -38,11 +38,11 @@ import java.util.List;
 public class NavBarModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavBarModel");
 
-  private ArrayList<Object> myModel = new ArrayList<Object>();
+  private final ArrayList<Object> myModel = new ArrayList<Object>();
   private int mySelectedIndex;
-  private Project myProject;
+  private final Project myProject;
 
-  private MyObservable myObservable = new MyObservable();
+  private final MyObservable myObservable = new MyObservable();
 
   public NavBarModel(final Project project) {
     myProject = project;

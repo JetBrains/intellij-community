@@ -7,7 +7,7 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.psi.search.SearchScope;
 
 public class ScopeDescriptor {
-  private SearchScope myScope;
+  private final SearchScope myScope;
 
   public ScopeDescriptor(SearchScope scope) {
     myScope = scope;

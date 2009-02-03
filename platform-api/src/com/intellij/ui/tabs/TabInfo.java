@@ -30,7 +30,7 @@ public final class TabInfo {
 
   private ActionGroup myGroup;
 
-  private PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
+  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
 
   private Icon myIcon;
   private String myPlace;
@@ -49,7 +49,7 @@ public final class TabInfo {
   private boolean myHidden;
   private JComponent myActionsContextComponent;
 
-  private SimpleColoredText myText = new SimpleColoredText();
+  private final SimpleColoredText myText = new SimpleColoredText();
   private String myTooltipText;
 
   private int myDefaultStyle = -1;

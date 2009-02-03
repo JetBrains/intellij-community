@@ -44,7 +44,7 @@ import java.util.Comparator;
  */
 public class WelcomeScreen {
   private JPanel myWelcomePanel;
-  private JPanel myMainPanel;
+  private final JPanel myMainPanel;
   private JPanel myPluginsPanel;
 
   private static final Insets ICON_INSETS = new Insets(15, 30, 15, 0);
@@ -101,7 +101,7 @@ public class WelcomeScreen {
   private class ActionGroupDescriptor {
     private int myIdx = -1;
     private int myCount = 0;
-    private JPanel myPanel;
+    private final JPanel myPanel;
     private final int myColumnIdx;
     @NonNls protected static final String HTML_PREFIX = "<html>";
     @NonNls protected static final String HTML_SUFFIX = "</html>";
@@ -664,8 +664,8 @@ public class WelcomeScreen {
     private int myGroupIdx;
     private int myRowIdx;
     private int myColumnIdx;
-    private String myDisplayName;
-    private Icon myIcon;
+    private final String myDisplayName;
+    private final Icon myIcon;
 
     private MyActionButton(Icon icon, String displayName) {
       myDisplayName = displayName;

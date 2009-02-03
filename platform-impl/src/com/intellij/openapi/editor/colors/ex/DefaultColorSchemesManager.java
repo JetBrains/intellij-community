@@ -18,7 +18,7 @@ import java.util.List;
  * @author max
  */
 public class DefaultColorSchemesManager implements ApplicationComponent, JDOMExternalizable {
-  private ArrayList mySchemes;
+  private final ArrayList mySchemes;
   @NonNls private static final String SCHEME_ELEMENT = "scheme";
 
   public String getComponentName() {

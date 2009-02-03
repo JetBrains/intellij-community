@@ -324,8 +324,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   private class MyComponent extends JPanel {
-    private boolean myCompact;
-    private FixedHeightLabel myProcessName;
+    private final boolean myCompact;
+    private final FixedHeightLabel myProcessName;
 
     private MyComponent(final boolean compact, final FixedHeightLabel processName) {
       myCompact = compact;

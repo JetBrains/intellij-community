@@ -26,15 +26,15 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private String myTitle = "";
   private boolean myResizable;
   private boolean myMovable;
-  private JComponent myComponent;
-  private JComponent myPrefferedFocusedComponent;
+  private final JComponent myComponent;
+  private final JComponent myPrefferedFocusedComponent;
   private boolean myRequestFocus;
   private boolean myForceHeavyweight;
   private String myDimensionServiceKey = null;
   private Computable<Boolean> myCallback = null;
   private Project myProject;
   private boolean myCancelOnClickOutside = true;
-  private Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
+  private final Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
   private boolean myUseDimSevriceForXYLocation;
 
   private IconButton myCancelButton;

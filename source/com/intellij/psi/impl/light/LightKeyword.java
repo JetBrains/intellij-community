@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaToken {
-  private String myText;
+  private final String myText;
 
   public LightKeyword(PsiManager manager, String text) {
     super(manager, StdFileTypes.JAVA.getLanguage());

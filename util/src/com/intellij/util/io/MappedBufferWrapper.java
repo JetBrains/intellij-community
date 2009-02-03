@@ -50,7 +50,7 @@ public abstract class MappedBufferWrapper {
 
   protected abstract MappedByteBuffer map();
 
-  private static int MAX_FORCE_ATTEMPTS = 10;
+  private static final int MAX_FORCE_ATTEMPTS = 10;
 
   public final void unmap() {
     if (!unmapMappedByteBuffer142b19(this)) {

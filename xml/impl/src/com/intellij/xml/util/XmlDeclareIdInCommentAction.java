@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlDeclareIdInCommentAction implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlDeclareIdInCommentAction");
 
-  private String myId;
+  private final String myId;
 
   public XmlDeclareIdInCommentAction(@NotNull final String id) {
     myId = id;

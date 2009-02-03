@@ -21,7 +21,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   protected final Project myProject;
   protected final ModifiableRootModel myModel;
   protected JComponent myComponent;
-  private List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   protected History myHistory;
 

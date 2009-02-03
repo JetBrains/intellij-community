@@ -76,10 +76,10 @@ import java.util.Set;
  */
 public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
-  private IdeView myIdeView = new MyIdeView();
-  private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
+  private final IdeView myIdeView = new MyIdeView();
+  private final MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
 
-  private DnDAwareTree myTree = new DnDAwareTree();
+  private final DnDAwareTree myTree = new DnDAwareTree();
   private final Project myProject;
   private FileTreeModelBuilder myBuilder;
 
@@ -91,9 +91,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final DependencyValidationManager myDependencyValidationManager;
-  private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
+  private final WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
-  private MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, myTree.isShowing(), myTree);
+  private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, myTree.isShowing(), myTree);
 
   public ScopeTreeViewPanel(final Project project) {
     super(new BorderLayout());

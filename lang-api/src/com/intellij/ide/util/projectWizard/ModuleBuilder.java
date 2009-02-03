@@ -47,8 +47,8 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   private String myName;
   @NonNls private String myModuleFilePath;
   @Nullable
-  private List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
-  private EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
+  private final List<ModuleConfigurationUpdater> myUpdaters = new ArrayList<ModuleConfigurationUpdater>();
+  private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
   @Nullable
   protected final String acceptParameter(String param) {

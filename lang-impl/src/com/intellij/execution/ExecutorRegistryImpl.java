@@ -34,9 +34,9 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
   private List<Executor> myExecutors = new ArrayList<Executor>();
   private ActionManager myActionManager;
-  private Map<String, Executor> myId2Executor = new HashMap<String, Executor>();
-  private Map<String, AnAction> myId2Action = new HashMap<String, AnAction>();
-  private Map<String, AnAction> myContextActionId2Action = new HashMap<String, AnAction>();
+  private final Map<String, Executor> myId2Executor = new HashMap<String, Executor>();
+  private final Map<String, AnAction> myId2Action = new HashMap<String, AnAction>();
+  private final Map<String, AnAction> myContextActionId2Action = new HashMap<String, AnAction>();
 
   public ExecutorRegistryImpl(ActionManager actionManager) {
     myActionManager = actionManager;
@@ -124,7 +124,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   private static class ExecutorAction extends AnAction {
     private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ExecutorRegistryImpl.ExecutorAction");
 
-    private Executor myExecutor;
+    private final Executor myExecutor;
 
     private ExecutorAction(@NotNull final Executor executor) {
       super(executor.getStartActionText(), executor.getActionName(), executor.getIcon());

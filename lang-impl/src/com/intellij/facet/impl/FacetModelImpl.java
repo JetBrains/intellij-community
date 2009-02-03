@@ -21,10 +21,10 @@ import java.util.*;
  */
 public class FacetModelImpl extends FacetModelBase implements ModifiableFacetModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetModelImpl");
-  private List<Facet> myFacets = new ArrayList<Facet>();
-  private Map<Facet, String> myFacet2NewName = new HashMap<Facet, String>();
-  private FacetManagerImpl myManager;
-  private Set<Listener> myListeners = new HashSet<Listener>();
+  private final List<Facet> myFacets = new ArrayList<Facet>();
+  private final Map<Facet, String> myFacet2NewName = new HashMap<Facet, String>();
+  private final FacetManagerImpl myManager;
+  private final Set<Listener> myListeners = new HashSet<Listener>();
 
   public FacetModelImpl(final FacetManagerImpl manager) {
     myManager = manager;

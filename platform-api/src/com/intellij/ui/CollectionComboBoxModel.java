@@ -7,7 +7,7 @@ import java.util.List;
  * @author yole
 */
 public class CollectionComboBoxModel extends AbstractListModel implements ComboBoxModel {
-  private List myItems;
+  private final List myItems;
   private Object mySelection;
 
   public CollectionComboBoxModel(final List items, final Object selection) {

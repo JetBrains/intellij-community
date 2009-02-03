@@ -8,7 +8,7 @@ import java.util.List;
 
 public class GroupedLogMessage extends AbstractMessage {
 
-  private List<AbstractMessage> myMessages;
+  private final List<AbstractMessage> myMessages;
 
   public GroupedLogMessage(List<AbstractMessage> messages) {
     myMessages = messages;

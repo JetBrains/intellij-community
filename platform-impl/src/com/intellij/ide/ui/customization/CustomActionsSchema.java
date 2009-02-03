@@ -42,13 +42,13 @@ public class CustomActionsSchema implements ExportableApplicationComponent, Name
   @NonNls private static final String ATTRIBUTE_ID = "id";
   @NonNls private static final String ATTRIBUTE_ICON = "icon";
 
-  private Map<String, String> myIconCustomizations = new HashMap<String, String>();
+  private final Map<String, String> myIconCustomizations = new HashMap<String, String>();
 
   private ArrayList<ActionUrl> myActions = new ArrayList<ActionUrl>();
 
-  private HashMap<String , ActionGroup> myIdToActionGroup = new HashMap<String, ActionGroup>();
+  private final HashMap<String , ActionGroup> myIdToActionGroup = new HashMap<String, ActionGroup>();
 
-  private static List<Pair> myIdToNameList = new ArrayList<Pair>();
+  private static final List<Pair> myIdToNameList = new ArrayList<Pair>();
   static {
     myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE));
     myIdToNameList.add(new Pair(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR));

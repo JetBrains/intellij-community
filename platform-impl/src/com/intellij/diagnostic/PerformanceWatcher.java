@@ -28,10 +28,10 @@ public class PerformanceWatcher implements ApplicationComponent {
   private Thread myThread;
   private int myLoopCounter;
   private int mySwingThreadCounter;
-  private Semaphore myShutdownSemaphore = new Semaphore(1);
+  private final Semaphore myShutdownSemaphore = new Semaphore(1);
   private ThreadMXBean myThreadMXBean;
   private Method myDumpAllThreadsMethod;
-  private DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
   //private DateFormat myPrintDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
   private File myLogDir;
   private int myUnresponsiveDuration = 0;
@@ -252,7 +252,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   private class SwingThreadRunnable implements Runnable {
-    private int myCount;
+    private final int myCount;
 
     private SwingThreadRunnable(final int count) {
       myCount = count;

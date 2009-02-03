@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private final Map<Key, UpdatableValueContainer<Value>> myMap = new HashMap<Key,UpdatableValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
-  private AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
+  private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
   private final List<BufferingStateListener> myListeners = new CopyOnWriteArrayList<BufferingStateListener>();
 
   public static interface BufferingStateListener {

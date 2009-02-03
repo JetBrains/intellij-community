@@ -34,7 +34,7 @@ public class EnvVariablesTable extends Observable {
   private final List<EnvironmentVariable> myVariables = new ArrayList<EnvironmentVariable>();
   private final JPanel myPanel = new JPanel(new BorderLayout());
 
-  private ColumnInfo NAME = new ColumnInfo<EnvironmentVariable, String>("Name") {
+  private final ColumnInfo NAME = new ColumnInfo<EnvironmentVariable, String>("Name") {
     public String valueOf(EnvironmentVariable environmentVariable) {
       return environmentVariable.getName();
     }
@@ -56,7 +56,7 @@ public class EnvVariablesTable extends Observable {
     }
   };
 
-  private ColumnInfo VALUE = new ColumnInfo<EnvironmentVariable, String>("Value") {
+  private final ColumnInfo VALUE = new ColumnInfo<EnvironmentVariable, String>("Value") {
     public String valueOf(EnvironmentVariable environmentVariable) {
       return environmentVariable.getValue();
     }

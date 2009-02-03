@@ -26,7 +26,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected int myEditorFontSize;
   protected float myLineSpacing;
 
-  private Map<EditorFontType, Font> myFonts = new EnumMap<EditorFontType, Font>(EditorFontType.class);
+  private final Map<EditorFontType, Font> myFonts = new EnumMap<EditorFontType, Font>(EditorFontType.class);
   private String myEditorFontName;
   private String myFallbackFontName;
   private String mySchemeName;

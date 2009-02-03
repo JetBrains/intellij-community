@@ -63,7 +63,7 @@ public class SdkVersionUtil {
   }
 
   public static class ReadStreamThread implements Runnable {
-    private InputStream myStream;
+    private final InputStream myStream;
 
     protected ReadStreamThread(InputStream stream) {
       myStream = stream;
@@ -84,10 +84,10 @@ public class SdkVersionUtil {
 
   public static class VersionParsingThread implements Runnable {
     private Reader myReader;
-    private InputStream myStream;
+    private final InputStream myStream;
     private boolean mySkipLF = false;
-    private String[] myVersionString;
-    private String myVersionLineMarker;
+    private final String[] myVersionString;
+    private final String myVersionLineMarker;
 
     protected VersionParsingThread(InputStream input, String[] versionString, String versionLineMarker) {
       myStream = input;

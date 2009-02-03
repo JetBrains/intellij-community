@@ -8,7 +8,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class RemoveMiddlemanUsageViewDescriptor implements UsageViewDescriptor {
-  private @NotNull PsiField field;
+  private @NotNull final PsiField field;
 
   RemoveMiddlemanUsageViewDescriptor(@NotNull PsiField field) {
     super();

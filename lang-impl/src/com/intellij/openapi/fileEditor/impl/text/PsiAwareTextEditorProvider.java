@@ -106,7 +106,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   }
 
   private final class PsiAwareEditorWrapper extends EditorWrapper {
-    private TextEditorBackgroundHighlighter myBackgroundHighlighter;
+    private final TextEditorBackgroundHighlighter myBackgroundHighlighter;
 
     private PsiAwareEditorWrapper(final Editor editor) {
       super(editor);

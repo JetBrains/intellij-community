@@ -61,9 +61,9 @@ public abstract class EditorComposite implements Disposable {
   private FileEditor mySelectedEditor;
   private final FileEditorManagerEx myFileEditorManager;
   private final long myInitialFileModificationStamp;
-  private Map<FileEditor, FileEditorInfoPane> myInfoPanes = new HashMap<FileEditor, FileEditorInfoPane>();
-  private Map<FileEditor, JComponent> myTopComponents = new HashMap<FileEditor, JComponent>();
-  private Map<FileEditor, JComponent> myBottomComponents = new HashMap<FileEditor, JComponent>();
+  private final Map<FileEditor, FileEditorInfoPane> myInfoPanes = new HashMap<FileEditor, FileEditorInfoPane>();
+  private final Map<FileEditor, JComponent> myTopComponents = new HashMap<FileEditor, JComponent>();
+  private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<FileEditor, JComponent>();
 
   /**
    * @param file <code>file</code> for which composite is being constructed

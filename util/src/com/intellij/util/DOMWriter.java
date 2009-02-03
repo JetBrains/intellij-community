@@ -23,8 +23,8 @@ import org.w3c.dom.*;
 import java.io.PrintWriter;
 
 class DOMWriter {
-  private PrintWriter myOut;
-  private boolean myCanonical;
+  private final PrintWriter myOut;
+  private final boolean myCanonical;
   @NonNls private static final String XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
   @NonNls private static final String DOCTYPE = "<!DOCTYPE ";
   @NonNls private static final String PUBLIC = " PUBLIC '";

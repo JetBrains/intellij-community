@@ -35,9 +35,9 @@ import java.util.Map;
  * @author nik
  */
 public class FacetPointersManagerImpl extends FacetPointersManager implements ProjectComponent {
-  private Project myProject;
-  private Map<String, FacetPointerImpl> myPointers = new HashMap<String, FacetPointerImpl>();
-  private Map<Class<? extends Facet>, EventDispatcher<FacetPointerListener>> myDispatchers =
+  private final Project myProject;
+  private final Map<String, FacetPointerImpl> myPointers = new HashMap<String, FacetPointerImpl>();
+  private final Map<Class<? extends Facet>, EventDispatcher<FacetPointerListener>> myDispatchers =
     new HashMap<Class<? extends Facet>, EventDispatcher<FacetPointerListener>>();
 
   public FacetPointersManagerImpl(final Project project) {
@@ -174,7 +174,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
 
   private class MyModuleListener extends ModuleAdapter {
     private final FacetManagerListener myFacetListener;
-    private Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
+    private final Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
 
     public MyModuleListener(final FacetManagerListener facetListener) {
       myFacetListener = facetListener;

@@ -26,7 +26,7 @@ public class PathMacroEditor extends DialogWrapper {
   private JTextPane myDescriptionPane;
   private final Validator myValidator;
   private final DocumentListener myDocumentListener;
-  private String myExistingDescription;
+  private final String myExistingDescription;
 
   public interface Validator {
     boolean checkName(String name);

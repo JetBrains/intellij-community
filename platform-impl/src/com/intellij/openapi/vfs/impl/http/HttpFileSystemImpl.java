@@ -17,9 +17,9 @@ import java.util.List;
  * @author nik
  */
 public class HttpFileSystemImpl extends HttpFileSystem {
-  private RemoteFileManager myRemoteFileManager;
-  private EventDispatcher<HttpVirtualFileListener> myDispatcher = EventDispatcher.create(HttpVirtualFileListener.class);
-  private List<RemoteContentProvider> myProviders = new ArrayList<RemoteContentProvider>();
+  private final RemoteFileManager myRemoteFileManager;
+  private final EventDispatcher<HttpVirtualFileListener> myDispatcher = EventDispatcher.create(HttpVirtualFileListener.class);
+  private final List<RemoteContentProvider> myProviders = new ArrayList<RemoteContentProvider>();
   private final DefaultRemoteContentProvider myDefaultRemoteContentProvider;
 
   public HttpFileSystemImpl() {

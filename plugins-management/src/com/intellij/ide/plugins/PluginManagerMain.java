@@ -74,19 +74,19 @@ public class PluginManagerMain {
   private JLabel mySynchStatus;
   private JPanel myTablePanel;
   private JButton myReloadButton;
-  private TabbedPaneWrapper myTabbedPane;
+  private final TabbedPaneWrapper myTabbedPane;
 
   private DefaultActionGroup actionGroup;
 
-  private InstalledPluginsTableModel installedPluginsModel;
-  private PluginTable installedPluginTable;
+  private final InstalledPluginsTableModel installedPluginsModel;
+  private final PluginTable installedPluginTable;
 
-  private AvailablePluginsTableModel availablePluginsModel;
-  private PluginTable availablePluginsTable;
+  private final AvailablePluginsTableModel availablePluginsModel;
+  private final PluginTable availablePluginsTable;
   private ArrayList<IdeaPluginDescriptor> pluginsList;
-  private ActionToolbar myActionToolbar;
+  private final ActionToolbar myActionToolbar;
 
-  private MyPluginsFilter myFilter = new MyPluginsFilter();
+  private final MyPluginsFilter myFilter = new MyPluginsFilter();
 
   public PluginManagerMain(final SortableProvider installedProvider, final SortableProvider availableProvider) {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
@@ -583,8 +583,8 @@ public class PluginManagerMain {
   }
 
   private class MyPluginsFilter extends FilterComponent {
-    private List<IdeaPluginDescriptor> myFilteredInstalled = new ArrayList<IdeaPluginDescriptor>();
-    private List<IdeaPluginDescriptor> myFilteredAvailable = new ArrayList<IdeaPluginDescriptor>();
+    private final List<IdeaPluginDescriptor> myFilteredInstalled = new ArrayList<IdeaPluginDescriptor>();
+    private final List<IdeaPluginDescriptor> myFilteredAvailable = new ArrayList<IdeaPluginDescriptor>();
 
     public MyPluginsFilter() {
       super("PLUGIN_FILTER", 5);

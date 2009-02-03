@@ -18,9 +18,9 @@ import java.util.Enumeration;
  * @author Eugene Belyaev
  */
 public class TreeList extends JList implements TreeModelListener {
-  private TreeModel myTreeModel;
+  private final TreeModel myTreeModel;
   private boolean myRootVisible = false;
-  private DefaultListModel myListModel = new DefaultListModel();
+  private final DefaultListModel myListModel = new DefaultListModel();
 
   /**
    * Constructs a <code>JList</code> with an empty model.

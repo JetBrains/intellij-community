@@ -101,7 +101,7 @@ public abstract class TabbedContentAction extends AnAction {
   }
 
   public static class MyPinTabAction extends ToggleAction {
-    private Content myContent;
+    private final Content myContent;
 
     public MyPinTabAction(Content content) {
       myContent = content;

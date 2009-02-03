@@ -24,7 +24,7 @@ import javax.swing.*;
  * @author yole
 */
 public class DefaultTreeExpander implements TreeExpander {
-  private JTree myTree;
+  private final JTree myTree;
 
   public DefaultTreeExpander(final JTree tree) {
     myTree = tree;

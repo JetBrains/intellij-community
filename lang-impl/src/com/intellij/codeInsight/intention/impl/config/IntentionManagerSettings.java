@@ -39,8 +39,8 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
 
   private class MetaDataKey {
-    @NotNull private String categoryNames;
-    @NotNull private String familyName;
+    @NotNull private final String categoryNames;
+    @NotNull private final String familyName;
 
     private MetaDataKey(@NotNull String[] categoryNames, @NotNull final String familyName) {
       this.categoryNames = StringUtil.join(categoryNames, ":");

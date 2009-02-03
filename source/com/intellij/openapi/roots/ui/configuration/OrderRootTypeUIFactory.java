@@ -22,10 +22,10 @@ public interface OrderRootTypeUIFactory {
   PathEditor createPathEditor();
 
   class MyPathsEditor extends PathEditor {
-    private boolean myShowUrl;
-    private OrderRootType myOrderRootType;
-    private FileChooserDescriptor myDescriptor;
-    private String myDisplayName;
+    private final boolean myShowUrl;
+    private final OrderRootType myOrderRootType;
+    private final FileChooserDescriptor myDescriptor;
+    private final String myDisplayName;
 
     public MyPathsEditor(final String displayName, final OrderRootType orderRootType, final FileChooserDescriptor descriptor, final boolean showUrl) {
       myShowUrl = showUrl;

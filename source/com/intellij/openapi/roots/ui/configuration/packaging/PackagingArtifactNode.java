@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class PackagingArtifactNode extends PackagingTreeNode {
-  private PackagingArtifact myArtifact;
+  private final PackagingArtifact myArtifact;
 
   PackagingArtifactNode(final PackagingArtifact artifact, PackagingArtifact owner) {
     super(owner);

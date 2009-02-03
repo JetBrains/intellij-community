@@ -8,9 +8,9 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorActionManagerImpl extends EditorActionManager {
-  private TypedAction myTypedAction = new TypedAction();
+  private final TypedAction myTypedAction = new TypedAction();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
-  private ActionManager myActionManager;
+  private final ActionManager myActionManager;
 
   public EditorActionManagerImpl(ActionManager actionManager) {
     myActionManager = actionManager;

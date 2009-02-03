@@ -54,10 +54,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
 
-  private NamedScopesHolder myLocalScopesManager;
-  private NamedScopesHolder mySharedScopesManager;
+  private final NamedScopesHolder myLocalScopesManager;
+  private final NamedScopesHolder mySharedScopesManager;
 
-  private Project myProject;
+  private final Project myProject;
 
   public static ScopeChooserConfigurable getInstance(Project project) {
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ScopeChooserConfigurable.class);
@@ -312,7 +312,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection {
 
     private AnAction[] myChildren;
-    private boolean myFromPopup;
+    private final boolean myFromPopup;
 
     public MyAddAction(boolean fromPopup) {
       super(IdeBundle.message("add.scope.popup.title"), true);
@@ -380,7 +380,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
 
   private class MyMoveAction extends AnAction {
-    private int myDirection;
+    private final int myDirection;
 
     protected MyMoveAction(String text, Icon icon, int direction) {
       super(text, text, icon);

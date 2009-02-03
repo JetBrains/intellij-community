@@ -13,7 +13,7 @@ public final class TimedDeadzone {
 
   private boolean myWithin;
 
-  private Runnable myClear = new Runnable() {
+  private final Runnable myClear = new Runnable() {
     public void run() {
       clear();
     }
@@ -64,7 +64,7 @@ public final class TimedDeadzone {
 
   public static class Length {
 
-    private int myLength;
+    private final int myLength;
 
     public Length(int length) {
       myLength = length;

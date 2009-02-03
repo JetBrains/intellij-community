@@ -17,14 +17,14 @@ import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher, Painter.Listener {
 
-  private Set<EventListener> myMouseListeners = new LinkedHashSet<EventListener>();
-  private JRootPane myRootPane;
+  private final Set<EventListener> myMouseListeners = new LinkedHashSet<EventListener>();
+  private final JRootPane myRootPane;
 
-  private WeakReference<Component> myCurrentOverComponent = new WeakReference<Component>(null);
-  private WeakReference<Component> myMousePressedComponent = new WeakReference<Component>(null);
+  private final WeakReference<Component> myCurrentOverComponent = new WeakReference<Component>(null);
+  private final WeakReference<Component> myMousePressedComponent = new WeakReference<Component>(null);
 
-  private Set<Painter> myPainters = new LinkedHashSet<Painter>();
-  private Map<Painter, Component> myPainter2Component = new LinkedHashMap<Painter, Component>();
+  private final Set<Painter> myPainters = new LinkedHashSet<Painter>();
+  private final Map<Painter, Component> myPainter2Component = new LinkedHashMap<Painter, Component>();
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;

@@ -15,8 +15,8 @@ public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProce
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.reformatting.code");
   private static final String COMMAND_NAME = CodeInsightBundle.message("process.reformat.code");
 
-  private OptimizeImportsProcessor myOptimizeImportsProcessor;
-  private ReformatCodeProcessor myReformatCodeProcessor;
+  private final OptimizeImportsProcessor myOptimizeImportsProcessor;
+  private final ReformatCodeProcessor myReformatCodeProcessor;
 
   public ReformatAndOptimizeImportsProcessor(Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT);

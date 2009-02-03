@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 class WrapReturnValueUsageViewDescriptor implements UsageViewDescriptor {
 
     @NotNull
-    private PsiMethod method;
+    private final PsiMethod method;
 
     WrapReturnValueUsageViewDescriptor(@NotNull PsiMethod method,
                                        UsageInfo[] usages){

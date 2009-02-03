@@ -11,11 +11,11 @@ import java.awt.print.PrinterException;
 import java.util.ArrayList;
 
 class MultiFilePainter implements Printable{
-  private ArrayList myFilesList;
+  private final ArrayList myFilesList;
   private int myFileIndex = 0;
   private int myStartPageIndex = 0;
   private Printable myTextPainter = null;
-  private Project myProject;
+  private final Project myProject;
   private ProgressIndicator myProgress;
 
   public MultiFilePainter(ArrayList filesList, Project project) {

@@ -29,7 +29,7 @@ public class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
   private final Convertor<Src, Dst> mySrcToDstConvertor;
   private final SettingsEditor<Dst> myWrapped;
 
-  private SettingsEditorListener<Dst> myListener;
+  private final SettingsEditorListener<Dst> myListener;
 
   public SettingsEditorWrapper(SettingsEditor<Dst> wrapped, Convertor<Src, Dst> convertor) {
     mySrcToDstConvertor = convertor;

@@ -35,13 +35,13 @@ public class DnDEnabler implements Activatable, Disposable {
 
   @NonNls public static final String KEY = "DragAndDropMultipleSelectionEnabler";
 
-  private AWTEventListener myAwtListener = new MyAwtListener();
+  private final AWTEventListener myAwtListener = new MyAwtListener();
   private List<EventListener> myMouseListeners;
   //private List<MouseListener> myMousePreprocessors = new ArrayList<MouseListener>();
-  private DnDAware myDnDSource;
+  private final DnDAware myDnDSource;
   private MouseListener myOriginalDragGestureRecognizer;
 
-  private PropertyChangeListener myPropertyChangeListener = new PropertyChangeListener() {
+  private final PropertyChangeListener myPropertyChangeListener = new PropertyChangeListener() {
     public void propertyChange(PropertyChangeEvent evt) {
       if ("UI".equals(evt.getPropertyName())) {
         // todo[spleaner]: does default listeners are recreated onSetUI() and what 'bout custom listeners??

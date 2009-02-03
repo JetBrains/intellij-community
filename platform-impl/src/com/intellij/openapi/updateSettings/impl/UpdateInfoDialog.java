@@ -20,7 +20,7 @@ import java.util.List;
 
 class UpdateInfoDialog extends AbstractUpdateDialog {
   private UpdateInfoPanel myUpdateInfoPanel;
-  private UpdateChecker.NewVersion myNewVersion;
+  private final UpdateChecker.NewVersion myNewVersion;
 
   protected UpdateInfoDialog(final boolean canBeParent,
                              UpdateChecker.NewVersion newVersion,

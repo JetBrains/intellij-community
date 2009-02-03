@@ -42,7 +42,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.IdeErrorsDialog");
   private JTextPane myDetailsPane;
   private List<AbstractMessage> myFatalErrors;
-  private List<ArrayList<AbstractMessage>> myModel = new ArrayList<ArrayList<AbstractMessage>>();
+  private final List<ArrayList<AbstractMessage>> myModel = new ArrayList<ArrayList<AbstractMessage>>();
   private final MessagePool myMessagePool;
   private JLabel myCountLabel;
   private JLabel myBlameLabel;

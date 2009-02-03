@@ -20,10 +20,10 @@ import java.util.Arrays;
  * @author nik
  */
 public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements CacheUpdater, VirtualFileManagerListener, Disposable {
-  private AbstractFileIndex myFileIndex;
-  private VirtualFileManagerEx myVirtualFileManager;
-  private Set<VirtualFile> myChangedFiles = new HashSet<VirtualFile>();
-  private Set<VirtualFile> myRemovedFiles = new HashSet<VirtualFile>();
+  private final AbstractFileIndex myFileIndex;
+  private final VirtualFileManagerEx myVirtualFileManager;
+  private final Set<VirtualFile> myChangedFiles = new HashSet<VirtualFile>();
+  private final Set<VirtualFile> myRemovedFiles = new HashSet<VirtualFile>();
 
   public FileIndexRefreshCacheUpdater(final AbstractFileIndex fileIndex) {
     myFileIndex = fileIndex;

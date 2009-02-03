@@ -34,7 +34,7 @@ import java.util.Collections;
 public class AddToFavoritesAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction");
 
-  private String myFavoritesListName;
+  private final String myFavoritesListName;
 
   public AddToFavoritesAction(String choosenList) {
     super(choosenList.replaceAll("_", "__"));

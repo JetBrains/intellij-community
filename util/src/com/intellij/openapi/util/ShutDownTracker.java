@@ -23,8 +23,8 @@ import java.util.List;
 public class ShutDownTracker implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.ShutDownTracker");
   private static ShutDownTracker ourInstance;
-  private List<Thread> myThreads = new ArrayList<Thread>();
-  private List<Thread> myShutdownTreads = new ArrayList<Thread>();
+  private final List<Thread> myThreads = new ArrayList<Thread>();
+  private final List<Thread> myShutdownTreads = new ArrayList<Thread>();
 
   private ShutDownTracker() {
     //noinspection HardCodedStringLiteral

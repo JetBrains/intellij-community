@@ -27,12 +27,12 @@ import java.util.Set;
 public class KeyboardShortcutDialog extends DialogWrapper {
   private StrokePanel myFirstStrokePanel;
   private StrokePanel mySecondStrokePanel;
-  private JCheckBox myEnableSecondKeystroke;
-  private JLabel myKeystrokePreview;
-  private JTextArea myConflictInfoArea;
+  private final JCheckBox myEnableSecondKeystroke;
+  private final JLabel myKeystrokePreview;
+  private final JTextArea myConflictInfoArea;
   private Keymap myKeymap;
-  private String myActionId;
-  private Group myMainGroup;
+  private final String myActionId;
+  private final Group myMainGroup;
 
   public KeyboardShortcutDialog(Component component, String actionId, final QuickList[] quickLists) {
     super(component, true);

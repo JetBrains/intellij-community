@@ -14,8 +14,8 @@ import com.intellij.util.ReflectionCache;
  */
 public class GeneratorFilter implements ElementFilter{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.filters.GeneratorFilter");
-  private ContextGetter myGetter;
-  private Class myFilterClass;
+  private final ContextGetter myGetter;
+  private final Class myFilterClass;
 
   public GeneratorFilter(Class filterClass, ContextGetter getter){
     myFilterClass = filterClass;

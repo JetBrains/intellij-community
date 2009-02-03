@@ -332,7 +332,7 @@ public class IncrementalSearchHandler {
   }
 
   private static class MyPanel extends JPanel{
-    private Component myLeft;
+    private final Component myLeft;
 
     public MyPanel(Component left) {
       super(new BorderLayout());
@@ -351,7 +351,7 @@ public class IncrementalSearchHandler {
   }
 
   public static class MyTypedHandler implements TypedActionHandler {
-    private TypedActionHandler myOriginalHandler;
+    private final TypedActionHandler myOriginalHandler;
 
     public MyTypedHandler(TypedActionHandler originalAction) {
       myOriginalHandler = originalAction;
@@ -380,7 +380,7 @@ public class IncrementalSearchHandler {
   }
 
   public static class BackSpaceHandler extends EditorActionHandler{
-    private EditorActionHandler myOriginalHandler;
+    private final EditorActionHandler myOriginalHandler;
 
     public BackSpaceHandler(EditorActionHandler originalAction) {
       myOriginalHandler = originalAction;
@@ -405,7 +405,7 @@ public class IncrementalSearchHandler {
   }
 
   public static class UpHandler extends EditorActionHandler {
-    private EditorActionHandler myOriginalHandler;
+    private final EditorActionHandler myOriginalHandler;
 
     public UpHandler(EditorActionHandler originalHandler) {
       myOriginalHandler = originalHandler;
@@ -436,7 +436,7 @@ public class IncrementalSearchHandler {
   }
 
   public static class DownHandler extends EditorActionHandler {
-    private EditorActionHandler myOriginalHandler;
+    private final EditorActionHandler myOriginalHandler;
 
     public DownHandler(EditorActionHandler originalHandler) {
       myOriginalHandler = originalHandler;

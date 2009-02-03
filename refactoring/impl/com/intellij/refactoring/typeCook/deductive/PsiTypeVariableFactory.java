@@ -20,8 +20,8 @@ import java.util.LinkedList;
  */
 public class PsiTypeVariableFactory {
   private int myCurrent = 0;
-  private LinkedList<HashSet<PsiTypeVariable>> myClusters = new LinkedList<HashSet<PsiTypeVariable>>();
-  private HashMap<Integer, HashSet<PsiTypeVariable>> myVarCluster = new HashMap<Integer, HashSet<PsiTypeVariable>>();
+  private final LinkedList<HashSet<PsiTypeVariable>> myClusters = new LinkedList<HashSet<PsiTypeVariable>>();
+  private final HashMap<Integer, HashSet<PsiTypeVariable>> myVarCluster = new HashMap<Integer, HashSet<PsiTypeVariable>>();
 
   public final int getNumber() {
     return myCurrent;
@@ -49,7 +49,7 @@ public class PsiTypeVariableFactory {
 
   public final PsiTypeVariable create(final PsiElement context) {
     return new PsiTypeVariable() {
-      private int myIndex = myCurrent++;
+      private final int myIndex = myCurrent++;
       private final PsiElement myContext = context;
 
       public boolean isValidInContext(final PsiType type) {

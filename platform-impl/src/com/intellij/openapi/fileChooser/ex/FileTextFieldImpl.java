@@ -238,7 +238,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   private class Separator {
-    private String myText;
+    private final String myText;
 
     private Separator(final String text) {
       myText = text;

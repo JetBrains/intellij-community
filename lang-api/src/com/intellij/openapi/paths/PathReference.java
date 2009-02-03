@@ -80,7 +80,7 @@ public class PathReference {
   }
 
   public static final class ConstFunction implements Function<PathReference, Icon> {
-    private Icon myValue;
+    private final Icon myValue;
     public ConstFunction(final Icon value) {
       myValue = value;
     }

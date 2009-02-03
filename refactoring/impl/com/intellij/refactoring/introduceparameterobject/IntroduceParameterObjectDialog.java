@@ -29,8 +29,8 @@ import java.util.List;
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
-  private PsiMethod sourceMethod;
-  private ParameterTablePanel.VariableData[] parameterInfo;
+  private final PsiMethod sourceMethod;
+  private final ParameterTablePanel.VariableData[] parameterInfo;
   private JTextField sourceMethodTextField;
 
   private JRadioButton useExistingClassButton;

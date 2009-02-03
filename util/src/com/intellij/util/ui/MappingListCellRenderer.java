@@ -31,7 +31,7 @@ import java.awt.*;
  * To change this template use File | Settings | File Templates.
  */
 public class MappingListCellRenderer extends DefaultListCellRenderer {
-  private Map<Object,String> myValueMap;
+  private final Map<Object,String> myValueMap;
 
   public MappingListCellRenderer(final Map<Object, String> valueMap) {
     myValueMap = valueMap;

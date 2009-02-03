@@ -24,7 +24,7 @@ import java.util.*;
  */
 public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   private static final Key<CompletionState> KEY_STATE = new Key<CompletionState>("HIPPIE_COMPLETION_STATE");
-  private Direction myDirection;
+  private final Direction myDirection;
 
   public HippieWordCompletionHandler(final Direction direction) {
     myDirection = direction;

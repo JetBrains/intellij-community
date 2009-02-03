@@ -65,8 +65,8 @@ public abstract class SchemesToImportPopup<T extends Scheme, E extends Externali
   }
 
   private static class SchemesToImportListCellRenderer implements ListCellRenderer {
-    private JPanel myPanel = new JPanel(new BorderLayout());
-    private JLabel myNameLabel = new JLabel("", JLabel.LEFT);
+    private final JPanel myPanel = new JPanel(new BorderLayout());
+    private final JLabel myNameLabel = new JLabel("", JLabel.LEFT);
 
     public SchemesToImportListCellRenderer() {
       myPanel.add(myNameLabel, BorderLayout.CENTER);

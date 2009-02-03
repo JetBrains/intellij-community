@@ -17,7 +17,7 @@ public class CodeStyleSchemesModel {
 
   private final List<CodeStyleScheme> mySchemes = new ArrayList<CodeStyleScheme>();
   private CodeStyleScheme myGlobalSelected;
-  private CodeStyleSchemeImpl myProjectScheme;
+  private final CodeStyleSchemeImpl myProjectScheme;
   private final CodeStyleScheme myDefault;
   private final Map<CodeStyleScheme, CodeStyleSettings> mySettingsToClone = new HashMap<CodeStyleScheme, CodeStyleSettings>();
 

@@ -18,8 +18,8 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.psi.PsiFile;
 
 public class IntersectionPackageSet implements PackageSet {
-  private PackageSet myFirstSet;
-  private PackageSet mySecondSet;
+  private final PackageSet myFirstSet;
+  private final PackageSet mySecondSet;
 
   public IntersectionPackageSet(PackageSet firstSet, PackageSet secondSet) {
     myFirstSet = firstSet;

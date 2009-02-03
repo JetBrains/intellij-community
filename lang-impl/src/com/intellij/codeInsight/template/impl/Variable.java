@@ -3,7 +3,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.template.Expression;
 
 public class Variable implements Cloneable {
-  private String myName;
+  private final String myName;
   private boolean myAlwaysStopAt;
 
   private String myExpressionString;

@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NonNls;
  * @author cdr
  */
 public class ProblemImpl implements Problem {
-  private VirtualFile virtualFile;
-  private HighlightInfo highlightInfo;
-  private boolean isSyntax;
+  private final VirtualFile virtualFile;
+  private final HighlightInfo highlightInfo;
+  private final boolean isSyntax;
 
   public ProblemImpl(final VirtualFile virtualFile, final HighlightInfo highlightInfo, final boolean isSyntax) {
     this.isSyntax = isSyntax;

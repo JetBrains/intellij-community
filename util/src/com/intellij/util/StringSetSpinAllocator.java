@@ -36,7 +36,7 @@ public class StringSetSpinAllocator {
     }
   }
 
-  private static SpinAllocator<Set<String>> myAllocator =
+  private static final SpinAllocator<Set<String>> myAllocator =
     new SpinAllocator<Set<String>>(new Creator(), new Disposer());
 
   public static Set<String> alloc() {

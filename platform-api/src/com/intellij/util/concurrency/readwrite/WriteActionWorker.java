@@ -56,7 +56,7 @@ public abstract class WriteActionWorker extends ActiveRunnableWrapper {
 
   private static class CommandWrapper extends ActiveRunnableWrapper {
 
-    private ActiveRunnable myWriteActionRunnable;
+    private final ActiveRunnable myWriteActionRunnable;
 
     public CommandWrapper(ActiveRunnable aWriteActionRunnable) {
       myWriteActionRunnable = aWriteActionRunnable;

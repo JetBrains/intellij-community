@@ -11,7 +11,7 @@ import java.awt.*;
  */
 public class LabeledIcon implements Icon {
   private final Icon myIcon;
-  private String myMnemonic;
+  private final String myMnemonic;
   private final String[] myStrings;
   private int myIconTextGap = 0;
 

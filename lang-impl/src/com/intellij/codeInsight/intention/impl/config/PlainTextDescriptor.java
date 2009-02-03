@@ -6,8 +6,8 @@ import java.io.IOException;
  * @author yole
  */
 public class PlainTextDescriptor implements TextDescriptor {
-  private String myText;
-  private String myFileName;
+  private final String myText;
+  private final String myFileName;
 
   public PlainTextDescriptor(final String text, final String fileName) {
     myText = text;

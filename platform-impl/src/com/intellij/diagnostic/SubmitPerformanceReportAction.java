@@ -29,7 +29,7 @@ import java.util.zip.ZipOutputStream;
  * @author yole
  */
 public class SubmitPerformanceReportAction extends AnAction {
-  private DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
   public void actionPerformed(final AnActionEvent e) {
     String reportFileName = "perf_" + ApplicationInfo.getInstance().getBuildNumber() + "_" +

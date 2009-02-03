@@ -26,7 +26,7 @@ public class CodeStyleImportsPanel extends JPanel {
   private JCheckBox myCbAddUnambiguousImportsOnTheFly;
   private JTextField myClassCountField;
   private JTextField myNamesCountField;
-  private CodeStyleSettings.ImportLayoutTable myImportLayoutList = new CodeStyleSettings.ImportLayoutTable();
+  private final CodeStyleSettings.ImportLayoutTable myImportLayoutList = new CodeStyleSettings.ImportLayoutTable();
   private CodeStyleSettings.PackageTable myPackageList = new CodeStyleSettings.PackageTable();
   private CodeStyleSettings.ImportLayoutTable.PackageEntry myOtherPackageEntry = null;
 
@@ -36,7 +36,7 @@ public class CodeStyleImportsPanel extends JPanel {
   private JButton myRemovePackageFromImportLayoutButton;
   private JButton myRemovePackageFromPackagesButton;
   private Table myPackageTable;
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
   private JRadioButton myJspImportCommaSeparated;
   private JRadioButton myJspOneImportPerDirective;
 

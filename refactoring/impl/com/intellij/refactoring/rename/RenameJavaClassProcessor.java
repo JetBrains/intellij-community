@@ -143,7 +143,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   private static class ClassCollisionsDetector {
     final HashSet<PsiFile> myProcessedFiles = new HashSet<PsiFile>();
     final PsiClass myRenamedClass;
-    private String myRenamedClassQualifiedName;
+    private final String myRenamedClassQualifiedName;
 
     public ClassCollisionsDetector(PsiClass renamedClass) {
       myRenamedClass = renamedClass;

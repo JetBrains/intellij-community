@@ -20,7 +20,7 @@
 package com.intellij.util.containers;
 
 public class LimitedPool<T> {
-  private int capacity;
+  private final int capacity;
   private final ObjectFactory<T> factory;
   private Object[] storage;
   private int index = 0;

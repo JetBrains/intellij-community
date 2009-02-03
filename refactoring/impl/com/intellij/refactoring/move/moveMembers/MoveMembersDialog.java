@@ -43,10 +43,10 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   @NonNls private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
   private MyMemberInfoModel myMemberInfoModel;
 
-  private Project myProject;
-  private PsiClass mySourceClass;
-  private String mySourceClassName;
-  private MemberInfo[] myMemberInfos;
+  private final Project myProject;
+  private final PsiClass mySourceClass;
+  private final String mySourceClassName;
+  private final MemberInfo[] myMemberInfos;
   private final ReferenceEditorComboWithBrowseButton myTfTargetClassName;
   private MemberSelectionTable myTable;
   private final MoveCallback myMoveCallback;

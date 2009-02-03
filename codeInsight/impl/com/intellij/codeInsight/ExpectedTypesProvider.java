@@ -183,7 +183,7 @@ public class ExpectedTypesProvider {
 
   private class MyParentVisitor extends JavaElementVisitor {
     private PsiExpression myExpr;
-    private boolean myForCompletion;
+    private final boolean myForCompletion;
     private final ExpectedClassProvider myClassProvider;
     private ExpectedTypeInfo[] myResult = ExpectedTypeInfo.EMPTY_ARRAY;
     @NonNls private static final String LENGTH_SYNTHETIC_ARRAY_FIELD = "length";

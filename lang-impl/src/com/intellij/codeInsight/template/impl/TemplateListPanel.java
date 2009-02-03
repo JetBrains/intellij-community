@@ -38,7 +38,7 @@ class TemplateListPanel extends JPanel {
   private JButton myExportButton;
   private JButton myImportButton;
   private Editor myEditor;
-  private List<TemplateGroup> myTemplateGroups = new ArrayList<TemplateGroup>();
+  private final List<TemplateGroup> myTemplateGroups = new ArrayList<TemplateGroup>();
   private JComboBox myExpandByCombo;
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
@@ -46,7 +46,7 @@ class TemplateListPanel extends JPanel {
 
   private CheckedTreeNode myTreeRoot = new CheckedTreeNode(null);
 
-  private Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm = new Alarm();
   private boolean myUpdateNeeded = false;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateListPanel");
@@ -900,18 +900,20 @@ class TemplateListPanel extends JPanel {
   }
 
   private static class TemplateKey implements Comparable {
-    private String myKey;
-    private String myGroupName;
+    private final String myKey;
+    private final String myGroupName;
 
     public TemplateKey(TemplateImpl template) {
-      myKey = template.getKey();
-      if (myKey == null) {
-        myKey = "";
+      String key = template.getKey();
+      if (key == null) {
+        key = "";
       }
-      myGroupName = template.getGroupName();
-      if (myGroupName == null) {
-        myGroupName = "";
+      myKey = key;
+      String groupName = template.getGroupName();
+      if (groupName == null) {
+        groupName = "";
       }
+      myGroupName =groupName;
     }
 
     public boolean equals(Object obj) {

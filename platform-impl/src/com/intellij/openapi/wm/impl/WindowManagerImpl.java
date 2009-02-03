@@ -78,14 +78,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   /**
    * Union of bounds of all available default screen devices.
    */
-  private Rectangle myScreenBounds;
+  private final Rectangle myScreenBounds;
 
   private final CommandProcessor myCommandProcessor;
   private final WindowWatcher myWindowWatcher;
   /**
    * That is the default layout.
    */
-  private DesktopLayout myLayout;
+  private final DesktopLayout myLayout;
 
   private final HashMap<Project, IdeFrameImpl> myProject2Frame;
 
@@ -97,7 +97,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
    */
   private Rectangle myFrameBounds;
   private int myFrameExtendedState;
-  private WindowAdapter myActivationListener;
+  private final WindowAdapter myActivationListener;
   private final ApplicationInfoEx myApplicationInfoEx;
   private final DataManager myDataManager;
   private final ActionManager myActionManager;
@@ -140,14 +140,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
     // Calculate screen bounds.
 
-    myScreenBounds = new Rectangle();
+    Rectangle screenBounds = new Rectangle();
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
       final GraphicsDevice[] devices = env.getScreenDevices();
       for (final GraphicsDevice device : devices) {
-        myScreenBounds = myScreenBounds.union(device.getDefaultConfiguration().getBounds());
+        screenBounds = screenBounds.union(device.getDefaultConfiguration().getBounds());
       }
     }
+    myScreenBounds = screenBounds;
 
     myActivationListener = new WindowAdapter() {
       public void windowActivated(WindowEvent e) {

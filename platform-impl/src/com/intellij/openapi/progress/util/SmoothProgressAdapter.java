@@ -12,10 +12,10 @@ import javax.swing.*;
 public class SmoothProgressAdapter extends BlockingProgressIndicator {
   private static final int SHOW_DELAY = 500;
 
-  private Alarm myStartupAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myStartupAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   protected ProgressIndicator myOriginal;
-  private Project myProject;
+  private final Project myProject;
 
   private boolean myOriginalStarted;
 

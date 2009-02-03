@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class HTMLExportFrameMaker {
   private final String myRootFolder;
-  private Project myProject;
+  private final Project myProject;
   private final ArrayList myInspectionTools;
 
   public HTMLExportFrameMaker(String rootFolder, Project project) {

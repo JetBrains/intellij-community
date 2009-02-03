@@ -13,8 +13,8 @@ import javax.swing.*;
 public class FileNodeDescriptor extends NodeDescriptor {
 
   private FileElement myFileElement;
-  private Icon myOriginalOpenIcon;
-  private Icon myOriginalClosedIcon;
+  private final Icon myOriginalOpenIcon;
+  private final Icon myOriginalClosedIcon;
   private final String myComment;
 
   public FileNodeDescriptor(Project project,

@@ -9,7 +9,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 
 public class ViewerNodeDescriptor extends NodeDescriptor {
-  private Object myElement;
+  private final Object myElement;
 
   public ViewerNodeDescriptor(Project project, Object element, NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);

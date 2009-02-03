@@ -9,7 +9,7 @@ import java.awt.*;
 
 public class ComponentContentUI implements ContentUI {
   private ContentManager myManager;
-  private JPanel myPanel;
+  private final JPanel myPanel;
 
   public ComponentContentUI() {
     myPanel = new MyPanel();

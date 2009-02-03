@@ -24,9 +24,9 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 
 public class VFileCopyEvent extends VFileEvent {
-  private VirtualFile myFile;
-  private VirtualFile myNewParent;
-  private String myNewChildName;
+  private final VirtualFile myFile;
+  private final VirtualFile myNewParent;
+  private final String myNewChildName;
 
   public VFileCopyEvent(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String newChildName) {
     super(requestor, false);

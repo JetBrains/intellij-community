@@ -12,15 +12,15 @@ import java.util.Set;
  * @author yole
  */
 public class ThreadState {
-  private String myName;
+  private final String myName;
   private final String myState;
   private String myStackTrace;
   private boolean myEmptyStackTrace;
   private String myJavaThreadState;
   private String myThreadStateDetail;
   private String myExtraState;
-  private List<ThreadState> myThreadsWaitingForMyLock = new ArrayList<ThreadState>();
-  private Set<ThreadState> myDeadlockedThreads = new HashSet<ThreadState>();
+  private final List<ThreadState> myThreadsWaitingForMyLock = new ArrayList<ThreadState>();
+  private final Set<ThreadState> myDeadlockedThreads = new HashSet<ThreadState>();
 
   @Nullable
   private ThreadOperation myOperation;

@@ -12,7 +12,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 
 public class InlineFieldDialog extends InlineOptionsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
-  private PsiReferenceExpression myReferenceExpression;
+  private final PsiReferenceExpression myReferenceExpression;
 
   private final PsiField myField;
 

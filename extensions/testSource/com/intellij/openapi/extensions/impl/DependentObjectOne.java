@@ -8,7 +8,7 @@ package com.intellij.openapi.extensions.impl;
  * @author Alexander Kireyev
  */
 public class DependentObjectOne {
-  private XMLTestBean[] myTestBeans;
+  private final XMLTestBean[] myTestBeans;
 
   public DependentObjectOne(XMLTestBean[] testBeans) {
     myTestBeans = testBeans;

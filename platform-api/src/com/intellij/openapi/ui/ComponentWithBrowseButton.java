@@ -162,7 +162,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     private final ComponentWithBrowseButton<T> myTextComponent;
     private final TextComponentAccessor<T> myAccessor;
     private final Project myProject;
-    private FileChooserDescriptor myFileChooserDescriptor;
+    private final FileChooserDescriptor myFileChooserDescriptor;
 
     public BrowseFolderActionListener(String title, String description, ComponentWithBrowseButton<T> textField, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor, TextComponentAccessor<T> accessor) {
       myTitle = title;

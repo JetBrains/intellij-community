@@ -16,7 +16,7 @@ import java.util.ArrayList;
  * @author yole
  */
 public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy {
-  private Project myProject;
+  private final Project myProject;
 
   public ExcludeCompilerOutputPolicy(final Project project) {
     myProject = project;

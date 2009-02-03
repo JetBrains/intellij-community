@@ -30,9 +30,9 @@ import java.util.Set;
 public class BindingFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.resolver.BindingFactory");
 
-  private HashSet<PsiTypeVariable> myBoundVariables;
-  private Project myProject;
-  private PsiTypeVariableFactory myFactory;
+  private final HashSet<PsiTypeVariable> myBoundVariables;
+  private final Project myProject;
+  private final PsiTypeVariableFactory myFactory;
 
   private PsiClass[] getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass) {
     if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) {
@@ -63,7 +63,7 @@ public class BindingFactory {
   }
 
   private class BindingImpl extends Binding {
-    private TIntObjectHashMap<PsiType> myBindings;
+    private final TIntObjectHashMap<PsiType> myBindings;
     private boolean myCyclic;
 
     BindingImpl(final PsiTypeVariable var, final PsiType type) {

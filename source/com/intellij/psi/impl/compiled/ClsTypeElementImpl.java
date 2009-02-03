@@ -23,7 +23,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   private ClsElementImpl myChild = null;
   private boolean myChildSet = false;
   private volatile PsiType myCachedType;
-  private char myVariance;
+  private final char myVariance;
   @NonNls private static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
   @NonNls private static final String VARIANCE_SUPER_PREFIX = "? super ";
 

@@ -6,9 +6,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import java.util.ArrayList;
 
 class LeafBlockWrapper extends AbstractBlockWrapper {
-  private static int CONTAIN_LINE_FEEDS = 4;
-  private static int READ_ONLY = 8;
-  private static int LEAF = 16;
+  private static final int CONTAIN_LINE_FEEDS = 4;
+  private static final int READ_ONLY = 8;
+  private static final int LEAF = 16;
 
   private final int mySymbolsAtTheLastLine;
   private LeafBlockWrapper myPreviousBlock;

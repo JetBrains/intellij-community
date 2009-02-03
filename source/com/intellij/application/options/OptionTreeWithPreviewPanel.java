@@ -35,9 +35,9 @@ import java.util.Arrays;
  */
 public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
-  private JTree myOptionsTree;
-  private HashMap myKeyToFieldMap = new HashMap();
-  private ArrayList myKeys = new ArrayList();
+  private final JTree myOptionsTree;
+  private final HashMap myKeyToFieldMap = new HashMap();
+  private final ArrayList myKeys = new ArrayList();
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
   public OptionTreeWithPreviewPanel(CodeStyleSettings settings) {
@@ -348,9 +348,9 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
   }
 
   protected class MyTreeCellRenderer implements TreeCellRenderer {
-    private MyLabelPanel myLabel;
-    private JCheckBox myCheckBox;
-    private JRadioButton myRadioButton;
+    private final MyLabelPanel myLabel;
+    private final JCheckBox myCheckBox;
+    private final JRadioButton myRadioButton;
 
     public MyTreeCellRenderer() {
       myLabel = new MyLabelPanel();
@@ -404,7 +404,7 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
 
   private static class MyLabelPanel extends JPanel {
     private String myText = "";
-    private boolean hasFocus = false;
+    private final boolean hasFocus = false;
 
     public MyLabelPanel() {
     }
@@ -501,10 +501,10 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
   }
 
   private static class MyToggleTreeNode extends DefaultMutableTreeNode {
-    private Object myKey;
-    private String myText;
+    private final Object myKey;
+    private final String myText;
     private boolean isSelected;
-    private boolean isCheckbox;
+    private final boolean isCheckbox;
 
     public MyToggleTreeNode(Object key, String text) {
       myKey = key;

@@ -19,7 +19,7 @@ import java.util.List;
  * @author mike
  */
 public class JavadocManagerImpl implements JavadocManager {
-  private List<JavadocTagInfo> myInfos;
+  private final List<JavadocTagInfo> myInfos;
 
   static {
     FormatterUtil.addHelper(new JavadocFormatterUtilHlper());

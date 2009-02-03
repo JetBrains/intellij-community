@@ -44,7 +44,7 @@ public class FileWatcher {
   private BufferedReader notifierReader;
   private BufferedWriter notifierWriter;
 
-  private static FileWatcher ourInstance = new FileWatcher();
+  private static final FileWatcher ourInstance = new FileWatcher();
   private int attemptCount = 0;
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
   private boolean isShuttingDown = false;

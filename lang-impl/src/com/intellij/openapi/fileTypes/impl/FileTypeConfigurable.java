@@ -36,9 +36,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   private PatternsPanel myPatterns;
   private FileTypePanel myFileTypePanel;
   private HashSet<FileType> myTempFileTypes;
-  private FileTypeManagerImpl myManager;
+  private final FileTypeManagerImpl myManager;
   private FileTypeAssocTable myTempPatternsTable;
-  private Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<UserFileType, UserFileType>();
+  private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<UserFileType, UserFileType>();
 
   public FileTypeConfigurable(FileTypeManager fileTypeManager) {
     myManager = (FileTypeManagerImpl)fileTypeManager;
@@ -506,8 +506,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   private static class TypeEditor<T extends UserFileType<T>> extends DialogWrapper {
-    private T myFileType;
-    private SettingsEditor<T> myEditor;
+    private final T myFileType;
+    private final SettingsEditor<T> myEditor;
 
     public TypeEditor(Component parent, T fileType, final String title) {
       super(parent, false);

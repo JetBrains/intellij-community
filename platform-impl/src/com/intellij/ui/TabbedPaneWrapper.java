@@ -404,7 +404,7 @@ public class TabbedPaneWrapper implements Disposable {
 
   protected static class TabbedPaneHolder extends JPanel {
 
-    private TabbedPaneWrapper myWrapper;
+    private final TabbedPaneWrapper myWrapper;
 
     public TabbedPaneHolder(TabbedPaneWrapper wrapper) {
       super(new BorderLayout());
@@ -450,7 +450,7 @@ public class TabbedPaneWrapper implements Disposable {
   }
 
   private static class JTabbedPaneFactory implements TabFactory {
-    private TabbedPaneWrapper myWrapper;
+    private final TabbedPaneWrapper myWrapper;
 
     private JTabbedPaneFactory(TabbedPaneWrapper wrapper) {
       myWrapper = wrapper;
@@ -471,9 +471,9 @@ public class TabbedPaneWrapper implements Disposable {
 
   private static class JBTabsFactory implements TabFactory {
 
-    private Project myProject;
-    private Disposable myParent;
-    private TabbedPaneWrapper myWrapper;
+    private final Project myProject;
+    private final Disposable myParent;
+    private final TabbedPaneWrapper myWrapper;
 
     public JBTabsFactory(TabbedPaneWrapper wrapper, Project project, Disposable parent) {
       myWrapper = wrapper;

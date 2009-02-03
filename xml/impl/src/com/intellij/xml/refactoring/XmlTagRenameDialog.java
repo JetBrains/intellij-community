@@ -42,12 +42,12 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameDialog");
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
 
-  private PsiElement myElement;
-  private Editor myEditor;
+  private final PsiElement myElement;
+  private final Editor myEditor;
   private JLabel myTitleLabel;
   private NameSuggestionsField myNameSuggestionsField;
   private String myHelpID;
-  private XmlTag myTag;
+  private final XmlTag myTag;
   private NameSuggestionsField.DataChanged myNameChangedListener;
 
   public XmlTagRenameDialog(@NotNull final Editor editor, @NotNull final PsiElement element, @NotNull final XmlTag tag) {

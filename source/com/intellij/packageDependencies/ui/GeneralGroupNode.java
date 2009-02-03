@@ -10,9 +10,9 @@ import javax.swing.*;
 import java.util.Set;
 
 public class GeneralGroupNode extends PackageDependenciesNode {
-  private String myName;
-  private Icon myOpenIcon;
-  private Icon myClosedIcon;
+  private final String myName;
+  private final Icon myOpenIcon;
+  private final Icon myClosedIcon;
 
   public GeneralGroupNode(String name, Icon openIcon, Icon closedIcon) {
     myName = name;

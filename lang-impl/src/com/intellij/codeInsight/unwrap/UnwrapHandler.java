@@ -130,10 +130,10 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   private static class MyUnwrapAction extends AnAction {
     private static final Key<Integer> CARET_POS_KEY = new Key<Integer>("UNWRAP_HANDLER_CARET_POSITION");
 
-    private Project myProject;
-    private Editor myEditor;
-    private Unwrapper myUnwrapper;
-    private PsiElement myElement;
+    private final Project myProject;
+    private final Editor myEditor;
+    private final Unwrapper myUnwrapper;
+    private final PsiElement myElement;
 
     public MyUnwrapAction(Project project, Editor editor, Unwrapper unwrapper, PsiElement element) {
       super(unwrapper.getDescription(element));

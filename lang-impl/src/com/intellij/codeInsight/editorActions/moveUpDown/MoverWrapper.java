@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 class MoverWrapper {
   protected final boolean myIsDown;
-  private StatementUpDownMover myMover;
-  private StatementUpDownMover.MoveInfo myInfo;
+  private final StatementUpDownMover myMover;
+  private final StatementUpDownMover.MoveInfo myInfo;
 
   protected MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
     myMover = mover;

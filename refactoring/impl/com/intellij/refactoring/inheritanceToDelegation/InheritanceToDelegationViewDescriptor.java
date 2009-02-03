@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class InheritanceToDelegationViewDescriptor extends UsageViewDescriptorAdapter {
-  private PsiClass myClass;
+  private final PsiClass myClass;
 
   public InheritanceToDelegationViewDescriptor(PsiClass aClass) {
     super();

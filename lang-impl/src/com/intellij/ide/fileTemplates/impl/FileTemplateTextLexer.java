@@ -189,7 +189,7 @@ class FileTemplateTextLexer implements FlexLexer {
   /**
    * zzAtBOL == true <=> the scanner is currently at the beginning of a line
    */
-  private boolean zzAtBOL = true;
+  private final boolean zzAtBOL = true;
 
   /** zzAtEOF == true <=> the scanner is at the EOF */
   private boolean zzAtEOF;

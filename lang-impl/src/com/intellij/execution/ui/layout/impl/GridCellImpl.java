@@ -34,16 +34,16 @@ import java.util.Set;
 
 public class GridCellImpl implements GridCell, Disposable {
 
-  private GridImpl myContainer;
+  private final GridImpl myContainer;
 
-  private MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
-  private Set<Content> myMinimizedContents = new HashSet<Content>();
+  private final MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
+  private final Set<Content> myMinimizedContents = new HashSet<Content>();
 
-  private JBTabs myTabs;
-  private GridImpl.Placeholder myPlaceholder;
-  private PlaceInGrid myPlaceInGrid;
+  private final JBTabs myTabs;
+  private final GridImpl.Placeholder myPlaceholder;
+  private final PlaceInGrid myPlaceInGrid;
 
-  private ViewContextEx myContext;
+  private final ViewContextEx myContext;
   private CellTransform.Restore.List myRestoreFromDetach;
   private JBPopup myPopup;
   private boolean myDisposed;

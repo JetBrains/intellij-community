@@ -40,10 +40,10 @@ import javax.swing.tree.TreePath;
 import java.util.Set;
 
 public class SuppressActionWrapper extends ActionGroup {
-  private Project myProject;
-  private InspectionManagerEx myManager;
-  private Set<InspectionTreeNode> myNodesToSuppress = new HashSet<InspectionTreeNode>();
-  private InspectionTool myTool;
+  private final Project myProject;
+  private final InspectionManagerEx myManager;
+  private final Set<InspectionTreeNode> myNodesToSuppress = new HashSet<InspectionTreeNode>();
+  private final InspectionTool myTool;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.SuppressActionWrapper");
 
   public SuppressActionWrapper(final Project project,

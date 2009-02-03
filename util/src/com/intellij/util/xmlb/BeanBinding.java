@@ -37,12 +37,12 @@ import java.util.Collection;
 class BeanBinding implements Binding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xmlb.BeanBinding");
 
-  private String myTagName;
-  private Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
-  private List<Binding> myPropertyBindingsList = new ArrayList<Binding>();
-  private Class<?> myBeanClass;
-  private SerializationFilter filter;
-  private XmlSerializerImpl serializer;
+  private final String myTagName;
+  private final Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
+  private final List<Binding> myPropertyBindingsList = new ArrayList<Binding>();
+  private final Class<?> myBeanClass;
+  private final SerializationFilter filter;
+  private final XmlSerializerImpl serializer;
   @NonNls private static final String CLASS_PROPERTY = "class";
   private final Accessor myAccessor;
 

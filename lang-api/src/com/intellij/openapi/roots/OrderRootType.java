@@ -31,10 +31,10 @@ import java.util.List;
  * @author dsl
  */
 public class OrderRootType {
-  private String myName;
-  private String mySdkRootName;
-  private String myModulePathsName;
-  private String myOldSdkRootName;
+  private final String myName;
+  private final String mySdkRootName;
+  private final String myModulePathsName;
+  private final String myOldSdkRootName;
   private static OrderRootType[] ourPersistentOrderRootTypes = new OrderRootType[0];
   private static boolean ourExtensionsLoaded = false;
 

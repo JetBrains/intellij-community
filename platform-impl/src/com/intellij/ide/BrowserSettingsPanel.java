@@ -15,12 +15,12 @@ import java.awt.event.ActionEvent;
  * @author spleaner
  */
 public class BrowserSettingsPanel extends JPanel {
-  private JRadioButton myUseDefaultBrowser;
-  private JRadioButton myUseAlternativeBrowser;
-  private BrowserSettingsProvider[] mySettingsProviders;
-  private TextFieldWithBrowseButton myBrowserPathField;
-  private JCheckBox myConfirmExtractFiles;
-  private JButton myClearExtractedFiles;
+  private final JRadioButton myUseDefaultBrowser;
+  private final JRadioButton myUseAlternativeBrowser;
+  private final BrowserSettingsProvider[] mySettingsProviders;
+  private final TextFieldWithBrowseButton myBrowserPathField;
+  private final JCheckBox myConfirmExtractFiles;
+  private final JButton myClearExtractedFiles;
 
   public BrowserSettingsPanel() {
     setLayout(new BorderLayout());

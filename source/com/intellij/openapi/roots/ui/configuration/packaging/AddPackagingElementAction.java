@@ -8,8 +8,8 @@ import javax.swing.*;
  * @author nik
 */
 public abstract class AddPackagingElementAction {
-  private String myText;
-  private Icon myIcon;
+  private final String myText;
+  private final Icon myIcon;
 
   protected AddPackagingElementAction(final String text, final Icon icon) {
     myText = text;

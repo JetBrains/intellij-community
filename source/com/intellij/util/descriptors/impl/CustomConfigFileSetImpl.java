@@ -27,7 +27,7 @@ public class CustomConfigFileSetImpl implements CustomConfigFileSet {
   @NonNls private static final String NAME_ATTRIBUTE = "name";
   @NonNls private static final String VALUE_ATTRIBUTE = "value";
 
-  private List<CustomConfigFile> myDescriptors = new ArrayList<CustomConfigFile>();
+  private final List<CustomConfigFile> myDescriptors = new ArrayList<CustomConfigFile>();
 
   public void add(CustomConfigFile descriptor) {
     myDescriptors.add(descriptor);

@@ -37,9 +37,9 @@ public class ActionsTree {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTree");
 
-  private JTree myTree;
+  private final JTree myTree;
   private DefaultMutableTreeNode myRoot;
-  private JScrollPane myComponent;
+  private final JScrollPane myComponent;
   private Keymap myKeymap;
   private Group myMainGroup = new Group("", null, null);
 

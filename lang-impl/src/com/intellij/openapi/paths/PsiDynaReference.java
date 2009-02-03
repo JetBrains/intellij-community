@@ -31,7 +31,7 @@ import java.util.List;
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   implements FileReferenceOwner, PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
 
-  private List<PsiReference> myReferences = new ArrayList<PsiReference>();
+  private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private int myChoosenOne = -1;
   private ResolveResult[] myCachedResult;
 

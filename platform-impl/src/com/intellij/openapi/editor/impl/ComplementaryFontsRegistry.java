@@ -12,11 +12,11 @@ import java.util.LinkedHashMap;
  * @author max
  */
 public class ComplementaryFontsRegistry {
-  private static ArrayList<String> ourFontNames;
-  private static LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
+  private static final ArrayList<String> ourFontNames;
+  private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
   private static FontKey ourSharedKeyInstance = new FontKey(null, 0, 0);
   private static FontInfo ourSharedDefaultFont;
-  private static TIntHashSet ourUndisplayableChars = new TIntHashSet();
+  private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
 
   private ComplementaryFontsRegistry() {
   }

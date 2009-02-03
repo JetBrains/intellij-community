@@ -21,8 +21,8 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 public class QueueTest extends TestCase {
-  private Assertion CHECK = new Assertion();
-  private com.intellij.util.containers.Queue myQueue = new com.intellij.util.containers.Queue(1);
+  private final Assertion CHECK = new Assertion();
+  private final com.intellij.util.containers.Queue myQueue = new com.intellij.util.containers.Queue(1);
 
   public void testEmpty() {
     Assert.assertEquals(0, myQueue.size());

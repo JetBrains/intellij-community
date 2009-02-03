@@ -20,7 +20,7 @@ import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
   private final StepSequence mySequence;
-  private JList myList;
+  private final JList myList;
   private final JPanel myPanel;
 
   public ImportChooserStep(final ProjectImportProvider[] providers, final StepSequence sequence, final WizardContext context) {

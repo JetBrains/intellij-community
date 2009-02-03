@@ -12,7 +12,7 @@ import java.io.IOException;
  * @author nik
  */
 public class LocalFileStorage {
-  private File myStorageIODirectory;
+  private final File myStorageIODirectory;
 
   public LocalFileStorage() {
     myStorageIODirectory = new File(PathManager.getSystemPath(), "httpFileSystem");

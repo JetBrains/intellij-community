@@ -21,7 +21,7 @@ import com.intellij.openapi.command.CommandProcessor;
 
 public class CommandWaiter extends AbstractWaiter implements CommandListener {
 
-  private Runnable myCommandRunnable;
+  private final Runnable myCommandRunnable;
 
   public CommandWaiter(Runnable aCommandRunnable) {
     myCommandRunnable = aCommandRunnable;

@@ -220,8 +220,8 @@ public class ColorPanel extends JPanel {
   }
 
   private class ColorBox extends JComponent {
-    private Dimension mySize;
-    private boolean isSelectable;
+    private final Dimension mySize;
+    private final boolean isSelectable;
     private Runnable mySelectColorAction = null;
     private Color myColor;
     @NonNls public static final String RGB = "RGB";

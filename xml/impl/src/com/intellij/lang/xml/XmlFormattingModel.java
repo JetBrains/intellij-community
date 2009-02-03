@@ -24,7 +24,7 @@ public class XmlFormattingModel extends PsiBasedFormattingModel {
   private static final Logger LOG =
       Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside");
 
-  private Project myProject;
+  private final Project myProject;
 
   public XmlFormattingModel(final PsiFile file,
                                                      final Block rootBlock,

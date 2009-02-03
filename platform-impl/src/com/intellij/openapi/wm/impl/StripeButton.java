@@ -42,7 +42,7 @@ public final class StripeButton extends JToggleButton implements ActionListener 
   private boolean myPressedWhenSelected;
 
   private JLayeredPane myDragPane;
-  private ToolWindowsPane myPane;
+  private final ToolWindowsPane myPane;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
   private Stripe myLastStripe;

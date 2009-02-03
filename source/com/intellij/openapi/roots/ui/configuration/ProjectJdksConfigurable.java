@@ -45,8 +45,8 @@ import java.util.Set;
 
 public class ProjectJdksConfigurable extends MasterDetailsComponent implements Configurable.Assistant {
 
-  private ProjectJdksModel myProjectJdksModel;
-  private Project myProject;
+  private final ProjectJdksModel myProjectJdksModel;
+  private final Project myProject;
   @NonNls 
   private static final String SPLITTER_PROPORTION = "project.jdk.splitter";
 

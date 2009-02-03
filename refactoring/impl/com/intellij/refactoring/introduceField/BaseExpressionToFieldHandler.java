@@ -531,7 +531,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final String myFieldName;
     private final PsiType myForcedType;
 
-    private boolean myReplaceAll;
+    private final boolean myReplaceAll;
     private final boolean myDeclareStatic;
     private final boolean myDeclareFinal;
     private final InitializationPlace myInitializerPlace;

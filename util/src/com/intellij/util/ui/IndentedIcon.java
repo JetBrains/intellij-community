@@ -23,8 +23,8 @@ import java.awt.*;
  * @author yole
  */
 public class IndentedIcon implements Icon {
-  private Icon myBaseIcon;
-  private int myIndent;
+  private final Icon myBaseIcon;
+  private final int myIndent;
 
   public IndentedIcon(final Icon baseIcon, final int indent) {
     myBaseIcon = baseIcon;

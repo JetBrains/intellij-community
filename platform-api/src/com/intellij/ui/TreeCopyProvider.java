@@ -28,7 +28,7 @@ import java.awt.datatransfer.Clipboard;
  */
 public class TreeCopyProvider implements CopyProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TreeCopyProvider");
-  private JTree myTree;
+  private final JTree myTree;
 
   public TreeCopyProvider(final JTree tree) {
     myTree = tree;

@@ -23,7 +23,7 @@ import java.util.List;
  * @author yole
 */
 public class CollectionListModel extends AbstractListModel {
-  private List myItems;
+  private final List myItems;
 
   public CollectionListModel(final List items) {
     myItems = items;

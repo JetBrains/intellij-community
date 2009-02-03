@@ -6,8 +6,8 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import java.lang.ref.WeakReference;
 
 public final class WeakKeymapManagerListener implements KeymapManagerListener{
-  private KeymapManagerEx myKeymapManager;
-  private WeakReference myRef;
+  private final KeymapManagerEx myKeymapManager;
+  private final WeakReference myRef;
 
   public WeakKeymapManagerListener(KeymapManagerEx keymapManager,KeymapManagerListener delegate){
     myKeymapManager=keymapManager;

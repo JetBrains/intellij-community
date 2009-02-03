@@ -52,7 +52,7 @@ public class MoveInnerDialog extends RefactoringDialog {
   private PackageNameReferenceEditorCombo myPackageNameField;
   private JLabel myPackageNameLabel;
   private SuggestedNameInfo mySuggestedNameInfo;
-  private PsiClass myOuterClass;
+  private final PsiClass myOuterClass;
 
   @NonNls private static final String RECENTS_KEY = "MoveInnerDialog.RECENTS_KEY";
 

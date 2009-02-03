@@ -26,7 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 public class CodeInsightServicesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightServicesUtil");
 
-  private static IElementType[] ourTokenMap = new IElementType[]{
+  private static final IElementType[] ourTokenMap = new IElementType[]{
     JavaTokenType.EQEQ, JavaTokenType.NE,
     JavaTokenType.LT, JavaTokenType.GE,
     JavaTokenType.LE, JavaTokenType.GT,

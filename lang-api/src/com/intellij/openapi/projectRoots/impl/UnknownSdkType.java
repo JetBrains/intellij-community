@@ -21,7 +21,7 @@ import java.util.Map;
 public class UnknownSdkType extends SdkType{
   public static final Icon ICON = IconLoader.getIcon("/nodes/unknownJdkClosed.png");
   private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/unknownJdkOpen.png");
-  private static Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<String, UnknownSdkType>();
+  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<String, UnknownSdkType>();
 
   /**
    * @param typeName the name of the SDK type that this SDK serves as a plug for

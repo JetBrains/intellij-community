@@ -107,7 +107,7 @@ public class IdeEventQueue extends EventQueue {
   private WindowManagerEx myWindowManager;
 
 
-  private Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
+  private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();

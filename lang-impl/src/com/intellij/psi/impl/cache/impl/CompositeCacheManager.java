@@ -19,7 +19,7 @@ import java.util.List;
  * @author peter
  */
 public class CompositeCacheManager implements CacheManager{
-  private List<CacheManager> myManagers = new ArrayList<CacheManager>();
+  private final List<CacheManager> myManagers = new ArrayList<CacheManager>();
 
   public void addCacheManager(CacheManager manager) {
     myManagers.add(manager);

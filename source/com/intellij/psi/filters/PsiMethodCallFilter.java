@@ -9,8 +9,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PsiMethodCallFilter implements ElementFilter {
-  @NonNls private String myClassName;
-  @NonNls private Set<String> myMethodNames;
+  @NonNls private final String myClassName;
+  @NonNls private final Set<String> myMethodNames;
 
 
   public PsiMethodCallFilter(@NonNls final String className, @NonNls final String... methodNames) {

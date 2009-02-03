@@ -8,7 +8,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 
 public abstract class ChildFocusWatcher implements AWTEventListener, Disposable {
-  private JComponent myParent;
+  private final JComponent myParent;
 
   public ChildFocusWatcher(JComponent parent) {
     myParent = parent;

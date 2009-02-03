@@ -25,7 +25,7 @@ import java.util.List;
  * Date: 11-Jan-2006
  */
 public class InvokeQuickFixAction extends AnAction {
-  private InspectionResultsView myView;
+  private final InspectionResultsView myView;
 
   public InvokeQuickFixAction(final InspectionResultsView view) {
     super(InspectionsBundle.message("inspection.action.apply.quickfix"), InspectionsBundle.message("inspection.action.apply.quickfix.description"), IconLoader.getIcon("/actions/createFromUsage.png"));

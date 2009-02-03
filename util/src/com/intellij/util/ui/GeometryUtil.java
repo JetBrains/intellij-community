@@ -23,8 +23,8 @@ import java.awt.geom.Point2D;
 import java.util.TreeMap;
 
 public class GeometryUtil implements SwingConstants {
-  private static int myArrowSize = 9;
-  private static Shape myArrowPolygon = new Polygon(new int[] {0, myArrowSize, 0, 0}, new int[] {0, myArrowSize /2, myArrowSize, 0}, 4);
+  private static final int myArrowSize = 9;
+  private static final Shape myArrowPolygon = new Polygon(new int[] {0, myArrowSize, 0, 0}, new int[] {0, myArrowSize /2, myArrowSize, 0}, 4);
 
   public static Point getIntersectionPoint(Line2D aSegment, Rectangle aRectangle) {
 
@@ -230,7 +230,7 @@ public class GeometryUtil implements SwingConstants {
   }
 
   private static class OrientedPoint extends Point {
-    private int myOrientation;
+    private final int myOrientation;
 
     public OrientedPoint(double x, double y, int aOrientation) {
       super((int) x, (int) y);

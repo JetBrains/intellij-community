@@ -10,9 +10,9 @@ import java.util.Set;
  * @author dsl
  */
 public class RenameHandlerRegistry {
-  private Set<RenameHandler> myHandlers  = new HashSet<RenameHandler>();
+  private final Set<RenameHandler> myHandlers  = new HashSet<RenameHandler>();
   private static final RenameHandlerRegistry INSTANCE = new RenameHandlerRegistry();
-  private PsiElementRenameHandler myDefaultElementRenameHandler;
+  private final PsiElementRenameHandler myDefaultElementRenameHandler;
 
   public static RenameHandlerRegistry getInstance() {
     return INSTANCE;

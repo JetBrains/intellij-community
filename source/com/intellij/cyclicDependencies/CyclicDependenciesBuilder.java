@@ -24,14 +24,14 @@ import java.util.*;
 public class CyclicDependenciesBuilder{
   private final Project myProject;
   private final AnalysisScope myScope;
-  private Map<String, PsiPackage> myPackages = new HashMap<String, PsiPackage>();
+  private final Map<String, PsiPackage> myPackages = new HashMap<String, PsiPackage>();
   private Graph<PsiPackage> myGraph;
-  private Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> myFilesInDependentPackages = new HashMap<PsiPackage, Map<PsiPackage, Set<PsiFile>>>();
-  private Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> myBackwardFilesInDependentPackages = new HashMap<PsiPackage, Map<PsiPackage, Set<PsiFile>>>();
-  private Map<PsiPackage, Set<PsiPackage>> myPackageDependencies = new HashMap<PsiPackage, Set<PsiPackage>>();
+  private final Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> myFilesInDependentPackages = new HashMap<PsiPackage, Map<PsiPackage, Set<PsiFile>>>();
+  private final Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> myBackwardFilesInDependentPackages = new HashMap<PsiPackage, Map<PsiPackage, Set<PsiFile>>>();
+  private final Map<PsiPackage, Set<PsiPackage>> myPackageDependencies = new HashMap<PsiPackage, Set<PsiPackage>>();
   private HashMap<PsiPackage, Set<List<PsiPackage>>> myCyclicDependencies = new HashMap<PsiPackage, Set<List<PsiPackage>>>();
   private int myFileCount = 0;
-  private ForwardDependenciesBuilder myForwardBuilder;
+  private final ForwardDependenciesBuilder myForwardBuilder;
 
   private String myRootNodeNameInUsageView;
 

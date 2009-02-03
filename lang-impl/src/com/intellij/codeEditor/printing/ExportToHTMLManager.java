@@ -200,10 +200,10 @@ class ExportToHTMLManager {
   }
 
   private static class ExportRunnable implements Runnable {
-    private ExportToHTMLSettings myExportToHTMLSettings;
-    private PsiDirectory myPsiDirectory;
-    private String myOutputDirectoryName;
-    private Project myProject;
+    private final ExportToHTMLSettings myExportToHTMLSettings;
+    private final PsiDirectory myPsiDirectory;
+    private final String myOutputDirectoryName;
+    private final Project myProject;
 
     public ExportRunnable(ExportToHTMLSettings exportToHTMLSettings,
                           PsiDirectory psiDirectory,

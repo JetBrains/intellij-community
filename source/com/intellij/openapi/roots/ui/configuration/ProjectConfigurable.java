@@ -64,10 +64,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   private MyJPanel myPanel;
 
-  private Alarm myUpdateWarningAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myUpdateWarningAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  private JLabel myWarningLabel = new JLabel("");
-  private ModulesConfigurator myModulesConfigurator;
+  private final JLabel myWarningLabel = new JLabel("");
+  private final ModulesConfigurator myModulesConfigurator;
   private JPanel myWholePanel;
 
   private boolean myFreeze = false;

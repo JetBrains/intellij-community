@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Highlighters implements DnDEvent.DropTargetHighlightingType {
-  private static List<Accessible> ourHightlighters = new ArrayList<Accessible>();
+  private static final List<Accessible> ourHightlighters = new ArrayList<Accessible>();
 
-  private static List<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<DropTargetHighlighter>();
+  private static final List<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<DropTargetHighlighter>();
 
   static {
     ourHightlighters.add(new RectangleHighlighter());
@@ -233,8 +233,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
-    private Icon myLeft = IconLoader.getIcon("/ide/dnd/left.png");
-    private Icon myRight = IconLoader.getIcon("/ide/dnd/right.png");
+    private final Icon myLeft = IconLoader.getIcon("/ide/dnd/left.png");
+    private final Icon myRight = IconLoader.getIcon("/ide/dnd/right.png");
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x - myLeft.getIconWidth(), aRectangle.y - myLeft.getIconHeight(), aRectangle.width + myLeft.getIconWidth() + myRight.getIconWidth(), aRectangle.height + myLeft.getIconHeight());
@@ -252,8 +252,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class VerticalLinesHighlighter extends AbstractComponentHighlighter {
-    private Icon myTop = IconLoader.getIcon("/ide/dnd/top.png");
-    private Icon myBottom = IconLoader.getIcon("/ide/dnd/bottom.png");
+    private final Icon myTop = IconLoader.getIcon("/ide/dnd/top.png");
+    private final Icon myBottom = IconLoader.getIcon("/ide/dnd/bottom.png");
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x, aRectangle.y - myTop.getIconHeight(), aRectangle.width, aRectangle.height + myTop.getIconHeight() + myBottom.getIconHeight());

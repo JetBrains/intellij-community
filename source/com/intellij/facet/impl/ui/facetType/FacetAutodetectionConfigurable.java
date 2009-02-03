@@ -38,7 +38,7 @@ import java.util.*;
 public class FacetAutodetectionConfigurable implements Configurable {
   private final Project myProject;
   private final StructureConfigurableContext myContext;
-  private FacetType<?, ?> myFacetType;
+  private final FacetType<?, ?> myFacetType;
   private JPanel myMainPanel;
   private JCheckBox myEnableAutoDetectionCheckBox;
   private JList myModulesList;
@@ -49,12 +49,12 @@ public class FacetAutodetectionConfigurable implements Configurable {
   private JPanel mySettingsPanel;
   private JLabel mySkipFilesLabel;
   private JPanel mySkipFilesListPanel;
-  private DefaultListModel myModulesListModel;
-  private DefaultListModel myFilesListModel;
-  private BidirectionalMap<String, String> myFile2Module = new BidirectionalMap<String, String>();
-  private Set<String> myRemovedModules = new HashSet<String>();
-  private Set<String> myAddedModules = new HashSet<String>();
-  private Set<String> myRemovedFiles = new HashSet<String>();
+  private final DefaultListModel myModulesListModel;
+  private final DefaultListModel myFilesListModel;
+  private final BidirectionalMap<String, String> myFile2Module = new BidirectionalMap<String, String>();
+  private final Set<String> myRemovedModules = new HashSet<String>();
+  private final Set<String> myAddedModules = new HashSet<String>();
+  private final Set<String> myRemovedFiles = new HashSet<String>();
   private boolean myAutodetectionWasEnabled;
 
   public FacetAutodetectionConfigurable(@NotNull Project project, final StructureConfigurableContext context, final @NotNull FacetType<?, ?> facetType) {

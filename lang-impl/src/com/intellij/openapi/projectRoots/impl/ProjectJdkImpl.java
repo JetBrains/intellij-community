@@ -234,7 +234,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
       return myRootContainer.getRootFiles(rootType);
     }
 
-    private Set<RootSetChangedListener> myListeners = new HashSet<RootSetChangedListener>();
+    private final Set<RootSetChangedListener> myListeners = new HashSet<RootSetChangedListener>();
 
     public void addRootSetChangedListener(RootSetChangedListener listener) {
       synchronized (this) {

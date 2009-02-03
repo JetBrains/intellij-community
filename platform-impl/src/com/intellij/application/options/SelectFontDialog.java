@@ -17,9 +17,9 @@ import java.util.List;
 public class SelectFontDialog extends DialogWrapper {
   private JList myFontList;
   private JCheckBox myShowMonospacedCheckbox;
-  private List<String> myFontNames;
-  private String myInitialFontName;
-  private HashMap myNameToIsMonospaced;
+  private final List<String> myFontNames;
+  private final String myInitialFontName;
+  private final HashMap myNameToIsMonospaced;
 
   public SelectFontDialog(Component parent, List<String> fontNames, String initialFontName, HashMap nameToIsMonospaced) {
     super(parent, true);

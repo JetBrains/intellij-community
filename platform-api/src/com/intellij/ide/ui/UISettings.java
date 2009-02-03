@@ -46,7 +46,7 @@ import java.util.Map;
     )}
 )
 public class UISettings implements PersistentStateComponent<UISettings>, ExportableApplicationComponent {
-  private EventListenerList myListenerList;
+  private final EventListenerList myListenerList;
 
   @Property(filter = FontFilter.class)
   @NonNls
@@ -238,7 +238,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
 
   }
 
-  private static boolean DONT_TOUCH_ALIASING = "true".equalsIgnoreCase(System.getProperty("idea.use.default.antialiasing.in.editor"));
+  private static final boolean DONT_TOUCH_ALIASING = "true".equalsIgnoreCase(System.getProperty("idea.use.default.antialiasing.in.editor"));
 
   public static void setupAntialiasing(final Graphics g) {
     if (DONT_TOUCH_ALIASING) return;

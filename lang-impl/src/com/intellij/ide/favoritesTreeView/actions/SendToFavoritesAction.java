@@ -17,7 +17,7 @@ import java.util.Collections;
  * Date: Feb 24, 2005
  */
 public class SendToFavoritesAction extends AnAction{
-  private String toName;
+  private final String toName;
   public SendToFavoritesAction(String name) {
     super(name);
     toName = name;

@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 
 public class VFilePropertyChangeEvent extends VFileEvent {
-  private VirtualFile myFile;
+  private final VirtualFile myFile;
   private final String myPropertyName;
   private final Object myOldValue;
   private final Object myNewValue;

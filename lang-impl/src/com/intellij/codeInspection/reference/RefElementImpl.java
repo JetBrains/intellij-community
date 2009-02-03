@@ -37,7 +37,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private static final int IS_PERMANENT_ENTRY_MASK = 0x100;
 
 
-  private SmartPsiElementPointer myID;
+  private final SmartPsiElementPointer myID;
 
   private ArrayList<RefElement> myOutReferences;
   private ArrayList<RefElement> myInReferences;
@@ -45,7 +45,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private String[] mySuppressions = null;
 
   private boolean myIsDeleted ;
-  private Module myModule;
+  private final Module myModule;
   protected static final int IS_REACHABLE_MASK = 0x40;
 
   protected RefElementImpl(String name, RefElement owner) {

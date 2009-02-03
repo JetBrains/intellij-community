@@ -28,10 +28,10 @@ public class BalloonImpl implements Disposable, Balloon {
   private Position myPosition;
   private Point myTargetPoint;
 
-  private Color myBorderColor;
-  private Color myFillColor;
+  private final Color myBorderColor;
+  private final Color myFillColor;
 
-  private Insets myContainerInsets = new Insets(4, 4, 4, 4);
+  private final Insets myContainerInsets = new Insets(4, 4, 4, 4);
 
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     public void eventDispatched(final AWTEvent event) {
@@ -68,9 +68,9 @@ public class BalloonImpl implements Disposable, Balloon {
   private boolean myShowPointer;
 
   private boolean myDisposed;
-  private JComponent myContent;
-  private boolean myHideOnMouse;
-  private boolean myHideOnKey;
+  private final JComponent myContent;
+  private final boolean myHideOnMouse;
+  private final boolean myHideOnKey;
 
   public BalloonImpl(JComponent content,
                      Color borderColor,
@@ -427,8 +427,8 @@ public class BalloonImpl implements Disposable, Balloon {
 
     private BufferedImage myImage;
     private float myAlpha;
-    private JComponent myParent;
-    private BalloonImpl myBalloon;
+    private final JComponent myParent;
+    private final BalloonImpl myBalloon;
 
     private MyComponent(JComponent content, JComponent parent, BalloonImpl balloon) {
       setOpaque(false);
@@ -475,11 +475,11 @@ public class BalloonImpl implements Disposable, Balloon {
   }
 
   private static class Shaper {
-    private GeneralPath myPath = new GeneralPath();
+    private final GeneralPath myPath = new GeneralPath();
 
     Rectangle myBounds;
-    private int myTargetSide;
-    private BalloonImpl myBalloon;
+    private final int myTargetSide;
+    private final BalloonImpl myBalloon;
 
     public Shaper(BalloonImpl balloon, Rectangle bounds, Point targetPoint, int targetSide) {
       myBalloon = balloon;

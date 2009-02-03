@@ -70,12 +70,12 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private JPanel myComponentPanel;
   private SearchUtil.ConfigurableSearchTextField mySearchField;
   private Set<Configurable> myOptionContainers = null;
-  private Alarm mySearchUpdater = new Alarm();
+  private final Alarm mySearchUpdater = new Alarm();
   private JTree myTree;
   @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.ExplorerSettingsEditor");
 
-  private JBPopup [] myPopup = new JBPopup[2];
+  private final JBPopup [] myPopup = new JBPopup[2];
 
   private static final TObjectHashingStrategy<Configurable> UNWRAPPING_STRATEGY = new TObjectHashingStrategy<Configurable>() {
     public int computeHashCode(final Configurable c) {
@@ -649,7 +649,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   private final class ApplyAction extends AbstractAction {
-    private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
     public ApplyAction() {
       super(OptionsBundle.message("options.apply.button"));

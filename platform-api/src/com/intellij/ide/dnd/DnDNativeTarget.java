@@ -19,7 +19,7 @@ public interface DnDNativeTarget extends DnDTarget {
     DataFlavor[] myFlavors;
     Transferable myTransferable;
 
-    private Map<DataFlavor, String> myTexts = new HashMap<DataFlavor, String>();
+    private final Map<DataFlavor, String> myTexts = new HashMap<DataFlavor, String>();
 
     EventInfo(final DataFlavor[] flavors, final Transferable transferable) {
       myFlavors = flavors;

@@ -15,7 +15,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   protected JRadioButton myRbInlineThisOnly;
   protected boolean myInvokedOnReference;
   protected final PsiElement myElement;
-  private JLabel myNameLabel = new JLabel();
+  private final JLabel myNameLabel = new JLabel();
   protected JPanel myOptionsPanel;
 
   protected InlineOptionsDialog(Project project, boolean canBeParent, PsiElement element) {

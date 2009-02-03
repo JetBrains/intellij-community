@@ -17,7 +17,7 @@ import java.util.Set;
 
 
 class DefaultsStateStorage implements StateStorage {
-  private PathMacroManager myPathMacroManager;
+  private final PathMacroManager myPathMacroManager;
 
 
   public DefaultsStateStorage(@Nullable final PathMacroManager pathMacroManager) {

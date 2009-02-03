@@ -19,8 +19,8 @@ public abstract class LookAheadLexer extends LexerBase{
 
   private final Lexer myBaseLexer;
   private int myTokenStart;
-  private List<IElementType> myTypeCache = new SmartList<IElementType>();
-  private List<Integer> myEndOffsetCache = new SmartList<Integer>();
+  private final List<IElementType> myTypeCache = new SmartList<IElementType>();
+  private final List<Integer> myEndOffsetCache = new SmartList<Integer>();
 
   public LookAheadLexer(final Lexer baseLexer) {
     myBaseLexer = baseLexer;

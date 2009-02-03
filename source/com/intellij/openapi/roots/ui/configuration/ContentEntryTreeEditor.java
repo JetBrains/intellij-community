@@ -49,7 +49,7 @@ public class ContentEntryTreeEditor {
   private final Project myProject;
   protected Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
-  private JPanel myTreePanel;
+  private final JPanel myTreePanel;
   private final DefaultMutableTreeNode EMPTY_TREE_ROOT = new DefaultMutableTreeNode(ProjectBundle.message("module.paths.empty.node"));
   protected DefaultActionGroup myEditingActionsGroup;
   private ContentEntryEditor myContentEntryEditor;

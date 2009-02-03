@@ -8,7 +8,7 @@ import java.io.File;
 
 final class JavadocConfigurable implements Configurable {
   private JavadocGenerationPanel myPanel;
-  private JavadocConfiguration myConfiguration;
+  private final JavadocConfiguration myConfiguration;
 
   public JavadocConfigurable(JavadocConfiguration configuration) {
     myConfiguration = configuration;

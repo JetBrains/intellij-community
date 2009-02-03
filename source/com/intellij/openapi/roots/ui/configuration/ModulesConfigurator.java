@@ -50,7 +50,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private boolean myModified = false;
 
-  private ProjectConfigurable myProjectConfigurable;
+  private final ProjectConfigurable myProjectConfigurable;
 
   private final List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
 

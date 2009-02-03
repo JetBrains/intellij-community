@@ -31,10 +31,10 @@ public abstract class ParameterTablePanel extends JPanel {
   private final TypeSelector[] myParameterTypeSelectors;
 
   private final Table myTable;
-  private MyTableModel myTableModel;
-  private JButton myUpButton;
-  private JButton myDownButton;
-  private JComboBox myTypeRendererCombo;
+  private final MyTableModel myTableModel;
+  private final JButton myUpButton;
+  private final JButton myDownButton;
+  private final JComboBox myTypeRendererCombo;
 
   public static class VariableData {
     public final PsiVariable variable;

@@ -23,16 +23,16 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel {
-  private SimpleColoredComponent myLabel = new SimpleColoredComponent();
-  private LayeredIcon myIcon;
+  private final SimpleColoredComponent myLabel = new SimpleColoredComponent();
+  private final LayeredIcon myIcon;
   private Icon myOverlayedIcon;
 
-  private TabInfo myInfo;
+  private final TabInfo myInfo;
   private ActionPanel myActionPanel;
   private boolean myCentered;
 
-  private Wrapper myLabelPlaceholder = new Wrapper();
-  private JBTabsImpl myTabs;
+  private final Wrapper myLabelPlaceholder = new Wrapper();
+  private final JBTabsImpl myTabs;
 
   private BufferedImage myImage;
 

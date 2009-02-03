@@ -14,7 +14,7 @@ import java.util.ArrayList;
  * @author nik
  */
 public class LibraryDownloadingMirrorsMap {
-  private Map<RemoteRepositoryInfo, String> myMirrors = new HashMap<RemoteRepositoryInfo, String>();
+  private final Map<RemoteRepositoryInfo, String> myMirrors = new HashMap<RemoteRepositoryInfo, String>();
 
   public LibraryDownloadingMirrorsMap() {
   }

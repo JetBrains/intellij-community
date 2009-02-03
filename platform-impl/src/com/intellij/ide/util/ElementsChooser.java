@@ -22,8 +22,8 @@ public class ElementsChooser<T> extends JPanel {
   private Table myTable = null;
   private MyTableModel myTableModel = null;
   private boolean myColorUnmarkedElements = true;
-  private List<ElementsMarkListener<T>> myListeners = new ArrayList<ElementsMarkListener<T>>();
-  private Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<T, ElementProperties>();
+  private final List<ElementsMarkListener<T>> myListeners = new ArrayList<ElementsMarkListener<T>>();
+  private final Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<T, ElementProperties>();
   private final Map<T, Boolean> myDisabledMap = new HashMap<T, Boolean>();
 
   public static interface ElementsMarkListener<T> {
@@ -572,7 +572,7 @@ public class ElementsChooser<T> extends JPanel {
   }
 
   private class CheckMarkColumnCellRenderer implements TableCellRenderer {
-    private TableCellRenderer myDelegate;
+    private final TableCellRenderer myDelegate;
 
     public CheckMarkColumnCellRenderer(TableCellRenderer delegate) {
       myDelegate = delegate;

@@ -21,8 +21,8 @@ import java.util.LinkedHashSet;
  * @author max
  */
 public class JdkScope extends GlobalSearchScope {
-  private LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
-  private String myJdkName;
+  private final LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
+  private final String myJdkName;
   private final ProjectFileIndex myIndex;
 
   public JdkScope(Project project, JdkOrderEntry jdk) {

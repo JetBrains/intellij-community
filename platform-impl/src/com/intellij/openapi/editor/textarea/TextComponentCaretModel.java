@@ -13,7 +13,7 @@ import javax.swing.text.JTextComponent;
  * @author yole
  */
 public class TextComponentCaretModel implements CaretModel {
-  private JTextComponent myTextComponent;
+  private final JTextComponent myTextComponent;
   private final TextComponentEditor myEditor;
 
   public TextComponentCaretModel(final JTextComponent textComponent, TextComponentEditor editor) {

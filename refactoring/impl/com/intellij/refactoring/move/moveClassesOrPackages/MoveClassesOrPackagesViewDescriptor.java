@@ -16,12 +16,12 @@ import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
 class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
-  private PsiElement[] myPsiElements;
+  private final PsiElement[] myPsiElements;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
-  private String myNewParentPackageName;
+  private final String myNewParentPackageName;
   private String myProcessedElementsHeader;
-  private String myCodeReferencesText;
+  private final String myCodeReferencesText;
   private final String myHelpID;
 
   public MoveClassesOrPackagesViewDescriptor(PsiElement[] psiElements,

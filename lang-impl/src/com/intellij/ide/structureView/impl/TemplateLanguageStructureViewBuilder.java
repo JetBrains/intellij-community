@@ -44,7 +44,7 @@ import java.util.List;
 public abstract class TemplateLanguageStructureViewBuilder implements StructureViewBuilder {
   private final VirtualFile myVirtualFile;
   private final Project myProject;
-  private PsiTreeChangeAdapter myPsiTreeChangeAdapter;
+  private final PsiTreeChangeAdapter myPsiTreeChangeAdapter;
   private Language myTemplateDataLanguage;
   private StructureViewComposite.StructureViewDescriptor myBaseStructureViewDescriptor;
   private FileEditor myFileEditor;

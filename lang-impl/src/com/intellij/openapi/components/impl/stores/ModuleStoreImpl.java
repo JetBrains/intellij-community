@@ -29,7 +29,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
   @NonNls private static final String MODULE_FILE_MACRO = "MODULE_FILE";
 
-  private ModuleImpl myModule;
+  private final ModuleImpl myModule;
 
   public static final String DEFAULT_STATE_STORAGE = "$" + MODULE_FILE_MACRO + "$";
 

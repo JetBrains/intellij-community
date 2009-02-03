@@ -20,7 +20,7 @@ import java.beans.PropertyChangeListener;
  */
 public class HttpFileEditor extends UserDataHolderBase implements FileEditor {
   private final HttpVirtualFile myVirtualFile;
-  private DownloadRemoteFilePanel myDownloadPanel;
+  private final DownloadRemoteFilePanel myDownloadPanel;
 
   public HttpFileEditor(final Project project, final HttpVirtualFile virtualFile) {
     myVirtualFile = virtualFile;

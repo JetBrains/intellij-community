@@ -16,8 +16,8 @@ import java.util.List;
 
 public class XmlAspectChangeSetImpl implements XmlChangeSet {
   private final PomModel myModel;
-  private List<XmlChange> myChanges = new ArrayList<XmlChange>();
-  private List<XmlFile> myChangedFiles = new ArrayList<XmlFile>();
+  private final List<XmlChange> myChanges = new ArrayList<XmlChange>();
+  private final List<XmlFile> myChangedFiles = new ArrayList<XmlFile>();
 
   public XmlAspectChangeSetImpl(PomModel model) {
     myModel = model;

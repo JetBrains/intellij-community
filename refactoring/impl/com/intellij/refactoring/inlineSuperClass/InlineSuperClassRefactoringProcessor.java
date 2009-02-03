@@ -38,7 +38,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   private final PsiClass mySuperClass;
   private final PsiClass[] myTargetClasses;
-  private MemberInfo[] myMemberInfos;
+  private final MemberInfo[] myMemberInfos;
 
   public InlineSuperClassRefactoringProcessor(Project project, PsiClass superClass, final PsiClass... targetClasses) {
     super(project);

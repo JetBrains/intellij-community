@@ -15,7 +15,7 @@ import java.awt.*;
 public class NewCodeStyleSettingsPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSettingsPanel");
 
-  private Configurable myTab;
+  private final Configurable myTab;
 
   public NewCodeStyleSettingsPanel(Configurable tab) {
     super(new BorderLayout());

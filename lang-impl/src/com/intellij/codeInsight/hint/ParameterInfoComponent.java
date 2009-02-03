@@ -17,14 +17,14 @@ import java.awt.*;
 import java.util.EnumSet;
 
 class ParameterInfoComponent extends JPanel{
-  private Object[] myObjects;
+  private final Object[] myObjects;
   private int myCurrentParameterIndex;
 
   private PsiElement myParameterOwner;
   private Object myHighlighted;
   private final @NotNull ParameterInfoHandler myHandler;
 
-  private OneElementComponent[] myPanels;
+  private final OneElementComponent[] myPanels;
 
   private static final Color BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
   private static final Color FOREGROUND_COLOR = new Color(0, 0, 0);

@@ -19,8 +19,8 @@ import java.util.Set;
 
 public class DirectoryNode extends PackageDependenciesNode {
 
-  private String myDirName;
-  private PsiDirectory myDirectory;
+  private final String myDirName;
+  private final PsiDirectory myDirectory;
 
   private DirectoryNode myCompactedDirNode;
   private DirectoryNode myWrapper;
@@ -33,17 +33,17 @@ public class DirectoryNode extends PackageDependenciesNode {
     myDirectory = aDirectory;
     VirtualFile directory = myDirectory.getVirtualFile();
     final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
-    myDirName = aDirectory.getName();
+    String dirName = aDirectory.getName();
     if (showFQName) {
       final VirtualFile contentRoot = index.getContentRootForFile(directory);
       if (contentRoot != null) {
         if (directory == contentRoot) {
-          myFQName = myDirName;
+          myFQName = dirName;
         }
         else {
           final VirtualFile sourceRoot = index.getSourceRootForFile(directory);
           if (directory == sourceRoot) {
-            myFQName = myDirName;
+            myFQName = dirName;
           }
           else if (sourceRoot != null) {
             myFQName = VfsUtil.getRelativePath(directory, sourceRoot, '/');
@@ -56,8 +56,9 @@ public class DirectoryNode extends PackageDependenciesNode {
       else {
         myFQName = FilePatternPackageSet.getLibRelativePath(directory, index);
       }
-      myDirName = myFQName;
+      dirName = myFQName;
     }
+    myDirName = dirName;
     myCompactPackages = compactPackages;
   }
 

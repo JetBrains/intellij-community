@@ -7,7 +7,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class TypeCookViewDescriptor implements UsageViewDescriptor {
-  private PsiElement[] myElements;
+  private final PsiElement[] myElements;
 
   public TypeCookViewDescriptor(PsiElement[] elements) {
     myElements = elements;

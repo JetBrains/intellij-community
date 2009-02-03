@@ -18,7 +18,7 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.psi.PsiFile;
 
 public class NamedPackageSetReference implements PackageSet {
-  private String myName;
+  private final String myName;
 
   public NamedPackageSetReference(String name) {
     myName = name.startsWith("$") ? name.substring(1) : name;

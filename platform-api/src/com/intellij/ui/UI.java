@@ -31,7 +31,7 @@ import java.util.Map;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class UI {
-  private static Map<String, Color> ourColors = new HashMap<String, Color>();
+  private static final Map<String, Color> ourColors = new HashMap<String, Color>();
 
   static {
     ourColors.put("panel.border.color", new Color(102, 101, 84));

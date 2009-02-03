@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SkipDefaultValuesSerializationFilters implements SerializationFilter {
-  private Map<Class, Object> myDefaultBeans = new HashMap<Class, Object>();
+  private final Map<Class, Object> myDefaultBeans = new HashMap<Class, Object>();
 
   public boolean accepts(final Accessor accessor, final Object bean) {
     Object defaultBean = getDefaultBean(bean);

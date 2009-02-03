@@ -14,9 +14,9 @@ import java.util.Map;
  */
 public class RemoteFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.http.RemoteFileManager");
-  private LocalFileStorage myStorage;
+  private final LocalFileStorage myStorage;
   private final HttpFileSystemImpl myHttpFileSystem;
-  private Map<Trinity<Boolean, RemoteContentProvider, String>, VirtualFileImpl> myRemoteFiles;
+  private final Map<Trinity<Boolean, RemoteContentProvider, String>, VirtualFileImpl> myRemoteFiles;
 
   public RemoteFileManager(final HttpFileSystemImpl httpFileSystem) {
     myHttpFileSystem = httpFileSystem;

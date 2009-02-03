@@ -19,8 +19,8 @@ import java.util.*;
  */
 public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
-  private LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
-  private List<Module> myModules;
+  private final LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
+  private final List<Module> myModules;
   private boolean myJDKProcessed = false;
 
   public LibraryRuntimeClasspathScope(final Project project, final List<Module> modules) {

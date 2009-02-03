@@ -32,7 +32,7 @@ import java.util.Set;
 public class ProjectRunConfigurationManager implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ProjectRunConfigurationManager");
 
-  private RunManagerImpl myManager;
+  private final RunManagerImpl myManager;
   private List<Element> myUnloadedElements = null;
 
   public ProjectRunConfigurationManager(final RunManagerImpl manager) {

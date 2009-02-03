@@ -25,9 +25,9 @@ import java.io.IOException;
  * @author spleaner
  */
 public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
-  private String myName;
-  private int myType;
-  private String myInspectionName;
+  private final String myName;
+  private final int myType;
+  private final String myInspectionName;
 
   public AddCustomTagOrAttributeIntentionAction(String shortName, String name, int type) {
     myInspectionName = shortName;

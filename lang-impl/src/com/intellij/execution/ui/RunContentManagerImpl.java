@@ -48,7 +48,7 @@ public class RunContentManagerImpl implements RunContentManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentManagerImpl");
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
 
-  private Project myProject;
+  private final Project myProject;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new HashMap<String, ContentManager>();
 
   private final Map<RunContentListener, MyRunContentListener> myListeners = new HashMap<RunContentListener, MyRunContentListener>();
@@ -569,16 +569,16 @@ public class RunContentManagerImpl implements RunContentManager {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       private ProgressIndicator myProgressIndicator;
-      private Semaphore mySemaphore = new Semaphore();
+      private final Semaphore mySemaphore = new Semaphore();
 
-      private Runnable myWaitThread = new Runnable() {
+      private final Runnable myWaitThread = new Runnable() {
         public void run() {
           descriptor.getProcessHandler().waitFor();
           mySemaphore.up();
         }
       };
 
-      private Runnable myCancelListener = new Runnable() {
+      private final Runnable myCancelListener = new Runnable() {
         public void run() {
           while(true) {
             if(myProgressIndicator != null && (myProgressIndicator.isCanceled() || !myProgressIndicator.isRunning())) {

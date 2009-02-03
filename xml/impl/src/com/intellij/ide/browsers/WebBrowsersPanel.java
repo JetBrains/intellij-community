@@ -23,10 +23,10 @@ import java.util.Map;
 public class WebBrowsersPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.WebBrowsersPanel");
 
-  private JPanel mySettingsPanel;
+  private final JPanel mySettingsPanel;
   private Map<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>> myBrowserSettingsMap =
       new HashMap<BrowsersConfiguration.BrowserFamily, Pair<JCheckBox, TextFieldWithBrowseButton>>();
-  private BrowsersConfiguration myConfiguration;
+  private final BrowsersConfiguration myConfiguration;
 
   public WebBrowsersPanel(final BrowsersConfiguration configuration) {
     setLayout(new BorderLayout());

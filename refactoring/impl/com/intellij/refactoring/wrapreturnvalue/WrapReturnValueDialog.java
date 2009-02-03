@@ -28,7 +28,7 @@ import java.awt.event.ActionListener;
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 class WrapReturnValueDialog extends RefactoringDialog {
 
-  private PsiMethod sourceMethod;
+  private final PsiMethod sourceMethod;
   private JTextField sourceMethodTextField;
 
   private JRadioButton createNewClassButton;

@@ -44,7 +44,7 @@ public class QuickList implements ExternalizableScheme {
 
   private boolean myReadonly;
 
-  private ExternalInfo myExternalInfo = new ExternalInfo();
+  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
 
 

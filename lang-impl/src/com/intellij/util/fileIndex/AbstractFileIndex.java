@@ -35,11 +35,11 @@ import java.util.*;
 public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> implements FileIndex<IndexEntry> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.fileIndex.AbstractFileIndex");
   private final Map<String, IndexEntry> myFileUrl2IndexEntry = new HashMap<String, IndexEntry>();
-  private ProjectFileIndex myProjectFileIndex;
+  private final ProjectFileIndex myProjectFileIndex;
   private boolean myFormatChanged;
   private final Project myProject;
   private AbstractFileIndex.FileIndexCacheUpdater myRootsChangeCacheUpdater;
-  private StartupManagerEx myStartupManager;
+  private final StartupManagerEx myStartupManager;
   private FileIndexRefreshCacheUpdater myRefreshCacheUpdater;
   private final Object myIndexLock = new Object();
 

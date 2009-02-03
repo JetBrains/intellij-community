@@ -9,8 +9,8 @@ import com.intellij.xml.XmlAttributeDescriptor;
  * @author Maxim.Mossienko
  */
 public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
-  private XmlAttributeDescriptor delegate;
-  private boolean myCaseSensitive;
+  private final XmlAttributeDescriptor delegate;
+  private final boolean myCaseSensitive;
 
   public HtmlAttributeDescriptorImpl(XmlAttributeDescriptor _delegate, boolean caseSensitive) {
     delegate = _delegate;

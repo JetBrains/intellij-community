@@ -41,17 +41,17 @@ import java.util.regex.Pattern;
 public class JavaDocExternalFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocExternalFilter");
 
-  private Project myProject;
-  private PsiManager myManager;
+  private final Project myProject;
+  private final PsiManager myManager;
 
-  private static @NonNls Pattern ourHTMLsuffix = Pattern.compile("[.][hH][tT][mM][lL]?");
-  private static @NonNls Pattern ourParentFolderprefix = Pattern.compile("^[.][.]/");
-  private static @NonNls Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
-  private static @NonNls Pattern ourHTMLFilesuffix = Pattern.compile("/[^/]*[.][hH][tT][mM][lL]?$");
-  private static @NonNls Pattern ourHREFselector = Pattern.compile("<A[ \\t\\n\\r\\f]+HREF=\"([^>]*)\"");
-  private static @NonNls Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
-  private static @NonNls Pattern ourIMGselector = Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*)\"");
-  private static @NonNls Pattern ourMethodHeading = Pattern.compile("<H3>(.+)</H3>");
+  private static @NonNls final Pattern ourHTMLsuffix = Pattern.compile("[.][hH][tT][mM][lL]?");
+  private static @NonNls final Pattern ourParentFolderprefix = Pattern.compile("^[.][.]/");
+  private static @NonNls final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
+  private static @NonNls final Pattern ourHTMLFilesuffix = Pattern.compile("/[^/]*[.][hH][tT][mM][lL]?$");
+  private static @NonNls final Pattern ourHREFselector = Pattern.compile("<A[ \\t\\n\\r\\f]+HREF=\"([^>]*)\"");
+  private static @NonNls final Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
+  private static @NonNls final Pattern ourIMGselector = Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*)\"");
+  private static @NonNls final Pattern ourMethodHeading = Pattern.compile("<H3>(.+)</H3>");
   private static @NonNls final String DOC_ELEMENT_PROTOCOL = "doc_element://";
   private static @NonNls final String PSI_ELEMENT_PROTOCOL = "psi_element://";
   private static @NonNls final String JAR_PROTOCOL = "jar:";
@@ -66,7 +66,7 @@ public class JavaDocExternalFilter {
   @NonNls private static final String DT = "<DT>";
 
   private static abstract class RefConvertor {
-    private Pattern mySelector;
+    private final Pattern mySelector;
 
     public RefConvertor(Pattern selector) {
       mySelector = selector;
@@ -102,7 +102,7 @@ public class JavaDocExternalFilter {
     }
   }
 
-  private RefConvertor myIMGConvertor = new RefConvertor(ourIMGselector) {
+  private final RefConvertor myIMGConvertor = new RefConvertor(ourIMGselector) {
     protected String convertReference(String root, String href) {
       if (StringUtil.startsWithChar(href, '#')) {
         return DOC_ELEMENT_PROTOCOL + root + href;
@@ -112,7 +112,7 @@ public class JavaDocExternalFilter {
     }
   };
 
-  private RefConvertor[] myReferenceConvertors = new RefConvertor[]{
+  private final RefConvertor[] myReferenceConvertors = new RefConvertor[]{
     new RefConvertor(ourHREFselector) {
       protected String convertReference(String root, String href) {
         if (BrowserUtil.isAbsoluteURL(href)) {

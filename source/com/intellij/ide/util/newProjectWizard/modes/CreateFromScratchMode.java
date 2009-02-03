@@ -25,7 +25,7 @@ import java.util.Map;
 
 public class CreateFromScratchMode extends WizardMode {
 
-  @NonNls private Map<String, ModuleBuilder> myBuildersMap = new HashMap<String, ModuleBuilder>();
+  @NonNls private final Map<String, ModuleBuilder> myBuildersMap = new HashMap<String, ModuleBuilder>();
 
   @NotNull
   public String getDisplayName(final WizardContext context) {

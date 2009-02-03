@@ -13,7 +13,7 @@ import java.awt.event.MouseEvent;
 class ContentTabLabel extends BaseLabel {
 
   Content myContent;
-  private BaseButtonBehavior myBehavior;
+  private final BaseButtonBehavior myBehavior;
 
   public ContentTabLabel(final Content content, ToolWindowContentUi ui) {
     super(ui, true);

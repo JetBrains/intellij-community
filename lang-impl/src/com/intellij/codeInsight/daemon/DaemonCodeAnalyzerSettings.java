@@ -28,7 +28,7 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
   @NonNls private static final String PROFILE_ATT = "profile";
   @NonNls public static final String DEFAULT_PROFILE_ATT = "Default";
   @NonNls public static final String PROFILE_COPY_NAME = "copy";
-  private InspectionProfileManager myManager;
+  private final InspectionProfileManager myManager;
 
 
   public DaemonCodeAnalyzerSettings(InspectionProfileManager manager) {

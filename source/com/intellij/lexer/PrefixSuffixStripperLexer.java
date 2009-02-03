@@ -15,11 +15,11 @@ public class PrefixSuffixStripperLexer extends LexerBase {
   private IElementType myTokenType;
   private int myState;
   private int myBufferEnd;
-  private String myPrefix;
-  private IElementType myPrefixType;
-  private String mySuffix;
-  private IElementType myMiddleTokenType;
-  private IElementType mySuffixType;
+  private final String myPrefix;
+  private final IElementType myPrefixType;
+  private final String mySuffix;
+  private final IElementType myMiddleTokenType;
+  private final IElementType mySuffixType;
 
   public PrefixSuffixStripperLexer(final String prefix,
                                    final IElementType prefixType,

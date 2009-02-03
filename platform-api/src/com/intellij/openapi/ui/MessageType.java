@@ -9,8 +9,8 @@ public class MessageType {
   public static final MessageType INFO = new MessageType(Messages.getInformationIcon(), new Color(186, 238, 186, 230));
   public static final MessageType WARNING = new MessageType(Messages.getWarningIcon(), new Color(186, 238, 186, 230));
 
-  private Icon myDefaultIcon;
-  private Color myPopupBackground;
+  private final Icon myDefaultIcon;
+  private final Color myPopupBackground;
 
   private MessageType(final Icon defaultIcon, Color popupBackground) {
     myDefaultIcon = defaultIcon;

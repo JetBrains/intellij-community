@@ -24,12 +24,12 @@ public class LibraryCompositionSettings {
   private final String myBaseDirectoryForDownloadedFiles;
   private final String myTitle;
   private String myDirectoryForDownloadedLibrariesPath;
-  private Set<VirtualFile> myAddedJars = new LinkedHashSet<VirtualFile>();
+  private final Set<VirtualFile> myAddedJars = new LinkedHashSet<VirtualFile>();
   private boolean myDownloadLibraries = true;
-  private Set<Library> myUsedLibraries = new LinkedHashSet<Library>();
+  private final Set<Library> myUsedLibraries = new LinkedHashSet<Library>();
   private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
   private String myLibraryName;
-  private Icon myIcon;
+  private final Icon myIcon;
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,

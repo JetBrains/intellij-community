@@ -17,8 +17,8 @@ import javax.swing.text.JTextComponent;
  * @author yole
  */
 public class TextComponentSelectionModel implements SelectionModel {
-  private JTextComponent myTextComponent;
-  private TextComponentEditor myEditor;
+  private final JTextComponent myTextComponent;
+  private final TextComponentEditor myEditor;
 
   public TextComponentSelectionModel(final JTextComponent textComponent, final TextComponentEditor textComponentEditor) {
     myTextComponent = textComponent;

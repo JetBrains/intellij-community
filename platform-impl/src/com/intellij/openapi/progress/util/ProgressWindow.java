@@ -37,9 +37,9 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
 
   private MyDialog myDialog;
-  private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private Alarm myInstallFunAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private Alarm myShowWindowAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myInstallFunAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myShowWindowAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final Project myProject;
   private final boolean myShouldShowCancel;
@@ -298,7 +298,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     private long myLastTimeDrawn = -1;
     private boolean myShouldShowBackground;
 
-    private Runnable myRepaintRunnable = new Runnable() {
+    private final Runnable myRepaintRunnable = new Runnable() {
       public void run() {
         String text = getText();
         double fraction = getFraction();
@@ -358,14 +358,15 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     private JPanel myFunPanel;
     private TitlePanel myTitlePanel;
     private DialogWrapper myPopup;
-    private Window myParentWindow;
+    private final Window myParentWindow;
     private Point myLastClicked;
 
     public MyDialog(boolean shouldShowBackground, Project project, String cancelText) {
-      myParentWindow = WindowManager.getInstance().suggestParentWindow(project);
-      if (myParentWindow == null) {
-        myParentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+      Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
+      if (parentWindow == null) {
+        parentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
       }
+      myParentWindow =parentWindow;
 
       initDialog(shouldShowBackground, cancelText);
     }

@@ -38,7 +38,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   @NonNls private static final String OPTION = "option";
   @NonNls private static final String ENV_VARIABLES = "ENV_VARIABLES";
 
-  private ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>(2);
+  private final ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>(2);
 
   public EnvironmentVariablesComponent() {
     super();

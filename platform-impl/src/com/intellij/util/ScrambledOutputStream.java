@@ -5,7 +5,7 @@ import java.io.OutputStream;
 
 public class ScrambledOutputStream extends OutputStream{
   static final int MASK = 0xAA;
-  private OutputStream myOriginalStream;
+  private final OutputStream myOriginalStream;
 
   public ScrambledOutputStream(OutputStream originalStream) {
     myOriginalStream = originalStream;

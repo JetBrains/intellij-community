@@ -3,9 +3,9 @@ package com.intellij.rt.execution.junit;
 import com.intellij.rt.execution.junit.segments.Packet;
 
 public class TestMeter {
-  private long myStartTime;
+  private final long myStartTime;
 
-  private long myInitialUsedMemory;
+  private final long myInitialUsedMemory;
   private long myFinalMemory;
   private long myDuration;
 

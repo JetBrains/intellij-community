@@ -13,7 +13,7 @@ import com.intellij.psi.filters.TrueFilter;
  * To change this template use File | Settings | File Templates.
  */
 public class SyntaxTableCompletionData extends CompletionData{
-  private SyntaxTable mySyntaxTable;
+  private final SyntaxTable mySyntaxTable;
 
   public SyntaxTableCompletionData(SyntaxTable _syntaxTable) {
     mySyntaxTable = _syntaxTable;

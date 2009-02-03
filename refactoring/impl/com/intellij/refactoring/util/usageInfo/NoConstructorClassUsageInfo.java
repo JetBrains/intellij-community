@@ -7,7 +7,7 @@ import com.intellij.usageView.UsageInfo;
  * @author dsl
  */
 public class NoConstructorClassUsageInfo extends UsageInfo {
-  private PsiClass myClass;
+  private final PsiClass myClass;
 
   public NoConstructorClassUsageInfo(PsiClass aClass) {
     super(aClass);

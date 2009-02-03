@@ -199,7 +199,7 @@ public class ActionMenuItem extends JMenuItem {
   private final class MenuItemSynchronizer implements PropertyChangeListener, Disposable {
     @NonNls private static final String SELECTED = "selected";
 
-    private Set<String> mySynchronized = new HashSet<String>();
+    private final Set<String> mySynchronized = new HashSet<String>();
 
     private MenuItemSynchronizer() {
       myPresentation.addPropertyChangeListener(this);

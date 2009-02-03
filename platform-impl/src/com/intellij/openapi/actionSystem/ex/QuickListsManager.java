@@ -35,8 +35,8 @@ import java.util.HashSet;
  */
 public class QuickListsManager implements ExportableApplicationComponent, NamedJDOMExternalizable {
   @NonNls private static final String LIST_TAG = "list";
-  private ActionManager myActionManager;
-  private SchemesManager<QuickList, QuickList> mySchemesManager;
+  private final ActionManager myActionManager;
+  private final SchemesManager<QuickList, QuickList> mySchemesManager;
 
   private final static Logger LOG = Logger.getInstance("#" + QuickListsManager.class.getName());
 
@@ -167,7 +167,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
   }
 
   private static class InvokeQuickListAction extends QuickSwitchSchemeAction {
-    private QuickList myQuickList;
+    private final QuickList myQuickList;
 
     public InvokeQuickListAction(QuickList quickList) {
       myQuickList = quickList;

@@ -106,7 +106,7 @@ public class LibrariesContainerFactory {
 
 
   private static class LibrariesContainerImpl extends LibrariesContainerBase {
-    private @Nullable Project myProject;
+    private @Nullable final Project myProject;
     @Nullable private final Module myModule;
     @Nullable private final ModifiableRootModel myRootModel;
 

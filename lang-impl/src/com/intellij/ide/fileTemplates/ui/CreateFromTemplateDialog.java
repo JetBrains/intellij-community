@@ -28,7 +28,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   private final CreateFromTemplatePanel myAttrPanel;
   private final JComponent myAttrComponent;
   @NotNull private final FileTemplate myTemplate;
-  private Properties myDefaultProperties;
+  private final Properties myDefaultProperties;
 
   public CreateFromTemplateDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull FileTemplate template,
                                   @Nullable final AttributesDefaults attributesDefaults) {

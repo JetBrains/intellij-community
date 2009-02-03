@@ -34,7 +34,7 @@ import java.util.List;
 public class InstalledPluginsTableModel extends PluginTableModel {
   public static Map<PluginId, Integer> NewVersions2Plugins = new HashMap<PluginId, Integer>();
   public static Set<PluginId> updatedPlugins = new HashSet<PluginId>();
-  private Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
+  private final Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
 
   public InstalledPluginsTableModel(SortableProvider sortableProvider) {
     super.sortableProvider = sortableProvider;

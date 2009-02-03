@@ -13,7 +13,7 @@ import com.intellij.openapi.keymap.KeymapManager;
  */ 
 final class ProxyShortcutSet implements ShortcutSet {
   private final String myActionId;
-  private KeymapManager myKeymapManager;
+  private final KeymapManager myKeymapManager;
 
   public ProxyShortcutSet(String actionId, KeymapManager keymapManager) {
     myActionId = actionId;

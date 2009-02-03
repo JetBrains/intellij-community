@@ -11,7 +11,7 @@ class ItemElement extends LibraryTableTreeContentElement {
   private final String myUrl;
   private final OrderRootType myRootType;
   private final boolean myIsJarDirectory;
-  private boolean myValid;
+  private final boolean myValid;
 
   public ItemElement(LibraryTableTreeContentElement parent, Library library, String url, OrderRootType rootType, final boolean isJarDirectory, boolean isValid) {
     myParent = parent;

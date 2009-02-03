@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class IdeaProjectSettingsService extends ProjectSettingsService {
-  private Project myProject;
+  private final Project myProject;
 
   public IdeaProjectSettingsService(final Project project) {
     myProject = project;

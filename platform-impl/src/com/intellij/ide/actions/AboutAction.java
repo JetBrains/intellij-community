@@ -116,9 +116,9 @@ public class AboutAction extends AnAction {
   }
 
   private static class AboutBoxLine {
-    private String myText;
-    private boolean myBold;
-    private boolean myLink;
+    private final String myText;
+    private final boolean myBold;
+    private final boolean myLink;
 
     public AboutBoxLine(final String text, final boolean bold, final boolean link) {
       myLink = link;
@@ -151,12 +151,12 @@ public class AboutAction extends AnAction {
     final Color linkCol;
     static final int UP = 0;
     static final int DOWN = 1;
-    private Image myImage;
+    private final Image myImage;
     private float myAlpha;
     private int myAlphaDirection = UP;
     private Font myFont;
     private Font myBoldFont;
-    private List<AboutBoxLine> myLines = new ArrayList<AboutBoxLine>();
+    private final List<AboutBoxLine> myLines = new ArrayList<AboutBoxLine>();
     private int linkX;
     private int linkY;
     private int linkWidth;

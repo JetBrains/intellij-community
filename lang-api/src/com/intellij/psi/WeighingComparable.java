@@ -18,7 +18,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   private Comparable[] myComputedWeighs;
   private final T myElement;
   private final Loc myLocation;
-  private Weigher<T,Loc>[] myWeighers;
+  private final Weigher<T,Loc>[] myWeighers;
 
   public WeighingComparable(final T element, final Loc location, final Weigher<T,Loc>[] weighers) {
     myElement = element;

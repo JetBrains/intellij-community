@@ -32,7 +32,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actionMacro.ActionMacroManager");
 
   private boolean myIsRecording;
-  private ActionManagerEx myActionManager;
+  private final ActionManagerEx myActionManager;
   private ActionMacro myLastMacro;
   private ActionMacro myRecordingMacro;
   private ArrayList<ActionMacro> myMacros = new ArrayList<ActionMacro>();

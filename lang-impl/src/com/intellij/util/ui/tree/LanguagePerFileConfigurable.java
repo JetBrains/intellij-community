@@ -37,7 +37,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   private final String myTreeTableTitle;
   private final String myOverrideQuestion;
   private final String myOverrideTitle;
-  private AbstractFileTreeTable<T> myTreeView;
+  private final AbstractFileTreeTable<T> myTreeView;
   private JScrollPane myTreePanel;
   private JPanel myPanel;
   private JLabel myLabel;

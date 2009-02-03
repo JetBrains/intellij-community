@@ -13,7 +13,7 @@ import javax.swing.*;
 public class InspectionRootNode extends InspectionTreeNode {
   private static final Icon INFO = IconLoader.getIcon("/general/ijLogo.png");
   private static final Icon APP_ICON = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl()); 
-  private Project myProject;
+  private final Project myProject;
 
   public InspectionRootNode(Project project) {
     super(project);

@@ -22,18 +22,25 @@ public class FieldConflictsResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.FieldConflictsResolver");
   private final String myName;
   private final PsiCodeBlock myScope;
-  private PsiField myField;
-  private List<PsiReferenceExpression> myReferenceExpressions;
+  private final PsiField myField;
+  private final List<PsiReferenceExpression> myReferenceExpressions;
   private PsiClass myQualifyingClass;
 
   public FieldConflictsResolver(String name, PsiCodeBlock scope) {
     myName = name;
     myScope = scope;
-    if (myScope == null) return;
+    if (myScope == null) {
+      myField = null;
+      myReferenceExpressions = null;
+      return;
+    }
     JavaPsiFacade facade = JavaPsiFacade.getInstance(myScope.getProject());
     final PsiVariable oldVariable = facade.getResolveHelper().resolveReferencedVariable(myName, myScope);
-    if (!(oldVariable instanceof PsiField)) return;
-    myField = (PsiField) oldVariable;
+    myField = oldVariable instanceof PsiField ? (PsiField) oldVariable : null;
+    if (!(oldVariable instanceof PsiField)) {
+      myReferenceExpressions = null;
+      return;
+    }
     myReferenceExpressions = new ArrayList<PsiReferenceExpression>();
     for (PsiReference reference : ReferencesSearch.search(myField, new LocalSearchScope(myScope), false)) {
       final PsiElement element = reference.getElement();

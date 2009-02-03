@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
 
-  private PsiMethod myMethodToSearchFor;
+  private final PsiMethod myMethodToSearchFor;
 
   public IntroduceParameterViewDescriptor(PsiMethod methodToSearchFor
   ) {

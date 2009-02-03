@@ -991,7 +991,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   protected class BodyInsertTransaction extends InsertTransaction{
-    private TreeElement myChild;
+    private final TreeElement myChild;
     private ASTNode myNewElement;
 
     public BodyInsertTransaction(TreeElement child) {

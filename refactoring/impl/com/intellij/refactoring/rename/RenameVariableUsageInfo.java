@@ -8,7 +8,7 @@ import com.intellij.psi.PsiVariable;
  * @author dsl
  */
 public class RenameVariableUsageInfo extends UsageInfo {
-  private String myNewName;
+  private final String myNewName;
 
   public RenameVariableUsageInfo(PsiVariable element, String newName) {
     super(element);

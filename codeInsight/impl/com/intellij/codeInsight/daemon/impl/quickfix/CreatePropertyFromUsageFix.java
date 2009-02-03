@@ -95,7 +95,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   static class FieldExpression extends Expression {
-    private String myDefaultFieldName;
+    private final String myDefaultFieldName;
     private final PsiField myField;
     private final PsiClass myClass;
     private final PsiType[] myExpectedTypes;

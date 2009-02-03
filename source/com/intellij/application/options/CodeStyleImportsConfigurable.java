@@ -9,7 +9,7 @@ import javax.swing.*;
 
 public class CodeStyleImportsConfigurable extends BaseConfigurable {
   private CodeStyleImportsPanel myPanel;
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
 
   public CodeStyleImportsConfigurable(CodeStyleSettings settings) {
     mySettings = settings;

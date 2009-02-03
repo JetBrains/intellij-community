@@ -64,7 +64,7 @@ public class UrlConnectionUtil {
 
   public static class InputStreamGetter implements Runnable {
     private InputStream myInputStream;
-    private URLConnection myUrlConnection;
+    private final URLConnection myUrlConnection;
     private IOException myException;
 
     public InputStreamGetter(URLConnection urlConnection) {

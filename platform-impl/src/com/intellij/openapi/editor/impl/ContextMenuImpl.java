@@ -33,7 +33,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   public static final String ACTION_GROUP = "EditorContextBarMenu";
 
   private ActionGroup myActionGroup;
-  private JComponent myComponent;
+  private final JComponent myComponent;
   private boolean myShowing = false;
   private int myCurrentOpacity;
   private Timer myShowTimer;
@@ -334,7 +334,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   private static class ContextMenuPanel extends JPanel {
-    private ContextMenuImpl myContextMenu;
+    private final ContextMenuImpl myContextMenu;
     private BufferedImage myBufferedImage;
     private boolean myPaintChildren = false;
 

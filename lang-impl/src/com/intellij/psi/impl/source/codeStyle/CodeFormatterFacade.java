@@ -26,8 +26,8 @@ import java.io.IOException;
 public class CodeFormatterFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
 
-  private CodeStyleSettings mySettings;
-  private Helper myHelper;
+  private final CodeStyleSettings mySettings;
+  private final Helper myHelper;
 
   public CodeFormatterFacade(CodeStyleSettings settings, Helper helper) {
     mySettings = settings;

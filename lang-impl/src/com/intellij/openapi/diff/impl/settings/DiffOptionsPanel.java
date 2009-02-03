@@ -235,8 +235,8 @@ public class DiffOptionsPanel implements OptionsPanel {
   private static class MyColorAndFontDescription implements EditorSchemeAttributeDescriptor {
     private Color myBackgroundColor;
     private Color myStripebarColor;
-    private Color myOriginalBackground;
-    private Color myOriginalStripebar;
+    private final Color myOriginalBackground;
+    private final Color myOriginalStripebar;
     private final EditorColorsScheme myScheme;
     private final TextDiffType myDiffType;
 

@@ -40,7 +40,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
-  private UIState myUiState = new UIState();
+  private final UIState myUiState = new UIState();
   private Splitter mySplitter;
   private JComponent myToolbarComponent;
   @NonNls private static final String CATEGORY = "category";
@@ -54,33 +54,33 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     public String lastEditedConfigurable;
   }
 
-  private Project myProject;
-  private ModuleManager myModuleManager;
+  private final Project myProject;
+  private final ModuleManager myModuleManager;
   private final FacetStructureConfigurable myFacetStructureConfigurable;
 
   private History myHistory = new History(this);
   private SidePanel mySidePanel;
 
   private JPanel myComponent;
-  private Wrapper myDetails = new Wrapper();
+  private final Wrapper myDetails = new Wrapper();
 
   private Configurable mySelectedConfigurable;
 
-  private ProjectJdksModel myProjectJdksModel = new ProjectJdksModel();
+  private final ProjectJdksModel myProjectJdksModel = new ProjectJdksModel();
 
   private ProjectConfigurable myProjectConfig;
-  private ProjectLibrariesConfigurable myProjectLibrariesConfig;
-  private GlobalLibrariesConfigurable myGlobalLibrariesConfig;
+  private final ProjectLibrariesConfigurable myProjectLibrariesConfig;
+  private final GlobalLibrariesConfigurable myGlobalLibrariesConfig;
   private ModuleStructureConfigurable myModulesConfig;
 
   private boolean myWasIntialized;
 
-  private List<Configurable> myName2Config = new ArrayList<Configurable>();
-  private StructureConfigurableContext myContext;
-  private ModulesConfigurator myModuleConfigurator;
+  private final List<Configurable> myName2Config = new ArrayList<Configurable>();
+  private final StructureConfigurableContext myContext;
+  private final ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
 
-  private JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>", JLabel.CENTER);
+  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>", JLabel.CENTER);
 
   public ProjectStructureConfigurable(final Project project, final ModuleManager moduleManager, final ProjectLibrariesConfigurable projectLibrariesConfigurable,
                                       final GlobalLibrariesConfigurable globalLibrariesConfigurable,

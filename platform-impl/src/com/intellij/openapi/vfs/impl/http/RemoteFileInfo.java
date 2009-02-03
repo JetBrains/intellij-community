@@ -30,7 +30,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   private boolean myDownloaded;
   private String myErrorMessage;
   private volatile boolean myCancelled;
-  private List<FileDownloadingListener> myListeners = new SmartList<FileDownloadingListener>();
+  private final List<FileDownloadingListener> myListeners = new SmartList<FileDownloadingListener>();
 
   public RemoteFileInfo(final @NotNull String url, final @NotNull RemoteFileManager manager, final @NotNull RemoteContentProvider provider) {
     myUrl = url;

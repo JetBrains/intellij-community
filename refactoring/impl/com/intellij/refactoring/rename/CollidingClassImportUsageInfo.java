@@ -7,7 +7,7 @@ import com.intellij.psi.PsiImportStatement;
  * @author dsl
  */
 public class CollidingClassImportUsageInfo extends ResolvableCollisionUsageInfo {
-  private PsiImportStatement myImportStatement;
+  private final PsiImportStatement myImportStatement;
 
   public CollidingClassImportUsageInfo(PsiImportStatement element, PsiElement referencedElement) {
     super(element, referencedElement);

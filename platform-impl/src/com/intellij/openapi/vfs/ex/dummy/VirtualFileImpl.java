@@ -16,7 +16,7 @@ abstract class VirtualFileImpl extends DeprecatedVirtualFile implements VirtualF
   private final VirtualFileDirectoryImpl myParent;
   private String myName;
   protected boolean myIsValid = true;
-  private int myId = DummyFileIdGenerator.next();
+  private final int myId = DummyFileIdGenerator.next();
 
   protected VirtualFileImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     myFileSystem = fileSystem;

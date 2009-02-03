@@ -22,8 +22,8 @@ import java.util.ArrayList;
 public class ActionUninstallPlugin extends AnAction {
   final private static String promptTitle = IdeBundle.message("title.plugin.uninstall");
 
-  private PluginTable pluginTable;
-  private PluginManagerMain host;
+  private final PluginTable pluginTable;
+  private final PluginManagerMain host;
 
   public ActionUninstallPlugin(PluginManagerMain mgr, PluginTable table) {
     super(IdeBundle.message("action.uninstall.plugin"), IdeBundle.message("action.uninstall.plugin"), IconLoader.getIcon("/actions/uninstall.png"));

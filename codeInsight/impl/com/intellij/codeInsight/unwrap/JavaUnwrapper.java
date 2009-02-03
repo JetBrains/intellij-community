@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class JavaUnwrapper implements Unwrapper {
-  private String myDescription;
+  private final String myDescription;
 
   public JavaUnwrapper(String description) {
     myDescription = description;
@@ -50,8 +50,8 @@ public abstract class JavaUnwrapper implements Unwrapper {
   }
 
   protected static class Context {
-    private List<PsiElement> myElementsToExtract = new ArrayList<PsiElement>();
-    private boolean myIsEffective;
+    private final List<PsiElement> myElementsToExtract = new ArrayList<PsiElement>();
+    private final boolean myIsEffective;
 
     public Context(boolean isEffective) {
       myIsEffective = isEffective;

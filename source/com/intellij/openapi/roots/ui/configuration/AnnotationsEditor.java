@@ -158,7 +158,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
   private static class TableItem {
     private final String myUrl;
-    private CellAppearance myCellAppearance;
+    private final CellAppearance myCellAppearance;
     public TableItem(VirtualFile file) {
       myUrl = file.getUrl();
       myCellAppearance = CellAppearanceUtils.forVirtualFile(file);

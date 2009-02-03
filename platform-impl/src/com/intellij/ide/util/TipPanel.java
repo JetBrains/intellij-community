@@ -28,10 +28,10 @@ public class TipPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.TipPanel");
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
-  private JCheckBox myCheckBox;
-  private JEditorPane browser;
-  private ArrayList<String> myTipPaths = new ArrayList<String>();
-  private HashMap<String, Class< ? extends ProductivityFeaturesProvider>> myPathsToProviderMap = new HashMap<String, Class<? extends ProductivityFeaturesProvider>>();
+  private final JCheckBox myCheckBox;
+  private final JEditorPane browser;
+  private final ArrayList<String> myTipPaths = new ArrayList<String>();
+  private final HashMap<String, Class< ? extends ProductivityFeaturesProvider>> myPathsToProviderMap = new HashMap<String, Class<? extends ProductivityFeaturesProvider>>();
   @NonNls
   private static final String ELEMENT_TIP = "tip";
   @NonNls

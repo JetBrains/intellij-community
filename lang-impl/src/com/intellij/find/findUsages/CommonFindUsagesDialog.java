@@ -16,7 +16,7 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
-  private PsiElement myPsiElement;
+  private final PsiElement myPsiElement;
 
   public CommonFindUsagesDialog(PsiElement element,
                                 Project project,

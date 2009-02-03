@@ -19,7 +19,7 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 public class EnumerationCopy implements Enumeration{
-  private Vector myElements;
+  private final Vector myElements;
   private Enumeration myEnumeration;
 
   public EnumerationCopy(Enumeration enumeration){

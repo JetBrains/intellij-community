@@ -27,14 +27,14 @@ import java.awt.event.ActionListener;
 
 class CopyClassDialog extends DialogWrapper{
   @NonNls private static final String RECENTS_KEY = "CopyClassDialog.RECENTS_KEY";
-  private JLabel myInformationLabel = new JLabel();
-  private JLabel myNameLabel = new JLabel();
+  private final JLabel myInformationLabel = new JLabel();
+  private final JLabel myNameLabel = new JLabel();
   private EditorTextField myNameField;
-  private JLabel myPackageLabel = new JLabel();
+  private final JLabel myPackageLabel = new JLabel();
   private ReferenceEditorComboWithBrowseButton myTfPackage;
-  private Project myProject;
+  private final Project myProject;
   private PsiDirectory myTargetDirectory;
-  private boolean myDoClone;
+  private final boolean myDoClone;
   private final PsiDirectory myDefaultTargetDirectory;
 
   public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {

@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author yole
  */
 public class JavaRefactoringListenerManagerImpl extends JavaRefactoringListenerManager {
-  private List<MoveMemberListener> myMoveMemberListeners = new CopyOnWriteArrayList<MoveMemberListener>();
+  private final List<MoveMemberListener> myMoveMemberListeners = new CopyOnWriteArrayList<MoveMemberListener>();
 
   public void addMoveMembersListener(MoveMemberListener moveMembersListener) {
     myMoveMemberListeners.add(moveMembersListener);

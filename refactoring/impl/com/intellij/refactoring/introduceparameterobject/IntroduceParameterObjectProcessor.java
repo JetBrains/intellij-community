@@ -50,7 +50,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   private final int[] paramsToMerge;
   private final List<PsiTypeParameter> typeParams;
   private final Set<PsiParameter> paramsNeedingSetters = new HashSet<PsiParameter>();
-  private PsiClass existingClass;
+  private final PsiClass existingClass;
   private boolean myExistingClassCompatible = true;
 
   public IntroduceParameterObjectProcessor(String className,

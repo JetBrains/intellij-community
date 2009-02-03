@@ -19,7 +19,7 @@ import java.util.List;
  *
  */
 public class UnSelectWordHandler extends EditorActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public UnSelectWordHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;

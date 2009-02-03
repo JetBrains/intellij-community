@@ -31,7 +31,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   @SuppressWarnings({"WeakerAccess"}) public boolean AUTOSCROLL_FROM_SOURCE = false;
   @SuppressWarnings({"WeakerAccess"}) public String ACTIVE_ACTIONS = "";
 
-  private Project myProject;
+  private final Project myProject;
   private StructureViewWrapperImpl myStructureViewWrapperImpl;
 
   private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();

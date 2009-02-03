@@ -16,7 +16,7 @@ import java.util.ArrayList;
  */
 public class HoverHyperlinkLabel extends JLabel {
   private String myOriginalText;
-  private ArrayList<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
+  private final ArrayList<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
 
   public HoverHyperlinkLabel(String text) {
     this(text, Color.BLUE);

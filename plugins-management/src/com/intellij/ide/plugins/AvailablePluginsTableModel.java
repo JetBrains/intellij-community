@@ -27,7 +27,7 @@ import java.util.Map;
  * To change this template use Options | File Templates.
  */
 public class AvailablePluginsTableModel extends PluginTableModel {
-  private static Map<PluginId, String> UpdateVersions = new HashMap<PluginId, String>();
+  private static final Map<PluginId, String> UpdateVersions = new HashMap<PluginId, String>();
 
   public AvailablePluginsTableModel(SortableProvider sortableProvider) {
     super(sortableProvider, 

@@ -21,8 +21,8 @@ import org.jdom.Text;
 import org.jetbrains.annotations.Nullable;
 
 public class TextBinding implements Binding {
-  private Accessor myAccessor;
-  private XmlSerializerImpl myXmlSerializer;
+  private final Accessor myAccessor;
+  private final XmlSerializerImpl myXmlSerializer;
   private Binding myBinding;
 
   public TextBinding(final Accessor accessor, final XmlSerializerImpl xmlSerializer) {

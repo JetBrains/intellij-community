@@ -26,7 +26,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
 
 
-  private JPanel myWholePanel;
+  private final JPanel myWholePanel;
 
   private WizardMode myMode;
   private final List<WizardMode> myModes = new ArrayList<WizardMode>();

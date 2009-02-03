@@ -25,9 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class ProjectConfigurableContext extends FacetEditorContextBase implements ProjectSettingsContext {
-  private Module myModule;
-  private boolean myNewFacet;
-  private ModuleConfigurationState myModuleConfigurationState;
+  private final Module myModule;
+  private final boolean myNewFacet;
+  private final ModuleConfigurationState myModuleConfigurationState;
 
   public ProjectConfigurableContext(final @NotNull Facet facet, final boolean isNewFacet,
                                     @Nullable FacetEditorContext parentContext,

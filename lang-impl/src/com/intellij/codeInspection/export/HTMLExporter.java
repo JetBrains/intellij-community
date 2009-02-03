@@ -30,7 +30,7 @@ import java.util.Set;
 
 public class HTMLExporter {
   private final String myRootFolder;
-  private Project myProject;
+  private final Project myProject;
   private int myFileCounter;
   private final HashMap<RefEntity,String> myElementToFilenameMap;
   private final HTMLComposerImpl myComposer;

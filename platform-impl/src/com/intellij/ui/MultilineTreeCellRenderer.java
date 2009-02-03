@@ -26,7 +26,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
 
   private int myMinHeight = 1;
   private Insets myTextInsets;
-  private Insets myLabelInsets = new Insets(1, 2, 1, 2);
+  private final Insets myLabelInsets = new Insets(1, 2, 1, 2);
 
   private boolean mySelected;
   private boolean myHasFocus;

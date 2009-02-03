@@ -24,8 +24,8 @@ public class RestartAction extends AnAction {
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   private final RunContentDescriptor myDescriptor;
-  private Executor myExecutor;
-  private ExecutionEnvironment myEnvironment;
+  private final Executor myExecutor;
+  private final ExecutionEnvironment myEnvironment;
 
   public RestartAction(final Executor executor,
                        final ProgramRunner runner,

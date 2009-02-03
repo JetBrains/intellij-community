@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class FileNode extends PackageDependenciesNode {
-  private PsiFile myFile;
-  private boolean myMarked;
+  private final PsiFile myFile;
+  private final boolean myMarked;
   private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.FileNode");
 
   public FileNode(PsiFile file, boolean marked) {

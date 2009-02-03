@@ -17,7 +17,7 @@ import java.awt.*;
 */
 public class VersionConfigurable extends FrameworkSupportConfigurable {
   private JComboBox myComboBox;
-  private VersionedFrameworkSupportProvider myFrameworkSupportProvider;
+  private final VersionedFrameworkSupportProvider myFrameworkSupportProvider;
 
   public VersionConfigurable(final VersionedFrameworkSupportProvider frameworkSupportProvider, String[] versions, String defaultVersion) {
     myFrameworkSupportProvider = frameworkSupportProvider;

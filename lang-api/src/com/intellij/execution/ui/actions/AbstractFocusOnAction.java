@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.ui.content.Content;
 
 public class AbstractFocusOnAction extends BaseViewAction implements Toggleable {
-  private String myCondition;
+  private final String myCondition;
 
   public AbstractFocusOnAction(String condition) {
     myCondition = condition;

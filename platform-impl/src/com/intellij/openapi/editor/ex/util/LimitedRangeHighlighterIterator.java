@@ -8,9 +8,9 @@ import com.intellij.psi.tree.IElementType;
  * @author max
  */
 public class LimitedRangeHighlighterIterator implements HighlighterIterator {
-  private HighlighterIterator myOriginal;
-  private int myStartOffset;
-  private int myEndOffset;
+  private final HighlighterIterator myOriginal;
+  private final int myStartOffset;
+  private final int myEndOffset;
 
 
   public LimitedRangeHighlighterIterator(final HighlighterIterator original, final int startOffset, final int endOffset) {

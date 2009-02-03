@@ -32,7 +32,7 @@ public class NotificationPopup {
   private final static int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
   private final static int FADE_OUT_TICKS = SHOW_TIME_TICKS + 60;
 
-  private ActionListener myFadeTracker = new ActionListener() {
+  private final ActionListener myFadeTracker = new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       Window popupWindow = SwingUtilities.windowForComponent(myContent);
       if (popupWindow != null) {
@@ -92,7 +92,7 @@ public class NotificationPopup {
   }
 
   private class ContentComponent extends JPanel {
-    private MouseAdapter myMouseListener;
+    private final MouseAdapter myMouseListener;
 
     public ContentComponent(JComponent content) {
       super(new BorderLayout());

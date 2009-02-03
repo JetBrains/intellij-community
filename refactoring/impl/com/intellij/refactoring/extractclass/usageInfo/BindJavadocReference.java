@@ -11,8 +11,8 @@ import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
 public class BindJavadocReference extends FixableUsageInfo {
-  private String myQualifiedName;
-  private String myFieldName;
+  private final String myQualifiedName;
+  private final String myFieldName;
 
   public BindJavadocReference(final PsiElement element, final String qualifiedName, final String fieldName) {
     super(element);

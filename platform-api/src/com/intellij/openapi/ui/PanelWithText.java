@@ -28,7 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PanelWithText extends JPanel {
-  private JLabel myLabel = new JLabel();
+  private final JLabel myLabel = new JLabel();
 
   public PanelWithText() {
     this("");

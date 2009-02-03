@@ -11,7 +11,7 @@ import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceExtendsListUsageInfo extends FixableUsageInfo {
-  private SafeDeleteExtendsClassUsageInfo mySafeDeleteUsageInfo;
+  private final SafeDeleteExtendsClassUsageInfo mySafeDeleteUsageInfo;
 
   public ReplaceExtendsListUsageInfo(PsiJavaCodeReferenceElement element, final PsiClass superClass, final PsiClass targetClass) {
     super(element);

@@ -17,15 +17,15 @@ import java.awt.event.ActionListener;
 public class ColorAndFontDescriptionPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.colors.ColorAndFontDescriptionPanel");
 
-  private ColorPanel myBackgroundChooser = new ColorPanel();
-  private ColorPanel myForegroundChooser = new ColorPanel();
-  private ColorPanel myEffectsColorChooser = new ColorPanel();
-  private ColorPanel myErrorStripeColorChooser = new ColorPanel();
+  private final ColorPanel myBackgroundChooser = new ColorPanel();
+  private final ColorPanel myForegroundChooser = new ColorPanel();
+  private final ColorPanel myEffectsColorChooser = new ColorPanel();
+  private final ColorPanel myErrorStripeColorChooser = new ColorPanel();
 
-  private JCheckBox myCbBackground = new JCheckBox(ApplicationBundle.message("checkbox.color.background"));
-  private JCheckBox myCbForeground = new JCheckBox(ApplicationBundle.message("checkbox.color.foreground"));
-  private JCheckBox myCbEffects = new JCheckBox(ApplicationBundle.message("checkbox.color.effects"));
-  private JCheckBox myCbErrorStripe = new JCheckBox(ApplicationBundle.message("checkbox.color.error.stripe.mark"));
+  private final JCheckBox myCbBackground = new JCheckBox(ApplicationBundle.message("checkbox.color.background"));
+  private final JCheckBox myCbForeground = new JCheckBox(ApplicationBundle.message("checkbox.color.foreground"));
+  private final JCheckBox myCbEffects = new JCheckBox(ApplicationBundle.message("checkbox.color.effects"));
+  private final JCheckBox myCbErrorStripe = new JCheckBox(ApplicationBundle.message("checkbox.color.error.stripe.mark"));
 
   private static final String BORDERED_EFFECT = ApplicationBundle.message("combobox.effect.bordered");
   private static final String UNDERSCORED_EFFECT = ApplicationBundle.message("combobox.effect.underscored");
@@ -33,11 +33,11 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private static final String UNDERWAVED_EFFECT = ApplicationBundle.message("combobox.effect.underwaved");
   private static final String STRIKEOUT_EFFECT = ApplicationBundle.message("combobox.effect.strikeout");
 
-  private JComboBox myEffectsCombo = new JComboBox(
+  private final JComboBox myEffectsCombo = new JComboBox(
     new String[]{UNDERSCORED_EFFECT, BOLD_UNDERSCORED_EFFECT, UNDERWAVED_EFFECT, BORDERED_EFFECT, STRIKEOUT_EFFECT});
 
-  private JCheckBox myCbBold = new JCheckBox(ApplicationBundle.message("checkbox.font.bold"));
-  private JCheckBox myCbItalic = new JCheckBox(ApplicationBundle.message("checkbox.font.italic"));
+  private final JCheckBox myCbBold = new JCheckBox(ApplicationBundle.message("checkbox.font.bold"));
+  private final JCheckBox myCbItalic = new JCheckBox(ApplicationBundle.message("checkbox.font.italic"));
   private boolean updatingEffects;
   private ActionListener myActionListener;
 

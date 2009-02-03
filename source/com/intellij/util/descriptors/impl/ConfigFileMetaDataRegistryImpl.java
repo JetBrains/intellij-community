@@ -19,8 +19,8 @@ import java.util.ArrayList;
  * @author nik
  */
 public class ConfigFileMetaDataRegistryImpl implements ConfigFileMetaDataRegistry {
-  private List<ConfigFileMetaData> myMetaData = new ArrayList<ConfigFileMetaData>();
-  private Map<String, ConfigFileMetaData> myId2MetaData = new HashMap<String, ConfigFileMetaData>();
+  private final List<ConfigFileMetaData> myMetaData = new ArrayList<ConfigFileMetaData>();
+  private final Map<String, ConfigFileMetaData> myId2MetaData = new HashMap<String, ConfigFileMetaData>();
   private ConfigFileMetaData[] myCachedMetaData;
 
   public ConfigFileMetaDataRegistryImpl() {

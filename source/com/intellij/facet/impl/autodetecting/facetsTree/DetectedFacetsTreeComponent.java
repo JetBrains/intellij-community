@@ -28,8 +28,8 @@ import java.util.List;
  * @author nik
  */
 public class DetectedFacetsTreeComponent {
-  private JPanel myMainPanel;
-  private List<ModuleDescriptorNode> myModuleNodes = new ArrayList<ModuleDescriptorNode>();
+  private final JPanel myMainPanel;
+  private final List<ModuleDescriptorNode> myModuleNodes = new ArrayList<ModuleDescriptorNode>();
 
   public DetectedFacetsTreeComponent() {
     myMainPanel = new JPanel(new BorderLayout());
@@ -121,7 +121,7 @@ public class DetectedFacetsTreeComponent {
   }
 
   private static class FacetInfoNode extends DetectedFacetsTree.FacetNode {
-    private FacetDetectionProcessor.DetectedInWizardFacetInfo myDetectedFacetInfo;
+    private final FacetDetectionProcessor.DetectedInWizardFacetInfo myDetectedFacetInfo;
 
     private FacetInfoNode(final FacetDetectionProcessor.DetectedInWizardFacetInfo detectedFacetInfo, final VirtualFile root, @Nullable final DetectedFacetsTree.FacetNode parent) {
       super(detectedFacetInfo.getFacetInfo(), detectedFacetInfo.getFacetInfo().getFacetType(), root, new VirtualFile[]{detectedFacetInfo.getFile()}, parent);

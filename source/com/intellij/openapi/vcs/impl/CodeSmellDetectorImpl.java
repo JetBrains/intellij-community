@@ -30,7 +30,7 @@ import java.util.*;
  * @author yole
  */
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
-  private Project myProject;
+  private final Project myProject;
 
   public CodeSmellDetectorImpl(final Project project) {
     myProject = project;

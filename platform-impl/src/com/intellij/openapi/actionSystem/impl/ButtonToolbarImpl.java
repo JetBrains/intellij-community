@@ -35,8 +35,8 @@ import java.util.ArrayList;
 public class ButtonToolbarImpl extends JPanel {
   private final MyTimerListener myTimerListener;
 
-  private DataManager myDataManager;
-  private String myPlace;
+  private final DataManager myDataManager;
+  private final String myPlace;
   private final PresentationFactory myPresentationFactory;
   private final ArrayList<ActionJButton> myActions = new ArrayList<ActionJButton>();
 

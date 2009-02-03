@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use Options | File Templates.
  */
 public class ReturnTypeFilter implements ElementFilter{
-  private ElementFilter myFilter;
+  private final ElementFilter myFilter;
   @NonNls private static final String PLACEHOLDER = "xxx";
 
   public ReturnTypeFilter(ElementFilter filter){

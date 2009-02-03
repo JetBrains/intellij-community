@@ -18,7 +18,7 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public class IdeGraphics2D extends Graphics2D{
-  private Graphics2D myDelegate;
+  private final Graphics2D myDelegate;
 
   public IdeGraphics2D(Graphics2D g2d){
     myDelegate=g2d;

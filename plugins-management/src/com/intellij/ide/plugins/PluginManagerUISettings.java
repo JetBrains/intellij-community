@@ -37,9 +37,9 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   @NonNls private static final String INSTALLED = "installed";
   @NonNls private static final String AVAILABLE = "available";
 
-  private SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
-  private TableColumnsProportionData myAvailableTableProportions = new TableColumnsProportionData();
-  private TableColumnsProportionData myInstalledTableProportions = new TableColumnsProportionData();
+  private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
+  private final TableColumnsProportionData myAvailableTableProportions = new TableColumnsProportionData();
+  private final TableColumnsProportionData myInstalledTableProportions = new TableColumnsProportionData();
 
   public Element getState() {
     Element element = new Element("state");

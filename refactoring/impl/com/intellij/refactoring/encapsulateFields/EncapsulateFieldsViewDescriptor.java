@@ -9,7 +9,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
-  private PsiField[] myFields;
+  private final PsiField[] myFields;
 
   public EncapsulateFieldsViewDescriptor(PsiField[] fields) {
     myFields = fields;

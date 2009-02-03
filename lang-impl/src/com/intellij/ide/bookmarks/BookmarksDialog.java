@@ -25,15 +25,15 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class BookmarksDialog extends DialogWrapper{
-  private MyModel myModel;
+  private final MyModel myModel;
   protected Table myTable;
-  private JButton myGotoButton = new JButton(IdeBundle.message("button.go.to"));
-  private JButton myRemoveButton = new JButton(IdeBundle.message("button.remove"));
-  private JButton myRemoveAllButton = new JButton(IdeBundle.message("button.remove.all"));
-  private JButton myMoveUpButton = new JButton(IdeBundle.message("button.move.up"));
-  private JButton myMoveDownButton = new JButton(IdeBundle.message("button.move.down"));
-  private JButton myCloseButton = new JButton(CommonBundle.getCloseButtonText());
-  private JButton myHelpButton = new JButton(CommonBundle.getHelpButtonText());  
+  private final JButton myGotoButton = new JButton(IdeBundle.message("button.go.to"));
+  private final JButton myRemoveButton = new JButton(IdeBundle.message("button.remove"));
+  private final JButton myRemoveAllButton = new JButton(IdeBundle.message("button.remove.all"));
+  private final JButton myMoveUpButton = new JButton(IdeBundle.message("button.move.up"));
+  private final JButton myMoveDownButton = new JButton(IdeBundle.message("button.move.down"));
+  private final JButton myCloseButton = new JButton(CommonBundle.getCloseButtonText());
+  private final JButton myHelpButton = new JButton(CommonBundle.getHelpButtonText());
   protected BookmarkManager myBookmarkManager;
 
   protected class MyModel extends DefaultTableModel implements ItemRemovable {
@@ -185,8 +185,8 @@ public abstract class BookmarksDialog extends DialogWrapper{
   }
 
   private static class BookmarkWrapper {
-    private Bookmark myBookmark;
-    private String myDisplayText;
+    private final Bookmark myBookmark;
+    private final String myDisplayText;
 
     BookmarkWrapper(Bookmark bookmark) {
       myBookmark = bookmark;

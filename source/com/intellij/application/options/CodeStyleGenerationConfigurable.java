@@ -32,12 +32,12 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JCheckBox myCbBlockCommentAtFirstColumn;
 
 
-  private MembersOrderList myMembersOrderList;
+  private final MembersOrderList myMembersOrderList;
   private JScrollPane myMembersListScroll;
   private JButton myMoveUpButton;
   private JButton myMoveDownButton;
 
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
   private JCheckBox myCbGenerateFinalParameters;
   private JCheckBox myCbGenerateFinalLocals;
   private JCheckBox myCbUseExternalAnnotations;
@@ -296,7 +296,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     private static final String CONSTRUCTORS = ApplicationBundle.message("listbox.members.order.constructors");
     private static final String INNER_CLASSES = ApplicationBundle.message("listbox.members.order.inner.classes");
 
-    private DefaultListModel myModel;
+    private final DefaultListModel myModel;
 
     public MembersOrderList() {
       myModel = new DefaultListModel();

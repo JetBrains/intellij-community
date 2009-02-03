@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescriptor {
 
-  private PsiMember myMember;
+  private final PsiMember myMember;
   private final String myProcessedElementsHeader;
 
   public MakeMethodOrClassStaticViewDescriptor(PsiMember member

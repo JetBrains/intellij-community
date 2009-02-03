@@ -329,7 +329,7 @@ class LookupCellRenderer implements ListCellRenderer {
   }
 
   private class WidthCalculatingPresentation extends LookupElementPresentationImpl {
-    private LookupElementPresentationImpl myBasePresentation;
+    private final LookupElementPresentationImpl myBasePresentation;
     private int myTotalWidth = 2;
     private int myIconWidth = 0;
 

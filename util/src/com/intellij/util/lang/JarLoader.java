@@ -30,9 +30,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
-  private URL myURL;
+  private final URL myURL;
   private final boolean myCanLockJar;
-  private static boolean myDebugTime = false;
+  private static final boolean myDebugTime = false;
 
   //private SoftReference<ZipFile> myZipFileRef;
   private final TimedComputable<ZipFile> myZipFileRef = new TimedComputable<ZipFile>(null) {

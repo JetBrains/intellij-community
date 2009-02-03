@@ -31,9 +31,9 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
   private final Location<PsiElement> myLocation;
   private RunnerAndConfigurationSettingsImpl myConfiguration;
-  private Module myModule;
-  private RuntimeConfiguration myRuntimeConfiguration;
-  private Component myContextComponent;
+  private final Module myModule;
+  private final RuntimeConfiguration myRuntimeConfiguration;
+  private final Component myContextComponent;
 
   public ConfigurationContext(final DataContext dataContext) {
     myRuntimeConfiguration = (RuntimeConfiguration)dataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);

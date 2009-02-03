@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 
 public class NextOccurenceToolbarAction extends NextOccurenceAction {
-  private OccurenceNavigator myNavigator;
+  private final OccurenceNavigator myNavigator;
 
   public NextOccurenceToolbarAction(OccurenceNavigator navigator) {
     myNavigator = navigator;

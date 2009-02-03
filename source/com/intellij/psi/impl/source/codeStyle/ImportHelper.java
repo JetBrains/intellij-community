@@ -36,7 +36,7 @@ import java.util.Set;
 public class ImportHelper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportHelper");
 
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
 
   public ImportHelper(CodeStyleSettings settings){

@@ -28,8 +28,8 @@ import java.util.List;
  */
 public class BaseAnalysisActionDialog extends DialogWrapper {
   private JPanel myPanel;
-  private String myFileName;
-  private String myModuleName;
+  private final String myFileName;
+  private final String myModuleName;
   private JRadioButton myProjectButton;
   private JRadioButton myModuleButton;
   private JRadioButton myUncommitedFilesButton;
@@ -39,9 +39,9 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private JCheckBox myInspectTestSource;
   private JComboBox myChangeLists;
   private TitledSeparator myTitledSeparator;
-  private Project myProject;
-  private boolean myRememberScope;
-  private String myAnalysisNoon;
+  private final Project myProject;
+  private final boolean myRememberScope;
+  private final String myAnalysisNoon;
   private ButtonGroup myGroup;
 
   private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommited.files.all.changelists.choice");

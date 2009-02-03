@@ -344,11 +344,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private static class ActionItem {
     private final AnAction myAction;
-    private String myText;
-    private boolean myIsEnabled;
-    private Icon myIcon;
-    private boolean myPrependWithSeparator;
-    private String mySeparatorText;
+    private final String myText;
+    private final boolean myIsEnabled;
+    private final Icon myIcon;
+    private final boolean myPrependWithSeparator;
+    private final String mySeparatorText;
 
     private ActionItem(@NotNull AnAction action, @NotNull String text, boolean enabled, Icon icon, final boolean prependWithSeparator, String separatorText) {
       myAction = action;
@@ -387,10 +387,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
   private static class ActionPopupStep implements ListPopupStep<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
     private final List<ActionItem> myItems;
     private final String myTitle;
-    private Component myContext;
-    private boolean myEnableMnemonics;
-    private int myDefaultOptionIndex;
-    private boolean myAutoSelectionEnabled;
+    private final Component myContext;
+    private final boolean myEnableMnemonics;
+    private final int myDefaultOptionIndex;
+    private final boolean myAutoSelectionEnabled;
 
     private ActionPopupStep(@NotNull final List<ActionItem> items,
                            final String title,

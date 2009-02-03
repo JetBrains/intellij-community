@@ -25,7 +25,7 @@ public class CanonicalTypes {
   }
 
   private static class Primitive extends Type {
-    private PsiPrimitiveType myType;
+    private final PsiPrimitiveType myType;
     private Primitive(PsiPrimitiveType type) {
       myType = type;
     }
@@ -42,7 +42,7 @@ public class CanonicalTypes {
   }
 
   private static class Array extends Type {
-    private Type myComponentType;
+    private final Type myComponentType;
 
     private Array(Type componentType) {
       myComponentType = componentType;
@@ -62,7 +62,7 @@ public class CanonicalTypes {
   }
 
   private static class Ellipsis extends Type {
-    private Type myComponentType;
+    private final Type myComponentType;
 
     private Ellipsis(Type componentType) {
       myComponentType = componentType;
@@ -111,7 +111,7 @@ public class CanonicalTypes {
   }
 
   private static class WrongType extends Type {
-    private String myText;
+    private final String myText;
 
     private WrongType(String text) {
       myText = text;
@@ -131,8 +131,8 @@ public class CanonicalTypes {
 
   private static class ClassType extends Type {
     private final String myOriginalText;
-    private String myClassQName;
-    private Map<String,Type> mySubstitutor;
+    private final String myClassQName;
+    private final Map<String,Type> mySubstitutor;
 
     private ClassType(String originalText, String classQName, Map<String, Type> substitutor) {
       myOriginalText = originalText;

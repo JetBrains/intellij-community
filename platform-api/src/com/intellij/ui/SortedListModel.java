@@ -23,7 +23,7 @@ import java.util.*;
 
 public class SortedListModel<T> extends AbstractListModel {
   private List<T> myItems = new ArrayList<T>();
-  private Comparator<T> myComparator;
+  private final Comparator<T> myComparator;
 
   public SortedListModel(Comparator<T> comparator) {
     myComparator = comparator;

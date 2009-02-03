@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 class ArchiveNode extends PackagingTreeNode {
-  private String myArchiveName;
+  private final String myArchiveName;
 
   ArchiveNode(final String archiveName, final PackagingArtifact owner) {
     super(owner);

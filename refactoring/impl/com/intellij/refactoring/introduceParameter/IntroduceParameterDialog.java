@@ -37,19 +37,19 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
 
-  private Project myProject;
-  private List<UsageInfo> myClassMembersList;
-  private int myOccurenceNumber;
+  private final Project myProject;
+  private final List<UsageInfo> myClassMembersList;
+  private final int myOccurenceNumber;
   private final boolean myIsInvokedOnDeclaration;
   private final PsiMethod myMethodToSearchFor;
   private final PsiMethod myMethodToReplaceIn;
   private final boolean myMustBeFinal;
   private final PsiParameter[] myParametersToRemove;
   private final boolean[] myParametersToRemoveChecked;
-  private PsiExpression myExpression;
-  private PsiLocalVariable myLocalVar;
-  private boolean myIsLocalVariable;
-  private boolean myHasInitializer;
+  private final PsiExpression myExpression;
+  private final PsiLocalVariable myLocalVar;
+  private final boolean myIsLocalVariable;
+  private final boolean myHasInitializer;
 
 //  private JComponent myParameterNameField = null;
   private NameSuggestionsField myParameterNameField;
@@ -63,7 +63,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private JRadioButton myReplaceFieldsWithGettersInaccessibleRadio = null;
   private JRadioButton myReplaceFieldsWithGettersAllRadio = null;
 
-  private ButtonGroup myReplaceFieldsWithGettersButtonGroup = new ButtonGroup();
+  private final ButtonGroup myReplaceFieldsWithGettersButtonGroup = new ButtonGroup();
 
   private final NameSuggestionsGenerator myNameSuggestionsGenerator;
   private final TypeSelectorManager myTypeSelectorManager;

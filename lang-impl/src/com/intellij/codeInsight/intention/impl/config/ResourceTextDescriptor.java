@@ -11,7 +11,7 @@ import java.io.File;
  * @author yole
  */
 public class ResourceTextDescriptor implements TextDescriptor {
-  private URL myUrl;
+  private final URL myUrl;
 
   public ResourceTextDescriptor(final URL url) {
     myUrl = url;

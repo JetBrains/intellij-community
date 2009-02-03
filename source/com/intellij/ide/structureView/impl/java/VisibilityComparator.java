@@ -14,7 +14,7 @@ public class VisibilityComparator implements Comparator {
   public static Comparator THEN_ALPHA = new VisibilityComparator(AlphaComparator.INSTANCE);
   public static Comparator IMSTANCE = new VisibilityComparator(null);
 
-  private Comparator myNextComparator;
+  private final Comparator myNextComparator;
   private static final int UNKNOWN_ACCESS_LEVEL = -1;
 
   public VisibilityComparator(Comparator comparator) {

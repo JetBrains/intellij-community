@@ -173,7 +173,7 @@ public class PullUpDialog extends DialogWrapper {
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     return panel;
   }
-  private InterfaceContainmentVerifier myInterfaceContainmentVerifier =
+  private final InterfaceContainmentVerifier myInterfaceContainmentVerifier =
     new InterfaceContainmentVerifier() {
       public boolean checkedInterfacesContain(PsiMethod psiMethod) {
         return PullUpHelper.checkedInterfacesContain(myMemberInfos, psiMethod);

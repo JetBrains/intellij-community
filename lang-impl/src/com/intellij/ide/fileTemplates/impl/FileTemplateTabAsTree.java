@@ -22,9 +22,9 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 abstract class FileTemplateTabAsTree extends FileTemplateTab {
-  private JTree myTree;
-  private FileTemplateNode myRoot;
-  private MyTreeModel myTreeModel;
+  private final JTree myTree;
+  private final FileTemplateNode myRoot;
+  private final MyTreeModel myTreeModel;
 
   protected FileTemplateTabAsTree(String title) {
     super(title);

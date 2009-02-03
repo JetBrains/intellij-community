@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PartialWhitespaceBlock extends SimpleJavaBlock {
-  private TextRange myRange;
+  private final TextRange myRange;
 
   public PartialWhitespaceBlock(final ASTNode node,
                                 final TextRange range,

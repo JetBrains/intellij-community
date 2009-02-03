@@ -26,7 +26,7 @@ public final class IdeMouseEventDispatcher{
   private final PresentationFactory myPresentationFactory;
   private final ArrayList<AnAction> myActions;
 
-  private Map<Container, Point> myRootPane2BlockedPoint = new HashMap<Container, Point>();
+  private final Map<Container, Point> myRootPane2BlockedPoint = new HashMap<Container, Point>();
 
   public IdeMouseEventDispatcher(){
     myPresentationFactory=new PresentationFactory();

@@ -37,12 +37,12 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor");
 
   private PsiClass myClassToMove;
-  private PsiClass myTargetClass;
+  private final PsiClass myTargetClass;
   private PsiPackage mySourcePackage;
-  private PsiPackage myTargetPackage;
+  private final PsiPackage myTargetPackage;
   private String mySourceVisibility;
-  private boolean mySearchInComments;
-  private boolean mySearchInNonJavaFiles;
+  private final boolean mySearchInComments;
+  private final boolean mySearchInNonJavaFiles;
   private NonCodeUsageInfo[] myNonCodeUsages;
   private static final Key<List<NonCodeUsageInfo>> ourNonCodeUsageKey = Key.create("MoveClassToInner.NonCodeUsage");
   private final MoveCallback myMoveCallback;

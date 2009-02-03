@@ -46,18 +46,18 @@ public class StructureConfigurableContext implements Disposable {
   public final Map<Library, Boolean> myLibraryPathValidityCache = new HashMap<Library, Boolean>(); //can be invalidated on startup only
   public final Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
 
-  private ModuleManager myModuleManager;
+  private final ModuleManager myModuleManager;
   public final ModulesConfigurator myModulesConfigurator;
   private boolean myDisposed;
 
   public final Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   public final Alarm myReloadProjectAlarm = new Alarm();
 
-  private List<Runnable> myCacheUpdaters = new ArrayList<Runnable>();
+  private final List<Runnable> myCacheUpdaters = new ArrayList<Runnable>();
 
 
   public final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<String, LibrariesModifiableModel>();
-  private Project myProject;
+  private final Project myProject;
 
 
   public StructureConfigurableContext(Project project, final ModuleManager moduleManager, final ModulesConfigurator modulesConfigurator) {

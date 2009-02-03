@@ -24,7 +24,7 @@ import com.intellij.ui.content.ContentManager;
     storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")}
 )
 public class DependenciesAnalyzeManager implements PersistentStateComponent<DependenciesAnalyzeManager.State> {
-  private Project myProject;
+  private final Project myProject;
   private ContentManager myContentManager;
 
   public static class State {

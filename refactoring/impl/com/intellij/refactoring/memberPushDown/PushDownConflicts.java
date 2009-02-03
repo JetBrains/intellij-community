@@ -15,10 +15,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PushDownConflicts {
-  private PsiClass myClass;
-  private Set<PsiMember> myMovedMembers;
-  private Set<PsiMember> myAbstractMembers;
-  private ArrayList<String> myConflicts;
+  private final PsiClass myClass;
+  private final Set<PsiMember> myMovedMembers;
+  private final Set<PsiMember> myAbstractMembers;
+  private final ArrayList<String> myConflicts;
 
 
   public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos) {

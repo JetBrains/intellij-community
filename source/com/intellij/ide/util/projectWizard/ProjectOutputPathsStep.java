@@ -19,9 +19,9 @@ import java.io.File;
  */
 public class ProjectOutputPathsStep extends ModuleWizardStep{
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  private JPanel myPanel;
-  private NamePathComponent myNamePathComponent;
-  private WizardContext myWizardContext;
+  private final JPanel myPanel;
+  private final NamePathComponent myNamePathComponent;
+  private final WizardContext myWizardContext;
 
   public ProjectOutputPathsStep(WizardContext wizardContext) {
     myWizardContext = wizardContext;

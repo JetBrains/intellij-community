@@ -13,7 +13,7 @@ import javax.swing.*;
  */
 public class InspectionSeverityGroupNode extends InspectionTreeNode{
 
-  private HighlightDisplayLevel myLevel;
+  private final HighlightDisplayLevel myLevel;
   private final Project myProject;
 
   public InspectionSeverityGroupNode(final Project project, final HighlightDisplayLevel level) {

@@ -25,19 +25,19 @@ public class WizardDialog<T extends WizardModel> extends DialogWrapper implement
 
   protected final T myModel;
 
-  private JButton myPrevious = new JButton();
-  private JButton myNext = new JButton();
-  private JButton myFinish = new JButton();
-  private JButton myCancel = new JButton();
-  private JButton myHelp = new JButton();
+  private final JButton myPrevious = new JButton();
+  private final JButton myNext = new JButton();
+  private final JButton myFinish = new JButton();
+  private final JButton myCancel = new JButton();
+  private final JButton myHelp = new JButton();
 
-  private JLabel myIcon = new JLabel();
-  private JLabel myHeader = new JLabel();
-  private JLabel myExplanation = new MultiLineLabel();
+  private final JLabel myIcon = new JLabel();
+  private final JLabel myHeader = new JLabel();
+  private final JLabel myExplanation = new MultiLineLabel();
 
   private JPanel myStepContent;
   private CardLayout myCardLayout;
-  private Map<WizardStep, String> myStepCardNames = new HashMap<WizardStep, String>();
+  private final Map<WizardStep, String> myStepCardNames = new HashMap<WizardStep, String>();
 
   public WizardDialog(Project project, boolean canBeParent, T model) {
     super(project, canBeParent);

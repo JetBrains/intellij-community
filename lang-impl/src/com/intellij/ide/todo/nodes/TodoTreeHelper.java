@@ -23,7 +23,7 @@ import java.util.*;
  * Date: May 27, 2005
  */
 public class TodoTreeHelper {
-  private Project myProject;
+  private final Project myProject;
   
   public static TodoTreeHelper getInstance(Project project) {
     return ServiceManager.getService(project, TodoTreeHelper.class);

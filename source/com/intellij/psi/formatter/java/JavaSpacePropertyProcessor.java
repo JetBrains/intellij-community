@@ -1335,7 +1335,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     return lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE;
   }
 
-  private static Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
+  private static final Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
     new ConcurrentHashMap<Pair<IElementType, IElementType>, Boolean>();
 
   public static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {

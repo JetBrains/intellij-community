@@ -46,10 +46,10 @@ public class PopupActionChooser {
   }
 
   private static class InvokeSurrounderAction extends AnAction {
-    private Surrounder mySurrounder;
-    private Project myProject;
-    private Editor myEditor;
-    private PsiElement[] myElements;
+    private final Surrounder mySurrounder;
+    private final Project myProject;
+    private final Editor myEditor;
+    private final PsiElement[] myElements;
 
     public InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements) {
       super(surrounder.getTemplateDescription());

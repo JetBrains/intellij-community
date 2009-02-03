@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
  * Date: 21-Feb-2006
  */
 public class RunInspectionIntention implements IntentionAction {
-  private String myShortName;
-  private String myDisplayName;
+  private final String myShortName;
+  private final String myDisplayName;
 
   public RunInspectionIntention(final LocalInspectionTool tool) {
     myShortName = tool.getShortName();

@@ -33,15 +33,15 @@ import java.util.Map;
 public class SystemBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder");
 
-  private PsiManager myManager;
-  private HashMap<PsiElement, Boolean> myMethodCache;
-  private HashMap<PsiParameter, PsiParameter> myParameters;
-  private HashMap<PsiMethod, PsiMethod> myMethods;
-  private HashMap<PsiElement, PsiType> myTypes;
-  private HashSet<PsiAnchor> myVisitedConstructions;
-  private Settings mySettings;
-  private PsiTypeVariableFactory myTypeVariableFactory;
-  private Project myProject;
+  private final PsiManager myManager;
+  private final HashMap<PsiElement, Boolean> myMethodCache;
+  private final HashMap<PsiParameter, PsiParameter> myParameters;
+  private final HashMap<PsiMethod, PsiMethod> myMethods;
+  private final HashMap<PsiElement, PsiType> myTypes;
+  private final HashSet<PsiAnchor> myVisitedConstructions;
+  private final Settings mySettings;
+  private final PsiTypeVariableFactory myTypeVariableFactory;
+  private final Project myProject;
 
   public SystemBuilder(final Project project, final Settings settings) {
     myProject = project;

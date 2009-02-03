@@ -17,9 +17,9 @@ import com.intellij.util.Consumer;
 import javax.swing.*;
 
 public class PanelProgressIndicator extends ProgressIndicatorBase {
-  private MyProgressPanel myProgressPanel;
+  private final MyProgressPanel myProgressPanel;
   private boolean myPaintInQueue;
-  private Consumer<JComponent> myComponentUpdater;
+  private final Consumer<JComponent> myComponentUpdater;
 
   public PanelProgressIndicator(Consumer<JComponent> componentUpdater) {
     myProgressPanel = new MyProgressPanel();

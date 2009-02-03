@@ -43,7 +43,7 @@ public class Anchor {
    */
   public static final Anchor AFTER  = new Anchor("after");
 
-  private String myText;
+  private final String myText;
 
   private Anchor(@NonNls String text) {
     myText = text;

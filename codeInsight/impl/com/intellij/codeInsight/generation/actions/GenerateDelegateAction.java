@@ -13,7 +13,7 @@ import com.intellij.psi.PsiJavaFile;
  * @author mike
  */
 public class GenerateDelegateAction extends BaseCodeInsightAction {
-  private GenerateDelegateHandler myHandler = new GenerateDelegateHandler();
+  private final GenerateDelegateHandler myHandler = new GenerateDelegateHandler();
 
   protected CodeInsightActionHandler getHandler() {
     return myHandler;

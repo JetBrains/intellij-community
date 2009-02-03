@@ -339,7 +339,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
 
   private class MyInlineProgressIndicator extends InlineProgressIndicator {
     private final ProgressIndicatorEx myOriginal;
-    private TaskInfo myTask;
+    private final TaskInfo myTask;
 
     public MyInlineProgressIndicator(final boolean compact, final TaskInfo task, final ProgressIndicatorEx original) {
       super(compact, task);

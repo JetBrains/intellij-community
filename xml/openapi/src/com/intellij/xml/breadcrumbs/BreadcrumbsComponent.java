@@ -31,7 +31,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   private Crumb myHovered;
   private PagedImage myBuffer;
   private List<Crumb> myCrumbs = new ArrayList<Crumb>();
-  private CrumbLineMouseListener myMouseListener;
+  private final CrumbLineMouseListener myMouseListener;
   private List<T> myItems;
 
   public BreadcrumbsComponent() {
@@ -342,9 +342,9 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   private static class PagedImage {
-    private int myPageWidth;
+    private final int myPageWidth;
     private int myPage;
-    private int myTotalWidth;
+    private final int myTotalWidth;
 
     public PagedImage(int totalWidth, int pageWidth) {
       myPageWidth = pageWidth;
@@ -398,7 +398,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   private static class CrumbLineMouseListener extends MouseAdapter implements MouseMotionListener {
-    private BreadcrumbsComponent myBreadcrumbs;
+    private final BreadcrumbsComponent myBreadcrumbs;
     private Crumb myHoveredCrumb;
 
     public CrumbLineMouseListener(@NotNull final BreadcrumbsComponent line) {
@@ -526,8 +526,8 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   private static class NavigationCrumb extends Crumb {
     @NonNls private static final String FORWARD = ">>";
     @NonNls private static final String BACKWARD = "<<";
-    private boolean myForward;
-    private BreadcrumbsComponent myLine;
+    private final boolean myForward;
+    private final BreadcrumbsComponent myLine;
 
     public NavigationCrumb(@NotNull final BreadcrumbsComponent line,
                            @NotNull final FontMetrics fm,
@@ -637,7 +637,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   abstract static class Painter {
     public static final int ROUND_VALUE = SystemInfo.isMac ? 3 : 2;
 
-    private PainterSettings mySettings;
+    private final PainterSettings mySettings;
 
     public Painter(@NotNull final PainterSettings s) {
       mySettings = s;

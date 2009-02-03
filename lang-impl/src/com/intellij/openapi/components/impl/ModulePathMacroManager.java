@@ -17,7 +17,7 @@ import java.io.File;
 public class ModulePathMacroManager extends BasePathMacroManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.ModulePathMacroManager");
 
-  private Module myModule;
+  private final Module myModule;
 
 
   public ModulePathMacroManager(final Module module) {

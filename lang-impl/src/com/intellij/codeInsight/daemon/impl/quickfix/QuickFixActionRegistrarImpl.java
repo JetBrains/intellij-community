@@ -7,7 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.TextRange;
 
 public class QuickFixActionRegistrarImpl implements QuickFixActionRegistrar {
-  private HighlightInfo myInfo;
+  private final HighlightInfo myInfo;
 
   public QuickFixActionRegistrarImpl(HighlightInfo info) {
     myInfo = info;

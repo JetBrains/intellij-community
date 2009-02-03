@@ -109,8 +109,8 @@ public final class InternalDecorator extends JPanel {
   @NonNls protected static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
   @NonNls protected static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls protected static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
-  private MyTitleButton myHideSideButton;
-  private JComponent myTitleTabs;
+  private final MyTitleButton myHideSideButton;
+  private final JComponent myTitleTabs;
 
   InternalDecorator(final Project project, final WindowInfoImpl info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
@@ -786,8 +786,8 @@ public final class InternalDecorator extends JPanel {
 
   private static final class MyTitleButton extends Wrapper implements ActionListener {
 
-    private InplaceButton myButton;
-    private AnAction myAction;
+    private final InplaceButton myButton;
+    private final AnAction myAction;
 
     public MyTitleButton(AnAction action) {
       myAction = action;

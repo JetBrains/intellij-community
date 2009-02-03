@@ -20,9 +20,9 @@ import java.util.List;
  * @author yole
  */
 public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
-  private Project myProject;
+  private final Project myProject;
   private final VirtualFile myBaseDir;
-  private ModuleManager myModuleManager;
+  private final ModuleManager myModuleManager;
 
   public ModuleDefaultVcsRootPolicy(final Project project) {
     myProject = project;

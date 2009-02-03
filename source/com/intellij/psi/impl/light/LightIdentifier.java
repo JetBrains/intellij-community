@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public class LightIdentifier extends LightElement implements PsiIdentifier, PsiJavaToken {
-  private String myText;
+  private final String myText;
 
   public LightIdentifier(PsiManager manager, String text) {
     super(manager, StdFileTypes.JAVA.getLanguage());

@@ -19,7 +19,7 @@ class GrowlNotifications {
 
   private static GrowlNotifications ourNotifications;
   private Growl myGrowl;
-  private Set<String> myNotifications = new TreeSet<String>();
+  private final Set<String> myNotifications = new TreeSet<String>();
 
   public GrowlNotifications() {
     this(ApplicationNamesInfo.getInstance().getFullProductName());

@@ -21,10 +21,10 @@ public class OutputPathsStep extends ModuleWizardStep{
   private final Icon myIcon;
   private final String myHelpId;
   private final NameLocationStep myNameLocationStep;
-  private JPanel myPanel;
-  private NamePathComponent myNamePathComponent;
-  private JRadioButton myRbInheritProjectOutput = new JRadioButton(ProjectBundle.message("project.inherit.compile.output.path"));
-  private JRadioButton myRbPerModuleOutput = new JRadioButton(ProjectBundle.message("project.module.compile.output.path"));
+  private final JPanel myPanel;
+  private final NamePathComponent myNamePathComponent;
+  private final JRadioButton myRbInheritProjectOutput = new JRadioButton(ProjectBundle.message("project.inherit.compile.output.path"));
+  private final JRadioButton myRbPerModuleOutput = new JRadioButton(ProjectBundle.message("project.module.compile.output.path"));
 
   public OutputPathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder descriptor, Icon icon, @NonNls String helpId) {
     myDescriptor = descriptor;

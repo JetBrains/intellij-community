@@ -282,7 +282,7 @@ public class PsiViewerDialog extends DialogWrapper {
   }
 
   private class MyTreeSelectionListener implements TreeSelectionListener {
-    private TextAttributes myAttributes;
+    private final TextAttributes myAttributes;
     private RangeHighlighter myHighlighter;
 
     public MyTreeSelectionListener() {

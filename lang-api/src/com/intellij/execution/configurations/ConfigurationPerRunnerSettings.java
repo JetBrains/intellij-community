@@ -22,7 +22,7 @@ import org.jdom.Element;
 
 public final class ConfigurationPerRunnerSettings implements JDOMExternalizable {
   private final JDOMExternalizable mySettings;
-  private String myRunnerId;
+  private final String myRunnerId;
 
   public ConfigurationPerRunnerSettings(String runnerId, JDOMExternalizable settings) {
     mySettings = settings;

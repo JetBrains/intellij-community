@@ -28,7 +28,7 @@ public class DocCommentLexer extends MergingLexerAdapter {
   }
 
   private static class AsteriskStripperLexer extends LexerBase {
-    private _JavaDocLexer myFlex;
+    private final _JavaDocLexer myFlex;
     private final DocCommentTokenTypes myTokenTypes;
     private CharSequence myBuffer;
     private int myBufferIndex;

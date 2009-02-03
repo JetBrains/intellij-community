@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class GroupingElement extends ErrorTreeElement {
   private final String[] myText;
   private final Object myData;
-  private VirtualFile myFile;
+  private final VirtualFile myFile;
 
   public GroupingElement(String name, Object data, VirtualFile file) {
     super(ErrorTreeElementKind.GENERIC);

@@ -17,8 +17,8 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
   private static @NonNls final String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
   private static @NonNls final String HELP_ID = "editing.codeReformatting";
 
-  private String myText;
-  private boolean mySuggestOptmizeImports;
+  private final String myText;
+  private final boolean mySuggestOptmizeImports;
   private JCheckBox myCbOptimizeImports;
 
   public LayoutProjectCodeDialog(Project project, String title, String text, boolean suggestOptmizeImports) {

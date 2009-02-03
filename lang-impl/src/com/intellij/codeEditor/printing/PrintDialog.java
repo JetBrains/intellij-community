@@ -54,7 +54,7 @@ class PrintDialog extends DialogWrapper {
   private JComboBox myFooterFontNameCombo = null;
   private String myFileName = null;
   private String myDirectoryName = null;
-  private boolean isSelectedTextEnabled;
+  private final boolean isSelectedTextEnabled;
 
   private static final Map<Object, String> PLACEMENT_MAP = new HashMap<Object, String>();
   private static final Map<Object, String> ALIGNMENT_MAP = new HashMap<Object, String>();

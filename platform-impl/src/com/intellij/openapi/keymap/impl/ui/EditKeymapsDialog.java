@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 
 public class EditKeymapsDialog extends SingleConfigurableEditor {
-  private String myActionToSelect;
+  private final String myActionToSelect;
 
   public EditKeymapsDialog(Project project, String actionToSelect) {
     super(project, new KeymapPanel());

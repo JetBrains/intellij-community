@@ -9,9 +9,9 @@ import java.awt.*;
 
 public class BegButtonUI extends MetalButtonUI {
   private final static BegButtonUI begButtonUI = new BegButtonUI();
-  private Rectangle viewRect = new Rectangle();
-  private Rectangle textRect = new Rectangle();
-  private Rectangle iconRect = new Rectangle();
+  private final Rectangle viewRect = new Rectangle();
+  private final Rectangle textRect = new Rectangle();
+  private final Rectangle iconRect = new Rectangle();
 
   public static ComponentUI createUI(JComponent c) {
     return begButtonUI;

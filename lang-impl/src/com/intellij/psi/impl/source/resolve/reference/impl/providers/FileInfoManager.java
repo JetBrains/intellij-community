@@ -20,7 +20,7 @@ import java.util.Map;
  * @author spleaner
  */
 public class FileInfoManager implements Disposable {
-  private Map<FileType, FileLookupInfoProvider> myFileType2InfoProvider = new HashMap<FileType, FileLookupInfoProvider>();
+  private final Map<FileType, FileLookupInfoProvider> myFileType2InfoProvider = new HashMap<FileType, FileLookupInfoProvider>();
 
   public FileInfoManager() {
     final FileLookupInfoProvider[] providers = FileLookupInfoProvider.EP_NAME.getExtensions();

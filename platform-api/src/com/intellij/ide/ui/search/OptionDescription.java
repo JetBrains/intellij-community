@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class OptionDescription implements Comparable{
   private String myOption;
-  private String myHit;
+  private final String myHit;
   private String myPath;
   private String myConfigurableId;
 

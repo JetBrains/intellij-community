@@ -23,24 +23,24 @@ import java.util.Iterator;
  * @author Yura Cangea, dsl
  */
 public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
-  private JTextField myFileTypeName = new JTextField(26);
-  private JTextField myFileTypeDescr = new JTextField(26);
-  private JCheckBox myIgnoreCase = new JCheckBox(IdeBundle.message("checkbox.customfiletype.ignore.case"));
-  private JCheckBox mySupportBraces = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.braces"));
-  private JCheckBox mySupportBrackets = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.brackets"));
-  private JCheckBox mySupportParens = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.parens"));
-  private JCheckBox mySupportEscapes = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.string.escapes"));
+  private final JTextField myFileTypeName = new JTextField(26);
+  private final JTextField myFileTypeDescr = new JTextField(26);
+  private final JCheckBox myIgnoreCase = new JCheckBox(IdeBundle.message("checkbox.customfiletype.ignore.case"));
+  private final JCheckBox mySupportBraces = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.braces"));
+  private final JCheckBox mySupportBrackets = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.brackets"));
+  private final JCheckBox mySupportParens = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.parens"));
+  private final JCheckBox mySupportEscapes = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.string.escapes"));
 
-  private JTextField myLineComment = new JTextField(20);
-  private JTextField myBlockCommentStart = new JTextField(20);
-  private JTextField myBlockCommentEnd = new JTextField(20);
-  private JTextField myHexPrefix = new JTextField(20);
-  private JTextField myNumPostfixes = new JTextField(20);
+  private final JTextField myLineComment = new JTextField(20);
+  private final JTextField myBlockCommentStart = new JTextField(20);
+  private final JTextField myBlockCommentEnd = new JTextField(20);
+  private final JTextField myHexPrefix = new JTextField(20);
+  private final JTextField myNumPostfixes = new JTextField(20);
 
-  private JList[] myKeywordsLists = new JList[]{new JList(), new JList(), new JList(), new JList()};
-  private DefaultListModel[] myKeywordModels = new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
-  private JButton[] myAddKeywordButtons = new JButton[4];
-  private JButton[] myRemoveKeywordButtons = new JButton[4];
+  private final JList[] myKeywordsLists = new JList[]{new JList(), new JList(), new JList(), new JList()};
+  private final DefaultListModel[] myKeywordModels = new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
+  private final JButton[] myAddKeywordButtons = new JButton[4];
+  private final JButton[] myRemoveKeywordButtons = new JButton[4];
 
   public CustomFileTypeEditor() {
   }

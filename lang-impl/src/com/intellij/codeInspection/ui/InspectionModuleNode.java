@@ -12,7 +12,7 @@ import javax.swing.*;
  * Date: 09-Jan-2006
  */
 public class InspectionModuleNode extends InspectionTreeNode{
-  private Module myModule;
+  private final Module myModule;
   public InspectionModuleNode(final Module module) {
     super(module);
     myModule = module;

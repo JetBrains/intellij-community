@@ -890,7 +890,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private abstract static class InvalidationTask implements Runnable {
-    private VirtualFile mySubj;
+    private final VirtualFile mySubj;
 
     protected InvalidationTask(final VirtualFile subj) {
       mySubj = subj;

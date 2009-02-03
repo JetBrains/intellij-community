@@ -8,7 +8,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 
 public abstract class HomeEndHandler extends EditorActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
   boolean myIsHomeHandler;
 
   public HomeEndHandler(final EditorActionHandler originalHandler, boolean isHomeHandler) {

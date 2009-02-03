@@ -55,7 +55,7 @@ public class EditorAdapter {
 
   private final Editor myEditor;
 
-  private Alarm myFlushAlarm = new Alarm();
+  private final Alarm myFlushAlarm = new Alarm();
   private final Collection<Line> myLines = new ArrayList<Line>();
   private final Project myProject;
 

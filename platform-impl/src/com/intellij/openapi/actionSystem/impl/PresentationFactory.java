@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.WeakHashMap;
 
 public class PresentationFactory {
-  private WeakHashMap<AnAction,Presentation> myAction2Presentation;
+  private final WeakHashMap<AnAction,Presentation> myAction2Presentation;
 
   public PresentationFactory() {
     myAction2Presentation = new WeakHashMap<AnAction, Presentation>();

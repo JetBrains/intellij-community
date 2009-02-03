@@ -20,12 +20,12 @@ public class EditLocationDialog extends DialogWrapper {
   private JTextField myTfUrl;
   private JTextField myTfPath;
   private FixedSizeButton myBtnBrowseLocalPath;
-  private Project myProject;
-  private boolean myShowPath;
+  private final Project myProject;
+  private final boolean myShowPath;
 
-  private String myTitle;
-  private String myName;
-  private String myLocation;
+  private final String myTitle;
+  private final String myName;
+  private final String myLocation;
 
   public EditLocationDialog(Project project, boolean showPath) {
     super(project, true);

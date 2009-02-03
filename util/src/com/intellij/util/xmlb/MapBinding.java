@@ -33,9 +33,9 @@ import java.util.Map;
 import java.util.Set;
 
 class MapBinding implements Binding {
-  private Binding myKeyBinding;
-  private Binding myValueBinding;
-  private MapAnnotation myMapAnnotation;
+  private final Binding myKeyBinding;
+  private final Binding myValueBinding;
+  private final MapAnnotation myMapAnnotation;
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
     public int compare(final Object o1, final Object o2) {
       if (o1 instanceof Comparable && o2 instanceof Comparable) {

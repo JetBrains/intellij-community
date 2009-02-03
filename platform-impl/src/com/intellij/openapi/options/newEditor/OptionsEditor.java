@@ -75,10 +75,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   Map<Configurable, ConfigurableContent> myConfigurable2Content = new HashMap<Configurable, ConfigurableContent>();
   Map<Configurable, ActionCallback> myConfigurable2LoadCallback = new HashMap<Configurable, ActionCallback>();
 
-  private MyColleague myColleague;
+  private final MyColleague myColleague;
 
   MergingUpdateQueue myModificationChecker;
-  private ConfigurableGroup[] myGroups;
+  private final ConfigurableGroup[] myGroups;
 
   SpotlightPainter mySpotlightPainter = new SpotlightPainter();
   MergingUpdateQueue mySpotlightUpdate;
@@ -513,7 +513,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   private class ContentWrapper extends NonOpaquePanel implements NullableComponent {
 
-    private JLabel myErrorLabel;
+    private final JLabel myErrorLabel;
 
     private JComponent mySimpleContent;
     private ConfigurationException myException;
@@ -523,7 +523,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     private JComponent myToolbar;
     private DetailsComponent myDetails;
 
-    private Splitter mySplitter = new Splitter(false);
+    private final Splitter mySplitter = new Splitter(false);
     private JPanel myLeft = new JPanel(new BorderLayout());
     public float myLastSplitterProproprtion;
 
@@ -1020,7 +1020,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   private class SearachableWrappper implements SearchableConfigurable {
-    private Configurable myConfigurable;
+    private final Configurable myConfigurable;
 
     private SearachableWrappper(final Configurable configurable) {
       myConfigurable = configurable;

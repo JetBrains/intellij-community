@@ -26,8 +26,8 @@ public class VisibleTreeState implements JDOMExternalizable{
   @NonNls private static final String SELECTED = "selected_node";
   @NonNls private static final String NAME = "name";
 
-  private HashSet<String> myExpandedNodes = new HashSet<String>();
-  private HashSet<String> mySelectedNodes = new HashSet<String>();
+  private final HashSet<String> myExpandedNodes = new HashSet<String>();
+  private final HashSet<String> mySelectedNodes = new HashSet<String>();
 
   public VisibleTreeState(VisibleTreeState src) {
     myExpandedNodes.addAll(src.myExpandedNodes);

@@ -88,7 +88,7 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
   }
 
   private class MyIterator implements Iterator<T> {
-    private Iterator<T> myIterator = myElements.iterator();
+    private final Iterator<T> myIterator = myElements.iterator();
     private T myLastObject;
 
     public boolean hasNext() {

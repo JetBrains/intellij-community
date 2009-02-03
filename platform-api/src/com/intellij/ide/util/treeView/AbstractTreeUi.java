@@ -70,22 +70,22 @@ class AbstractTreeUi {
   private boolean myUpdateFromRootRequested;
   private boolean myWasEverShown;
   private boolean myUpdateIfInactive;
-  private WeakList<Object> myLoadingParents = new WeakList<Object>();
+  private final WeakList<Object> myLoadingParents = new WeakList<Object>();
   private long myClearOnHideDelay = -1;
   private ScheduledExecutorService ourClearanceService;
-  private Map<AbstractTreeUi, Long> ourUi2Countdown = Collections.synchronizedMap(new WeakHashMap<AbstractTreeUi, Long>());
+  private final Map<AbstractTreeUi, Long> ourUi2Countdown = Collections.synchronizedMap(new WeakHashMap<AbstractTreeUi, Long>());
   private final List<Runnable> myDeferredSelections = new ArrayList<Runnable>();
   private final List<Runnable> myDeferredExpansions = new ArrayList<Runnable>();
   private UpdaterTreeState myUpdaterState;
   private AbstractTreeBuilder myBuilder;
 
-  private Set<DefaultMutableTreeNode> myUpdatingChildren = new HashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myUpdatingChildren = new HashSet<DefaultMutableTreeNode>();
   private long myJanitorPollPeriod = Time.SECOND * 10;
   private boolean myCheckStructure = false;
 
 
   private boolean myCanYield = false;
-  private Set<TreeUpdatePass> myYeildingPasses = new HashSet<TreeUpdatePass>();
+  private final Set<TreeUpdatePass> myYeildingPasses = new HashSet<TreeUpdatePass>();
 
   protected final void init(AbstractTreeBuilder builder,
                             JTree tree,

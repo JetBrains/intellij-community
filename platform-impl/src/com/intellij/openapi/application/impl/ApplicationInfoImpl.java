@@ -383,9 +383,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   private static class PluginChooserPageImpl implements PluginChooserPage {
-    private String myTitle;
-    private String myCategory;
-    private String myDependentPlugin;
+    private final String myTitle;
+    private final String myCategory;
+    private final String myDependentPlugin;
 
     private PluginChooserPageImpl(Element e) {
       myTitle = e.getAttributeValue("title");

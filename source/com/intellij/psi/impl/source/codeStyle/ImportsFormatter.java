@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NonNls;
 public class ImportsFormatter extends XmlRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportsFormatter");
   
-  private FormattingDocumentModelImpl myDocumentModel;
+  private final FormattingDocumentModelImpl myDocumentModel;
   private final CodeStyleSettings.IndentOptions myIndentOptions;
   private static final @NonNls String PAGE_DIRECTIVE = "page";
   private static final @NonNls String IMPORT_ATT = "import";

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class ChangeClassSigntaureViewDescriptor extends UsageViewDescriptorAdapter {
-  private PsiClass myClass;
+  private final PsiClass myClass;
 
   public ChangeClassSigntaureViewDescriptor(PsiClass aClass) {
     super();

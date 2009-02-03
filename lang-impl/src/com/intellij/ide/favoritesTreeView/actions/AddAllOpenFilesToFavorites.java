@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * Date: Apr 5, 2005
  */
 public class AddAllOpenFilesToFavorites extends AnAction{
-  private String myFavoritesName;
+  private final String myFavoritesName;
   public AddAllOpenFilesToFavorites(String choosenList) {
     super(choosenList);
     myFavoritesName = choosenList;

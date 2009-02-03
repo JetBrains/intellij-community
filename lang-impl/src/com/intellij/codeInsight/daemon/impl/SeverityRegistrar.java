@@ -31,7 +31,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   private final Map<HighlightSeverity, Color> ourRendererColors = new THashMap<HighlightSeverity, Color>();
   @NonNls private static final String COLOR = "color";
 
-  private JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
+  private final JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
 
   public static SeverityRegistrar getInstance() {
     return InspectionProfileManager.getInstance().getSeverityRegistrar();
@@ -187,8 +187,8 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public static class SeverityBasedTextAttributes implements JDOMExternalizable {
-    private TextAttributes myAttributes;
-    private HighlightInfoType.HighlightInfoTypeImpl myType;
+    private final TextAttributes myAttributes;
+    private final HighlightInfoType.HighlightInfoTypeImpl myType;
 
     //readexternal
     public SeverityBasedTextAttributes() {

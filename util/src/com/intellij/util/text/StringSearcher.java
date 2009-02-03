@@ -26,7 +26,7 @@ public class StringSearcher {
   private String myPattern = null;
   private char[] myPatternArray = null;
   private int myPatternLength;
-  private int[] mySearchTable = new int[128];
+  private final int[] mySearchTable = new int[128];
   private boolean myCaseSensitive = true;
   private boolean myForwardDirection = true;
   private boolean myJavaIdentifier;

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class FilesystemToolwindowOpener implements ProjectComponent {
-  private Project myProject;
+  private final Project myProject;
 
   public FilesystemToolwindowOpener(final Project project) {
     myProject = project;

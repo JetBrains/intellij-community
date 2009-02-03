@@ -71,8 +71,8 @@ public class ShowModuleDependenciesAction extends AnAction{
   }
 
   private static class MyModuleOrProjectScope extends DialogWrapper{
-    private JRadioButton myProjectScope;
-    private JRadioButton myModuleScope;
+    private final JRadioButton myProjectScope;
+    private final JRadioButton myModuleScope;
     protected MyModuleOrProjectScope(String moduleName) {
       super(false);
       setTitle(AnalysisScopeBundle.message("module.dependencies.scope.dialog.title"));

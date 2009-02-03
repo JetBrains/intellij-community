@@ -25,7 +25,7 @@ public class PsiCopyPasteManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.PsiCopyPasteManagerImpl");
 
   private MyData myRecentData;
-  private CopyPasteManagerEx myCopyPasteManager;
+  private final CopyPasteManagerEx myCopyPasteManager;
 
   public PsiCopyPasteManager(CopyPasteManager copyPasteManager) {
     myCopyPasteManager = (CopyPasteManagerEx) copyPasteManager;
@@ -125,7 +125,7 @@ public class PsiCopyPasteManager {
 
   private static class MyData {
     private PsiElement[] myElements;
-    private boolean myIsCopied;
+    private final boolean myIsCopied;
 
     public MyData(PsiElement[] elements, boolean copied) {
       myElements = elements;
@@ -165,7 +165,7 @@ public class PsiCopyPasteManager {
   }
 
   public static class MyTransferable implements Transferable {
-    private MyData myDataProxy;
+    private final MyData myDataProxy;
     private static final DataFlavor[] DATA_FLAVOR_ARRAY = new DataFlavor[]{ourDataFlavor, DataFlavor.stringFlavor};
 
     public MyTransferable(MyData data) {

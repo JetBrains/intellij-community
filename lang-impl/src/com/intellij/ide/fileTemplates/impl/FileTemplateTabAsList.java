@@ -14,7 +14,7 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 abstract class FileTemplateTabAsList extends FileTemplateTab {
-  private JList myList = new JList();
+  private final JList myList = new JList();
   private MyListModel myModel;
 
   public FileTemplateTabAsList(String title) {

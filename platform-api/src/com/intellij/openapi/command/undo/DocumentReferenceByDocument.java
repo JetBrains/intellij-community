@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author max
  */
 public class DocumentReferenceByDocument extends DocumentReference {
-  private Document myDocument;
+  private final Document myDocument;
 
   private DocumentReferenceByDocument(Document document) {
     myDocument = document;

@@ -35,8 +35,8 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   protected XmlElementDecl myElementDecl;
   private String myName;
 
-  private static Class[] ourParentClassesToScanAttributes = new Class[] { XmlMarkupDecl.class, XmlDocument.class };
-  private static Key<CachedValue<XmlAttlistDecl[]>> ourCachedAttlistKeys = Key.create("cached_decls");
+  private static final Class[] ourParentClassesToScanAttributes = new Class[] { XmlMarkupDecl.class, XmlDocument.class };
+  private static final Key<CachedValue<XmlAttlistDecl[]>> ourCachedAttlistKeys = Key.create("cached_decls");
 
   public XmlElementDescriptorImpl(XmlElementDecl elementDecl) {
     init(elementDecl);

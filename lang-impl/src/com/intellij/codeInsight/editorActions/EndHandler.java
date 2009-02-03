@@ -15,7 +15,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 
 public class EndHandler extends EditorActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public EndHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;

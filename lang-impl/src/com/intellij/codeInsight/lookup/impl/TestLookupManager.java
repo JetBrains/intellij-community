@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use Options | File Templates.
  */
 public class TestLookupManager extends LookupManagerImpl{
-  private Project myProject;
+  private final Project myProject;
   public TestLookupManager(Project project, MessageBus bus){
     super(project, bus);
     myProject = project;

@@ -64,10 +64,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @NonNls private static final String MEDIUM_WEIGHT_POPUP="medium";
 
   private final EventListenerList myListenerList;
-  private UIManager.LookAndFeelInfo[] myLafs;
+  private final UIManager.LookAndFeelInfo[] myLafs;
   private UIManager.LookAndFeelInfo myCurrentLaf;
 
-  @NonNls private static String[] ourPatcheableFontResources = new String[]{
+  @NonNls private static final String[] ourPatcheableFontResources = new String[]{
     "Button.font", "ToggleButton.font", "RadioButton.font", "CheckBox.font", "ColorChooser.font", "ComboBox.font",
     "Label.font", "List.font", "MenuBar.font", "MenuItem.font", "MenuItem.acceleratorFont", "RadioButtonMenuItem.font",
     "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font", "Panel.font", "ProgressBar.font",
@@ -80,8 +80,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"
   };
 
-  private HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>>();
-  private UISettings myUiSettings;
+  private final HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>>();
+  private final UISettings myUiSettings;
 
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";

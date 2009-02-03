@@ -10,7 +10,7 @@ import java.util.List;
 import java.lang.reflect.Field;
 
 public class RunOnce extends TestResult {
-  private Hashtable myPeformedTests = new Hashtable();
+  private final Hashtable myPeformedTests = new Hashtable();
   private static final String NOT_ALLOWED_IN_ID = ":";
 
   protected void run(TestCase test) {

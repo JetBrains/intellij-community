@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 
 class RestoreReferencesDialog extends DialogWrapper {
-  private Object[] myNamedElements;
+  private final Object[] myNamedElements;
   private JList myList;
   private Object[] mySelectedElements = PsiClass.EMPTY_ARRAY;
   private boolean myContainsClassesOnly = true;

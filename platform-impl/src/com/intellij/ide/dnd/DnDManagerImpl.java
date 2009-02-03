@@ -36,7 +36,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   private DnDEventImpl myCurrentEvent;
   private DnDEvent myLastHighlightedEvent;
 
-  private static DnDTarget NULL_TARGET = new NullTarget();
+  private static final DnDTarget NULL_TARGET = new NullTarget();
 
   private WeakReference<DnDTarget> myLastProcessedTarget = new WeakReference<DnDTarget>(NULL_TARGET);
   private DragSourceContext myCurrentDragContext;
@@ -46,12 +46,12 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   private String myLastMessage;
   private DnDEvent myLastProcessedEvent;
 
-  private DragGestureListener myDragGestureListener = new MyDragGestureListnener();
-  private DropTargetListener myDropTargetListener = new MyDropTargetListener();
+  private final DragGestureListener myDragGestureListener = new MyDragGestureListnener();
+  private final DropTargetListener myDropTargetListener = new MyDropTargetListener();
 
   private static final Image EMPTY_IMAGE = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
 
-  private Timer myTooltipTimer = new Timer(ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
+  private final Timer myTooltipTimer = new Timer(ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       onTimer();
     }
@@ -60,7 +60,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
 
-  private Application myApp;
+  private final Application myApp;
 
   private WeakReference<Component> myLastDropHandler;
 

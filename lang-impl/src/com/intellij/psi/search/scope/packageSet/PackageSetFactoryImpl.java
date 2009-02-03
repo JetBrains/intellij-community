@@ -18,7 +18,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
   }
 
   private static class Parser {
-    private Lexer myLexer;
+    private final Lexer myLexer;
 
     public Parser(Lexer lexer) {
       myLexer = lexer;

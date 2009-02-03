@@ -18,18 +18,18 @@ import java.util.Set;
 
 public class ProcessPopup  {
 
-  private VerticalBox myProcessBox = new VerticalBox();
+  private final VerticalBox myProcessBox = new VerticalBox();
 
-  private InfoAndProgressPanel myProgressPanel;
+  private final InfoAndProgressPanel myProgressPanel;
 
   private JBPopup myPopup;
 
   private JPanel myActiveFocusedContent;
   private JComponent myActiveContentComponent;
 
-  private JLabel myInactiveContentComponent;
+  private final JLabel myInactiveContentComponent;
 
-  private Wrapper myRootContent = new Wrapper();
+  private final Wrapper myRootContent = new Wrapper();
 
   private final Set<InlineProgressIndicator> myIndicators = new HashSet<InlineProgressIndicator>();
 
@@ -174,7 +174,7 @@ public class ProcessPopup  {
 
   private class ActiveContent extends JPanel implements Scrollable {
 
-    private JLabel myLabel = new JLabel("XXX");
+    private final JLabel myLabel = new JLabel("XXX");
 
     public ActiveContent() {
       super(new BorderLayout());

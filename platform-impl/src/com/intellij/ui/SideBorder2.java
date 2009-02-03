@@ -10,11 +10,11 @@ public class SideBorder2 implements Border {
     return false;
   }
 
-  private Color myLeftColor;
-  private Color myRightColor;
-  private Color myTopColor;
-  private Color myBottomColor;
-  private int myThickness;
+  private final Color myLeftColor;
+  private final Color myRightColor;
+  private final Color myTopColor;
+  private final Color myBottomColor;
+  private final int myThickness;
 
   public SideBorder2(Color topColor, Color leftColor, Color bottomColor, Color rightColor, int thickness) {
     myTopColor = topColor;

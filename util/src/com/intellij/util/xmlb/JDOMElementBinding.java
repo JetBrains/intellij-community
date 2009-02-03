@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 class JDOMElementBinding implements Binding {
-  private Accessor myAccessor;
-  private String myTagName;
+  private final Accessor myAccessor;
+  private final String myTagName;
 
   public JDOMElementBinding(final Accessor accessor) {
     myAccessor = accessor;

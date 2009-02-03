@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Key;
  * @author yole
  */
 public class LogFragment {
-  private String myText;
-  private Key myOutputType;
+  private final String myText;
+  private final Key myOutputType;
 
   public LogFragment(final String text, final Key outputType) {
     myText = text;

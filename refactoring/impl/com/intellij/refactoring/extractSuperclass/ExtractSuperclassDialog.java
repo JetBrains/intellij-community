@@ -32,7 +32,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
 
   private JLabel myClassNameLabel;
   private JLabel myPackageLabel;
-  private Callback myCallback;
+  private final Callback myCallback;
 
   public ExtractSuperclassDialog(Project project, PsiClass sourceClass, MemberInfo[] selectedMembers, Callback callback) {
     super(project, sourceClass, selectedMembers, ExtractSuperclassHandler.REFACTORING_NAME);

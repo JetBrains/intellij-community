@@ -66,7 +66,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   }
 
   private static final class HelpAction extends AnAction {
-    private String myHelpId;
+    private final String myHelpId;
 
     private HelpAction(String helpId) {
       super(IdeBundle.message("action.help"), null, IconLoader.getIcon("/actions/help.png"));

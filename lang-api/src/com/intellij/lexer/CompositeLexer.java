@@ -18,8 +18,8 @@ package com.intellij.lexer;
 import com.intellij.psi.tree.IElementType;
 
 public abstract class CompositeLexer extends LexerBase {
-  private Lexer myLexer1;
-  private Lexer myLexer2;
+  private final Lexer myLexer1;
+  private final Lexer myLexer2;
   private int myCurOffset;
 
   public CompositeLexer(Lexer lexer1, Lexer lexer2) {

@@ -20,7 +20,7 @@ import java.io.File;
  * @author yole
  */
 public class ModuleVcsPathPresenter extends VcsPathPresenter {
-  private Project myProject;
+  private final Project myProject;
 
   public ModuleVcsPathPresenter(final Project project) {
     myProject = project;

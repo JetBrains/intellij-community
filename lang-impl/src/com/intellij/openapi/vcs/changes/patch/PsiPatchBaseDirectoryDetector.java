@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PsiPatchBaseDirectoryDetector extends PatchBaseDirectoryDetector {
-  private Project myProject;
+  private final Project myProject;
 
   public PsiPatchBaseDirectoryDetector(final Project project) {
     myProject = project;

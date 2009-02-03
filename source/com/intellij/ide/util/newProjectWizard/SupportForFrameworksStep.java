@@ -27,7 +27,7 @@ import java.util.List;
  * @author nik
  */
 public class SupportForFrameworksStep extends ModuleWizardStep {
-  private AddSupportForFrameworksPanel mySupportForFrameworksPanel;
+  private final AddSupportForFrameworksPanel mySupportForFrameworksPanel;
   private boolean myCommitted;
 
   public SupportForFrameworksStep(final ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {

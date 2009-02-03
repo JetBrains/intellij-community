@@ -36,14 +36,14 @@ import java.util.Map;
  * Date: Apr 22, 2005
  */
 public class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<RunConfigurationBase> {
-  private TableView myFilesTable;
-  private ListTableModel myModel;
+  private final TableView myFilesTable;
+  private final ListTableModel myModel;
   private JPanel myWholePanel;
   private JButton myAddButton;
   private JButton myRemoveButton;
   private JPanel myScrollPanel;
-  private Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<LogFileOptions, PredefinedLogFile>();
-  private List<PredefinedLogFile> myUnresolvedPredefined = new ArrayList<PredefinedLogFile>();
+  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<LogFileOptions, PredefinedLogFile>();
+  private final List<PredefinedLogFile> myUnresolvedPredefined = new ArrayList<PredefinedLogFile>();
 
   private final ColumnInfo<LogFileOptions, Boolean> IS_SHOW = new MyIsActiveColumnInfo();
   private final ColumnInfo<LogFileOptions, LogFileOptions> FILE = new MyLogFileColumnInfo();

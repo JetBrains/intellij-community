@@ -13,11 +13,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OptionsPanelImpl extends JPanel implements OptionsPanel {
-  private JList myOptionsList;
-  private ColorAndFontDescriptionPanel myOptionsPanel;
+  private final JList myOptionsList;
+  private final ColorAndFontDescriptionPanel myOptionsPanel;
 
   private final ColorAndFontOptions myOptions;
-  private SchemesPanel mySchemesProvider;
+  private final SchemesPanel mySchemesProvider;
   private final String myCategoryName;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);

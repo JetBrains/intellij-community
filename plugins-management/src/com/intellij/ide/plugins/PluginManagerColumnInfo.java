@@ -41,8 +41,8 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     IdeBundle.message("column.plugins.category")
   };
 
-  private int columnIdx;
-  private SortableProvider mySortableProvider;
+  private final int columnIdx;
+  private final SortableProvider mySortableProvider;
 
   public PluginManagerColumnInfo(int columnIdx, SortableProvider sortableProvider) {
     super(COLUMNS[columnIdx]);
@@ -203,7 +203,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   }
 
   private static class PluginTableCellRenderer extends DefaultTableCellRenderer {
-    private PluginManagerColumnInfo myColumnInfo;
+    private final PluginManagerColumnInfo myColumnInfo;
 
     private PluginTableCellRenderer(final PluginManagerColumnInfo columnInfo) {
       myColumnInfo = columnInfo;

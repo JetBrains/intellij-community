@@ -33,7 +33,7 @@ import java.util.Comparator;
  *         Date: May 18, 2005
  */
 class JdkComboBox extends JComboBox{
-  private JButton myEditButton = new JButton(ApplicationBundle.message("button.edit"));
+  private final JButton myEditButton = new JButton(ApplicationBundle.message("button.edit"));
 
   public JdkComboBox(final ProjectJdksModel jdksModel) {
     super(new JdkComboBoxModel(jdksModel));

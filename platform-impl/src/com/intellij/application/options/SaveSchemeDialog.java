@@ -13,8 +13,8 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class SaveSchemeDialog extends DialogWrapper {
-  private JTextField mySchemeName = new JTextField();
-  private ArrayList myInvalidNames;
+  private final JTextField mySchemeName = new JTextField();
+  private final ArrayList myInvalidNames;
 
   public SaveSchemeDialog(Component parent, String title, ArrayList invalidNames){
     super(parent, false);

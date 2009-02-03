@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class SequenceIterator<T> implements Iterator<T> {
-  private Iterator[] myIterators;
+  private final Iterator[] myIterators;
   private int myCurrentIndex;
 
   public SequenceIterator(Iterator... iterators){

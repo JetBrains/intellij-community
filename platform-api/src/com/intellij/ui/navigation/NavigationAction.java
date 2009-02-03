@@ -10,7 +10,7 @@ import javax.swing.*;
 
 abstract class NavigationAction extends AnAction {
 
-  private ShadowAction myShadow;
+  private final ShadowAction myShadow;
 
   protected NavigationAction(JComponent c, final String originalActionID) {
     final AnAction original = ActionManager.getInstance().getAction(originalActionID);

@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class XmlParsing {
-  private PsiBuilder myBuilder;
-  private Stack<String> myTagNamesStack = new Stack<String>();
+  private final PsiBuilder myBuilder;
+  private final Stack<String> myTagNamesStack = new Stack<String>();
   private static final int BALANCING_DEPTH_THRESHOULD = 1000;
 
   public XmlParsing(final PsiBuilder builder) {

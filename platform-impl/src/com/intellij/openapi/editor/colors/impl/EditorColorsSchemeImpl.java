@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
-  private ExternalInfo myExternalInfo = new ExternalInfo();
+  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   public EditorColorsSchemeImpl(EditorColorsScheme parenScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
     super(parenScheme, defaultColorSchemesManager);

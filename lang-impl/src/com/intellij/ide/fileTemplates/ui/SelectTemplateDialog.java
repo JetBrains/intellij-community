@@ -21,8 +21,8 @@ import java.awt.event.ActionListener;
 public class SelectTemplateDialog extends DialogWrapper{
   private JComboBox myCbxTemplates;
   private FileTemplate mySelectedTemplate;
-  private Project myProject;
-  private PsiDirectory myDirectory;
+  private final Project myProject;
+  private final PsiDirectory myDirectory;
 
   public SelectTemplateDialog(Project project, PsiDirectory directory){
     super(project, true);

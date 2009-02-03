@@ -14,7 +14,7 @@ import com.intellij.refactoring.RefactoringBundle;
 public class InfoDialog extends DialogWrapper{
   private JCheckBox myShowInFutureCheckBox;
   private JTextArea myTextArea;
-  private String myText;
+  private final String myText;
   private boolean isToShowInFuture;
 
   public InfoDialog(String text, Project project) {

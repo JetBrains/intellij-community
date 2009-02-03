@@ -14,8 +14,8 @@ import javax.swing.*;
  * @author nik
  */
 public class GroupToolbarAction extends AnAction {
-  private ActionGroup myGroup;
-  private JComponent myToolbarComponent;
+  private final ActionGroup myGroup;
+  private final JComponent myToolbarComponent;
 
   public GroupToolbarAction(final ActionGroup group, JComponent toolbarComponent) {
     super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(),

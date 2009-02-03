@@ -72,8 +72,8 @@ public class IdRefReference extends BasicAttributeValueReference {
             subTag.getName().indexOf(".directive") == -1);
   }
 
-  private static FileBasedUserDataCache<List<PsiElement>> ourCachedIdsCache = new FileBasedUserDataCache<List<PsiElement>>() {
-    private Key<CachedValue<List<PsiElement>>> ourCachedIdsValueKey = Key.create("my.ids.cached.value");
+  private static final FileBasedUserDataCache<List<PsiElement>> ourCachedIdsCache = new FileBasedUserDataCache<List<PsiElement>>() {
+    private final Key<CachedValue<List<PsiElement>>> ourCachedIdsValueKey = Key.create("my.ids.cached.value");
 
     protected List<PsiElement> doCompute(PsiFile file) {
       final List<PsiElement> result = new ArrayList<PsiElement>();

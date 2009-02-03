@@ -84,11 +84,11 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
                                                      "    Window frame.\n" +
                                                      "WindowText\n" +
                                                      "    Text in windows. ";
-  @NonNls private static String standardColorsString = "maroon #800000 red #ff0000 orange #ffA500 yellow #ffff00 olive #808000\n" +
+  @NonNls private static final String standardColorsString = "maroon #800000 red #ff0000 orange #ffA500 yellow #ffff00 olive #808000\n" +
                                                        "purple #800080 fuchsia #ff00ff white #ffffff lime #00ff00 green #008000\n" +
                                                        "navy #000080 blue #0000ff aqua #00ffff teal #008080\n" +
                                                        "black #000000 silver #c0c0c0 gray #808080";
-  @NonNls private static String colorsString = "aliceblue \t#f0f8ff \t240,248,255\n" +
+  @NonNls private static final String colorsString = "aliceblue \t#f0f8ff \t240,248,255\n" +
                                                "  \t  \tantiquewhite \t#faebd7 \t250,235,215\n" +
                                                "  \t  \taqua \t#00ffff \t0,255,255\n" +
                                                "  \t  \taquamarine \t#7fffd4 \t127,255,212\n" +
@@ -228,11 +228,11 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
                                                "  \t  \twhitesmoke \t#f5f5f5 \t245,245,245\n" +
                                                "  \t  \tyellow \t#ffff00 \t255,255,0\n" +
                                                "  \t  \tyellowgreen \t#9acd32 \t154,205,50";
-  private boolean myIsStandard;
-  private String myName;
-  private String myValue;
+  private final boolean myIsStandard;
+  private final String myName;
+  private final String myValue;
   private Color myColor;
-  private static ArrayList<String> ourSystemColors;
+  private static final ArrayList<String> ourSystemColors;
 
   static {
     ourSystemColors = new ArrayList<String>();

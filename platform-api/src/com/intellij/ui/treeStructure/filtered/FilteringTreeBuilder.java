@@ -23,7 +23,7 @@ import java.util.Comparator;
 public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   private Object myLastSuccessfulSelect;
-  private SimpleTree myTree;
+  private final SimpleTree myTree;
 
   private MergingUpdateQueue myRefilterQueue;
 

@@ -27,7 +27,7 @@ import java.awt.*;
  * Dead code now
  */
 public class LibraryDependantsPanel extends OrderPanel<ModifiableRootModel> {
-  private Library myLibrary;
+  private final Library myLibrary;
 
   public LibraryDependantsPanel(final Library library) {
     super(ModifiableRootModel.class, true);

@@ -23,9 +23,9 @@ import org.jdom.Text;
 
 //todo: merge with option tag binding
 class TagBindingWrapper implements Binding {
-  private Binding binding;
-  private String myTagName;
-  private String myAttributeName;
+  private final Binding binding;
+  private final String myTagName;
+  private final String myAttributeName;
 
   public TagBindingWrapper(Binding binding, final String tagName, final String attributeName) {
     this.binding = binding;

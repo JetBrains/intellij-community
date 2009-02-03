@@ -31,12 +31,12 @@ public final class History {
 
   public static DataKey<History> KEY = DataKey.create("History");
 
-  private List<Place> myHistory = new ArrayList<Place>();
+  private final List<Place> myHistory = new ArrayList<Place>();
   private int myCurrentPos;
-  private Place.Navigator myRoot;
+  private final Place.Navigator myRoot;
 
   private boolean myNavigatedNow;
-  private CopyOnWriteArraySet<HistoryListener> myListeners = new CopyOnWriteArraySet<HistoryListener>();
+  private final CopyOnWriteArraySet<HistoryListener> myListeners = new CopyOnWriteArraySet<HistoryListener>();
 
   public History(@NotNull Place.Navigator root) {
     myRoot = root;

@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 
 public class PerformAnalysisInBackgroundOption implements PerformInBackgroundOption {
-  private AnalysisUIOptions myUIOptions;
+  private final AnalysisUIOptions myUIOptions;
 
   public PerformAnalysisInBackgroundOption(Project project) {
     myUIOptions = AnalysisUIOptions.getInstance(project);

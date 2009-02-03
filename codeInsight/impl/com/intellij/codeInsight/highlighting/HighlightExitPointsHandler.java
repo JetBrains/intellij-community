@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
-  private PsiElement myTarget;
+  private final PsiElement myTarget;
 
   public HighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
     super(editor, file);

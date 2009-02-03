@@ -27,8 +27,8 @@ public class EdgeBorder implements Border {
   public static final int EDGE_LEFT = 240;
   public static final int EDGE_TOP = 15;
   public static final int EDGE_ALL = 65535;
-  private Insets myInsets;
-  private int b;
+  private final Insets myInsets;
+  private final int b;
 
   public EdgeBorder(int i) {
     myInsets = new Insets(2, 2, 2, 2);

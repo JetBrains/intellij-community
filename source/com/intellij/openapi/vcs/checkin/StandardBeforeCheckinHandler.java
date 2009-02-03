@@ -20,7 +20,7 @@ import java.util.Collection;
 
 public class StandardBeforeCheckinHandler extends CheckinHandler implements CheckinMetaHandler {
   protected final Project myProject;
-  private CheckinProjectPanel myPanel;
+  private final CheckinProjectPanel myPanel;
 
   public StandardBeforeCheckinHandler(final Project project, final CheckinProjectPanel panel) {
     myProject = project;

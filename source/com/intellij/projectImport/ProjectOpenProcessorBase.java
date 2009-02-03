@@ -37,7 +37,7 @@ import java.io.IOException;
 
 public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
 
-  private ProjectImportBuilder myBuilder;
+  private final ProjectImportBuilder myBuilder;
 
   protected ProjectOpenProcessorBase(final ProjectImportBuilder builder) {
     myBuilder = builder;

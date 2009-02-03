@@ -30,7 +30,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   private class LeftRenderer extends ColoredListCellRenderer {
-    private String myModuleName;
+    private final String myModuleName;
 
     public LeftRenderer(final String moduleName) {
       myModuleName = moduleName;

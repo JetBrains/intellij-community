@@ -19,8 +19,8 @@ import java.util.List;
  * @author mike
  */
 class SeeDocTagInfo implements JavadocTagInfo {
-  private String myName;
-  private boolean myInline;
+  private final String myName;
+  private final boolean myInline;
   private static final @NonNls String LINKPLAIN_TAG = "linkplain";
 
   public SeeDocTagInfo(@NonNls String name, boolean isInline) {

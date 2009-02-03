@@ -24,7 +24,7 @@ import javax.swing.*;
 public class ModulesConfigurable extends NamedConfigurable<ModuleManager> {
   private static final Icon PROJECT_ICON = IconLoader.getIcon("/modules/modulesNode.png");
 
-  private ModuleManager myManager;
+  private final ModuleManager myManager;
 
   public ModulesConfigurable(ModuleManager manager) {
     myManager = manager;

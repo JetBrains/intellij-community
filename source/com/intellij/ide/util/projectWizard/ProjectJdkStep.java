@@ -28,11 +28,11 @@ import java.awt.*;
  */
 public class ProjectJdkStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  private WizardContext myContext;
+  private final WizardContext myContext;
 
-  private ProjectJdksConfigurable myProjectJdksConfigurable;
+  private final ProjectJdksConfigurable myProjectJdksConfigurable;
 
-  private JComponent myJDKsComponent;
+  private final JComponent myJDKsComponent;
 
   public ProjectJdkStep(final WizardContext context) {
     myContext = context;

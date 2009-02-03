@@ -89,7 +89,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
   }
 
   static class FetchingResourceIOException extends IOException {
-    private String url;
+    private final String url;
 
     FetchingResourceIOException(Throwable cause, String url) {
       initCause(cause);

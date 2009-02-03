@@ -156,7 +156,7 @@ public abstract class ReorderableListController <T> {
 
     protected static class BaseAction<V> extends AnAction {
       private final ActionBehaviour<V> myBehaviour;
-      private CustomActionDescription<V> myCustomActionDescription;
+      private final CustomActionDescription<V> myCustomActionDescription;
 
       public BaseAction(final CustomActionDescription<V> customActionDescription,
                         final String text, final String description, final Icon icon, final ActionBehaviour<V> behaviour) {

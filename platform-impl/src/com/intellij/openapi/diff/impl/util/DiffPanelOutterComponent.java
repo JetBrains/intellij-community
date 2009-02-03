@@ -20,7 +20,7 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   private DataProvider myDataProvider = null;
   private DeferScrollToFirstDiff myScrollState = NO_SCROLL_NEEDED;
   private ScrollingPanel myScrollingPanel = null;
-  private JPanel myBottomContainer;
+  private final JPanel myBottomContainer;
   private JComponent myBottomComponent;
 
   public DiffPanelOutterComponent(List<TextDiffType> diffTypes, DiffRequest.ToolbarAddons defaultActions) {

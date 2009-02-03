@@ -39,7 +39,7 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
   }
 
   private static class SoftKey extends SoftReference implements Key{
-    private int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
+    private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
 
     private SoftKey(Object k) {
       super(k);
@@ -75,8 +75,8 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
   }
 
   private static class HardKey implements Key{
-    private Object myObject;
-    private int myHash;
+    private final Object myObject;
+    private final int myHash;
 
     public HardKey(Object object) {
       myObject = object;
@@ -105,7 +105,7 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
   private final ConcurrentMap myMap;
   private static final Object NULL_KEY = new Object();
 
-  private ReferenceQueue myReferenceQueue = new ReferenceQueue();
+  private final ReferenceQueue myReferenceQueue = new ReferenceQueue();
 
   private void processQueue() {
     SoftKey wk;
@@ -205,8 +205,8 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
   }
 
   static private class Entry implements Map.Entry {
-    private Map.Entry ent;
-    private Object key;	/* Strong reference to key, so that the GC
+    private final Map.Entry ent;
+    private final Object key;	/* Strong reference to key, so that the GC
                                  will leave it alone as long as this Entry
                                  exists */
 

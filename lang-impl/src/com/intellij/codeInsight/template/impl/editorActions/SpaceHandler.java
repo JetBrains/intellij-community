@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 
 public class SpaceHandler implements TypedActionHandler {
-  private TypedActionHandler myOriginalHandler;
+  private final TypedActionHandler myOriginalHandler;
 
   public SpaceHandler(TypedActionHandler originalHandler) {
     myOriginalHandler = originalHandler;

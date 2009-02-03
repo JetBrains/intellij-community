@@ -27,12 +27,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private final PropertyChangeSupport myChangeSupport;
   private final ToolWindowManagerImpl myToolWindowManager;
   private final String myId;
-  private JComponent myComponent;
+  private final JComponent myComponent;
   private boolean myAvailable;
-  private ContentManager myContentManager;
+  private final ContentManager myContentManager;
 
   private static final Content EMPTY_CONTENT = new ContentImpl(new JLabel(), "", false);
-  private ToolWindowContentUi myContentUI;
+  private final ToolWindowContentUi myContentUI;
 
   private InternalDecorator myDecorator;
 

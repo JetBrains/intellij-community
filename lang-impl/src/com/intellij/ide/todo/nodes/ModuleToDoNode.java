@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedRegionProvider {
-  private ArrayList<HighlightedRegion> myHighlightedRegions;
+  private final ArrayList<HighlightedRegion> myHighlightedRegions;
 
   public ModuleToDoNode(Project project, Module value, TodoTreeBuilder builder) {
     super(project, value, builder);

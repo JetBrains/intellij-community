@@ -121,7 +121,7 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
   private class ProjectModuleOrPackageDialog extends DialogWrapper {
-    private String myModuleName;
+    private final String myModuleName;
     private JRadioButton myProjectButton;
     private JRadioButton myModuleButton;
 

@@ -25,7 +25,7 @@ public final class ToolWindowAnchor {
   public static final ToolWindowAnchor BOTTOM = new ToolWindowAnchor("bottom");
   public static final ToolWindowAnchor RIGHT = new ToolWindowAnchor("right");
 
-  private String myText;
+  private final String myText;
 
   private ToolWindowAnchor(@NonNls String text){
     myText = text;

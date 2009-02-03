@@ -35,7 +35,7 @@ import java.util.TooManyListenersException;
  * To change this template use File | Settings | File Templates.
  */
 class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
-  private UsageViewImpl myUsageView;
+  private final UsageViewImpl myUsageView;
 
   public ExporterToTextFile(UsageViewImpl usageView) {
     myUsageView = usageView;

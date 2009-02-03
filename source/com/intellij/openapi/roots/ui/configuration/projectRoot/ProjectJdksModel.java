@@ -39,8 +39,8 @@ import java.util.Set;
 public class ProjectJdksModel implements NotifiableSdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel");
 
-  private HashMap<Sdk, Sdk> myProjectJdks = new HashMap<Sdk, Sdk>();
-  private EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(SdkModel.Listener.class);
+  private final HashMap<Sdk, Sdk> myProjectJdks = new HashMap<Sdk, Sdk>();
+  private final EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(SdkModel.Listener.class);
 
   private boolean myModified = false;
 

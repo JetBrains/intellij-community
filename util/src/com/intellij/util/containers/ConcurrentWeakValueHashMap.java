@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V> {
   private final ConcurrentHashMap<K,MyReference<K,V>> myMap;
-  private ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   public ConcurrentWeakValueHashMap(final Map<K, V> map) {
     this();

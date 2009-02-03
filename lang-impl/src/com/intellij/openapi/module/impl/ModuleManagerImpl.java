@@ -65,14 +65,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private List<ModulePath> myModulePaths;
-  private List<ModulePath> myFailedModulePaths = new ArrayList<ModulePath>();
+  private final List<ModulePath> myFailedModulePaths = new ArrayList<ModulePath>();
   @NonNls public static final String ELEMENT_MODULES = "modules";
   @NonNls public static final String ELEMENT_MODULE = "module";
   @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
   @NonNls public static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
   private long myModificationCount;
-  private MessageBusConnection myConnection;
+  private final MessageBusConnection myConnection;
   private final MessageBus myMessageBus;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
@@ -353,7 +353,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   private static class ModulePathSaveItem extends SaveItem{
     private final ModulePath myModulePath;
-    private String myFilePath;
+    private final String myFilePath;
     private final String myName;
 
     public ModulePathSaveItem(ModulePath modulePath) {
@@ -416,7 +416,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
   }
 
-  private Map<ModuleListener, MessageBusConnection> myAdapters = new HashMap<ModuleListener, MessageBusConnection>();
+  private final Map<ModuleListener, MessageBusConnection> myAdapters = new HashMap<ModuleListener, MessageBusConnection>();
   public void addModuleListener(@NotNull ModuleListener listener) {
     final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(ProjectTopics.MODULES, listener);
@@ -558,12 +558,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    private Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
+    private final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
     private Module[] myModulesCache;
 
-    private List<Module> myModulesToDispose = new ArrayList<Module>();
-    private Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
-    private Map<String, Module> myNewNameToModule = new HashMap<String, Module>();
+    private final List<Module> myModulesToDispose = new ArrayList<Module>();
+    private final Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
+    private final Map<String, Module> myNewNameToModule = new HashMap<String, Module>();
     private boolean myIsWritable;
     private Map<Module, String []> myModuleGroupPath;
 

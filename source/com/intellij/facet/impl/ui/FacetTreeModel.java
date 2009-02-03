@@ -23,8 +23,8 @@ import java.util.Collection;
 public class FacetTreeModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetTreeModel");
   private static final FacetInfo ROOT = new FacetInfo(null, "", null, null);
-  private List<FacetInfo> myFacetInfos = new ArrayList<FacetInfo>();
-  private BidirectionalMap<FacetInfo, FacetInfo> myParents = new BidirectionalMap<FacetInfo, FacetInfo>();
+  private final List<FacetInfo> myFacetInfos = new ArrayList<FacetInfo>();
+  private final BidirectionalMap<FacetInfo, FacetInfo> myParents = new BidirectionalMap<FacetInfo, FacetInfo>();
 
   public void addFacetInfo(FacetInfo info) {
     myFacetInfos.add(info);

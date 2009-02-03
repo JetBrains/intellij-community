@@ -687,8 +687,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private class MyBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
-    private ASTDiffBuilder myDelegate;
-    private ASTConvertor myConvertor;
+    private final ASTDiffBuilder myDelegate;
+    private final ASTConvertor myConvertor;
 
     public MyBuilder(PsiFileImpl file, LighterASTNode rootNode) {
       myDelegate = new ASTDiffBuilder(file);
@@ -960,7 +960,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private class MyTreeStructure implements FlyweightCapableTreeStructure<LighterASTNode> {
-    private LimitedPool<Token> myPool = new LimitedPool<Token>(1000, new LimitedPool.ObjectFactory<Token>() {
+    private final LimitedPool<Token> myPool = new LimitedPool<Token>(1000, new LimitedPool.ObjectFactory<Token>() {
       public void cleanup(final Token token) {
         token.myHC = -1;
       }
@@ -1053,7 +1053,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private class ASTConvertor implements Convertor<Node, ASTNode> {
-    private Node myRoot;
+    private final Node myRoot;
 
     public ASTConvertor(final Node root) {
       myRoot = root;

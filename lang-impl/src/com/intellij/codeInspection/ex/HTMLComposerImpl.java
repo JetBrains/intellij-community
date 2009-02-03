@@ -32,10 +32,10 @@ import java.util.Map;
  */
 public abstract class HTMLComposerImpl extends HTMLComposer {
   protected HTMLExporter myExporter;
-  private int[] myListStack;
+  private final int[] myListStack;
   private int myListStackTop;
-  private Map<Key, HTMLComposerExtension> myExtensions = new HashMap<Key, HTMLComposerExtension>();
-  private Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<Language, HTMLComposerExtension>();
+  private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<Key, HTMLComposerExtension>();
+  private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<Language, HTMLComposerExtension>();
   @NonNls protected static final String BR = "<br>";
   @NonNls protected static final String NBSP = "&nbsp;";
   @NonNls protected static final String CODE_CLOSING = "</code>";

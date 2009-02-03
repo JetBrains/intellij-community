@@ -28,17 +28,17 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 
 public class InheritanceToDelegationDialog extends RefactoringDialog {
-  private PsiClass[] mySuperClasses;
+  private final PsiClass[] mySuperClasses;
 
-  private PsiClass myClass;
-  private HashMap<PsiClass,MemberInfo[]> myBasesToMemberInfos;
+  private final PsiClass myClass;
+  private final HashMap<PsiClass,MemberInfo[]> myBasesToMemberInfos;
 
   private NameSuggestionsField myFieldNameField;
   private NameSuggestionsField myInnerClassNameField;
   private JCheckBox myCbGenerateGetter;
   private MemberSelectionPanel myMemberSelectionPanel;
   private JComboBox myClassCombo;
-  private Project myProject;
+  private final Project myProject;
   private MyClassComboItemListener myClassComboItemListener;
   private NameSuggestionsField.DataChanged myDataChangedListener;
 

@@ -139,7 +139,7 @@ public class MessagesEx extends Messages {
   public static class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
     private String[] myChoises = ArrayUtil.EMPTY_STRING_ARRAY;
     private String myDefaultChoice = null;
-    private boolean myEditable = false;
+    private final boolean myEditable = false;
 
     public ChoiceInfo(Project project) {
       super(project);

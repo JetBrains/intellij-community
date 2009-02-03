@@ -16,7 +16,7 @@ import javax.swing.*;
 public abstract class ProjectImportProvider {
   public static final ExtensionPointName<ProjectImportProvider> PROJECT_IMPORT_PROVIDER = ExtensionPointName.create("com.intellij.projectImportProvider");
 
-  private ProjectImportBuilder myBuilder;
+  private final ProjectImportBuilder myBuilder;
 
   protected ProjectImportProvider(final ProjectImportBuilder builder) {
     myBuilder = builder;

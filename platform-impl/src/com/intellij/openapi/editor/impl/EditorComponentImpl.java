@@ -16,7 +16,7 @@ import java.awt.im.InputMethodRequests;
  *
  */
 public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider {
-  private EditorImpl myEditor;
+  private final EditorImpl myEditor;
 
   public EditorComponentImpl(EditorImpl editor) {
     myEditor = editor;

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class LightFilePointer  {
-  private String myUrl;
+  private final String myUrl;
   private VirtualFile myFile;
 
   public LightFilePointer(String url) {

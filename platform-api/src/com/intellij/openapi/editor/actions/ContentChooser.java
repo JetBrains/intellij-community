@@ -50,7 +50,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   private final boolean myUseIdeaEditor;
 
   private Splitter mySplitter;
-  private Project myProject;
+  private final Project myProject;
 
   public ContentChooser(Project project, String title, boolean useIdeaEditor) {
     super(project, true);

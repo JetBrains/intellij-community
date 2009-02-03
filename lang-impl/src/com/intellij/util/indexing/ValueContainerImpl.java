@@ -143,7 +143,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   };
 
   private static class SingleValueIterator implements IntIterator {
-    private int myValue;
+    private final int myValue;
     private boolean myValueRead = false;
 
     private SingleValueIterator(int value) {

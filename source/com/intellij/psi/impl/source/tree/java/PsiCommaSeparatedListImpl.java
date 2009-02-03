@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement implements Constants {
-  private TokenSet myTypesOfElements;
+  private final TokenSet myTypesOfElements;
 
 
   protected PsiCommaSeparatedListImpl(IElementType type, final TokenSet typeOfElements) {

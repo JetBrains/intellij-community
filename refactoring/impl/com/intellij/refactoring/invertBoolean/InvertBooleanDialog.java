@@ -20,7 +20,7 @@ public class InvertBooleanDialog extends RefactoringDialog {
   private JLabel myLabel;
   private JLabel myCaptionLabel;
 
-  private PsiNamedElement myElement;
+  private final PsiNamedElement myElement;
 
   public InvertBooleanDialog(final PsiNamedElement element) {
     super(element.getProject(), false);

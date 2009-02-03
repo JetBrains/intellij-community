@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class EmptyMarkupModel implements MarkupModelEx {
-  private Document myDocument;
+  private final Document myDocument;
 
   public EmptyMarkupModel(final Document document) {
     myDocument = document;

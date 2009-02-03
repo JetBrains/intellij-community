@@ -317,7 +317,7 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   private abstract static class TaskContainer implements Runnable {
-    private Task myTask;
+    private final Task myTask;
 
     protected TaskContainer(final Task task) {
       myTask = task;

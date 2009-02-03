@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter {
-  private PsiMethod myMethod;
-  private PsiVariable myTargetVariable;
-  private PsiClass myTargetClass;
+  private final PsiMethod myMethod;
+  private final PsiVariable myTargetVariable;
+  private final PsiClass myTargetClass;
 
   public MoveInstanceMethodViewDescriptor(
     PsiMethod method,

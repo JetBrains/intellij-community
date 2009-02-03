@@ -15,10 +15,10 @@ public class SpeedSearchPane extends JDialog {
   private static final Color SPEEDSEARCH_BACKGROUND = new Color(244, 249, 181);
   private static final Color SPEEDSEARCH_FOREGROUND = Color.black;
 
-  private WizardPopup myPopup;
-  private JLabel myLabel = new JLabel();
+  private final WizardPopup myPopup;
+  private final JLabel myLabel = new JLabel();
 
-  private JPanel myPanel = new JPanel();
+  private final JPanel myPanel = new JPanel();
 
   private Dimension myLastLabelSize = new Dimension();
   private static final Icon ICON_PROMPT = IconLoader.getIcon("/icons/ide/speedSearchPrompt.png");

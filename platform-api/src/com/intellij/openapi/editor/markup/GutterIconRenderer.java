@@ -115,7 +115,7 @@ public abstract class GutterIconRenderer {
     RIGHT(3),
     CENTER(2);
 
-    private int myWeight;
+    private final int myWeight;
 
     private Alignment(int weight) {
       myWeight = weight;

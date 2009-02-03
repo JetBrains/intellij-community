@@ -19,7 +19,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return dimCount;
   }
 
-  private int dimCount;
+  private final int dimCount;
 
   public int getKind() {
     return kind;

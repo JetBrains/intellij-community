@@ -23,7 +23,7 @@ import java.util.List;
 
 public abstract class SimpleMutableNode extends CachingSimpleNode {
 
-  private List myChildren = new ArrayList();
+  private final List myChildren = new ArrayList();
 
   public SimpleMutableNode() {
   }

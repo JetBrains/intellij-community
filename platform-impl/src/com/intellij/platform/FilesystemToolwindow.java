@@ -28,8 +28,8 @@ import java.awt.*;
 public class FilesystemToolwindow {
   private final VirtualFile myRoot;
   private final Project myProject;
-  private ToolWindow myToolWindow;
-  private JPanel myContent;
+  private final ToolWindow myToolWindow;
+  private final JPanel myContent;
   private final FileSystemTree myFsTree;
 
   public FilesystemToolwindow(final VirtualFile root, Project project) {

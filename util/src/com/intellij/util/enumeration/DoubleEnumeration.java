@@ -19,8 +19,8 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 public class DoubleEnumeration implements Enumeration{
-  private Object myValue1;
-  private Object myValue2;
+  private final Object myValue1;
+  private final Object myValue2;
   private int myIndex;
 
   public DoubleEnumeration(Object value1, Object value2){

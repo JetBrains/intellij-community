@@ -27,7 +27,7 @@ final class Stripe extends JPanel{
   private Dimension myPrefSize;
   private StripeButton myDragButton;
   private Rectangle myDropRectangle;
-  private ToolWindowManagerImpl myManager;
+  private final ToolWindowManagerImpl myManager;
   private JComponent myDragButtonImage;
   private LayoutData myLastLayoutData;
   private boolean myFinishingDrop;

@@ -17,12 +17,12 @@ import java.awt.event.MouseEvent;
 
 class ActionButton extends IconButton implements ActionListener {
 
-  private InplaceButton myButton;
+  private final InplaceButton myButton;
   private Presentation myPrevPresentation;
-  private AnAction myAction;
-  private String myPlace;
-  private TabInfo myTabInfo;
-  private JBTabsImpl myTabs;
+  private final AnAction myAction;
+  private final String myPlace;
+  private final TabInfo myTabInfo;
+  private final JBTabsImpl myTabs;
   private boolean myAutoHide;
   private boolean myToShow;
 

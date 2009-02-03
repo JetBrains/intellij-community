@@ -24,10 +24,10 @@ import java.util.*;
  */
 public class GenerateEqualsHelper implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHelper");
-  private PsiClass myClass;
-  private PsiField[] myEqualsFields;
-  private PsiField[] myHashCodeFields;
-  private HashSet<PsiField> myNonNullSet;
+  private final PsiClass myClass;
+  private final PsiField[] myEqualsFields;
+  private final PsiField[] myHashCodeFields;
+  private final HashSet<PsiField> myNonNullSet;
   private final PsiElementFactory myFactory;
   private String myParameterName;
 
@@ -40,10 +40,10 @@ public class GenerateEqualsHelper implements Runnable {
 
   @NonNls private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<String, MessageFormat>();
   private final boolean mySuperHasHashCode;
-  private CodeStyleManager myCodeStyleManager;
-  private JavaCodeStyleManager myJavaCodeStyleManager;
+  private final CodeStyleManager myCodeStyleManager;
+  private final JavaCodeStyleManager myJavaCodeStyleManager;
   private final Project myProject;
-  private boolean myCheckParameterWithInstanceof;
+  private final boolean myCheckParameterWithInstanceof;
 
   public GenerateEqualsHelper(Project project,
                               PsiClass aClass,

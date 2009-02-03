@@ -64,19 +64,19 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
                                                                                           ExportableApplicationComponent, JDOMExternalizable {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
-  private InspectionToolRegistrar myRegistrar;
+  private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
-  private AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
-  private SeverityRegistrar mySeverityRegistrar;
+  private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
+  private final SeverityRegistrar mySeverityRegistrar;
   private static final String INSPECTION = "inspection";
   private static final String FILE_SPEC = "$ROOT_CONFIG$/" + INSPECTION;
   private final SchemeProcessor<InspectionProfileImpl> myProcessor;
 
 
-  private List<ProfileChangeAdapter> myProfileChangeAdapters = new ArrayList<ProfileChangeAdapter>();
+  private final List<ProfileChangeAdapter> myProfileChangeAdapters = new ArrayList<ProfileChangeAdapter>();
 
-  private String myProfileType;
-  private Computable<Profile> mySampleProfile;
+  private final String myProfileType;
+  private final Computable<Profile> mySampleProfile;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
 

@@ -24,7 +24,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private final ToolWindowImpl myToolWindow;
   private final FocusWatcher myFocusWatcher;
 
-  private boolean myForced;
+  private final boolean myForced;
 
   public RequestFocusInToolWindowCmd(final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, boolean forced) {
     super(finishCallBack);

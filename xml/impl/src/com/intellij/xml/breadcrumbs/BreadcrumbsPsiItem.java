@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class BreadcrumbsPsiItem extends BreadcrumbsItem {
-  private PsiElement myElement;
-  private BreadcrumbsInfoProvider myProvider;
+  private final PsiElement myElement;
+  private final BreadcrumbsInfoProvider myProvider;
 
   public BreadcrumbsPsiItem(@NotNull final PsiElement element, @NotNull final BreadcrumbsInfoProvider provider) {
     myElement = element;

@@ -59,8 +59,8 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
   private Set<Configurable> myOptionContainers = null;
   private SearchUtil.ConfigurableSearchTextField mySearchField;
-  private Alarm mySearchUpdater = new Alarm();
-  private JBPopup[] myPopup = new JBPopup[2];
+  private final Alarm mySearchUpdater = new Alarm();
+  private final JBPopup[] myPopup = new JBPopup[2];
 
   public ControlPanelSettingsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
@@ -314,13 +314,13 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
   }
 
   private class MyActionButton extends JComponent implements ActionButtonComponent {
-    private Configurable myConfigurable;
-    private int myGroupIdx;
-    private int myRowIdx;
-    private int myColumnIdx;
+    private final Configurable myConfigurable;
+    private final int myGroupIdx;
+    private final int myRowIdx;
+    private final int myColumnIdx;
     private boolean myIsMouseInside = false;
-    private Icon myIcon;
-    private KeyStroke myShortcut;
+    private final Icon myIcon;
+    private final KeyStroke myShortcut;
 
     public MyActionButton(Configurable configurable, KeyStroke shortcut, int groupIdx, int rowIdx, int columnIdx) {
       myConfigurable = configurable;

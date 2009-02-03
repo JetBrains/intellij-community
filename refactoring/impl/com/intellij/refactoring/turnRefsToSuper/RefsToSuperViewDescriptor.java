@@ -9,8 +9,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 class RefsToSuperViewDescriptor implements UsageViewDescriptor{
-  private PsiClass myClass;
-  private PsiClass mySuper;
+  private final PsiClass myClass;
+  private final PsiClass mySuper;
 
   public RefsToSuperViewDescriptor(
     PsiClass aClass,

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class TableLayout extends TabLayout {
 
-  private JBTabsImpl myTabs;
+  private final JBTabsImpl myTabs;
 
   public TablePassInfo myLastTableLayout;
 

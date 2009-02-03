@@ -29,7 +29,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   private NameSuggestionsField myNameField;
   private final ReferenceEditorWithBrowseButton myTfTargetClassName;
   private JComboBox myTargetClassNameCombo;
-  private PsiClass myContainingClass;
+  private final PsiClass myContainingClass;
   private final PsiMethod myConstructor;
   private final boolean myIsInner;
   private NameSuggestionsField.DataChanged myNameChangedListener;

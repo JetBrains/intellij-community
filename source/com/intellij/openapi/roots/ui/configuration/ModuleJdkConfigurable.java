@@ -31,12 +31,12 @@ import java.awt.event.ActionListener;
 public class ModuleJdkConfigurable implements Disposable {
   private JdkComboBox myCbModuleJdk;
   private Sdk mySelectedModuleJdk = null;
-  private ModifiableRootModel myRootModel;
+  private final ModifiableRootModel myRootModel;
   private JPanel myJdkPanel;
   private ClasspathEditor myModuleEditor;
-  private ProjectJdksModel myJdksModel;
+  private final ProjectJdksModel myJdksModel;
   private boolean myFreeze = false;
-  private SdkModel.Listener myListener = new SdkModel.Listener() {
+  private final SdkModel.Listener myListener = new SdkModel.Listener() {
     public void sdkAdded(Sdk sdk) {
       reloadModel();
     }

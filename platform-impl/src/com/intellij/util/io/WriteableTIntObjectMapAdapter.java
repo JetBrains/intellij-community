@@ -13,7 +13,7 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public class WriteableTIntObjectMapAdapter <V> implements WriteableMap<V> {
-  private TIntObjectHashMap<V> hashmap;
+  private final TIntObjectHashMap<V> hashmap;
   private int[] hashkeys;
 
   public WriteableTIntObjectMapAdapter(TIntObjectHashMap<V> map) {

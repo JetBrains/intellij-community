@@ -38,8 +38,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class FileSystemSynchronizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileSystemSynchronizer");
 
-  private ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
-  private LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
+  private final ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
+  private final LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
   private Collection/*<VirtualFile>*/[] myUpdateSets;
 
   private boolean myIsCancelable = false;

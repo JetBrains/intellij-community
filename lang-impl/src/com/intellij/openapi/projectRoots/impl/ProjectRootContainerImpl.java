@@ -26,12 +26,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRootContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootContainerImpl");
-  private Map<OrderRootType, CompositeProjectRoot> myRoots = new HashMap<OrderRootType, CompositeProjectRoot>();
+  private final Map<OrderRootType, CompositeProjectRoot> myRoots = new HashMap<OrderRootType, CompositeProjectRoot>();
 
   private Map<OrderRootType, VirtualFile[]> myFiles = new HashMap<OrderRootType, VirtualFile[]>();
 
   private boolean myInsideChange = false;
-  private List<ProjectRootListener> myListeners = new CopyOnWriteArrayList<ProjectRootListener>();
+  private final List<ProjectRootListener> myListeners = new CopyOnWriteArrayList<ProjectRootListener>();
 
   private boolean myNoCopyJars = false;
 

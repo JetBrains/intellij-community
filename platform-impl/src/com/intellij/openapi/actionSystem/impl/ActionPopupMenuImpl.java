@@ -18,7 +18,7 @@ import java.awt.*;
 final class ActionPopupMenuImpl implements ActionPopupMenu {
 
   private final MyMenu myMenu;
-  private ActionManagerImpl myManager;
+  private final ActionManagerImpl myManager;
 
   public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager) {
     myManager = actionManager;
@@ -30,10 +30,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
   }
 
   private class MyMenu extends JPopupMenu {
-    private String myPlace;
+    private final String myPlace;
     private final ActionGroup myGroup;
     private DataContext myContext;
-    private PresentationFactory myPresentationFactory;
+    private final PresentationFactory myPresentationFactory;
 
     public MyMenu(String place, @NotNull ActionGroup group) {
       myPlace = place;

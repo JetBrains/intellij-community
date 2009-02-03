@@ -10,7 +10,7 @@ public class OverriderUsageInfo extends UsageInfo {
   private final PsiMethod myBaseMethod;
   private final boolean myToInsertArgs;
   private final boolean myToCatchExceptions;
-  private boolean myIsOriginalOverrider;
+  private final boolean myIsOriginalOverrider;
 
   public OverriderUsageInfo(final PsiMethod method, PsiMethod baseMethod, boolean  isOriginalOverrider,
                             boolean toInsertArgs, boolean toCatchExceptions) {

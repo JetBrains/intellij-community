@@ -32,7 +32,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
   private ProgressIndicator myProgressIndicator = null;
-  private String myPromptStopSearch;
+  private final String myPromptStopSearch;
 
   public AbstractStepWithProgress(final String promptStopSearching) {
     myPromptStopSearch = promptStopSearching;

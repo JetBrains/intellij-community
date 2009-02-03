@@ -60,7 +60,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   private FacetDetectionIndex myFileIndex;
   private MyPsiTreeChangeListener myPsiTreeChangeListener;
   private MergingUpdateQueue myMergingUpdateQueue;
-  private ProjectFacetInfoSet myDetectedFacetSet;
+  private final ProjectFacetInfoSet myDetectedFacetSet;
   private DetectedFacetManager myDetectedFacetManager;
   private DisabledAutodetectionInfo myDisabledAutodetectionInfo = new DisabledAutodetectionInfo();
   private boolean myDetectionInProgress;

@@ -22,7 +22,7 @@ import java.util.*;
  */
 public class ComplexTypeDescriptor extends TypeDescriptor {
   private final XmlNSDescriptorImpl myDocumentDescriptor;
-  private XmlTag myTag;
+  private final XmlTag myTag;
 
   private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
     new FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement>() {

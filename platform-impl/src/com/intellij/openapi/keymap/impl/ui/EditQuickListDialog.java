@@ -9,9 +9,9 @@ import javax.swing.*;
 
 public class EditQuickListDialog extends DialogWrapper {
   private QuickList myList;
-  private QuickList[] myAllQuickLists;
+  private final QuickList[] myAllQuickLists;
   private QuickListPanel myPanel;
-  private Project myProject;
+  private final Project myProject;
 
   public EditQuickListDialog(Project project, QuickList list, QuickList[] allQuickLists) {
     super(project, true);

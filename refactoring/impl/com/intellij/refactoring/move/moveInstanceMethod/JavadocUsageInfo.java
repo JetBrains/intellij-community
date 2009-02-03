@@ -7,7 +7,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
  * @author ven
  */
 public class JavadocUsageInfo extends UsageInfo {
-  private PsiDocTagValue myDocTagValue;
+  private final PsiDocTagValue myDocTagValue;
 
   public JavadocUsageInfo(final PsiDocTagValue docTagValue) {
     super(docTagValue);

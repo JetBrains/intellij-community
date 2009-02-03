@@ -30,9 +30,9 @@ import java.util.Set;
  * @author yole
  */
 public class ModuleVcsDetector implements ProjectComponent {
-  private Project myProject;
-  private MessageBus myMessageBus;
-  private ProjectLevelVcsManagerImpl myVcsManager;
+  private final Project myProject;
+  private final MessageBus myMessageBus;
+  private final ProjectLevelVcsManagerImpl myVcsManager;
 
   public ModuleVcsDetector(final Project project, final MessageBus messageBus, final ProjectLevelVcsManager vcsManager) {
     myProject = project;

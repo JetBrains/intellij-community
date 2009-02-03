@@ -21,8 +21,8 @@ import java.util.Set;
 
 //todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
-  @Nullable private Element myElement;
-  private ProjectManagerImpl myProjectManager;
+  @Nullable private final Element myElement;
+  private final ProjectManagerImpl myProjectManager;
   @NonNls private static final String ROOT_TAG_NAME = "defaultProject";
 
   public DefaultProjectStoreImpl(final ProjectImpl project, final ProjectManagerImpl projectManager) {

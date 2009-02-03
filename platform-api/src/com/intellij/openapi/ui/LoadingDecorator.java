@@ -107,17 +107,17 @@ public class LoadingDecorator {
 
   private class LoadingLayer extends JPanel {
 
-    private JLabel myText;
+    private final JLabel myText;
 
     private BufferedImage mySnapshot;
     private Color mySnapshotBg;
 
-    private AsyncProcessIcon myProgress = new AsyncProcessIcon.Big("Loading");
+    private final AsyncProcessIcon myProgress = new AsyncProcessIcon.Big("Loading");
 
     private boolean myVisible;
 
     private float myCurrentAlpha;
-    private NonOpaquePanel myTextComponent;
+    private final NonOpaquePanel myTextComponent;
 
     private LoadingLayer() {
       setOpaque(false);

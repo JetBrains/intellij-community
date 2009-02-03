@@ -32,7 +32,7 @@ import java.awt.print.PrinterException;
 import java.util.List;
 
 public class TextPainter implements Printable {
-  private DocumentEx myDocument;
+  private final DocumentEx myDocument;
 
   private int myOffset = 0;
   private int myLineNumber = 1;
@@ -40,20 +40,20 @@ public class TextPainter implements Printable {
   private float myLineHeight = -1;
   private float myDescent = -1;
   private double myCharWidth = -1;
-  private Font myPlainFont;
-  private Font myBoldFont;
-  private Font myItalicFont;
-  private Font myBoldItalicFont;
-  private Font myHeaderFont;
-  private EditorHighlighter myHighlighter;
-  private PrintSettings myPrintSettings;
-  private String myFileName;
+  private final Font myPlainFont;
+  private final Font myBoldFont;
+  private final Font myItalicFont;
+  private final Font myBoldItalicFont;
+  private final Font myHeaderFont;
+  private final EditorHighlighter myHighlighter;
+  private final PrintSettings myPrintSettings;
+  private final String myFileName;
   private int myPageIndex;
   private int mySegmentEnd;
-  private LineMarkerInfo[] myMethodSeparators;
+  private final LineMarkerInfo[] myMethodSeparators;
   private int myCurrentMethodSeparator;
-  private CodeStyleSettings myCodeStyleSettings;
-  private FileType myFileType;
+  private final CodeStyleSettings myCodeStyleSettings;
+  private final FileType myFileType;
   private ProgressIndicator myProgress;
   @NonNls private static final String DEFAULT_MEASURE_HEIGHT_TEXT = "A";
   @NonNls private static final String DEFAULT_MEASURE_WIDTH_TEXT = "w";

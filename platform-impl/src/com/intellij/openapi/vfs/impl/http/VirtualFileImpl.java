@@ -23,8 +23,8 @@ class VirtualFileImpl extends HttpVirtualFile {
   private final @Nullable RemoteFileInfo myFileInfo;
   private FileType myInitialFileType;
   private final String myPath;
-  private String myParentPath;
-  private String myName;
+  private final String myParentPath;
+  private final String myName;
 
   VirtualFileImpl(HttpFileSystemImpl fileSystem, String path, final @Nullable RemoteFileInfo fileInfo) {
     myFileSystem = fileSystem;

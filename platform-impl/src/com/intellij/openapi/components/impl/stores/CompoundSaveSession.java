@@ -9,7 +9,7 @@ import java.util.*;
  * @author mike
  */
 public class CompoundSaveSession {
-  private Map<StateStorage, StateStorage.SaveSession> mySaveSessions = new HashMap<StateStorage, StateStorage.SaveSession>();
+  private final Map<StateStorage, StateStorage.SaveSession> mySaveSessions = new HashMap<StateStorage, StateStorage.SaveSession>();
 
   public CompoundSaveSession(final CompoundExternalizationSession compoundExternalizationSession) {
     final Collection<StateStorage> stateStorages = compoundExternalizationSession.getStateStorages();

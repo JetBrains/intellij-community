@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class PopupListElementRenderer extends GroupedItemsListRenderer {
 
-  private ListPopupImpl myPopup;
+  private final ListPopupImpl myPopup;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptor() {

@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public class StorageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
-  private static boolean ourDumpChangedComponentStates = "true".equals(System.getProperty("log.externally.changed.component.states"));
+  private static final boolean ourDumpChangedComponentStates = "true".equals(System.getProperty("log.externally.changed.component.states"));
 
   private StorageUtil() {
   }

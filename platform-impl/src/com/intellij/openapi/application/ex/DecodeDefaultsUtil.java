@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class DecodeDefaultsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.ex.DecodeDefaultsUtil");
-  private static Map<String, URL> myResourceCache = Collections.synchronizedMap(new HashMap<String, URL>());
+  private static final Map<String, URL> myResourceCache = Collections.synchronizedMap(new HashMap<String, URL>());
 
   @NonNls private static final String XML_EXTENSION = ".xml";
 

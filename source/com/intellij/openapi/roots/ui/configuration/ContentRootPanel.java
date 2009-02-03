@@ -52,9 +52,9 @@ public class ContentRootPanel extends JPanel {
 
   private final ContentEntry myContentEntry;
   private final ActionCallback myCallback;
-  private JComponent myHeader;
-  private JComponent myBottom;
-  private Map<JComponent, Color> myComponentToForegroundMap = new HashMap<JComponent, Color>();
+  private final JComponent myHeader;
+  private final JComponent myBottom;
+  private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<JComponent, Color>();
 
   public static interface ActionCallback {
     void deleteContentEntry();

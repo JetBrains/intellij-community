@@ -12,8 +12,8 @@ import java.util.Map;
 public class RunManagerConfig {
   public static final String MAKE = ExecutionBundle.message("before.run.property.make");
   private static final BooleanProperty SHOW_SETTINGS = new BooleanProperty("showSettingsBeforeRunnig", true);
-  private StoringPropertyContainer myProperties;
-  private RunManagerImpl myManager;
+  private final StoringPropertyContainer myProperties;
+  private final RunManagerImpl myManager;
 
   public RunManagerConfig(PropertiesComponent propertiesComponent,
                           RunManagerImpl manager) {

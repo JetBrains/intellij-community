@@ -17,8 +17,8 @@ public class MutableMarker {
 
   private final PsiBuilder.Marker myStartMarker;
   private IElementType myResultType;
-  private int myInitialPathLength;
-  private LinkedList<IElementType> myPath;
+  private final int myInitialPathLength;
+  private final LinkedList<IElementType> myPath;
   private Mode myMode;
 
   public MutableMarker(final LinkedList<IElementType> path, final PsiBuilder.Marker startMarker, final int initialPathLength) {

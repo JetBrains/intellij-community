@@ -19,8 +19,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import org.jetbrains.annotations.NonNls;
 
 public class ReadOnlyFragmentModificationException extends RuntimeException {
-  private DocumentEvent myIllegalAttemptEvent;
-  private RangeMarker myGuardedBlock;
+  private final DocumentEvent myIllegalAttemptEvent;
+  private final RangeMarker myGuardedBlock;
   @NonNls public static final String MESSAGE = "Attempt to modify read-only fragment";
 
   public ReadOnlyFragmentModificationException(DocumentEvent illegalAttemptEvent, RangeMarker guardedBlock) {

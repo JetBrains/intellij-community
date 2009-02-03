@@ -18,13 +18,13 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 class PatternDialog extends DialogWrapper{
-  private TodoPattern myPattern;
+  private final TodoPattern myPattern;
 
-  private JComboBox myIconComboBox;
-  private JCheckBox myCaseSensitiveCheckBox;
-  private JTextField myPatternStringField;
-  private ColorAndFontDescriptionPanel myColorAndFontDescriptionPanel;
-  private ColorAndFontDescription myColorAndFontDescription;
+  private final JComboBox myIconComboBox;
+  private final JCheckBox myCaseSensitiveCheckBox;
+  private final JTextField myPatternStringField;
+  private final ColorAndFontDescriptionPanel myColorAndFontDescriptionPanel;
+  private final ColorAndFontDescription myColorAndFontDescription;
 
   public PatternDialog(Component parent,TodoPattern pattern){
     super(parent,true);

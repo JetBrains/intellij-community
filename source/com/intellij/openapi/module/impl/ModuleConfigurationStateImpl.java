@@ -8,10 +8,10 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolderBase;
 
 public class ModuleConfigurationStateImpl extends UserDataHolderBase implements ModuleConfigurationState {
-  private ModulesProvider myProvider;
-  private ModifiableRootModel myRootModel;
-  private Project myProject;
-  private FacetsProvider myFacetsProvider;
+  private final ModulesProvider myProvider;
+  private final ModifiableRootModel myRootModel;
+  private final Project myProject;
+  private final FacetsProvider myFacetsProvider;
 
   public ModuleConfigurationStateImpl(Project project, ModulesProvider provider, ModifiableRootModel rootModel,
                                       final FacetsProvider facetsProvider) {

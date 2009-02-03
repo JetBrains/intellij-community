@@ -13,7 +13,7 @@ import java.awt.*;
  * @author yole
  */
 public class TextComponentScrollingModel implements ScrollingModel {
-  private JTextComponent myTextComponent;
+  private final JTextComponent myTextComponent;
 
   public TextComponentScrollingModel(final JTextComponent textComponent) {
     myTextComponent = textComponent;

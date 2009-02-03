@@ -22,7 +22,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
   private boolean myRelaxed;
   private boolean myCaseSensitive;
 
-  private static SimpleFieldCache<Map<String, XmlElementDescriptor>, HtmlNSDescriptorImpl> myCachedDeclsCache = new SimpleFieldCache<Map<String, XmlElementDescriptor>, HtmlNSDescriptorImpl>() {
+  private static final SimpleFieldCache<Map<String, XmlElementDescriptor>, HtmlNSDescriptorImpl> myCachedDeclsCache = new SimpleFieldCache<Map<String, XmlElementDescriptor>, HtmlNSDescriptorImpl>() {
     protected Map<String, XmlElementDescriptor> compute(final HtmlNSDescriptorImpl htmlNSDescriptor) {
       return htmlNSDescriptor.doBuildCachedMap();
     }

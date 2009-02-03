@@ -42,7 +42,7 @@ public class ClasspathEditor extends ModuleElementsEditor {
   public static final Icon ICON = IconLoader.getIcon("/modules/classpath.png");
 
   private ClasspathPanel myPanel;
-  private ModulesProvider myModulesProvider;
+  private final ModulesProvider myModulesProvider;
 
   private ClasspathFormatPanel myClasspathFormatPanel;
 
@@ -123,9 +123,9 @@ public class ClasspathEditor extends ModuleElementsEditor {
 
   private class ClasspathFormatPanel extends JPanel {
 
-    private JComboBox cbClasspathFormat;
+    private final JComboBox cbClasspathFormat;
 
-    private Map<String,String> formatIdToDescr = new HashMap<String, String>();
+    private final Map<String,String> formatIdToDescr = new HashMap<String, String>();
 
     private ClasspathFormatPanel(final List<ClasspathStorageProvider> providers) {
       super(new GridBagLayout());

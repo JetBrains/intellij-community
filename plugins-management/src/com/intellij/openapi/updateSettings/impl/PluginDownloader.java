@@ -37,8 +37,8 @@ public class PluginDownloader {
 
   @NonNls private static final String FILENAME = "filename=";
 
-  private String myPluginId;
-  private String myPluginUrl;
+  private final String myPluginId;
+  private final String myPluginUrl;
   private String myPluginVersion;
 
   private String myFileName;

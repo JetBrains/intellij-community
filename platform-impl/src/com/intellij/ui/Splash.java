@@ -9,8 +9,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Splash extends JWindow {
-  private Icon myImage;
-  private JLabel myLabel;
+  private final Icon myImage;
+  private final JLabel myLabel;
 
   public Splash(String imageName, final Color textColor) {
     Icon originalImage = IconLoader.getIcon(imageName);
@@ -42,8 +42,8 @@ public class Splash extends JWindow {
   }
 
   private static final class MyIcon implements Icon {
-    private Icon myOriginalIcon;
-    private Color myTextColor;
+    private final Icon myOriginalIcon;
+    private final Color myTextColor;
 
     public MyIcon(Icon originalIcon, Color textColor) {
       myOriginalIcon = originalIcon;

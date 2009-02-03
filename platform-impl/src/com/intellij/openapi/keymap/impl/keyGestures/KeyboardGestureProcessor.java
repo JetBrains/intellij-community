@@ -35,7 +35,7 @@ public class KeyboardGestureProcessor {
       myState.processDblClickTimer();
     }
   });
-  private ActionProcessor myActionProcessor = new MyActionProcessor();
+  private final ActionProcessor myActionProcessor = new MyActionProcessor();
 
   public KeyboardGestureProcessor(final IdeKeyEventDispatcher dispatcher) {
     myDispatcher = dispatcher;

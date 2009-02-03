@@ -31,13 +31,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RenameInputValidatorRegistry {
-  private static RenameInputValidatorRegistry ourInstance = new RenameInputValidatorRegistry();
+  private static final RenameInputValidatorRegistry ourInstance = new RenameInputValidatorRegistry();
 
   public static RenameInputValidatorRegistry getInstance() {
     return ourInstance;
   }
 
-  private List<Pair<ElementPattern<? extends PsiElement>,RenameInputValidator>> myValidators = new ArrayList<Pair<ElementPattern<? extends PsiElement>, RenameInputValidator>>();
+  private final List<Pair<ElementPattern<? extends PsiElement>,RenameInputValidator>> myValidators = new ArrayList<Pair<ElementPattern<? extends PsiElement>, RenameInputValidator>>();
 
   private RenameInputValidatorRegistry() {
   }

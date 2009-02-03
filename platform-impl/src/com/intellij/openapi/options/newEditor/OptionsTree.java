@@ -48,7 +48,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
   Map<Configurable, EditorNode> myConfigurable2Node = new HashMap<Configurable, EditorNode>();
 
   MergingUpdateQueue mySelection;
-  private OptionsTree.Renderer myRendrer;
+  private final OptionsTree.Renderer myRendrer;
 
   public OptionsTree(Project project, ConfigurableGroup[] groups, OptionsEditorContext context) {
     myProject = project;

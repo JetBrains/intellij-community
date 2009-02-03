@@ -42,8 +42,8 @@ public class FacetDetectionIndex extends AbstractFileIndex<FacetDetectionIndexEn
   @NonNls private static final String CACHE_DIRECTORY_NAME = "facets";
   private final FileTypeManager myFileTypeManager;
   private final Set<FileType> myFileTypes;
-  private Set<FacetType> myNewFacetTypes = new THashSet<FacetType>();
-  private FacetPointersManager myFacetPointersManager;
+  private final Set<FacetType> myNewFacetTypes = new THashSet<FacetType>();
+  private final FacetPointersManager myFacetPointersManager;
   private final FacetAutodetectingManagerImpl myAutodetectingManager;
   private final BidirectionalMultiMap<String, FacetPointer> myFacets;
   private final BidirectionalMultiMap<String, Integer> myDetectedFacetIds;

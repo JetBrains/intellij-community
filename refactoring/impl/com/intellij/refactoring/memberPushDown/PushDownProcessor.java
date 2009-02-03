@@ -29,9 +29,9 @@ import java.util.Set;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownProcessor");
-  private MemberInfo[] myMemberInfos;
+  private final MemberInfo[] myMemberInfos;
   private PsiClass myClass;
-  private JavaDocPolicy myJavaDocPolicy;
+  private final JavaDocPolicy myJavaDocPolicy;
 
   public PushDownProcessor(Project project,
                            MemberInfo[] memberInfos,

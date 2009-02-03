@@ -8,13 +8,13 @@ import java.util.*;
 
 
 public class MemberInfoStorage {
-  private PsiClass myClass;
-  private HashMap<PsiClass,List<MemberInfo>> myClassToMemberInfoMap = new HashMap<PsiClass, List<MemberInfo>>();
-  private HashMap<PsiClass,LinkedHashSet<PsiClass>> myClassToSubclassesMap = new HashMap<PsiClass, LinkedHashSet<PsiClass>>();
-  private HashMap<PsiClass,Set<PsiClass>> myTargetClassToExtendingMap = new HashMap<PsiClass, Set<PsiClass>>();
-  private HashMap<PsiClass,MemberInfo[]> myTargetClassToMemberInfosMap = new HashMap<PsiClass, MemberInfo[]>();
-  private HashMap<PsiClass,LinkedHashSet<MemberInfo>> myTargetClassToMemberInfosListMap = new HashMap<PsiClass, LinkedHashSet<MemberInfo>>();
-  private HashMap<PsiClass,HashSet<MemberInfo>> myTargetClassToDuplicatedMemberInfosMap = new HashMap<PsiClass, HashSet<MemberInfo>>();
+  private final PsiClass myClass;
+  private final HashMap<PsiClass,List<MemberInfo>> myClassToMemberInfoMap = new HashMap<PsiClass, List<MemberInfo>>();
+  private final HashMap<PsiClass,LinkedHashSet<PsiClass>> myClassToSubclassesMap = new HashMap<PsiClass, LinkedHashSet<PsiClass>>();
+  private final HashMap<PsiClass,Set<PsiClass>> myTargetClassToExtendingMap = new HashMap<PsiClass, Set<PsiClass>>();
+  private final HashMap<PsiClass,MemberInfo[]> myTargetClassToMemberInfosMap = new HashMap<PsiClass, MemberInfo[]>();
+  private final HashMap<PsiClass,LinkedHashSet<MemberInfo>> myTargetClassToMemberInfosListMap = new HashMap<PsiClass, LinkedHashSet<MemberInfo>>();
+  private final HashMap<PsiClass,HashSet<MemberInfo>> myTargetClassToDuplicatedMemberInfosMap = new HashMap<PsiClass, HashSet<MemberInfo>>();
   private final MemberInfo.Filter myFilter;
 
   public MemberInfoStorage(PsiClass aClass, MemberInfo.Filter memberInfoFilter) {

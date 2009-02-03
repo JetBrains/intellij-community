@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NonNls;
  * @author mike
  */
 class SimpleDocTagInfo implements JavadocTagInfo {
-  private String myName;
-  private Class myContext;
-  private boolean myInline;
+  private final String myName;
+  private final Class myContext;
+  private final boolean myInline;
   private final LanguageLevel myLanguageLevel;
 
   public SimpleDocTagInfo(@NonNls String name, Class context, boolean isInline, LanguageLevel level) {

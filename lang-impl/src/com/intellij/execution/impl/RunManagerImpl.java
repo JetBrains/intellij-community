@@ -18,14 +18,14 @@ import java.util.*;
 public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, ProjectComponent {
   private final Project myProject;
 
-  private Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
+  private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
 
   private Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations =
       new LinkedHashMap<String, RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
-  private Map<Integer, Boolean> mySharedConfigurations = new TreeMap<Integer, Boolean>();
-  private Map<Integer, Map<String, Boolean>> myMethod2CompileBeforeRun = new TreeMap<Integer, Map<String, Boolean>>();
+  private final Map<Integer, Boolean> mySharedConfigurations = new TreeMap<Integer, Boolean>();
+  private final Map<Integer, Map<String, Boolean>> myMethod2CompileBeforeRun = new TreeMap<Integer, Map<String, Boolean>>();
 
-  private Map<String, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap =
+  private final Map<String, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap =
       new HashMap<String, RunnerAndConfigurationSettingsImpl>();
   private RunnerAndConfigurationSettingsImpl mySelectedConfiguration = null;
   private String mySelectedConfig = null;

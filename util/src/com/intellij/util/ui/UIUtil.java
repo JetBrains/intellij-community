@@ -54,9 +54,9 @@ public class UIUtil {
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
 
 
-  private static Color ACTIVE_COLOR = new Color(160, 186, 213);
-  private static Color INACTIVE_COLOR = new Color(128, 128, 128);
-  private static Color SEPARATOR_COLOR = INACTIVE_COLOR.brighter();
+  private static final Color ACTIVE_COLOR = new Color(160, 186, 213);
+  private static final Color INACTIVE_COLOR = new Color(128, 128, 128);
+  private static final Color SEPARATOR_COLOR = INACTIVE_COLOR.brighter();
   public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
   public static final String FOCUS_PROXY_KEY = "isFocusProxy";

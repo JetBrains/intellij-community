@@ -14,12 +14,12 @@ import java.awt.event.ActionEvent;
 //TODO: review title and text!!!
 class SuperMethodWarningDialog extends DialogWrapper {
   public static final int NO_EXIT_CODE=NEXT_USER_EXIT_CODE+1;
-  private String myName;
-  private String[] myClassNames;
-  private String myActionString;
-  private boolean myIsSuperAbstract;
-  private boolean myIsParentInterface;
-  private boolean myIsContainedInInterface;
+  private final String myName;
+  private final String[] myClassNames;
+  private final String myActionString;
+  private final boolean myIsSuperAbstract;
+  private final boolean myIsParentInterface;
+  private final boolean myIsContainedInInterface;
 
   public SuperMethodWarningDialog(Project project,
                                   String name,

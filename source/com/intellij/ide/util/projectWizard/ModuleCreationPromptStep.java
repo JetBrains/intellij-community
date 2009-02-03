@@ -15,9 +15,9 @@ import java.awt.event.ItemListener;
  */
 public class ModuleCreationPromptStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  private JPanel myPanel;
-  private JRadioButton myRbCreateSingle;
-  private JRadioButton myRbCreateMultiple;
+  private final JPanel myPanel;
+  private final JRadioButton myRbCreateSingle;
+  private final JRadioButton myRbCreateMultiple;
 
   public ModuleCreationPromptStep() {
     myPanel = new JPanel(new GridBagLayout());

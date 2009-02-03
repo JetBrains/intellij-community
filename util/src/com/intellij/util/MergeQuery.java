@@ -27,8 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class MergeQuery<T, T1 extends T, T2 extends T> implements Query<T>{
-  private Query<T1> myQuery1;
-  private Query<T2> myQuery2;
+  private final Query<T1> myQuery1;
+  private final Query<T2> myQuery2;
 
   public MergeQuery(final Query<T1> query1, final Query<T2> query2) {
     myQuery1 = query1;

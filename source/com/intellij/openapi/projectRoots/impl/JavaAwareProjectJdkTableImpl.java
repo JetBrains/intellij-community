@@ -30,7 +30,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
     return (JavaAwareProjectJdkTableImpl)ServiceManager.getService(ProjectJdkTable.class);
   }
 
-  private JavaSdk myJavaSdk;
+  private final JavaSdk myJavaSdk;
   private Sdk myInternalJdk;
 
   public JavaAwareProjectJdkTableImpl(final JavaSdk javaSdk) {

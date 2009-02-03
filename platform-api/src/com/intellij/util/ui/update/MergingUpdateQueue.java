@@ -34,7 +34,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private final Map<Update, Update> mySheduledUpdates = new TreeMap<Update, Update>();
 
-  private Alarm myWaiterForMerge = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myWaiterForMerge = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private volatile boolean myFlushing;
 

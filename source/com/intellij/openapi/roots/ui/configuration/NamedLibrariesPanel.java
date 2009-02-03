@@ -25,10 +25,10 @@ public class NamedLibrariesPanel extends JPanel {
   private final ModifiableRootModel myRootModel;
   private final LibraryTable myLibraryTable;
   private final ElementsChooser<LibraryChooserElement> myLibrariesChooser;
-  private ElementsChooser.ElementsMarkListener<LibraryChooserElement> myMarkListener;
+  private final ElementsChooser.ElementsMarkListener<LibraryChooserElement> myMarkListener;
   private final JButton myIncludeAllButton;
   private final JButton myExcludeAllButton;
-  private LibraryTable.Listener myLibrariesUpdateListener;
+  private final LibraryTable.Listener myLibrariesUpdateListener;
 
   public NamedLibrariesPanel(ModifiableRootModel rootModel, LibraryTable libraryTable) {
     super(new BorderLayout());

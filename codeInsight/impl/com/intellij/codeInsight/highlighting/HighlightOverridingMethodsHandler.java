@@ -13,8 +13,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBase<PsiClass> {
-  private PsiElement myTarget;
-  private PsiClass myClass;
+  private final PsiElement myTarget;
+  private final PsiClass myClass;
 
   public HighlightOverridingMethodsHandler(final Editor editor, final PsiFile file, final PsiElement target, final PsiClass psiClass) {
     super(editor, file);

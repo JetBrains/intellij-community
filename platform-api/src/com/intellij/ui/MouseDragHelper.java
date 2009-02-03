@@ -19,7 +19,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
   public static final int DRAG_START_DEADZONE = 7;
 
-  private JComponent myDragComponent;
+  private final JComponent myDragComponent;
 
   private Point myPressPointScreen;
   private Point myPressPointComponent;
@@ -27,7 +27,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   private boolean myDraggingNow;
   private boolean myDragJustStarted;
   private IdeGlassPane myGlassPane;
-  private Disposable myParentDisposable;
+  private final Disposable myParentDisposable;
   private Dimension myDelta;
 
   public MouseDragHelper(Disposable parent, final JComponent dragComponent) {

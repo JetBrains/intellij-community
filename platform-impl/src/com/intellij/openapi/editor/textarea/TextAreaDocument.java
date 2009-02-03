@@ -7,7 +7,7 @@ import javax.swing.text.BadLocationException;
  * @author yole
  */
 public class TextAreaDocument extends TextComponentDocument {
-  private JTextArea myTextArea;
+  private final JTextArea myTextArea;
 
   public TextAreaDocument(final JTextArea textComponent) {
     super(textComponent);

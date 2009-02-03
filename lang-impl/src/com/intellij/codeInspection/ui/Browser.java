@@ -36,8 +36,8 @@ public class Browser extends JPanel {
   private final List<ClickListener> myClickListeners;
   private RefEntity myCurrentEntity;
   private JEditorPane myHTMLViewer;
-  private InspectionResultsView myView;
-  private HyperlinkListener myHyperLinkListener;
+  private final InspectionResultsView myView;
+  private final HyperlinkListener myHyperLinkListener;
   private CommonProblemDescriptor myCurrentDescriptor;
 
   public static class ClickEvent {

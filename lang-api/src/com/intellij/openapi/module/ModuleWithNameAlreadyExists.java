@@ -16,7 +16,7 @@
 package com.intellij.openapi.module;
 
 public class ModuleWithNameAlreadyExists extends Exception {
-  private String myModuleName;
+  private final String myModuleName;
 
   /**
    * @deprecated use constructor which allows passing of localized message

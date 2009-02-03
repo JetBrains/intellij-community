@@ -28,9 +28,9 @@ import org.jetbrains.annotations.NotNull;
 public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction");
 
-  private boolean myStart;
-  private String myTargetName;
-  private String mySourceName;
+  private final boolean myStart;
+  private final String myTargetName;
+  private final String mySourceName;
 
   RenameTagBeginOrEndIntentionAction(@NotNull final String targetName, @NotNull final String sourceName, final boolean start) {
     myTargetName = targetName;

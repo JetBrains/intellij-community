@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
-  private Project myProject;
+  private final Project myProject;
 
   public UIRootConfigurationAccessor(final Project project) {
     myProject = project;

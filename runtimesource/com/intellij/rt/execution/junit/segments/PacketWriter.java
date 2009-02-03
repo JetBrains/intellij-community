@@ -1,7 +1,7 @@
 package com.intellij.rt.execution.junit.segments;
 
 public class PacketWriter {
-  private StringBuffer myBody = new StringBuffer();
+  private final StringBuffer myBody = new StringBuffer();
 
   public void appendString(String string) {
     myBody.append(string);

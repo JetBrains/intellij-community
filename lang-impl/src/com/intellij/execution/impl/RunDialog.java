@@ -17,10 +17,10 @@ import java.awt.event.ActionEvent;
 
 public class RunDialog extends DialogWrapper {
   private final Project myProject;
-  private RunConfigurable myConfigurable;
+  private final RunConfigurable myConfigurable;
   private JComponent myCenterPanel;
   @NonNls public static String HELP_ID = "reference.dialogs.rundebug";
-  private Executor myExecutor;
+  private final Executor myExecutor;
 
   public RunDialog(final Project project, final Executor executor) {
     super(project, true);

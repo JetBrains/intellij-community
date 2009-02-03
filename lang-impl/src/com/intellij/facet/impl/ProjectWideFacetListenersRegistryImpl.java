@@ -24,11 +24,11 @@ import java.util.Map;
  * @author nik
  */
 public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListenersRegistry {
-  private Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<FacetTypeId, EventDispatcher<ProjectWideFacetListener>>();
-  private Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<FacetTypeId, WeakHashMap<Facet, Boolean>>();
-  private Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
-  private FacetManagerAdapter myFacetListener;
-  private EventDispatcher<ProjectWideFacetListener> myAllFacetsListener = EventDispatcher.create(ProjectWideFacetListener.class);
+  private final Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<FacetTypeId, EventDispatcher<ProjectWideFacetListener>>();
+  private final Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<FacetTypeId, WeakHashMap<Facet, Boolean>>();
+  private final Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
+  private final FacetManagerAdapter myFacetListener;
+  private final EventDispatcher<ProjectWideFacetListener> myAllFacetsListener = EventDispatcher.create(ProjectWideFacetListener.class);
 
   public ProjectWideFacetListenersRegistryImpl(MessageBus messageBus) {
     myFacetListener = new MyFacetManagerAdapter();

@@ -46,8 +46,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class HtmlFileHighlighter extends SyntaxHighlighterBase {
-  private static Map<IElementType, TextAttributesKey> keys1;
-  private static Map<IElementType, TextAttributesKey> keys2;
+  private static final Map<IElementType, TextAttributesKey> keys1;
+  private static final Map<IElementType, TextAttributesKey> keys2;
 
   static {
     keys1 = new HashMap<IElementType, TextAttributesKey>();

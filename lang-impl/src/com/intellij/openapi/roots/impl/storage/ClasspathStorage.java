@@ -53,7 +53,7 @@ public class ClasspathStorage implements StateStorage {
 
   @NonNls private static final String COMPONENT_TAG = "component";
   private Object mySession;
-  private ClasspathStorageProvider.ClasspathConverter myConverter;
+  private final ClasspathStorageProvider.ClasspathConverter myConverter;
 
 
   public ClasspathStorage(Module module) {

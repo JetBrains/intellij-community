@@ -70,7 +70,7 @@ public class ServiceManagerImpl implements BaseComponent {
   private static class MyComponentAdapter implements AssignableToComponentAdapter {
     private ComponentAdapter myDelegate;
     private final ServiceDescriptor myDescriptor;
-    private PluginDescriptor myPluginDescriptor;
+    private final PluginDescriptor myPluginDescriptor;
     private final ComponentManagerEx myComponentManager;
     private volatile Object myInitializedComponentInstance = null;
 

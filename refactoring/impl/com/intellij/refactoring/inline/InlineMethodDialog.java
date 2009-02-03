@@ -13,7 +13,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 
 public class InlineMethodDialog extends InlineOptionsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
-  private PsiJavaCodeReferenceElement myReferenceElement;
+  private final PsiJavaCodeReferenceElement myReferenceElement;
   private final Editor myEditor;
   private final boolean myAllowInlineThisOnly;
 

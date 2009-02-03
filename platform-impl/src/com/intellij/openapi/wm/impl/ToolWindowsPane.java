@@ -53,10 +53,10 @@ final class ToolWindowsPane extends JPanel{
   private final Stripe myBottomStripe;
   private final Stripe myTopStripe;
 
-  private ArrayList<Stripe> myStipes = new ArrayList<Stripe>();
+  private final ArrayList<Stripe> myStipes = new ArrayList<Stripe>();
 
   private final MyUISettingsListenerImpl myUISettingsListener;
-  private ToolWindowManagerImpl myManager;
+  private final ToolWindowManagerImpl myManager;
 
   ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
     super(new BorderLayout());
@@ -592,9 +592,9 @@ final class ToolWindowsPane extends JPanel{
   }
 
   private final class RemoveSplitAndDockedComponentCmd extends FinalizableCommand {
-    private WindowInfoImpl myInfo;
-    private WindowInfoImpl mySideInfo;
-    private boolean myDirtyMode;
+    private final WindowInfoImpl myInfo;
+    private final WindowInfoImpl mySideInfo;
+    private final boolean myDirtyMode;
 
     private RemoveSplitAndDockedComponentCmd(final WindowInfoImpl info, final WindowInfoImpl sideInfo, boolean dirtyMode, final Runnable finishCallBack) {
       super(finishCallBack);
@@ -711,7 +711,7 @@ final class ToolWindowsPane extends JPanel{
   }
 
   private final class UpdateButtonPositionCmd extends FinalizableCommand {
-    private String myId;
+    private final String myId;
 
     private UpdateButtonPositionCmd(String id, final Runnable finishCallBack) {
       super(finishCallBack);

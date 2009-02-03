@@ -21,7 +21,7 @@ import java.text.CharacterIterator;
  * @author max
  */
 public class CharSequenceCharacterIterator implements CharacterIterator {
-  private CharSequence myChars;
+  private final CharSequence myChars;
   private int myCurPosition;
 
   public CharSequenceCharacterIterator(final CharSequence chars) {

@@ -8,7 +8,7 @@ import javax.swing.tree.DefaultTreeModel;
  * @author yole
  */
 public class ChangesModuleGroupingPolicyFactory extends ChangesGroupingPolicyFactory {
-  private Project myProject;
+  private final Project myProject;
 
   public ChangesModuleGroupingPolicyFactory(final Project project) {
     myProject = project;

@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class StepAdapter implements Step {
 
-  private List<StepListener> myListeners = new ArrayList<StepListener>();
+  private final List<StepListener> myListeners = new ArrayList<StepListener>();
 
   public void _init() {}
 

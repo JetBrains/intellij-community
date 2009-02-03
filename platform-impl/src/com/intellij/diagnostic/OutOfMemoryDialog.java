@@ -13,7 +13,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
     HEAP, PERM_GEN
   }
 
-  private MemoryKind myMemoryKind;
+  private final MemoryKind myMemoryKind;
 
   private JPanel myContentPane;
   private JLabel myMessageLabel;
@@ -26,8 +26,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private JLabel myHeapUnitsLabel;
   private JLabel myPermGenUnitsLabel;
   private JLabel mySettingsFileHintLabel;
-  private Action myIgnoreAction;
-  private Action myShutdownAction;
+  private final Action myIgnoreAction;
+  private final Action myShutdownAction;
 
   public OutOfMemoryDialog(MemoryKind memoryKind) {
     super(false);

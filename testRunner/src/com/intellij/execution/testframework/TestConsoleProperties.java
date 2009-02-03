@@ -26,7 +26,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty OPEN_FAILURE_LINE = new BooleanProperty("openFailureLine", false);
   public static final BooleanProperty TRACK_CODE_COVERAGE = new BooleanProperty("trackCodeCoverage", false);
 
-  private Project myProject;
+  private final Project myProject;
   private ConsoleView myConsole;
 
   protected final HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>> myListeners = new HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>>();

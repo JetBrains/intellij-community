@@ -114,8 +114,8 @@ public class StartupActionScriptManager {
 
   public static class CopyCommand implements Serializable, ActionCommand {
     @NonNls private static final String action = "copy";
-    private File mySource;
-    private File myDestination;
+    private final File mySource;
+    private final File myDestination;
 
     public CopyCommand(File source, File destination) {
       myDestination = destination;
@@ -205,7 +205,7 @@ public class StartupActionScriptManager {
 
   public static class DeleteCommand implements Serializable, ActionCommand {
     @NonNls private static final String action = "delete";
-    private File mySource;
+    private final File mySource;
 
     public DeleteCommand(File source) {
       mySource = source;

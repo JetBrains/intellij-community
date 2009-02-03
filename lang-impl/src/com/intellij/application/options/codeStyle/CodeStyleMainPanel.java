@@ -14,13 +14,13 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class CodeStyleMainPanel extends JPanel {
-  private CardLayout myLayout = new CardLayout();
+  private final CardLayout myLayout = new CardLayout();
   private final JPanel mySettingsPanel = new JPanel(myLayout);
 
   private final Map<String, NewCodeStyleSettingsPanel> mySettingsPanels = new HashMap<String, NewCodeStyleSettingsPanel>();
   private final Collection<NewCodeStyleSettingsPanel> myResetPanels = new HashSet<NewCodeStyleSettingsPanel>();
 
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
 

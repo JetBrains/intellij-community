@@ -16,9 +16,9 @@ import java.awt.*;
 
 public class YesNoPreviewUsagesDialog extends DialogWrapper {
   private JCheckBox myCbPreviewResults;
-  private boolean myToPreviewUsages;
+  private final boolean myToPreviewUsages;
   private final String myMessage;
-  private String myHelpID;
+  private final String myHelpID;
 
   public YesNoPreviewUsagesDialog(String title, String message, boolean previewUsages,
                                   String helpID, Project project) {

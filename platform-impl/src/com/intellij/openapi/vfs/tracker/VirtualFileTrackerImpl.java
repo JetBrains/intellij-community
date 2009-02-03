@@ -17,8 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author mike
  */
 public class VirtualFileTrackerImpl implements VirtualFileTracker {
-  private Map<String, Set<VirtualFileListener>> myNonRefreshTrackers = new ConcurrentHashMap<String, Set<VirtualFileListener>>();
-  private Map<String, Set<VirtualFileListener>> myAllTrackers = new ConcurrentHashMap<String, Set<VirtualFileListener>>();
+  private final Map<String, Set<VirtualFileListener>> myNonRefreshTrackers = new ConcurrentHashMap<String, Set<VirtualFileListener>>();
+  private final Map<String, Set<VirtualFileListener>> myAllTrackers = new ConcurrentHashMap<String, Set<VirtualFileListener>>();
 
   public VirtualFileTrackerImpl(VirtualFileManager virtualFileManager) {
     virtualFileManager.addVirtualFileListener(new VirtualFileListener() {

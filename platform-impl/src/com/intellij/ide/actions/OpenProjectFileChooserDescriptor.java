@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
-  private Icon myProjectIcon = IconLoader.getIcon(ApplicationInfoImpl.getInstanceEx().getSmallIconUrl());
+  private final Icon myProjectIcon = IconLoader.getIcon(ApplicationInfoImpl.getInstanceEx().getSmallIconUrl());
 
   public OpenProjectFileChooserDescriptor(final boolean chooseFiles) {
     super(chooseFiles, true, false, false, false, false);

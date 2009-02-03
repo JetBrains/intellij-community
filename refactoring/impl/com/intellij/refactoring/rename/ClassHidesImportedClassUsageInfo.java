@@ -8,7 +8,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class ClassHidesImportedClassUsageInfo extends ResolvableCollisionUsageInfo {
   private final PsiClass myHiddenClass;
-  private PsiJavaCodeReferenceElement myCollisionReference;
+  private final PsiJavaCodeReferenceElement myCollisionReference;
 
   public ClassHidesImportedClassUsageInfo(PsiJavaCodeReferenceElement collisionReference, PsiClass renamedClass, PsiClass hiddenClass) {
     super(collisionReference, renamedClass);

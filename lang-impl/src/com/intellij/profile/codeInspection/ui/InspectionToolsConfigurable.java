@@ -19,8 +19,8 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.*;
 
 public class InspectionToolsConfigurable implements Configurable {
-  private InspectionProfile myInspectionProfile;
-  private String mySelectedTool;
+  private final InspectionProfile myInspectionProfile;
+  private final String mySelectedTool;
   private SingleInspectionProfilePanel myPanel;
 
   public InspectionToolsConfigurable(final InspectionProfile inspectionProfile, final String selectedTool) {

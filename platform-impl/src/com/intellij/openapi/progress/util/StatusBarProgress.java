@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
-  private HashMap<StatusBarEx, Pair<String, String>> myStatusBar2SavedText = new HashMap<StatusBarEx, Pair<String, String>>();
+  private final HashMap<StatusBarEx, Pair<String, String>> myStatusBar2SavedText = new HashMap<StatusBarEx, Pair<String, String>>();
 
   public void start() {
     super.start();

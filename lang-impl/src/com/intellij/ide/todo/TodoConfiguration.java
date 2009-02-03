@@ -29,7 +29,7 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
 
-  private EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
+  private final EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
 
   @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
   @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";

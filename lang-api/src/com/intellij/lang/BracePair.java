@@ -25,9 +25,9 @@ import com.intellij.psi.tree.IElementType;
  */
 
 public class BracePair {
-  private IElementType myLeftBrace;
-  private IElementType myRightBrace;
-  private boolean myStructural;
+  private final IElementType myLeftBrace;
+  private final IElementType myRightBrace;
+  private final boolean myStructural;
 
   /**
    * Creates a new brace pair instance.

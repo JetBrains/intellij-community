@@ -218,8 +218,8 @@ abstract class SelectInContextImpl implements SelectInContext {
    }
 
   private static class VirtualFileSelectInContext implements SelectInContext {
-    private Project myProject;
-    private VirtualFile myVirtualFile;
+    private final Project myProject;
+    private final VirtualFile myVirtualFile;
 
     public VirtualFileSelectInContext(final Project project, final VirtualFile virtualFile) {
       myProject = project;

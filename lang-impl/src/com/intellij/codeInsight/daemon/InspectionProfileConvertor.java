@@ -25,7 +25,7 @@ import java.util.HashMap;
  * Date: Dec 20, 2004
  */
 public class InspectionProfileConvertor {
-  private HashMap<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<String, HighlightDisplayLevel>();
+  private final HashMap<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<String, HighlightDisplayLevel>();
   public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
   public static final @NonNls String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
@@ -43,7 +43,7 @@ public class InspectionProfileConvertor {
   @NonNls private static final String DEFAULT_XML = "Default.xml";
   @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls public static final String LEVEL_ATT = "level";
-  private InspectionProfileManager myManager;
+  private final InspectionProfileManager myManager;
 
   public InspectionProfileConvertor(InspectionProfileManager manager) {
     myManager = manager;

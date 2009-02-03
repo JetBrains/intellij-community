@@ -165,8 +165,8 @@ public class RunConfigurationAction extends ComboBoxAction {
   }
 
   private static class MenuAction extends AnAction {
-    private RunnerAndConfigurationSettingsImpl myConfiguration;
-    private Project myProject;
+    private final RunnerAndConfigurationSettingsImpl myConfiguration;
+    private final Project myProject;
 
     public MenuAction(final RunnerAndConfigurationSettingsImpl configuration, final Project project) {
       myConfiguration = configuration;

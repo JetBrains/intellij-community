@@ -10,7 +10,7 @@ import java.awt.event.ActionEvent;
 
 public class ReplacePromptDialog extends DialogWrapper {
 
-  private boolean myIsMultiple;
+  private final boolean myIsMultiple;
 
   public ReplacePromptDialog(boolean isMultipleFiles, String title, Project project) {
     super(project, true);
@@ -61,7 +61,7 @@ public class ReplacePromptDialog extends DialogWrapper {
   }
 
   private class DoAction extends AbstractAction {
-    private int myExitCode;
+    private final int myExitCode;
 
     public DoAction(String name,int exitCode) {
       putValue(Action.NAME, name);

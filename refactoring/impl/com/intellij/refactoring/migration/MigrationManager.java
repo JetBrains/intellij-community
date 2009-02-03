@@ -3,8 +3,8 @@ package com.intellij.refactoring.migration;
 import com.intellij.openapi.project.Project;
 
 public class MigrationManager {
-  private Project myProject;
-  private MigrationMapSet myMigrationMapSet = new MigrationMapSet();
+  private final Project myProject;
+  private final MigrationMapSet myMigrationMapSet = new MigrationMapSet();
 
   public MigrationManager(Project project) {
     myProject = project;

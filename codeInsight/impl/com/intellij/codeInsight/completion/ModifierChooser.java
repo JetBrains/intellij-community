@@ -25,7 +25,7 @@ import java.util.Map;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ModifierChooser
  implements KeywordChooser{
-  private static Map<ElementFilter, String[][]> myMap = new HashMap<ElementFilter, String[][]>();
+  private static final Map<ElementFilter, String[][]> myMap = new HashMap<ElementFilter, String[][]>();
 
   static {
     myMap.put(new NotFilter(new InterfaceFilter()), new String[][]{

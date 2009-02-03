@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class PairedBraceMatcherAdapter implements BraceMatcher {
-  private PairedBraceMatcher myMatcher;
-  private Language myLanguage;
+  private final PairedBraceMatcher myMatcher;
+  private final Language myLanguage;
 
   public PairedBraceMatcherAdapter(final PairedBraceMatcher matcher, Language language) {
     myMatcher = matcher;

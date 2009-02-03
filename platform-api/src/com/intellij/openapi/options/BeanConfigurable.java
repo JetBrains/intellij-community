@@ -15,7 +15,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
-  private T myInstance;
+  private final T myInstance;
 
   private static abstract class BeanField<T extends JComponent> {
     String myFieldName;
@@ -98,7 +98,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
   }
 
   private static class CheckboxField extends BeanField<JCheckBox> {
-    private String myTitle;
+    private final String myTitle;
 
     private CheckboxField(final String fieldName, final String title) {
       super(fieldName);
@@ -127,7 +127,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     }
   }
 
-  private List<BeanField> myFields = new ArrayList<BeanField>();
+  private final List<BeanField> myFields = new ArrayList<BeanField>();
 
   protected BeanConfigurable(T beanInstance) {
     myInstance = beanInstance;

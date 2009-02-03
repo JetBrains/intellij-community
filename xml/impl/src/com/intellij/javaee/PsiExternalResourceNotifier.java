@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiExternalResourceNotifier implements ProjectComponent {
   private final ExternalResourceListener myExternalResourceListener;
-  private PsiManagerEx myPsiManager;
-  private ExternalResourceManagerEx myExternalResourceManager;
-  private DaemonCodeAnalyzer myDaemonCodeAnalyzer;
+  private final PsiManagerEx myPsiManager;
+  private final ExternalResourceManagerEx myExternalResourceManager;
+  private final DaemonCodeAnalyzer myDaemonCodeAnalyzer;
 
   public PsiExternalResourceNotifier(PsiManagerEx psiManager, ExternalResourceManagerEx externalResourceManager,
                                      final DaemonCodeAnalyzer daemonCodeAnalyzer) {

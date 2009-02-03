@@ -20,7 +20,7 @@ import java.util.HashSet;
 public class ToolManager implements ExportableApplicationComponent {
 
   
-  private ActionManagerEx myActionManager;
+  private final ActionManagerEx myActionManager;
   private final SchemesManager<ToolsGroup,ToolsGroup> mySchemesManager;
 
   public static ToolManager getInstance() {

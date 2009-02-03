@@ -127,8 +127,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   }
 
   private static class RefElementContainer implements UserObjectContainer<RefEntity> {
-    private RefEntity myElement;
-    private CommonProblemDescriptor[] myDescriptors;
+    private final RefEntity myElement;
+    private final CommonProblemDescriptor[] myDescriptors;
 
     public RefElementContainer(final RefEntity element, final CommonProblemDescriptor[] descriptors) {
       myElement = element;

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
-  private PsiManagerImpl myManager;
+  private final PsiManagerImpl myManager;
 
   public PsiDirectoryFactoryImpl(final PsiManagerImpl manager) {
     myManager = manager;

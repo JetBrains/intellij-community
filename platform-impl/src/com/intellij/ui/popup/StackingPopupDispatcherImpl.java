@@ -20,10 +20,10 @@ import java.util.Stack;
 
 public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
-  private Stack<JBPopup> myStack = new Stack<JBPopup>();
-  private WeakList<JBPopup> myPersistentPopups = new WeakList<JBPopup>();
+  private final Stack<JBPopup> myStack = new Stack<JBPopup>();
+  private final WeakList<JBPopup> myPersistentPopups = new WeakList<JBPopup>();
 
-  private WeakList<JBPopup> myAllPopups = new WeakList<JBPopup>();
+  private final WeakList<JBPopup> myAllPopups = new WeakList<JBPopup>();
 
 
   private StackingPopupDispatcherImpl() {

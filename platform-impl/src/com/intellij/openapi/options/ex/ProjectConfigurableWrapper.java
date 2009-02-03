@@ -16,8 +16,8 @@ import java.io.File;
  * @author max
  */
 public class ProjectConfigurableWrapper implements SearchableConfigurable {
-  private Project myProject;
-  private Configurable myDelegate;
+  private final Project myProject;
+  private final Configurable myDelegate;
 
   public ProjectConfigurableWrapper(Project project, Configurable delegate) {
     myProject = project;

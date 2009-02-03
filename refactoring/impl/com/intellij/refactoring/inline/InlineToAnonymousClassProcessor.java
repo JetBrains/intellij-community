@@ -36,9 +36,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
 
-  private ElementPattern ourCatchClausePattern = PlatformPatterns.psiElement(PsiTypeElement.class).withParent(PlatformPatterns.psiElement(PsiParameter.class).withParent(
+  private final ElementPattern ourCatchClausePattern = PlatformPatterns.psiElement(PsiTypeElement.class).withParent(PlatformPatterns.psiElement(PsiParameter.class).withParent(
     PlatformPatterns.psiElement(PsiCatchSection.class)));
-  private ElementPattern ourThrowsClausePattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceList.class).withFirstChild(
+  private final ElementPattern ourThrowsClausePattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceList.class).withFirstChild(
     PlatformPatterns.psiElement().withText(PsiKeyword.THROWS)));
 
   protected InlineToAnonymousClassProcessor(Project project,

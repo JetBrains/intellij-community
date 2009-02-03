@@ -51,7 +51,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   protected HashMap<PsiElement, Node> myElementToNode = new HashMap<PsiElement, Node>();
   protected Map<SmartPsiElementPointer, String> myVariablesRenames = new HashMap<SmartPsiElementPointer, String>();
   private final String mySuperClassName;
-  private List<UsageInfo> myVariablesUsages = new ArrayList<UsageInfo>();
+  private final List<UsageInfo> myVariablesUsages = new ArrayList<UsageInfo>();
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
@@ -693,7 +693,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   private static class VisitMark implements Mark {
     private boolean myVisited;
-    private PsiElement myElement;
+    private final PsiElement myElement;
 
     public boolean coincidesWith(Mark x) {
       return ((VisitMark)x).myVisited == myVisited;
@@ -723,7 +723,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   }
 
   private static class Node extends NodeImpl {
-    private HashSet<Node> mySuccessors = new HashSet<Node>();
+    private final HashSet<Node> mySuccessors = new HashSet<Node>();
     private VisitMark myMark;
 
     public Node(PsiElement x) {

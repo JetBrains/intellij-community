@@ -27,7 +27,7 @@ public abstract class AbstractPainter implements Painter {
 
   private boolean myNeedsRepaint;
 
-  private Set<Listener> myListeners = new HashSet<Listener>();
+  private final Set<Listener> myListeners = new HashSet<Listener>();
 
 
   public boolean needsRepaint() {

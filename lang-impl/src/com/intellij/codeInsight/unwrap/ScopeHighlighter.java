@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScopeHighlighter {
-  private Editor myEditor;
-  private List<RangeHighlighter> myActiveHighliters = new ArrayList<RangeHighlighter>();
+  private final Editor myEditor;
+  private final List<RangeHighlighter> myActiveHighliters = new ArrayList<RangeHighlighter>();
 
   public ScopeHighlighter(Editor editor) {
     myEditor = editor;

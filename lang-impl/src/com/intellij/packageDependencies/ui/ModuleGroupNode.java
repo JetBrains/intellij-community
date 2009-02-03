@@ -14,7 +14,7 @@ import java.util.Set;
  * Date: 24-Jan-2006
  */
 public class ModuleGroupNode extends PackageDependenciesNode {
-  private ModuleGroup myModuleGroup;
+  private final ModuleGroup myModuleGroup;
 
   public ModuleGroupNode(ModuleGroup moduleGroup) {
     myModuleGroup = moduleGroup;    

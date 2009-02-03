@@ -20,11 +20,11 @@ import java.util.*;
  */
 
 public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
-  private Map<Library, LibraryEditor> myLibrary2EditorMap = new HashMap<Library, LibraryEditor>();
-  private Set<Library> myRemovedLibraries = new HashSet<Library>();
+  private final Map<Library, LibraryEditor> myLibrary2EditorMap = new HashMap<Library, LibraryEditor>();
+  private final Set<Library> myRemovedLibraries = new HashSet<Library>();
 
-  private LibraryTable.ModifiableModel myLibrariesModifiableModel;
-  private Project myProject;
+  private final LibraryTable.ModifiableModel myLibrariesModifiableModel;
+  private final Project myProject;
 
   public LibrariesModifiableModel(final LibraryTable table, final Project project) {
     myProject = project;

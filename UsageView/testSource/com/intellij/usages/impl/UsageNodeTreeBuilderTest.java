@@ -113,7 +113,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
   }
 
   private static class LogUsageGroup implements UsageGroup {
-    private int myPower;
+    private final int myPower;
 
     public LogUsageGroup(int power) {
       myPower = power;
@@ -228,7 +228,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
   }
 
   private static class MockUsage implements Usage {
-    private int myId;
+    private final int myId;
 
     public MockUsage(int index) {
       myId = index;

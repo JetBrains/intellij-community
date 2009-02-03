@@ -47,8 +47,8 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   @NonNls public static final String CONVERTED_ATTRIBUTE = "converted";
   @NonNls public static final String CONVERTER_TAG = "converter";
   @NonNls public static final String CONVERTER_ID_ATTRIBUTE = "id";
-  private ProjectFileVersionState myState = new ProjectFileVersionState();
-  private Project myProject;
+  private final ProjectFileVersionState myState = new ProjectFileVersionState();
+  private final Project myProject;
 
   public void projectOpened() {
   }

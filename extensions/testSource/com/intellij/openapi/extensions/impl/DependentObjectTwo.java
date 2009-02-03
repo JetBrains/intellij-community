@@ -8,7 +8,7 @@ package com.intellij.openapi.extensions.impl;
  * @author Alexander Kireyev
  */
 public class DependentObjectTwo {
-  private DependentObjectOne myOne;
+  private final DependentObjectOne myOne;
 
   public DependentObjectTwo(DependentObjectOne one) {
     myOne = one;

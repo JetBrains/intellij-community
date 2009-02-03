@@ -31,7 +31,7 @@ import java.beans.PropertyChangeListener;
 
 public class UserActivityWatcher extends ComponentTreeWatcher {
   private boolean myIsModified = false;
-  private EventDispatcher<UserActivityListener> myListeners = EventDispatcher.create(UserActivityListener.class);
+  private final EventDispatcher<UserActivityListener> myListeners = EventDispatcher.create(UserActivityListener.class);
 
   private final DocumentListener myDocumentListener = new DocumentAdapter() {
     public void textChanged(DocumentEvent event) {
@@ -39,19 +39,19 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     }
   };
 
-  private com.intellij.openapi.editor.event.DocumentListener myIdeaDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
+  private final com.intellij.openapi.editor.event.DocumentListener myIdeaDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
     @Override
     public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
       fireUIChanged();
     }
   };
 
-  private TableModelListener myTableModelListener = new TableModelListener() {
+  private final TableModelListener myTableModelListener = new TableModelListener() {
     public void tableChanged(TableModelEvent e) {
       fireUIChanged();
     }
   };
-  private PropertyChangeListener myTableListener = new PropertyChangeListener() {
+  private final PropertyChangeListener myTableListener = new PropertyChangeListener() {
     public void propertyChange(PropertyChangeEvent evt) {
       TableModel oldModel = (TableModel)evt.getOldValue();
       if (oldModel != null) {
@@ -68,7 +68,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       }
     }
   };
-  private ChangeListener myChangeListener = new ChangeListener() {
+  private final ChangeListener myChangeListener = new ChangeListener() {
     public void stateChanged(final ChangeEvent e) {
       fireUIChanged();
     }

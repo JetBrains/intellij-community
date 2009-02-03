@@ -51,9 +51,9 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
   private ChangeListTodosPanel myChangeListTodos;
 
   private int mySelectedIndex;
-  private TodoPanelSettings myCurrentPanelSettings;
-  private TodoPanelSettings myAllPanelSettings;
-  private TodoPanelSettings myChangeListTodosPanelSettings;
+  private final TodoPanelSettings myCurrentPanelSettings;
+  private final TodoPanelSettings myAllPanelSettings;
+  private final TodoPanelSettings myChangeListTodosPanelSettings;
 
   @NonNls private static final String ATTRIBUTE_SELECTED_INDEX = "selected-index";
   @NonNls private static final String ELEMENT_TODO_PANEL = "todo-panel";

@@ -52,7 +52,7 @@ import java.util.*;
  * Date: 11-Jan-2006
  */
 public class ExportHTMLAction extends AnAction {
-  private InspectionResultsView myView;
+  private final InspectionResultsView myView;
   @NonNls private static final String PROBLEMS = "problems";
   @NonNls private static final String HTML = "HTML";
   @NonNls private static final String XML = "XML";

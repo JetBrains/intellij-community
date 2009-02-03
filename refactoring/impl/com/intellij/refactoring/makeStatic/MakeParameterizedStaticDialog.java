@@ -28,12 +28,12 @@ import java.awt.event.*;
 import java.util.ArrayList;
 
 public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
-  private Project myProject;
-  private String[] myNameSuggestions;
+  private final Project myProject;
+  private final String[] myNameSuggestions;
 
-  private JCheckBox myMakeClassParameter = new JCheckBox();
+  private final JCheckBox myMakeClassParameter = new JCheckBox();
   private JComponent myClassParameterNameInputField;
-  private JCheckBox myMakeFieldParameters = new JCheckBox();
+  private final JCheckBox myMakeFieldParameters = new JCheckBox();
 
   private ParameterTablePanel myParameterPanel;
   private ParameterTablePanel.VariableData[] myVariableData;

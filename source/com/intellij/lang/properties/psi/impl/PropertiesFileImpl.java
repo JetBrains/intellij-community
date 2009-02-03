@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
-  private static TokenSet outPropertiesListSet = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
+  private static final TokenSet outPropertiesListSet = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
   private Map<String,List<Property>> myPropertiesMap;
   private List<Property> myProperties;
 

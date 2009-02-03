@@ -83,20 +83,20 @@ public class ImplementationViewComponent extends JPanel {
   private final PsiElement[] myElements;
   private int myIndex;
 
-  private Editor myEditor;
-  private JPanel myViewingPanel;
-  private JLabel myLocationLabel;
-  private JLabel myCountLabel;
+  private final Editor myEditor;
+  private final JPanel myViewingPanel;
+  private final JLabel myLocationLabel;
+  private final JLabel myCountLabel;
+  private final CardLayout myBinarySwitch;
+  private final JPanel myBinaryPanel;
   private JComboBox myFileChooser;
-  private CardLayout myBinarySwitch;
-  private JPanel myBinaryPanel;
   private FileEditor myNonTextEditor;
   private FileEditorProvider myCurrentNonTextEditorProvider;
   private JBPopup myHint;
   private String myTitle;
-  private static final @NonNls String TEXT_PAGE_KEY = "Text";
-  private static final @NonNls String BINARY_PAGE_KEY = "Binary";
-  private ActionToolbar myToolbar;
+  @NonNls private static final String TEXT_PAGE_KEY = "Text";
+  @NonNls private static final String BINARY_PAGE_KEY = "Binary";
+  private final ActionToolbar myToolbar;
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
 
   public void setHint(final JBPopup hint, final String title) {
@@ -127,7 +127,16 @@ public class ImplementationViewComponent extends JPanel {
       candidates.add(element.getNavigationElement());
     }
     myElements = candidates.toArray(new PsiElement[candidates.size()]);
-    if (myElements.length == 0) return;
+    if (myElements.length == 0) {
+      myToolbar = null;
+      myEditor = null;
+      myViewingPanel = null;
+      myLocationLabel = null;
+      myCountLabel = null;
+      myBinarySwitch = null;
+      myBinaryPanel = null;
+      return;
+    }
     myIndex = index < myElements.length ? index : 0;
 
     final Project project = elements[myIndex].getProject();

@@ -40,7 +40,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
   }
 
   private static class WeakKey extends WeakReference implements Key{
-    private int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
+    private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
 
     private WeakKey(Object k) {
       super(k);
@@ -110,7 +110,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
   private final ConcurrentMap myMap;
   private static final Object NULL_KEY = new Object();
 
-  private ReferenceQueue myReferenceQueue = new ReferenceQueue();
+  private final ReferenceQueue myReferenceQueue = new ReferenceQueue();
 
   private void processQueue() {
     WeakKey wk;
@@ -230,8 +230,8 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
   }
 
   private static class Entry implements Map.Entry {
-    private Map.Entry ent;
-    private Object key;	/* Strong reference to key, so that the GC
+    private final Map.Entry ent;
+    private final Object key;	/* Strong reference to key, so that the GC
                                  will leave it alone as long as this Entry
                                  exists */
 

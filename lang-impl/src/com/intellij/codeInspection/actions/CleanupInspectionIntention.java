@@ -27,8 +27,8 @@ import java.util.List;
  * Date: 21-Feb-2006
  */
 public class CleanupInspectionIntention implements IntentionAction {
-  private LocalInspectionTool myTool;
-  private Class myQuickfixClass;
+  private final LocalInspectionTool myTool;
+  private final Class myQuickfixClass;
 
   public CleanupInspectionIntention(final LocalInspectionTool tool, Class quickFixClass) {
     myTool = tool;

@@ -23,7 +23,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
   private final FileChooserDescriptor myChooserDescriptor;
 
   private VirtualFileAdapter myVirtualFileListener;
-  private Runnable myOnInitialized;
+  private final Runnable myOnInitialized;
 
   public FileTreeBuilder(JTree tree,
                          DefaultTreeModel treeModel,

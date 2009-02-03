@@ -19,8 +19,8 @@ package com.intellij.util.xmlb;
 import org.jetbrains.annotations.Nullable;
 
 class AccessorBindingWrapper implements Binding {
-  private Accessor myAccessor;
-  private Binding myBinding;
+  private final Accessor myAccessor;
+  private final Binding myBinding;
 
 
   public AccessorBindingWrapper(final Accessor accessor, final Binding binding) {

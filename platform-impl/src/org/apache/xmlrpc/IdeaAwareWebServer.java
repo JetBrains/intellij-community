@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadFactory;
  */
 public class IdeaAwareWebServer extends WebServer
 {
-    private static ExecutorService threadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
+    private static final ExecutorService threadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
       public Thread newThread(final Runnable r) {
         return new Thread(r, "WebServer thread pool");
       }

@@ -18,7 +18,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class CustomizingReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
-  private CustomizableReferenceProvider myProvider;
+  private final CustomizableReferenceProvider myProvider;
   private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
   public CustomizingReferenceProvider(@NotNull CustomizableReferenceProvider provider) {

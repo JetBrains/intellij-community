@@ -25,8 +25,8 @@ import java.util.*;
 
 public final class SoftHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V> {
   private Map<Key<K>,V> myMap;
-  private ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
-  private HardKey<K> myHardKeyInstance = new HardKey<K>(null); // "singleton"
+  private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
+  private final HardKey<K> myHardKeyInstance = new HardKey<K>(null); // "singleton"
   private Set<Map.Entry<K,V>> entrySet;
 
   private static interface Key<T>{
@@ -34,7 +34,7 @@ public final class SoftHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
   }
 
   private static class SoftKey<T> extends SoftReference<T> implements Key<T>{
-    private int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
+    private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
 
     private SoftKey(T k, ReferenceQueue<? super T> q) {
       super(k, q);
@@ -192,8 +192,8 @@ public final class SoftHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
   }
 
   private static class Entry<K,V> implements Map.Entry<K,V> {
-    private Map.Entry<?,V> ent;
-    private K key;	/* Strong reference to key, so that the GC
+    private final Map.Entry<?,V> ent;
+    private final K key;	/* Strong reference to key, so that the GC
                                  will leave it alone as long as this Entry
                                  exists */
 

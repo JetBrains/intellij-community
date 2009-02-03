@@ -32,9 +32,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private ContentManager myManager;
 
   ArrayList<ContentTabLabel> myTabs = new ArrayList<ContentTabLabel>();
-  private Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<Content, ContentTabLabel>();
+  private final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<Content, ContentTabLabel>();
 
-  private JPanel myContent = new JPanel(new BorderLayout());
+  private final JPanel myContent = new JPanel(new BorderLayout());
   ToolWindowImpl myWindow;
 
   TabbedContentAction.CloseAllAction myCloseAllAction;
@@ -42,9 +42,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
 
 
-  private BaseLabel myIdLabel = new BaseLabel(this, false);
+  private final BaseLabel myIdLabel = new BaseLabel(this, false);
 
-  private MoreIcon myMoreIcon = new MoreIcon() {
+  private final MoreIcon myMoreIcon = new MoreIcon() {
     protected Rectangle getIconRec() {
       return myLastLayout.moreRect;
     }
@@ -59,7 +59,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   };
 
   private JPopupMenu myPopup;
-  private PopupMenuListener myPopupListener;
+  private final PopupMenuListener myPopupListener;
 
   private static final int MORE_ICON_BORDER = 6;
 

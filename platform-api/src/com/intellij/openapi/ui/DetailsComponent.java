@@ -37,22 +37,22 @@ import java.util.Arrays;
 
 public class DetailsComponent {
 
-  private JPanel myComponent;
+  private final JPanel myComponent;
 
   private JComponent myContent;
 
 
-  private Banner myBannerLabel;
+  private final Banner myBannerLabel;
 
-  private JLabel myEmptyContentLabel;
-  private NonOpaquePanel myBanner;
+  private final JLabel myEmptyContentLabel;
+  private final NonOpaquePanel myBanner;
 
   private String[] myBannerText;
   private boolean myDetailsEnabled = true;
   private String[] myPrefix;
   private String[] myText;
 
-  private Wrapper myContentGutter = new Wrapper();
+  private final Wrapper myContentGutter = new Wrapper();
 
   private boolean myPaintBorder = true;
 

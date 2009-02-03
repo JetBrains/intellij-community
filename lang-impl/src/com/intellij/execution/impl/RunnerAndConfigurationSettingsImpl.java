@@ -34,10 +34,10 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private RunConfiguration myConfiguration;
   private boolean myIsTemplate;
 
-  private Map<ProgramRunner, RunnerSettings> myRunnerSettings = new HashMap<ProgramRunner, RunnerSettings>();
+  private final Map<ProgramRunner, RunnerSettings> myRunnerSettings = new HashMap<ProgramRunner, RunnerSettings>();
   private List<Element> myUnloadedRunnerSettings = null;
 
-  private Map<ProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new HashMap<ProgramRunner, ConfigurationPerRunnerSettings>();
+  private final Map<ProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new HashMap<ProgramRunner, ConfigurationPerRunnerSettings>();
   private List<Element> myUnloadedConfigurationPerRunnerSettings = null;
 
   @NonNls
@@ -303,7 +303,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   private class InfoProvider implements ConfigurationInfoProvider {
-    private ProgramRunner myRunner;
+    private final ProgramRunner myRunner;
 
     public InfoProvider(ProgramRunner runner) {
       myRunner = runner;

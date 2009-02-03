@@ -53,13 +53,13 @@ public class RefManagerImpl extends RefManager {
 
   private boolean myIsInProcess = false;
 
-  private List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
+  private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
   private GlobalInspectionContextImpl myContext;
 
-  private Map<Key, RefManagerExtension> myExtensions = new HashMap<Key, RefManagerExtension>();
-  private HashMap<Language, RefManagerExtension> myLanguageExtensions = new HashMap<Language, RefManagerExtension>();
+  private final Map<Key, RefManagerExtension> myExtensions = new HashMap<Key, RefManagerExtension>();
+  private final HashMap<Language, RefManagerExtension> myLanguageExtensions = new HashMap<Language, RefManagerExtension>();
 
-  private JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
+  private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
 
   public RefManagerImpl(Project project, AnalysisScope scope, GlobalInspectionContextImpl context) {
     myDeclarationsFound = false;

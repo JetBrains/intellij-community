@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class HyperlinkLabel extends HighlightableComponent {
   private HighlightedText myHighlightedText;
-  private List<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
+  private final List<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
   private final Color myTextForegroundColor;
   private final Color myTextBackgroundColor;
   private final Color myTextEffectColor;

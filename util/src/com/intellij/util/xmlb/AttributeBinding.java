@@ -22,9 +22,9 @@ import org.jdom.Text;
 import org.jetbrains.annotations.Nullable;
 
 public class AttributeBinding implements Binding {
-  private Accessor myAccessor;
-  private Attribute myAttribute;
-  private XmlSerializerImpl myXmlSerializer;
+  private final Accessor myAccessor;
+  private final Attribute myAttribute;
+  private final XmlSerializerImpl myXmlSerializer;
   private Binding myBinding;
 
   public AttributeBinding(final Accessor accessor, final Attribute attribute, final XmlSerializerImpl xmlSerializer) {

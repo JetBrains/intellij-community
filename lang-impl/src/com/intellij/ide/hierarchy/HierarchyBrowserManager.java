@@ -30,7 +30,7 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
 
   private State myState = new State();
 
-  private ContentManager myContentManager;
+  private final ContentManager myContentManager;
 
   public HierarchyBrowserManager(final Project project) {
     final ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(project);

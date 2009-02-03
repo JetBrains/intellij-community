@@ -30,9 +30,9 @@ import java.awt.event.ActionListener;
 public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private JdkComboBox myCbProjectJdk;
   private JPanel myJdkPanel;
-  private Project myProject;
-  private ProjectJdksModel myJdksModel;
-  private SdkModel.Listener myListener = new SdkModel.Listener() {
+  private final Project myProject;
+  private final ProjectJdksModel myJdksModel;
+  private final SdkModel.Listener myListener = new SdkModel.Listener() {
     public void sdkAdded(Sdk sdk) {
       reloadModel();
     }

@@ -41,7 +41,7 @@ public class WizardContext {
   private String myCompilerOutputDirectory;
   private Sdk myProjectJdk;
   private ProjectBuilder myProjectBuilder;
-  private List<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = new ArrayList<Listener>();
   private StorageScheme myProjectStorageFormat = StorageScheme.DEFAULT;
 
   public void setProjectStorageFormat(StorageScheme format) {

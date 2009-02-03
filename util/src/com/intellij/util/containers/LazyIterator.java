@@ -12,7 +12,7 @@ import java.util.Iterator;
  * @author peter
 */
 public class LazyIterator<T> implements Iterator<T> {
-  private NotNullLazyValue<Iterator<T>> myLazyValue;
+  private final NotNullLazyValue<Iterator<T>> myLazyValue;
 
   public LazyIterator(final NotNullLazyValue<Iterator<T>> lazyIterator) {
     myLazyValue = lazyIterator;

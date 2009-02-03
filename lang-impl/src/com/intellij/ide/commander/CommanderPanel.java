@@ -71,7 +71,7 @@ public class CommanderPanel extends JPanel {
   private static final String ACTION_GO_UP = "GoUp";
   private ProjectAbstractTreeStructureBase myProjectTreeStructure;
   private boolean myActive = true;
-  private List<CommanderHistoryListener> myHistoryListeners = new CopyOnWriteArrayList<CommanderHistoryListener>();
+  private final List<CommanderHistoryListener> myHistoryListeners = new CopyOnWriteArrayList<CommanderHistoryListener>();
   private boolean myMoveFocus = false;
 
   public CommanderPanel(final Project project, final boolean enablePopupMenu) {

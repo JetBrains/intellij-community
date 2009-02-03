@@ -46,7 +46,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected Integer myProviderUpToDateHash;
   private boolean mySavingDisabled = false;
 
-  private Map<String, Element> myStorageComponentStates = new TreeMap<String, Element>();
+  private final Map<String, Element> myStorageComponentStates = new TreeMap<String, Element>();
 
   private final ComponentVersionProvider myLocalVersionProvider;
   private final ComponentVersionProvider myRemoteVersionProvider;
@@ -272,7 +272,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   protected class MyExternalizationSession implements ExternalizationSession {
-    private StorageData myStorageData;
+    private final StorageData myStorageData;
     private final ComponentVersionListener myListener;
 
     public MyExternalizationSession(final StorageData storageData, ComponentVersionListener listener) {

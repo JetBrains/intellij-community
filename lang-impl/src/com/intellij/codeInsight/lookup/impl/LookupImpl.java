@@ -75,7 +75,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
   private boolean myDirty;
   private String myAdditionalPrefix = "";
-  private PsiElement myElement;
+  private final PsiElement myElement;
   private final AsyncProcessIcon myProcessIcon;
   private final Comparator<LookupElement> myComparator;
   private volatile boolean myCalculating;

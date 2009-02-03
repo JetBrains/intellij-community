@@ -17,8 +17,8 @@ import java.util.TooManyListenersException;
  *
  */
 public class ErrorViewTextExporter implements ExporterToTextFile {
-  private JCheckBox myCbShowDetails;
-  private ErrorViewStructure myStructure;
+  private final JCheckBox myCbShowDetails;
+  private final ErrorViewStructure myStructure;
   private ChangeListener myChangeListener;
 
   public ErrorViewTextExporter(ErrorViewStructure treeStructure) {

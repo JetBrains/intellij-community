@@ -39,11 +39,11 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private final Map<Facet, FacetEditorImpl> myEditors = new HashMap<Facet, FacetEditorImpl>();
   private final Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
   private final Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
-  private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
-  private Map<Module, UserDataHolder> mySharedModuleData = new HashMap<Module, UserDataHolder>();
-  private Set<Facet> myFacetsToDispose = new HashSet<Facet>();
-  private Set<Facet> myChangedFacets = new HashSet<Facet>();
-  private Set<Facet> myCreatedFacets = new HashSet<Facet>();
+  private final Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
+  private final Map<Module, UserDataHolder> mySharedModuleData = new HashMap<Module, UserDataHolder>();
+  private final Set<Facet> myFacetsToDispose = new HashSet<Facet>();
+  private final Set<Facet> myChangedFacets = new HashSet<Facet>();
+  private final Set<Facet> myCreatedFacets = new HashSet<Facet>();
   private final StructureConfigurableContext myContext;
   private final Project myProject;
   private UserDataHolderBase myProjectData = new UserDataHolderBase();
@@ -332,7 +332,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {
-    private LibrariesContainer myContainer;
+    private final LibrariesContainer myContainer;
 
     public MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
       super(facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,

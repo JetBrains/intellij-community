@@ -59,8 +59,8 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo VALUE = new ColumnInfo("VALUE") {
-    private TableCellEditor myEditor = new MyValueEditor();
-    private TableCellRenderer myRenderer = new MyValueRenderer();
+    private final TableCellEditor myEditor = new MyValueEditor();
+    private final TableCellRenderer myRenderer = new MyValueRenderer();
 
     public Object valueOf(Object o) {
       if (o instanceof MyTreeNode) {
@@ -91,8 +91,8 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
 
   public final ColumnInfo[] COLUMNS = new ColumnInfo[]{TITLE, VALUE};
 
-  private TreeCellRenderer myTitleRenderer = new TreeCellRenderer() {
-    private JLabel myLabel = new JLabel();
+  private final TreeCellRenderer myTitleRenderer = new TreeCellRenderer() {
+    private final JLabel myLabel = new JLabel();
 
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
@@ -121,9 +121,9 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
     }
   };
 
-  private TreeTable myTreeTable;
-  private HashMap myKeyToFieldMap = new HashMap();
-  private ArrayList myKeys = new ArrayList();
+  private final TreeTable myTreeTable;
+  private final HashMap myKeyToFieldMap = new HashMap();
+  private final ArrayList myKeys = new ArrayList();
 
   private final JPanel myPanel = new JPanel();
 
@@ -424,8 +424,8 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
   }
 
   private class MyTreeNode extends DefaultMutableTreeNode {
-    private Object myKey;
-    private String myText;
+    private final Object myKey;
+    private final String myText;
     private Object myValue;
 
     public MyTreeNode(Object key, String text, CodeStyleSettings settings) {
@@ -458,9 +458,9 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
   }
 
   private class MyValueRenderer implements TableCellRenderer {
-    private JLabel myComboBox = new JLabel();
-    private JCheckBox myCheckBox = new JCheckBox();
-    private JPanel myEmptyLabel = new JPanel();
+    private final JLabel myComboBox = new JLabel();
+    private final JCheckBox myCheckBox = new JCheckBox();
+    private final JPanel myEmptyLabel = new JPanel();
 
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
@@ -493,8 +493,8 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
   }
 
   private class MyValueEditor extends AbstractTableCellEditor {
-    private JComboBox myComboBox = new JComboBox();
-    private JCheckBox myCheckBox = new JCheckBox();
+    private final JComboBox myComboBox = new JComboBox();
+    private final JCheckBox myCheckBox = new JCheckBox();
     private Component myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
 

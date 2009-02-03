@@ -9,8 +9,8 @@ import com.intellij.openapi.util.IconLoader;
 
 public class ShowSearchFieldAction extends AnAction implements Toggleable {
 
-  private ShadowAction myShadow;
-  private OptionsEditor myEditor;
+  private final ShadowAction myShadow;
+  private final OptionsEditor myEditor;
 
 
   public ShowSearchFieldAction(OptionsEditor editor) {

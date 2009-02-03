@@ -28,12 +28,12 @@ import java.util.*;
  */
 public class FacetFinderImpl extends FacetFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetFinderImpl");
-  private Map<FacetTypeId, AllFacetsOfTypeModificationTracker> myAllFacetTrackers = new HashMap<FacetTypeId, AllFacetsOfTypeModificationTracker>();
-  private Map<FacetTypeId, CachedValue<Map<VirtualFile, List<Facet>>>> myCachedMaps =
+  private final Map<FacetTypeId, AllFacetsOfTypeModificationTracker> myAllFacetTrackers = new HashMap<FacetTypeId, AllFacetsOfTypeModificationTracker>();
+  private final Map<FacetTypeId, CachedValue<Map<VirtualFile, List<Facet>>>> myCachedMaps =
     new HashMap<FacetTypeId, CachedValue<Map<VirtualFile, List<Facet>>>>();
-  private Project myProject;
-  private CachedValuesManager myCachedValuesManager;
-  private ModuleManager myModuleManager;
+  private final Project myProject;
+  private final CachedValuesManager myCachedValuesManager;
+  private final ModuleManager myModuleManager;
 
   public FacetFinderImpl(Project project) {
     myProject = project;

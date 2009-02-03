@@ -17,7 +17,7 @@ public class LibrariesConfigurable extends NamedConfigurable <String> {
   
   private LibraryTable myLibraryTable;
 
-  private PanelWithText myPanel = new PanelWithText();
+  private final PanelWithText myPanel = new PanelWithText();
 
   protected LibrariesConfigurable(final LibraryTable libraryTable) {
     myLibraryTable = libraryTable;

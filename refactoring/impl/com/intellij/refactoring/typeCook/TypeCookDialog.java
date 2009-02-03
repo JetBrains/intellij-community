@@ -24,14 +24,14 @@ import java.awt.*;
 public class TypeCookDialog extends RefactoringDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("generify.title");
 
-  private PsiElement[] myElements;
-  private JLabel myClassNameLabel = new JLabel();
-  private JCheckBox myCbDropCasts = new JCheckBox();
-  private JCheckBox myCbPreserveRawArrays = new JCheckBox();
-  private JCheckBox myCbLeaveObjectParameterizedTypesRaw = new JCheckBox();
-  private JCheckBox myCbExhaustive = new JCheckBox();
-  private JCheckBox myCbCookObjects = new JCheckBox();
-  private JCheckBox myCbCookToWildcards = new JCheckBox();
+  private final PsiElement[] myElements;
+  private final JLabel myClassNameLabel = new JLabel();
+  private final JCheckBox myCbDropCasts = new JCheckBox();
+  private final JCheckBox myCbPreserveRawArrays = new JCheckBox();
+  private final JCheckBox myCbLeaveObjectParameterizedTypesRaw = new JCheckBox();
+  private final JCheckBox myCbExhaustive = new JCheckBox();
+  private final JCheckBox myCbCookObjects = new JCheckBox();
+  private final JCheckBox myCbCookToWildcards = new JCheckBox();
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public TypeCookDialog(Project project, PsiElement[] elements) {

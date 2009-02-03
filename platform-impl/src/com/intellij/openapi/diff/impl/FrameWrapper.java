@@ -34,7 +34,7 @@ public class FrameWrapper implements Disposable {
   private JFrame myFrame;
   private final Map myDatas = new HashMap();
   private Project myProject;
-  private ProjectManagerListener myProjectListener = new MyProjectManagerListener();
+  private final ProjectManagerListener myProjectListener = new MyProjectManagerListener();
   private FocusTrackback myFocusTrackback;
   private FocusWatcher myFocusWatcher;
 

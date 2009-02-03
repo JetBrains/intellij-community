@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 )
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {
-  private SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<LogFilter, Boolean>(new Comparator<LogFilter>() {
+  private final SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<LogFilter, Boolean>(new Comparator<LogFilter>() {
     public int compare(final LogFilter o1, final LogFilter o2) {
       return -1;
     }
@@ -65,7 +65,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
-  private List<FilterListener> myListeners = new ArrayList<FilterListener>();
+  private final List<FilterListener> myListeners = new ArrayList<FilterListener>();
   private static final Logger LOG = Logger.getInstance("#" + LogConsolePreferences.class.getName());
 
   public static LogConsolePreferences getInstance(Project project){

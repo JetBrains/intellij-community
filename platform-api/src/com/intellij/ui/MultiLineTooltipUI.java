@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class MultiLineTooltipUI extends MetalToolTipUI {
-  private List myLines = new ArrayList();
+  private final List myLines = new ArrayList();
 
   public void paint(Graphics g, JComponent c) {
     FontMetrics metrics = g.getFontMetrics(g.getFont());

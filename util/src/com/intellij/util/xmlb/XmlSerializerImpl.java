@@ -30,8 +30,8 @@ import java.util.*;
  */
 class XmlSerializerImpl {
 
-  private SerializationFilter filter;
-  private Map<Pair<Type, Accessor>, Binding> myBindings = new HashMap<Pair<Type, Accessor>, Binding>();
+  private final SerializationFilter filter;
+  private final Map<Pair<Type, Accessor>, Binding> myBindings = new HashMap<Pair<Type, Accessor>, Binding>();
 
 
   public XmlSerializerImpl(SerializationFilter filter) {

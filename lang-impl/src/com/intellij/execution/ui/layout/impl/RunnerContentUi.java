@@ -47,10 +47,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   String mySessionName;
   MyComponent myComponent = new MyComponent();
 
-  private Wrapper myToolbar = new Wrapper();
+  private final Wrapper myToolbar = new Wrapper();
 
   JBTabs myTabs;
-  private Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
+  private final Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
     public int compare(final TabInfo o1, final TabInfo o2) {
       return getTabFor(o1).getIndex() - getTabFor(o2).getIndex();
     }
@@ -67,21 +67,21 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   boolean myUiLastStateWasRestored;
 
-  private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
+  private final Set<Object> myRestoreStateRequestors = new HashSet<Object>();
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   private String myActionsPlace = ActionPlaces.UNKNOWN;
-  private IdeFocusManager myFocusManager;
+  private final IdeFocusManager myFocusManager;
 
   private boolean myMinimizeActionEnabled = true;
   private boolean myMoveToGridActionEnabled = true;
-  private RunnerLayoutUi myRunnerUi;
+  private final RunnerLayoutUi myRunnerUi;
 
-  private Map<String, LayoutAttractionPolicy> myAttractions = new HashMap<String, LayoutAttractionPolicy>();
-  private Map<String, LayoutAttractionPolicy> myConditionAttractions = new HashMap<String, LayoutAttractionPolicy>();
+  private final Map<String, LayoutAttractionPolicy> myAttractions = new HashMap<String, LayoutAttractionPolicy>();
+  private final Map<String, LayoutAttractionPolicy> myConditionAttractions = new HashMap<String, LayoutAttractionPolicy>();
 
   private ActionGroup myAdditonalFocusActions;
 
-  private ActionCallback myInitialized = new ActionCallback();
+  private final ActionCallback myInitialized = new ActionCallback();
   private boolean myToDisposeRemovedContent = true;
 
   private int myAttractionCount;

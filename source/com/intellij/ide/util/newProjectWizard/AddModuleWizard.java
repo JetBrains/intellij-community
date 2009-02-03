@@ -39,7 +39,7 @@ import java.util.ArrayList;
 public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
   private static final String NEW_PROJECT_TITLE = IdeBundle.message("title.new.project");
-  private Project myCurrentProject;
+  private final Project myCurrentProject;
   private WizardContext myWizardContext;
   private ProjectCreateModeStep myRootStep;
 

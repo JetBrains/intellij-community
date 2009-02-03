@@ -36,7 +36,7 @@ public abstract class SwingWorker {
   private Object value;
   // see getValue(), setValue()
 
-  private ModalityState myModalityState;
+  private final ModalityState myModalityState;
 
   /**
    * Class to maintain reference to current worker thread
@@ -58,7 +58,7 @@ public abstract class SwingWorker {
     }
   }
 
-  private ThreadVar myThreadVar;
+  private final ThreadVar myThreadVar;
   /**
    * Get the value produced by the worker thread, or null if it
    * hasn't been constructed yet.

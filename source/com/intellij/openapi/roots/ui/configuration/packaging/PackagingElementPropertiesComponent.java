@@ -33,9 +33,9 @@ public class PackagingElementPropertiesComponent {
   private final PackagingEditorPolicy myEditorPolicy;
   private PackagingMethod myLastSelectedMethod;
   private PackagingEditorPolicy.AdditionalPropertiesConfigurable myAdditionalPropertiesConfigurable;
-  private PackagingElementsToEditInfo myElementsInfo;
+  private final PackagingElementsToEditInfo myElementsInfo;
   private Map<ContainerElement,String> myPathTails;
-  private PackagingEditorListener myListener;
+  private final PackagingEditorListener myListener;
 
   private PackagingElementPropertiesComponent(PackagingElementsToEditInfo elementsInfo, PackagingEditorPolicy editorPolicy,
                                               final @Nullable PackagingEditorListener listener) {
@@ -202,7 +202,7 @@ public class PackagingElementPropertiesComponent {
   }
 
   public static class PackagingElementPropertiesDialog extends DialogWrapper {
-    private PackagingElementPropertiesComponent myPropertiesComponent;
+    private final PackagingElementPropertiesComponent myPropertiesComponent;
 
     public PackagingElementPropertiesDialog(JComponent parent, PackagingElementPropertiesComponent propertiesComponent) {
       super(parent, false);

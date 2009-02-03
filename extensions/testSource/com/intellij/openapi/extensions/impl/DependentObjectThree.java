@@ -8,9 +8,9 @@ package com.intellij.openapi.extensions.impl;
  * @author Alexander Kireyev
  */
 public class DependentObjectThree {
-  private DependentObjectOne myOne;
-  private DependentObjectTwo myTwo;
-  private XMLTestBean[] myTestBeans;
+  private final DependentObjectOne myOne;
+  private final DependentObjectTwo myTwo;
+  private final XMLTestBean[] myTestBeans;
 
   public DependentObjectThree(DependentObjectOne one, XMLTestBean[] testBeans, DependentObjectTwo two) {
     myOne = one;

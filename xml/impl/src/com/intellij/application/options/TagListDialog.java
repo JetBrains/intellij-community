@@ -12,7 +12,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class TagListDialog extends DialogWrapper{
-  private JPanel myPanel = new JPanel(new BorderLayout());
+  private final JPanel myPanel = new JPanel(new BorderLayout());
   private final JList myList = new JList(new DefaultListModel());
   private ArrayList<String> myData;
 

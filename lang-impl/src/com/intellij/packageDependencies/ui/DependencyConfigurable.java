@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class DependencyConfigurable extends BaseConfigurable {
-  private Project myProject;
+  private final Project myProject;
   private MyTableModel myDenyRulesModel;
   private MyTableModel myAllowRulesModel;
   private TableView<DependencyRule> myDenyTable;

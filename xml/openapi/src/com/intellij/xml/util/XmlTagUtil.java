@@ -35,7 +35,7 @@ import java.util.Set;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class XmlTagUtil extends XmlTagUtilBase {
-  private static Map<String, Character> ourCharacterEntities;
+  private static final Map<String, Character> ourCharacterEntities;
 
   static {
     ourCharacterEntities = new HashMap<String, Character>();

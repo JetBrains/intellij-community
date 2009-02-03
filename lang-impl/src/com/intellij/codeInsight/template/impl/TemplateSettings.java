@@ -45,7 +45,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private @NonNls static final String TEMPLATE = "template";
 
   private @NonNls static final String DELETED_TEMPLATES = "deleted_templates";
-  private List<String> myDeletedTemplates = new ArrayList<String>();
+  private final List<String> myDeletedTemplates = new ArrayList<String>();
 
   public static final char SPACE_CHAR = ' ';
   public static final char TAB_CHAR = '\t';

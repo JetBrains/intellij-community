@@ -36,12 +36,12 @@ import java.util.EventListener;
  */
 @Deprecated
 public class ModuleTypeStep extends ModuleWizardStep {
-  private JPanel myPanel;
-  private JRadioButton myRbCreateNewModule;
-  private JRadioButton myRbImportModule;
-  private FieldPanel myModulePathFieldPanel;
-  private JList myTypesList;
-  private JEditorPane myModuleDescriptionPane;
+  private final JPanel myPanel;
+  private final JRadioButton myRbCreateNewModule;
+  private final JRadioButton myRbImportModule;
+  private final FieldPanel myModulePathFieldPanel;
+  private final JList myTypesList;
+  private final JEditorPane myModuleDescriptionPane;
 
   private ModuleType myModuleType = StdModuleTypes.JAVA;
   private Runnable myDoubleClickAction = null;

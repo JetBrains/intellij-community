@@ -38,7 +38,7 @@ import java.util.Map;
 public class PasteHandler extends EditorActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
 
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.customPasteProvider");
 

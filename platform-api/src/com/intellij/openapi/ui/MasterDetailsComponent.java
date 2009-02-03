@@ -114,13 +114,13 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   protected MyNode myRoot = new MyRootNode();
   protected Tree myTree = new Tree();
 
-  private DetailsComponent myDetails = new DetailsComponent();
+  private final DetailsComponent myDetails = new DetailsComponent();
   protected JPanel myWholePanel;
   public JPanel myNorthPanel = new JPanel(new BorderLayout());
 
-  private ArrayList<ItemsChangeListener> myListners = new ArrayList<ItemsChangeListener>();
+  private final ArrayList<ItemsChangeListener> myListners = new ArrayList<ItemsChangeListener>();
 
-  private Set<NamedConfigurable> myInitializedConfigurables = new HashSet<NamedConfigurable>();
+  private final Set<NamedConfigurable> myInitializedConfigurables = new HashSet<NamedConfigurable>();
 
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;

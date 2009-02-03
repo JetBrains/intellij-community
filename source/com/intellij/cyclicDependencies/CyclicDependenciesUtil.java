@@ -77,11 +77,11 @@ public class CyclicDependenciesUtil{
   }
 
   public static class GraphTraverser<Node> {
-    private List<Path<Node>> myCurrentPaths = new ArrayList<Path<Node>>();
-    private Node myBegin;
-    private Chunk<Node> myChunk;
-    private int myMaxPathsCount;
-    private Graph<Node> myGraph;
+    private final List<Path<Node>> myCurrentPaths = new ArrayList<Path<Node>>();
+    private final Node myBegin;
+    private final Chunk<Node> myChunk;
+    private final int myMaxPathsCount;
+    private final Graph<Node> myGraph;
 
     public GraphTraverser(final Node begin, final Chunk<Node> chunk, final int maxPathsCount, final Graph<Node> graph) {
       myBegin = begin;

@@ -72,9 +72,9 @@ public class PackagingEditorImpl implements PackagingEditor {
   private JCheckBox myShowIncludedCheckBox;
   private JCheckBox myShowLibraryFilesCheckBox;
   private PackagingArtifact myRootArtifact;
-  private Project myProject;
+  private final Project myProject;
   private PackagingTreeParameters myTreeParameters;
-  private EventDispatcher<PackagingEditorListener> myDispatcher = EventDispatcher.create(PackagingEditorListener.class);
+  private final EventDispatcher<PackagingEditorListener> myDispatcher = EventDispatcher.create(PackagingEditorListener.class);
 
   public PackagingEditorImpl(final PackagingConfiguration originalConfiguration,
                              final PackagingConfiguration modifiedConfiguration,

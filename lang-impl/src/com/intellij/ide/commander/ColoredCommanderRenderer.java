@@ -14,7 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
-  private CommanderPanel myCommanderPanel;
+  private final CommanderPanel myCommanderPanel;
 
   public ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
     myCommanderPanel = commanderPanel;

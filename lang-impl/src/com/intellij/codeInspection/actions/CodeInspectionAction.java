@@ -153,7 +153,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   private static class MySingleConfigurableEditor extends SingleConfigurableEditor {
-    private InspectionManagerEx myManager;
+    private final InspectionManagerEx myManager;
 
     public MySingleConfigurableEditor(final Project project, final ErrorsConfigurable configurable, InspectionManagerEx manager) {
       super(project, configurable, createDimensionKey(configurable));

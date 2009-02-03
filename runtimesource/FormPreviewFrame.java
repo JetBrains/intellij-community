@@ -7,7 +7,7 @@ import java.util.ResourceBundle;
 
 public class FormPreviewFrame {
   private JComponent myComponent;
-  private static ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
 
   // Note: this class should not be obfuscated
 

@@ -117,7 +117,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
   protected void refreshSelection() {}
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    private PsiModificationTracker myModificationTracker;
+    private final PsiModificationTracker myModificationTracker;
     private long myOutOfCodeBlockModificationCount;
 
     private MyPsiTreeChangeListener() {

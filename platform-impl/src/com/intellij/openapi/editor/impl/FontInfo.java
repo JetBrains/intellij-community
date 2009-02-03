@@ -9,13 +9,13 @@ import java.awt.*;
  * @author max
  */
 public class FontInfo {
-  private String myFamilyName;
-  private Font myFont;
-  private int mySize;
-  private int myStyle;
-  private TIntHashSet mySafeCharacters = new TIntHashSet();
+  private final String myFamilyName;
+  private final Font myFont;
+  private final int mySize;
+  private final int myStyle;
+  private final TIntHashSet mySafeCharacters = new TIntHashSet();
   private FontMetrics myFontMetrics = null;
-  private int[] charWidth = new int[128];
+  private final int[] charWidth = new int[128];
 
   public FontInfo(final String familyName, final int size, final int style) {
     myFamilyName = familyName;

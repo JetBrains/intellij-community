@@ -37,9 +37,9 @@ import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
-  private ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
-  private FileStatusListener myFileStatusListener;
-  private CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
+  private final ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
+  private final FileStatusListener myFileStatusListener;
+  private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
   private final FavoritesManager.FavoritesListener myFavoritesListener;
   private final String myListName;
 

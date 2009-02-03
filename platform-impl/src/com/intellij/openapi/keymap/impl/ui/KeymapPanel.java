@@ -51,7 +51,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   private JComboBox myKeymapList;
   private JList myShortcutsList;
 
-  private DefaultComboBoxModel myKeymapListModel = new DefaultComboBoxModel();
+  private final DefaultComboBoxModel myKeymapListModel = new DefaultComboBoxModel();
 
   private KeymapImpl mySelectedKeymap;
 
@@ -952,7 +952,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
   private static class MyEditor implements ComboBoxEditor {
     private KeymapImpl myKeymap = null;
-    private JTextField myTextField = new JTextField();
+    private final JTextField myTextField = new JTextField();
 
     public MyEditor() {
       myTextField.getDocument().addDocumentListener(new DocumentAdapter() {

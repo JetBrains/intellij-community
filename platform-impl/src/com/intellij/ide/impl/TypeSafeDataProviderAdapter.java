@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class TypeSafeDataProviderAdapter implements DataProvider, DataSink {
-  private TypeSafeDataProvider myProvider;
+  private final TypeSafeDataProvider myProvider;
   private DataKey myLastKey = null;
   private Object myValue = null;
 

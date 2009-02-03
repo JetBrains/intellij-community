@@ -638,7 +638,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private final PackageSink mySink = new PackageSink();
 
   private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
-    private Condition<VirtualFile> myValidityCondition = new Condition<VirtualFile>() {
+    private final Condition<VirtualFile> myValidityCondition = new Condition<VirtualFile>() {
       public boolean value(final VirtualFile virtualFile) {
         return virtualFile.isValid();
       }

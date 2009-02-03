@@ -15,7 +15,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
 public class CutHandler extends EditorWriteActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public CutHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;

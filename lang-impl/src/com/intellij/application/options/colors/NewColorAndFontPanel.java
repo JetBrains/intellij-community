@@ -11,12 +11,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class NewColorAndFontPanel extends JPanel {
-  private ColorSettingsPage mySettingsPage;
-  private SchemesPanel mySchemesPanel;
-  private OptionsPanel myOptionsPanel;
-  private PreviewPanel myPreviewPanel;
+  private final ColorSettingsPage mySettingsPage;
+  private final SchemesPanel mySchemesPanel;
+  private final OptionsPanel myOptionsPanel;
+  private final PreviewPanel myPreviewPanel;
   private final String myCategory;
-  private Collection<String> myOptionList;
+  private final Collection<String> myOptionList;
 
   public NewColorAndFontPanel(final SchemesPanel schemesPanel,
                               final OptionsPanel optionsPanel,

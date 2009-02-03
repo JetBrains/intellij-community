@@ -11,7 +11,7 @@ public interface CellTransform {
     ActionCallback restoreInGrid();
 
     class List implements Restore {
-      private ArrayList<Restore> myActions = new ArrayList();
+      private final ArrayList<Restore> myActions = new ArrayList();
       private boolean myRestoringNow;
 
       public void add(Restore restore) {

@@ -16,7 +16,7 @@ import java.util.List;
  * @author max
  */
 public class ReadonlyWhitespaceBlock implements Block {
-  private TextRange myRange;
+  private final TextRange myRange;
   private final Wrap myWrap;
   private final Alignment myAlignment;
   private final Indent myIndent;

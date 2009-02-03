@@ -10,9 +10,9 @@ import java.util.*;
 
 public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry implements NamedJDOMExternalizable, RoamingTypeDisabled {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.ProductivityFeaturesRegistry");
-  private Map<String, FeatureDescriptor> myFeatures = new HashMap<String, FeatureDescriptor>();
-  private Map<String, GroupDescriptor> myGroups = new HashMap<String, GroupDescriptor>();
-  private List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<Pair<String,ApplicabilityFilter>>();
+  private final Map<String, FeatureDescriptor> myFeatures = new HashMap<String, FeatureDescriptor>();
+  private final Map<String, GroupDescriptor> myGroups = new HashMap<String, GroupDescriptor>();
+  private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<Pair<String,ApplicabilityFilter>>();
 
   private boolean myLoadAdditionFeatures = false;
 

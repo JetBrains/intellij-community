@@ -48,10 +48,10 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   private JButton myAddFilterButton;
   private JButton myEditFilterButton;
   private JButton myRemoveFilterButton;
-  private List<TodoPattern> myPatterns;
-  private PatternsTableModel myPatternsModel;
-  private List<TodoFilter> myFilters;
-  private FiltersTableModel myFiltersModel;
+  private final List<TodoPattern> myPatterns;
+  private final PatternsTableModel myPatternsModel;
+  private final List<TodoFilter> myFilters;
+  private final FiltersTableModel myFiltersModel;
 
   /**
    * Invoked by reflection

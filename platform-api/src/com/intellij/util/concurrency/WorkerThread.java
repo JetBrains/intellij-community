@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NonNls;
 import java.util.LinkedList;
 
 public class WorkerThread implements Runnable, Disposable {
-  private LinkedList<Runnable> myTasks = new LinkedList<Runnable>();
+  private final LinkedList<Runnable> myTasks = new LinkedList<Runnable>();
   private boolean myToDispose = false;
   private boolean myDisposed = false;
-  private int mySleep;
-  private String myName;
+  private final int mySleep;
+  private final String myName;
 
   public WorkerThread(@NonNls String name, int sleep) {
     mySleep = sleep;

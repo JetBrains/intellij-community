@@ -1067,7 +1067,7 @@ public class ClasspathPanel extends JPanel {
   }
 
   private class ChooseNamedLibraryAction extends ChooseAndAddAction<Library> {
-    private LibraryTableModifiableModelProvider myLibraryTableModelProvider;
+    private final LibraryTableModifiableModelProvider myLibraryTableModelProvider;
 
     public ChooseNamedLibraryAction(final int index, final String title, final LibraryTableModifiableModelProvider libraryTable) {
       super(index, title, Icons.LIBRARY_ICON);
@@ -1113,7 +1113,7 @@ public class ClasspathPanel extends JPanel {
     }
 
     private class MyChooserDialog implements ChooserDialog<Library> {
-      private LibraryTableEditor myEditor;
+      private final LibraryTableEditor myEditor;
       private boolean myIsOk;
 
       MyChooserDialog(){

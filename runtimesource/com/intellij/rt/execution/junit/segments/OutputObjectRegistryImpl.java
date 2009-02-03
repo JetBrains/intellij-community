@@ -11,7 +11,7 @@ import junit.framework.TestSuite;
 import java.util.Hashtable;
 
 public class OutputObjectRegistryImpl implements OutputObjectRegistry, PacketFactory {
-  private Hashtable myKnownKeys = new Hashtable();
+  private final Hashtable myKnownKeys = new Hashtable();
   private int myLastIndex = 0;
   private PacketProcessor myMainTransport;
   private final JUnit4API JUnit4API;

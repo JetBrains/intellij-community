@@ -9,7 +9,7 @@ import javax.swing.*;
 import java.util.Set;
 
 public class ModuleNode extends PackageDependenciesNode {
-  private Module myModule;
+  private final Module myModule;
 
   public ModuleNode(Module module) {
     myModule = module;    

@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.CodeInsightBundle;
 
 public class EscapeHandler extends EditorActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public EscapeHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;

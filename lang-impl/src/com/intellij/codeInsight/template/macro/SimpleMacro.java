@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public abstract class SimpleMacro implements Macro {
-  private String myName;
+  private final String myName;
 
   protected SimpleMacro(final String name) {
     myName = name;

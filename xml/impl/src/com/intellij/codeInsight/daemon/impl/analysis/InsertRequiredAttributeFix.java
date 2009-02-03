@@ -48,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFix {
   private final XmlTag myTag;
   private final String myAttrName;
-  private String[] myValues;
+  private final String[] myValues;
   @NonNls
   private static final String NAME_TEMPLATE_VARIABLE = "name";
 

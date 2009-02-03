@@ -25,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class SelectInManager  {
-  private Project myProject;
-  private List<SelectInTarget> myTargets = new ArrayList<SelectInTarget>();
+  private final Project myProject;
+  private final List<SelectInTarget> myTargets = new ArrayList<SelectInTarget>();
   private boolean myLoadedExtensions = false;
   @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
   @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");

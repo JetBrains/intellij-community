@@ -310,7 +310,7 @@ public class JavadocParsing extends Parsing {
   }
 
   private static class TokenProcessor implements com.intellij.psi.impl.source.parsing.TokenProcessor {
-    private JavadocParsing myParsing;
+    private final JavadocParsing myParsing;
 
     private TokenProcessor(JavadocParsing theParsing) {
       myParsing = theParsing;

@@ -4,8 +4,8 @@ import java.io.*;
 import java.util.Vector;
 
 class TraceFilter {
-  private String myTrace;
-  private Vector myLines = new Vector();
+  private final String myTrace;
+  private final Vector myLines = new Vector();
 
   public TraceFilter(String trace) {
     myTrace = trace;

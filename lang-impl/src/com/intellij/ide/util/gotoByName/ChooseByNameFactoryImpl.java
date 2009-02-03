@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
  * Date: Jan 26, 2005
  */
 public class ChooseByNameFactoryImpl extends ChooseByNameFactory {
-  private Project myProject;
+  private final Project myProject;
 
   public ChooseByNameFactoryImpl(final Project project) {
     myProject = project;

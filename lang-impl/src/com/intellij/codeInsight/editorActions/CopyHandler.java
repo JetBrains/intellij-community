@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
-  private EditorActionHandler myOriginalAction;
+  private final EditorActionHandler myOriginalAction;
 
   public CopyHandler(final EditorActionHandler originalHandler) {
     myOriginalAction = originalHandler;

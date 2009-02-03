@@ -391,7 +391,7 @@ public final class UpdateChecker {
   public static class NewVersion {
     private final int myLatestBuild;
     private final String myLatestVersion;
-    private List<PatchInfo> myPatches;
+    private final List<PatchInfo> myPatches;
 
     public NewVersion(int build, String version, List<PatchInfo> patches) {
       myLatestBuild = build;
@@ -417,8 +417,8 @@ public final class UpdateChecker {
   }
 
   public static class PatchInfo {
-    private String myFromBuild;
-    private String mySize;
+    private final String myFromBuild;
+    private final String mySize;
 
     public PatchInfo(String fromBuild, String size) {
       myFromBuild = fromBuild;

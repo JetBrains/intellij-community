@@ -25,10 +25,10 @@ public class ExportToHTMLDialog extends DialogWrapper {
 
   private JCheckBox myCbOpenInBrowser;
   private TextFieldWithBrowseButton myTargetDirectoryField;
-  private String myFileName;
-  private String myDirectoryName;
-  private boolean myIsSelectedTextEnabled;
-  private Project myProject;
+  private final String myFileName;
+  private final String myDirectoryName;
+  private final boolean myIsSelectedTextEnabled;
+  private final Project myProject;
 
   public ExportToHTMLDialog(String fileName, String directoryName, boolean isSelectedTextEnabled, Project project) {
     super(project, true);

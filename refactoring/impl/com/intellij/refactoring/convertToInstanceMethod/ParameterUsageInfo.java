@@ -8,7 +8,7 @@ import com.intellij.usageView.UsageInfo;
  * @author dsl
  */
 class ParameterUsageInfo extends UsageInfo {
-  private PsiReferenceExpression myReferenceExpression;
+  private final PsiReferenceExpression myReferenceExpression;
 
   public ParameterUsageInfo(PsiReferenceExpression refereneceElement) {
     super(refereneceElement);

@@ -47,11 +47,11 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   private CommandDescriptor myCurrentCommand = null;
-  private Stack<CommandDescriptor> myInterruptedCommands = new Stack<CommandDescriptor>();
+  private final Stack<CommandDescriptor> myInterruptedCommands = new Stack<CommandDescriptor>();
 
 //  private HashMap myStatisticsMap = new HashMap(); // command name --> count
 
-  private CopyOnWriteArrayList<CommandListener> myListeners = new CopyOnWriteArrayList<CommandListener>();
+  private final CopyOnWriteArrayList<CommandListener> myListeners = new CopyOnWriteArrayList<CommandListener>();
 
   private int myUndoTransparentCount = 0;
 

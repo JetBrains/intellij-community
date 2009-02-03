@@ -8,7 +8,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class PushDownUsageViewDescriptor implements UsageViewDescriptor {
-  private PsiClass myClass;
+  private final PsiClass myClass;
   private final String myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header");
 
   public PushDownUsageViewDescriptor(PsiClass aClass) {

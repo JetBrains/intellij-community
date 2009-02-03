@@ -17,8 +17,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
 
-  private JBTabs myTabs;
-  private CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
+  private final JBTabs myTabs;
+  private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, Disposable parent) {
     myTabs = new JBTabsImpl(project, ActionManager.getInstance(), project != null ? IdeFocusManager.getInstance(project) : null, parent);

@@ -249,7 +249,7 @@ public class ObjectIntCache<K> implements Iterable {
   }
 
   protected class ObjectCacheIterator<K> implements Iterator {
-    private ObjectIntCache<K> myCache;
+    private final ObjectIntCache<K> myCache;
     private int myCurrentEntry;
 
     public ObjectCacheIterator(ObjectIntCache<K> cache) {

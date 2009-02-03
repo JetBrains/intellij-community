@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class DeleteTypeDescriptionLocation implements ElementDescriptionLocation {
-  private boolean myPlural;
+  private final boolean myPlural;
 
   private DeleteTypeDescriptionLocation(final boolean plural) {
     myPlural = plural;

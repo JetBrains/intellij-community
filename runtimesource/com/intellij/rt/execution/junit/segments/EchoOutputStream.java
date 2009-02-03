@@ -4,8 +4,8 @@ import java.io.OutputStream;
 import java.io.IOException;
 
 public class EchoOutputStream extends OutputStream {
-  private OutputStream myOut;
-  private OutputStream myEcho;
+  private final OutputStream myOut;
+  private final OutputStream myEcho;
 
   public EchoOutputStream(OutputStream out, OutputStream echo) {
     myOut = out;

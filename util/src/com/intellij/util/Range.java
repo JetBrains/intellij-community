@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class Range<T extends Comparable<T>> {
 
-  private T myFrom;
-  private T myTo;
+  private final T myFrom;
+  private final T myTo;
 
 
   public Range(@NotNull final T from, @NotNull final T to) {

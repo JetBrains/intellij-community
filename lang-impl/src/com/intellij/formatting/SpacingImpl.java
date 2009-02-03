@@ -10,10 +10,10 @@ class SpacingImpl extends Spacing {
   private int myPrefLineFeeds = 0;
   protected int myFlags;
 
-  private static int READ_ONLY_MASK = 1;
-  private static int SAFE_MASK = 2;
-  private static int SHOULD_KEEP_LINEBEAKS_MASK = 4;
-  private static int SHOULD_KEEP_FIRST_COLUMN_MASK = 8;
+  private static final int READ_ONLY_MASK = 1;
+  private static final int SAFE_MASK = 2;
+  private static final int SHOULD_KEEP_LINEBEAKS_MASK = 4;
+  private static final int SHOULD_KEEP_FIRST_COLUMN_MASK = 8;
 
   public SpacingImpl(final int minSpaces,
                      final int maxSpaces,

@@ -47,7 +47,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   private final PsiElementFactory myElementFactory;
 
-  private MyExtractMethodProcessor myExtractProcessor;
+  private final MyExtractMethodProcessor myExtractProcessor;
   private boolean myCreateInnerClass = true;
   private String myInnerClassName;
 

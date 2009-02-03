@@ -30,8 +30,8 @@ import java.util.Iterator;
 public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
   public final static ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
 
-  private JPanel myPanel = new JPanel(new GridBagLayout());
-  private JComboBox myComboBox = new JComboBox();
+  private final JPanel myPanel = new JPanel(new GridBagLayout());
+  private final JComboBox myComboBox = new JComboBox();
 
   private ComboBoxTableCellEditor() {
     myComboBox.setRenderer(new BasicComboBoxRenderer());

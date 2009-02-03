@@ -18,7 +18,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
   private static final int DEFAULT_HEIGHT = 200;
 
   private JEditorPane myBrowser;
-  private String[] myFeatures;
+  private final String[] myFeatures;
   private int myCurrentFeature;
 
   public AdaptiveTipDialog(Project project, String[] features) {

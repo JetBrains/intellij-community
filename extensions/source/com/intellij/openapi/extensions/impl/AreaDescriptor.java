@@ -21,8 +21,8 @@ import com.intellij.openapi.extensions.AreaInstance;
  * @author akireyev
  */
 class AreaDescriptor {
-  private String myAreaClass;
-  private AreaInstance myInstance;
+  private final String myAreaClass;
+  private final AreaInstance myInstance;
 
   public AreaDescriptor(String aClass, AreaInstance instance) {
     myAreaClass = aClass;

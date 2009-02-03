@@ -62,7 +62,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   }
 
   public static class ExtensionSortKey implements Comparable {
-    private String myExtension;
+    private final String myExtension;
 
     public ExtensionSortKey(final String extension) {
       myExtension = extension;

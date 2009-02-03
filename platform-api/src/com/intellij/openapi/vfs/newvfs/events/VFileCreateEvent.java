@@ -24,9 +24,9 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 
 public class VFileCreateEvent extends VFileEvent {
-  private VirtualFile myParent;
+  private final VirtualFile myParent;
   private final boolean myDirectory;
-  private String myChildName;
+  private final String myChildName;
 
   public VFileCreateEvent(final Object requestor, final VirtualFile parent, final String childName, boolean isDirectory, boolean isFromRefresh) {
     super(requestor, isFromRefresh);

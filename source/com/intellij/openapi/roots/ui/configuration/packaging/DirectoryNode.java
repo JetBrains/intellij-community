@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 class DirectoryNode extends PackagingTreeNode {
-  private String myDirectoryName;
+  private final String myDirectoryName;
 
   DirectoryNode(final String directoryName, PackagingArtifact owner) {
     super(owner);

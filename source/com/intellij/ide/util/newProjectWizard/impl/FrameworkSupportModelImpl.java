@@ -22,8 +22,8 @@ import java.util.Map;
  */
 public class FrameworkSupportModelImpl extends UserDataHolderBase implements FrameworkSupportModel {
   private final Project myProject;
-  private EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
-  private Map<String, AddSupportForFrameworksPanel.FrameworkSupportSettings> mySettingsMap = new HashMap<String, AddSupportForFrameworksPanel.FrameworkSupportSettings>();
+  private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
+  private final Map<String, AddSupportForFrameworksPanel.FrameworkSupportSettings> mySettingsMap = new HashMap<String, AddSupportForFrameworksPanel.FrameworkSupportSettings>();
 
   public FrameworkSupportModelImpl(final @Nullable Project project) {
     myProject = project;

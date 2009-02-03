@@ -23,7 +23,7 @@ import java.util.Arrays;
 public class ActionInstallPlugin extends AnAction {
   final private static String updateMessage = IdeBundle.message("action.update.plugin");
 
-  private PluginManagerMain host;
+  private final PluginManagerMain host;
 
   public ActionInstallPlugin(PluginManagerMain mgr) {
     super(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("action.download.and.install.plugin"), IconLoader.getIcon("/actions/install.png"));

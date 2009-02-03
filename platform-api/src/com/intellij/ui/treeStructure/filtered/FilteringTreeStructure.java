@@ -20,11 +20,11 @@ import java.util.Map;
 
 public class FilteringTreeStructure extends AbstractTreeStructure {
 
-  private ElementFilter myFilter;
-  private AbstractTreeStructure myStructure;
-  private Node myRoot;
+  private final ElementFilter myFilter;
+  private final AbstractTreeStructure myStructure;
+  private final Node myRoot;
 
-  private Map<Object, Node> myNodeObject2Node = new HashMap<Object, Node>();
+  private final Map<Object, Node> myNodeObject2Node = new HashMap<Object, Node>();
 
   public FilteringTreeStructure(Project project, ElementFilter filter, AbstractTreeStructure originalStructure) {
     myFilter = filter;
@@ -59,7 +59,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   public class Node extends CachingSimpleNode {
 
     private Object myDelegate;
-    private List<Node> myChildren = new ArrayList<Node>();
+    private final List<Node> myChildren = new ArrayList<Node>();
 
     public Node(Project project) {
       super(project, null);

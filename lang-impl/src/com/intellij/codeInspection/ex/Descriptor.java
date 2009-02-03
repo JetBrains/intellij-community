@@ -19,13 +19,13 @@ import javax.swing.*;
  * Date: Dec 8, 2004
  */
 public class Descriptor {
-  private String myText;
-  private String myGroup;
-  private HighlightDisplayKey myKey;
+  private final String myText;
+  private final String myGroup;
+  private final HighlightDisplayKey myKey;
   private JComponent myAdditionalConfigPanel;
-  private Element myConfig;
+  private final Element myConfig;
   private InspectionProfileEntry myTool;
-  private HighlightDisplayLevel myLevel;
+  private final HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
 

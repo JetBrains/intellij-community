@@ -28,9 +28,9 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
   private JLabel myInformationLabel;
   private TextFieldWithBrowseButton myTargetDirectoryField;
   private JTextField myNewNameField;
-  private Project myProject;
-  private boolean myShowDirectoryField;
-  private boolean myShowNewNameField;
+  private final Project myProject;
+  private final boolean myShowDirectoryField;
+  private final boolean myShowNewNameField;
 
   private PsiDirectory myTargetDirectory;
 

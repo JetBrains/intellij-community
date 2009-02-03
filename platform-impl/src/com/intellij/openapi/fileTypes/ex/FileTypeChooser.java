@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class FileTypeChooser extends DialogWrapper{
-  private DefaultListModel myModel = new DefaultListModel();
+  private final DefaultListModel myModel = new DefaultListModel();
   private JList myList;
   private JLabel myTitleLabel;
   private JTextField myPattern;

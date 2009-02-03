@@ -10,7 +10,7 @@ public class TabsBorder {
   private Insets myBorderSize;
   private int myTabBorderSize;
 
-  private JBTabsImpl myTabs;
+  private final JBTabsImpl myTabs;
 
   private JBTabsPosition myPosition;
 

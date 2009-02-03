@@ -24,9 +24,9 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   @NonNls static final String ELEMENT_COMPONENT = "component";
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
-  private ComponentManager myComponentManager;
-  private static ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
-  private DefaultsStateStorage myDefaultsStateStorage;
+  private final ComponentManager myComponentManager;
+  private static final ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
+  private final DefaultsStateStorage myDefaultsStateStorage;
   private StateStorageManager myStateStorageManager;
 
 

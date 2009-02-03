@@ -8,7 +8,7 @@ import javax.swing.*;
 
 public class SimpleTextCellAppearance implements ModifiableCellAppearance {
   private Icon myIcon;
-  private SimpleTextAttributes myTextAttributes;
+  private final SimpleTextAttributes myTextAttributes;
   private final String myText;
 
   public static SimpleTextCellAppearance invalid(String text, Icon icon) {

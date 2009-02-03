@@ -14,7 +14,7 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 
 public class ActivateToolWindowAction extends AnAction {
-  private String myToolWindowId;
+  private final String myToolWindowId;
 
   /**
    * Creates an action which activates tool window with specified <code>toolWindowId</code>.

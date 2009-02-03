@@ -13,7 +13,7 @@ import java.awt.*;
 public class GotoLineNumberDialog extends DialogWrapper {
   private JLabel myLabel;
   private JTextField myField;
-  private Editor myEditor;
+  private final Editor myEditor;
 
   public GotoLineNumberDialog(Project project, Editor editor){
     super(project, true);

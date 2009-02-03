@@ -81,8 +81,8 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       super(element);
     }
 
-    private static Pattern pattern = Pattern.compile("^(?:\\\\i|\\\\l)");
-    private static Pattern pattern2 = Pattern.compile("([^\\\\])(?:\\\\i|\\\\l)");
+    private static final Pattern pattern = Pattern.compile("^(?:\\\\i|\\\\l)");
+    private static final Pattern pattern2 = Pattern.compile("([^\\\\])(?:\\\\i|\\\\l)");
 
     @Nullable
     public PsiElement resolve() {
@@ -116,7 +116,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   }
 
   public static class NameReference implements PsiReference {
-    private PsiElement myElement;
+    private final PsiElement myElement;
 
     public NameReference(PsiElement element) {
       myElement = element;
@@ -166,7 +166,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   }
 
   static class TypeOrElementOrAttributeReference implements PsiReference, QuickFixProvider<TypeOrElementOrAttributeReference> {
-    private PsiElement myElement;
+    private final PsiElement myElement;
     private TextRange myRange;
 
     public void registerQuickfix(HighlightInfo info, TypeOrElementOrAttributeReference reference) {

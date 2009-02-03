@@ -66,7 +66,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
   private static class SelectInnerOrMembersRefactoringDialog extends DialogWrapper {
     private JRadioButton myRbMoveInner;
     private JRadioButton myRbMoveMembers;
-    private String myClassName;
+    private final String myClassName;
 
     public SelectInnerOrMembersRefactoringDialog(final PsiClass innerClass, Project project) {
       super(project, true);

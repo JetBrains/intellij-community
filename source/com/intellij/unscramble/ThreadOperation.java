@@ -6,7 +6,7 @@ package com.intellij.unscramble;
 public enum ThreadOperation {
   Socket("socket operation"), IO("I/O");
 
-  private String myName;
+  private final String myName;
 
   ThreadOperation(final String name) {
     myName = name;

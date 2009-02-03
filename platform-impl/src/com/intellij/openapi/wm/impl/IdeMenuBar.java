@@ -28,8 +28,8 @@ public class IdeMenuBar extends JMenuBar{
   private ArrayList<AnAction> myVisibleActions;
   private ArrayList<AnAction> myNewVisibleActions;
   private final PresentationFactory myPresentationFactory;
-  private DataManager myDataManager;
-  private ActionManager myActionManager;
+  private final DataManager myDataManager;
+  private final ActionManager myActionManager;
   private UISettingsListener myUISettingsListener;
 
   public IdeMenuBar(ActionManager actionManager, DataManager dataManager, KeymapManager keymapManager){

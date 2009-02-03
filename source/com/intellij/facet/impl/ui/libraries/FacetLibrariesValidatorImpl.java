@@ -28,11 +28,11 @@ import java.util.*;
  * @author nik
  */
 public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
-  private LibrariesValidatorContext myContext;
+  private final LibrariesValidatorContext myContext;
   private final FacetValidatorsManager myValidatorsManager;
   private RequiredLibrariesInfo myRequiredLibraries;
   private FacetLibrariesValidatorDescription myDescription;
-  private List<Library> myAddedLibraries = new ArrayList<Library>();
+  private final List<Library> myAddedLibraries = new ArrayList<Library>();
 
   public FacetLibrariesValidatorImpl(LibraryInfo[] requiredLibraries, FacetLibrariesValidatorDescription description,
                                      final LibrariesValidatorContext context, FacetValidatorsManager validatorsManager) {
@@ -99,7 +99,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class CollectingLibrariesPolicy extends RootPolicy<List<VirtualFile>> {
-    private Set<Module> myProcessedModules = new HashSet<Module>();
+    private final Set<Module> myProcessedModules = new HashSet<Module>();
 
     public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final List<VirtualFile> value) {
       Library library = libraryOrderEntry.getLibrary();
@@ -149,7 +149,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private class LibraryCompositionDialog extends DialogWrapper {
-    private LibraryCompositionOptionsPanel myPanel;
+    private final LibraryCompositionOptionsPanel myPanel;
     private final LibraryDownloadingMirrorsMap myMirrorsMap;
 
     private LibraryCompositionDialog(final JComponent parent, final LibraryCompositionOptionsPanel panel,

@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.migration.MigrationManager;
 
 public class RefactoringManager {
-  private MigrationManager myMigrateManager;
+  private final MigrationManager myMigrateManager;
 
   public static RefactoringManager getInstance(Project project) {
     return ServiceManager.getService(project, RefactoringManager.class);

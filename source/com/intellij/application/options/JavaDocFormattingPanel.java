@@ -12,7 +12,7 @@ import java.awt.event.ActionListener;
  * @author max
  */
 public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
-  private JCheckBox myEnableCheckBox;
+  private final JCheckBox myEnableCheckBox;
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
   private static final String OTHER_GROUP = ApplicationBundle.message("group.javadoc.other");

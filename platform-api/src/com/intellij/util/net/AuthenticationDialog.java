@@ -32,7 +32,7 @@ import java.awt.event.ActionEvent;
  * To change this template use Options | File Templates.
  */
 public class AuthenticationDialog extends DialogWrapper {
-  private AuthenticationPanel panel;
+  private final AuthenticationPanel panel;
 
   public AuthenticationDialog(String title, String description) {
     super(JOptionPane.getRootFrame(), true);

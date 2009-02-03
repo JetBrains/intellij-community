@@ -53,9 +53,9 @@ import java.util.List;
 public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   @NonNls public static final String ABSTRACT_TREE_NODE_TRANSFERABLE = "AbstractTransferable";
 
-  private FavoritesTreeStructure myFavoritesTreeStructure;
+  private final FavoritesTreeStructure myFavoritesTreeStructure;
   private FavoritesViewTreeBuilder myBuilder;
-  private CopyPasteDelegator myCopyPasteDelegator;
+  private final CopyPasteDelegator myCopyPasteDelegator;
   private MouseListener myTreePopupHandler;
   @NonNls public static final String CONTEXT_FAVORITES_ROOTS = "FavoritesRoot";
   @NonNls public static final String FAVORITES_LIST_NAME = "FavoritesListName";
@@ -68,7 +68,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
   private String myListName;
-  private IdeView myIdeView = new MyIdeView();
+  private final IdeView myIdeView = new MyIdeView();
 
   public FavoritesTreeViewPanel(Project project, String helpId, String name) {
     super(new BorderLayout());

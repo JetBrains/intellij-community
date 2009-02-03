@@ -30,8 +30,8 @@ import java.util.List;
 public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor");
 
-  private static Fixer[] ourFixers;
-  private static EnterProcessor[] ourEnterProcessors;
+  private static final Fixer[] ourFixers;
+  private static final EnterProcessor[] ourEnterProcessors;
 
   static {
     final List<Fixer> fixers = new ArrayList<Fixer>();

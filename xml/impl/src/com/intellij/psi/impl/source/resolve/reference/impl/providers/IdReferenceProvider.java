@@ -28,7 +28,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
   @NonNls public static final String STYLE_ID_ATTR_NAME = "styleId";
   @NonNls public static final String NAME_ATTR_NAME = "name";
 
-  private static THashSet<String> ourNamespacesWithoutNameReference = new THashSet<String>();
+  private static final THashSet<String> ourNamespacesWithoutNameReference = new THashSet<String>();
   static {
     ourNamespacesWithoutNameReference.add( XmlUtil.JSP_URI );
     ourNamespacesWithoutNameReference.add( XmlUtil.STRUTS_BEAN_URI );
@@ -111,7 +111,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
   }
 
   public static class GlobalAttributeValueSelfReference extends AttributeValueSelfReference {
-    private boolean mySoft;
+    private final boolean mySoft;
 
     public GlobalAttributeValueSelfReference(PsiElement element, boolean soft) {
       super(element);

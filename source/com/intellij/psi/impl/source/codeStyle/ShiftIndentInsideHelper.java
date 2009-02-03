@@ -27,7 +27,7 @@ public class ShiftIndentInsideHelper {
 
   private final CodeStyleSettings mySettings;
   private final FileType myFileType;
-  private Helper myIndentHelper;
+  private final Helper myIndentHelper;
 
   public ShiftIndentInsideHelper(FileType fileType, Project project) {
     mySettings = CodeStyleSettingsManager.getSettings(project);

@@ -84,7 +84,7 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
   }
 
   public static abstract class ModuleNode extends CheckedTreeNode{
-    private List<FacetNode> myRootFacets = new ArrayList<FacetNode>();
+    private final List<FacetNode> myRootFacets = new ArrayList<FacetNode>();
 
     public ModuleNode(Object userObject) {
       super(userObject);
@@ -106,8 +106,8 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
   }
 
   public static class FacetTypeNode extends CheckedTreeNode {
-    private FacetType myFacetType;
-    private List<ModuleNode> myModuleNodes = new ArrayList<ModuleNode>();
+    private final FacetType myFacetType;
+    private final List<ModuleNode> myModuleNodes = new ArrayList<ModuleNode>();
 
     public FacetTypeNode(final FacetType facetType) {
       super(facetType);
@@ -132,7 +132,7 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
     private final VirtualFile[] myFiles;
     private final FacetType<?,?> myFacetType;
     private final VirtualFile myProjectRoot;
-    private List<FacetNode> myChildren = new ArrayList<FacetNode>();
+    private final List<FacetNode> myChildren = new ArrayList<FacetNode>();
 
     public FacetNode(Object userObject, FacetType facetType, VirtualFile projectRoot, final VirtualFile[] files, @Nullable FacetNode parent) {
       super(userObject);

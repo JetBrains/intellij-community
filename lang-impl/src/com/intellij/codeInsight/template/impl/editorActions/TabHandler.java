@@ -10,7 +10,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 
 public class TabHandler extends EditorWriteActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public TabHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;

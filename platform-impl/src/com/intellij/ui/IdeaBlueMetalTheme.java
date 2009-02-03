@@ -10,11 +10,11 @@ public class IdeaBlueMetalTheme extends DefaultMetalTheme {
     return UIBundle.message("idea.blue.metal.theme.name");
   }
 
-  private static ColorUIResource darkGray = new ColorUIResource(132, 130, 132);
-  private static ColorUIResource white = new ColorUIResource(255, 255, 255);
-  private static ColorUIResource darkBlue = new ColorUIResource(82, 108, 164);
+  private static final ColorUIResource darkGray = new ColorUIResource(132, 130, 132);
+  private static final ColorUIResource white = new ColorUIResource(255, 255, 255);
+  private static final ColorUIResource darkBlue = new ColorUIResource(82, 108, 164);
 //  private static ColorUIResource lightGray = new ColorUIResource(214, 211, 206);
-  private static ColorUIResource lightGray = new ColorUIResource(214, 214, 214);
+  private static final ColorUIResource lightGray = new ColorUIResource(214, 214, 214);
 
   public ColorUIResource getControl() {
     return lightGray;

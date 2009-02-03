@@ -31,8 +31,8 @@ import java.util.*;
  */
 public class ProjectFacetInfoSet extends FacetInfoSet<Module> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet");
-  private Map<Facet, FacetInfoBackedByFacet> myFacetInfos = new HashMap<Facet, FacetInfoBackedByFacet>();
-  private EventDispatcher<DetectedFacetListener> myDispatcher = EventDispatcher.create(DetectedFacetListener.class);
+  private final Map<Facet, FacetInfoBackedByFacet> myFacetInfos = new HashMap<Facet, FacetInfoBackedByFacet>();
+  private final EventDispatcher<DetectedFacetListener> myDispatcher = EventDispatcher.create(DetectedFacetListener.class);
   private int myNextId;
   private final Project myProject;
 

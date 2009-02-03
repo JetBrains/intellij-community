@@ -44,14 +44,14 @@ import java.util.List;
  * @author spleaner
  */
 public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<BreadcrumbsPsiItem>, Disposable {
-  private BreadcrumbsComponent<BreadcrumbsPsiItem> myComponent;
+  private final BreadcrumbsComponent<BreadcrumbsPsiItem> myComponent;
   private final Project myProject;
   private Editor myEditor;
-  private VirtualFile myFile;
+  private final VirtualFile myFile;
   private boolean myUserCaretChange;
-  private MergingUpdateQueue myQueue;
-  private BreadcrumbsInfoProvider myInfoProvider;
-  private JPanel myWrapperPanel;
+  private final MergingUpdateQueue myQueue;
+  private final BreadcrumbsInfoProvider myInfoProvider;
+  private final JPanel myWrapperPanel;
 
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;

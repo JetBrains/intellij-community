@@ -33,8 +33,8 @@ import java.util.List;
 public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiLiteralExpression> {
   private static final Logger LOG = Logger.getInstance("#" + HighlightSuppressedWarningsHandler.class.getName());
 
-  private PsiAnnotation myTarget;
-  private PsiLiteralExpression mySuppressedExpression;
+  private final PsiAnnotation myTarget;
+  private final PsiLiteralExpression mySuppressedExpression;
 
   protected HighlightSuppressedWarningsHandler(Editor editor, PsiFile file, PsiAnnotation target, PsiLiteralExpression suppressedExpression) {
     super(editor, file);

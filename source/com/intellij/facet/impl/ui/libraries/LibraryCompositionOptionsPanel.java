@@ -32,7 +32,7 @@ import java.util.List;
  * @author nik
 */
 public class LibraryCompositionOptionsPanel {
-  private MutualMap<LibrariesContainer.LibraryLevel, String> myLibraryLevels = new MutualMap<LibrariesContainer.LibraryLevel, String>(true);
+  private final MutualMap<LibrariesContainer.LibraryLevel, String> myLibraryLevels = new MutualMap<LibrariesContainer.LibraryLevel, String>(true);
   private JPanel myMainPanel;
   private JButton myAddLibraryButton;
   private JButton myAddJarsButton;
@@ -46,12 +46,12 @@ public class LibraryCompositionOptionsPanel {
   private JPanel myNewLibraryPanel;
   private JPanel myLibraryPropertiesPanel;
   private JPanel myMirrorsPanel;
-  private List<VirtualFile> myAddedJars = new ArrayList<VirtualFile>();
-  private List<Library> myUsedLibraries = new ArrayList<Library>();
+  private final List<VirtualFile> myAddedJars = new ArrayList<VirtualFile>();
+  private final List<Library> myUsedLibraries = new ArrayList<Library>();
   private final LibrariesContainer myLibrariesContainer;
   private final LibraryCompositionSettings myLibraryCompositionSettings;
-  private List<Library> mySuitableLibraries;
-  private LibraryDownloadingMirrorsMap myMirrorsMap;
+  private final List<Library> mySuitableLibraries;
+  private final LibraryDownloadingMirrorsMap myMirrorsMap;
   private List<RemoteRepositoryMirrorPanel> myMirrorPanelsList;
 
   public LibraryCompositionOptionsPanel(final LibrariesContainer librariesContainer, final LibraryCompositionSettings libraryCompositionSettings,

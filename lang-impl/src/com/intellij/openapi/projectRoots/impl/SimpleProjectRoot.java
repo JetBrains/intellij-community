@@ -19,7 +19,7 @@ import java.io.File;
 public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   private String myUrl;
   private VirtualFile myFile;
-  private VirtualFile[] myFileArrray = new VirtualFile[1];
+  private final VirtualFile[] myFileArrray = new VirtualFile[1];
   private boolean myInitialized = false;
   @NonNls private static final String ATTRIBUTE_URL = "url";
 

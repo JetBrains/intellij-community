@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
-  private Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<PsiFile, Set<PsiFile>>();
+  private final Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<PsiFile, Set<PsiFile>>();
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);

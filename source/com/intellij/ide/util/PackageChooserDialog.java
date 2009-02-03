@@ -48,8 +48,8 @@ public class PackageChooserDialog extends PackageChooser {
 
   private Tree myTree;
   private DefaultTreeModel myModel;
-  private Project myProject;
-  private String myTitle;
+  private final Project myProject;
+  private final String myTitle;
   private Module myModule;
 
   public PackageChooserDialog(String title, @NotNull Module module) {

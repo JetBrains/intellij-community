@@ -44,7 +44,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private final AtomicInteger myState = new AtomicInteger(STATE_INITIAL);
 
   private final Semaphore    myWaitSemaphore;
-  private ProcessListener myEventMulticaster;
+  private final ProcessListener myEventMulticaster;
 
   protected ProcessHandler() {
     myEventMulticaster = createEventMulticaster();

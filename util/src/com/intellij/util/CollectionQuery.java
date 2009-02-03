@@ -25,7 +25,7 @@ import java.util.Iterator;
  * @author max
  */
 public class CollectionQuery<T> implements Query<T> {
-  private Collection<T> myCollection;
+  private final Collection<T> myCollection;
 
   public CollectionQuery(@NotNull final Collection<T> collection) {
     myCollection = collection;

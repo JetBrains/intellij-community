@@ -12,7 +12,7 @@ import java.util.StringTokenizer;
  * @author Dmitry Skavish
  */
 public class JDParser {
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
 
   public JDParser(CodeStyleSettings settings) {
     mySettings = settings;
@@ -335,7 +335,7 @@ public class JDParser {
   private static final @NonNls String EXCEPTION_TAG = "exception";
   private static final @NonNls String AUTHOR_TAG = "author";
 
-  private static TagParser[] tagParsers = {
+  private static final TagParser[] tagParsers = {
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = SEE_TAG.equals(tag);

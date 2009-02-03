@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PropertiesComponentImpl extends PropertiesComponent
     implements PersistentStateComponent<Element> {
-  private HashMap<String, String> myMap = new HashMap<String, String>();
+  private final HashMap<String, String> myMap = new HashMap<String, String>();
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";

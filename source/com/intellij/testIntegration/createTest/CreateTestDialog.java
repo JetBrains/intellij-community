@@ -52,14 +52,14 @@ public class CreateTestDialog extends DialogWrapper {
   private static final String DEFAULT_LIBRARY_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrary";
   private static final String SHOW_INHERITED_MEMBERS_PROPERTY = CreateTestDialog.class.getName() + ".includeInheritedMembers";
 
-  private Project myProject;
-  private PsiClass myTargetClass;
-  private Module myTargetModule;
+  private final Project myProject;
+  private final PsiClass myTargetClass;
+  private final Module myTargetModule;
 
   private PsiDirectory myTargetDirectory;
   private TestFrameworkDescriptor mySelectedTestDescriptor;
 
-  private List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
+  private final List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
   private JTextField myTargetClassNameField;
   private ReferenceEditorWithBrowseButton mySuperClassField;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;

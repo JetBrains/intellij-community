@@ -44,11 +44,11 @@ public class FileChooserDescriptor implements Cloneable{
   private String myDescription;
 
   private boolean myHideIgnored = true;
-  private List<VirtualFile> myRoots = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myRoots = new ArrayList<VirtualFile>();
   private boolean myShowFileSystemRoots = true;
   private boolean myIsTreeRootVisible = false;
 
-  private Map<String, Object> myUserData = new HashMap<String, Object>();
+  private final Map<String, Object> myUserData = new HashMap<String, Object>();
 
   /**
    * @param chooseFiles controls whether files can be chosen

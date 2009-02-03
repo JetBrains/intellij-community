@@ -17,9 +17,9 @@ import java.util.Map;
 public class ResolveSnapshot {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.ResolveSnapshot");
 
-  private Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap = new HashMap<SmartPsiElementPointer, SmartPsiElementPointer>();
-  private Project myProject;
-  private Document myDocument;
+  private final Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap = new HashMap<SmartPsiElementPointer, SmartPsiElementPointer>();
+  private final Project myProject;
+  private final Document myDocument;
 
   public static ResolveSnapshot createSnapshot(PsiElement scope) {
     return new ResolveSnapshot(scope);

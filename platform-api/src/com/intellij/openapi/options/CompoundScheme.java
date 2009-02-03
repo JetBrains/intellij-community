@@ -13,7 +13,7 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
 
   protected String myName;
   private final List<T> myElements = new ArrayList<T>();
-  private ExternalInfo myExternalInfo = new ExternalInfo();
+  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   public CompoundScheme(final String name) {
     myName = name;

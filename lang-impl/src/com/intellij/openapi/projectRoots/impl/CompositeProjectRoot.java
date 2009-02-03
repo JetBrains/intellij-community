@@ -16,7 +16,7 @@ import java.util.List;
  * @author mike
  */
 class CompositeProjectRoot implements ProjectRoot {
-  private List<ProjectRoot> myRoots = new ArrayList<ProjectRoot>();
+  private final List<ProjectRoot> myRoots = new ArrayList<ProjectRoot>();
 
   ProjectRoot[] getProjectRoots() {
     return myRoots.toArray(new ProjectRoot[myRoots.size()]);

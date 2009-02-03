@@ -18,13 +18,13 @@ import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
 
-  private static int MAX_POOL_SIZE_FOR_FATALS = 100;
+  private static final int MAX_POOL_SIZE_FOR_FATALS = 100;
 
-  private List<AbstractMessage> myIdeFatals = new ArrayList<AbstractMessage>();
+  private final List<AbstractMessage> myIdeFatals = new ArrayList<AbstractMessage>();
 
-  private Set<MessagePoolListener> myListeners = new HashSet<MessagePoolListener>();
+  private final Set<MessagePoolListener> myListeners = new HashSet<MessagePoolListener>();
 
-  private MessageGrouper myFatalsGrouper;
+  private final MessageGrouper myFatalsGrouper;
   private boolean ourJvmIsShuttingDown = false;
 
   MessagePool(int maxGroupSize, int timeout) {
@@ -118,8 +118,8 @@ public class MessagePool {
 
   private class MessageGrouper implements Runnable {
 
-    private int myTimeOut;
-    private int myMaxGroupSize;
+    private final int myTimeOut;
+    private final int myMaxGroupSize;
 
     private final List<AbstractMessage> myMessages = new ArrayList<AbstractMessage>();
     private int myAccumulatedTime;

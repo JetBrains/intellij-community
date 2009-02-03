@@ -21,7 +21,7 @@ import java.awt.*;
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 public class RemoveMiddlemanDialog extends RefactoringDialog {
 
-  private JTextField fieldNameLabel;
+  private final JTextField fieldNameLabel;
 
   private final MemberInfo[] delegateMethods;
 

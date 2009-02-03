@@ -18,8 +18,8 @@ import java.util.List;
  * @author peter
  */
 public class MockFileManager implements FileManager {
-  private PsiManagerEx myManager;
-  private FactoryMap<VirtualFile,FileViewProvider> myViewProviders = new FactoryMap<VirtualFile, FileViewProvider>() {
+  private final PsiManagerEx myManager;
+  private final FactoryMap<VirtualFile,FileViewProvider> myViewProviders = new FactoryMap<VirtualFile, FileViewProvider>() {
     protected FileViewProvider create(final VirtualFile key) {
       return new SingleRootFileViewProvider(myManager, key);
     }

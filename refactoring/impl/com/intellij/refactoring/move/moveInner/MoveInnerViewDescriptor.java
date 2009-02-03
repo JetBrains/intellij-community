@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 class MoveInnerViewDescriptor implements UsageViewDescriptor {
 
-  private PsiClass myInnerClass;
+  private final PsiClass myInnerClass;
 
   public MoveInnerViewDescriptor(PsiClass innerClass) {
     myInnerClass = innerClass;

@@ -24,12 +24,12 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   @NonNls private static final String XML_EXTENSION = ".xml";
 
-  private ApplicationImpl myApplication;
-  private StateStorageManager myStateStorageManager;
+  private final ApplicationImpl myApplication;
+  private final StateStorageManager myStateStorageManager;
   @NonNls private static final String APP_CONFIG_STORAGE_MACRO = "APP_CONFIG";
   @NonNls private static final String OPTIONS_MACRO = "OPTIONS";
   @NonNls private static final String CONFIG_MACRO = "ROOT_CONFIG";
-  private DefaultsStateStorage myDefaultsStateStorage;
+  private final DefaultsStateStorage myDefaultsStateStorage;
   @NonNls private static final String ROOT_ELEMENT_NAME = "application";
 
 

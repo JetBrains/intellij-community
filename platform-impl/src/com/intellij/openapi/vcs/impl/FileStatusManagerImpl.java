@@ -31,8 +31,8 @@ import java.util.Map;
 public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent {
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
 
-  private Project myProject;
-  private List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
+  private final Project myProject;
+  private final List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
   private MyDocumentAdapter myDocumentListener;
   private FileStatusProvider myFileStatusProvider;
 

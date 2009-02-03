@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class LimitedInputStream extends FilterInputStream {
-  private int myReadLimit;
+  private final int myReadLimit;
   private int myBytesRead;
 
   public LimitedInputStream(final InputStream in, final int readLimit) {

@@ -20,8 +20,8 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class PushDownDialog extends RefactoringDialog {
-  private MemberInfo[] myMemberInfos;
-  private PsiClass myClass;
+  private final MemberInfo[] myMemberInfos;
+  private final PsiClass myClass;
   private JavaDocPanel myJavaDocPanel;
   private MemberInfoModel myMemberInfoModel;
 

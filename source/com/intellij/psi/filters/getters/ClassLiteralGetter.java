@@ -18,7 +18,7 @@ import java.util.List;
 
 public class ClassLiteralGetter implements ContextGetter {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.filters.getters.ClassLiteralGetter");
-  private ContextGetter myBaseGetter;
+  private final ContextGetter myBaseGetter;
   @NonNls private static final String DOT_CLASS = ".class";
 
   public ClassLiteralGetter(ContextGetter baseGetter) {

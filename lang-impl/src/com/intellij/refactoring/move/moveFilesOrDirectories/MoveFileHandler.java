@@ -29,7 +29,7 @@ public abstract class MoveFileHandler {
     return DEFAULT;
   }
 
-  private static MoveFileHandler DEFAULT = new MoveFileHandler() {
+  private static final MoveFileHandler DEFAULT = new MoveFileHandler() {
     @Override
     public boolean canProcessElement(final PsiFile element) {
       return true;

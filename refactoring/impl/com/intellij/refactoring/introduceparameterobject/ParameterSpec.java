@@ -4,7 +4,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 
 class ParameterSpec {
-  private PsiParameter myParameter;
+  private final PsiParameter myParameter;
   private final boolean setterRequired;
     private final String name;
     private final PsiType type;

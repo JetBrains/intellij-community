@@ -46,7 +46,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private ActionToolbar myLeftToolbar;
   private ActionToolbar myRightToolbar;
-  private TreeExpander myTreeExpander = new MyTreeExpander();
+  private final TreeExpander myTreeExpander = new MyTreeExpander();
   private ExporterToTextFile myExporterToTextFile;
   protected Project myProject;
   private String myHelpId;
@@ -441,8 +441,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private class RerunAction extends AnAction {
-    private Runnable myRerunAction;
-    private AnAction myCloseAction;
+    private final Runnable myRerunAction;
+    private final AnAction myCloseAction;
 
     public RerunAction(@NotNull Runnable rerunAction, @NotNull AnAction closeAction) {
       super(IdeBundle.message("action.refresh"), null, IconLoader.getIcon("/actions/refreshUsages.png"));

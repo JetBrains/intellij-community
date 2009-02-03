@@ -11,7 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class EditorBookmarksDialog extends BookmarksDialog {
-  private JButton myViewSourceButton;
+  private final JButton myViewSourceButton;
 
   private EditorBookmarksDialog(BookmarkManager bookmarkManager) {
     super(bookmarkManager);

@@ -33,7 +33,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager
     implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
 
-  private Collection<EditorColorsListener> myListeners = new ArrayList<EditorColorsListener>();
+  private final Collection<EditorColorsListener> myListeners = new ArrayList<EditorColorsListener>();
 
 
   @NonNls private static final String NODE_NAME = "global_color_scheme";
@@ -41,7 +41,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
   private String myGlobalSchemeName;
   public boolean USE_ONLY_MONOSPACED_FONTS = true;
-  private DefaultColorSchemesManager myDefaultColorSchemesManager;
+  private final DefaultColorSchemesManager myDefaultColorSchemesManager;
   private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemesManager;
   @NonNls private static final String NAME_ATTR = "name";
   private static final String FILE_SPEC = "$ROOT_CONFIG$/colors";

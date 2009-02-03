@@ -23,7 +23,7 @@ public class FileContentStorage {
   private final TIntHashSet myFileIds = new TIntHashSet();
   private final Object myLock = new Object();
 
-  private SLRUCache<Integer, byte[]> myCache = new SLRUCache<Integer, byte[]>(200, 56) {
+  private final SLRUCache<Integer, byte[]> myCache = new SLRUCache<Integer, byte[]>(200, 56) {
     @NotNull
     public byte[] createValue(final Integer key) {
       final int _keyValue = key.intValue();

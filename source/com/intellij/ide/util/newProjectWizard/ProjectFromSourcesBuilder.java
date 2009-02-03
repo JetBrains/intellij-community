@@ -43,7 +43,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
   private List<LibraryDescriptor> myChosenLibraries = Collections.emptyList();
   private Set<LibraryDescriptor> myChosenLibrariesSet;
   private List<ModuleDescriptor> myChosenModules = Collections.emptyList();
-  private List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
+  private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<ProjectConfigurationUpdater>();
   private final ModuleInsight myModuleInsight;
 
   public ProjectFromSourcesBuilder(final ModuleInsight moduleInsight) {

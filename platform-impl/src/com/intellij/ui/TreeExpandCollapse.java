@@ -22,7 +22,7 @@ public class TreeExpandCollapse {
   }
 
   private static class ExpandContext {
-    private int myLevelsLeft;
+    private final int myLevelsLeft;
     private int myExpansionLimit;
 
     public ExpandContext(int expansionLimit, int levelsLeft) {

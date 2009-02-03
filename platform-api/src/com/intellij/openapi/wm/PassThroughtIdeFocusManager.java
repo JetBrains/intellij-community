@@ -8,7 +8,7 @@ import java.awt.*;
 
 public class PassThroughtIdeFocusManager extends IdeFocusManager {
 
-  private static PassThroughtIdeFocusManager ourInstance = new PassThroughtIdeFocusManager();
+  private static final PassThroughtIdeFocusManager ourInstance = new PassThroughtIdeFocusManager();
 
   public static PassThroughtIdeFocusManager getInstance() {
     return ourInstance;

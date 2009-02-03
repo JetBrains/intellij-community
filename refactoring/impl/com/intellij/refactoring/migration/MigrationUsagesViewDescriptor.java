@@ -11,8 +11,8 @@ import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 
 class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
-  private boolean isSearchInComments;
-  private MigrationMap myMigrationMap;
+  private final boolean isSearchInComments;
+  private final MigrationMap myMigrationMap;
 
   public MigrationUsagesViewDescriptor(MigrationMap migrationMap, boolean isSearchInComments) {
     myMigrationMap = migrationMap;

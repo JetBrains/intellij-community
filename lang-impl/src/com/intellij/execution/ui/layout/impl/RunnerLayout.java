@@ -15,20 +15,20 @@ import java.util.*;
 
 public class RunnerLayout  {
 
-  private String myID;
+  private final String myID;
 
   protected Map<String, ViewImpl> myViews = new HashMap<String, ViewImpl>();
-  private Map<String, ViewImpl.Default> myDefaultViews = new HashMap<String, ViewImpl.Default>();
+  private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<String, ViewImpl.Default>();
 
   protected Set<TabImpl> myTabs = new TreeSet<TabImpl>(new Comparator<TabImpl>() {
     public int compare(final TabImpl o1, final TabImpl o2) {
       return o1.getIndex() - o2.getIndex();
     }
   });
-  private Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<Integer, TabImpl.Default>();
+  private final Map<Integer, TabImpl.Default> myDefaultTabs = new HashMap<Integer, TabImpl.Default>();
 
   protected General myGeneral = new General();
-  private Map<String, String> myDefaultFocus = new HashMap<String, String>();
+  private final Map<String, String> myDefaultFocus = new HashMap<String, String>();
 
 
   public RunnerLayout(final String ID) {

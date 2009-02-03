@@ -22,7 +22,7 @@ import javax.swing.*;
 
 public class PasswordPromptDialog extends DialogWrapper {
   private JPasswordField myPasswordField;
-  private String myPrompt;
+  private final String myPrompt;
   private final String myDefaultValue;
 
   public PasswordPromptDialog(String prompt, final String title, @Nullable final String defaultValue) {

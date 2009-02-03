@@ -45,7 +45,7 @@ public abstract class PathEditor {
   private JButton mySpecifyUrlButton;
   private JList myList;
   private DefaultListModel myModel;
-  private Set<VirtualFile> myAllFiles = new HashSet<VirtualFile>();
+  private final Set<VirtualFile> myAllFiles = new HashSet<VirtualFile>();
   private boolean myModified = false;
   private boolean myEnabled = false;
   private static final Icon ICON_INVALID = IconLoader.getIcon("/nodes/ppInvalid.png");

@@ -302,14 +302,14 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
   private static class MyDialog extends JPanel implements Disposable, DialogWrapperDialog, DataProvider, FocusTrackback.Provider {
     private final WeakReference<DialogWrapper> myDialogWrapper;
-    private IdeGlassPaneEx myPane;
+    private final IdeGlassPaneEx myPane;
     private final WeakReference<Project> myProject;
     private JComponent myContentPane;
-    private MyRootPane myRootPane;
+    private final MyRootPane myRootPane;
     private Point myLocation;
     private boolean myForceRelayout;
     private BufferedImage shadow;
-    private Container myTransparentPane;
+    private final Container myTransparentPane;
     private boolean myManualLocation;
     private JButton myDefaultButton;
 
@@ -554,7 +554,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   private static class MyRootPane extends JRootPane {
-    private MyDialog myDialog;
+    private final MyDialog myDialog;
 
     private MyRootPane(final MyDialog dialog) {
       myDialog = dialog;

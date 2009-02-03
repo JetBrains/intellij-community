@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpander {
 
-  private Project myProject;
+  private final Project myProject;
 
   public ClassesScopeTreeStructureExpander(final Project project) {
     myProject = project;

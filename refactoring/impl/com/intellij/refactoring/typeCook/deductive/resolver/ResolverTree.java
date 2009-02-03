@@ -28,12 +28,12 @@ public class ResolverTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree");
 
   private ResolverTree[] mySons = new ResolverTree[0];
-  private BindingFactory myBindingFactory;
+  private final BindingFactory myBindingFactory;
   private Binding myCurrentBinding;
-  private SolutionHolder mySolutions;
-  private Project myProject;
-  private TObjectIntHashMap<PsiTypeVariable> myBindingDegree; //How many times this type variable is bound in the system
-  private Settings mySettings;
+  private final SolutionHolder mySolutions;
+  private final Project myProject;
+  private final TObjectIntHashMap<PsiTypeVariable> myBindingDegree; //How many times this type variable is bound in the system
+  private final Settings mySettings;
   private boolean mySolutionFound = false;
 
   private HashSet<Constraint> myConstraints;

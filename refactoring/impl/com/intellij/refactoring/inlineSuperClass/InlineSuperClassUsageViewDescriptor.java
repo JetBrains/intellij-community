@@ -10,7 +10,7 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineSuperClassUsageViewDescriptor extends UsageViewDescriptorAdapter{
-  private PsiClass myClass;
+  private final PsiClass myClass;
 
   public InlineSuperClassUsageViewDescriptor(final PsiClass aClass) {
     myClass = aClass;

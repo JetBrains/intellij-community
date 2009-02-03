@@ -96,7 +96,7 @@ public class OrderEntryUtil {
 
   private static class CollectDependentOrderEntries extends RootPolicy<Set<OrderEntry>> {
     private final Set<Module> myProcessedModules;
-    private ModulesProvider myModulesProvider;
+    private final ModulesProvider myModulesProvider;
 
     public CollectDependentOrderEntries(Set<Module> processedModules, ModulesProvider modulesProvider) {
       myProcessedModules = processedModules;

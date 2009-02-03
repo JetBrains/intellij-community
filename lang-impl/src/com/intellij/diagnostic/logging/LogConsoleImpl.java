@@ -58,12 +58,12 @@ public abstract class LogConsoleImpl extends AdditionalTabComponent implements L
   private boolean myShowStandardFilters = true;
 
   private String myTitle = null;
-  private Project myProject;
-  private String myPath;
+  private final Project myProject;
+  private final String myPath;
   private boolean myWasInitialized;
-  private JPanel myTopComponent = new JPanel(new BorderLayout());
+  private final JPanel myTopComponent = new JPanel(new BorderLayout());
   private ActionGroup myActions;
-  private boolean myBuildInActions;
+  private final boolean myBuildInActions;
 
   public LogConsoleImpl(Project project, File file, long skippedContents, String title, final boolean buildInActions) {
     super(new BorderLayout());

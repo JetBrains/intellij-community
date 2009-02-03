@@ -27,14 +27,14 @@ import java.util.List;
 public class FacetErrorPanel {
   @NonNls private static final String HTML_PREFIX = "<html><body>";
   @NonNls private static final String HTML_SUFFIX = "</body></html>";
-  private JPanel myMainPanel;
+  private final JPanel myMainPanel;
   private JPanel myButtonPanel;
   private JButton myQuickFixButton;
   private FacetConfigurationQuickFix myCurrentQuickFix;
-  private JLabel myWarningLabel;
+  private final JLabel myWarningLabel;
   private final FacetValidatorsManagerImpl myValidatorsManager;
   private boolean myNoErrors = true;
-  private List<Runnable> myListeners = new ArrayList<Runnable>();
+  private final List<Runnable> myListeners = new ArrayList<Runnable>();
 
   public FacetErrorPanel() {
     myValidatorsManager = new FacetValidatorsManagerImpl();
@@ -88,7 +88,7 @@ public class FacetErrorPanel {
   }
 
   private class FacetValidatorsManagerImpl implements FacetValidatorsManager {
-    private List<FacetEditorValidator> myValidators = new ArrayList<FacetEditorValidator>();
+    private final List<FacetEditorValidator> myValidators = new ArrayList<FacetEditorValidator>();
 
     public void registerValidator(final FacetEditorValidator validator, JComponent... componentsToWatch) {
       myValidators.add(validator);

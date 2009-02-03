@@ -22,8 +22,8 @@ import java.util.*;
  * @author nik
  */
 public class EnableAutodetectionWorker {
-  private MultiValuesMap<FacetType<?,?>, Module> myModulesToProcess = new MultiValuesMap<FacetType<?,?>, Module>();
-  private MultiValuesMap<FacetType<?,?>, VirtualFile> myFilesToProcess = new MultiValuesMap<FacetType<?,?>, VirtualFile>();
+  private final MultiValuesMap<FacetType<?,?>, Module> myModulesToProcess = new MultiValuesMap<FacetType<?,?>, Module>();
+  private final MultiValuesMap<FacetType<?,?>, VirtualFile> myFilesToProcess = new MultiValuesMap<FacetType<?,?>, VirtualFile>();
   private final Project myProject;
   private final FacetAutodetectingManagerImpl myFacetAutodetectingManager;
 

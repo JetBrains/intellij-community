@@ -20,8 +20,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 public class IndexTreePathState implements TreePathState {
-  private TreePath mySelectionPath;
-  private int[] myIndicies;
+  private final TreePath mySelectionPath;
+  private final int[] myIndicies;
 
   public IndexTreePathState(TreePath path) {
     mySelectionPath = path;

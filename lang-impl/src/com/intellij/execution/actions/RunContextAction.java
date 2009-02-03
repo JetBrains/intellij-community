@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RunContextAction extends BaseRunConfigurationAction {
-  private Executor myExecutor;
+  private final Executor myExecutor;
 
   public RunContextAction(@NotNull final Executor executor) {
     super(ExecutionBundle.message("perform.action.with.context.configuration.action.name", executor.getStartActionText()), null,

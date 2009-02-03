@@ -15,8 +15,8 @@ import java.util.HashMap;
  * @author yole
  */
 public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
-  private Project myProject;
-  private DefaultTreeModel myModel;
+  private final Project myProject;
+  private final DefaultTreeModel myModel;
   private final HashMap<Module, ChangesBrowserNode> myModuleCache = new HashMap<Module, ChangesBrowserNode>();
 
   public static final String PROJECT_ROOT_TAG = "<Project Root>";

@@ -57,11 +57,11 @@ class RunConfigurable extends BaseConfigurable {
   private final Project myProject;
   private final RunDialog myRunDialog;
   private JCheckBox myCbShowSettingsBeforeRunning;
-  @NonNls private DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
-  private Tree myTree = new Tree(myRoot);
-  private JPanel myRightPanel = new JPanel(new BorderLayout());
+  @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
+  private final Tree myTree = new Tree(myRoot);
+  private final JPanel myRightPanel = new JPanel(new BorderLayout());
   private JComponent myToolbarComponent;
-  private Splitter myPanel = new Splitter();
+  private final Splitter myPanel = new Splitter();
   private JPanel myWholePanel;
   private StorageAccessors myConfig;
   private SingleConfigurationConfigurable<RunConfiguration> mySelectedConfigurable = null;
@@ -888,7 +888,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   private class MyMoveAction extends AnAction {
-    private int myDirection;
+    private final int myDirection;
 
     protected MyMoveAction(String text, String description, Icon icon, int direction) {
       super(text, description, icon);

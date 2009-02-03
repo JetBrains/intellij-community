@@ -11,9 +11,9 @@ import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
 class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
-  private PsiElement[] myElementsToMove;
+  private final PsiElement[] myElementsToMove;
   private String myProcessedElementsHeader;
-  private String myCodeReferencesText;
+  private final String myCodeReferencesText;
 
   public MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove, PsiDirectory newParent) {
     myElementsToMove = elementsToMove;

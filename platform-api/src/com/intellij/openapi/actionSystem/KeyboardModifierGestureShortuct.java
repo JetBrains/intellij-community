@@ -4,8 +4,8 @@ import javax.swing.*;
 
 public class KeyboardModifierGestureShortuct extends Shortcut {
 
-  private KeyStroke myStroke;
-  private KeyboardGestureAction.ModifierType myType;
+  private final KeyStroke myStroke;
+  private final KeyboardGestureAction.ModifierType myType;
 
   public static Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
     switch (type) {

@@ -33,8 +33,8 @@ import java.awt.event.ActionEvent;
  * @author yole
  */
 public class TextComponentUndoProvider implements Disposable {
-  private JTextComponent myTextComponent;
-  private UndoManager myUndoManager = new UndoManager();
+  private final JTextComponent myTextComponent;
+  private final UndoManager myUndoManager = new UndoManager();
   private UndoableEditListener myUndoableEditListener;
   private Keymap myOldKeymap;
 

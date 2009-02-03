@@ -15,8 +15,8 @@ import java.util.ArrayList;
  * @author nik
  */
 public class PackagingTreeState {
-  private PackagingNodeState myRootState;
-  private List<String[]> mySelectedPaths;
+  private final PackagingNodeState myRootState;
+  private final List<String[]> mySelectedPaths;
 
   private PackagingTreeState(Tree tree) {
     myRootState = saveState(tree, (PackagingTreeNode)tree.getModel().getRoot());
@@ -91,7 +91,7 @@ public class PackagingTreeState {
   }
 
   private static class PackagingNodeState {
-    private String myName;
+    private final String myName;
     private Map<String, PackagingNodeState> myChildren;
 
     private PackagingNodeState(final String name) {

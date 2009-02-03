@@ -27,7 +27,7 @@ import java.util.*;
 
 public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   // fav list name -> list of (root: root url, root class)
-  private Map<String, List<Pair<AbstractUrl,String>>> myName2FavoritesRoots = new LinkedHashMap<String, List<Pair<AbstractUrl, String>>>();
+  private final Map<String, List<Pair<AbstractUrl,String>>> myName2FavoritesRoots = new LinkedHashMap<String, List<Pair<AbstractUrl, String>>>();
   private final Project myProject;
   private final MyRootsChangeAdapter myPsiTreeChangeAdapter = new MyRootsChangeAdapter();
   private final List<FavoritesListener> myListeners = new ArrayList<FavoritesListener>();

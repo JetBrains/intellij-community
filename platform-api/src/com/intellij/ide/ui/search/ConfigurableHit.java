@@ -7,10 +7,10 @@ import java.util.LinkedHashSet;
 
 public final class ConfigurableHit {
 
-  private Set<Configurable> myNameHits = new LinkedHashSet<Configurable>();
-  private Set<Configurable> myContentHits = new LinkedHashSet<Configurable>();
+  private final Set<Configurable> myNameHits = new LinkedHashSet<Configurable>();
+  private final Set<Configurable> myContentHits = new LinkedHashSet<Configurable>();
 
-  private Set<Configurable> myNameFullHit = new LinkedHashSet<Configurable>();
+  private final Set<Configurable> myNameFullHit = new LinkedHashSet<Configurable>();
 
   ConfigurableHit() {
   }

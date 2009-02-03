@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class PsiJavaCodeReferenceCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiJavaCodeReferenceCodeFragment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceCodeFragmentImpl");
-  private boolean myIsClassesAccepted;
+  private final boolean myIsClassesAccepted;
 
   public PsiJavaCodeReferenceCodeFragmentImpl(final Project project,
                                               final boolean isPhysical,

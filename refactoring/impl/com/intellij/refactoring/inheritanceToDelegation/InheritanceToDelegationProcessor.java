@@ -45,7 +45,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor");
   private final PsiClass myClass;
   private final String myInnerClassName;
-  private boolean myIsDelegateOtherMembers;
+  private final boolean myIsDelegateOtherMembers;
   private final Set<PsiClass> myDelegatedInterfaces;
   private final Set<PsiMethod> myDelegatedMethods;
   private final HashMap<PsiMethod,String> myDelegatedMethodsVisibility;
@@ -56,15 +56,15 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private final String myFieldName;
   private final String myGetterName;
   private final boolean myGenerateGetter;
-  private Set<PsiClass> myBaseClassBases;
+  private final Set<PsiClass> myBaseClassBases;
   private Set<PsiClass> myClassImplementedInterfaces;
-  private PsiElementFactory myFactory;
+  private final PsiElementFactory myFactory;
   private final PsiClassType myBaseClassType;
   private final PsiManager myManager;
   private final boolean myIsInnerClassNeeded;
   private Set<PsiClass> myClassInheritors;
   private HashSet<PsiMethod> myAbstractDelegatedMethods;
-  private Map<PsiClass, PsiSubstitutor> mySuperClassesToSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
+  private final Map<PsiClass, PsiSubstitutor> mySuperClassesToSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
 
 
   public InheritanceToDelegationProcessor(Project project,
@@ -758,7 +758,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     // fix abstract methods
     {
       class InnerClassAbstractMethod extends InnerClassMethod {
-        private boolean myImplicitImplementation;
+        private final boolean myImplicitImplementation;
 
         public InnerClassAbstractMethod(PsiMethod method, final boolean implicitImplementation) {
           super(method);
@@ -922,7 +922,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private class MyClassInheritorMemberReferencesVisitor extends ClassMemberReferencesVisitor {
     private final List<UsageInfo> myUsageInfoStorage;
-    private ClassInstanceScanner.ClassInstanceReferenceVisitor myInstanceVisitor;
+    private final ClassInstanceScanner.ClassInstanceReferenceVisitor myInstanceVisitor;
 
     MyClassInheritorMemberReferencesVisitor(PsiClass aClass, List<UsageInfo> usageInfoStorage,
                                             ClassInstanceScanner.ClassInstanceReferenceVisitor instanceScanner) {

@@ -26,7 +26,7 @@ import java.util.Arrays;
  */
 public class RowIcon implements Icon {
 
-  private Icon[] myIcons;
+  private final Icon[] myIcons;
   private int myWidth;
   private int myHeight;
 

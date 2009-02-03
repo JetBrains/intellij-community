@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class RenameWrongRefFix implements IntentionAction {
-  private PsiReferenceExpression myRefExpr;
+  private final PsiReferenceExpression myRefExpr;
   @NonNls private static final String INPUT_VARIABLE_NAME = "INPUTVAR";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
 

@@ -126,7 +126,7 @@ public class SourceCodeCompressor {
   private static class VaultOutputStream extends ByteArrayOutputStream {
 
     private static final int MIN_BUF_SIZE = 0x10000;
-    private byte[] MIN_BUFFER;
+    private final byte[] MIN_BUFFER;
 
     public VaultOutputStream() {
       super(MIN_BUF_SIZE);

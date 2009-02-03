@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use Options | File Templates.
  */
 public class PluginException extends RuntimeException {
-  private PluginId myPluginId;
+  private final PluginId myPluginId;
 
   public PluginException(String message, Throwable cause, PluginId pluginId) {
     super(message, cause);

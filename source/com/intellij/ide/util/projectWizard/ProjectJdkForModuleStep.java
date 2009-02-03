@@ -29,9 +29,9 @@ import java.awt.event.ActionListener;
  */
 public class ProjectJdkForModuleStep extends ModuleWizardStep {
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-  private JdkChooserPanel myJdkChooser;
-  private JPanel myPanel;
-  private WizardContext myContext;
+  private final JdkChooserPanel myJdkChooser;
+  private final JPanel myPanel;
+  private final WizardContext myContext;
   private final SdkType myType;
   private boolean myInitialized = false;
 

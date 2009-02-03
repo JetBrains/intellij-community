@@ -17,7 +17,7 @@ import javax.swing.*;
  * Date: 17-Mar-2006
  */
 public class DefaultSearchableConfigurable implements Configurable {
-  private SearchableConfigurable myDelegate;
+  private final SearchableConfigurable myDelegate;
   private JComponent myComponent;
 
   public DefaultSearchableConfigurable(final SearchableConfigurable delegate) {

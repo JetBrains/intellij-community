@@ -11,7 +11,7 @@ class BaseLabel extends JLabel {
 
   private Color myActiveFg;
   private Color myPassiveFg;
-  private boolean myBold;
+  private final boolean myBold;
 
   public BaseLabel(ToolWindowContentUi ui, boolean bold) {
     myUi = ui;

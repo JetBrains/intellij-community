@@ -63,8 +63,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private boolean myOkToSearch = false;
   private boolean myHasMatches = false;
   private final JCheckBox myCbRegexp;
-  private JCheckBox myCbWholeWords;
-  private boolean myInitialTextOverridden = false;
+  private final JCheckBox myCbWholeWords;
+  private final boolean myInitialTextOverridden = false;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {

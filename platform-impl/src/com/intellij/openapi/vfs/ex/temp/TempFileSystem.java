@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TempFileSystem extends NewVirtualFileSystem {
-  private FSItem myRoot = new FSDir(null, "/");
+  private final FSItem myRoot = new FSDir(null, "/");
 
   public static TempFileSystem getInstance() {
     return ApplicationManager.getApplication().getComponent(TempFileSystem.class);
@@ -177,7 +177,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
   }
 
   private static abstract class FSItem {
-    private FSDir myParent;
+    private final FSDir myParent;
     private String myName;
     private long myTimestamp;
     private boolean myWritable;

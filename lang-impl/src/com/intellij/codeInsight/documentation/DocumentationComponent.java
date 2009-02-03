@@ -37,12 +37,12 @@ public class DocumentationComponent extends JPanel implements Disposable{
     private DocumentationManager myManager;
     private SmartPsiElementPointer myElement;
 
-    private Stack<Context> myBackStack = new Stack<Context>();
-    private Stack<Context> myForwardStack = new Stack<Context>();
-    private ActionToolbar myToolBar;
+    private final Stack<Context> myBackStack = new Stack<Context>();
+    private final Stack<Context> myForwardStack = new Stack<Context>();
+    private final ActionToolbar myToolBar;
     private boolean myIsEmpty;
     private boolean myIsShown;
-    private JLabel myElementLabel;
+    private final JLabel myElementLabel;
 
     private static class Context {
         final SmartPsiElementPointer element;
@@ -56,16 +56,16 @@ public class DocumentationComponent extends JPanel implements Disposable{
         }
     }
 
-    private JScrollPane myScrollPane;
-    private JEditorPane myEditorPane;
+    private final JScrollPane myScrollPane;
+    private final JEditorPane myEditorPane;
     private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
-    private JPanel myControlPanel;
+    private final JPanel myControlPanel;
     private boolean myControlPanelVisible;
-    private ExternalDocAction myExternalDocAction;
+    private final ExternalDocAction myExternalDocAction;
 
     private JBPopup myHint;
 
-    private HashMap<KeyStroke,ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>(); // KeyStroke --> ActionListener
+    private final HashMap<KeyStroke,ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>(); // KeyStroke --> ActionListener
 
     public boolean requestFocusInWindow() {
         return myScrollPane.requestFocusInWindow();

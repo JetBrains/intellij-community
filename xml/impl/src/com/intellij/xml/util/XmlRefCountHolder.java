@@ -23,7 +23,7 @@ import java.util.*;
  * @author spleaner
  */
 public class XmlRefCountHolder {
-  private static Key<CachedValue<XmlRefCountHolder>> xmlRefCountHolderKey = Key.create("xml ref count holder");
+  private static final Key<CachedValue<XmlRefCountHolder>> xmlRefCountHolderKey = Key.create("xml ref count holder");
 
   private final static UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object> CACHE =
     new UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object>() {
@@ -40,11 +40,11 @@ public class XmlRefCountHolder {
       }
     };
 
-  private Map<String, List<Pair<XmlAttributeValue, Boolean>>> myId2AttributeListMap = new HashMap<String, List<Pair<XmlAttributeValue, Boolean>>>();
-  private Set<XmlAttributeValue> myPossiblyDuplicateIds = new HashSet<XmlAttributeValue>();
-  private List<XmlAttributeValue> myIdReferences = new ArrayList<XmlAttributeValue>();
-  private Set<String> myAdditionallyDeclaredIds = new HashSet<String>();
-  private Set<PsiElement> myDoNotValidateParentsList = new HashSet<PsiElement>();
+  private final Map<String, List<Pair<XmlAttributeValue, Boolean>>> myId2AttributeListMap = new HashMap<String, List<Pair<XmlAttributeValue, Boolean>>>();
+  private final Set<XmlAttributeValue> myPossiblyDuplicateIds = new HashSet<XmlAttributeValue>();
+  private final List<XmlAttributeValue> myIdReferences = new ArrayList<XmlAttributeValue>();
+  private final Set<String> myAdditionallyDeclaredIds = new HashSet<String>();
+  private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<PsiElement>();
 
   public static XmlRefCountHolder getInstance(final XmlFile file) {
     return CACHE.get(xmlRefCountHolderKey, file, null).getValue();
@@ -109,7 +109,7 @@ public class XmlRefCountHolder {
   }
 
   private static class IdGatheringRecursiveVisitor extends XmlRecursiveElementVisitor {
-    private XmlRefCountHolder myHolder;
+    private final XmlRefCountHolder myHolder;
 
     private IdGatheringRecursiveVisitor(@NotNull XmlRefCountHolder holder) {
       super(true);

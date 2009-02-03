@@ -45,18 +45,18 @@ import java.util.List;
 public class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
 
-  private HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
-  private MyTree myLeftTree = new MyTree();
-  private MyTree myRightTree = new MyTree();
-  private DependenciesUsagesPanel myUsagesPanel;
+  private final HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
+  private final MyTree myLeftTree = new MyTree();
+  private final MyTree myRightTree = new MyTree();
+  private final DependenciesUsagesPanel myUsagesPanel;
 
-  private TreeExpansionMonitor myRightTreeExpansionMonitor;
-  private TreeExpansionMonitor myLeftTreeExpansionMonitor;
+  private final TreeExpansionMonitor myRightTreeExpansionMonitor;
+  private final TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
-  private Project myProject;
-  private CyclicDependenciesBuilder myBuilder;
+  private final Project myProject;
+  private final CyclicDependenciesBuilder myBuilder;
   private Content myContent;
-  private DependenciesPanel.DependencyPanelSettings mySettings = new DependenciesPanel.DependencyPanelSettings();
+  private final DependenciesPanel.DependencyPanelSettings mySettings = new DependenciesPanel.DependencyPanelSettings();
   public static final String DEFAULT_PACKAGE_ABBREVIATION = AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
 
 

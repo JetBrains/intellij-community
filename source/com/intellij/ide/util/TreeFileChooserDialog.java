@@ -71,7 +71,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   @Nullable private final PsiFileFilter myFilter;
   @Nullable private final FileType myFileType;
 
-  private boolean myDisableStructureProviders;
+  private final boolean myDisableStructureProviders;
   private final boolean myShowLibraryContents;
 
   public TreeFileChooserDialog(final Project project,
@@ -309,7 +309,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   private final class MyGotoFileModel implements ChooseByNameModel {
-    private int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
+    private final int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
     public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
       final PsiFile[] psiFiles = JavaPsiFacade.getInstance(myProject).getShortNamesCache().getFilesByName(name);
       return filterFiles(psiFiles);

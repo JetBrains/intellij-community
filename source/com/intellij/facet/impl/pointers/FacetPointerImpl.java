@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
-  private FacetPointersManagerImpl myManager;
+  private final FacetPointersManagerImpl myManager;
   private String myModuleName;
   private String myFacetTypeId;
   private String myFacetName;

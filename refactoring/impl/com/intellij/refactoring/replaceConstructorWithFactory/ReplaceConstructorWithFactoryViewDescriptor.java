@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAdapter {
-  private PsiMethod myConstructor;
-  private PsiClass myClass;
+  private final PsiMethod myConstructor;
+  private final PsiClass myClass;
 
   public ReplaceConstructorWithFactoryViewDescriptor(
     PsiMethod constructor) {

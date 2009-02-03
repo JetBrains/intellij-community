@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class SimpleJavaBlock extends AbstractJavaBlock {
   private int myStartOffset = -1;
-  private Map<IElementType, Wrap> myReservedWrap = new HashMap<IElementType, Wrap>();
+  private final Map<IElementType, Wrap> myReservedWrap = new HashMap<IElementType, Wrap>();
 
   public SimpleJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent,settings);

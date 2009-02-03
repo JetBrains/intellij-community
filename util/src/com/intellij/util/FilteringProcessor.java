@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Condition;
  */
 public class FilteringProcessor<T> implements Processor<T> {
   private final Condition<T> myFilter;
-  private Processor<T> myProcessor;
+  private final Processor<T> myProcessor;
 
   public FilteringProcessor(final Condition<T> filter, Processor<T> processor) {
     myFilter = filter;

@@ -29,9 +29,9 @@ import java.io.IOException;
 * To change this template use File | Settings | File Templates.
 */
 public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction {
-  private String myName;
-  private int myType;
-  private String myInspectionName;
+  private final String myName;
+  private final int myType;
+  private final String myInspectionName;
 
   public AddHtmlTagOrAttributeToCustomsIntention(String shortName, String name, int type) {
     myInspectionName = shortName;

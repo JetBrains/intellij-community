@@ -26,7 +26,7 @@ import java.lang.ref.WeakReference;
 public class WeakPropertyChangeAdapter
   implements PropertyChangeListener
 {
-  private WeakReference myRef;
+  private final WeakReference myRef;
 
   public WeakPropertyChangeAdapter(PropertyChangeListener l) {
     myRef = new WeakReference(l);

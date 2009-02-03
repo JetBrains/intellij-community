@@ -22,9 +22,9 @@ public class FilePatternPackageSet implements PackageSet {
   public static final @NonNls String SCOPE_FILE = "file";
   private Pattern myModulePattern;
   private Pattern myModuleGroupPattern;
-  private String myPathPattern;
-  private Pattern myFilePattern;
-  private String myModulePatternText;
+  private final String myPathPattern;
+  private final Pattern myFilePattern;
+  private final String myModulePatternText;
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.search.scope.packageSet.FilePatternPackageSet");
 
   public FilePatternPackageSet(@NonNls String modulePattern,

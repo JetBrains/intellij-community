@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class StepSequence {
-  private List<ModuleWizardStep> myCommonSteps = new ArrayList<ModuleWizardStep>();
-  private Map<String, StepSequence> mySpecificSteps = new HashMap<String, StepSequence>();
+  private final List<ModuleWizardStep> myCommonSteps = new ArrayList<ModuleWizardStep>();
+  private final Map<String, StepSequence> mySpecificSteps = new HashMap<String, StepSequence>();
   @NonNls private String myType;
   private StepSequence myParentSequence;
 

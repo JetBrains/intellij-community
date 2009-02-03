@@ -55,7 +55,7 @@ import java.util.Set;
 
 public class FileStructureDialog extends DialogWrapper {
   private final Editor myEditor;
-  private Navigatable myNavigatable;
+  private final Navigatable myNavigatable;
   private final Project myProject;
   private MyCommanderPanel myCommanderPanel;
   private final StructureViewModel myTreeModel;
@@ -407,7 +407,7 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   private class MyTreeActionsOwner implements TreeActionsOwner {
-    private Set<Filter> myFilters = new HashSet<Filter>();
+    private final Set<Filter> myFilters = new HashSet<Filter>();
 
     public void setActionActive(String name, boolean state) {
     }

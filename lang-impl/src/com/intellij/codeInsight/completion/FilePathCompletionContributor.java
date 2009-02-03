@@ -205,12 +205,12 @@ public class FilePathCompletionContributor extends CompletionContributor {
   }
 
   public class FilePathLookupItem extends LookupElement {
-    private String myRelativePath;
-    private String myName;
-    private String myPath;
-    private String myInfo;
-    private Icon myIcon;
-    private PsiFile myFile;
+    private final String myRelativePath;
+    private final String myName;
+    private final String myPath;
+    private final String myInfo;
+    private final Icon myIcon;
+    private final PsiFile myFile;
 
     public FilePathLookupItem(@NotNull final PsiFile file, @NotNull final PsiFileSystemItem context) {
       myName = file.getName();

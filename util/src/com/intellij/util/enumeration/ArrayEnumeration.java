@@ -19,7 +19,7 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 public class ArrayEnumeration implements Enumeration {
-  private Object[] myArray;
+  private final Object[] myArray;
   private int myCurrent;
 
   public ArrayEnumeration(Object[] array) {

@@ -14,8 +14,8 @@ import java.util.Map;
 
 public abstract class MnemonicsSearch<T> {
 
-  private WizardPopup myPopup;
-  private Map<String, T> myChar2ValueMap = new HashMap();
+  private final WizardPopup myPopup;
+  private final Map<String, T> myChar2ValueMap = new HashMap();
 
   public MnemonicsSearch(WizardPopup popup) {
     myPopup = popup;

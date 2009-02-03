@@ -21,7 +21,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
   private final Project myProject;
   private final String[] myNames;
   private final String myType;
-  private PsiClass myTargetClass;
+  private final PsiClass myTargetClass;
   private final boolean myFieldMayBeFinal;
 
   private JComponent myNameField;

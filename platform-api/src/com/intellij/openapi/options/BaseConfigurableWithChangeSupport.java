@@ -20,7 +20,7 @@ import javax.swing.event.ChangeListener;
 import java.util.ArrayList;
 
 public abstract class BaseConfigurableWithChangeSupport extends BaseConfigurable {
-  private ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>();
+  private final ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>();
 
   public void setModified(final boolean modified) {
     fireStateChanged();

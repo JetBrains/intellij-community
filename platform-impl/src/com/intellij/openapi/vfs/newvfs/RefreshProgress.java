@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import javax.swing.*;
 
 public class RefreshProgress extends ProgressIndicatorBase {
-  private String myMessage;
+  private final String myMessage;
 
   public RefreshProgress(final String message) {
     myMessage = message;

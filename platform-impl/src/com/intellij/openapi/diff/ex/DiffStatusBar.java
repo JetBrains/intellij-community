@@ -126,8 +126,8 @@ public class DiffStatusBar extends JPanel {
   }
 
   static class LegendTypeDescriptorImpl implements LegendTypeDescriptor {
-    private String myDisplayName;
-    private Color myColor;
+    private final String myDisplayName;
+    private final Color myColor;
 
     LegendTypeDescriptorImpl(final String displayName, final Color color) {
       myDisplayName = displayName;

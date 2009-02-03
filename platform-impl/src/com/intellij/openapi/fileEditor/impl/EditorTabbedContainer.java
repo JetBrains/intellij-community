@@ -43,7 +43,7 @@ import java.util.List;
 final class EditorTabbedContainer implements Disposable {
   private final EditorWindow myWindow;
   private final Project myProject;
-  private JBTabs myTabs;
+  private final JBTabs myTabs;
 
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
@@ -268,7 +268,7 @@ final class EditorTabbedContainer implements Disposable {
   private class CloseTab extends AnAction {
 
     ShadowAction myShadow;
-    private TabInfo myTabInfo;
+    private final TabInfo myTabInfo;
 
     public CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;

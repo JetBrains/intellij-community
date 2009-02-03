@@ -31,8 +31,8 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   private boolean myStoreProjectConfiguration;
 
-  private ConfigurationSettingsEditor myEditor;
-  private RunnerAndConfigurationSettingsImpl mySettings;
+  private final ConfigurationSettingsEditor myEditor;
+  private final RunnerAndConfigurationSettingsImpl mySettings;
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettingsImpl settings) {
     mySettings = settings;
@@ -114,7 +114,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   private class StepBeforeLaunchRow extends JPanel {
-    private JCheckBox myCheckBox;
+    private final JCheckBox myCheckBox;
     private FixedSizeButton myButton;
 
     public StepBeforeLaunchRow(final RunConfiguration runConfiguration,

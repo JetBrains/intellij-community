@@ -87,8 +87,8 @@ public class ExportToFileUtil {
   }
 
   public static class ExportDialogBase extends DialogWrapper {
-    private Project myProject;
-    private ExporterToTextFile myExporter;
+    private final Project myProject;
+    private final ExporterToTextFile myExporter;
     protected JTextArea myTextArea;
     protected JScrollPane myTextScrollPane;
     protected JTextField myTfFile;

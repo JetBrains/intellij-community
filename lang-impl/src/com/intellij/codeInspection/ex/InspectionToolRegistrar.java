@@ -30,10 +30,10 @@ import java.util.regex.Pattern;
 public class InspectionToolRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolRegistrar");
 
-  private ArrayList<Factory<InspectionTool>> myInspectionToolFactories = new ArrayList<Factory<InspectionTool>>();
+  private final ArrayList<Factory<InspectionTool>> myInspectionToolFactories = new ArrayList<Factory<InspectionTool>>();
 
-  private AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
-  private AtomicBoolean myInspectionComponentsLoaded = new AtomicBoolean(false);
+  private final AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
+  private final AtomicBoolean myInspectionComponentsLoaded = new AtomicBoolean(false);
 
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 

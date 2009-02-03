@@ -10,7 +10,7 @@ import com.intellij.refactoring.SafeDeleteRefactoring;
  * @author yole
  */
 public class RefactoringFactoryImpl extends RefactoringFactory {
-  private Project myProject;
+  private final Project myProject;
 
   public RefactoringFactoryImpl(final Project project) {
     myProject = project;

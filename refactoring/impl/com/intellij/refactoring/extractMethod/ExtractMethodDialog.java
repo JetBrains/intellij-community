@@ -39,7 +39,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   private final PsiType[] myExceptions;
   private final boolean myStaticFlag;
   private final boolean myCanBeStatic;
-  private PsiElement[] myElementsToExtract;
+  private final PsiElement[] myElementsToExtract;
   private final String myHelpId;
 
   private final EditorTextField myNameField;

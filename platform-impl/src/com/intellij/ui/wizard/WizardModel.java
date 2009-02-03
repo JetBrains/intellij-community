@@ -10,7 +10,7 @@ import java.util.List;
 
 public class WizardModel {
 
-  private List<WizardStep> mySteps = new ArrayList<WizardStep>();
+  private final List<WizardStep> mySteps = new ArrayList<WizardStep>();
 
   private WizardStep myCurrentStep;
   private WizardNavigationState myCurrentState;
@@ -20,7 +20,7 @@ public class WizardModel {
 
   private boolean myDropped = false;
   private boolean myAchieved = false;
-  private String myTitle;
+  private final String myTitle;
 
   public WizardModel(String title) {
     myTitle = title;

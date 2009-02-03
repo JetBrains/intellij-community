@@ -21,8 +21,8 @@ import javax.swing.*;
  */
 public abstract class FrameworkSupportProvider {
   public static final ExtensionPointName<FrameworkSupportProvider> EXTENSION_POINT = ExtensionPointName.create("com.intellij.frameworkSupport");
-  private String myId;
-  private String myTitle;
+  private final String myId;
+  private final String myTitle;
 
   protected FrameworkSupportProvider(final @NonNls @NotNull String id, final @NotNull String title) {
     myId = id;

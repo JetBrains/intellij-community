@@ -109,7 +109,7 @@ public class JBTabsImpl extends JComponent
 
   private boolean myTabLabelActionsAutoHide;
 
-  private TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
+  private final TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
   private IdeGlassPane myGlassPane;
   @NonNls private static final String LAYOUT_DONE = "Layout.done";
 
@@ -120,7 +120,7 @@ public class JBTabsImpl extends JComponent
 
   JBTabsPosition myPosition = JBTabsPosition.top;
 
-  private TabsBorder myBorder = new TabsBorder(this);
+  private final TabsBorder myBorder = new TabsBorder(this);
   private BaseNavigationAction myNextAction;
   private BaseNavigationAction myPrevAction;
   private Disposable myParent;
@@ -1080,8 +1080,8 @@ public class JBTabsImpl extends JComponent
   }
 
   public static class Toolbar extends JPanel {
-    private JBTabsImpl myTabs;
-    private TabInfo myInfo;
+    private final JBTabsImpl myTabs;
+    private final TabInfo myInfo;
 
     public Toolbar(JBTabsImpl tabs, TabInfo info) {
       myTabs = tabs;
@@ -2244,8 +2244,8 @@ public class JBTabsImpl extends JComponent
 
   private static abstract class BaseNavigationAction extends AnAction {
 
-    private ShadowAction myShadow;
-    private ActionManager myActionManager;
+    private final ShadowAction myShadow;
+    private final ActionManager myActionManager;
 
     protected BaseNavigationAction(final String copyFromID, JComponent c, ActionManager mgr) {
       myActionManager = mgr;

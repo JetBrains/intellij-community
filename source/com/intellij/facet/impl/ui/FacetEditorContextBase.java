@@ -29,13 +29,13 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class FacetEditorContextBase extends UserDataHolderBase implements FacetEditorContext {
-  private FacetsProvider myFacetsProvider;
+  private final FacetsProvider myFacetsProvider;
   @Nullable private final FacetEditorContext myParentContext;
-  private ModulesProvider myModulesProvider;
+  private final ModulesProvider myModulesProvider;
   private final Facet myFacet;
-  private UserDataHolder mySharedModuleData;
-  private EventDispatcher<FacetContextChangeListener> myFacetContextChangeDispatcher = EventDispatcher.create(FacetContextChangeListener.class);
-  private UserDataHolder mySharedProjectData;
+  private final UserDataHolder mySharedModuleData;
+  private final EventDispatcher<FacetContextChangeListener> myFacetContextChangeDispatcher = EventDispatcher.create(FacetContextChangeListener.class);
+  private final UserDataHolder mySharedProjectData;
 
   public FacetEditorContextBase(@NotNull Facet facet, final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider,
                                 final @NotNull ModulesProvider modulesProvider,

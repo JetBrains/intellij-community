@@ -114,8 +114,8 @@ public class Main {
   }
 
   private static class StreamRedirector implements Runnable {
-    private InputStream myIn;
-    private OutputStream myOut;
+    private final InputStream myIn;
+    private final OutputStream myOut;
 
     private StreamRedirector(InputStream in, OutputStream out) {
       myIn = in;

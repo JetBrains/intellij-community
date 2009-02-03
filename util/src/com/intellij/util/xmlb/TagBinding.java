@@ -27,10 +27,10 @@ import java.util.Arrays;
 import java.util.List;
 
 class TagBinding implements Binding {
-  private Accessor accessor;
-  private Tag myTagAnnotation;
-  private String myTagName;
-  private Binding binding;
+  private final Accessor accessor;
+  private final Tag myTagAnnotation;
+  private final String myTagName;
+  private final Binding binding;
 
   public TagBinding(Accessor accessor, Tag tagAnnotation, XmlSerializerImpl xmlSerializer) {
     this.accessor = accessor;

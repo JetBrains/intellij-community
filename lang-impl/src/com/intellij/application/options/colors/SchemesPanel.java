@@ -19,7 +19,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 public class SchemesPanel extends JPanel {
-  private ColorAndFontOptions myOptions;
+  private final ColorAndFontOptions myOptions;
 
   private JComboBox mySchemeComboBox;
 

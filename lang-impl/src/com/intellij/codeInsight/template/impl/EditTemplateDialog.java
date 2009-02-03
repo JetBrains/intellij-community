@@ -28,8 +28,8 @@ import java.util.*;
 import java.util.List;
 
 public class EditTemplateDialog extends DialogWrapper {
-  private List<TemplateGroup> myTemplateGroups;
-  private TemplateImpl myTemplate;
+  private final List<TemplateGroup> myTemplateGroups;
+  private final TemplateImpl myTemplate;
 
   private final JTextField myKeyField;
   private final JTextField myDescription;
@@ -38,11 +38,11 @@ public class EditTemplateDialog extends DialogWrapper {
   private ArrayList<Variable> myVariables = new ArrayList<Variable>();
 
   private JComboBox myExpandByCombo;
-  private String myDefaultShortcutItem;
+  private final String myDefaultShortcutItem;
   private JCheckBox myCbReformat;
 
-  private Map<TemplateContextType, JCheckBox> myCbContextMap = new HashMap<TemplateContextType, JCheckBox>();
-  private Map<TemplateOptionalProcessor, JCheckBox> myCbOptionalProcessorMap = new HashMap<TemplateOptionalProcessor, JCheckBox>();
+  private final Map<TemplateContextType, JCheckBox> myCbContextMap = new HashMap<TemplateContextType, JCheckBox>();
+  private final Map<TemplateOptionalProcessor, JCheckBox> myCbOptionalProcessorMap = new HashMap<TemplateOptionalProcessor, JCheckBox>();
 
   private JButton myEditVariablesButton;
 

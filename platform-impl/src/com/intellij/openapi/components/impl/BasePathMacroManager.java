@@ -88,7 +88,7 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   private class MyTrackingPathMacroSubstitutor implements TrackingPathMacroSubstitutor {
-    private Set<String> myUsedMacros;
+    private final Set<String> myUsedMacros;
 
     public MyTrackingPathMacroSubstitutor(final Set<String> usedMacros) {
       myUsedMacros = usedMacros;

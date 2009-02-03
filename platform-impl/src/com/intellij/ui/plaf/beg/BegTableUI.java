@@ -15,7 +15,7 @@ import java.awt.event.KeyListener;
  * @author mike
  */
 public class BegTableUI extends BasicTableUI {
-  private KeyAdapter myAdapter= new KeyAdapter() {
+  private final KeyAdapter myAdapter= new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           if (table.isEditing()) {

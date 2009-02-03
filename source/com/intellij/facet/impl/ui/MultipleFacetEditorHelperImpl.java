@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.MultipleFacetSettingsEditor");
-  private List<AbstactBinding> myBindings = new ArrayList<AbstactBinding>();
+  private final List<AbstactBinding> myBindings = new ArrayList<AbstactBinding>();
 
   public void bind(@NotNull ThreeStateCheckBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JCheckBox> fun) {
     List<JCheckBox> checkBoxesList = new ArrayList<JCheckBox>();
@@ -119,9 +119,9 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
 
   private static class TextFieldBinding extends AbstactBinding {
     private final JTextField myCommon;
-    private List<JTextField> myTextFields;
-    private List<String> myInitialValues;
-    private DocumentAdapter myListener;
+    private final List<JTextField> myTextFields;
+    private final List<String> myInitialValues;
+    private final DocumentAdapter myListener;
 
     private TextFieldBinding(final JTextField common, final List<JTextField> textFields) {
       LOG.assertTrue(!textFields.isEmpty());
@@ -161,7 +161,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
   private static class CombobBoxBinding extends AbstactBinding implements ItemListener {
     private final JComboBox myCommon;
     private final List<JComboBox> myComponentsList;
-    private List<Object> myInitialValues;
+    private final List<Object> myInitialValues;
 
     public CombobBoxBinding(final JComboBox common, final List<JComboBox> componentsList) {
       LOG.assertTrue(!componentsList.isEmpty());

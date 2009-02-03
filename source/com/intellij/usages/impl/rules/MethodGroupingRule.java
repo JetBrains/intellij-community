@@ -62,8 +62,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
   }
 
   private static class MethodUsageGroup implements UsageGroup, TypeSafeDataProvider {
-    private SmartPsiElementPointer myMethodPointer;
-    private String myName;
+    private final SmartPsiElementPointer myMethodPointer;
+    private final String myName;
     private Icon myIcon;
 
     public MethodUsageGroup(PsiMethod psiMethod) {

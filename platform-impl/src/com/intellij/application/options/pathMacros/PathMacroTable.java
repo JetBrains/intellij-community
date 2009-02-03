@@ -21,13 +21,13 @@ import java.util.List;
  */
 public class PathMacroTable extends Table {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.pathMacros.PathMacroTable");
-  private PathMacros myPathMacros = PathMacros.getInstance();
-  private MyTableModel myTableModel = new MyTableModel();
+  private final PathMacros myPathMacros = PathMacros.getInstance();
+  private final MyTableModel myTableModel = new MyTableModel();
   private static final int NAME_COLUMN = 0;
   private static final int VALUE_COLUMN = 1;
   private final boolean myEditOnlyPaths;  // if true, disable macro name changing, and macro adding/removing
 
-  private List<Pair<String, Pair<String, String>>> myMacros = new ArrayList<Pair<String, Pair<String, String>>>();
+  private final List<Pair<String, Pair<String, String>>> myMacros = new ArrayList<Pair<String, Pair<String, String>>>();
   private static final Comparator<Pair<String, Pair<String, String>>> MACRO_COMPARATOR = new Comparator<Pair<String, Pair<String, String>>>() {
     public int compare(Pair<String, Pair<String, String>> pair, Pair<String, Pair<String, String>> pair1) {
       return pair.getFirst().compareTo(pair1.getFirst());

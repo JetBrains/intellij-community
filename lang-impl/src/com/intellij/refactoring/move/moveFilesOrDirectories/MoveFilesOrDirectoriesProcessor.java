@@ -29,11 +29,11 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor");
 
-  private PsiElement[] myElementsToMove;
+  private final PsiElement[] myElementsToMove;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
-  private PsiDirectory myNewParent;
-  private MoveCallback myMoveCallback;
+  private final PsiDirectory myNewParent;
+  private final MoveCallback myMoveCallback;
 
   public MoveFilesOrDirectoriesProcessor(
     Project project,

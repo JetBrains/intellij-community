@@ -57,7 +57,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
   @NonNls private static final String TYPE_ATTR = "type";
   @NonNls private static final String BODY_TAG = "body";
 
-  private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       if (!(file.getFileSystem() instanceof LocalFileSystem)) {
         return false;
@@ -74,7 +74,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
       return language instanceof TemplateLanguage || (language instanceof XMLLanguage && language != XMLLanguage.INSTANCE);
     }
   };
-  private DataExternalizer<InfoHolder<LinkInfo>> myValueExternalizer = new DataExternalizer<InfoHolder<LinkInfo>>() {
+  private final DataExternalizer<InfoHolder<LinkInfo>> myValueExternalizer = new DataExternalizer<InfoHolder<LinkInfo>>() {
     public void save(DataOutput out, InfoHolder<LinkInfo> value) throws IOException {
       out.writeInt(value.myValues.length);
       for (final LinkInfo linkInfo : value.myValues) {
@@ -461,7 +461,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
   private static class MyLinkReferenceResult implements LinkReferenceResult {
     private final PsiFileSystemItem[] myItem;
     private final LinkInfo myLinkInfo;
-    private PsiFile myPsiFile;
+    private final PsiFile myPsiFile;
 
     public MyLinkReferenceResult(final PsiFileSystemItem[] item, final LinkInfo linkInfo, final PsiFile psiFile) {
       myItem = item;

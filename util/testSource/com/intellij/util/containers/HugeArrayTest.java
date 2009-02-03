@@ -21,8 +21,8 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 public class HugeArrayTest extends TestCase {
-  private HugeArray myArray = new HugeArray(3);
-  private Assertion CHECK = new Assertion();
+  private final HugeArray myArray = new HugeArray(3);
+  private final Assertion CHECK = new Assertion();
 
   public void testIndexing() {
     Assert.assertEquals(0, myArray.calcRow(0));

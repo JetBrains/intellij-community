@@ -15,16 +15,16 @@ import java.util.Set;
  */
 public class Group implements KeymapGroup {
   private Group myParent;
-  private String myName;
+  private final String myName;
   private String myId;
-  private Icon myIcon;
-  private Icon myOpenIcon;
+  private final Icon myIcon;
+  private final Icon myOpenIcon;
   /**
    * Group or action id (String) or Separator or QuickList
    */
-  private ArrayList<Object> myChildren;
+  private final ArrayList<Object> myChildren;
 
-  private Set<String> myIds = new HashSet<String>();
+  private final Set<String> myIds = new HashSet<String>();
 
   public Group(String name, String id, Icon icon, Icon openIcon) {
     myName = name;

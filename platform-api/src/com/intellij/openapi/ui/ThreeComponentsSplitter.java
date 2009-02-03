@@ -385,7 +385,7 @@ public class ThreeComponentsSplitter extends JPanel {
   protected class Divider extends JPanel {
     protected boolean myDragging;
     protected Point myPoint;
-    private boolean myIsFirst;
+    private final boolean myIsFirst;
 
     public Divider(boolean isFirst) {
       super(new GridBagLayout());

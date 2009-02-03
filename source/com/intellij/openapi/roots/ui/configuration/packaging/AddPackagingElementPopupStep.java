@@ -13,7 +13,7 @@ import java.util.List;
  * @author nik
 */
 class AddPackagingElementPopupStep extends BaseListPopupStep<AddPackagingElementAction> {
-  private PackagingEditor myEditor;
+  private final PackagingEditor myEditor;
 
   public AddPackagingElementPopupStep(final PackagingEditor editor, final List<AddPackagingElementAction> addActions) {
     super(null, addActions);

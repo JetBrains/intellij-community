@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author max
  */
 public class DocumentReferenceByVirtualFile extends DocumentReference {
-  private VirtualFile myFile;
+  private final VirtualFile myFile;
   private String myUrl = null;
 
   public DocumentReferenceByVirtualFile(VirtualFile file) {

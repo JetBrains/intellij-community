@@ -91,44 +91,36 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private static final Icon LEFT_ICON = IconLoader.getIcon("/general/splitLeft.png");
   private static final Icon RIGHT_ICON = IconLoader.getIcon("/general/splitRight.png");
 
-  private ArrayList<MyCompositeLabel> myList = new ArrayList<MyCompositeLabel>();
+  private final ArrayList<MyCompositeLabel> myList = new ArrayList<MyCompositeLabel>();
 
   private int myFirstIndex = 0;
 
-  private InplaceButton myLeftButton = new InplaceButton(new IconButton("Scroll Left", LEFT_ICON), new ActionListener() {
+  private final InplaceButton myLeftButton = new InplaceButton(new IconButton("Scroll Left", LEFT_ICON), new ActionListener() {
     public void actionPerformed(final ActionEvent e) {
       selectLast();
       shiftFocus(-1);
     }
   });
-  private InplaceButton myRightButton = new InplaceButton(new IconButton("Scroll Right", RIGHT_ICON), new ActionListener() {
+  private final InplaceButton myRightButton = new InplaceButton(new IconButton("Scroll Right", RIGHT_ICON), new ActionListener() {
     public void actionPerformed(final ActionEvent e) {
       selectLast();
       shiftFocus(1);
     }
   });
-  private JPanel myScrollablePanel = new JPanel(new GridBagLayout());
+  private final JPanel myScrollablePanel = new JPanel(new GridBagLayout());
   private int myPreferredWidth;
-  private NavBarModel myModel;
-  private Project myProject;
-  private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
-  private MyProblemListener myProblemListener = new MyProblemListener();
-  private MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
+  private final NavBarModel myModel;
+  private final Project myProject;
+  private final MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
+  private final MyProblemListener myProblemListener = new MyProblemListener();
+  private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
   private final MyTimerListener myTimerListener = new MyTimerListener();
-  private ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
-  private IdeView myIdeView = new MyIdeView();
-  private CopyPasteDelegator myCopyPasteDelegator =
-    new CopyPasteDelegator(myProject, NavBarPanel.this) {
-
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        final PsiElement element = getSelectedElement(PsiElement.class);
-        return element == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{element};
-      }
-    };
+  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
+  private final IdeView myIdeView = new MyIdeView();
+  private final CopyPasteDelegator myCopyPasteDelegator;
   private LightweightHint myHint = null;
   private ListPopupImpl myNodePopup = null;
-  private Alarm myUpdateAlarm = new Alarm();
+  private final Alarm myUpdateAlarm = new Alarm();
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
   private MessageBusConnection myConnection;
   private WeakTimerListener myWeakTimerListener;
@@ -236,6 +228,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     installBorder(-1);
 
     updateList();
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
+
+      @NotNull
+      protected PsiElement[] getSelectedElements() {
+        final PsiElement element = getSelectedElement(PsiElement.class);
+        return element == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{element};
+      }
+    };
   }
 
   private void processFocusLost(final FocusEvent e) {
@@ -867,15 +867,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   protected static class MyCompositeLabel extends JPanel implements Observer {
-    private JLabel myLabel;
-    private SimpleColoredComponent myColoredComponent;
+    private final JLabel myLabel;
+    private final SimpleColoredComponent myColoredComponent;
 
     private final String myText;
     private final SimpleTextAttributes myAttributes;
     private final int myIndex;
     private int myLastSelectedIndex = -1;
 
-    private NavBarModel myModel;
+    private final NavBarModel myModel;
 
     public MyCompositeLabel(final int idx, final Icon icon, @NotNull final String presentableText, final SimpleTextAttributes textAttributes, NavBarModel model) {
       super(new GridBagLayout());

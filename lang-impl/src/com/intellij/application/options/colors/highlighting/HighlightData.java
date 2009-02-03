@@ -16,9 +16,9 @@ import java.awt.*;
 import java.util.Map;
 
 public final class HighlightData {
-  private int myStartOffset;
+  private final int myStartOffset;
   private int myEndOffset;
-  private TextAttributesKey myHighlightType;
+  private final TextAttributesKey myHighlightType;
 
   public HighlightData(int startOffset, TextAttributesKey highlightType) {
     myStartOffset = startOffset;

@@ -513,8 +513,8 @@ public class XmlUtil {
   }
 
   private static class XmlElementProcessor {
-    private PsiElementProcessor processor;
-    private PsiFile targetFile;
+    private final PsiElementProcessor processor;
+    private final PsiFile targetFile;
     private static final Key<CachedValue<PsiElement[]>> KEY_RESOLVED_XINCLUDE = Key.create("RESOLVED_XINCLUDE");
 
     XmlElementProcessor(PsiElementProcessor _processor, PsiFile _targetFile) {

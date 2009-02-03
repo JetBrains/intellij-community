@@ -27,9 +27,9 @@ import java.util.*;
 abstract class AbstractCollectionBinding implements Binding {
   private Map<Class, Binding> myElementBindings;
 
-  private Class myElementType;
-  private XmlSerializerImpl myXmlSerializer;
-  private String myTagName;
+  private final Class myElementType;
+  private final XmlSerializerImpl myXmlSerializer;
+  private final String myTagName;
   @Nullable protected Accessor myAccessor;
   private AbstractCollection myAnnotation = null;
   private boolean myUsingOptionBinding = false;

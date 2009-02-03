@@ -20,10 +20,10 @@ import java.util.ArrayList;
  * @author Eugene Belyaev
  */
 public class MessageViewImpl implements ProjectComponent, MessageView {
-  private StartupManager myStartupManager;
-  private ToolWindowManager myToolWindowManager;
+  private final StartupManager myStartupManager;
+  private final ToolWindowManager myToolWindowManager;
   private ToolWindow myToolWindow;
-  private List<Runnable> myPostponedRunnables = new ArrayList<Runnable>();
+  private final List<Runnable> myPostponedRunnables = new ArrayList<Runnable>();
 
   public MessageViewImpl(final StartupManager startupManager, final ToolWindowManager toolWindowManager) {
     myStartupManager = startupManager;

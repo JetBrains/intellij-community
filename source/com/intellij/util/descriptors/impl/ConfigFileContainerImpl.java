@@ -21,12 +21,12 @@ import java.util.Set;
  * @author nik
  */
 public class ConfigFileContainerImpl implements ConfigFileContainer {
-  private Project myProject;
-  private EventDispatcher<ConfigFileListener> myDispatcher = EventDispatcher.create(ConfigFileListener.class);
-  private MultiValuesMap<ConfigFileMetaData, ConfigFile> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFile>();
+  private final Project myProject;
+  private final EventDispatcher<ConfigFileListener> myDispatcher = EventDispatcher.create(ConfigFileListener.class);
+  private final MultiValuesMap<ConfigFileMetaData, ConfigFile> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFile>();
   private ConfigFile[] myCachedConfigFiles;
-  private ConfigFileMetaDataProvider myMetaDataProvider;
-  private ConfigFileInfoSetImpl myConfiguration;
+  private final ConfigFileMetaDataProvider myMetaDataProvider;
+  private final ConfigFileInfoSetImpl myConfiguration;
 
   public ConfigFileContainerImpl(final Project project, final ConfigFileMetaDataProvider descriptorMetaDataProvider,
                                        final ConfigFileInfoSetImpl configuration) {

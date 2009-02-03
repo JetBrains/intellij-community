@@ -31,7 +31,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
-  private Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
+  private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
 
   public OfflineInspectionRVContentProvider(final Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
                                             final Project project) {
@@ -159,7 +159,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
 
   private static class OfflineProblemDescriptorContainer implements UserObjectContainer<OfflineProblemDescriptor> {
-    private OfflineProblemDescriptor myDescriptor;
+    private final OfflineProblemDescriptor myDescriptor;
 
     public OfflineProblemDescriptorContainer(final OfflineProblemDescriptor descriptor) {
       myDescriptor = descriptor;

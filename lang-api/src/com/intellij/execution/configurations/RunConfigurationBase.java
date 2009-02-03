@@ -45,7 +45,7 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   @NonNls private static final String LOG_FILE = "log_file";
   @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
 
-  private Map<Class<? extends RunConfigurationExtension>, Object> myExtensionSettings =
+  private final Map<Class<? extends RunConfigurationExtension>, Object> myExtensionSettings =
     new HashMap<Class<? extends RunConfigurationExtension>, Object>();
 
   protected RunConfigurationBase(Project project, ConfigurationFactory factory, String name) {

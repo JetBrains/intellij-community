@@ -22,8 +22,8 @@ import java.awt.*;
 
 public class WatermarkIcon implements Icon {
 
-  private Icon myIcon;
-  private float myAlpha;
+  private final Icon myIcon;
+  private final float myAlpha;
 
   public WatermarkIcon(Icon icon, float alpha) {
     myIcon = icon;

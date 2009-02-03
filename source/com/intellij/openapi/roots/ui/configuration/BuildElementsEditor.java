@@ -256,7 +256,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   }
 
   private static class CommitableFieldPanel extends FieldPanel {
-    private Runnable myCommitRunnable;
+    private final Runnable myCommitRunnable;
 
     public CommitableFieldPanel(final JTextField textField,
                                 String labelText,

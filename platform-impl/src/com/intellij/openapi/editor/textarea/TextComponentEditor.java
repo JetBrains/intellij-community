@@ -21,12 +21,12 @@ import java.awt.event.MouseEvent;
  * @author yole
  */
 public class TextComponentEditor extends UserDataHolderBase implements Editor {
-  private Project myProject;
-  private JTextComponent myTextComponent;
-  private TextComponentDocument myDocument;
-  private TextComponentCaretModel myCaretModel;
-  private TextComponentSelectionModel mySelectionModel;
-  private TextComponentScrollingModel myScrollingModel;
+  private final Project myProject;
+  private final JTextComponent myTextComponent;
+  private final TextComponentDocument myDocument;
+  private final TextComponentCaretModel myCaretModel;
+  private final TextComponentSelectionModel mySelectionModel;
+  private final TextComponentScrollingModel myScrollingModel;
   private EditorSettings mySettings;
 
   public TextComponentEditor(final Project project, final JTextComponent textComponent) {

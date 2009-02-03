@@ -16,7 +16,7 @@ public class MainAppClassLoader  extends URLClassLoader {
    * @noinspection HardCodedStringLiteral
    */
   private static final String USER_CLASSPATH = "idea.user.classpath";
-  private Class myAppMainClass;
+  private final Class myAppMainClass;
 
   private static URL[] makeUrls() {
     List classpath = new ArrayList();

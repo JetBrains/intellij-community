@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
  */
 public class DelegatingProgressIndicator implements ProgressIndicator {
   private static final EmptyProgressIndicator EMPTY_INDICATOR = new EmptyProgressIndicator();
-  private ProgressManager myProgressManager;
+  private final ProgressManager myProgressManager;
 
   public DelegatingProgressIndicator() {
     myProgressManager = ProgressManager.getInstance();

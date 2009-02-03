@@ -20,7 +20,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   private static WizardPopup ourActiveWizardRoot;
   private static WizardPopup ourShowingStep;
 
-  private static PopupDispatcher ourInstance = new PopupDispatcher();
+  private static final PopupDispatcher ourInstance = new PopupDispatcher();
 
   static {
     if (System.getProperty("is.popup.test") != null ||

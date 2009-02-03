@@ -22,8 +22,8 @@ import java.awt.geom.Point2D;
 
 public class LineEndDecorator {
 
-  private static int myArrowSize = 9;
-  private static Shape myArrowPolygon = new Polygon(new int[] {0, myArrowSize, 0, 0}, new int[] {0, myArrowSize /2, myArrowSize, 0}, 4);
+  private static final int myArrowSize = 9;
+  private static final Shape myArrowPolygon = new Polygon(new int[] {0, myArrowSize, 0, 0}, new int[] {0, myArrowSize /2, myArrowSize, 0}, 4);
 
   public static Shape getArrowShape(Line2D line, Point2D intersectionPoint) {
     final double deltaY = line.getP2().getY() - line.getP1().getY();

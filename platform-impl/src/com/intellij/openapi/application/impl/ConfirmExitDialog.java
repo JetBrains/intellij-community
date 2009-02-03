@@ -20,7 +20,7 @@ import java.awt.*;
  */
 public class ConfirmExitDialog extends OptionsDialog {
 
-  private boolean myHasTasks;
+  private final boolean myHasTasks;
 
   public ConfirmExitDialog(boolean hasBgTasks) {
     super(false);

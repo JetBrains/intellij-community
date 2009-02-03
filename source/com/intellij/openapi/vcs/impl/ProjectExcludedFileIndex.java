@@ -9,8 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author yole
  */
 public class ProjectExcludedFileIndex extends ExcludedFileIndex {
-  private ProjectRootManager myRootManager;
-  private DirectoryIndex myDirectoryIndex;
+  private final ProjectRootManager myRootManager;
+  private final DirectoryIndex myDirectoryIndex;
 
   public ProjectExcludedFileIndex(final Project project, final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
     super(project);

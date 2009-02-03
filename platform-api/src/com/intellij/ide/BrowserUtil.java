@@ -53,8 +53,8 @@ public class BrowserUtil {
   // with RFC is that we do not allow schemes with length=1 (in other case
   // local paths like "C:/temp/index.html" whould be erroneously interpreted as
   // external URLs.)
-  @NonNls private static Pattern ourExternalPrefix = Pattern.compile("^[\\w\\+\\.\\-]{2,}:");
-  private static Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
+  @NonNls private static final Pattern ourExternalPrefix = Pattern.compile("^[\\w\\+\\.\\-]{2,}:");
+  private static final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
 
   private BrowserUtil() {
   }
@@ -257,7 +257,7 @@ public class BrowserUtil {
                 class MyFilter implements FilenameFilter {
                   private final Set<File> myImportantDirs = new HashSet<File>(
                     Arrays.asList(outputDir, new File(outputDir, "resources")));
-                  private boolean myImportantOnly;
+                  private final boolean myImportantOnly;
 
                   private MyFilter(boolean importantOnly) {
                     myImportantOnly = importantOnly;

@@ -26,7 +26,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
   private static final Logger LOG =
       Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside");
 
-  private Project myProject;
+  private final Project myProject;
 
   public PsiBasedFormatterModelWithShiftIndentInside(final PsiFile file,
                                                      @NotNull final Block rootBlock,

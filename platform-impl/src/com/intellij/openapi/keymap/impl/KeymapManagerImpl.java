@@ -39,9 +39,9 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
 
-  private List<KeymapManagerListener> myListeners = new CopyOnWriteArrayList<KeymapManagerListener>();
+  private final List<KeymapManagerListener> myListeners = new CopyOnWriteArrayList<KeymapManagerListener>();
   private String myActiveKeymapName;
-  private Map<String, String> myBoundShortcuts = new HashMap<String, String>();
+  private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
 
   @NonNls
   private static final String KEYMAP = "keymap";
@@ -51,7 +51,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   private static final String ACTIVE_KEYMAP = "active_keymap";
   @NonNls
   private static final String NAME_ATTRIBUTE = "name";
-  private SchemesManager<Keymap, KeymapImpl> mySchemesManager;
+  private final SchemesManager<Keymap, KeymapImpl> mySchemesManager;
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
     mySchemesManager = factory.createSchemesManager(

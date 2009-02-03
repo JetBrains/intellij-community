@@ -47,8 +47,8 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Ex
   public static final String HELP_ID = "refactoring.extractInclude";
 
   private static class IncludeDuplicate<E extends PsiElement> {
-    private SmartPsiElementPointer<E> myStart;
-    private SmartPsiElementPointer<E> myEnd;
+    private final SmartPsiElementPointer<E> myStart;
+    private final SmartPsiElementPointer<E> myEnd;
 
     private IncludeDuplicate(E start, E end) {
       myStart = SmartPointerManager.getInstance(start.getProject()).createSmartPsiElementPointer(start);

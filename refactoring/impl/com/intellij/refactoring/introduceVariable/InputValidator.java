@@ -18,7 +18,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
   private final PsiElement myAnchorStatementIfAll;
   private final PsiElement myAnchorStatement;
   private final ExpressionOccurenceManager myOccurenceManager;
-  private IntroduceVariableBase myIntroduceVariableBase;
+  private final IntroduceVariableBase myIntroduceVariableBase;
 
   public boolean isOK(IntroduceVariableSettings settings) {
     String name = settings.getEnteredName();

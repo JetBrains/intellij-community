@@ -27,7 +27,7 @@ import java.util.List;
  * @author nik
  */
 public class DetectedFacetsDialog extends DialogWrapper {
-  private ImplicitFacetsTreeComponent myFacetsTreeComponent;
+  private final ImplicitFacetsTreeComponent myFacetsTreeComponent;
   private JPanel myMainPanel;
   private JPanel myTreePanel;
 

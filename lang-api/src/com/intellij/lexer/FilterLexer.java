@@ -32,7 +32,7 @@ public class FilterLexer extends LexerBase {
   }
 
   public static final class SetFilter implements Filter {
-    private TokenSet mySet;
+    private final TokenSet mySet;
 
     public SetFilter(TokenSet set) {
       mySet = set;

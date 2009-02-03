@@ -19,8 +19,8 @@ package com.intellij.util.containers;
 
 public class HugeArray {
   private Object[][] myRows;
-  private int myRowBits;
-  private int myColumnMask;
+  private final int myRowBits;
+  private final int myColumnMask;
   private int myMaxIndex = -1;
 
   public HugeArray(int rowBits) {

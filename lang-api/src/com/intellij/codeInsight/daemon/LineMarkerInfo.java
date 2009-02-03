@@ -95,7 +95,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   }
 
   public static class LineMarkerGutterIconRenderer<T extends PsiElement> extends GutterIconRenderer {
-    private LineMarkerInfo<T> myInfo;
+    private final LineMarkerInfo<T> myInfo;
 
     public LineMarkerGutterIconRenderer(final LineMarkerInfo<T> info) {
       myInfo = info;

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class DelegatingLibrariesValidatorContext implements LibrariesValidatorContext {
-  private FacetEditorContext myDelegate;
+  private final FacetEditorContext myDelegate;
 
   public DelegatingLibrariesValidatorContext(final @NotNull FacetEditorContext delegate) {
     myDelegate = delegate;

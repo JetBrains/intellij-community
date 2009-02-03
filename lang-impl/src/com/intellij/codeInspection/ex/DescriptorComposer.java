@@ -21,7 +21,7 @@ import java.net.URL;
  */
 public class DescriptorComposer extends HTMLComposerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorComposer");
-  private DescriptorProviderInspection myTool;
+  private final DescriptorProviderInspection myTool;
 
   public DescriptorComposer(DescriptorProviderInspection tool) {
     myTool = tool;

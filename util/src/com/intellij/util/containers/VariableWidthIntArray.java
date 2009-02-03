@@ -31,8 +31,8 @@ public final class VariableWidthIntArray implements Cloneable {
   private short shortArray[] = null;
   private byte byteArray[] = null;
 
-  private int minValue;
-  private int maxValue;
+  private final int minValue;
+  private final int maxValue;
 
   static final int INT = 1;
   static final int SHORT = 2;

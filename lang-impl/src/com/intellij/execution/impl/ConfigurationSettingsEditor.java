@@ -29,10 +29,10 @@ import java.util.List;
  * @author dyoma
  */
 class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettingsImpl> {
-  private ArrayList<SettingsEditor<RunnerAndConfigurationSettingsImpl>> myRunnerEditors =
+  private final ArrayList<SettingsEditor<RunnerAndConfigurationSettingsImpl>> myRunnerEditors =
     new ArrayList<SettingsEditor<RunnerAndConfigurationSettingsImpl>>();
   private RunnersEditorComponent myRunnersComponent;
-  private RunConfiguration myConfiguration;
+  private final RunConfiguration myConfiguration;
   private final SettingsEditor<RunConfiguration> myConfigurationEditor;
   private SettingsEditorGroup<RunnerAndConfigurationSettingsImpl> myCompound;
 

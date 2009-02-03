@@ -8,8 +8,8 @@ import java.awt.event.KeyEvent;
  * @author yole
 */
 public class RadioUpDownListener extends KeyAdapter {
-  private JRadioButton myRadioButton1;
-  private JRadioButton myRadioButton2;
+  private final JRadioButton myRadioButton1;
+  private final JRadioButton myRadioButton2;
 
   public RadioUpDownListener(final JRadioButton radioButton1, final JRadioButton radioButton2) {
     myRadioButton1 = radioButton1;

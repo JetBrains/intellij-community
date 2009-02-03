@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 //todo[nik] delete
 public final class FacetInfo {
   public static final FacetInfo[] EMPTY_ARRAY = new FacetInfo[0];
-  private FacetType myFacetType;
-  private FacetConfiguration myConfiguration;
-  private FacetInfo myUnderlyingFacet;
+  private final FacetType myFacetType;
+  private final FacetConfiguration myConfiguration;
+  private final FacetInfo myUnderlyingFacet;
   private String myName;
 
   public FacetInfo(final FacetType facetType, String name, final FacetConfiguration configuration, final FacetInfo underlyingFacet) {

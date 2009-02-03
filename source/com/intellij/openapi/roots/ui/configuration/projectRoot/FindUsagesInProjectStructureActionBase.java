@@ -36,7 +36,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase");
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
   private final JComponent myParentComponent;
-  private Project myProject;
+  private final Project myProject;
 
   public FindUsagesInProjectStructureActionBase(JComponent parentComponent, Project project) {
     super(ProjectBundle.message("find.usages.action.text"), ProjectBundle.message("find.usages.action.text"), FIND_ICON);

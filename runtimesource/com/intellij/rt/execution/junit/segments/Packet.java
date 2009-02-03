@@ -7,8 +7,8 @@ import java.io.*;
 import java.util.Vector;
 
 public class Packet extends PacketWriter {
-  private OutputObjectRegistry myRegistry;
-  private PacketProcessor myTransport;
+  private final OutputObjectRegistry myRegistry;
+  private final PacketProcessor myTransport;
   public static final char ourSpecialSymbol = '$';
   public static final char[] ourSymbolsToEncode = new char[] {'\n', '\r', SegmentedStream.SPECIAL_SYMBOL};
   public static final int CODE_LENGTH = 2;

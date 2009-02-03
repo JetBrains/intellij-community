@@ -10,7 +10,7 @@ import java.util.Map;
  * @author mike
  */
 public class CompoundExternalizationSession {
-  private Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new HashMap<StateStorage, StateStorage.ExternalizationSession>();
+  private final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new HashMap<StateStorage, StateStorage.ExternalizationSession>();
 
   public StateStorage.ExternalizationSession getExternalizationSession(StateStorage stateStore) {
     StateStorage.ExternalizationSession session = mySessions.get(stateStore);

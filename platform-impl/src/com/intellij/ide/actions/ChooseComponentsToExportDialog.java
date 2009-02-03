@@ -27,8 +27,8 @@ import java.util.List;
 public class ChooseComponentsToExportDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ChooseComponentsToExportDialog");
 
-  private ElementsChooser<ComponentElementProperties> myChooser;
-  private FieldPanel myPathPanel;
+  private final ElementsChooser<ComponentElementProperties> myChooser;
+  private final FieldPanel myPathPanel;
   @NonNls
   public static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath()+"/"+"settings.jar");
   private final boolean myShowFilePath;

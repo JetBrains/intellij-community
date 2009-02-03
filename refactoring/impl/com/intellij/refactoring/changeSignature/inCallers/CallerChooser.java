@@ -40,9 +40,9 @@ import java.util.Set;
  */
 public abstract class CallerChooser extends DialogWrapper {
   PsiMethod myMethod;
-  private Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm = new Alarm();
   private MethodNode myRoot;
-  private Project myProject;
+  private final Project myProject;
   private Tree myTree;
   private TreeSelectionListener myTreeSelectionListener;
   private Editor myCallerEditor;

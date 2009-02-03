@@ -56,16 +56,16 @@ import java.util.List;
  * Date: 24-Feb-2006
  */
 public class SeverityEditorDialog extends DialogWrapper {
-  private JPanel myPanel;
+  private final JPanel myPanel;
 
-  private JList myOptionsList = new JList();
-  private ColorAndFontDescriptionPanel myOptionsPanel = new ColorAndFontDescriptionPanel();
+  private final JList myOptionsList = new JList();
+  private final ColorAndFontDescriptionPanel myOptionsPanel = new ColorAndFontDescriptionPanel();
 
   private SeverityRegistrar.SeverityBasedTextAttributes myCurrentSelection;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.SeverityEditorDialog");
   private final SeverityRegistrar mySeverityRegistrar;
-  private CardLayout myCard;
-  private JPanel myRightPanel;
+  private final CardLayout myCard;
+  private final JPanel myRightPanel;
   @NonNls private static final String DEFAULT = "DEFAULT";
   @NonNls private static final String EDITABLE = "EDITABLE";
 

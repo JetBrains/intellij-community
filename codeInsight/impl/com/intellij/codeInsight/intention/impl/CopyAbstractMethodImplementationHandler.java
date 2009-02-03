@@ -31,12 +31,12 @@ import java.util.*;
 public class CopyAbstractMethodImplementationHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CopyAbstractMethodImplementationHandler");
 
-  private Project myProject;
-  private Editor myEditor;
-  private PsiMethod myMethod;
+  private final Project myProject;
+  private final Editor myEditor;
+  private final PsiMethod myMethod;
   private PsiClass mySourceClass;
-  private List<PsiClass> myTargetClasses = new ArrayList<PsiClass>();
-  private List<PsiMethod> mySourceMethods = new ArrayList<PsiMethod>();
+  private final List<PsiClass> myTargetClasses = new ArrayList<PsiClass>();
+  private final List<PsiMethod> mySourceMethods = new ArrayList<PsiMethod>();
 
   public CopyAbstractMethodImplementationHandler(final Project project, final Editor editor, final PsiMethod method) {
     myProject = project;

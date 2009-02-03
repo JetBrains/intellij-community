@@ -16,7 +16,7 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   public static final Logger LOG = Logger.getInstance("#" + ReplaceWithSubtypeUsageInfo.class.getName());
   private final PsiTypeElement myTypeElement;
   private final PsiClassType myTargetClassType;
-  private PsiType myOriginalType;
+  private final PsiType myOriginalType;
   private String myConflict;
 
   public ReplaceWithSubtypeUsageInfo(PsiTypeElement typeElement, PsiClassType classType, final PsiClass[] targetClasses) {

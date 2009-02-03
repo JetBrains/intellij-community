@@ -42,8 +42,8 @@ public class JavaDocInfoGenerator {
   private static final @NonNls Matcher ourNotDotMatcher = ourNotDot.matcher("");
   private static final @NonNls Matcher ourWhitespacesMatcher = ourWhitespaces.matcher("");
 
-  private Project myProject;
-  private PsiElement myElement;
+  private final Project myProject;
+  private final PsiElement myElement;
   private static final @NonNls String THROWS_KEYWORD = "throws";
   private static final @NonNls String BR_TAG = "<br>";
   private static final @NonNls String LINK_TAG = "link";

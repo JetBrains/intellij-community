@@ -28,9 +28,9 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   private boolean myShowWhiteSpaces = true;
   private boolean myShowTreeNodes = true;
 
-  private Project myProject;
+  private final Project myProject;
   private PsiElement myRootPsiElement = null;
-  private Object myRootElement = new Object();
+  private final Object myRootElement = new Object();
 
   public ViewerTreeStructure(Project project) {
     myProject = project;

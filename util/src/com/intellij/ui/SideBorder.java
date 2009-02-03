@@ -27,7 +27,7 @@ public class SideBorder extends LineBorder {
   public static final int RIGHT = 0x04;
   public static final int BOTTOM = 0x08;
   public static final int ALL = LEFT | TOP | RIGHT | BOTTOM;
-  private int mySideMask;
+  private final int mySideMask;
 
   public SideBorder(Color color, int mask) {
     super(color, 1);

@@ -49,8 +49,8 @@ public class SpinAllocator<T> {
     }
   }
   
-  private AtomicBoolean[] myEmployed = new AtomicBoolean[MAX_SIMULTANEOUS_ALLOCATIONS];
-  private Object[] myObjects = new Object[MAX_SIMULTANEOUS_ALLOCATIONS];
+  private final AtomicBoolean[] myEmployed = new AtomicBoolean[MAX_SIMULTANEOUS_ALLOCATIONS];
+  private final Object[] myObjects = new Object[MAX_SIMULTANEOUS_ALLOCATIONS];
   protected final ICreator<T> myCreator;
   protected final IDisposer<T> myDisposer;
 

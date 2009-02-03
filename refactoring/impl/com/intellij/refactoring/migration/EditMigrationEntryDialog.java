@@ -19,7 +19,7 @@ public class EditMigrationEntryDialog extends DialogWrapper{
   private JRadioButton myRbClass;
   private JTextField myOldNameField;
   private JTextField myNewNameField;
-  private Project myProject;
+  private final Project myProject;
 
   public EditMigrationEntryDialog(Project project) {
     super(project, true);

@@ -27,8 +27,8 @@ public class ProgressTipPanel {
   private JButton myPrevHintButton;
   private JPanel myPanel;
 
-  private String[] myFeatures;
-  private Project myProject;
+  private final String[] myFeatures;
+  private final Project myProject;
   private int myCurrentFeature;
   private JLabel myLabel;
 

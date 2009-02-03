@@ -21,9 +21,9 @@ import java.awt.event.*;
  * @author yole
  */
 public class PaletteGroupHeader extends JCheckBox implements DataProvider {
-  private PaletteWindow myPaletteWindow;
+  private final PaletteWindow myPaletteWindow;
   private PaletteComponentList myComponentList;
-  private PaletteGroup myGroup;
+  private final PaletteGroup myGroup;
 
   public PaletteGroupHeader(PaletteWindow paletteWindow, PaletteGroup group) {
     myPaletteWindow = paletteWindow;
@@ -148,7 +148,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   }
 
   private class MoveFocusAction extends AbstractAction {
-    private boolean moveDown;
+    private final boolean moveDown;
 
     public MoveFocusAction(boolean moveDown) {
       this.moveDown = moveDown;
@@ -178,7 +178,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   }
 
   private class ExpandAction extends AbstractAction {
-    private boolean expand;
+    private final boolean expand;
 
     public ExpandAction(boolean expand) {
       this.expand = expand;

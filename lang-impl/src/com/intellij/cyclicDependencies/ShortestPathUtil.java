@@ -15,12 +15,12 @@ import java.util.*;
  */
 //DijkstraAlgorithm
 public class ShortestPathUtil <Node> {
-  private HashSet<Node> myVisited;
-  private Set<ProcessingNode> myProcessingNodes;
+  private final HashSet<Node> myVisited;
+  private final Set<ProcessingNode> myProcessingNodes;
 
   private DefaultTreeModel myShortestPathTree;
 
-  private Graph<Node> myGraph;
+  private final Graph<Node> myGraph;
 
   public ShortestPathUtil(Graph<Node> graph) {
     myVisited = new HashSet<Node>();

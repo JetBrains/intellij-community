@@ -34,9 +34,9 @@ import java.util.List;
 
 public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.bookmarks.BookmarkManager");
-  private Project myProject;
-  private BookmarksCollection.ForEditors myEditorBookmarks = new BookmarksCollection.ForEditors();
-  private BookmarksCollection.ForPsiElements myCommanderBookmarks = new BookmarksCollection.ForPsiElements();
+  private final Project myProject;
+  private final BookmarksCollection.ForEditors myEditorBookmarks = new BookmarksCollection.ForEditors();
+  private final BookmarksCollection.ForPsiElements myCommanderBookmarks = new BookmarksCollection.ForPsiElements();
   private final MyEditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
   public static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
 

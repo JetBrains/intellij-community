@@ -16,8 +16,8 @@ import java.util.*;
  * @author yole
  */
 public class StartupWizardModel extends WizardModel {
-  private Set<String> myDisabledPluginIds = new HashSet<String>();
-  private Map<String, SelectPluginsStep> myStepMap = new HashMap<String, SelectPluginsStep>();
+  private final Set<String> myDisabledPluginIds = new HashSet<String>();
+  private final Map<String, SelectPluginsStep> myStepMap = new HashMap<String, SelectPluginsStep>();
   private SelectPluginsStep myOtherStep;
 
   public StartupWizardModel(final List<ApplicationInfoEx.PluginChooserPage> pluginChooserPages) {

@@ -35,10 +35,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String MACINTOSH_STRING = ApplicationBundle.message("combobox.crlf.mac");
 
   private JCheckBox myCbUseSameIndents;
-  private IndentOptionsEditor myOtherIndentOptions = new IndentOptionsEditor();
+  private final IndentOptionsEditor myOtherIndentOptions = new IndentOptionsEditor();
 
-  private Map<FileType, IndentOptionsEditor> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptionsEditor>();
-  private List<FileTypeIndentOptionsProvider> myIndentOptionsProviders = new ArrayList<FileTypeIndentOptionsProvider>();
+  private final Map<FileType, IndentOptionsEditor> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptionsEditor>();
+  private final List<FileTypeIndentOptionsProvider> myIndentOptionsProviders = new ArrayList<FileTypeIndentOptionsProvider>();
 
   private TabbedPaneWrapper myIndentOptionsTabs;
   private JPanel myIndentPanel;

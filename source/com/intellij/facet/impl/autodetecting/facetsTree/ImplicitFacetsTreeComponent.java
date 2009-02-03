@@ -21,9 +21,9 @@ import java.util.*;
  * @author nik
  */
 public class ImplicitFacetsTreeComponent {
-  private DetectedFacetsTree myTree;
+  private final DetectedFacetsTree myTree;
   private final DetectedFacetManager myDetectedFacetManager;
-  private Collection<DetectedFacetsTree.FacetTypeNode> myFacetTypeNodes;
+  private final Collection<DetectedFacetsTree.FacetTypeNode> myFacetTypeNodes;
 
   public ImplicitFacetsTreeComponent(DetectedFacetManager detectedFacetManager, Collection<DetectedFacetInfo<Module>> detectedFacets, HashMap<DetectedFacetInfo<Module>, List<VirtualFile>> files) {
     myDetectedFacetManager = detectedFacetManager;

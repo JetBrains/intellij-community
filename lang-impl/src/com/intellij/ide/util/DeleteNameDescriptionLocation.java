@@ -14,7 +14,7 @@ public class DeleteNameDescriptionLocation implements ElementDescriptionLocation
   }
 
   public static DeleteNameDescriptionLocation INSTANCE = new DeleteNameDescriptionLocation();
-  private static ElementDescriptionProvider ourDefaultProvider = new DefaultProvider();
+  private static final ElementDescriptionProvider ourDefaultProvider = new DefaultProvider();
 
   public ElementDescriptionProvider getDefaultProvider() {
     return ourDefaultProvider;

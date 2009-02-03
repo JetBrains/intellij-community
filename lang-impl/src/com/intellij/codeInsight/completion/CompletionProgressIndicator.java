@@ -51,7 +51,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   };
   private LightweightHint myHint;
   private final CompletionContext myContextOriginal;
-  private Semaphore myFreezeSemaphore;
+  private final Semaphore myFreezeSemaphore;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler,
                                      final CompletionContext contextOriginal, Semaphore freezeSemaphore) {

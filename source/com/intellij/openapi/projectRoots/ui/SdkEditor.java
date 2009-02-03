@@ -47,13 +47,13 @@ import java.util.Set;
 public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
   private Sdk mySdk;
-  private Map<OrderRootType, PathEditor> myPathEditors = new HashMap<OrderRootType, PathEditor>();
+  private final Map<OrderRootType, PathEditor> myPathEditors = new HashMap<OrderRootType, PathEditor>();
 
   private TextFieldWithBrowseButton myHomeComponent;
-  private Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<SdkType, AdditionalDataConfigurable>();
-  private Map<AdditionalDataConfigurable, JComponent> myAdditionalDataComponents = new HashMap<AdditionalDataConfigurable, JComponent>();
+  private final Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<SdkType, AdditionalDataConfigurable>();
+  private final Map<AdditionalDataConfigurable, JComponent> myAdditionalDataComponents = new HashMap<AdditionalDataConfigurable, JComponent>();
   private JPanel myAdditionalDataPanel;
-  private SdkModificator myEditedSdkModificator = new EditedSdkModificator();
+  private final SdkModificator myEditedSdkModificator = new EditedSdkModificator();
 
   // GUI components
   private JPanel myMainPanel;
@@ -64,7 +64,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private String myInitialName;
   private String myInitialPath;
-  private History myHistory;
+  private final History myHistory;
 
   public SdkEditor(NotifiableSdkModel sdkModel, History history, final ProjectJdkImpl sdk) {
     mySdkModel = sdkModel;

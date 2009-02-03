@@ -81,7 +81,7 @@ public class LibraryTableEditor implements Disposable {
   private JPanel myTreePanel;
   private JButton myAttachAnnotationsButton;
   private Tree myTree;
-  private Map<Library, LibraryEditor> myLibraryToEditorMap = new HashMap<Library, LibraryEditor>();
+  private final Map<Library, LibraryEditor> myLibraryToEditorMap = new HashMap<Library, LibraryEditor>();
 
   private LibraryTableModifiableModelProvider myLibraryTableProvider;
   private final boolean myEditingModuleLibraries;
@@ -91,11 +91,11 @@ public class LibraryTableEditor implements Disposable {
   private static final Icon JAR_DIRECTORY_ICON = IconLoader.getIcon("/nodes/jarDirectory.png");
 
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
-  @Nullable private Project myProject = null;
+  @Nullable private final Project myProject = null;
 
-  private Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
+  private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
 
-  private LibraryTableEditor(final LibraryTable libraryTableProvider) {
+  private LibraryTableEditor(final LibraryTable libraryTableProvider, Project project) {
     this(new LibraryTableModifiableModelProvider() {
       public LibraryTable.ModifiableModel getModifiableModel() {
         return libraryTableProvider.getModifiableModel();
@@ -112,11 +112,11 @@ public class LibraryTableEditor implements Disposable {
       public boolean isLibraryTableEditable() {
         return libraryTableProvider.isEditable();
       }
-    });
+    }, project);
   }
 
 
-  private LibraryTableEditor(LibraryTableModifiableModelProvider provider){
+  private LibraryTableEditor(LibraryTableModifiableModelProvider provider, Project project){
     myLibraryTableProvider = provider;
     myTableModifiableModel = myLibraryTableProvider.getModifiableModel();
     final String tableLevel = provider.getTableLevel();
@@ -128,14 +128,13 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public static LibraryTableEditor editLibraryTable(LibraryTableModifiableModelProvider provider, Project project){
-    LibraryTableEditor result = new LibraryTableEditor(provider);
-    result.myProject = project;
+    LibraryTableEditor result = new LibraryTableEditor(provider,project);
     result.init(new LibraryTableTreeStructure(result));
     return result;
   }
 
   public static LibraryTableEditor editLibraryTable(LibraryTable libraryTable){
-    LibraryTableEditor result = new LibraryTableEditor(libraryTable);
+    LibraryTableEditor result = new LibraryTableEditor(libraryTable,null);
     result.init(new LibraryTableTreeStructure(result));
     return result;
   }
@@ -143,14 +142,14 @@ public class LibraryTableEditor implements Disposable {
   public static LibraryTableEditor editLibrary(final LibraryTableModifiableModelProvider provider,
                                                final Library library,
                                                final Project project) {
-    final LibraryTableEditor tableEditor = editLibrary(provider, library);
-    tableEditor.myProject = project;
+    LibraryTableEditor tableEditor = new LibraryTableEditor(provider,project);
+    tableEditor.init(new LibraryTreeStructure(tableEditor, library));
     Disposer.register(project, tableEditor);
     return tableEditor;
   }
 
-  public static LibraryTableEditor editLibrary(LibraryTableModifiableModelProvider provider, Library library){
-    LibraryTableEditor result = new LibraryTableEditor(provider);
+  public static LibraryTableEditor editLibrary(LibraryTableModifiableModelProvider provider, Library library) {
+    LibraryTableEditor result = new LibraryTableEditor(provider,null);
     result.init(new LibraryTreeStructure(result, library));
     return result;
   }

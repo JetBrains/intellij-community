@@ -8,7 +8,7 @@ import com.intellij.util.EventDispatcher;
  *  @author dsl
  */
 public abstract class RootProviderBaseImpl implements RootProvider {
-  private EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
+  private final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
   public void addRootSetChangedListener(RootSetChangedListener listener) {
     myDispatcher.addListener(listener);
   }

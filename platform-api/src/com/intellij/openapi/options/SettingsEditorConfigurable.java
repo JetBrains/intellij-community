@@ -21,9 +21,9 @@ import javax.swing.*;
 
 public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigurable {
   private SettingsEditor<Settings> myEditor;
-  private Settings mySettings;
-  private SettingsEditorListener<Settings> myListener;
-  private JComponent myComponent;
+  private final Settings mySettings;
+  private final SettingsEditorListener<Settings> myListener;
+  private final JComponent myComponent;
 
   public SettingsEditorConfigurable(SettingsEditor<Settings> editor, Settings settings) {
     myEditor = editor;

@@ -68,7 +68,7 @@ public class CustomizableActionsPanel {
   private JTree myActionsTree;
   private JButton myAddSeparatorButton;
 
-  private TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor myTreeExpansionMonitor;
 
   private CustomActionsSchema mySelectedSchema;
 
@@ -532,7 +532,7 @@ public class CustomizableActionsPanel {
   }
 
   private class EditIconDialog extends DialogWrapper {
-    private DefaultMutableTreeNode myNode;
+    private final DefaultMutableTreeNode myNode;
     protected TextFieldWithBrowseButton myTextField;
 
     protected EditIconDialog(DefaultMutableTreeNode node) {

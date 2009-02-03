@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaBraceMatcher implements PairedBraceMatcher {
-  private BracePair[] pairs = new BracePair[] {
+  private final BracePair[] pairs = new BracePair[] {
       new BracePair(JavaTokenType.LPARENTH, JavaTokenType.RPARENTH, false),
       new BracePair(JavaTokenType.LBRACE, JavaTokenType.RBRACE, true),
       new BracePair(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET, false),

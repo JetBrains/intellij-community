@@ -25,7 +25,7 @@ public class IdeaLogger extends Logger {
 
   public static String ourLastActionId = "";
 
-  private org.apache.log4j.Logger myLogger;
+  private final org.apache.log4j.Logger myLogger;
   /** If not null - it means that errors occurred and it is the first of them. */
   public static Exception ourErrorsOccurred;
 

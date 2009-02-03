@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class BaseGenerateAction extends CodeInsightAction {
-  private CodeInsightActionHandler myHandler;
+  private final CodeInsightActionHandler myHandler;
 
   public BaseGenerateAction(CodeInsightActionHandler handler) {
     myHandler = handler;

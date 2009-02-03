@@ -17,7 +17,7 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesStructureViewElement implements StructureViewTreeElement {
-  private Property myProperty;
+  private final Property myProperty;
   private String myPresentableName;
 
   public PropertiesStructureViewElement(final Property element) {
