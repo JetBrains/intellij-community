@@ -781,7 +781,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                               int accessCount,
                                               boolean isAccessedForWriting) {
     if (strictlyFinal) {
-      class CanAllLocalsBeDeclaredFinal extends JavaRecursiveElementVisitor {
+      class CanAllLocalsBeDeclaredFinal extends JavaRecursiveElementWalkingVisitor {
         boolean success = true;
 
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -1083,7 +1083,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       @NonNls String text = "new Object() { " + myMethod.getReturnTypeElement().getText() + " evaluate() { return " + call.getText() + ";}}.evaluate";
       PsiExpression callExpr = JavaPsiFacade.getInstance(myProject).getParserFacade().createExpressionFromText(text, call);
       PsiElement classExpr = ref.replace(callExpr);
-      classExpr.accept(new JavaRecursiveElementVisitor() {
+      classExpr.accept(new JavaRecursiveElementWalkingVisitor() {
         public void visitReturnStatement(final PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
           PsiExpression expr = statement.getReturnValue();
@@ -1114,7 +1114,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private static void addMarkedElements(final List<PsiReferenceExpression> array, PsiElement scope) {
-    scope.accept(new PsiRecursiveElementVisitor() {
+    scope.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override public void visitElement(PsiElement element) {
         if (element.getCopyableUserData(MARK_KEY) != null) {
           array.add((PsiReferenceExpression)element);

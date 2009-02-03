@@ -508,7 +508,7 @@ public class PsiUtilBase {
   }
 
   public static <T extends PsiElement> T copyElementPreservingOriginalLinks(final T element, final Key<PsiElement> originalKey) {
-    final PsiElementVisitor originalVisitor = new PsiRecursiveElementVisitor() {
+    final PsiElementVisitor originalVisitor = new PsiRecursiveElementWalkingVisitor() {
       public void visitElement(final PsiElement element) {
         element.putCopyableUserData(originalKey, element);
         super.visitElement(element);
@@ -516,11 +516,9 @@ public class PsiUtilBase {
     };
     originalVisitor.visitElement(element);
 
-
     final PsiElement fileCopy = element.copy();
 
-    final PsiElementVisitor copyVisitor = new PsiRecursiveElementVisitor() {
-
+    final PsiElementVisitor copyVisitor = new PsiRecursiveElementWalkingVisitor() {
       public void visitElement(final PsiElement element) {
         final PsiElement originalElement = element.getCopyableUserData(originalKey);
         if (originalElement != null) {

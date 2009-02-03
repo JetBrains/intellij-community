@@ -272,12 +272,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         public void run() {
           performInspectionsWithProgress(scope, manager);
           @NonNls final String ext = ".xml";
-          for (String toolName : myTools.keySet()) {
+          for (Map.Entry<String, Set<Pair<InspectionTool, InspectionProfile>>> stringSetEntry : myTools.entrySet()) {
             final Element root = new Element(InspectionsBundle.message("inspection.problems"));
             final Document doc = new Document(root);
-            final Set<Pair<InspectionTool, InspectionProfile>> sameTools = myTools.get(toolName);
+            final Set<Pair<InspectionTool, InspectionProfile>> sameTools = stringSetEntry.getValue();
             boolean hasProblems = false;
             boolean isLocalTool = false;
+            String toolName = stringSetEntry.getKey();
             if (sameTools != null) {
               for (Pair<InspectionTool, InspectionProfile> toolDescr : sameTools) {
                 final InspectionTool tool = toolDescr.first;
@@ -528,8 +529,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       scope.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitFile(PsiFile file) {
-          InspectionProfile profile;
-          profile = RUN_WITH_EDITOR_PROFILE ? profileManager.getInspectionProfile(file) : getCurrentProfile();
+          InspectionProfile profile = RUN_WITH_EDITOR_PROFILE ? profileManager.getInspectionProfile(file) : getCurrentProfile();
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile != null) {
             incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));

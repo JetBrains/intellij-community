@@ -35,9 +35,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
     myFile = createFile(name + "." + myFileExt, text);
-    myFile.accept(new PsiRecursiveElementVisitor() {
-      @Override public void visitElement(PsiElement element) {super.visitElement(element);}
-    });
+    myFile.accept(new PsiRecursiveElementVisitor(){});
     assertEquals(text, myFile.getText());
     if (checkResult){
       checkResult(name + ".txt", myFile);

@@ -31,7 +31,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   @NonNls private static final String NAME_ATTR_NAME = "name";
 
   private static final Validator<XmlTag> ELEMENT_VALIDATOR = new Validator<XmlTag>() {
-    public void validate(final XmlTag tag, ValidationHost host) {
+    public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
       final boolean hasRefAttribute = tag.getAttributeValue(REF_ATTR_NAME) != null;
 
@@ -84,7 +84,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   };
 
   private static final Validator<XmlTag> ATTRIBUTE_VALIDATOR = new Validator<XmlTag>() {
-    public void validate(final XmlTag tag, ValidationHost host) {
+    public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
 
       if (tag.getAttributeValue(REF_ATTR_NAME) == null && tag.getAttributeValue(NAME_ATTR_NAME) == null) {
@@ -111,7 +111,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
   };
 
-  private static XmlUtil.DuplicationInfoProvider<XmlTag> SCHEMA_ATTR_DUP_INFO_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlTag>() {
+  private static final XmlUtil.DuplicationInfoProvider<XmlTag> SCHEMA_ATTR_DUP_INFO_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlTag>() {
     public String getName(final XmlTag t) {
       return t.getAttributeValue(NAME_ATTR_NAME);
     }
@@ -127,7 +127,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   };
 
   private static final Validator<XmlTag> ELEMENT_AND_ATTR_VALIDATOR = new Validator<XmlTag>() {
-    public void validate(final XmlTag tag, ValidationHost host) {
+    public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
       final String nsPrefix = tag.getNamespacePrefix();
       final XmlTag[] attrDeclTags = tag.findSubTags((nsPrefix.length() > 0 ? nsPrefix + ":" : "") + "attribute");

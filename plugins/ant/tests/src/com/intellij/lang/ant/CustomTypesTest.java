@@ -5,7 +5,6 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.testFramework.ParsingTestCase;
@@ -43,11 +42,7 @@ public class CustomTypesTest extends ParsingTestCase {
     String text = loadFile(name + "." + myFileExt);
     PsiFile file = createFile(name + "." + myFileExt, text);
     final AntFile antFile = AntSupport.getAntFile(file);
-    antFile.accept(new PsiRecursiveElementVisitor() {
-      @Override public void visitElement(PsiElement element) {
-        super.visitElement(element);
-      }
-    });
+    antFile.accept(new PsiRecursiveElementVisitor() { });
     final AntTypeDefinition result = antFile.getBaseTypeDefinition(myCustomTaskClass);
     assertNotNull(result);
     return result;

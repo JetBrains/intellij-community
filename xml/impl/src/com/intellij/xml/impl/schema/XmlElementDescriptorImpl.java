@@ -14,6 +14,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -453,7 +454,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     myValidator = validator;
   }
 
-  public void validate(XmlTag context, ValidationHost host) {
+  public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
     Validator<XmlTag> validator = myValidator;
     if (validator != null) {
       validator.validate(context, host);

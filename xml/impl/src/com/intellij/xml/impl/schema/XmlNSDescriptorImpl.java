@@ -58,7 +58,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
 
   private Object[] dependencies;
 
-  private static ThreadLocal<Set<PsiFile>> myRedefinedDescriptorsInProcessing = new ThreadLocal<Set<PsiFile>>();
+  private static final ThreadLocal<Set<PsiFile>> myRedefinedDescriptorsInProcessing = new ThreadLocal<Set<PsiFile>>();
 
   private static void collectDependencies(@Nullable XmlTag myTag, @NotNull XmlFile myFile, @NotNull Set<PsiFile> visited) {
     if (visited.contains(myFile)) return;
@@ -932,7 +932,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     UNDECLARED_STD_TYPES.add("anySimpleType");
   }
 
-  public void validate(XmlDocument context, Validator.ValidationHost host) {
+  public void validate(@NotNull XmlDocument context, @NotNull Validator.ValidationHost host) {
     ExternalDocumentValidator.doValidation(context,host);
   }
 

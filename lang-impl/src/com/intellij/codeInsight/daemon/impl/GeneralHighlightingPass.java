@@ -293,7 +293,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         super.createAnnotation(documentRange.injectedToHost(TextRange.from(0, 0)), severity, message);
       }
     };
-    PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+    PsiElementVisitor visitor = new PsiRecursiveElementWalkingVisitor() {
       @Override public void visitElement(PsiElement element) {
         super.visitElement(element);
         //noinspection ForLoopReplaceableByForEach

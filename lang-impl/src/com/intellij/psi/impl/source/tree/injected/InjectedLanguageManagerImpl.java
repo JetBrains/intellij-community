@@ -248,7 +248,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   public String getUnescapedText(@NotNull final PsiElement injectedNode) {
     final StringBuilder text = new StringBuilder(injectedNode.getTextLength());
     // gather text from (patched) leaves
-    injectedNode.accept(new PsiRecursiveElementVisitor() {
+    injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         String unescaped = element.getUserData(UNESCAPED_TEXT);

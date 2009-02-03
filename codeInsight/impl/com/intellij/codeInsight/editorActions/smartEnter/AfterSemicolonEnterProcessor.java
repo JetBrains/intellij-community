@@ -49,8 +49,8 @@ public class AfterSemicolonEnterProcessor implements EnterProcessor {
   }
 
   private static int getErrorElementOffset(PsiElement elt) {
-    final int[] offset = new int[] { -1 };
-    elt.accept(new PsiRecursiveElementVisitor() {
+    final int[] offset = { -1 };
+    elt.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override public void visitErrorElement(PsiErrorElement element) {
         if (offset[0] == -1) offset[0] = element.getTextRange().getStartOffset();
       }

@@ -159,7 +159,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return new Object[]{myElement, ExternalResourceManager.getInstance()};
   }
 
-  public void validate(XmlDocument document, ValidationHost host) {
+  public void validate(@NotNull XmlDocument document, @NotNull ValidationHost host) {
     if (document.getLanguage() == DTDLanguage.INSTANCE) {
       final List<XmlElementDecl> decls = new ArrayList<XmlElementDecl>(3);
 

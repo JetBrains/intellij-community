@@ -52,7 +52,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
   private volatile boolean released = true;
   private PsiFile myFile;
-  private final PsiRecursiveElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementVisitor() {
+  private final PsiElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementWalkingVisitor() {
     @Override public void visitElement(PsiElement element) {
       super.visitElement(element);
       for (PsiReference reference : element.getReferences()) {

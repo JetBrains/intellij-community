@@ -55,7 +55,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
     private int mySyncEndOffset;
     private boolean mySyncMarkerIsValid;
 
-    public AnchorElementInfo(PsiElement anchor) {
+    private AnchorElementInfo(PsiElement anchor) {
       LOG.assertTrue(anchor.isPhysical());
       LOG.assertTrue(anchor.isValid());
       myFile = anchor.getContainingFile();
@@ -66,7 +66,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
       LOG.assertTrue(!documentManager.isUncommited(document));
       if (myFile.getTextLength() != document.getTextLength()) {
         final String docText = document.getText();
-        myFile.accept(new PsiRecursiveElementVisitor() {
+        myFile.accept(new PsiRecursiveElementWalkingVisitor() {
           @Override
           public void visitElement(PsiElement element) {
             super.visitElement(element);
@@ -124,12 +124,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
       else if (anchor instanceof XmlToken) {
         XmlToken token = (XmlToken)anchor;
 
-        if (token.getTokenType() == XmlTokenType.XML_NAME) {
-          return token.getParent();
-        }
-        else {
-          return null;
-        }
+        return token.getTokenType() == XmlTokenType.XML_NAME ? token.getParent() : null;
       }
       else {
         return null;

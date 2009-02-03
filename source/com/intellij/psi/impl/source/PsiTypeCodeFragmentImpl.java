@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,17 +18,16 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
                                  boolean allowEllipsis,
                                  @NonNls String name,
                                  CharSequence text) {
-    super(manager, Constants.TYPE_TEXT, isPhysical, name, text);
+    super(manager, JavaElementType.TYPE_TEXT, isPhysical, name, text);
     myAllowEllipsis = allowEllipsis;
   }
 
   @NotNull
   public PsiType getType()
     throws TypeSyntaxException, NoTypeException {
-    PsiType type;
     class SyntaxError extends RuntimeException {}
     try {
-      accept(new PsiRecursiveElementVisitor() {
+      accept(new PsiRecursiveElementWalkingVisitor() {
         @Override public void visitErrorElement(PsiErrorElement element) {
           throw new SyntaxError();
         }
@@ -40,12 +40,11 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     while (child != null && !(child instanceof PsiTypeElement)) {
       child = child.getNextSibling();
     }
-    final PsiTypeElement typeElement1 = (PsiTypeElement)child;
-    PsiTypeElement typeElement = typeElement1;
+    PsiTypeElement typeElement = (PsiTypeElement)child;
     if (typeElement == null) {
       throw new NoTypeException();
     }
-    type = typeElement.getType();
+    PsiType type = typeElement.getType();
     PsiElement sibling = typeElement.getNextSibling();
     while (sibling instanceof PsiWhiteSpace) {
       sibling = sibling.getNextSibling();
