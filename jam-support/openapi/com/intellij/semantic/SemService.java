@@ -46,7 +46,7 @@ public class SemService {
     });
     final SemRegistrar registrar = new SemRegistrar() {
       public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(Class<T> key,
-                                                                                   final ElementPattern<V> place,
+                                                                                   final ElementPattern<? extends V> place,
                                                                                    final NullableFunction<V, T> provider) {
         myProducers.put(key, new NullableFunction<PsiElement, SemElement>() {
           public SemElement fun(PsiElement element) {

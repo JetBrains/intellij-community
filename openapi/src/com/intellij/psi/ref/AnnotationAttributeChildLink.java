@@ -5,17 +5,17 @@
 package com.intellij.psi.ref;
 
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiChildLink;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
 */
-public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, PsiNameValuePair> {
+public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, PsiAnnotationMemberValue> {
   private final String myAttributeName;
 
   public AnnotationAttributeChildLink(@NotNull @NonNls String attributeName) {
@@ -28,21 +28,15 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
   }
 
   @Override
-  public PsiNameValuePair findLinkedChild(@Nullable PsiAnnotation psiAnnotation) {
+  public PsiAnnotationMemberValue findLinkedChild(@Nullable PsiAnnotation psiAnnotation) {
     if (psiAnnotation == null) return null;
 
     psiAnnotation.getText();
-    for (final PsiNameValuePair attribute : psiAnnotation.getParameterList().getAttributes()) {
-      final String attrName = attribute.getName();
-      if (attrName == null && "value".equals(myAttributeName) || myAttributeName.equals(attrName)) {
-        return attribute;
-      }
-    }
-    return null;
+    return psiAnnotation.findDeclaredAttributeValue(myAttributeName);
   }
 
   @NotNull
-  public PsiNameValuePair createChild(@NotNull PsiAnnotation psiAnnotation) throws IncorrectOperationException {
+  public PsiAnnotationMemberValue createChild(@NotNull PsiAnnotation psiAnnotation) throws IncorrectOperationException {
     psiAnnotation.getText();
     throw new UnsupportedOperationException("Method createChild is not yet implemented in " + getClass().getName());
   }
