@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -151,8 +150,8 @@ public class TestIntegrationUtils {
                                                    String name,
                                                    boolean automatic) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
-    String templateName = FileUtil.getNameWithoutExtension(templateDesc.getFileName());
-    FileTemplate fileTemplate = FileTemplateManager.getInstance().getTemplate(templateName);
+    String templateName = templateDesc.getFileName();
+    FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);
     Template template = TemplateManager.getInstance(targetClass.getProject()).createTemplate("", "");
 
     String templateText = fileTemplate.getText();
