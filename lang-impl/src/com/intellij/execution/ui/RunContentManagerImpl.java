@@ -174,7 +174,7 @@ public class RunContentManagerImpl implements RunContentManager {
 
         final Content content = getRunContentByDescriptor(contentManager, descriptor);
 
-        if (contentManager != null) {
+        if (contentManager != null && content != null) {
           contentManager.setSelectedContent(content);
 
           if (content != null) {

@@ -274,7 +274,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   private void scrollSelectionToVisible(final int direction) {
     final int selectedIndex = myModel.getSelectedIndex();
-    if (selectedIndex == -1) return;
+    if (selectedIndex == -1 || selectedIndex >= myList.size()) return;
     final int firstIndex = myFirstIndex;
     while (!myList.get(selectedIndex).isShowing()) {
       myFirstIndex = myModel.getIndexByMode(myFirstIndex + direction);

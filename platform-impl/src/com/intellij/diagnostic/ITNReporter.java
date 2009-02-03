@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 
@@ -138,7 +139,7 @@ public class ITNReporter extends ErrorReportSubmitter {
         break;
       }
       catch (Exception e) {
-        if (Messages.showYesNoDialog(parentComponent, DiagnosticBundle.message("error.report.sending.failure"),
+        if (Messages.showYesNoDialog(JOptionPane.getRootFrame(), DiagnosticBundle.message("error.report.sending.failure"),
                                      ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
           break;
         }

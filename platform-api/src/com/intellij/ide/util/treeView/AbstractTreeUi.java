@@ -1278,8 +1278,9 @@ class AbstractTreeUi {
               final Application app = ApplicationManager.getApplication();
               app.runReadAction(runnable);
               if (postRunnable != null) {
-                if (myTree.isVisible()) {
-                  app.invokeLater(postRunnable, ModalityState.stateForComponent(myTree));
+                final JTree tree = myTree;
+                if (tree != null && tree.isVisible()) {
+                  app.invokeLater(postRunnable, ModalityState.stateForComponent(tree));
                 }
                 else {
                   app.invokeLater(postRunnable);
