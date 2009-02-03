@@ -84,4 +84,11 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    */
   @Nullable
   PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls String attributeName);
+
+  /**
+   * Set annotation attribute value. Adds new name-value pair or uses an existing one, expands unnamed 'value' attribute name if needed.
+   * @param attributeName attribute name
+   * @param value new value template element
+   */
+  void setDeclaredAttributeValue(@NonNls String attributeName, @Nullable PsiAnnotationMemberValue value);
 }

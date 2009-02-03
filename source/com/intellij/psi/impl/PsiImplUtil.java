@@ -54,7 +54,9 @@ public class PsiImplUtil {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
       @NonNls final String name = attribute.getName();
-      if (ObjectUtils.equals(name, attributeName) || attributeName == null && name.equals("value")) return attribute.getValue();
+      if (ObjectUtils.equals(name, attributeName) || attributeName == null && name.equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
+        return attribute.getValue();
+      }
     }
     return null;
   }

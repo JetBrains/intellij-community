@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +90,10 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
   @Nullable
   public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
+  }
+
+  public void setDeclaredAttributeValue(@NonNls String attributeName, PsiAnnotationMemberValue value) {
+    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
   public String getText() {

@@ -33,10 +33,8 @@ public class AnnotationChildLink extends PsiChildLink<PsiModifierListOwner, PsiA
 
   @NotNull
   public PsiAnnotation createChild(@NotNull PsiModifierListOwner member) throws IncorrectOperationException {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(member.getProject()).getElementFactory();
-    final PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnoFqn, member);
     final PsiModifierList modifierList = member.getModifierList();
     assert modifierList != null;
-    return (PsiAnnotation)modifierList.add(annotation);
+    return modifierList.addAnnotation(myAnnoFqn);
   }
 }

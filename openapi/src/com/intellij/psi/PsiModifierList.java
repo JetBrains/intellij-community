@@ -81,4 +81,11 @@ public interface PsiModifierList extends PsiElement {
    * @return the annotation instance, or null if no such annotation is found.
    */
   @Nullable PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName);
+
+  /**
+   * Add a new annotation to this modifier list. The annotation class name will be shortened. No attribbutes will be defined.
+   * @param qualifiedName qualifiedName
+   * @return newly added annotation
+   */
+  @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName);
 }

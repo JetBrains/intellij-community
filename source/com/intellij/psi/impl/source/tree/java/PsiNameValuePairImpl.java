@@ -75,6 +75,12 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return cachedValue;
   }
 
+  @NotNull
+  public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
+    getValue().replace(newValue);
+    return getValue();
+  }
+
   public int getChildRole(ASTNode child) {
     if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
       return ChildRole.ANNOTATION_VALUE;

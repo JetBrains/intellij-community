@@ -16,6 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
@@ -238,6 +239,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
+  }
+
+  @NotNull
+  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    return (PsiAnnotation)addAfter(JavaPsiFacade.getInstance(getProject()).getElementFactory().createAnnotationFromText(qualifiedName, this), null);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){

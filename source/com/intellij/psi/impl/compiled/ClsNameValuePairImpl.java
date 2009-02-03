@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -76,5 +77,10 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
 
   public PsiAnnotationMemberValue getValue() {
     return myMemberValue;
+  }
+
+  @NotNull
+  public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
+    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 }

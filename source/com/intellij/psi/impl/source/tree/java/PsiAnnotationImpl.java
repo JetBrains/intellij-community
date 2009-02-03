@@ -49,6 +49,40 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
+  public void setDeclaredAttributeValue(@NonNls String attributeName, @Nullable PsiAnnotationMemberValue value) {
+    final PsiAnnotationMemberValue existing = findDeclaredAttributeValue(attributeName);
+    if (value == null) {
+      if (existing == null) {
+        return;
+      }
+      existing.getParent().delete();
+    } else {
+      if (existing != null) {
+        ((PsiNameValuePair)existing.getParent()).setValue(value);
+      } else {
+        final PsiNameValuePair[] attributes = getParameterList().getAttributes();
+        if (attributes.length == 1 && attributes[0].getName() == null) {
+          attributes[0].replace(createNameValuePair(attributes[0].getValue(), DEFAULT_REFERENCED_METHOD_NAME + "="));
+        }
+
+        boolean allowNoName = attributes.length == 0 && "value".equals(attributeName);
+        final String namePrefix;
+        if (allowNoName) {
+          namePrefix = "";
+        } else {
+          namePrefix = attributeName + "=";
+        }
+        getParameterList().addBefore(createNameValuePair(value, namePrefix), null);
+      }
+    }
+  }
+
+  private PsiNameValuePair createNameValuePair(PsiAnnotationMemberValue value, String namePrefix) {
+    final PsiAnnotation newAnno = JavaPsiFacade.getInstance(getProject()).getElementFactory()
+      .createAnnotationFromText("@A(" + namePrefix + value.getText() + ")", null);
+    return newAnno.getParameterList().getAttributes()[0];
+  }
+
   public String toString() {
     return "PsiAnnotation";
   }

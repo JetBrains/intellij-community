@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierListStub> implements PsiModifierList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsModifierListImpl");
@@ -49,6 +50,11 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
 
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
+  }
+
+  @NotNull
+  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+    throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
