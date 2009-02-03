@@ -90,7 +90,7 @@ abstract class TabNavigationActionBase extends AnAction {
     final VirtualFile[] files = currentWindow.getFiles();
     int index = ArrayUtil.find(files, selectedFile);
     LOG.assertTrue(index != -1);
-    editorManager.openFile(files[(index + files.length + dir) % files.length], false);
+    editorManager.openFile(files[(index + files.length + dir) % files.length], true);
   }
 
 }
