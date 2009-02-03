@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
@@ -1321,5 +1322,20 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
     assertModuleLibDeps("project", "Maven: foo:foo:ejb:1", "Maven: foo:bar:ejb-client:client:1");
+  }
+
+  public void testDoNotFailOnAbsentAppLibrary() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+    Library lib = appTable.createLibrary("foo");
+    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+    model.addLibraryEntry(lib);
+    model.commit();
+    appTable.removeLibrary(lib);
+
+    importProject(); // should not fail;
   }
 }

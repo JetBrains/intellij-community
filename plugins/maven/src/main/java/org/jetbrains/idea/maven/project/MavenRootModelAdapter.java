@@ -61,7 +61,8 @@ public class MavenRootModelAdapter {
     for (OrderEntry e : myRootModel.getOrderEntries()) {
       if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) continue;
       if (e instanceof LibraryOrderEntry) {
-        if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
+        Library library = ((LibraryOrderEntry)e).getLibrary();
+        if (library == null || !isMavenLibrary(library)) continue;
       }
       if (e instanceof ModuleOrderEntry) {
         Module m = ((ModuleOrderEntry)e).getModule();
