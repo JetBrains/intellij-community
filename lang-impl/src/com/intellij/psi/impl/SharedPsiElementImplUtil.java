@@ -69,7 +69,7 @@ public class SharedPsiElementImplUtil {
     PsiElement[] children = parent.getChildren();
     for(int i = 0; i < children.length; i++){
       PsiElement child = children[i];
-      if (child.equals(element)) {
+      if (child == element) { //do not use .equals since some smartheads are used to overriding PsiElement.equals e.g. com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatementImpl.equals()
         return i < children.length - 1 ? children[i + 1] : null;
       }
     }
