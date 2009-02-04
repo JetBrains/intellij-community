@@ -628,7 +628,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     assertCompletionVariants(myProjectPom, "compile", "provided", "runtime", "test", "system", "import");
   }
 
-  public void testInvalidScopeHighlighting() throws Throwable {
+  public void testDoNotHighlightUnknownScope() throws Throwable {
     updateProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -638,7 +638,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
                      "    <groupId>junit</groupId>" +
                      "    <artifactId>junit</artifactId>" +
                      "    <version>4.0</version>" +
-                     "    <scope><error>xxx</error></scope>" +
+                     "    <scope>xxx</scope>" +
                      "  </dependency>" +
                      "</dependencies>");
 
