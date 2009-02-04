@@ -322,17 +322,19 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   //  if (myKeyGestureProcessor.processInitState()) return true;
 
-    updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
-
-    if(myContext.getActions().isEmpty()) {
-      if (SystemInfo.isMac) {
-        if (e.getID() == KeyEvent.KEY_PRESSED && e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && hasMnemonicInWindow(focusOwner, e.getKeyCode())) {
-          myPressedWasProcessed = true;
-          setState(STATE_PROCESSED);
-          return false;
-        }
+    if (SystemInfo.isMac) {
+      if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK &&
+        (e.getID() == KeyEvent.KEY_PRESSED && hasMnemonicInWindow(focusOwner, e.getKeyCode())) ||
+         e.getID() == KeyEvent.KEY_TYPED && hasMnemonicInWindow(focusOwner, e.getKeyChar()))
+      {
+        myPressedWasProcessed = true;
+        setState(STATE_PROCESSED);
+        return false;
       }
+    }
 
+    updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
+    if(myContext.getActions().isEmpty()) {
       // there's nothing mapped for this stroke
       return false;
     }
