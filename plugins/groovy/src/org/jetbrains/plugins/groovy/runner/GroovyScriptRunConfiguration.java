@@ -146,10 +146,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.setWorkingDirectory(getAbsoluteWorkDir());
 
     //add starter configuration parameters
-    String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
-    if (groovyHome.length() == 0) {
-      groovyHome = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
-    }
+    String groovyHome = getGroovyHome(module);
     params.getVMParametersList().addParametersString(DGROOVY_HOME + "\"" + groovyHome + "\"");
 
     // -Dgroovy.starter.conf
@@ -172,6 +169,14 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     // set starter class
     params.setMainClass(GROOVY_STARTER);
+  }
+
+  private static String getGroovyHome(Module module) {
+    String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    if (groovyHome.length() == 0) {
+      groovyHome = GrailsConfigUtils.getInstance().getSDKInstallPath(module);
+    }
+    return groovyHome;
   }
 
   private String getConfPath(String groovyHome) {
@@ -200,7 +205,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add(GROOVY_MAIN);
 
     params.getProgramParametersList().add("--conf");
-    String groovyHome = GroovyConfigUtils.getInstance().getSDKInstallPath(module);
+    String groovyHome = getGroovyHome(module);
     String confpath = getConfPath(groovyHome);
     params.getProgramParametersList().add(confpath);
 
