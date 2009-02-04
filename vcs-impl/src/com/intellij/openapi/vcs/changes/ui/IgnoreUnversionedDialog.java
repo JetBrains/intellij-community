@@ -5,18 +5,15 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.IgnoredFileBean;
-import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -26,10 +23,10 @@ import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * @author  yole
@@ -45,10 +42,12 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   private List<VirtualFile> myFilesToIgnore;
   private final Project myProject;
   private boolean myInternalChange;
+  private final IgnoredPathPresentation myPresentation;
 
   public IgnoreUnversionedDialog(final Project project) {
     super(project, false);
     myProject = project;
+    myPresentation = new IgnoredPathPresentation(myProject);
     setTitle(VcsBundle.message("ignored.edit.title"));
     init();
     myIgnoreFileTextField.addBrowseFolderListener("Select File to Ignore",
@@ -191,7 +190,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   public IgnoredFileBean[] getSelectedIgnoredFiles() {
     if (myIgnoreSpecifiedFileRadioButton.isSelected()) {
       if (myFilesToIgnore == null) {
-        return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreFile(myIgnoreFileTextField.getText().replace(File.separatorChar, '/')) };
+        return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreFile(myPresentation.alwaysRelative(myIgnoreFileTextField.getText())) };
       }
       return getBeansFromFilesToIgnore(false);
     }
@@ -199,14 +198,8 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       if (getDirectoriesToIgnore() > 1) {
         return getBeansFromFilesToIgnore(true);
       }
-      String path = myIgnoreDirectoryTextField.getText();
-      if (new File(path).isAbsolute()) {
-        final String relPath = ChangesUtil.getProjectRelativePath(myProject, new File(path));
-        if (relPath != null) {
-          path = relPath;
-        }
-      }
-      return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreUnderDirectory(FileUtil.toSystemIndependentName(path)) };
+      final String path = myIgnoreDirectoryTextField.getText();
+      return new IgnoredFileBean[] { IgnoredBeanFactory.ignoreUnderDirectory(myPresentation.alwaysRelative(path)) };
     }
     if (myIgnoreAllFilesMatchingRadioButton.isSelected()) {
       return new IgnoredFileBean[] { IgnoredBeanFactory.withMask(myIgnoreMaskTextField.getText()) };
