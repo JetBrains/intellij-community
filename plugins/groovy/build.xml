@@ -13,6 +13,11 @@
   ~ limitations under the License.
   -->
 
+<!--
+  This script is designed to be run as part of TeamCity build process. If you want to build plugin
+    locally, use packagePlugin.xml
+        -->
+
 <project name="Generating the build of groovy language plugin" default="make.project">
   <property file="groovy.properties"/>
   <property environment="env"/>
