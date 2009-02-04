@@ -663,16 +663,16 @@ import java.util.HashSet;
   }
 
   private static void setTmpDir(String path) {
+    System.setProperty("java.io.tmpdir", path);
+    Class<File> ioFile = File.class;
     try {
-      System.setProperty("java.io.tmpdir", path);
-      Class<File> ioFile = File.class;
       Field field = ioFile.getDeclaredField("tmpdir");
       
       field.setAccessible(true);
       field.set(ioFile, null);
     }
-    catch (NoSuchFieldException e) {
-      LOG.error(e);
+    catch (NoSuchFieldException ignore) {
+      // field was removed in JDK 1.6.0_12
     }
     catch (IllegalAccessException e) {
       LOG.error(e);

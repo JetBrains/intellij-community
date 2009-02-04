@@ -340,7 +340,7 @@ public class FileUtil {
   }
 
   private static File doCreateTempFile(String prefix, String suffix) throws IOException {
-    return doCreateTempFile(prefix, suffix, null);
+    return doCreateTempFile(prefix, suffix, new File(getTempDirectory()));
   }
 
   private static File doCreateTempFile(String prefix, String suffix, final File dir) throws IOException {
