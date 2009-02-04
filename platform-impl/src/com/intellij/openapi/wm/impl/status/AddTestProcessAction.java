@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
@@ -44,6 +45,11 @@ public class AddTestProcessAction extends AnAction {
 
           countTo(1000, new Count() {
             public void onCount(int each) {
+
+//              if (each == 5) {
+//                createAnotherProgress(project);
+//              }
+
               indicator.setText("Found: " + each / 20 + 1);
               if (each / 10.0 == Math.round(each / 10.0)) {
                 indicator.setText(null);
@@ -78,6 +84,54 @@ public class AddTestProcessAction extends AnAction {
         }
       }
     }.queue();
+  }
+
+  private void createAnotherProgress(final Project project) {
+    final Task.Modal task = new Task.Modal(project, "Test2", true/*, PerformInBackgroundOption.DEAF*/) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        try {
+          countTo(1000, new Count() {
+            public void onCount(int each) {
+              indicator.setText("Found: " + each / 20 + 1);
+              if (each / 10.0 == Math.round(each / 10.0)) {
+                indicator.setText(null);
+              }
+              indicator.setFraction(each / 1000.0);
+
+              try {
+                Thread.currentThread().sleep(100);
+              }
+              catch (InterruptedException e1) {
+                e1.printStackTrace();
+              }
+
+              indicator.checkCanceled();
+              indicator.setText2("bla bla bla");
+            }
+          });
+          indicator.stop();
+        }
+        catch (ProcessCanceledException e1) {
+          try {
+            Thread.currentThread().sleep(2000);
+            indicator.stop();
+          }
+          catch (InterruptedException e2) {
+            e2.printStackTrace();
+          }
+          return;
+        }
+      }
+    };
+
+//    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+//    task.run(indicator != null ? indicator : new EmptyProgressIndicator());
+
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        task.queue();
+      }
+    });
   }
 
   private void countTo(int top, Count count) {
