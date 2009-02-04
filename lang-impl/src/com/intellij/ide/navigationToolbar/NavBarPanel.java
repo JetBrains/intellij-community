@@ -120,7 +120,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private final CopyPasteDelegator myCopyPasteDelegator;
   private LightweightHint myHint = null;
   private ListPopupImpl myNodePopup = null;
-  private final Alarm myUpdateAlarm = new Alarm();
+  private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
   private MessageBusConnection myConnection;
   private WeakTimerListener myWeakTimerListener;
@@ -1036,7 +1036,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         immediateUpdateList(true);
         rebuildComponent();
       }
-    }, 500, ModalityState.NON_MODAL);
+    }, 500);
   }
 
   private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
@@ -1051,7 +1051,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           if (myProject.isDisposed()) return;
           immediateUpdateList(myModel.updateModel(event.getParent()));
         }
-      }, 500, ModalityState.NON_MODAL);
+      }, 500);
     }
 
     public void childReplaced(PsiTreeChangeEvent event) {

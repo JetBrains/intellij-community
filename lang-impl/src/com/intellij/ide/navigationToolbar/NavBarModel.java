@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -16,10 +17,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -184,17 +182,36 @@ public class NavBarModel {
     psiElement = psiElement.getOriginalElement();
     PsiElement resultElement = psiElement;
     if (containingFile != null) {
-      for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
-        resultElement = modelExtension.adjustElement(resultElement);
+      for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+        final PsiElement resultElement1 = resultElement;
+        resultElement = ApplicationManager.getApplication().runReadAction(
+            new Computable<PsiElement>() {
+              public PsiElement compute() {
+                return modelExtension.adjustElement(resultElement1);
+              }
+            }
+        );
       }
-      final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
+      final PsiDirectory containingDirectory = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiDirectory>() {
+            public PsiDirectory compute() {
+              return containingFile.getContainingDirectory();
+            }
+          }
+      );
       if (containingDirectory != null) {
         traverseToRoot(containingDirectory, roots);
       }
     }
     else if (psiElement instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)psiElement;
-      final PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
+      final PsiDirectory parentDirectory = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiDirectory>() {
+            public PsiDirectory compute() {
+              return psiDirectory.getParentDirectory();
+            }
+          }
+      );
       if (!roots.contains(psiDirectory.getVirtualFile()) && parentDirectory != null) {
         traverseToRoot(parentDirectory, roots);
       }
@@ -203,23 +220,41 @@ public class NavBarModel {
       final VirtualFile virtualFile = ((PsiFileSystemItem)psiElement).getVirtualFile();
       if (virtualFile == null) return;
       final PsiManager psiManager = PsiManager.getInstance(myProject);
-      if (virtualFile.isDirectory()) {
-        resultElement = psiManager.findDirectory(virtualFile);
-      } else {
-        resultElement = psiManager.findFile(virtualFile);
-      }
+      resultElement = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+        public PsiElement compute() {
+          if (virtualFile.isDirectory()) {
+            return psiManager.findDirectory(virtualFile);
+          }
+          else {
+            return psiManager.findFile(virtualFile);
+          }
+        }
+      });
       if (resultElement == null) return;
       final VirtualFile parentVFile = virtualFile.getParent();
       if (parentVFile != null && !roots.contains(parentVFile)) {
-        final PsiDirectory parentDirectory = psiManager.findDirectory(parentVFile);
+        final PsiDirectory parentDirectory = ApplicationManager.getApplication().runReadAction(
+            new Computable<PsiDirectory>() {
+              public PsiDirectory compute() {
+                return psiManager.findDirectory(parentVFile);
+              }
+            }
+        );
         if (parentDirectory != null) {
           traverseToRoot(parentDirectory, roots);
         }
       }
     }
     else {
-      for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
-        final PsiElement parent = modelExtension.getParent(psiElement);
+      final PsiElement el = psiElement;
+      for (final NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+        final PsiElement parent = ApplicationManager.getApplication().runReadAction(
+            new Computable<PsiElement>() {
+              public PsiElement compute() {
+                return modelExtension.getParent(el);
+              }
+            }
+        );
         if (parent != null) {
           traverseToRoot(parent, roots);
         }
@@ -236,7 +271,7 @@ public class NavBarModel {
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
-  private static boolean checkValid(Object object) {
+  private static boolean checkValid(final Object object) {
     if (object instanceof Project) {
       return !((Project)object).isDisposed();
     }
@@ -244,7 +279,13 @@ public class NavBarModel {
       return !((Module)object).isDisposed();
     }
     if (object instanceof PsiElement) {
-      return ((PsiElement)object).isValid();
+      return ApplicationManager.getApplication().runReadAction(
+          new Computable<Boolean>() {
+            public Boolean compute() {
+              return ((PsiElement)object).isValid();
+            }
+          }
+      ).booleanValue();
     }
     return true;
   }
@@ -271,11 +312,17 @@ public class NavBarModel {
   }
 
   @Nullable
-  protected static Icon getIcon(Object object) {
+  protected static Icon getIcon(final Object object) {
     if (!checkValid(object)) return null;
     if (object instanceof Project) return IconLoader.getIcon("/nodes/project.png");
     if (object instanceof Module) return ((Module)object).getModuleType().getNodeIcon(false);
-    if (object instanceof PsiElement && ((PsiElement)object).isValid()) return ((PsiElement)object).getIcon(Iconable.ICON_FLAG_CLOSED);
+    if (object instanceof PsiElement && ((PsiElement)object).isValid()) return ApplicationManager.getApplication().runReadAction(
+        new Computable<Icon>() {
+          public Icon compute() {
+            return ((PsiElement)object).getIcon(Iconable.ICON_FLAG_CLOSED);
+          }
+        }
+    );
     if (object instanceof JdkOrderEntry) return ((JdkOrderEntry)object).getJdk().getSdkType().getIcon();
     if (object instanceof LibraryOrderEntry) return IconLoader.getIcon("/nodes/ppLibClosed.png");
     if (object instanceof ModuleOrderEntry) return ((ModuleOrderEntry)object).getModule().getModuleType().getNodeIcon(false);
@@ -309,7 +356,13 @@ public class NavBarModel {
     }
     else if (object instanceof Project) {
       final Project project = (Project)object;
-      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      final Module[] modules = ApplicationManager.getApplication().runReadAction(
+          new Computable<Module[]>() {
+            public Module[] compute() {
+              return  ModuleManager.getInstance(project).getModules();
+            }
+          }
+      );
       for (Module module : modules) {
         if (WolfTheProblemSolver.getInstance(project).hasProblemFilesBeneath(module)) {
           return new SimpleTextAttributes(null, null, Color.red, SimpleTextAttributes.STYLE_WAVED);
@@ -346,19 +399,31 @@ public class NavBarModel {
 
   List<Object> calcElementChildren(final Object object) {
     final List<Object> result = new ArrayList<Object>();
-    Object rootElement = size() > 1 ? getElement(1) : null;
+    final Object rootElement = size() > 1 ? getElement(1) : null;
     if (!(object instanceof Project) && rootElement instanceof Module && ((Module)rootElement).isDisposed()) return result;
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (object instanceof Project) {
-      result.addAll(Arrays.asList(ModuleManager.getInstance((Project)object).getModules()));
+      result.addAll(Arrays.asList(ApplicationManager.getApplication().runReadAction(
+          new Computable<Module[]>() {
+            public Module[] compute() {
+              return ModuleManager.getInstance((Project)object).getModules();
+            }
+          }
+      )));
     }
     else if (object instanceof Module) {
       Module module = (Module)object;
       if (!module.isDisposed()) {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         VirtualFile[] roots = moduleRootManager.getContentRoots();
-        for (VirtualFile root : roots) {
-          final PsiDirectory psiDirectory = psiManager.findDirectory(root);
+        for (final VirtualFile root : roots) {
+          final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(
+              new Computable<PsiDirectory>() {
+                public PsiDirectory compute() {
+                  return psiManager.findDirectory(root);
+                }
+              }
+          );
           if (psiDirectory != null) {
             result.add(psiDirectory);
           }
@@ -367,15 +432,26 @@ public class NavBarModel {
     }
     else if (object instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer psiPackage = (PsiDirectoryContainer)object;
-      final PsiDirectory[] psiDirectories = rootElement instanceof Module
+      final PsiDirectory[] psiDirectories = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiDirectory[]>() {
+            public PsiDirectory[] compute() {
+              return rootElement instanceof Module
                                             ? psiPackage.getDirectories(GlobalSearchScope.moduleScope((Module)rootElement))
                                             : psiPackage.getDirectories();
+            }
+          }
+      );
       for (PsiDirectory psiDirectory : psiDirectories) {
         getDirectoryChildren(psiDirectory, rootElement, result);
       }
     }
     else if (object instanceof PsiDirectory) {
-      getDirectoryChildren((PsiDirectory)object, rootElement, result);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run(){
+              getDirectoryChildren((PsiDirectory)object, rootElement, result);
+          }
+      });
+
     }
     Collections.sort(result, new SiblingsComparator());
     return result;
