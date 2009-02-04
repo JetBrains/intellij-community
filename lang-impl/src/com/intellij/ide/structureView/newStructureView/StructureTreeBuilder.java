@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
-final class StructureTreeBuilder extends AbstractTreeBuilder {
+class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
   private final StructureViewModel myStructureModel;
 
@@ -56,27 +56,27 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myStructureModel.addModelListener(myModelListener);
   }
 
-  public void dispose() {
+  public final void dispose() {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
     myStructureModel.removeModelListener(myModelListener);
     super.dispose();
   }
 
-  protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
+  protected final boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
   }
 
-  protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+  protected final boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return false;
   }
 
-  protected boolean isSmartExpand() {
+  protected final boolean isSmartExpand() {
     return false;
   }
 
   @NotNull
-  protected ProgressIndicator createProgressIndicator() {
+  protected final ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
   }
 
@@ -141,13 +141,13 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     }, 300, ModalityState.stateForComponent(getTree()));
   }
 
-  void addRootToUpdate() {
+  final void addRootToUpdate() {
     getTreeStructure().commit();
     ((SmartTreeStructure)getTreeStructure()).rebuildTree();
     getUpdater().addSubtreeToUpdate(getRootNode());
   }
 
-  protected AbstractTreeNode createSearchingTreeNodeWrapper() {
+  protected final AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new StructureViewComponent.StructureViewTreeElementWrapper(null,null, null);
   }
 }

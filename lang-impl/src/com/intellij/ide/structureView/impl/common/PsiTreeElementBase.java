@@ -156,4 +156,8 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     T value = getValue();
     return value == null ? 0 : value.hashCode();
   }
+
+  public boolean isValid() {
+    return myValue != null && myValue.isValid();
+  }
 }

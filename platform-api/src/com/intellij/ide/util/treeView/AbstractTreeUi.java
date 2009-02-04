@@ -633,7 +633,8 @@ class AbstractTreeUi {
     Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
     if (children.length == 0) {
       removeLoadingNode(node);
-    } else if (getBuilder().isAutoExpandNode((NodeDescriptor)node.getUserObject())) {
+    }
+    else if (getBuilder().isAutoExpandNode((NodeDescriptor)node.getUserObject())) {
       addNodeAction(getElementFor(node), new NodeAction() {
         public void onReady(final DefaultMutableTreeNode node) {
           removeLoadingNode(node);
@@ -1604,13 +1605,17 @@ class AbstractTreeUi {
     if (wasRootNodeInitialized()) {
       List<Object> kidsToExpand = new ArrayList<Object>();
       Object eachElement = element;
-      DefaultMutableTreeNode firstVisible;
+      DefaultMutableTreeNode firstVisible = null;
       while (true) {
+        if (!getBuilder().validateNode(eachElement)) break;
+
         firstVisible = getNodeForElement(eachElement, true);
         if (eachElement != element || !parentsOnly) {
           assert !kidsToExpand.contains(eachElement) :
             "Not a valid tree structure, walking up the structure gives many entries for element=" +
-            eachElement + ", root="+ getTreeStructure().getRootElement();
+            eachElement +
+            ", root=" +
+            getTreeStructure().getRootElement();
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;

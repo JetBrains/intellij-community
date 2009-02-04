@@ -7,6 +7,7 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
+import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.*;
@@ -113,7 +114,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     tree.setShowsRootHandles(true);
 
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
-                                                     (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
+                                                     (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper) {
+      @Override
+      protected boolean validateNode(Object child) {
+        return isValid(child);
+      }
+    };
     myAbstractTreeBuilder.updateFromRoot();
     Disposer.register(this, myAbstractTreeBuilder);
     Disposer.register(myAbstractTreeBuilder, new Disposable() {
@@ -708,6 +714,18 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public void doUpdate() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     ((StructureTreeBuilder)myAbstractTreeBuilder).addRootToUpdate();
+  }
+
+//todo [kirillk] dirty hack for discovering invalid psi elements, to delegate it to a proper place after 8.1
+  private static boolean isValid(Object treeElement) {
+    if (treeElement instanceof StructureViewTreeElementWrapper) {
+      final StructureViewTreeElementWrapper wrapper = (StructureViewTreeElementWrapper)treeElement;
+      if (wrapper.getValue() instanceof PsiTreeElementBase) {
+        final PsiTreeElementBase psiNode = (PsiTreeElementBase)wrapper.getValue();
+        return psiNode.isValid();
+      }
+    }
+    return true;
   }
 
   static class StructureViewTreeElementWrapper extends TreeElementWrapper implements NodeDescriptorProvidingKey {
