@@ -7,13 +7,7 @@
       <antReference projectDefault="true" />
       <customJdkName value="" />
       <maximumHeapSize value="128" />
-      <properties />
-    </buildFile>
-    <buildFile url="file://$PROJECT_DIR$/src/build.xml">
-      <additionalClassPath />
-      <antReference name="Apache Ant version 1.7.0" />
-      <customJdkName value="IDEA jdk" />
-      <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
       <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/src/org/jetbrains/plugins/grails/lang/gsp/lexer/core/build.xml">
@@ -21,6 +15,7 @@
       <antReference projectDefault="true" />
       <customJdkName value="" />
       <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
       <properties />
     </buildFile>
   </component>
@@ -55,7 +50,52 @@
           <option name="LABEL_INDENT_SIZE" value="0" />
           <option name="LABEL_INDENT_ABSOLUTE" value="false" />
         </ADDITIONAL_INDENT_OPTIONS>
-        <ADDITIONAL_INDENT_OPTIONS fileType="js">
+        <ADDITIONAL_INDENT_OPTIONS fileType="groovy">
+          <option name="INDENT_SIZE" value="2" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="gsp">
+          <option name="INDENT_SIZE" value="2" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="java">
+          <option name="INDENT_SIZE" value="2" />
+          <option name="CONTINUATION_INDENT_SIZE" value="4" />
+          <option name="TAB_SIZE" value="2" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="jsp">
+          <option name="INDENT_SIZE" value="4" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="txt">
+          <option name="INDENT_SIZE" value="4" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="xml">
           <option name="INDENT_SIZE" value="4" />
           <option name="CONTINUATION_INDENT_SIZE" value="8" />
           <option name="TAB_SIZE" value="4" />
@@ -89,6 +129,9 @@
       <entry name="?*.groovy" />
     </wildcardResourcePatterns>
   </component>
+  <component name="CopyrightManager" default="">
+    <module2copyright />
+  </component>
   <component name="DependenciesAnalyzeManager">
     <option name="myForwardDirection" value="false" />
   </component>
@@ -109,6 +152,7 @@
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
     <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
   </component>
@@ -116,6 +160,11 @@
     <option name="PRINT_LINE_NUMBERS" value="false" />
     <option name="OPEN_IN_BROWSER" value="false" />
     <option name="OUTPUT_DIRECTORY" />
+  </component>
+  <component name="FacetAutodetectingManager">
+    <autodetection-disabled>
+      <facet-type id="Groovy" />
+    </autodetection-disabled>
   </component>
   <component name="IdProvider" IDEtalkID="CA57306CD032AD7AF462C2DE24318A97" />
   <component name="InspectionProjectProfileManager">
@@ -294,6 +343,9 @@
       </item>
     </group>
   </component>
+  <component name="ProjectDetails">
+    <option name="projectName" value="Groovy" />
+  </component>
   <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectModuleManager">
     <modules>
@@ -301,8 +353,28 @@
       <module fileurl="file://$PROJECT_DIR$/rt/rt.iml" filepath="$PROJECT_DIR$/rt/rt.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 7821" project-jdk-type="IDEA JDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="JetGroovy IDEA JDK" project-jdk-type="IDEA JDK">
     <output url="file://$PROJECT_DIR$/classes" />
+  </component>
+  <component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="JetGroovy" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
+      <module name="groovy" />
+      <option name="VM_PARAMETERS" value=" -Xms32m -Xmx500m -XX:MaxPermSize=190m -ea -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=IntelliJIDEA -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" />
+      <option name="PROGRAM_PARAMETERS" value="" />
+      <log_file path="$APPLICATION_HOME_DIR$/system/plugins-sandbox/system/log/idea.log" checked="false" skipped="true" show_all="false" alias="IDEA LOG" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="1670" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Profile ">
+        <option name="myExternalizedOptions" value="&#13;&#10;additional-options=&#13;&#10;snapshots-dir=&#13;&#10;" />
+      </RunnerSettings>
+      <ConfigurationWrapper RunnerId="Debug" />
+      <method>
+        <option name="Make" value="true" />
+      </method>
+    </configuration>
   </component>
   <component name="ResourceManagerContainer">
     <option name="myResourceBundles">
@@ -337,6 +409,8 @@
         </entry>
       </map>
     </option>
+    <option name="myVersion" value="124" />
+    <option name="mySupportsUserInfoFilter" value="true" />
   </component>
   <component name="TeamCityRootDirectoryHolder">
     <option name="myRelativeRootDirectory" />
@@ -356,27 +430,6 @@
     <Base>
       <setting name="state" value="1" />
     </Base>
-    <LanguageOptions name="$TEMPLATE$">
-      <option name="templateOptions">
-        <value>
-          <option name="block" value="true" />
-          <option name="separateBefore" value="false" />
-          <option name="separateAfter" value="false" />
-          <option name="prefixLines" value="true" />
-          <option name="lenBefore" value="80" />
-          <option name="lenAfter" value="80" />
-          <option name="box" value="false" />
-          <option name="filler" value=" " />
-        </value>
-      </option>
-      <option name="notice" value="Copyright 2000-2007 JetBrains s.r.o.&#10;Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);&#10;you may not use this file except in compliance with the License.&#10;You may obtain a copy of the License at&#10;&#10;http://www.apache.org/licenses/LICENSE-2.0&#10;&#10;Unless required by applicable law or agreed to in writing, software&#10;distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#10;WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#10;See the License for the specific language governing permissions and&#10;limitations under the License." />
-      <option name="keyword" value="Copyright" />
-      <option name="fileTypeOverride" value="4" />
-      <option name="relativeBefore" value="true" />
-      <option name="addBlankAfter" value="true" />
-      <option name="fileLocation" value="1" />
-      <option name="useAlternate" value="false" />
-    </LanguageOptions>
     <LanguageOptions name="HTML">
       <option name="templateOptions">
         <value>
@@ -504,8 +557,43 @@
       <option name="useAlternate" value="false" />
     </LanguageOptions>
   </component>
+  <component name="libraryTable">
+    <library name="Groovy">
+      <CLASSES>
+        <root url="jar://$GROOVY_SDK_PATH$/lib/ant-1.7.0.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/ant-junit-1.7.0.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/ant-launcher-1.7.0.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/antlr-2.7.6.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/asm-2.2.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/asm-analysis-2.2.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/asm-tree-2.2.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/asm-util-2.2.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/bsf-2.4.0.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/commons-cli-1.0.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/commons-logging-1.1.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/groovy-1.5.7.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/jline-0.9.94.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/jsp-api-2.0.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/junit-3.8.2.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/mockobjects-core-0.09.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/mx4j-3.0.2.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/servlet-api-2.4.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/xpp3_min-1.1.3.4.O.jar!/" />
+        <root url="jar://$GROOVY_SDK_PATH$/lib/xstream-1.2.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$GROOVY_SDK_PATH$/src/main" />
+      </SOURCES>
+    </library>
+    <library name="IDEA">
+      <CLASSES />
+      <JAVADOC />
+      <SOURCES />
+    </library>
+  </component>
   <UsedPathMacros>
-    <macro name="TEMPLATE" />
+    <macro name="GROOVY_SDK_PATH" description="Path to Groovy distribution directory, used in JetGroovy plugin dependencies " />
   </UsedPathMacros>
 </project>
 
