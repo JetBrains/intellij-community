@@ -11,9 +11,9 @@ public interface JavaMainMethodProvider {
 
   ExtensionPointName<JavaMainMethodProvider> EP_NAME = ExtensionPointName.create("com.intellij.javaMainMethodProvider");
 
-  boolean isApplicable(PsiClass clazz);
+  boolean isApplicable(final PsiClass clazz);
 
-  boolean hasMainMethod(PsiClass clazz);
+  boolean hasMainMethod(final PsiClass clazz);
 
   PsiMethod findMainInClass(final PsiClass clazz);
 
