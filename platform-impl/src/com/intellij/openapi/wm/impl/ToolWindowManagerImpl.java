@@ -1638,7 +1638,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private boolean checkForRejectOrByPass(final FocusCommand cmd, final boolean forced, final ActionCallback result) {
-    if (cmd.isExpired()) return true;
+    if (cmd.isExpired()) {
+      result.setRejected();
+      return true;
+    }
 
     final FocusCommand lastRequest = getLastEffectiveForcedRequest();
 
