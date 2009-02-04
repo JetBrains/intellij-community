@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -127,6 +128,11 @@ public class FileBasedIndex implements ApplicationComponent {
     connection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(final FileTypeEvent event) {
         cleanupProcessedFlag();
+        // TODO: temporary solution for tests to avoid 'twin stubs' problem
+        // Correct index update will require more information from FileType events
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          requestRebuild(StubUpdatingIndex.INDEX_ID);
+        }
       }
 
       public void fileTypesChanged(final FileTypeEvent event) {
