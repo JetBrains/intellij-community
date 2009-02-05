@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -33,7 +34,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -141,7 +141,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  private static final Key<WeakReference<StubTree>> ourCachedStubTreeRefKey = Key.create("our.cached.decompiler.stub");
+  private static final Key<SoftReference<StubTree>> ourCachedStubTreeRefKey = Key.create("our.cached.decompiler.stub");
 
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, @NotNull final Key key, final Project project,
                                                            final GlobalSearchScope scope) {
@@ -176,7 +176,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                   psiFile = (PsiFileWithStubSupport)_psifile;
                   stubTree = psiFile.getStubTree();
                 } else if (_psifile instanceof PsiBinaryFile) {
-                  final WeakReference<StubTree> reference = _psifile.getUserData(ourCachedStubTreeRefKey);
+                  final SoftReference<StubTree> reference = _psifile.getUserData(ourCachedStubTreeRefKey);
                   stubTree = reference != null ? reference.get():null;
 
                   if (stubTree == null) {
@@ -187,7 +187,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                     } catch (IOException ex) {
                       LOG.error(ex);
                     }
-                    _psifile.putUserData(ourCachedStubTreeRefKey, new WeakReference<StubTree>(stubTree));
+                    _psifile.putUserData(ourCachedStubTreeRefKey, new SoftReference<StubTree>(stubTree));
                   }
                 }
               }
