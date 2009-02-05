@@ -271,6 +271,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myBuildDate = new GregorianCalendar(year, month, day);
     }
 
+    Thread currentThread = Thread.currentThread();
+    currentThread.setName(currentThread.getName() + " " + myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber + ", eap:"+myEAP);
+
     Element logoElement = parentNode.getChild(ELEMENT_LOGO);
     if (logoElement != null) {
       myLogoUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
