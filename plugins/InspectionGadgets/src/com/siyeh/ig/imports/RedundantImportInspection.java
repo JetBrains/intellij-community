@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,26 @@ import java.util.Set;
 
 public class RedundantImportInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "redundant.import.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "redundant.import.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new DeleteImportFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new RedundantImportVisitor();
     }
@@ -150,6 +154,8 @@ public class RedundantImportInspection extends BaseInspection {
                     }
                     if (onDemandImports.contains(contextName) &&
                             !ImportUtils.hasOnDemandImportConflict(qualifiedName,
+                                    javaFile) &&
+                            !ImportUtils.hasDefaultImportConflict(qualifiedName,
                                     javaFile)) {
                         registerError(importStatement);
                     }
