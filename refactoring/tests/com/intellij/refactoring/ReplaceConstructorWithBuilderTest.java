@@ -14,6 +14,7 @@ import com.intellij.refactoring.replaceConstructorWithBuilder.ParameterData;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderProcessor;
 import com.intellij.util.containers.HashMap;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
@@ -62,7 +63,7 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
         final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
         assertNotNull("Class Test not found", aClass);
 
-        final HashMap<String, ParameterData> map = new HashMap<String, ParameterData>();
+        final LinkedHashMap<String, ParameterData> map = new LinkedHashMap<String, ParameterData>();
         final PsiMethod[] constructors = aClass.getConstructors();
         for (PsiMethod constructor : constructors) {
           ParameterData.createFromConstructor(constructor, map);
