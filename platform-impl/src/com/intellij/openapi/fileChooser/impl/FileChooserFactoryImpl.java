@@ -3,12 +3,10 @@ package com.intellij.openapi.fileChooser.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.fileChooser.FileTextField;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
+import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 
@@ -57,5 +55,8 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
     return map;
   }
-  
+
+  public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project) {
+    return new FileSaverDialogImpl(descriptor, project);
+  }
 }

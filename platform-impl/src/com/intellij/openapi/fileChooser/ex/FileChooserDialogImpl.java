@@ -56,7 +56,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private static boolean ourToShowTextField = true;
   private FileChooserDialogImpl.TextFieldAction myTextFieldAction;
 
-  private FileTextFieldImpl myPathTextField;
+  protected FileTextFieldImpl myPathTextField;
 
   private JComponent myPathTextFieldWrapper;
 
@@ -354,7 +354,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  private final class MyPanel extends JPanel implements DataProvider {
+  protected final class MyPanel extends JPanel implements DataProvider {
     public MyPanel() {
       super(new BorderLayout(0, 0));
     }
