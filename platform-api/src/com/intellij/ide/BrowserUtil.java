@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
@@ -26,7 +27,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
@@ -196,9 +196,7 @@ public class BrowserUtil {
 
   public static void launchBrowser(String url, String name) {
     if (url.startsWith("jar:")) {
-      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (file == null || !(file.getFileSystem() instanceof JarFileSystem)) return;
-      url = extractFiles(file);
+      url = extractFiles(url);
       if (url == null) return;
     }
     if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
@@ -209,8 +207,18 @@ public class BrowserUtil {
     }
   }
 
-  private static String extractFiles(VirtualFile file) {
+  private static String extractFiles(String url) {
     try {
+      int sharpPos = url.indexOf('#');
+      String anchor = "";
+      if (sharpPos != -1) {
+        anchor = url.substring(sharpPos);
+        url = url.substring(0, sharpPos);
+      }
+
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      if (file == null || !(file.getFileSystem() instanceof JarFileSystem)) return null;
+
       JarFileSystem jarFileSystem = (JarFileSystem)file.getFileSystem();
       VirtualFile jarVirtualFile = jarFileSystem.getVirtualFileForJar(file);
 
@@ -235,7 +243,7 @@ public class BrowserUtil {
           dialog.show();
           if (!dialog.isOK()) return null;
         }
-        
+
         final ZipFile jarFile = jarFileSystem.getJarFile(file);
         ZipEntry entry = jarFile.getEntry(targetFileRelativePath);
         if (entry == null) return null;
@@ -287,7 +295,7 @@ public class BrowserUtil {
         });
       }
 
-      return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(new File(outputDir, targetFileRelativePath).getPath()));
+      return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(new File(outputDir, targetFileRelativePath).getPath())) + anchor;
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -360,7 +368,7 @@ public class BrowserUtil {
 
     protected Action[] createActions() {
       setOKButtonText(CommonBundle.getYesButtonText());
-      return new Action[] {getOKAction(), getCancelAction()};
+      return new Action[]{getOKAction(), getCancelAction()};
     }
 
     protected JComponent createCenterPanel() {
