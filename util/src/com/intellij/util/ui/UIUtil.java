@@ -681,7 +681,11 @@ public class UIUtil {
 
 
   public static boolean isCloseClick(MouseEvent e) {
-    if (e.isPopupTrigger() || e.getID() != MouseEvent.MOUSE_PRESSED) return false;
+    return isCloseClick(e, MouseEvent.MOUSE_PRESSED);
+  }
+
+  public static boolean isCloseClick(MouseEvent e, int effectiveType) {
+    if (e.isPopupTrigger() || e.getID() != effectiveType) return false;
     return e.getButton() == MouseEvent.BUTTON2 || (e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown());
   }
 

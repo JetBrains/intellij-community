@@ -74,17 +74,16 @@ final class EditorTabbedContainer implements Disposable {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
       }
     }, ActionPlaces.EDITOR_POPUP, false).addTabMouseListener(new MouseAdapter() {
-      public void mousePressed(final MouseEvent e) {
-        if (UIUtil.isCloseClick(e)) {
+      @Override
+      public void mouseClicked(final MouseEvent e) {
+        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_CLICKED)) {
           final TabInfo info = myTabs.findInfo(e);
           if (info != null) {
             myWindow.closeFile((VirtualFile)info.getObject());
+            return;
           }
         }
-      }
 
-      @Override
-      public void mouseClicked(final MouseEvent e) {
         if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
           ActionUtil.execute("HideAllWindows", e, null, ActionPlaces.UNKNOWN, 0);
         }
