@@ -53,7 +53,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -623,7 +622,7 @@ public class FileBasedIndex implements ApplicationComponent {
     final Set<Document> documents = getUnsavedOrTransactedDocuments();
     if (!documents.isEmpty()) {
       // now index unsaved data
-      final Lock storageLock = setDataBufferingEnabled(true);
+      final StorageGuard.Holder guard = setDataBufferingEnabled(true);
       try {
         final Semaphore semaphore = myUnsavedDataIndexingSemaphores.get(indexId);
         semaphore.down();
@@ -631,14 +630,6 @@ public class FileBasedIndex implements ApplicationComponent {
           for (Document document : documents) {
             indexUnsavedDocument(document, indexId);
           }
-        }
-        catch (StorageException e) {
-          setDataBufferingEnabled(false).unlock(); // revert to original state
-          throw e;
-        }
-        catch (ProcessCanceledException e) {
-          setDataBufferingEnabled(false).unlock(); // revert to original state
-          throw e;
         }
         finally {
           semaphore.up();
@@ -652,7 +643,7 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
       finally {
-        storageLock.unlock();
+        guard.leave();
       }
     }
   }
@@ -759,10 +750,10 @@ public class FileBasedIndex implements ApplicationComponent {
     return findLatestKnownPsiForUncomittedDocument(document);
   }
 
-  private Lock myStorageLock = new ReentrantLock();
+  private StorageGuard myStorageLock = new StorageGuard();
 
-  private Lock setDataBufferingEnabled(final boolean enabled) {
-    myStorageLock.lock();
+  private StorageGuard.Holder setDataBufferingEnabled(final boolean enabled) {
+    final StorageGuard.Holder holder = myStorageLock.enter(enabled);
     if (!enabled) {
       synchronized (myLastIndexedDocStamps) {
         myLastIndexedDocStamps.clear();
@@ -775,7 +766,7 @@ public class FileBasedIndex implements ApplicationComponent {
       final IndexStorage indexStorage = index.getStorage();
       ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
-    return myStorageLock;
+    return holder;
   }
 
   private void dropUnregisteredIndices() {
@@ -855,7 +846,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
 
-    final Lock lock = setDataBufferingEnabled(false);
+    final StorageGuard.Holder lock = setDataBufferingEnabled(false);
 
     try {
       final int inputId = Math.abs(getFileId(file));
@@ -879,7 +870,7 @@ public class FileBasedIndex implements ApplicationComponent {
       });
     }
     finally {
-      lock.unlock();
+      lock.leave();
     }
   }
 
@@ -1390,5 +1381,57 @@ public class FileBasedIndex implements ApplicationComponent {
 /*      nvf.clearCachedFileType(); */
       nvf.setFlag(ALREADY_PROCESSED, false);
     }
+  }
+
+  private static class StorageGuard {
+    private int myHolds = 0;
+
+    public interface Holder {
+      void leave();
+    }
+
+    private final Holder myTrueHolder = new Holder() {
+      public void leave() {
+        StorageGuard.this.leave(true);
+      }
+    };
+    private final Holder myFalseHolder = new Holder() {
+      public void leave() {
+        StorageGuard.this.leave(false);
+      }
+    };
+
+    public synchronized Holder enter(boolean mode) {
+      if (mode) {
+        while (myHolds < 0) {
+          try {
+            wait();
+          }
+          catch (InterruptedException ignored) {
+          }
+        }
+        myHolds++;
+        return myTrueHolder;
+      }
+      else {
+        while (myHolds > 0) {
+          try {
+            wait();
+          }
+          catch (InterruptedException ignored) {
+          }
+        }
+        myHolds--;
+        return myFalseHolder;
+      }
+    }
+
+    private synchronized void leave(boolean mode) {
+      myHolds += (mode? -1 : 1);
+      if (myHolds == 0) {
+        notifyAll();
+      }
+    }
+
   }
 }

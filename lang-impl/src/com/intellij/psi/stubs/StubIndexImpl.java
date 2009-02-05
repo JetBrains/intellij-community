@@ -4,6 +4,8 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -221,7 +223,13 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                           builder.append("\n");
                           LOG.info(builder.toString());
 
-                          FileBasedIndex.getInstance().requestReindex(file);
+                          // requestReindex() may want to acquire write lock (for indices not requiring content loading)
+                          // thus, because here we are under read lock, need to use invoke later
+                          ApplicationManager.getApplication().invokeLater(new Runnable() {
+                            public void run() {
+                              FileBasedIndex.getInstance().requestReindex(file);
+                            }
+                          }, ModalityState.NON_MODAL);
                         }
                       }
                     }
