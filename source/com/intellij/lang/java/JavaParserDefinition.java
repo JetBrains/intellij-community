@@ -8,12 +8,10 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
-import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -76,21 +74,7 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
-    if (shouldCreateJavaFile(viewProvider)) {
-      return new PsiJavaFileImpl(viewProvider);
-    }
-    else {
-        //todo not used? see JavaLanguageSubstitutor
-      return new PsiPlainTextFileImpl(viewProvider);
-    }
-  }
-
-  public static boolean shouldCreateJavaFile(final FileViewProvider viewProvider) {
-    return !viewProvider.isPhysical() || isInSource(viewProvider);
-  }
-
-  private static boolean isInSource(final FileViewProvider viewProvider) {
-    return ProjectRootManager.getInstance(viewProvider.getManager().getProject()).getFileIndex().isInSource(viewProvider.getVirtualFile());
+    return new PsiJavaFileImpl(viewProvider);
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {

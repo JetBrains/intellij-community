@@ -3,7 +3,6 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -23,10 +22,13 @@ public class JavaSourceFilterScope extends GlobalSearchScope {
   }
 
   public boolean contains(final VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    return (myDelegate == null || myDelegate.contains(file)) &&
-           (StdFileTypes.JAVA == fileType && myIndex.isInSourceContent(file) ||
-            StdFileTypes.CLASS == fileType && myIndex.isInLibraryClasses(file));
+    if (myDelegate != null && !myDelegate.contains(file)) {
+      return false;
+    }
+    if (myIndex.isInLibraryClasses(file)) {
+      return true;
+    }
+    return StdFileTypes.JAVA == file.getFileType() && myIndex.isInSourceContent(file);
   }
 
   public int compare(final VirtualFile file1, final VirtualFile file2) {
