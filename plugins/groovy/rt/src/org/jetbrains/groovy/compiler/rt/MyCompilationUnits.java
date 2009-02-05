@@ -17,6 +17,7 @@ package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyRuntimeException;
 import org.codehaus.groovy.ast.ASTNode;
+import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.*;
 import org.codehaus.groovy.syntax.SyntaxException;
@@ -24,9 +25,7 @@ import org.codehaus.groovy.tools.GroovyClass;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 
 public class MyCompilationUnits {
@@ -79,25 +78,37 @@ public class MyCompilationUnits {
   private void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
-    String outputRootDirectory = targetDirectory.getParentFile().getCanonicalPath();
-    String outputPath = targetDirectory.getCanonicalPath();
+    String outputPath = targetDirectory.getCanonicalPath().replace(File.separatorChar, '/');
+    final SortedSet allClasses = new TreeSet();
+    List listOfClasses = compilationUnit.getClasses();
+    for (int i = 0; i < listOfClasses.size(); i++) {
+      allClasses.add(((GroovyClass)listOfClasses.get(i)).getName());
+    }
 
     for (Iterator iterator = compilationUnit.iterator(); iterator.hasNext();) {
       SourceUnit sourceUnit = (SourceUnit) iterator.next();
       String fileName = sourceUnit.getName();
+      //for debug purposes
       System.out.println("source: " + fileName);
-      final List listOfClasses = compilationUnit.getClasses();
-      System.out.println(listOfClasses);
+      System.out.print("classes:");
+      final List topLevelClasses = sourceUnit.getAST().getClasses();
 
-      for (int i = 0; i < listOfClasses.size(); i++) {
-        Object elem = listOfClasses.get(i);
-        final String name = ((GroovyClass)elem).getName();
-        String pathToClass = name.replace('.', File.separatorChar);
-
-        String outputPathClass = outputPath + File.separator + pathToClass + ".class";
-        outputPathClass = outputPathClass.replace(File.separatorChar, '/');
-        compiledFiles.add(new OutputItemImpl(outputRootDirectory, outputPathClass, fileName));
+      for (int i = 0; i < topLevelClasses.size(); i++) {
+        final String topLevel = ((ClassNode)topLevelClasses.get(i)).getName();
+        final String nested = topLevel + "$";
+        final SortedSet tail = allClasses.tailSet(topLevel);
+        for (Iterator tailIter = tail.iterator(); tailIter.hasNext();) {
+          String className = (String)tailIter.next();
+          if (className.equals(topLevel) || className.startsWith(nested)) {
+            tailIter.remove();
+            System.out.print("  " + className);
+            compiledFiles.add(new OutputItemImpl(outputPath, outputPath + "/" + className.replace('.', '/') + ".class", fileName));
+          } else {
+            break;
+          }
+        }
       }
+      System.out.println("");
     }
   }
 
