@@ -50,7 +50,7 @@ public interface TranslatingCompiler extends Compiler {
     /**
      * Returns the output directory for this output item.
      *
-     * @return the output directory for this output item
+     * @return the output directory for this output item ('/' slashes used)
      */
     String getOutputRootDirectory();
   }

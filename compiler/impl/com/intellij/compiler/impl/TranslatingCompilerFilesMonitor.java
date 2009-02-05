@@ -278,7 +278,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               final Map<String, SourceUrlClassNamePair> map = new HashMap<String, SourceUrlClassNamePair>();
               myOutputsToDelete.put(projectId, map);
               for (int i = 0; i < size; i++) {
-                final String outputPath = CompilerIOUtil.readString(is);
+                final String outputPath = FileUtil.toSystemIndependentName(CompilerIOUtil.readString(is));
                 final String srcUrl = CompilerIOUtil.readString(is);
                 final String className = CompilerIOUtil.readString(is);
                 if (lfs.findFileByPath(outputPath) != null) {
