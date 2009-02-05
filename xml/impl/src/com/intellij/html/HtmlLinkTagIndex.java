@@ -174,7 +174,13 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
                     new FileReferenceSet(StringUtil.stripQuotesAroundValue(element.getText()), element, 1, null, true);
 
                   final FileReference lastReference = set.getLastReference();
-                  item[0] = lastReference == null ? null : lastReference.resolve();
+
+                  if (lastReference != null) {
+                    final PsiFileSystemItem resolved = lastReference.resolve();
+                    if (resolved instanceof PsiFile) {
+                      item[0] = resolved;
+                    }
+                  }
                 }
 
                 result.add(new MyLinkReferenceResult(item, linkInfo, psiFile));
