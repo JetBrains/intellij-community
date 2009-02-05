@@ -373,7 +373,7 @@ public class OldXmlParsing implements XmlElementType {
       addToken(tag, lexer);
     }
     else {
-      TreeUtil.insertAfter((TreeElement)tag.getLastChildNode(), Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
+      TreeUtil.insertAfter(tag.getLastChildNode(), Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
     }
 
     return true;
@@ -918,7 +918,7 @@ public class OldXmlParsing implements XmlElementType {
     originalLexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
     insertMissingTokens(dummyRoot, originalLexer, start, end, _OldXmlLexer.DOCTYPE,
                                   WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-    return (TreeElement)dummyRoot.getFirstChildNode();
+    return dummyRoot.getFirstChildNode();
   }
 
   public static class WhiteSpaceAndCommentsProcessor implements TokenProcessor {

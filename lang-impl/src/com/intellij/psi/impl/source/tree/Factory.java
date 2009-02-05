@@ -28,9 +28,8 @@ public class Factory  {
   }
 
   public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
-    final LeafElement newElement;
     final FileElement holderElement = DummyHolderFactory.createHolder(manager, table, type.getLanguage()).getTreeElementNoLock();
-    newElement = ASTFactory.leaf(type, buffer, startOffset, endOffset, holderElement.getCharTable());
+    final LeafElement newElement = ASTFactory.leaf(type, buffer, startOffset, endOffset, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
     if(generatedFlag) CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;

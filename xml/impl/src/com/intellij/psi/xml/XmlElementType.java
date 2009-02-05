@@ -8,7 +8,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lexer.OldXmlLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
-import com.intellij.psi.impl.source.tree.CharTableBasedLeafElementImpl;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -54,7 +54,7 @@ public interface XmlElementType extends XmlTokenType {
 
   IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", DTDLanguage.INSTANCE){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       final XmlParsingContext parsingContext = new XmlParsingContext(table);
       return parsingContext.getXmlParsing().parse(new OldXmlLexer(), chars, 0, chars.length(), SharedImplUtil.getManagerByTree(chameleon));
@@ -64,7 +64,7 @@ public interface XmlElementType extends XmlTokenType {
 
   IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       final XmlParsingContext parsingContext = new XmlParsingContext(table);
       return parsingContext.getXmlParsing().parseMarkupDecl(new OldXmlLexer(), chars, 0, chars.length(), SharedImplUtil.getManagerByTree(chameleon));

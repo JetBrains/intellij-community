@@ -498,7 +498,7 @@ import java.util.Map;
    * @return dummy psi file.
    * @throws IncorrectOperationException
    */
-  protected static PsiFile createFile(String fileName, String text) throws IncorrectOperationException {
+  protected static PsiFile createFile(@NonNls String fileName, String text) throws IncorrectOperationException {
     return createPseudoPhysicalFile(fileName, text);
   }
 
