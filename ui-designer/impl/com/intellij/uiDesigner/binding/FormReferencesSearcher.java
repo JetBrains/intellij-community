@@ -18,6 +18,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
@@ -34,6 +35,7 @@ import java.util.Set;
  */
 public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
+    if (!scopeCanContainForms(p.getScope())) return true;
     final PsiElement refElement = p.getElementToSearch();
     final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       public PsiFile compute() {
@@ -71,6 +73,18 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     }
 
     return true;
+  }
+
+  private static boolean scopeCanContainForms(SearchScope scope) {
+    if (!(scope instanceof LocalSearchScope)) return true;
+    LocalSearchScope localSearchScope = (LocalSearchScope) scope;
+    final PsiElement[] elements = localSearchScope.getScope();
+    for (PsiElement element : elements) {
+      if (element instanceof PsiDirectory) return true;
+      final PsiFile file = element.getContainingFile();
+      if (file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM) return true;
+    }
+    return false;
   }
 
   private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
