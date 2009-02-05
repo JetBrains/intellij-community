@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,9 +172,6 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   private static void scrollToCaret(final Editor e) {
-    e.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-
-    /*
     final Project project = e.getProject();
     if (project != null) {
       IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
@@ -182,8 +180,8 @@ public class OpenFileDescriptor implements Navigatable {
         }
       });
     } else {
+      e.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
-    */
   }
 
   public boolean canNavigate() {
