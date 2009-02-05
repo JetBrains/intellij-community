@@ -20,13 +20,11 @@ import com.intellij.lang.ParserDefinition;
 import static com.intellij.lang.ParserDefinition.SpaceRequirements.MAY;
 import static com.intellij.lang.ParserDefinition.SpaceRequirements.MUST_LINE_BREAK;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -75,12 +73,7 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
-    if (JavaParserDefinition.shouldCreateJavaFile(viewProvider)) {
-      return new GroovyFileImpl(viewProvider);
-    }
-    else {
-      return new PsiPlainTextFileImpl(viewProvider);
-    }
+    return new GroovyFileImpl(viewProvider);
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
