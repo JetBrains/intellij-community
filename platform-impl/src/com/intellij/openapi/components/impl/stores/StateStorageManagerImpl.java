@@ -1,14 +1,12 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
@@ -545,9 +543,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public void save() {
-
-    deleteOldProjectAndModuleVersionFiles();
-
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       new File(filePath).getParentFile().mkdirs();
@@ -559,58 +554,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
 
     }
-  }
-
-  private static void deleteOldProjectAndModuleVersionFiles() {
-    String configPath = PathManager.getConfigPath();
-    File configDir = new File(configPath);
-    File[] configFiles = configDir.listFiles();
-    if (configFiles != null) {
-      for (File configFile : configFiles) {
-        if (isOldProjectOrModuleVersionFile(configFile)) {
-          FileUtil.delete(configFile);
-        }
-      }
-    }
-  }
-
-  private static boolean isOldProjectOrModuleVersionFile(File configFile) {
-    if (!configFile.isFile()) return false;
-
-    if (configFile.getName().equals("appComponentVersions.xml")) return true;
-
-    if (configFile.getName().endsWith(".xml") && (
-      configFile.getName().startsWith("project") || configFile.getName().startsWith("module"))){
-      try {
-        Document document = JDOMUtil.loadDocument(configFile);
-        Element root = document.getRootElement();
-        if (!root.getName().equals("versions")) {
-          return false;
-        }
-
-        List children = root.getChildren();
-        for (Object child : children) {
-          if (!(child instanceof Element)) return false;
-
-          Element element = (Element)child;
-          if (!element.getName().equals("component")) return false;
-
-          if (element.getAttributes().size() != 2) return false;
-
-          if (element.getAttribute("name") == null || element.getAttribute("version") == null) return false;
-        }
-      }
-      catch (JDOMException e) {
-        return false;
-      }
-      catch (IOException e) {
-        return false;
-      }
-
-      return true;
-    }
-
-    return false;
   }
 
   private Map<String, Long> getComponentVersions() {
