@@ -182,7 +182,7 @@ public class TestIntegrationUtils {
         name = StringUtil.decapitalize(name);
       }
       if (from == 0) {
-        Expression nameExpr = new ConstantNode(name + index);
+        Expression nameExpr = new ConstantNode(name);
         template.addVariable("name", nameExpr, nameExpr, !automatic);
       } else {
         template.addVariableSegment("name");
