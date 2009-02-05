@@ -12,7 +12,6 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
@@ -45,14 +44,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference, Constants {
+public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
   private volatile String myCachedQName = null;
   private volatile String myCachedTextSkipWhiteSpaceAndComments = null;
 
   public PsiReferenceExpressionImpl() {
-    super(REFERENCE_EXPRESSION);
+    super(JavaElementType.REFERENCE_EXPRESSION);
   }
 
   public PsiExpression getQualifierExpression() {
@@ -89,7 +88,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       PsiManagerEx manager = getManager();
       PsiReferenceExpression classRef = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceExpression(qualifierClass);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-      LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, treeCharTab, manager);
+      LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, treeCharTab, manager);
       addInternal(dot, dot, SourceTreeToPsiMap.psiElementToTree(getParameterList()), Boolean.TRUE);
       addBefore(classRef, SourceTreeToPsiMap.treeElementToPsi(dot));
     }
@@ -139,7 +138,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
         TreeElement dot = (TreeElement)findChildByRole(ChildRole.DOT);
         if (dot == null) {
-          dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, treeCharTab, getManager());
+          dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, treeCharTab, getManager());
           dot = addInternal(dot, dot, getFirstChildNode(), Boolean.TRUE);
         }
         addBefore(newQualifier, dot.getPsi());
@@ -168,19 +167,19 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    public static JavaResolveResult[] _resolve(PsiJavaReference ref, boolean incompleteCode) {
-      final PsiReferenceExpressionImpl _ref = (PsiReferenceExpressionImpl)ref;
-      IElementType parentType = _ref.getTreeParent() != null ? _ref.getTreeParent().getElementType() : null;
-      final JavaResolveResult[] result = _ref._resolve(parentType);
+    private static JavaResolveResult[] _resolve(boolean incompleteCode, PsiReferenceExpressionImpl expression) {
+      CompositeElement treeParent = expression.getTreeParent();
+      IElementType parentType = treeParent != null ? treeParent.getElementType() : null;
+      final JavaResolveResult[] result = expression.resolve(parentType);
 
-      if (incompleteCode && parentType != REFERENCE_EXPRESSION && result.length == 0) {
-        return _ref._resolve(REFERENCE_EXPRESSION);
+      if (incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION && result.length == 0) {
+        return expression.resolve(JavaElementType.REFERENCE_EXPRESSION);
       }
       return result;
     }
 
     public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
-      final JavaResolveResult[] result = _resolve(ref, incompleteCode);
+      final JavaResolveResult[] result = _resolve(incompleteCode, (PsiReferenceExpressionImpl)ref);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
         final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
@@ -195,61 +194,68 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
-  private JavaResolveResult[] _resolve(IElementType parentType) {
+  private JavaResolveResult[] resolve(IElementType parentType) {
     if (parentType == null) {
       parentType = getTreeParent() != null ? getTreeParent().getElementType() : null;
     }
-    if (parentType == REFERENCE_EXPRESSION) {
-      {
-        final VariableResolverProcessor processor = new VariableResolverProcessor(this);
-        PsiScopesUtil.resolveAndWalk(processor, this, null);
-        JavaResolveResult[] result = processor.getResult();
+    if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
+      JavaResolveResult[] result = resolveToVariable();
+      if (result.length > 0) {
+        return result;
+      }
 
-        if (result.length > 0) {
-          return result;
-        }
+      final PsiElement classNameElement = getReferenceNameElement();
+      if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
+      result = resolveToClass(classNameElement);
+      if (result.length > 0) {
+        return result;
       }
-      {
-        final PsiElement classNameElement = getReferenceNameElement();
-        if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
-        final String className = classNameElement.getText();
 
-        final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
-        PsiScopesUtil.resolveAndWalk(processor, this, null);
-        JavaResolveResult[] result = processor.getResult();
-        if (result.length > 0) {
-          return processor.getResult();
-        }
-      }
-      final String packageName = getCachedTextSkipWhiteSpaceAndComments();
-      final PsiManager manager = getManager();
-      final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
-      if (aPackage == null) {
-        if (!JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)) {
-          return JavaResolveResult.EMPTY_ARRAY;
-        }
-        else {
-          return CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE;
-        }
-      }
-      return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
+      return resolveToPackage();
     }
-    else if (parentType == METHOD_CALL_EXPRESSION) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)getParent();
-      final MethodResolverProcessor processor = new MethodResolverProcessor(methodCall);
-      try {
-        PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
-      }
-      catch (MethodProcessorSetupFailedException e) {
-        return JavaResolveResult.EMPTY_ARRAY;
-      }
-      return processor.getResult();
+    if (parentType == JavaElementType.METHOD_CALL_EXPRESSION) {
+      return resolveToMethod();
     }
-    else {
-      final VariableResolverProcessor processor = new VariableResolverProcessor(this);
-      PsiScopesUtil.resolveAndWalk(processor, this, null);
-      return processor.getResult();
+    return resolveToVariable();
+  }
+
+  private JavaResolveResult[] resolveToMethod() {
+    final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)getParent();
+    final MethodResolverProcessor processor = new MethodResolverProcessor(methodCall);
+    try {
+      PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
     }
+    catch (MethodProcessorSetupFailedException e) {
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
+    return processor.getResult();
+  }
+
+  private JavaResolveResult[] resolveToPackage() {
+    final String packageName = getCachedTextSkipWhiteSpaceAndComments();
+    final PsiManager manager = getManager();
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
+    if (aPackage == null) {
+      return JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)
+             ? CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE
+             : JavaResolveResult.EMPTY_ARRAY;
+    }
+    return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
+  }
+
+  private JavaResolveResult[] resolveToClass(PsiElement classNameElement) {
+    final String className = classNameElement.getText();
+
+    final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
+    PsiScopesUtil.resolveAndWalk(processor, this, null);
+    JavaResolveResult[] result = processor.getResult();
+    return result;
+  }
+
+  private JavaResolveResult[] resolveToVariable() {
+    final VariableResolverProcessor processor = new VariableResolverProcessor(this);
+    PsiScopesUtil.resolveAndWalk(processor, this, null);
+    return processor.getResult();
   }
 
   @NotNull
@@ -339,7 +345,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   public boolean isReferenceTo(PsiElement element) {
     IElementType i = getLastChildNode().getElementType();
-    if (i == IDENTIFIER) {
+    if (i == JavaTokenType.IDENTIFIER) {
       if (!(element instanceof PsiPackage)) {
         if (!(element instanceof PsiNamedElement)) return false;
         String name = ((PsiNamedElement)element).getName();
@@ -347,7 +353,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         if (!name.equals(getLastChildNode().getText())) return false;
       }
     }
-    else if (i == SUPER_KEYWORD || i == THIS_KEYWORD) {
+    else if (i == JavaTokenType.SUPER_KEYWORD || i == JavaTokenType.THIS_KEYWORD) {
       if (!(element instanceof PsiMethod)) return false;
       if (!((PsiMethod)element).isConstructor()) return false;
     }
@@ -379,7 +385,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       public boolean execute(final PsiElement element, final ResolveState state) {
         if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
           myVarNames.add(((PsiVariable) element).getName());
-        } else if (element instanceof PsiField && myVarNames.contains(((PsiVariable) element).getName())) {
+        }
+        else if (element instanceof PsiField && myVarNames.contains(((PsiVariable) element).getName())) {
           return true;
         }
 
@@ -513,7 +520,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   private static boolean isFullyQualified(CompositeElement classRef) {
     ASTNode qualifier = classRef.findChildByRole(ChildRole.QUALIFIER);
     if (qualifier == null) return false;
-    if (qualifier.getElementType() != REFERENCE_EXPRESSION) return false;
+    if (qualifier.getElementType() != JavaElementType.REFERENCE_EXPRESSION) return false;
     PsiElement refElement = ((PsiReference)qualifier).resolve();
     return refElement instanceof PsiPackage || isFullyQualified((CompositeElement)qualifier);
   }
@@ -540,7 +547,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
           return getLastChildNode();
         }
 
-        return TreeUtil.findChild(this, IDENTIFIER);
+        return TreeUtil.findChild(this, JavaTokenType.IDENTIFIER);
 
       case ChildRole.QUALIFIER:
         if (getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER) {
@@ -550,23 +557,23 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         return null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
-        return TreeUtil.findChild(this, REFERENCE_PARAMETER_LIST);
+        return TreeUtil.findChild(this, JavaElementType.REFERENCE_PARAMETER_LIST);
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, DOT);
+        return TreeUtil.findChild(this, JavaTokenType.DOT);
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == DOT) {
+    if (i == JavaTokenType.DOT) {
       return ChildRole.DOT;
     }
-    else if (i == REFERENCE_PARAMETER_LIST) {
+    else if (i == JavaElementType.REFERENCE_PARAMETER_LIST) {
       return ChildRole.REFERENCE_PARAMETER_LIST;
     }
-    else if (i == IDENTIFIER || i == THIS_KEYWORD || i == SUPER_KEYWORD) {
+    else if (i == JavaTokenType.IDENTIFIER || i == JavaTokenType.THIS_KEYWORD || i == JavaTokenType.SUPER_KEYWORD) {
       return ChildRole.REFERENCE_NAME;
     }
     else {
