@@ -3,10 +3,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.fileChooser.FileTextField;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -1000,6 +997,10 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
     }
 
     public void installFileCompletion(JTextField field, FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
+      throw new UnsupportedOperationException();
+    }
+
+    public FileSaverDialog createSaveFileDialog(FileSaverDescriptor descriptor, Project project) {
       throw new UnsupportedOperationException();
     }
   }
