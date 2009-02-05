@@ -190,4 +190,8 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   public JBTabs getTabs() {
     return myTabs;
   }
+
+  public boolean isDisposed() {
+    return myTabs.isDisposed();
+  }
 }

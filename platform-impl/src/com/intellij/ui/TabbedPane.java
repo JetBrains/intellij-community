@@ -61,4 +61,6 @@ public interface TabbedPane {
   void updateUI();
 
   void removeChangeListener(ChangeListener listener);
+
+  boolean isDisposed();
 }

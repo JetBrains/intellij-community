@@ -1022,8 +1022,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public void fireSelectionChanged(final EditorComposite oldSelectedComposite, final EditorComposite newSelectedComposite) {
     final VirtualFile oldSelectedFile = oldSelectedComposite != null ? oldSelectedComposite.getFile() : null;
     final VirtualFile newSelectedFile = newSelectedComposite != null ? newSelectedComposite.getFile() : null;
-    final FileEditor oldSelectedEditor = oldSelectedComposite != null ? oldSelectedComposite.getSelectedEditor() : null;
-    final FileEditor newSelectedEditor = newSelectedComposite != null ? newSelectedComposite.getSelectedEditor() : null;
+
+    final FileEditor oldSelectedEditor = oldSelectedComposite != null && !oldSelectedComposite.isDisposed() ? oldSelectedComposite.getSelectedEditor() : null;
+    final FileEditor newSelectedEditor = newSelectedComposite != null && !newSelectedComposite.isDisposed() ? newSelectedComposite.getSelectedEditor() : null;
+
     final boolean filesEqual = oldSelectedFile == null ? newSelectedFile == null : oldSelectedFile.equals(newSelectedFile);
     final boolean editorsEqual = oldSelectedEditor == null ? newSelectedEditor == null : oldSelectedEditor.equals(newSelectedEditor);
     if (!filesEqual || !editorsEqual) {

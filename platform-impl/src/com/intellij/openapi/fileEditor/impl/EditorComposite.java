@@ -304,6 +304,10 @@ public abstract class EditorComposite implements Disposable {
     return getSelectedEditorWithProvider ().getFirst ();
   }
 
+  public boolean isDisposed() {
+    return myTabbedPaneWrapper != null && myTabbedPaneWrapper.isDisposed();
+  }
+
   /**
    * @return currently selected myEditor with its provider. The method never returns <code>null</code>.
    */

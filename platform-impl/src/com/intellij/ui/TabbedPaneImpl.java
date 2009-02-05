@@ -307,4 +307,8 @@ public class TabbedPaneImpl extends JTabbedPane implements TabbedPane {
       }
     }
   }
+
+  public boolean isDisposed() {
+    return false;
+  }
 }

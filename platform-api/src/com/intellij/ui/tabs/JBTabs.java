@@ -92,4 +92,6 @@ public interface JBTabs {
   void requestFocus();
 
   void setNavigationActiondBinding(String prevActiobId, String nextActionId);
+
+  boolean isDisposed();
 }

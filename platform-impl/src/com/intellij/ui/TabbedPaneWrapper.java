@@ -22,7 +22,7 @@ import java.awt.event.MouseListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class TabbedPaneWrapper implements Disposable {
+public class TabbedPaneWrapper  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneWrapper");
   private static final PrevNextActionsDescriptor DEFAULT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_PREVIOUS_TAB);
   protected TabbedPane myTabbedPane;
@@ -78,7 +78,8 @@ public class TabbedPaneWrapper implements Disposable {
     assertIsDispatchThread();
   }
 
-  public void dispose() {
+  public boolean isDisposed() {
+    return myTabbedPane != null && myTabbedPane.isDisposed();
   }
 
   private void assertIsDispatchThread() {

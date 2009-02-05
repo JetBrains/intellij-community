@@ -211,6 +211,10 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  public final boolean isDisposed() {
+    return myDisposed;
+  }
+
   public void dispose() {
     myDisposed = true;
     mySelectedInfo = null;
@@ -2246,10 +2250,12 @@ public class JBTabsImpl extends JComponent
 
     private final ShadowAction myShadow;
     private final ActionManager myActionManager;
+    private JBTabsImpl myTabs;
 
-    protected BaseNavigationAction(final String copyFromID, JComponent c, ActionManager mgr) {
+    protected BaseNavigationAction(final String copyFromID, JBTabsImpl tabs, ActionManager mgr) {
       myActionManager = mgr;
-      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), c);
+      myTabs = tabs;
+      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs);
       setEnabledInModalContext(true);
     }
 
@@ -2259,7 +2265,7 @@ public class JBTabsImpl extends JComponent
       if (tabs == null) return;
 
       final int selectedIndex = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
-      final boolean enabled = tabs.myVisibleInfos.size() > 0 && selectedIndex >= 0;
+      final boolean enabled = tabs == myTabs && myTabs.isNavigationVisible() && selectedIndex >= 0;
       e.getPresentation().setEnabled(enabled);
       if (enabled) {
         _update(e, tabs, selectedIndex);
@@ -2286,8 +2292,8 @@ public class JBTabsImpl extends JComponent
 
   private static class SelectNextAction extends BaseNavigationAction {
 
-    public SelectNextAction(JComponent c, ActionManager mgr) {
-      super(IdeActions.ACTION_NEXT_TAB, c, mgr);
+    public SelectNextAction(JBTabsImpl tabs, ActionManager mgr) {
+      super(IdeActions.ACTION_NEXT_TAB, tabs, mgr);
     }
 
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
@@ -2300,8 +2306,8 @@ public class JBTabsImpl extends JComponent
   }
 
   private static class SelectPreviousAction extends BaseNavigationAction {
-    public SelectPreviousAction(JComponent c, ActionManager mgr) {
-      super(IdeActions.ACTION_PREVIOUS_TAB, c, mgr);
+    public SelectPreviousAction(JBTabsImpl tabs, ActionManager mgr) {
+      super(IdeActions.ACTION_PREVIOUS_TAB, tabs, mgr);
     }
 
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
@@ -2445,8 +2451,7 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
-    if (!NAVIGATION_ACTIONS_KEY.getName().equals(dataId)) return null;
-    return isNavigationVisible() ? this : null;
+    return NAVIGATION_ACTIONS_KEY.getName().equals(dataId) ? this : null;
   }
 
 
