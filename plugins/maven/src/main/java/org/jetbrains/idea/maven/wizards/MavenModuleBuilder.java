@@ -136,7 +136,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     workingDir.mkdirs();
 
     MavenRunnerParameters params = new MavenRunnerParameters(
-        false, workingDir.getPath(), Collections.singletonList("archetype:create"), null);
+        false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:create"), null);
 
     MavenRunner runner = MavenRunner.getInstance(project);
     MavenRunnerSettings settings = runner.getState().clone();
