@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,12 @@ public class NonExceptionNameEndsWithExceptionInspection
             final PsiJavaCodeReferenceElement reference =
                     factory.createReferenceElementByFQClassName(
                             "java.lang.Exception", scope);
+            final PsiJavaCodeReferenceElement[] referenceElements =
+                    extendsList.getReferenceElements();
+            for (PsiJavaCodeReferenceElement referenceElement :
+                    referenceElements) {
+                referenceElement.delete();
+            }
             extendsList.add(reference);
         }
     }
