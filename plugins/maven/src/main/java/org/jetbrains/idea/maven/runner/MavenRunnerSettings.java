@@ -34,7 +34,7 @@ public class MavenRunnerSettings implements Cloneable {
   @NonNls public static final String USE_INTERNAL_JAVA = "#JAVA_INTERNAL";
   @NonNls public static final String USE_JAVA_HOME = "#JAVA_HOME";
 
-  private boolean runMavenInBackground = false;
+  private boolean runMavenInBackground = true;
   @NotNull private String jreName = "";
   @NotNull private String vmOptions = "";
   private boolean skipTests = false;
