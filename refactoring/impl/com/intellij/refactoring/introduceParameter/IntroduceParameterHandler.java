@@ -35,6 +35,7 @@ import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,16 +118,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       return false;
     }
 
-    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(method);
-    if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final EnclosingMethodSelectionDialog dialog = new EnclosingMethodSelectionDialog(project, validEnclosingMethods);
-      dialog.show();
-      if (!dialog.isOK()) return false;
-      method = dialog.getSelectedMethod();
-    }
-    else if (validEnclosingMethods.size() == 1) {
-      method = validEnclosingMethods.get(0);
-    }
+    method = chooseEnclosingMethod(method);
+    if (method == null) return false;
 
     final PsiMethod methodToSearchFor = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (methodToSearchFor == null) return false;
@@ -245,6 +238,22 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       }
     }
     return enclosingMethods;
+  }
+
+
+  @Nullable
+  public static PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method) {
+    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(method);
+    if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
+      final EnclosingMethodSelectionDialog dialog = new EnclosingMethodSelectionDialog(method.getProject(), validEnclosingMethods);
+      dialog.show();
+      if (!dialog.isOK()) return null;
+      method = dialog.getSelectedMethod();
+    }
+    else if (validEnclosingMethods.size() == 1) {
+      method = validEnclosingMethods.get(0);
+    }
+    return method;
   }
 
   private static boolean isLibraryInterfaceMethod(final PsiMethod method) {

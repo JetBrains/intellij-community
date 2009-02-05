@@ -13,6 +13,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -58,6 +59,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     String varName = myReferenceExpression.getReferenceName();
     PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     LOG.assertTrue(method != null);
+    method = IntroduceParameterHandler.chooseEnclosingMethod(method);
+    if (method == null) return;
 
     method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
