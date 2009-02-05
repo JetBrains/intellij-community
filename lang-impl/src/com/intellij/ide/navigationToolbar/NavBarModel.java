@@ -441,8 +441,12 @@ public class NavBarModel {
             }
           }
       );
-      for (PsiDirectory psiDirectory : psiDirectories) {
-        getDirectoryChildren(psiDirectory, rootElement, result);
+      for (final PsiDirectory psiDirectory : psiDirectories) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run(){
+              getDirectoryChildren(psiDirectory, rootElement, result);
+            }
+        });
       }
     }
     else if (object instanceof PsiDirectory) {
