@@ -1,0 +1,6 @@
+#Path to Groovy distribution
+path.variable.groovy_sdk_path=C\:/groovy-1.5.7
+#Path to IDEA distribution, used in groovy module SDK
+jdk.home.jetgroovy_idea_sdk=C\:/JetGroovyIdeaSdk
+#Path to some JDK 1.3
+jdk.home.jetgroovy_runtime_jdk=C\:/jdk1.5.0_08
