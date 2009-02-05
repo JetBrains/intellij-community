@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -84,7 +85,13 @@ public class PropertyUtil {
       return false;
     }
 
-    return method.getReturnType() == null || method.getReturnType() == PsiType.VOID;
+    final PsiType returnType = method.getReturnType();
+
+    if (returnType == null || returnType == PsiType.VOID) {
+      return true;
+    }
+
+    return Comparing.equal(PsiUtil.resolveClassInType(returnType), method.getContainingClass());
   }
 
   @Nullable public static String getPropertyName(PsiMethod method) {
@@ -392,6 +399,10 @@ public class PropertyUtil {
   }
 
   public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass) {
+    return generateSetterPrototype(field, containingClass, false);
+  }
+
+  public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass, boolean returnSelf) {
     Project project = field.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
@@ -402,7 +413,7 @@ public class PropertyUtil {
     String propertyName = codeStyleManager.variableNameToPropertyName(name, kind);
     String setName = suggestSetterName(project, field);
     try {
-      PsiMethod setMethod = factory.createMethod(setName, PsiType.VOID);
+      PsiMethod setMethod = factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID);
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       PsiParameter param = factory.createParameter(parameterName, field.getType());
 
@@ -429,7 +440,11 @@ public class PropertyUtil {
       buffer.append(name);
       buffer.append("=");
       buffer.append(parameterName);
-      buffer.append(";\n}");
+      buffer.append(";\n");
+      if (returnSelf) {
+        buffer.append("return this;\n");
+      }
+      buffer.append("}");
       PsiCodeBlock body = factory.createCodeBlockFromText(buffer.toString(), null);
       setMethod.getBody().replace(body);
       setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);

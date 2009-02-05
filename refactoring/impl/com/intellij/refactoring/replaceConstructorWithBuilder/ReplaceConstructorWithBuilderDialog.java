@@ -1,0 +1,298 @@
+/*
+ * User: anna
+ * Date: 07-May-2008
+ */
+package com.intellij.refactoring.replaceConstructorWithBuilder;
+
+import com.intellij.ide.util.PackageChooserDialog;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.ui.*;
+import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumnModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
+public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
+  private final PsiMethod[] myConstructors;
+
+  private TextFieldWithBrowseButton myExistentClassTF;
+
+  private JRadioButton myCreateBuilderClassRadioButton;
+  private JRadioButton myExistingBuilderClassRadioButton;
+
+  private JPanel myWholePanel;
+  private JTextField myNewClassName;
+  private TextFieldWithBrowseButton myPackageTextField;
+
+  private static final Logger LOG = Logger.getInstance("#" + ReplaceConstructorWithBuilderDialog.class.getName());
+  private final LinkedHashMap<String, ParameterData> myParametersMap;
+  private MyTableModel myTableModel;
+  private Table myTable;
+
+
+  protected ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
+    super(project, false);
+    myConstructors = constructors;
+    init();
+    setTitle(ReplaceConstructorWithBuilderProcessor.REFACTORING_NAME);
+    myParametersMap = new LinkedHashMap<String, ParameterData>();
+    for (PsiMethod constructor : constructors) {
+      ParameterData.createFromConstructor(constructor, myParametersMap);
+    }
+  }
+
+  protected void doAction() {
+    TableUtil.stopEditing(myTable);
+
+    final String className;
+    final String packageName;
+    if (myCreateBuilderClassRadioButton.isSelected()) {
+      className = myNewClassName.getText().trim();
+      packageName = myPackageTextField.getText().trim();
+    } else {
+      final String fqName = myExistentClassTF.getText().trim();
+      className = StringUtil.getShortName(fqName);
+      packageName = StringUtil.getPackageName(fqName);
+    }
+    invokeRefactoring(new ReplaceConstructorWithBuilderProcessor(getProject(), myConstructors, myParametersMap, className, packageName,
+                                                                 myCreateBuilderClassRadioButton.isSelected()));
+  }
+
+  @Override
+  protected JComponent createNorthPanel() {
+    return createTablePanel();
+  }
+
+  protected JComponent createCenterPanel() {
+
+    myPackageTextField.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final Project project = getProject();
+        final PackageChooserDialog chooser = new PackageChooserDialog(RefactorJBundle.message("choose.destination.package.label"), project);
+        final String packageText = myPackageTextField.getText();
+        chooser.selectPackage(packageText);
+        chooser.show();
+        final PsiPackage aPackage = chooser.getSelectedPackage();
+        if (aPackage != null) {
+          final String packageName = aPackage.getQualifiedName();
+          myPackageTextField.setText(packageName);
+        }
+      }
+    });
+
+    myExistentClassTF.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final TreeClassChooser dialog = TreeClassChooserFactory.getInstance(getProject())
+          .createWithInnerClassesScopeChooser("", GlobalSearchScope.projectScope(myProject), null, null);
+        dialog.showDialog();
+        final PsiClass psiClass = dialog.getSelectedClass();
+        if (psiClass != null) {
+          myExistentClassTF.setText(psiClass.getQualifiedName());
+        }
+      }
+    });
+
+    final ActionListener enableDisableListener = new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        setEnabled(myCreateBuilderClassRadioButton.isSelected());
+        validateButtons();
+      }
+    };
+    myCreateBuilderClassRadioButton.addActionListener(enableDisableListener);
+    myExistingBuilderClassRadioButton.addActionListener(enableDisableListener);
+    myCreateBuilderClassRadioButton.setSelected(true);
+    setEnabled(true);
+
+    final DocumentAdapter validateButtonsListener = new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        validateButtons();
+      }
+    };
+    myNewClassName.getDocument().addDocumentListener(validateButtonsListener);
+    myPackageTextField.getTextField().getDocument().addDocumentListener(validateButtonsListener);
+    myExistentClassTF.getTextField().getDocument().addDocumentListener(validateButtonsListener);
+
+
+    return myWholePanel;
+  }
+
+  private void setEnabled(final boolean createNew) {
+    myNewClassName.setEnabled(createNew);
+    myPackageTextField.setEnabled(createNew);
+    myExistentClassTF.setEnabled(!createNew);
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myNewClassName;
+  }
+
+  @Override
+  protected boolean areButtonsValid() {
+    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+    for (ParameterData parameterData : myParametersMap.values()) {
+      if (!nameHelper.isIdentifier(parameterData.getFieldName())) return false;
+      if (!nameHelper.isIdentifier(parameterData.getSetterName())) return false;
+    }
+    if (myCreateBuilderClassRadioButton.isSelected()) {
+      final String className = myNewClassName.getText().trim();
+      if (className.length() == 0) return false;
+      return nameHelper.isQualifiedName(className) && nameHelper.isQualifiedName(myPackageTextField.getText().trim());
+    } else {
+      final String qualifiedName = myExistentClassTF.getText().trim();
+      return qualifiedName.length() > 0 && nameHelper.isQualifiedName(qualifiedName);
+    }
+  }
+
+  private JScrollPane createTablePanel() {
+    myTableModel = new MyTableModel();
+    myTable = new Table(myTableModel);
+    myTable.setSurrendersFocusOnKeystroke(true);
+    myTable.getTableHeader().setReorderingAllowed(false);
+
+    final TableColumnModel columnModel = myTable.getColumnModel();
+    columnModel.getColumn(SKIP_SETTER).setCellRenderer(new BooleanTableCellRenderer());
+
+    myTable.registerKeyboardAction(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          final int[] selectedRows = myTable.getSelectedRows();
+          for (final int selectedRow : selectedRows) {
+            final ParameterData parameterData = myTableModel.getParamData(selectedRow);
+            if (parameterData.getDefaultValue() != null) {
+              parameterData.setInsertSetter(!parameterData.isInsertSetter());
+            }
+          }
+          TableUtil.selectRows(myTable, selectedRows);
+        }
+      },
+      KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0),
+      JComponent.WHEN_FOCUSED
+    );
+
+    myTable.setPreferredScrollableViewportSize(new Dimension(550, myTable.getRowHeight() * 12));
+    myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    final Border titledBorder = IdeBorderFactory.createTitledBorder("Parameters to Pass to the Builder");
+    final Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
+    final Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
+    scrollPane.setBorder(border);
+
+    return scrollPane;
+  }
+
+  private static final int PARAM = 0;
+  private static final int FIELD = 1;
+  private static final int SETTER = 2;
+  private static final int DEFAULT_VALUE = 3;
+  private static final int SKIP_SETTER = 4;
+
+  private class MyTableModel extends AbstractTableModel {
+
+    public Class getColumnClass(int columnIndex) {
+      if (columnIndex == SKIP_SETTER) {
+        return Boolean.class;
+      }
+      return String.class;
+    }
+
+    public int getRowCount() {
+      return myParametersMap.size();
+    }
+
+    public int getColumnCount() {
+      return 5;
+    }
+
+    public Object getValueAt(int rowIndex, int columnIndex) {
+      final ParameterData data = getParamData(rowIndex);
+      switch (columnIndex) {
+        case PARAM:
+          return data.getType().getCanonicalText() + " " + data.getParamName();
+        case FIELD:
+          return data.getFieldName();
+        case SETTER:
+          return data.getSetterName();
+        case DEFAULT_VALUE:
+          return data.getDefaultValue();
+        case SKIP_SETTER:
+          return !data.isInsertSetter();
+      }
+      return null;
+    }
+
+    private ParameterData getParamData(int rowIndex) {
+      return myParametersMap.get(new ArrayList<String>(myParametersMap.keySet()).get(rowIndex));
+    }
+
+    @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+      final ParameterData data = getParamData(rowIndex);
+      switch (columnIndex) {
+        case FIELD:
+          data.setFieldName((String)aValue);
+          break;
+        case SETTER:
+          data.setSetterName((String)aValue);
+          break;
+        case DEFAULT_VALUE:
+          data.setDefaultValue((String)aValue);
+          break;
+        case SKIP_SETTER:
+          data.setInsertSetter(!((Boolean)aValue).booleanValue());
+          break;
+        default:
+          assert false;
+      }
+    }
+
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+      if (columnIndex == PARAM) return false;
+      if (columnIndex == SKIP_SETTER) {
+        final ParameterData data = getParamData(rowIndex);
+        if (data.getDefaultValue() == null) return false;
+      }
+      return true;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+      switch (column) {
+        case PARAM:
+          return "Parameter";
+        case FIELD:
+          return "Fieled Name";
+        case SETTER:
+          return "Setter Name";
+        case DEFAULT_VALUE:
+          return "Default Value";
+        case SKIP_SETTER:
+          return "Optional Setter";
+      }
+      assert false: "unknown column " + column;
+      return null;
+    }
+  }
+}

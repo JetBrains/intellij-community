@@ -169,6 +169,7 @@
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
       <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction"/>
+      <action id="ReplaceConstructorWithBuilder" class="com.intellij.refactoring.actions.ReplaceConstructorWithBuilderAction"/>
       <separator/>
       <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
       <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
