@@ -211,7 +211,7 @@ public class SvnVcs extends AbstractVcs {
   public void invokeRefreshSvnRoots(final boolean hidden) {
     final Runnable refresher = new Runnable() {
       public void run() {
-        myRootsInfo.ensureInitialized();
+        //myRootsInfo.ensureInitialized();
         myRootsInfo.realRefresh();
         myProject.getMessageBus().syncPublisher(ROOTS_RELOADED).run();
       }
@@ -841,7 +841,7 @@ public class SvnVcs extends AbstractVcs {
 
   @NotNull
   public SvnFileUrlMapping getSvnFileUrlMapping() {
-    myRootsInfo.ensureInitialized();
+    //myRootsInfo.ensureInitialized();
     return myRootsInfo;
   }
 

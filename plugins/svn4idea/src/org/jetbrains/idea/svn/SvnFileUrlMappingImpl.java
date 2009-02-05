@@ -23,7 +23,6 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileUrlMappingImpl");
   
   private volatile boolean myInitialized;
-  private final Project myProject;
   private final SvnVcs myVcs;
 
   private final Object myMonitor = new Object();
@@ -31,27 +30,71 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
   private final Map<String, Pair<String, VirtualFile>> myUrl2FileMap;
   private final Map<String, VirtualFile> myFileRootsMap;
   private volatile boolean myUserRootsDiffersFromReal;
-  private VirtualFile[] myNotFilteredRoots;
-  private final ProjectLevelVcsManager myPlVcsManager;
+
+  private final MyRootsHelper myHelper;
+
+  private static class MyRootsHelper {
+    private final ProjectLevelVcsManager myPlVcsManager;
+    private final SvnVcs myVcs;
+
+    private final static ThreadLocal<Boolean> ourInsideRefresh = new ThreadLocal<Boolean>() {
+      @Override
+      protected Boolean initialValue() {
+        return Boolean.TRUE;
+      }
+    };
+
+    private MyRootsHelper(final Project project, final SvnVcs vcs) {
+      myVcs = vcs;
+      myPlVcsManager = ProjectLevelVcsManager.getInstance(project);
+    }
+
+    public boolean doConvertion() {
+      return Boolean.TRUE.equals(ourInsideRefresh.get());
+    }
+
+    public VirtualFile[] getRootSettings() {
+      try {
+        ourInsideRefresh.set(Boolean.FALSE);
+        return myPlVcsManager.getRootsUnderVcs(myVcs);
+      } finally {
+        ourInsideRefresh.set(Boolean.TRUE);
+      }
+    }
+  }
 
   SvnFileUrlMappingImpl(final Project project, final SvnVcs vcs) {
-    myProject = project;
     myVcs = vcs;
-    myPlVcsManager = ProjectLevelVcsManager.getInstance(project);
 
     myFile2UrlMap = new HashMap<String, RootUrlInfo>();
     myUrl2FileMap = new HashMap<String, Pair<String, VirtualFile>>();
     myFileRootsMap = new HashMap<String, VirtualFile>();
+
+    myHelper = new MyRootsHelper(project, myVcs);
   }
 
-  public void ensureInitialized() {
+  /*public void ensureInitialized() {
+    synchronized (myMonitor) {
+      if (myInitialized) return;
+    }
+
+    // without convertion
+    final VirtualFile[] mappings = myHelper.getRootSettings();
+
     synchronized (myMonitor) {
       if (! myInitialized) {
-        artificialFill();
+        final FileUrlMappingCrawler crawler = new FileUrlMappingCrawler();
+        for (VirtualFile root : mappings) {
+          crawler.setCurrentRoot(root);
+          crawler.fun(root);
+        }
+        synchronized (myMonitor) {
+          crawler.copyResults();
+        }
         myInitialized = true;
       }
     }
-  }
+  }*/
 
   @Nullable
   public SVNURL getUrlForFile(final File file) {
@@ -205,17 +248,6 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
     }
   }
 
-  private MyData putToData() {
-    synchronized (myMonitor) {
-      final MyData result = new MyData();
-      result.myRootsDiffer = myUserRootsDiffersFromReal;
-      result.myFile2UrlMap.putAll(myFile2UrlMap);
-      result.myFileRootsMap.putAll(myFileRootsMap);
-      result.myUrl2FileMap.putAll(myUrl2FileMap);
-      return result;
-    }
-  }
-
   private class FileUrlMappingCrawler implements NotNullFunction<VirtualFile, Collection<VirtualFile>> {
     private final SVNWCClient myClient;
     private VirtualFile myCurrentRoot;
@@ -266,26 +298,14 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
     }
   }
 
-  private void artificialFill() {
-    myNotFilteredRoots = myPlVcsManager.getRootsUnderVcs(myVcs);
-    final FileUrlMappingCrawler crawler = new FileUrlMappingCrawler();
-    for (VirtualFile root : myNotFilteredRoots) {
-      crawler.setCurrentRoot(root);
-      crawler.fun(root);
-    }
-    synchronized (myMonitor) {
-      crawler.copyResults();
-    }
-  }
-
   /**
    * for: convertions of roots in direct root search; update of roots in indirect root search
    */
   public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
-    synchronized (myMonitor) {
-      myNotFilteredRoots = result.toArray(new VirtualFile[result.size()]);
-      final Collection<Pair<String, VirtualFile>> pairCollection = myUrl2FileMap.values();
+    if (! myHelper.doConvertion()) return result;
 
+    synchronized (myMonitor) {
+      final Collection<Pair<String, VirtualFile>> pairCollection = myUrl2FileMap.values();
       if (pairCollection.isEmpty()) {
         return result;
       }
@@ -298,15 +318,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
   }
 
   public void realRefresh() {
-    final VirtualFile[] roots;
-    synchronized (myMonitor) {
-      if (myNotFilteredRoots == null) {
-        // this will refresh
-        myPlVcsManager.getRootsUnderVcs(myVcs);
-      }
-
-      roots = myNotFilteredRoots;
-    }
+    final VirtualFile[] roots = myHelper.getRootSettings();
 
     final FileUrlMappingCrawler crawler = new FileUrlMappingCrawler();
     for (VirtualFile root : roots) {
@@ -348,6 +360,6 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping {
   }
 
   public VirtualFile[] getNotFilteredRoots() {
-    return myNotFilteredRoots;
+    return myHelper.getRootSettings();
   }
 }
