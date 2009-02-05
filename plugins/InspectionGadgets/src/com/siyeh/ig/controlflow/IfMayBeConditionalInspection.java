@@ -51,7 +51,7 @@ public class IfMayBeConditionalInspection extends BaseInspection {
     }
 
     private static class IfMayBeConditionalFix extends InspectionGadgetsFix {
-        
+
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
@@ -182,13 +182,35 @@ public class IfMayBeConditionalInspection extends BaseInspection {
                 if (!(elseStatement instanceof PsiExpressionStatement)) {
                     return;
                 }
+                final PsiExpressionStatement thenExpressionStatement =
+                        (PsiExpressionStatement) thenStatement;
+                final PsiExpression thenExpression =
+                        thenExpressionStatement.getExpression();
+                if (!(thenExpression instanceof PsiAssignmentExpression)) {
+                    return;
+                }
+                final PsiAssignmentExpression thenAssignmentExpression =
+                        (PsiAssignmentExpression) thenExpression;
+                final PsiExpressionStatement elseExpressionStatement =
+                        (PsiExpressionStatement) elseStatement;
+                final PsiExpression elseExpression =
+                        elseExpressionStatement.getExpression();
+                if (!(elseExpression instanceof PsiAssignmentExpression)) {
+                    return;
+                }
+                final PsiAssignmentExpression elseAssignmentExpression =
+                        (PsiAssignmentExpression) elseExpression;
+                if (!thenAssignmentExpression.getOperationTokenType().equals(
+                        elseAssignmentExpression.getOperationTokenType())) {
+                    return;
+                }
                 final PsiVariable thenVariable =
-                        getAssignmentTarget(thenStatement);
+                        getAssignmentTarget(thenAssignmentExpression);
                 if (thenVariable == null) {
                     return;
                 }
                 final PsiVariable elseVariable =
-                        getAssignmentTarget(elseStatement);
+                        getAssignmentTarget(elseAssignmentExpression);
                 if (elseVariable == null) {
                     return;
                 }
@@ -199,16 +221,8 @@ public class IfMayBeConditionalInspection extends BaseInspection {
             }
         }
 
-        private static PsiVariable getAssignmentTarget(PsiStatement statement) {
-            final PsiExpressionStatement thenExpressionStatement =
-                    (PsiExpressionStatement) statement;
-            final PsiExpression expression =
-                    thenExpressionStatement.getExpression();
-            if (!(expression instanceof PsiAssignmentExpression)) {
-                return null;
-            }
-            final PsiAssignmentExpression assignmentExpression =
-                    (PsiAssignmentExpression) expression;
+        private static PsiVariable getAssignmentTarget(
+                PsiAssignmentExpression assignmentExpression) {
             final PsiExpression thenLhs = assignmentExpression.getLExpression();
             if (!(thenLhs instanceof PsiReferenceExpression)) {
                 return null;
@@ -221,6 +235,5 @@ public class IfMayBeConditionalInspection extends BaseInspection {
             }
             return (PsiVariable) target;
         }
-
     }
 }

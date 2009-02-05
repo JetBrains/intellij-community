@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  
+  <problem>
+    <file>IfMayBeConditional.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement could be replaced with simple conditional expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; could be replaced with simple conditional expression #loc</description>
+  </problem>
+</problems>
