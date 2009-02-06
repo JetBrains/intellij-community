@@ -48,7 +48,7 @@ public class FileUtil {
 
   @Nullable
   public static File createFileByRelativePath(@NotNull final File absoluteBase, @NotNull final String relativeTail) {
-    assert absoluteBase.isAbsolute() && absoluteBase.isDirectory();
+    // assert absoluteBase.isAbsolute() && absoluteBase.isDirectory(); : assertion seem to be too costly
 
     File point = absoluteBase;
     final String[] parts = relativeTail.replace('\\', '/').split("/");
@@ -67,7 +67,7 @@ public class FileUtil {
     return point;
   }
 
-  @Nullable                                                            
+  @Nullable
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
 
