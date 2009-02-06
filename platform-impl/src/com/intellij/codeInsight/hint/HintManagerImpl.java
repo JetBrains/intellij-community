@@ -102,11 +102,13 @@ public class HintManagerImpl extends HintManager implements Disposable {
     };
 
     myEditorFocusListener = new FocusAdapter() {
-      public void focusLost(FocusEvent e) {
+      public void focusLost(final FocusEvent e) {
         myHideAlarm.addRequest(
           new Runnable() {
             public void run() {
-              hideAllHints();
+              if (!JBPopupFactory.getInstance().isChildPopupFocused(e.getComponent())) {
+                hideAllHints();
+              }
             }
           },
           200

@@ -104,6 +104,12 @@ public abstract class JBPopupFactory {
 
   public abstract RelativePoint guessBestPopupLocation(JComponent component);
 
+  public boolean isChildPopupFocused(@Nullable Component parent) {
+    if (parent == null) return false;
+    final JBPopup child = getChildPopup(parent);
+    return child != null && child.isFocused();
+  }
+
   /**
    * Possible ways to select actions in a popup from keyboard.
    */

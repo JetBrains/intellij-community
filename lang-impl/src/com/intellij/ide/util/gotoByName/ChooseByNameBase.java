@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -91,6 +92,8 @@ public abstract class ChooseByNameBase{
   @NonNls private static final String CHECK_BOX_CARD = "chkbox";
   @NonNls private static final String SEARCHING_CARD = "searching";
   private static final int REBUILD_DELAY = 300;
+
+  private final Alarm myHideAlarm = new Alarm();
 
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
@@ -326,11 +329,14 @@ public abstract class ChooseByNameBase{
 
     if (isCloseByFocusLost()) {
       myTextField.addFocusListener(new FocusAdapter() {
-        public void focusLost(FocusEvent e) {
-          if (!myTextFieldPanel.focusRequested()) {
-            doClose(false);
-            myTextFieldPanel.hideHint();
-          }
+        public void focusLost(final FocusEvent e) {
+          myHideAlarm.addRequest(new Runnable() {
+            public void run() {
+              if (!JBPopupFactory.getInstance().isChildPopupFocused(e.getComponent())) {
+                hideHint();
+              }
+            }
+          }, 200);
         }
       });
     }
@@ -428,6 +434,13 @@ public abstract class ChooseByNameBase{
 
     if (modalityState != null) {
       rebuildList(0, 0, null, modalityState);
+    }
+  }
+
+  private void hideHint() {
+    if (!myTextFieldPanel.focusRequested()) {
+      doClose(false);
+      myTextFieldPanel.hideHint();
     }
   }
 
