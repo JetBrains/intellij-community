@@ -16,11 +16,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
@@ -147,7 +147,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myNameSuggestionsField.getComponent();
+    return myNameSuggestionsField.getFocusableComponent();
   }
 
   protected JComponent createNorthPanel() {
@@ -180,6 +180,6 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
   protected boolean areButtonsValid() {
     final String newName = getNewName();
-    return RenameUtil.isValidName(myProject, myTag, newName);
+    return !StringUtil.containsAnyChar(newName, "\t ;*'\"\\/,()^&<>={}"); // RenameUtil.isValidName(myProject, myTag, newName); // IDEADEV-34531
   }
 }
