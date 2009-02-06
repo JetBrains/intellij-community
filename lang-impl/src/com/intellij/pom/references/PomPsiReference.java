@@ -8,9 +8,6 @@ import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaDataTarget;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
@@ -34,7 +31,7 @@ public class PomPsiReference extends PomReference {
   @Nullable
   public PomTarget resolve() {
     final PsiElement element = myDelegate.resolve();
-    return element == null ? null : convertPsi2Target(element);
+    return element == null ? null : PomReferenceUtil.convertPsi2Target(element);
   }
 
   public PsiReference getDelegate() {
@@ -53,7 +50,7 @@ public class PomPsiReference extends PomReference {
             if (element == null) {
               return null;
             }
-            return convertPsi2Target(element);
+            return PomReferenceUtil.convertPsi2Target(element);
           }
         });
       return list.toArray(new PomTarget[list.size()]);
@@ -63,28 +60,13 @@ public class PomPsiReference extends PomReference {
     return target == null ? PomTarget.EMPTY_ARRAY : new PomTarget[]{target};
   }
 
-  @NotNull
-  public static PomTarget convertPsi2Target(@NotNull PsiElement element) {
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaOwner metaOwner = (PsiMetaOwner)element;
-      final PsiMetaData psiMetaData = metaOwner.getMetaData();
-      if (psiMetaData != null) {
-        return new PsiMetaDataTarget(psiMetaData);
-      }
-    }
-    if (element instanceof PsiNameIdentifierOwner) {
-      return new PsiNamedElementTarget((PsiNameIdentifierOwner)element);
-    }
-    return new PsiTarget<PsiElement>(element);
-  }
-
   public void bindToElement(@NotNull PomTarget target) throws IncorrectOperationException {
-    myDelegate.bindToElement(((PsiTarget) target).getDeclaringElement());
+    myDelegate.bindToElement(((PsiTarget) target).getNavigationElement());
   }
 
   @Override
   public boolean isReferenceTo(@NotNull PomTarget target) {
-    return myDelegate.isReferenceTo(((PsiTarget) target).getDeclaringElement());
+    return myDelegate.isReferenceTo(((PsiTarget) target).getNavigationElement());
   }
 
   @NotNull

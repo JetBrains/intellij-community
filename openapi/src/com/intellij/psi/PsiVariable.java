@@ -15,14 +15,16 @@
  */
 package com.intellij.psi;
 
+import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a Java local variable, method parameter or field.
  */
-public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwner {
+public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwner, PsiTarget, PomRenameableTarget<PsiElement> {
   /**
    * Returns the type of the variable.
    *
@@ -80,4 +82,6 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
    * @return the variable name identifier.
    */
   @Nullable PsiIdentifier getNameIdentifier();
+
+  PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 }

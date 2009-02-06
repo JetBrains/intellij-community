@@ -106,6 +106,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return SharedPsiElementImplUtil.findReferenceAt(this, offset);
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     return this;
   }

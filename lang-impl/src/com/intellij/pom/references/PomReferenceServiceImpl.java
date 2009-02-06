@@ -221,7 +221,7 @@ public class PomReferenceServiceImpl extends PomReferenceService {
       int flags = oldStuff.getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
       PsiElement targetElement = oldStuff.findTargetElement(editor, flags, offset);
       if (targetElement != null) {
-        return Arrays.<PomTarget>asList(new PsiTarget<PsiElement>(targetElement));
+        return Arrays.<PomTarget>asList(new DelegatePsiTarget(targetElement));
       }
     }
 
@@ -230,7 +230,7 @@ public class PomReferenceServiceImpl extends PomReferenceService {
       for (PsiElement psiElement : oldStuff.getTargetCandidates(psiReference)) {
         PsiElement navElement =
           oldStuff.getGotoDeclarationTarget(psiElement, psiElement.getNavigationElement());
-        result.add(PomPsiReference.convertPsi2Target(navElement));
+        result.add(PomReferenceUtil.convertPsi2Target(navElement));
       }
     }
 

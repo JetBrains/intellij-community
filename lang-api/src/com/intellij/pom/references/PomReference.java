@@ -53,7 +53,7 @@ public abstract class PomReference {
   public void bindToElement(@NotNull PomTarget target) {
     if (target instanceof PomNamedTarget) {
       final PomNamedTarget namedTarget = (PomNamedTarget)target;
-      PomReferenceUtil.changeContent(this, namedTarget.getTargetName());
+      PomReferenceUtil.changeContent(this, namedTarget.getName());
     }
     throw new UnsupportedOperationException("Cannot bind reference " + this + " to unnamed target " + target);
   }

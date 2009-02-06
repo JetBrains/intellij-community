@@ -9,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public interface PomRenameableTarget extends PomNamedTarget{
+public interface PomRenameableTarget<T> extends PomNamedTarget{
 
   boolean isWritable();
 
-  void setTargetName(@NotNull String newName);
+  T setName(@NotNull String newName);
   
 }

@@ -12,6 +12,6 @@ import org.jetbrains.annotations.NotNull;
 public interface PomNamedTarget extends PomTarget {
 
   @NotNull
-  String getTargetName();
+  String getName();
 
 }

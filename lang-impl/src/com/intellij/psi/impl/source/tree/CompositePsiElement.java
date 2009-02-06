@@ -197,6 +197,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return getParent();
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     return this;
   }

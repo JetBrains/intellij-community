@@ -8,6 +8,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.DelegatePsiTarget;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataTarget;
+import com.intellij.pom.PomTarget;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -31,4 +37,18 @@ public class PomReferenceUtil {
   }
 
 
+  @NotNull
+  public static PomTarget convertPsi2Target(@NotNull PsiElement element) {
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaOwner metaOwner = (PsiMetaOwner)element;
+      final PsiMetaData psiMetaData = metaOwner.getMetaData();
+      if (psiMetaData != null) {
+        return new PsiMetaDataTarget(psiMetaData);
+      }
+    }
+    if (element instanceof PomTarget) {
+      return (PomTarget)element;
+    }
+    return new DelegatePsiTarget(element);
+  }
 }

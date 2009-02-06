@@ -86,6 +86,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
     return getParent();
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     return this;
   }
