@@ -68,10 +68,18 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     if (myDocument.getTextLength() == 0) return;
 
-    int lastLineEnd = myDocument.getLineEndOffset(myDocument.getLineNumber(myEndOffset));
-    FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
-    if (collapsedAt != null) {
-      myEndOffset = Math.max(myEndOffset, collapsedAt.getEndOffset());
+    while (true) {
+      int lastLineEnd = myDocument.getLineEndOffset(myDocument.getLineNumber(myEndOffset));
+      FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
+      if (collapsedAt != null) {
+        final int endOffset = collapsedAt.getEndOffset();
+        if (endOffset <= myEndOffset) {
+          break;
+        }
+        myEndOffset = endOffset;
+      } else {
+        break;
+      }
     }
 
     boolean wholeLinesSelected = !hasSelection || (
