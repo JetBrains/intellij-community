@@ -155,12 +155,18 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     public void dispose() {
+      if (console != null) {
         Disposer.dispose(console);
         console = null;
+      }
+      if (testNGResults != null) {
         Disposer.dispose(testNGResults);
         testNGResults = null;
-        consoleProperties.dispose();
+      }
+      if (consoleProperties != null) {
+        Disposer.dispose(consoleProperties);
         consoleProperties = null;
+      }
     }
 
     private List<Printable> getPrintables(final TestResultMessage result, String s) {
