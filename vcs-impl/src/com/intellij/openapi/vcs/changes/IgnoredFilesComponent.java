@@ -66,35 +66,23 @@ public class IgnoredFilesComponent {
       if (myFilesToIgnore.size() == 0) {
         return IgnoreResult.NO;
       }
-      String filePath = null;
       // don't use VfsUtil.getRelativePath() here because it can't handle paths where one file is not a direct ancestor of another one
       final VirtualFile baseDir = myProject.getBaseDir();
       final File baseDirIoFile = (baseDir != null) ? new File(baseDir.getPath()) : null;
-      if (baseDir != null) {
-        filePath = FileUtil.getRelativePath(new File(baseDir.getPath()), new File(file.getPath()));
-        if (filePath != null) {
-          filePath = FileUtil.toSystemIndependentName(filePath);
-        }
-        if (file.isDirectory()) {
-          filePath += "/";
-        }
-      }
       String absIoPath = new File(file.getPath()).getAbsolutePath();
       absIoPath = file.isDirectory() ? (absIoPath + File.separatorChar) : absIoPath;
       for(IgnoredFileBean bean: myFilesToIgnore) {
-        if (filePath != null) {
-          final String prefix = bean.getPath();
-          if ("./".equals(prefix)) {
-            // special case for ignoring the project base dir (IDEADEV-16056)
-            final String basePath = FileUtil.toSystemIndependentName(baseDir.getPath());
-            final String fileAbsPath = FileUtil.toSystemIndependentName(file.getPath());
-            if (StringUtil.startsWithIgnoreCase(fileAbsPath, basePath)) {
-              return IgnoreResult.SUBTREE;
-            }
+        final String prefix = bean.getPath();
+        if ("./".equals(prefix) && baseDir != null) {
+          // special case for ignoring the project base dir (IDEADEV-16056)
+          final String basePath = FileUtil.toSystemIndependentName(baseDir.getPath());
+          final String fileAbsPath = FileUtil.toSystemIndependentName(file.getPath());
+          if (StringUtil.startsWithIgnoreCase(fileAbsPath, basePath)) {
+            return IgnoreResult.SUBTREE;
           }
-          else if (prefix != null && bean.fileIsUnderMe(absIoPath, baseDirIoFile)) {
-            return IgnoreSettingsType.UNDER_DIR.equals(bean.getType()) ? IgnoreResult.SUBTREE : IgnoreResult.SELF;
-          }
+        }
+        else if (prefix != null && bean.fileIsUnderMe(absIoPath, baseDirIoFile)) {
+          return IgnoreSettingsType.UNDER_DIR.equals(bean.getType()) ? IgnoreResult.SUBTREE : IgnoreResult.SELF;
         }
         final Pattern pattern = bean.getPattern();
         if (pattern != null && pattern.matcher(file.getName()).matches()) {
