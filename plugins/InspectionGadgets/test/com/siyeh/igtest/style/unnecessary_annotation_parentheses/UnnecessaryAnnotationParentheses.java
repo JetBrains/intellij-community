@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryAnnotationParentheses {
 
-    @NotNull()
+    @Deprecated()
     Object foo() {
         return null;
     }
