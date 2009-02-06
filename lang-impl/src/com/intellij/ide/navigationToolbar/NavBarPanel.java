@@ -999,7 +999,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       if (element != null && element.isValid()) {
         final PsiFile file = element.getContainingFile();
         if (file != null) {
-          return new PsiDirectory[]{file.getContainingDirectory()};
+          final PsiDirectory psiDirectory = file.getContainingDirectory();
+          return psiDirectory != null ? new PsiDirectory[]{psiDirectory} : PsiDirectory.EMPTY_ARRAY;
         }
       }
       final PsiDirectoryContainer directoryContainer = getSelectedElement(PsiDirectoryContainer.class);
