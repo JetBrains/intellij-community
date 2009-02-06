@@ -67,7 +67,7 @@ public class RunConfigurationAction extends ComboBoxAction {
       setConfigurationIcon(presentation, settings, project);
     }
     else {
-      presentation.setText(" ");
+      presentation.setText(""); // IDEA-21657
       presentation.setIcon(null);
     }
   }
