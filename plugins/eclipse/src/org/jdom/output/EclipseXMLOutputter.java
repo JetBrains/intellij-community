@@ -56,6 +56,7 @@
 
 package org.jdom.output;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.*;
 
 import javax.xml.transform.Result;
@@ -145,7 +146,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * before use.
      */
     public EclipseXMLOutputter(Format format) {
-        userFormat = (Format) format.clone();
+        userFormat = (Format) format;
         currentFormat = userFormat;
     }
 
@@ -158,7 +159,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param that the XMLOutputter to clone
      */
     public EclipseXMLOutputter(EclipseXMLOutputter that) {
-        this.userFormat = (Format) that.userFormat.clone();
+        this.userFormat = (Format) that.userFormat;
         currentFormat = userFormat;
     }
 
@@ -172,7 +173,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param newFormat the format to use for output
      */
     public void setFormat(Format newFormat) {
-        this.userFormat = (Format) newFormat.clone();
+        this.userFormat = newFormat;
         this.currentFormat = userFormat;
     }
 
@@ -181,7 +182,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * Format object returned is a clone of the one used internally.
      */
     public Format getFormat() {
-        return (Format) userFormat.clone();
+        return (Format) userFormat;
     }
 
     // * * * * * * * * * * Output to a OutputStream * * * * * * * * * *
@@ -320,7 +321,7 @@ public class EclipseXMLOutputter implements Cloneable {
      */
     private Writer makeWriter(OutputStream out)
                          throws java.io.UnsupportedEncodingException {
-        return makeWriter(out, userFormat.encoding);
+        return makeWriter(out, CharsetToolkit.UTF8);
     }
 
     /**
@@ -360,7 +361,7 @@ public class EclipseXMLOutputter implements Cloneable {
      */
     public void output(Document doc, Writer out) throws IOException {
 
-        printDeclaration(out, doc, userFormat.encoding);
+        printDeclaration(out, doc, CharsetToolkit.UTF8);
 
         // Print out root element, as well as any root level
         // comments and processing instructions,
@@ -384,7 +385,7 @@ public class EclipseXMLOutputter implements Cloneable {
                 printDocType(out, doc.getDocType());
                 // Always print line separator after declaration, helps the
                 // output look better and is semantically inconsequential
-                out.write(currentFormat.lineSeparator);
+                out.write("\n");
             }
             else {
                 // XXX if we get here then we have a illegal content, for
@@ -500,7 +501,7 @@ public class EclipseXMLOutputter implements Cloneable {
      */
     public void output(ProcessingInstruction pi, Writer out)
                                  throws IOException {
-        boolean currentEscapingPolicy = currentFormat.ignoreTrAXEscapingPIs;
+        boolean currentEscapingPolicy = false;//currentFormat.ignoreTrAXEscapingPIs;
 
         // Output PI verbatim, disregarding TrAX escaping PIs.
         currentFormat.setIgnoreTrAXEscapingPIs(true);
@@ -674,19 +675,15 @@ public class EclipseXMLOutputter implements Cloneable {
                                     String encoding) throws IOException {
 
         // Only print the declaration if it's not being omitted
-        if (!userFormat.omitDeclaration) {
-            // Assume 1.0 version
-            out.write("<?xml version=\"1.0\"");
-            if (!userFormat.omitEncoding) {
-                out.write(" encoding=\"" + encoding + "\"");
-            }
-            out.write("?>");
+        // Assume 1.0 version
+        out.write("<?xml version=\"1.0\"");
+        out.write(" encoding=\"" + encoding + "\"");
+        out.write("?>");
 
-            // Print new line after decl always, even if no other new lines
-            // Helps the output look better and is semantically
-            // inconsequential
-            out.write(currentFormat.lineSeparator);
-        }
+        // Print new line after decl always, even if no other new lines
+        // Helps the output look better and is semantically
+        // inconsequential
+        out.write("\n");
     }
 
     /**
@@ -721,7 +718,7 @@ public class EclipseXMLOutputter implements Cloneable {
         }
         if ((internalSubset != null) && (!internalSubset.equals(""))) {
             out.write(" [");
-            out.write(currentFormat.lineSeparator);
+            out.write("\n");
             out.write(docType.getInternalSubset());
             out.write("]");
         }
@@ -752,7 +749,7 @@ public class EclipseXMLOutputter implements Cloneable {
         String target = pi.getTarget();
         boolean piProcessed = false;
 
-        if (currentFormat.ignoreTrAXEscapingPIs == false) {
+        //if (currentFormat.ignoreTrAXEscapingPIs == false) {
             if (target.equals(Result.PI_DISABLE_OUTPUT_ESCAPING)) {
                 escapeOutput = false;
                 piProcessed  = true;
@@ -761,7 +758,7 @@ public class EclipseXMLOutputter implements Cloneable {
                 escapeOutput = true;
                 piProcessed  = true;
             }
-        }
+        //}
         if (piProcessed == false) {
             String rawData = pi.getData();
 
@@ -803,10 +800,10 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param out <code>Writer</code> to use.
      */
     protected void printCDATA(Writer out, CDATA cdata) throws IOException {
-        String str = (currentFormat.mode == Format.TextMode.NORMALIZE)
-                     ? cdata.getTextNormalize()
-                     : ((currentFormat.mode == Format.TextMode.TRIM) ?
-                             cdata.getText().trim() : cdata.getText());
+        String str = //(currentFormat.mode == Format.TextMode.NORMALIZE) ?
+                      cdata.getTextNormalize();
+                     //: ((currentFormat.mode == Format.TextMode.TRIM) ?
+                            //cdata.getText().trim() : cdata.getText());
         out.write("<![CDATA[");
         out.write(str);
         out.write("]]>");
@@ -819,10 +816,10 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param out <code>Writer</code> to use.
      */
     protected void printText(Writer out, Text text) throws IOException {
-        String str = (currentFormat.mode == Format.TextMode.NORMALIZE)
-                     ? text.getTextNormalize()
-                     : ((currentFormat.mode == Format.TextMode.TRIM) ?
-                          text.getText().trim() : text.getText());
+        String str = //(currentFormat.mode == Format.TextMode.NORMALIZE) ?
+                      text.getTextNormalize();
+                     //: ((currentFormat.mode == Format.TextMode.TRIM) ?
+                         // text.getText().trim() : text.getText());
         out.write(escapeElementEntities(str));
     }
 
@@ -831,12 +828,12 @@ public class EclipseXMLOutputter implements Cloneable {
      * trims interior whitespace, etc. if necessary.
      */
     private void printString(Writer out, String str) throws IOException {
-        if (currentFormat.mode == Format.TextMode.NORMALIZE) {
+        //if (currentFormat.mode == Format.TextMode.NORMALIZE) {
             str = Text.normalizeString(str);
-        }
-        else if (currentFormat.mode == Format.TextMode.TRIM) {
+        //}
+        //else if (currentFormat.mode == Format.TextMode.TRIM) {
             str = str.trim();
-        }
+        //}
         out.write(escapeElementEntities(str));
     }
 
@@ -851,7 +848,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param namespaces <code>List</code> stack of Namespaces in scope.
      */
     protected void printElement(Writer out, Element element,
-                                int level, NamespaceStack namespaces)
+                                int level, EclipseNamespaceStack namespaces)
                        throws IOException {
 
         List attributes = element.getAttributes();
@@ -900,14 +897,14 @@ public class EclipseXMLOutputter implements Cloneable {
         int size = content.size();
         if (start >= size) {
             // Case content is empty or all insignificant whitespace
-            if (currentFormat.expandEmptyElements) {
-                out.write("></");
-                printQualifiedName(out, element);
-                out.write(">");
-            }
-            else {
+            //if (currentFormat.expandEmptyElements) {
+            //    out.write("></");
+            //    printQualifiedName(out, element);
+            //    out.write(">");
+            //}
+            //else {
                 out.write("/>");
-            }
+            //}
         }
         else {
             out.write(">");
@@ -957,7 +954,7 @@ public class EclipseXMLOutputter implements Cloneable {
      */
     private void printContentRange(Writer out, List content,
                                      int start, int end, int level,
-                                     NamespaceStack namespaces)
+                                     EclipseNamespaceStack namespaces)
                        throws IOException {
         boolean firstNode; // Flag for 1st node in content
         Object next;       // Node we're about to print
@@ -1064,13 +1061,13 @@ public class EclipseXMLOutputter implements Cloneable {
                 // Determine if we need to pad the output (padding is
                 // only need in trim or normalizing mode)
                 if (previous != null) { // Not 1st node
-                    if (currentFormat.mode == Format.TextMode.NORMALIZE ||
-                        currentFormat.mode == Format.TextMode.TRIM) {
+                    //if (currentFormat.mode == Format.TextMode.NORMALIZE ||
+                    //    currentFormat.mode == Format.TextMode.TRIM) {
                             if ((endsWithWhite(previous)) ||
                                 (startsWithWhite(next))) {
                                     out.write(" ");
                             }
-                    }
+                    //}
                 }
 
                 // Print the node
@@ -1097,7 +1094,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param out <code>Writer</code> to use.
      */
     private void printNamespace(Writer out, Namespace ns,
-                                NamespaceStack namespaces)
+                                EclipseNamespaceStack namespaces)
                      throws IOException {
         String prefix = ns.getPrefix();
         String uri = ns.getURI();
@@ -1125,7 +1122,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param out <code>Writer</code> to use
      */
     protected void printAttributes(Writer out, List attributes, Element parent,
-                                   NamespaceStack namespaces)
+                                   EclipseNamespaceStack namespaces)
                        throws IOException {
 
         // I do not yet handle the case where the same prefix maps to
@@ -1152,7 +1149,7 @@ public class EclipseXMLOutputter implements Cloneable {
     }
 
     private void printElementNamespace(Writer out, Element element,
-                                       NamespaceStack namespaces)
+                                       EclipseNamespaceStack namespaces)
                              throws IOException {
         // Add namespace decl only if it's not the XML namespace and it's
         // not the NO_NAMESPACE with the prefix "" not yet mapped
@@ -1169,7 +1166,7 @@ public class EclipseXMLOutputter implements Cloneable {
     }
 
     private void printAdditionalNamespaces(Writer out, Element element,
-                                           NamespaceStack namespaces)
+                                           EclipseNamespaceStack namespaces)
                                 throws IOException {
         List list = element.getAdditionalNamespaces();
         if (list != null) {
@@ -1190,9 +1187,9 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param out <code>Writer</code> to use
      */
     private void newline(Writer out) throws IOException {
-        if (currentFormat.indent != null) {
-            out.write(currentFormat.lineSeparator);
-        }
+        //if (currentFormat.indent != null) {
+            out.write("\n");
+        //}
     }
 
     /**
@@ -1203,13 +1200,13 @@ public class EclipseXMLOutputter implements Cloneable {
      * @param level current indent level (number of tabs)
      */
     private void indent(Writer out, int level) throws IOException {
-        if (currentFormat.indent == null ||
-            currentFormat.indent.equals("")) {
-            return;
-        }
+        //if (currentFormat.indent == null ||
+        //    currentFormat.indent.equals("")) {
+        //    return;
+        //}
 
         for (int i = 0; i < level; i++) {
-            out.write(currentFormat.indent);
+            out.write("\t");
         }
     }
 
@@ -1224,16 +1221,16 @@ public class EclipseXMLOutputter implements Cloneable {
 
         int index = start;
         int size = content.size();
-        if (currentFormat.mode == Format.TextMode.TRIM_FULL_WHITE
-                || currentFormat.mode == Format.TextMode.NORMALIZE
-                || currentFormat.mode == Format.TextMode.TRIM) {
+        //if (currentFormat.mode == Format.TextMode.TRIM_FULL_WHITE
+        //        || currentFormat.mode == Format.TextMode.NORMALIZE
+        //        || currentFormat.mode == Format.TextMode.TRIM) {
             while (index < size) {
                 if (!isAllWhitespace(content.get(index))) {
                     return index;
                 }
                 index++;
             }
-        }
+        //}
         return index;
     }
 
@@ -1248,15 +1245,15 @@ public class EclipseXMLOutputter implements Cloneable {
         }
 
         int index = start;
-        if (currentFormat.mode == Format.TextMode.TRIM_FULL_WHITE
-                || currentFormat.mode == Format.TextMode.NORMALIZE
-                || currentFormat.mode == Format.TextMode.TRIM) {
+        //if (currentFormat.mode == Format.TextMode.TRIM_FULL_WHITE
+        //        || currentFormat.mode == Format.TextMode.NORMALIZE
+        //        || currentFormat.mode == Format.TextMode.TRIM) {
             while (index >= 0) {
                 if (!isAllWhitespace(content.get(index - 1)))
                     break;
                 --index;
             }
-        }
+        //}
         return index;
     }
 
@@ -1348,7 +1345,7 @@ public class EclipseXMLOutputter implements Cloneable {
         StringBuffer buffer;
         char ch;
         String entity;
-        EscapeStrategy strategy = currentFormat.escapeStrategy;
+        //EscapeStrategy strategy = currentFormat.escapeStrategy;
 
         buffer = null;
         for (int i = 0; i < str.length(); i++) {
@@ -1381,12 +1378,12 @@ public class EclipseXMLOutputter implements Cloneable {
                     entity = "&#xA;";
                     break;
                 default :
-                    if (strategy.shouldEscape(ch)) {
-                        entity = "&#x" + Integer.toHexString(ch) + ";";
-                    }
-                    else {
+                    //if (strategy.shouldEscape(ch)) {
+                    //    entity = "&#x" + Integer.toHexString(ch) + ";";
+                    //}
+                    //else {
                         entity = null;
-                    }
+                    //}
                     break;
             }
             if (buffer == null) {
@@ -1432,7 +1429,7 @@ public class EclipseXMLOutputter implements Cloneable {
         StringBuffer buffer;
         char ch;
         String entity;
-        EscapeStrategy strategy = currentFormat.escapeStrategy;
+        //EscapeStrategy strategy = currentFormat.escapeStrategy;
 
         buffer = null;
         for (int i = 0; i < str.length(); i++) {
@@ -1451,15 +1448,15 @@ public class EclipseXMLOutputter implements Cloneable {
                     entity = "&#xD;";
                     break;
                 case '\n' :
-                    entity = currentFormat.lineSeparator;
+                    entity = "\n";
                     break;
                 default :
-                    if (strategy.shouldEscape(ch)) {
-                        entity = "&#x" + Integer.toHexString(ch) + ";";
-                    }
-                    else {
+                    //if (strategy.shouldEscape(ch)) {
+                    //    entity = "&#x" + Integer.toHexString(ch) + ";";
+                    //}
+                    //else {
                         entity = null;
-                    }
+                    //}
                     break;
             }
             if (buffer == null) {
@@ -1533,10 +1530,10 @@ public class EclipseXMLOutputter implements Cloneable {
         }
 
         return (
-            "XMLOutputter[omitDeclaration = " + userFormat.omitDeclaration + ", " +
-            "encoding = " + userFormat.encoding + ", " +
-            "omitEncoding = " + userFormat.omitEncoding + ", " +
-            "indent = '" + userFormat.indent + "'" + ", " +
+            "XMLOutputter[omitDeclaration = " + false + ", " +
+            "encoding = " + CharsetToolkit.UTF8 + ", " +
+            "omitEncoding = " + false + ", " +
+            "indent = '" + "\t" + "'" + ", " +
             "expandEmptyElements = " + userFormat.expandEmptyElements + ", " +
             "lineSeparator = '" + buffer.toString() + "', " +
             "textMode = " + userFormat.mode + "]"
@@ -1549,22 +1546,11 @@ public class EclipseXMLOutputter implements Cloneable {
      * NamespaceStack, as a way to make NamespaceStack "friendly" toward
      * subclassers.
      */
-    private NamespaceStack createNamespaceStack() {
+    private EclipseNamespaceStack createNamespaceStack() {
        // actually returns a XMLOutputter.NamespaceStack (see below)
-       return new NamespaceStack();
+       return new EclipseNamespaceStack();
     }
 
-    /**
-     * Our own null subclass of NamespaceStack.  This plays a little
-     * trick with Java access protection.  We want subclasses of
-     * XMLOutputter to be able to override protected methods that
-     * declare a NamespaceStack parameter, but we don't want to
-     * declare the parent NamespaceStack class as public.
-     */
-    protected class NamespaceStack
-        extends org.jdom.output.NamespaceStack
-    {
-    }
 
     // Support method to print a name without using elt.getQualifiedName()
     // and thus avoiding a StringBuffer creation and memory churn
