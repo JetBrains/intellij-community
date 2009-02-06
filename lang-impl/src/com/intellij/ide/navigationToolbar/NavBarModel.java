@@ -316,10 +316,10 @@ public class NavBarModel {
     if (!checkValid(object)) return null;
     if (object instanceof Project) return IconLoader.getIcon("/nodes/project.png");
     if (object instanceof Module) return ((Module)object).getModuleType().getNodeIcon(false);
-    if (object instanceof PsiElement && ((PsiElement)object).isValid()) return ApplicationManager.getApplication().runReadAction(
+    if (object instanceof PsiElement) return ApplicationManager.getApplication().runReadAction(
         new Computable<Icon>() {
           public Icon compute() {
-            return ((PsiElement)object).getIcon(Iconable.ICON_FLAG_CLOSED);
+            return ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(Iconable.ICON_FLAG_CLOSED) : null;
           }
         }
     );
