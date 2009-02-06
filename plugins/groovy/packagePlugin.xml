@@ -3,11 +3,7 @@
 
   <!--
    In order for plugin packaging to work, you should have a groovy.properties file
-   next to this one, under the module content root. This file should define the following properties:
-
-path.variable.groovy_sdk_path=<Path to Groovy distribution>
-jdk.home.jetgroovy_idea_sdk=<Path to IDEA distribution, used in groovy module SDK>
-jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
+   next to this one, under the module content root. The template file is groovy.template.properties
   -->
 
   
