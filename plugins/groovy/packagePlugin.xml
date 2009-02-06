@@ -12,12 +12,12 @@ jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
 
   
   <property file="groovy.properties"/>
-  <property name="skip.tests" value="true"/>
   <property name="idea.home" value="${jdk.home.jetgroovy_idea_sdk}"/>
   <property name="javac2.home" value="${idea.home}/lib"/>
   <path id="javac2.classpath">
     <pathelement location="${javac2.home}/javac2.jar"/>
     <pathelement location="${javac2.home}/jdom.jar"/>
+    <pathelement location="${javac2.home}/jgoodies-forms.jar"/>
     <pathelement location="${javac2.home}/asm.jar"/>
     <pathelement location="${javac2.home}/asm-commons.jar"/>
   </path>
@@ -71,7 +71,7 @@ jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
   
   <!-- JDK definitions -->
   
-  <property name="jdk.bin.jetgroovy_idea_sdk" value="${jdk.home.jetgroovy_idea_sdk}/../jdk1.5.0_08/bin"/>
+  <property name="jdk.bin.jetgroovy_idea_sdk" value="${jdk.home.jetgroovy_compile_with_jdk}/bin"/>
   <path id="jdk.classpath.jetgroovy_idea_sdk">
     <fileset dir="${jdk.home.jetgroovy_idea_sdk}">
       <include name="lib/alloy.jar"/>
@@ -143,20 +143,20 @@ jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
       <include name="plugins/JavaScriptLanguage/lib/JavascriptLanguage.jar"/>
       <include name="plugins/CSS/lib/css-openapi.jar"/>
       <include name="plugins/CSS/lib/css.jar"/>
-      <include name="../jdk1.5.0_08/lib/tools.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/lib/tools.jar"/>
       <include name="lib/ant/lib/ant.jar"/>
       <include name="lib/groovy-all-1.5.7.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/charsets.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/deploy.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/javaws.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/jce.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/jsse.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/plugin.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/rt.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/ext/dnsns.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/ext/localedata.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/ext/sunjce_provider.jar"/>
-      <include name="../jdk1.5.0_08/jre/lib/ext/sunpkcs11.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/charsets.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/deploy.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/javaws.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/jce.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/jsse.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/plugin.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/rt.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/ext/dnsns.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/ext/localedata.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/ext/sunjce_provider.jar"/>
+      <include name="${jdk.home.jetgroovy_compile_with_jdk}/jre/lib/ext/sunpkcs11.jar"/>
     </fileset>
   </path>
   
@@ -174,7 +174,7 @@ jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
       <include name="jre/lib/ext/localedata.jar"/>
       <include name="jre/lib/ext/sunjce_provider.jar"/>
       <include name="jre/lib/ext/sunpkcs11.jar"/>
-      <include name="../JetGroovyIdeaSdk/lib/groovy-all-1.5.7.jar"/>
+      <include name="${path.variable.groovy_sdk_path}/lib/groovy-all*.jar"/>
     </fileset>
   </path>
   
@@ -186,26 +186,21 @@ jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
   <!-- Project Libraries -->
   
   <path id="library.groovy.classpath">
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/ant-1.7.0.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/ant-junit-1.7.0.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/ant-launcher-1.7.0.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/antlr-2.7.6.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/asm-2.2.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/asm-analysis-2.2.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/asm-tree-2.2.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/asm-util-2.2.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/bsf-2.4.0.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/commons-cli-1.0.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/commons-logging-1.1.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/groovy-1.5.7.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/jline-0.9.94.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/jsp-api-2.0.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/junit-3.8.2.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/mockobjects-core-0.09.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/mx4j-3.0.2.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/servlet-api-2.4.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/xpp3_min-1.1.3.4.O.jar"/>
-    <pathelement location="${path.variable.groovy_sdk_path}/lib/xstream-1.2.2.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="ant-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="antlr-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="asm-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="bsf-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="commons-cli-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="commons-logging-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="groovy-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="jline-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="jsp-api-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="junit-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="mockobjects-core-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="mx4j-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="servlet-api-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="xpp3_min-*.jar"/>
+    <fileset dir="${path.variable.groovy_sdk_path}/lib" includes="xstream-*.jar"/>
   </path>
   
   <path id="library.idea.classpath"/>
@@ -409,26 +404,27 @@ jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
   
   <!-- Call the target to build exploded directory for module 'groovy'.\n       Path to the exploded directory is specified by parameter 'plugin.dir.exploded' -->
   <target name="plugin.build.exploded.groovy" description="Plugin exploded directory for module &apos;groovy&apos;">
-    <copy file="${path.variable.groovy_sdk_path}/lib/xstream-1.2.2.jar" tofile="${plugin.dir.exploded}/lib/xstream-1.2.2.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/xpp3_min-1.1.3.4.O.jar" tofile="${plugin.dir.exploded}/lib/xpp3_min-1.1.3.4.O.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/servlet-api-2.4.jar" tofile="${plugin.dir.exploded}/lib/servlet-api-2.4.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/mx4j-3.0.2.jar" tofile="${plugin.dir.exploded}/lib/mx4j-3.0.2.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/mockobjects-core-0.09.jar" tofile="${plugin.dir.exploded}/lib/mockobjects-core-0.09.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/junit-3.8.2.jar" tofile="${plugin.dir.exploded}/lib/junit-3.8.2.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/jsp-api-2.0.jar" tofile="${plugin.dir.exploded}/lib/jsp-api-2.0.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/jline-0.9.94.jar" tofile="${plugin.dir.exploded}/lib/jline-0.9.94.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/groovy-1.5.7.jar" tofile="${plugin.dir.exploded}/lib/groovy-1.5.7.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/commons-logging-1.1.jar" tofile="${plugin.dir.exploded}/lib/commons-logging-1.1.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/commons-cli-1.0.jar" tofile="${plugin.dir.exploded}/lib/commons-cli-1.0.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/bsf-2.4.0.jar" tofile="${plugin.dir.exploded}/lib/bsf-2.4.0.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/asm-util-2.2.jar" tofile="${plugin.dir.exploded}/lib/asm-util-2.2.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/asm-tree-2.2.jar" tofile="${plugin.dir.exploded}/lib/asm-tree-2.2.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/asm-analysis-2.2.jar" tofile="${plugin.dir.exploded}/lib/asm-analysis-2.2.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/asm-2.2.jar" tofile="${plugin.dir.exploded}/lib/asm-2.2.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/antlr-2.7.6.jar" tofile="${plugin.dir.exploded}/lib/antlr-2.7.6.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/ant-launcher-1.7.0.jar" tofile="${plugin.dir.exploded}/lib/ant-launcher-1.7.0.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/ant-junit-1.7.0.jar" tofile="${plugin.dir.exploded}/lib/ant-junit-1.7.0.jar"/>
-    <copy file="${path.variable.groovy_sdk_path}/lib/ant-1.7.0.jar" tofile="${plugin.dir.exploded}/lib/ant-1.7.0.jar"/>
+  
+    <copy todir="${plugin.dir.exploded}/lib/">
+        <fileset dir="${path.variable.groovy_sdk_path}/lib/">
+            <include name="xstream-*.jar"/>
+            <include name="xpp3_min-*.jar"/>
+            <include name="servlet-api-*.jar"/>
+            <include name="mx4j-*.jar"/>
+            <include name="mockobjects-core-*.jar"/>
+            <include name="junit-*.jar"/>
+            <include name="jsp-api-*.jar"/>
+            <include name="jline-*.jar"/>
+            <include name="groovy-*.jar"/>
+            <include name="commons-logging-*.jar"/>
+            <include name="commons-cli-*.jar"/>
+            <include name="bsf-*.jar"/>
+            <include name="asm-*.jar"/>
+            <include name="antlr-*.jar"/>
+            <include name="ant-*.jar"/>
+        </fileset>
+    </copy>
+
     <copy todir="${plugin.dir.exploded}/classes">
       <fileset dir="${module.groovy.basedir}/classes/production/rt"/>
     </copy>
@@ -443,7 +439,7 @@ jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
   
   <!-- Call the target to build archive for module 'groovy'.\n       Path to the archive file is specified by parameter 'plugin.path.jar' -->
   <target name="plugin.build.jar.groovy" description="Build plugin archive for module &apos;groovy&apos;">
-    <property name="tmp.dir.groovy" value="${module.groovy.basedir}/../temp"/>
+    <property name="tmp.dir.groovy" value="${module.groovy.basedir}/temp"/>
     <mkdir dir="${tmp.dir.groovy}"/>
     <mkdir dir="${tmp.dir.groovy}/lib"/>
     <jar destfile="${tmp.dir.groovy}/lib/Groovy.jar" duplicate="preserve">
@@ -454,7 +450,7 @@ jdk.home.jetgroovy_runtime_jdk=<Path to some JDK 1.3>
     </jar>
     <copy file="${module.groovy.basedir}/resources/conf/groovy-starter.conf" todir="${tmp.dir.groovy}/lib"/>
     <zip destfile="${groovy.path.jar}">
-      <fileset dir="${module.groovy.basedir}/../temp"/>
+      <fileset dir="${module.groovy.basedir}/temp"/>
     </zip>
     <delete dir="${tmp.dir.groovy}"/>
   </target>
