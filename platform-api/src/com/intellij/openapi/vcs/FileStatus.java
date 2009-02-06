@@ -45,7 +45,7 @@ public interface FileStatus {
    .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", VcsBundle.message("file.status.name.deleted.from.file.system"),
                      new Color(119, 56, 149));
   FileStatus SWITCHED = ServiceManager.getService(FileStatusFactory.class).createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"), COLOR_SWITCHED);
-  FileStatus OBSOLETE = ServiceManager.getService(FileStatusFactory.class).createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.switched"), COLOR_OUT_OF_DATE);
+  FileStatus OBSOLETE = ServiceManager.getService(FileStatusFactory.class).createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.obsolete"), COLOR_OUT_OF_DATE);
 
   String getText();
 
