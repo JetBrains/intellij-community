@@ -21,11 +21,6 @@ public class ElementDescriptionUtil {
       if (result != null) return result;
     }
 
-    for(ElementDescriptionProvider provider: Extensions.getExtensions(ElementDescriptionProvider.EP_NAME)) {
-      String result = provider.getElementDescription(element, null);
-      if (result != null) return result;
-    }
-
     return element.toString();
   }
 }
