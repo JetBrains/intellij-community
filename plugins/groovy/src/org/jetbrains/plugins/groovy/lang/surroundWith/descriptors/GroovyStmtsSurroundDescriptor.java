@@ -31,6 +31,7 @@ public class GroovyStmtsSurroundDescriptor extends GroovySurroundDescriptor {
       new GroovyWithWhileSurrounder(),
 
       new GroovySurrounderByClosure(),
+      new GroovyWithShouldFailWithTypeStatementsSurrounder(),
   };
 
       /********** ***********/
