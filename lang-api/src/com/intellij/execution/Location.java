@@ -44,6 +44,7 @@ public abstract class Location<E extends PsiElement> {
     return new OpenFileDescriptor(getProject(), virtualFile, psiElement.getTextOffset());
   }
 
+  @Nullable
   public <Ancestor extends PsiElement> Location<Ancestor> getParent(final Class<Ancestor> parentClass) {
     final Iterator<Location<PsiElement>> ancestors = getAncestors(PsiElement.class, true);
     if (!ancestors.hasNext()) return null;
@@ -52,20 +53,24 @@ public abstract class Location<E extends PsiElement> {
     return null;
   }
 
+  @Nullable
   public <T extends PsiElement> Location<T> getAncestorOrSelf(final Class<T> ancestorClass) {
     final Iterator<Location<T>> ancestors = getAncestors(ancestorClass, false);
     if (!ancestors.hasNext()) return null;
     return ancestors.next();
   }
 
+  @Nullable
   public <Ancestor extends PsiElement> Ancestor getParentElement(final Class<Ancestor> parentClass) {
     return safeGetPsiElement(getParent(parentClass));
   }
 
+  @Nullable
   public static <T extends PsiElement> T safeGetPsiElement(final Location<T> location) {
     return location != null ? location.getPsiElement() : null;
   }
 
+  @Nullable
   public static <T> T safeCast(final Object obj, final Class<T> expectedClass) {
     if (expectedClass.isInstance(obj)) return (T)obj;
     return null;
