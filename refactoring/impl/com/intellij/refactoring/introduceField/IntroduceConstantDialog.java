@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -392,9 +393,8 @@ class IntroduceConstantDialog extends DialogWrapper {
     final String targetClassName = getTargetClassName();
     PsiClass newClass = myParentClass;
 
-    if (!"".equals (targetClassName)) {
-      final PsiManager manager = PsiManager.getInstance(myProject);
-      newClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
+    if (!"".equals (targetClassName) && !Comparing.strEqual(targetClassName, myParentClass.getQualifiedName())) {
+      newClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
         CommonRefactoringUtil.showErrorMessage(
                 IntroduceConstantHandler.REFACTORING_NAME,
