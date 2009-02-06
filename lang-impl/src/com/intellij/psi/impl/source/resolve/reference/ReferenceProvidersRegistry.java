@@ -2,10 +2,10 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.codeInsight.completion.LegacyCompletionContributor;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -14,6 +14,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.pom.references.PomReferenceProvider;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +29,10 @@ import java.util.concurrent.ConcurrentMap;
  * Time: 17:13:45
  * To change this template use Options | File Templates.
  */
-public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
+public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   private final ConcurrentMap<Class,SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
   private final ConcurrentMap<Class,NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
   private MultiMap<Class,Class> myKnownSupers;
-  private boolean myInitialized;
 
   private static final Comparator<Trinity<PsiReferenceProvider,ProcessingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
     public int compare(final Trinity<PsiReferenceProvider, ProcessingContext, Double> o1,
@@ -48,6 +48,9 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
 
   public ReferenceProvidersRegistry(Project project) {
     myProject = project;
+    for (final PsiReferenceContributor contributor : Extensions.getExtensions(PsiReferenceContributor.EP_NAME)) {
+      contributor.registerReferenceProviders(this);
+    }
   }
 
   /**
@@ -60,10 +63,11 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     registerReferenceProvider(PlatformPatterns.psiElement(scope).and(new FilterPattern(elementFilter)), provider, priority);
   }
 
-
-  public void registerReferenceProvider(@NotNull ElementPattern<? extends PsiElement> pattern, @NotNull PsiReferenceProvider provider) {
-    registerReferenceProvider(pattern, provider, DEFAULT_PRIORITY);
+  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
+                                                               @NotNull PomReferenceProvider<T> provider,
+                                                               double priority) {
   }
+
   public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority) {
     myKnownSupers = null;
     final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
@@ -159,17 +163,8 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   }
 
   @NotNull
-  private List<Trinity<PsiReferenceProvider,ProcessingContext,Double>> getPairsByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+  public List<Trinity<PsiReferenceProvider,ProcessingContext,Double>> getPairsByElement(@NotNull PsiElement element, @NotNull Class clazz) {
     assert ReflectionCache.isInstance(element, clazz);
-
-    synchronized (myBindingsMap) {
-      if (!myInitialized) {
-        for (final PsiReferenceContributor contributor : Extensions.getExtensions(PsiReferenceContributor.EP_NAME)) {
-          contributor.registerReferenceProviders(this);
-        }
-        myInitialized = true;
-      }
-    }
 
     MultiMap<Class, Class> knownSupers = myKnownSupers;
     if (knownSupers == null) {
@@ -195,10 +190,10 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
 
       if (ret == null) ret = new SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>();
       if (simpleBinding != null) {
-        simpleBinding.addAcceptableReferenceProviders(element, ret);
+        simpleBinding.addAcceptableReferenceProviders(element, ret, null);
       }
       if (namedBinding != null) {
-        namedBinding.addAcceptableReferenceProviders(element, ret);
+        namedBinding.addAcceptableReferenceProviders(element, ret, null);
       }
     }
     return ret == null ? Collections.<Trinity<PsiReferenceProvider, ProcessingContext, Double>>emptyList() : ret;

@@ -3,10 +3,10 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.pom.references.PomReferenceProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author maxim
  */
-abstract class NamedObjectProviderBinding implements ProviderBinding {
+public abstract class NamedObjectProviderBinding<PsiReferenceProvider> implements ProviderBinding<PsiReferenceProvider> {
   private final ConcurrentMap<String, CopyOnWriteArrayList<Trinity<PsiReferenceProvider, ElementPattern,Double>>> myNamesToProvidersMap = new ConcurrentHashMap<String, CopyOnWriteArrayList<Trinity<PsiReferenceProvider, ElementPattern,Double>>>(5);
   private final ConcurrentMap<String, CopyOnWriteArrayList<Trinity<PsiReferenceProvider, ElementPattern,Double>>> myNamesToProvidersMapInsensitive = new ConcurrentHashMap<String, CopyOnWriteArrayList<Trinity<PsiReferenceProvider, ElementPattern,Double>>>(5);
 
@@ -37,11 +37,12 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
     }
   }
 
-  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> list) {
+  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> list,
+                                              Integer offset) {
     String name = getName(position);
     if (name != null) {
-      addMatchingProviders(position, myNamesToProvidersMap.get(name), list);
-      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(name.toLowerCase()), list);
+      addMatchingProviders(position, myNamesToProvidersMap.get(name), list, offset);
+      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(name.toLowerCase()), list, offset);
     }
   }
 
@@ -65,13 +66,16 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
   @Nullable
   abstract protected String getName(final PsiElement position);
 
-  private static void addMatchingProviders(final PsiElement position,
-                                           @Nullable final List<Trinity<PsiReferenceProvider,ElementPattern,Double>> providerList,
-                                           final List<Trinity<PsiReferenceProvider, ProcessingContext,Double>> ret) {
+  private static <PsiReferenceProvider> void addMatchingProviders(final PsiElement position, @Nullable final List<Trinity<PsiReferenceProvider, ElementPattern, Double>> providerList,
+                                                                  final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> ret,
+                                                                  Integer offset) {
     if (providerList == null) return;
 
     for(Trinity<PsiReferenceProvider,ElementPattern,Double> trinity:providerList) {
       final ProcessingContext context = new ProcessingContext();
+      if (offset != null) {
+        context.put(PomReferenceProvider.OFFSET_IN_ELEMENT, offset);
+      }
       if (trinity.second.accepts(position, context)) {
         ret.add(Trinity.create(trinity.first, context, trinity.third));
       }

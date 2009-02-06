@@ -8,22 +8,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
+import com.intellij.pom.references.PomReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public interface PsiReferenceRegistrar {
-  double DEFAULT_PRIORITY = 0.0;
-  double HIGHER_PRIORITY = 100.0;
-  double LOWER_PRIORITY = -100.0;
+public abstract class PsiReferenceRegistrar {
+  public static final double DEFAULT_PRIORITY = 0.0;
+  public static final double HIGHER_PRIORITY = 100.0;
+  public static final double LOWER_PRIORITY = -100.0;
 
   /**
    * Register reference provider with default priority ({@link #DEFAULT_PRIORITY})
    * @param pattern reference place description. See {@link StandardPatterns}, {@link PlatformPatterns} and their extenders
    * @param provider
    */
-  void registerReferenceProvider(@NotNull ElementPattern<? extends PsiElement> pattern, @NotNull PsiReferenceProvider provider);
+  public void registerReferenceProvider(@NotNull ElementPattern<? extends PsiElement> pattern, @NotNull PsiReferenceProvider provider) {
+    registerReferenceProvider(pattern, provider, DEFAULT_PRIORITY);
+  }
+
 
   /**
    * Register reference provider
@@ -31,11 +35,18 @@ public interface PsiReferenceRegistrar {
    * @param provider
    * @param priority @see DEFAULT_PRIORITY, HIGHER_PRIORITY, LOWER_PRIORITY
    */
-  <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority);
+  public abstract <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority);
+
+  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PomReferenceProvider<T> provider) {
+    registerReferenceProvider(pattern, provider, DEFAULT_PRIORITY);
+  }
+
+  public abstract <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PomReferenceProvider<T> provider, double priority);
 
   /**
    * Return the project to register providers for.
-   * @return project
+   * @return project or null, if POM references are registered
    */
-  Project getProject();
+  @Deprecated
+  public abstract Project getProject();
 }

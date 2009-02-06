@@ -69,6 +69,9 @@
   <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                       serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.pom.references.PomReferenceService"
+                  serviceImplementation="com.intellij.pom.references.PomReferenceServiceImpl"/>
+
   <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
                       serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
 
