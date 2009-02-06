@@ -3,12 +3,13 @@ package com.intellij.ide.util;
 import com.intellij.ide.IdeBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JavaDeleteTypeDescriptionProvider implements ElementDescriptionProvider {
-  public String getElementDescription(final PsiElement element, @Nullable final ElementDescriptionLocation location) {
+  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (location instanceof DeleteTypeDescriptionLocation && ((DeleteTypeDescriptionLocation) location).isPlural()) {
       if (element instanceof PsiMethod) {
         return IdeBundle.message("prompt.delete.method", 2);

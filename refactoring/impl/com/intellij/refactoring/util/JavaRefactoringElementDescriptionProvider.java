@@ -5,9 +5,10 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
-  public String getElementDescription(final PsiElement element, @Nullable final ElementDescriptionLocation location) {
+  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof RefactoringDescriptionLocation)) return null;
     RefactoringDescriptionLocation rdLocation = (RefactoringDescriptionLocation) location;
 

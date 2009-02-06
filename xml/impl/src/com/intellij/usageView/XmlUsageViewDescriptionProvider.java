@@ -9,12 +9,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class XmlUsageViewDescriptionProvider implements ElementDescriptionProvider {
-  public String getElementDescription(final PsiElement element, @Nullable final ElementDescriptionLocation location) {
+  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (location instanceof UsageViewShortNameLocation) {
       if (element instanceof XmlAttributeValue) {
         return ((XmlAttributeValue)element).getValue();

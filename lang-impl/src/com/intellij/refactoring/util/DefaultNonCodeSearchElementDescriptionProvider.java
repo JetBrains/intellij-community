@@ -6,6 +6,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -15,7 +16,7 @@ public class DefaultNonCodeSearchElementDescriptionProvider implements ElementDe
 
   public static final DefaultNonCodeSearchElementDescriptionProvider INSTANCE = new DefaultNonCodeSearchElementDescriptionProvider();
   
-  public String getElementDescription(final PsiElement element, @Nullable final ElementDescriptionLocation location) {
+  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof NonCodeSearchDescriptionLocation)) return null;
     final NonCodeSearchDescriptionLocation ncdLocation = (NonCodeSearchDescriptionLocation)location;
 

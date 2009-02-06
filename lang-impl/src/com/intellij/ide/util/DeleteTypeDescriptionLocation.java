@@ -4,6 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,7 +30,7 @@ public class DeleteTypeDescriptionLocation implements ElementDescriptionLocation
   }
 
   public static class DefaultProvider implements ElementDescriptionProvider {
-    public String getElementDescription(final PsiElement element, @Nullable final ElementDescriptionLocation location) {
+    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (location instanceof DeleteTypeDescriptionLocation) {
         final boolean plural = ((DeleteTypeDescriptionLocation)location).isPlural();
         int count = plural ? 2 : 1;

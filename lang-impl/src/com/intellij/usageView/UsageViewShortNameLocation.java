@@ -7,6 +7,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiMetaData;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -22,7 +23,7 @@ public class UsageViewShortNameLocation implements ElementDescriptionLocation {
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
-    public String getElementDescription(final PsiElement element, @Nullable final ElementDescriptionLocation location) {
+    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (!(location instanceof UsageViewShortNameLocation)) return null;
 
       if (element instanceof PsiMetaOwner) {

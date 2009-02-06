@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -21,7 +22,7 @@ public class UsageViewLongNameLocation implements ElementDescriptionLocation {
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
-    public String getElementDescription(final PsiElement element, @Nullable final ElementDescriptionLocation location) {
+    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (location instanceof UsageViewLongNameLocation) {
         if (element instanceof PsiDirectory) {
           return PsiDirectoryFactory.getInstance(element.getProject()).getQualifiedName((PsiDirectory)element, true);
