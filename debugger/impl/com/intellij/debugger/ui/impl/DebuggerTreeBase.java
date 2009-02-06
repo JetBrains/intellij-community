@@ -42,9 +42,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
 
     myTipManager = new TipManager(this, new TipManager.TipFactory() {
           public JComponent createToolTip(MouseEvent e) {
-            return null;
-            //[kirillk] to RRF debugger popups, disabled for 8.1
-            //return DebuggerTreeBase.this.createToolTip(e);
+            return DebuggerTreeBase.this.createToolTip(e);
           }
         });
 
@@ -157,11 +155,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
       tipRectangle.setSize(tipRectangle.width  + borderInsets.left + borderInsets.right, tipRectangle.height + borderInsets.top  + borderInsets.bottom);
     }
 
-    boolean addScrollers = false;
-    if (tipRectangle.height > screen.height / 4) {
-      tipRectangle.height = screen.height / 4;
-      addScrollers = true;
-    }
+    boolean addScrollers = true;
 
     toolTip.setLayout(new BorderLayout());
     toolTip.add(scrollPane, BorderLayout.CENTER);
@@ -174,7 +168,25 @@ public class DebuggerTreeBase extends DnDAwareTree {
 
 
 
+    final int maxWidth = (int)(screen.width - screen.width * .25);
+    if (tipRectangle.width > maxWidth) {
+      tipRectangle.width = maxWidth;
+    }
+
+    final Dimension prefSize = tipRectangle.getSize();
+
     ScreenUtil.cropRectangleToFitTheScreen(tipRectangle);
+
+    if (prefSize.width > tipRectangle.width) {
+      final int delta = prefSize.width - tipRectangle.width;
+      tipRectangle.x -= delta;
+      if (tipRectangle.x < screen.x) {
+        tipRectangle.x = screen.x + maxWidth /2;
+        tipRectangle.width = screen.width - maxWidth / 2;
+      } else {
+        tipRectangle.width += delta;
+      }
+    }
 
     toolTip.setPreferredSize(tipRectangle.getSize());
 

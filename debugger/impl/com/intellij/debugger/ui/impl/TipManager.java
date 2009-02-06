@@ -2,6 +2,9 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -10,8 +13,8 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuListener;
 import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -219,6 +222,25 @@ public class TipManager implements Disposable, PopupMenuListener {
       public void hideNotify() {
       }
     });
+
+    final HideTooltipAction hide = new HideTooltipAction();
+    hide.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), myComponent);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        hide.unregisterCustomShortcutSet(myComponent);
+      }
+    });
+  }
+
+  private class HideTooltipAction extends AnAction {
+    public void actionPerformed(AnActionEvent e) {
+      hideTooltip(true);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myTipPopup != null);
+    }
   }
 
   private void installListeners() {
