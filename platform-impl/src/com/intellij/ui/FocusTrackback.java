@@ -207,7 +207,15 @@ public class FocusTrackback {
           toFocus = ownerBySwing;
         }
       }
-      toFocus.requestFocus();
+
+      if (myParentWindow != null) {
+        final Window to = toFocus instanceof Window ? (Window) toFocus : SwingUtilities.getWindowAncestor(toFocus);
+        if (to == myParentWindow) {  // IDEADEV-34537
+          toFocus.requestFocus();
+        }
+      } else {
+        toFocus.requestFocus();
+      }
     }
 
     stack.remove(this);
