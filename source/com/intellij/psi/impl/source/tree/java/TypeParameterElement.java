@@ -39,10 +39,10 @@ public class TypeParameterElement extends CompositeElement {
         return null;
 
       case ChildRole.NAME:
-        return TreeUtil.findChild(this, JavaTokenType.IDENTIFIER);
+        return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.EXTENDS_LIST:
-        return TreeUtil.findChild(this, JavaElementType.EXTENDS_BOUND_LIST);
+        return findChildByType(JavaElementType.EXTENDS_BOUND_LIST);
     }
   }
 }

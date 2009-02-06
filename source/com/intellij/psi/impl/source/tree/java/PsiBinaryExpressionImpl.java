@@ -8,7 +8,6 @@ import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -80,7 +79,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
         return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
 
       case ChildRole.OPERATION_SIGN:
-        return TreeUtil.findChild(this, OUR_OPERATIONS_BIT_SET);
+        return findChildByType(OUR_OPERATIONS_BIT_SET);
     }
   }
 

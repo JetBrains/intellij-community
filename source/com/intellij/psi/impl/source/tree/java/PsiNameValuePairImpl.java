@@ -97,13 +97,13 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
 
   public ASTNode findChildByRole(int role) {
     if (role == ChildRole.NAME) {
-      return TreeUtil.findChild(this, IDENTIFIER);
+      return findChildByType(IDENTIFIER);
     }
     else if (role == ChildRole.ANNOTATION_VALUE) {
-      return TreeUtil.findChild(this, ANNOTATION_MEMBER_VALUE_BIT_SET);
+      return findChildByType(ANNOTATION_MEMBER_VALUE_BIT_SET);
     }
     else if (role == ChildRole.OPERATION_SIGN) {
-      return TreeUtil.findChild(this, EQ);
+      return findChildByType(EQ);
     }
 
     return null;

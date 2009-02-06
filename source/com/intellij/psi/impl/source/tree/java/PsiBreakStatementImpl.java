@@ -61,10 +61,10 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
         return null;
 
       case ChildRole.BREAK_KEYWORD:
-        return TreeUtil.findChild(this, BREAK_KEYWORD);
+        return findChildByType(BREAK_KEYWORD);
 
       case ChildRole.LABEL:
-        return TreeUtil.findChild(this, IDENTIFIER);
+        return findChildByType(IDENTIFIER);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);

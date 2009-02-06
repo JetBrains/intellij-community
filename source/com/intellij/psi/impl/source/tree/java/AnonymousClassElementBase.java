@@ -30,10 +30,10 @@ public abstract class AnonymousClassElementBase extends ClassElement {
         return getFirstChildNode().getElementType() == JavaElementType.JAVA_CODE_REFERENCE ? getFirstChildNode() : null;
 
       case ChildRole.ARGUMENT_LIST:
-        return TreeUtil.findChild(this, JavaElementType.EXPRESSION_LIST);
+        return findChildByType(JavaElementType.EXPRESSION_LIST);
 
       case ChildRole.LBRACE:
-        return TreeUtil.findChild(this, JavaTokenType.LBRACE);
+        return findChildByType(JavaTokenType.LBRACE);
 
       case ChildRole.RBRACE:
         return TreeUtil.findChildBackward(this, JavaTokenType.RBRACE);

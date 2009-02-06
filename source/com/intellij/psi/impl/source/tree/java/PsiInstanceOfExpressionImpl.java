@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
@@ -37,13 +36,13 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
         return null;
 
       case ChildRole.OPERAND:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.INSTANCEOF_KEYWORD:
-        return TreeUtil.findChild(this, INSTANCEOF_KEYWORD);
+        return findChildByType(INSTANCEOF_KEYWORD);
 
       case ChildRole.TYPE:
-        return TreeUtil.findChild(this, TYPE);
+        return findChildByType(TYPE);
     }
   }
 

@@ -5,7 +5,6 @@ import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.lang.ASTNode;
 
 /**
@@ -33,7 +32,7 @@ public class ExtendsListElement extends ReferenceListElement {
         return null;
 
       case ChildRole.EXTENDS_KEYWORD:
-        return TreeUtil.findChild(this, EXTENDS_KEYWORD);
+        return findChildByType(EXTENDS_KEYWORD);
     }
   }
 

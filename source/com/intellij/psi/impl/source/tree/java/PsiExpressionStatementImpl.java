@@ -19,7 +19,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
 
   @NotNull
   public PsiExpression getExpression() {
-    PsiExpression expression = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(TreeUtil.findChild(this, ElementType.EXPRESSION_BIT_SET));
+    PsiExpression expression = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(findChildByType(ElementType.EXPRESSION_BIT_SET));
     if (expression != null) return expression;
     LOG.error("Illegal PSI. Children: " + DebugUtil.psiToString(this, false));
     return null;
@@ -32,7 +32,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
         return null;
 
       case ChildRole.EXPRESSION:
-        return TreeUtil.findChild(this, ElementType.EXPRESSION_BIT_SET);
+        return findChildByType(ElementType.EXPRESSION_BIT_SET);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);

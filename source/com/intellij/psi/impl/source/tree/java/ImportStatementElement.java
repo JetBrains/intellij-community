@@ -19,7 +19,7 @@ public class ImportStatementElement extends ImportStatementBaseElement {
       default:
         return null;
       case ChildRole.IMPORT_REFERENCE:
-        return TreeUtil.findChild(this, JAVA_CODE_REFERENCE);
+        return findChildByType(JAVA_CODE_REFERENCE);
     }
   }
 }

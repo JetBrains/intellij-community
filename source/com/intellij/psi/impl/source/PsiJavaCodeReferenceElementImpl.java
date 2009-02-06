@@ -199,7 +199,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            }
 
     case ChildRole.DOT:
-           return TreeUtil.findChild(this, JavaTokenType.DOT);
+      return findChildByType(JavaTokenType.DOT);
     }
   }
 

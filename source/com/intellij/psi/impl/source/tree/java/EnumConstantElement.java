@@ -32,16 +32,16 @@ public class EnumConstantElement extends CompositeElement implements Constants {
         return PsiImplUtil.findDocComment(this);
 
       case ChildRole.NAME:
-        return TreeUtil.findChild(this, JavaTokenType.IDENTIFIER);
+        return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.ARGUMENT_LIST:
-        return TreeUtil.findChild(this, EXPRESSION_LIST);
+        return findChildByType(EXPRESSION_LIST);
 
       case ChildRole.ANONYMOUS_CLASS:
-        return TreeUtil.findChild(this, ENUM_CONSTANT_INITIALIZER);
+        return findChildByType(ENUM_CONSTANT_INITIALIZER);
 
       case ChildRole.MODIFIER_LIST:
-        return TreeUtil.findChild(this, JavaElementType.MODIFIER_LIST);
+        return findChildByType(JavaElementType.MODIFIER_LIST);
     }
   }
 

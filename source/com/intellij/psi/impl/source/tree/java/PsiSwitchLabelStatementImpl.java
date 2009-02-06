@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -45,16 +44,16 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
         return null;
 
       case ChildRole.CASE_KEYWORD:
-        return TreeUtil.findChild(this, CASE_KEYWORD);
+        return findChildByType(CASE_KEYWORD);
 
       case ChildRole.DEFAULT_KEYWORD:
-        return TreeUtil.findChild(this, DEFAULT_KEYWORD);
+        return findChildByType(DEFAULT_KEYWORD);
 
       case ChildRole.CASE_EXPRESSION:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.COLON:
-        return TreeUtil.findChild(this, COLON);
+        return findChildByType(COLON);
     }
   }
 

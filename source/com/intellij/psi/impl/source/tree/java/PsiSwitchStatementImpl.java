@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
@@ -41,19 +40,19 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
         return null;
 
       case ChildRole.SWITCH_KEYWORD:
-        return TreeUtil.findChild(this, SWITCH_KEYWORD);
+        return findChildByType(SWITCH_KEYWORD);
 
       case ChildRole.LPARENTH:
-        return TreeUtil.findChild(this, LPARENTH);
+        return findChildByType(LPARENTH);
 
       case ChildRole.SWITCH_EXPRESSION:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.RPARENTH:
-        return TreeUtil.findChild(this, RPARENTH);
+        return findChildByType(RPARENTH);
 
       case ChildRole.SWITCH_BODY:
-        return TreeUtil.findChild(this, CODE_BLOCK);
+        return findChildByType(CODE_BLOCK);
     }
   }
 

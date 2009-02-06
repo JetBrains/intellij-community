@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -33,19 +32,19 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
         return null;
 
       case ChildRole.SYNCHRONIZED_KEYWORD:
-        return TreeUtil.findChild(this, SYNCHRONIZED_KEYWORD);
+        return findChildByType(SYNCHRONIZED_KEYWORD);
 
       case ChildRole.LPARENTH:
-        return TreeUtil.findChild(this, LPARENTH);
+        return findChildByType(LPARENTH);
 
       case ChildRole.LOCK:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.RPARENTH:
-        return TreeUtil.findChild(this, RPARENTH);
+        return findChildByType(RPARENTH);
 
       case ChildRole.BLOCK:
-        return TreeUtil.findChild(this, CODE_BLOCK);
+        return findChildByType(CODE_BLOCK);
     }
   }
 

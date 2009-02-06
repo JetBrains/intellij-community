@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
@@ -49,25 +48,25 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
 
     switch(role) {
       case ChildRole.LOOP_BODY:
-        return TreeUtil.findChild(this, STATEMENT_BIT_SET);
+        return findChildByType(STATEMENT_BIT_SET);
 
       case ChildRole.FOR_ITERATED_VALUE:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.FOR_KEYWORD:
         return getFirstChildNode();
 
       case ChildRole.LPARENTH:
-        return TreeUtil.findChild(this, LPARENTH);
+        return findChildByType(LPARENTH);
 
       case ChildRole.RPARENTH:
-        return TreeUtil.findChild(this, RPARENTH);
+        return findChildByType(RPARENTH);
 
       case ChildRole.FOR_ITERATION_PARAMETER:
-        return TreeUtil.findChild(this, PARAMETER);
+        return findChildByType(PARAMETER);
 
       case ChildRole.COLON:
-        return TreeUtil.findChild(this, COLON);
+        return findChildByType(COLON);
 
       default:
         return null;

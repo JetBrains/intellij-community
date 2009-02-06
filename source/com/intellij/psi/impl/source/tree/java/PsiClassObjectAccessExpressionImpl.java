@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.ui.RowIcon;
@@ -38,13 +37,13 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
         return null;
 
       case ChildRole.TYPE:
-        return TreeUtil.findChild(this, TYPE);
+        return findChildByType(TYPE);
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, DOT);
+        return findChildByType(DOT);
 
       case ChildRole.CLASS_KEYWORD:
-        return TreeUtil.findChild(this, CLASS_KEYWORD);
+        return findChildByType(CLASS_KEYWORD);
     }
   }
 

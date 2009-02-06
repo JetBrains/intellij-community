@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 
@@ -45,10 +44,10 @@ public class AnnotationElement extends CompositeElement implements Constants {
         return null;
 
       case ChildRole.PARAMETER_LIST:
-        return TreeUtil.findChild(this, ANNOTATION_PARAMETER_LIST);
+        return findChildByType(ANNOTATION_PARAMETER_LIST);
 
       case ChildRole.CLASS_REFERENCE:
-        return TreeUtil.findChild(this, JAVA_CODE_REFERENCE);
+        return findChildByType(JAVA_CODE_REFERENCE);
     }
   }
 }

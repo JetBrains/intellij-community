@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +90,7 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
         }
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, DOT);
+        return findChildByType(DOT);
 
       case ChildRole.SUPER_KEYWORD:
         return getLastChildNode();

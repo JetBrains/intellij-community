@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.tree.IElementType;
@@ -13,46 +12,11 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class TreeUtil {
   public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
-
-  public static ASTNode findChild(ASTNode parent, IElementType type) {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-    for(ASTNode element = parent.getFirstChildNode(); element != null; element = element.getTreeNext()){
-      if (element.getElementType() == type) return element;
-    }
-    return null;
-  }
-
-  public static ASTNode findChild(ASTNode parent, TokenSet types) {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-    for(ASTNode element = parent.getFirstChildNode(); element != null; element = element.getTreeNext()){
-      if (types.contains(element.getElementType())) return element;
-    }
-    return null;
-  }
-
-  public static ASTNode[] findChildren(ASTNode parent, TokenSet types) {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-    List<ASTNode> result = new ArrayList<ASTNode>();
-    for(ASTNode element = parent.getFirstChildNode(); element != null; element = element.getTreeNext()){
-      if (types.contains(element.getElementType())) {
-        result.add(element);
-      }
-    }
-    return result.toArray(new ASTNode[result.size()]);
-  }
 
   public static ASTNode findChildBackward(ASTNode parent, IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
@@ -60,16 +24,6 @@ public class TreeUtil {
     }
     for(ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()){
       if (element.getElementType() == type) return element;
-    }
-    return null;
-  }
-
-  public static ASTNode findChildBackward(ASTNode parent, TokenSet types) {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-    for(ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()){
-      if (types.contains(element.getElementType())) return element;
     }
     return null;
   }
@@ -107,20 +61,6 @@ public class TreeUtil {
       if (parent.getElementType() == type) return parent;
     }
     return null;
-  }
-
-  public static ASTNode findParent(ASTNode element, TokenSet types) {
-    for(ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()){
-      if (types.contains(parent.getElementType())) return parent;
-    }
-    return null;
-  }
-
-  public static boolean isInRange(ASTNode element, ASTNode start, ASTNode end) {
-    for(ASTNode child = start; child != end; child = child.getTreeNext()){
-      if (child == element) return true;
-    }
-    return false;
   }
 
   @Nullable
@@ -316,15 +256,6 @@ public class TreeUtil {
     }
   }
 
-  public static ASTNode findSibling(ASTNode start, TokenSet types) {
-    ASTNode child = start;
-    while (true) {
-      if (child == null) return null;
-      if (types.contains(child.getElementType())) return child;
-      child = child.getTreeNext();
-    }
-  }
-
   public static ASTNode findCommonParent(ASTNode one, ASTNode two){
     // optimization
     if(one == two) return one;
@@ -354,17 +285,6 @@ public class TreeUtil {
       }
     }
     return length;
-  }
-
-  public static int countLeafs(ASTNode composite) {
-    int count = 0;
-    ASTNode child = composite.getFirstChildNode();
-    while(child != null){
-      if(child instanceof LeafElement) count++;
-      else count += countLeafs(child);
-      child = child.getTreeNext();
-    }
-    return count;
   }
 
   public static void clearCaches(TreeElement tree) {
@@ -400,29 +320,6 @@ public class TreeUtil {
   @Nullable
   public static ASTNode prevLeaf(final ASTNode node) {
     return prevLeaf((TreeElement)node, null);
-  }
-
-  public static boolean containsErrors(final TreeElement treeNext) {
-    if(treeNext.getElementType() == TokenType.ERROR_ELEMENT) return true;
-    if(treeNext instanceof CompositeElement){
-      final CompositeElement composite = (CompositeElement)treeNext;
-      ASTNode firstChildNode = composite.getFirstChildNode();
-      while(firstChildNode != null){
-        if(containsErrors((TreeElement)firstChildNode)) return true;
-        firstChildNode = firstChildNode.getTreeNext();
-      }
-      return false;
-    }
-    else return false;
-  }
-  public static int getOffsetInParent(final ASTNode child) {
-    int childOffsetInParent = 0;
-    ASTNode current = child.getTreeParent().getFirstChildNode();
-    while(current != child) {
-      childOffsetInParent += current.getTextLength();
-      current = current.getTreeNext();
-    }
-    return childOffsetInParent;
   }
 
   public static boolean isStrongWhitespaceHolder(IElementType type) {

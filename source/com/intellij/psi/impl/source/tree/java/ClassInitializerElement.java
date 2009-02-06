@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 
@@ -23,10 +22,10 @@ public class ClassInitializerElement extends CompositeElement implements Constan
         return null;
 
       case ChildRole.MODIFIER_LIST:
-        return TreeUtil.findChild(this, MODIFIER_LIST);
+        return findChildByType(MODIFIER_LIST);
 
       case ChildRole.METHOD_BODY:
-        return TreeUtil.findChild(this, CODE_BLOCK);
+        return findChildByType(CODE_BLOCK);
     }
   }
 

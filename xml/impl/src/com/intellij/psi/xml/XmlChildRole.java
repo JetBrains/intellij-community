@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.DefaultRoleFinder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.RoleFinder;
@@ -38,8 +37,8 @@ public interface XmlChildRole {
 
   RoleFinder DOCUMENT_FINDER = new RoleFinder() {
     public ASTNode findChild(@NotNull ASTNode parent) {
-      ASTNode oldDocument = TreeUtil.findChild(parent, XmlElementType.XML_DOCUMENT);
-      if(oldDocument == null) oldDocument = TreeUtil.findChild(parent, XmlElementType.HTML_DOCUMENT);
+      ASTNode oldDocument = parent.findChildByType(XmlElementType.XML_DOCUMENT);
+      if(oldDocument == null) oldDocument = parent.findChildByType(XmlElementType.HTML_DOCUMENT);
       return oldDocument;
     }
   };

@@ -29,10 +29,10 @@ public class ImportStatementBaseElement extends CompositeElement implements Cons
         return getFirstChildNode();
 
       case ChildRole.IMPORT_ON_DEMAND_DOT:
-        return TreeUtil.findChild(this, DOT);
+        return findChildByType(DOT);
 
       case ChildRole.IMPORT_ON_DEMAND_ASTERISK:
-        return TreeUtil.findChild(this, ASTERISK);
+        return findChildByType(ASTERISK);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);

@@ -13,7 +13,6 @@ import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -175,7 +174,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
 
     myCachedType = null;
-    return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), JavaTokenType.ELLIPSIS) != null;
+    return SourceTreeToPsiMap.psiElementToTree(getTypeElement()).findChildByType(JavaTokenType.ELLIPSIS) != null;
   }
 
   @NotNull

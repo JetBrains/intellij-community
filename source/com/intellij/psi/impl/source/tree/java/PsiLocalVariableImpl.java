@@ -77,14 +77,14 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @NotNull
   public PsiTypeElement getTypeElement() {
-    ASTNode first = TreeUtil.findChild(getTreeParent(), LOCAL_VARIABLE);
-    return (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(TreeUtil.findChild(first, TYPE));
+    ASTNode first = getTreeParent().findChildByType(LOCAL_VARIABLE);
+    return (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(first.findChildByType(TYPE));
   }
 
   public PsiModifierList getModifierList() {
     CompositeElement parent = getTreeParent();
     if (parent == null) return null;
-    CompositeElement first = (CompositeElement)TreeUtil.findChild(parent, LOCAL_VARIABLE);
+    CompositeElement first = (CompositeElement)parent.findChildByType(LOCAL_VARIABLE);
     return (PsiModifierList)first.findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
   }
 
@@ -187,19 +187,19 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         return null;
 
       case ChildRole.MODIFIER_LIST:
-        return TreeUtil.findChild(this, MODIFIER_LIST);
+        return findChildByType(MODIFIER_LIST);
 
       case ChildRole.TYPE:
-        return TreeUtil.findChild(this, TYPE);
+        return findChildByType(TYPE);
 
       case ChildRole.NAME:
-        return TreeUtil.findChild(this, JavaTokenType.IDENTIFIER);
+        return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.INITIALIZER_EQ:
-        return TreeUtil.findChild(this, JavaTokenType.EQ);
+        return findChildByType(JavaTokenType.EQ);
 
       case ChildRole.INITIALIZER:
-        return TreeUtil.findChild(this, ElementType.EXPRESSION_BIT_SET);
+        return findChildByType(ElementType.EXPRESSION_BIT_SET);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);

@@ -75,7 +75,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
         }
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, JavaTokenType.DOT);
+        return findChildByType(JavaTokenType.DOT);
     }
   }
 

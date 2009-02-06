@@ -10,7 +10,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlockStatement {
@@ -32,7 +31,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
         return null;
 
       case ChildRole.BLOCK:
-        return TreeUtil.findChild(this, Constants.CODE_BLOCK);
+        return findChildByType(Constants.CODE_BLOCK);
     }
   }
 

@@ -129,7 +129,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   protected PsiElement findChildByType(TokenSet type) {
-    ASTNode node = TreeUtil.findChild(getNode(), type);
+    ASTNode node = getNode().findChildByType(type);
     return node == null ? null : node.getPsi();
   }
 

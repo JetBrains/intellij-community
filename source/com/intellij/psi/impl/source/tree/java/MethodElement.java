@@ -63,25 +63,25 @@ public class MethodElement extends CompositeElement implements Constants {
         return PsiImplUtil.findDocComment(this);
 
       case ChildRole.MODIFIER_LIST:
-        return TreeUtil.findChild(this, MODIFIER_LIST);
+        return findChildByType(MODIFIER_LIST);
 
       case ChildRole.TYPE_PARAMETER_LIST:
-        return TreeUtil.findChild(this, TYPE_PARAMETER_LIST);
+        return findChildByType(TYPE_PARAMETER_LIST);
 
       case ChildRole.NAME:
-        return TreeUtil.findChild(this, IDENTIFIER);
+        return findChildByType(IDENTIFIER);
 
       case ChildRole.TYPE:
-        return TreeUtil.findChild(this, TYPE);
+        return findChildByType(TYPE);
 
       case ChildRole.METHOD_BODY:
-        return TreeUtil.findChild(this, CODE_BLOCK);
+        return findChildByType(CODE_BLOCK);
 
       case ChildRole.PARAMETER_LIST:
-        return TreeUtil.findChild(this, PARAMETER_LIST);
+        return findChildByType(PARAMETER_LIST);
 
       case ChildRole.THROWS_LIST:
-        return TreeUtil.findChild(this, THROWS_LIST);
+        return findChildByType(THROWS_LIST);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);

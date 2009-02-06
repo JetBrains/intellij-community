@@ -10,7 +10,6 @@ import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
@@ -159,13 +158,13 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       return !hasModifierProperty(PsiModifier.PUBLIC) && !hasModifierProperty(PsiModifier.PRIVATE) && !hasModifierProperty(PsiModifier.PROTECTED);
     }
 
-    return TreeUtil.findChild(getNode(), type) != null;
+    return getNode().findChildByType(type) != null;
   }
 
   public boolean hasExplicitModifier(@NotNull String name) {
     final CompositeElement tree = (CompositeElement)getNode();
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
-    return TreeUtil.findChild(tree, type) != null;
+    return tree.findChildByType(type) != null;
   }
 
   public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
@@ -209,7 +208,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         if (type == null) return;
       }
 
-      if (TreeUtil.findChild(treeElement, type) == null){
+      if (treeElement.findChildByType(type) == null){
         TreeElement keyword = Factory.createSingleLeafElement(type, name, 0, name.length(), null, getManager());
         treeElement.addInternal(keyword, keyword, null, null);
       }
@@ -221,7 +220,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       if (type == null){ // package local
         throw new IncorrectOperationException("Cannot reset package local modifier."); //?
       }
-      ASTNode child = TreeUtil.findChild(treeElement, type);
+      ASTNode child = treeElement.findChildByType(type);
       if (child != null){
         SourceTreeToPsiMap.treeElementToPsi(child).delete();
       }

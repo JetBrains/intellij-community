@@ -32,10 +32,10 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
         return null;
 
       case ChildRole.THROW_KEYWORD:
-        return TreeUtil.findChild(this, THROW_KEYWORD);
+        return findChildByType(THROW_KEYWORD);
 
       case ChildRole.EXCEPTION:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);

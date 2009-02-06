@@ -7,7 +7,6 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +61,7 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
         }
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, DOT);
+        return findChildByType(DOT);
 
       case ChildRole.THIS_KEYWORD:
         return getLastChildNode();

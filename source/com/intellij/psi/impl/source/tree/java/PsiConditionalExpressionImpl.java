@@ -2,12 +2,10 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +81,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
         return getFirstChildNode();
 
       case ChildRole.QUEST:
-        return TreeUtil.findChild(this, QUEST);
+        return findChildByType(QUEST);
 
       case ChildRole.THEN_EXPRESSION:
         {
@@ -98,7 +96,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
         }
 
       case ChildRole.COLON:
-        return TreeUtil.findChild(this, COLON);
+        return findChildByType(COLON);
 
       case ChildRole.ELSE_EXPRESSION:
         {

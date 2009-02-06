@@ -547,7 +547,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
           return getLastChildNode();
         }
 
-        return TreeUtil.findChild(this, JavaTokenType.IDENTIFIER);
+        return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.QUALIFIER:
         if (getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER) {
@@ -557,10 +557,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         return null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
-        return TreeUtil.findChild(this, JavaElementType.REFERENCE_PARAMETER_LIST);
+        return findChildByType(JavaElementType.REFERENCE_PARAMETER_LIST);
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, JavaTokenType.DOT);
+        return findChildByType(JavaTokenType.DOT);
     }
   }
 

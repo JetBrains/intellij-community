@@ -10,7 +10,6 @@ import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -80,7 +79,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         return getFirstChildNode();
 
       case ChildRole.ARGUMENT_LIST:
-        return TreeUtil.findChild(this, JavaElementType.EXPRESSION_LIST);
+        return findChildByType(JavaElementType.EXPRESSION_LIST);
     }
   }
 

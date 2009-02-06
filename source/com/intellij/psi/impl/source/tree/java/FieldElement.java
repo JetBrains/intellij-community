@@ -38,19 +38,19 @@ public class FieldElement extends CompositeElement{
         return PsiImplUtil.findDocComment(this);
 
       case ChildRole.MODIFIER_LIST:
-        return TreeUtil.findChild(this, JavaElementType.MODIFIER_LIST);
+        return findChildByType(JavaElementType.MODIFIER_LIST);
 
       case ChildRole.TYPE:
-        return TreeUtil.findChild(this, JavaElementType.TYPE);
+        return findChildByType(JavaElementType.TYPE);
 
       case ChildRole.NAME:
-        return TreeUtil.findChild(this, JavaTokenType.IDENTIFIER);
+        return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.INITIALIZER_EQ:
-        return TreeUtil.findChild(this, JavaTokenType.EQ);
+        return findChildByType(JavaTokenType.EQ);
 
       case ChildRole.INITIALIZER:
-        return TreeUtil.findChild(this, ElementType.EXPRESSION_BIT_SET);
+        return findChildByType(ElementType.EXPRESSION_BIT_SET);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);

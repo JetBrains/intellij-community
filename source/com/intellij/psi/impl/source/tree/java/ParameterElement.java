@@ -7,7 +7,6 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 
@@ -33,13 +32,13 @@ public class ParameterElement extends CompositeElement{
         return null;
 
       case ChildRole.MODIFIER_LIST:
-        return TreeUtil.findChild(this, JavaElementType.MODIFIER_LIST);
+        return findChildByType(JavaElementType.MODIFIER_LIST);
 
       case ChildRole.NAME:
-        return TreeUtil.findChild(this, JavaTokenType.IDENTIFIER);
+        return findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.TYPE:
-        return TreeUtil.findChild(this, JavaElementType.TYPE);
+        return findChildByType(JavaElementType.TYPE);
 
     }
   }

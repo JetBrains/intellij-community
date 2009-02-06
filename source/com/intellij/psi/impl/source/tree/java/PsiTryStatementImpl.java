@@ -7,7 +7,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
@@ -81,13 +80,13 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
         return null;
 
       case ChildRole.TRY_KEYWORD:
-        return TreeUtil.findChild(this, TRY_KEYWORD);
+        return findChildByType(TRY_KEYWORD);
 
       case ChildRole.TRY_BLOCK:
-        return TreeUtil.findChild(this, CODE_BLOCK);
+        return findChildByType(CODE_BLOCK);
 
       case ChildRole.FINALLY_KEYWORD:
-        return TreeUtil.findChild(this, FINALLY_KEYWORD);
+        return findChildByType(FINALLY_KEYWORD);
 
       case ChildRole.FINALLY_BLOCK:
         {

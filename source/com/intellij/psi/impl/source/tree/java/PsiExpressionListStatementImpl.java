@@ -32,7 +32,7 @@ public class PsiExpressionListStatementImpl extends CompositePsiElement implemen
         return null;
 
       case ChildRole.EXPRESSION_LIST:
-        return TreeUtil.findChild(this, EXPRESSION_LIST);
+        return findChildByType(EXPRESSION_LIST);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);

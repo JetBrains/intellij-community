@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -94,22 +93,22 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         return null;
 
       case ChildRole.IF_KEYWORD:
-        return TreeUtil.findChild(this, IF_KEYWORD);
+        return findChildByType(IF_KEYWORD);
 
       case ChildRole.LPARENTH:
-        return TreeUtil.findChild(this, LPARENTH);
+        return findChildByType(LPARENTH);
 
       case ChildRole.CONDITION:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.RPARENTH:
-        return TreeUtil.findChild(this, RPARENTH);
+        return findChildByType(RPARENTH);
 
       case ChildRole.THEN_BRANCH:
-        return TreeUtil.findChild(this, STATEMENT_BIT_SET);
+        return findChildByType(STATEMENT_BIT_SET);
 
       case ChildRole.ELSE_KEYWORD:
-        return TreeUtil.findChild(this, ELSE_KEYWORD);
+        return findChildByType(ELSE_KEYWORD);
 
       case ChildRole.ELSE_BRANCH:
         {

@@ -96,12 +96,12 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
           }
         }
         else{
-          ASTNode anonymousClassElement = TreeUtil.findChild(PsiNewExpressionImpl.this, JavaElementType.ANONYMOUS_CLASS);
+          ASTNode anonymousClassElement = findChildByType(JavaElementType.ANONYMOUS_CLASS);
           if (anonymousClassElement != null) {
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
             final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
             PsiType aClass = anonymousClass.getBaseClassType();
-            ASTNode argumentList = TreeUtil.findChild(anonymousClassElement, JavaElementType.EXPRESSION_LIST);
+            ASTNode argumentList = anonymousClassElement.findChildByType(JavaElementType.EXPRESSION_LIST);
             return facade.getResolveHelper().multiResolveConstructor((PsiClassType)aClass,
                                                                       (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
                                                                       anonymousClass);
@@ -176,7 +176,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   public PsiAnonymousClass getAnonymousClass() {
-    ASTNode anonymousClass = TreeUtil.findChild(this, JavaElementType.ANONYMOUS_CLASS);
+    ASTNode anonymousClass = findChildByType(JavaElementType.ANONYMOUS_CLASS);
     if (anonymousClass == null) return null;
     return (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClass);
   }
@@ -184,7 +184,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   private static final TokenSet CLASS_REF = TokenSet.create(JavaElementType.JAVA_CODE_REFERENCE, JavaElementType.ANONYMOUS_CLASS);
   @Nullable
   public PsiJavaCodeReferenceElement getClassOrAnonymousClassReference() {
-    ASTNode ref = TreeUtil.findChild(this, CLASS_REF);
+    ASTNode ref = findChildByType(CLASS_REF);
     if (ref == null) return null;
     if (ref instanceof PsiJavaCodeReferenceElement) return (PsiJavaCodeReferenceElement)ref;
     PsiAnonymousClass anonymousClass = (PsiAnonymousClass)ref.getPsi();
@@ -209,7 +209,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
-        return TreeUtil.findChild(this, JavaElementType.REFERENCE_PARAMETER_LIST);
+        return findChildByType(JavaElementType.REFERENCE_PARAMETER_LIST);
 
       case ChildRole.QUALIFIER:
         TreeElement firstChild = getFirstChildNode();
@@ -221,28 +221,28 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         }
 
       case ChildRole.DOT:
-        return TreeUtil.findChild(this, JavaTokenType.DOT);
+        return findChildByType(JavaTokenType.DOT);
 
       case ChildRole.NEW_KEYWORD:
-        return TreeUtil.findChild(this, JavaTokenType.NEW_KEYWORD);
+        return findChildByType(JavaTokenType.NEW_KEYWORD);
 
       case ChildRole.ANONYMOUS_CLASS:
-        return TreeUtil.findChild(this, JavaElementType.ANONYMOUS_CLASS);
+        return findChildByType(JavaElementType.ANONYMOUS_CLASS);
 
       case ChildRole.TYPE_REFERENCE:
-        return TreeUtil.findChild(this, JavaElementType.JAVA_CODE_REFERENCE);
+        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
 
       case ChildRole.TYPE_KEYWORD:
-        return TreeUtil.findChild(this, ElementType.PRIMITIVE_TYPE_BIT_SET);
+        return findChildByType(ElementType.PRIMITIVE_TYPE_BIT_SET);
 
       case ChildRole.ARGUMENT_LIST:
-        return TreeUtil.findChild(this, JavaElementType.EXPRESSION_LIST);
+        return findChildByType(JavaElementType.EXPRESSION_LIST);
 
       case ChildRole.LBRACKET:
-        return TreeUtil.findChild(this, JavaTokenType.LBRACKET);
+        return findChildByType(JavaTokenType.LBRACKET);
 
       case ChildRole.RBRACKET:
-        return TreeUtil.findChild(this, JavaTokenType.RBRACKET);
+        return findChildByType(JavaTokenType.RBRACKET);
 
       case ChildRole.ARRAY_INITIALIZER:
         if (getLastChildNode().getElementType() == JavaElementType.ARRAY_INITIALIZER_EXPRESSION){

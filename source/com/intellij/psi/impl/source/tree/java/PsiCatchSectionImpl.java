@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -72,19 +71,19 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
         return null;
 
       case ChildRole.PARAMETER:
-        return TreeUtil.findChild(this, PARAMETER);
+        return findChildByType(PARAMETER);
 
       case ChildRole.CATCH_KEYWORD:
-        return TreeUtil.findChild(this, CATCH_KEYWORD);
+        return findChildByType(CATCH_KEYWORD);
 
       case ChildRole.CATCH_BLOCK_PARAMETER_LPARENTH:
-        return TreeUtil.findChild(this, LPARENTH);
+        return findChildByType(LPARENTH);
 
       case ChildRole.CATCH_BLOCK_PARAMETER_RPARENTH:
-        return TreeUtil.findChild(this, RPARENTH);
+        return findChildByType(RPARENTH);
 
       case ChildRole.CATCH_BLOCK:
-        return TreeUtil.findChild(this, CODE_BLOCK);
+        return findChildByType(CODE_BLOCK);
     }
   }
 

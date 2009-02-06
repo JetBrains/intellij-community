@@ -9,7 +9,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
@@ -36,13 +35,13 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
         return null;
 
       case ChildRole.ASSERT_KEYWORD:
-        return TreeUtil.findChild(this, ASSERT_KEYWORD);
+        return findChildByType(ASSERT_KEYWORD);
 
       case ChildRole.CONDITION:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.COLON:
-        return TreeUtil.findChild(this, COLON);
+        return findChildByType(COLON);
 
       case ChildRole.ASSERT_DESCRIPTION:
         {
@@ -56,7 +55,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
         }
 
       case ChildRole.CLOSING_SEMICOLON:
-        return TreeUtil.findChild(this, SEMICOLON);
+        return findChildByType(SEMICOLON);
     }
   }
 

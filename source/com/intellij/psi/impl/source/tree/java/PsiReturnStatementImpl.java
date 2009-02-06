@@ -32,10 +32,10 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
         return null;
 
       case ChildRole.RETURN_KEYWORD:
-        return TreeUtil.findChild(this, RETURN_KEYWORD);
+        return findChildByType(RETURN_KEYWORD);
 
       case ChildRole.RETURN_VALUE:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);

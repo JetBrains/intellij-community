@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -41,19 +40,19 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
         return null;
 
       case ChildRole.WHILE_KEYWORD:
-        return TreeUtil.findChild(this, WHILE_KEYWORD);
+        return findChildByType(WHILE_KEYWORD);
 
       case ChildRole.LPARENTH:
-        return TreeUtil.findChild(this, LPARENTH);
+        return findChildByType(LPARENTH);
 
       case ChildRole.CONDITION:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.RPARENTH:
-        return TreeUtil.findChild(this, RPARENTH);
+        return findChildByType(RPARENTH);
 
       case ChildRole.LOOP_BODY:
-        return TreeUtil.findChild(this, STATEMENT_BIT_SET);
+        return findChildByType(STATEMENT_BIT_SET);
     }
   }
 

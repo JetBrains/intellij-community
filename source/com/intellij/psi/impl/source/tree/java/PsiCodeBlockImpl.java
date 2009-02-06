@@ -145,7 +145,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
         return null;
 
       case ChildRole.LBRACE:
-        return TreeUtil.findChild(this, LBRACE);
+        return findChildByType(LBRACE);
 
       case ChildRole.RBRACE:
         return TreeUtil.findChildBackward(this, RBRACE);

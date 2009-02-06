@@ -51,10 +51,10 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
         return null;
 
       case ChildRole.LBRACE:
-        return TreeUtil.findChild(this, LBRACE);
+        return findChildByType(LBRACE);
 
       case ChildRole.RBRACE:
-        return TreeUtil.findChild(this, RBRACE);
+        return findChildByType(RBRACE);
     }
   }
 

@@ -57,10 +57,10 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
         return null;
 
       case ChildRole.CONTINUE_KEYWORD:
-        return TreeUtil.findChild(this, CONTINUE_KEYWORD);
+        return findChildByType(CONTINUE_KEYWORD);
 
       case ChildRole.LABEL:
-        return TreeUtil.findChild(this, IDENTIFIER);
+        return findChildByType(IDENTIFIER);
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);

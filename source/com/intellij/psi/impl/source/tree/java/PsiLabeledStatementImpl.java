@@ -9,7 +9,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -39,10 +38,10 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
         return null;
 
       case ChildRole.STATEMENT:
-        return TreeUtil.findChild(this, STATEMENT_BIT_SET);
+        return findChildByType(STATEMENT_BIT_SET);
 
       case ChildRole.COLON:
-        return TreeUtil.findChild(this, COLON);
+        return findChildByType(COLON);
 
       case ChildRole.LABEL_NAME:
         return getFirstChildNode();

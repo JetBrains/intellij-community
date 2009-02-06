@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.lang.ASTNode;
 
@@ -21,12 +20,12 @@ public class ImportStaticStatementElement extends ImportStatementBaseElement {
         return null;
 
       case ChildRole.IMPORT_REFERENCE:
-        final ASTNode importStaticReference = TreeUtil.findChild(this, IMPORT_STATIC_REFERENCE);
+        final ASTNode importStaticReference = findChildByType(IMPORT_STATIC_REFERENCE);
         if (importStaticReference != null) {
           return importStaticReference;
         }
         else {
-          return TreeUtil.findChild(this, JAVA_CODE_REFERENCE);
+          return findChildByType(JAVA_CODE_REFERENCE);
         }
     }
   }

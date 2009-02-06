@@ -48,10 +48,10 @@ public class JavaFileElement extends FileElement implements Constants {
         return null;
 
       case ChildRole.PACKAGE_STATEMENT:
-        return TreeUtil.findChild(this, PACKAGE_STATEMENT);
+        return findChildByType(PACKAGE_STATEMENT);
 
       case ChildRole.IMPORT_LIST:
-        return TreeUtil.findChild(this, IMPORT_LIST);
+        return findChildByType(IMPORT_LIST);
     }
   }
 

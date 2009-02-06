@@ -8,7 +8,6 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
@@ -54,13 +53,13 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
         return null;
 
       case ChildRole.FOR_KEYWORD:
-        return TreeUtil.findChild(this, FOR_KEYWORD);
+        return findChildByType(FOR_KEYWORD);
 
       case ChildRole.LPARENTH:
-        return TreeUtil.findChild(this, LPARENTH);
+        return findChildByType(LPARENTH);
 
       case ChildRole.FOR_INITIALIZATION:
-        final ASTNode initialization = TreeUtil.findChild(this, STATEMENT_BIT_SET);
+        final ASTNode initialization = findChildByType(STATEMENT_BIT_SET);
         // should be inside parens
         ASTNode paren = findChildByRole(ChildRole.LPARENTH);
         for(ASTNode child = paren; child != null; child = child.getTreeNext()){
@@ -70,10 +69,10 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
         return null;
 
       case ChildRole.CONDITION:
-        return TreeUtil.findChild(this, EXPRESSION_BIT_SET);
+        return findChildByType(EXPRESSION_BIT_SET);
 
       case ChildRole.FOR_SEMICOLON:
-        return TreeUtil.findChild(this, SEMICOLON);
+        return findChildByType(SEMICOLON);
 
       case ChildRole.FOR_UPDATE:
       {
@@ -88,7 +87,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       }
 
       case ChildRole.RPARENTH:
-        return TreeUtil.findChild(this, RPARENTH);
+        return findChildByType(RPARENTH);
 
       case ChildRole.LOOP_BODY:
       {

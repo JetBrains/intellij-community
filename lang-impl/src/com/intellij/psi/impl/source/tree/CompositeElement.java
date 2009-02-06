@@ -179,17 +179,35 @@ public class CompositeElement extends TreeElement {
   }
 
   public ASTNode findChildByType(IElementType type) {
-    return TreeUtil.findChild(this, type);
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+
+    for(ASTNode element = getFirstChildNode(); element != null; element = element.getTreeNext()){
+      if (element.getElementType() == type) return element;
+    }
+    return null;
   }
 
   @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet typesSet) {
-    return TreeUtil.findChild(this, typesSet);
+  public ASTNode findChildByType(@NotNull TokenSet types) {
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+    for(ASTNode element = getFirstChildNode(); element != null; element = element.getTreeNext()){
+      if (types.contains(element.getElementType())) return element;
+    }
+    return null;
   }
 
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
-    return TreeUtil.findSibling(anchor, typesSet);
+    ASTNode child = anchor;
+    while (true) {
+      if (child == null) return null;
+      if (typesSet.contains(child.getElementType())) return child;
+      child = child.getTreeNext();
+    }
   }
 
   @NotNull

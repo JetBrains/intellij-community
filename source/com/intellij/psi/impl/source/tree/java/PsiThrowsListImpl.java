@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 
@@ -34,7 +33,7 @@ public class PsiThrowsListImpl extends ReferenceListElement implements Constants
         return null;
 
       case ChildRole.THROWS_KEYWORD:
-        return TreeUtil.findChild(this, THROWS_KEYWORD);
+        return findChildByType(THROWS_KEYWORD);
     }
   }
 

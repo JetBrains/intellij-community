@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +53,10 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
         }
 
       case ChildRole.LBRACKET:
-        return TreeUtil.findChild(this, LBRACKET);
+        return findChildByType(LBRACKET);
 
       case ChildRole.RBRACKET:
-        return TreeUtil.findChild(this, RBRACKET);
+        return findChildByType(RBRACKET);
     }
   }
 

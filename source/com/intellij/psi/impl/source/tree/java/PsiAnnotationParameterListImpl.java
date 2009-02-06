@@ -63,10 +63,10 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
         LOG.assertTrue(false);
         return null;
       case ChildRole.LPARENTH:
-        return TreeUtil.findChild(this, LPARENTH);
+        return findChildByType(LPARENTH);
 
       case ChildRole.RPARENTH:
-        return TreeUtil.findChild(this, RPARENTH);
+        return findChildByType(RPARENTH);
     }
   }
 

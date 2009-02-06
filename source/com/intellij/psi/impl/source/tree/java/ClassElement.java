@@ -105,7 +105,7 @@ public class ClassElement extends CompositeElement implements Constants {
             child.getElementType() == JavaElementType.ENUM_CONSTANT) {
           CompositeElement modifierList = (CompositeElement)((CompositeElement)child).findChildByRole(ChildRole.MODIFIER_LIST);
           while (true) {
-            ASTNode modifier = TreeUtil.findChild(modifierList, MODIFIERS_TO_REMOVE_IN_ENUM_BIT_SET);
+            ASTNode modifier = modifierList.findChildByType(MODIFIERS_TO_REMOVE_IN_ENUM_BIT_SET);
             if (modifier == null) break;
             modifierList.deleteChildInternal(modifier);
           }
@@ -118,7 +118,7 @@ public class ClassElement extends CompositeElement implements Constants {
         if (child.getElementType() == JavaElementType.METHOD || child.getElementType() == JavaElementType.FIELD) {
           CompositeElement modifierList = (CompositeElement)((CompositeElement)child).findChildByRole(ChildRole.MODIFIER_LIST);
           while (true) {
-            ASTNode modifier = TreeUtil.findChild(modifierList, MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET);
+            ASTNode modifier = modifierList.findChildByType(MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET);
             if (modifier == null) break;
             modifierList.deleteChildInternal(modifier);
           }
@@ -237,16 +237,16 @@ public class ClassElement extends CompositeElement implements Constants {
         return findEnumConstantListDelimiter();
 
       case ChildRole.MODIFIER_LIST:
-        return TreeUtil.findChild(this, MODIFIER_LIST);
+        return findChildByType(MODIFIER_LIST);
 
       case ChildRole.EXTENDS_LIST:
-        return TreeUtil.findChild(this, EXTENDS_LIST);
+        return findChildByType(EXTENDS_LIST);
 
       case ChildRole.IMPLEMENTS_LIST:
-        return TreeUtil.findChild(this, IMPLEMENTS_LIST);
+        return findChildByType(IMPLEMENTS_LIST);
 
       case ChildRole.TYPE_PARAMETER_LIST:
-        return TreeUtil.findChild(this, TYPE_PARAMETER_LIST);
+        return findChildByType(TYPE_PARAMETER_LIST);
 
       case ChildRole.CLASS_OR_INTERFACE_KEYWORD:
         for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -262,10 +262,10 @@ public class ClassElement extends CompositeElement implements Constants {
         return null;
 
       case ChildRole.NAME:
-        return TreeUtil.findChild(this, IDENTIFIER);
+        return findChildByType(IDENTIFIER);
 
       case ChildRole.LBRACE:
-        return TreeUtil.findChild(this, LBRACE);
+        return findChildByType(LBRACE);
 
       case ChildRole.RBRACE:
         return TreeUtil.findChildBackward(this, RBRACE);
