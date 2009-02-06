@@ -49,6 +49,10 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
     doTest(true, null, "Found constructors are not reducible to simple chain");
   }
 
+  public void testGenerics() throws Exception {
+    doTest(true);
+  }
+
   private void doTest(final boolean createNewBuilderClass) throws Exception {
     doTest(createNewBuilderClass, null);
   }
