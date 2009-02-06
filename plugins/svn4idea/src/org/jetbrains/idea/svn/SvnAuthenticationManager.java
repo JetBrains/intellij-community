@@ -1,6 +1,8 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.net.HttpConfigurable;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -32,14 +34,16 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     }
 
     protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
-      return new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir));
+      return new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir), myProject);
     }
 
   private static class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
     private final ISVNAuthenticationProvider myDelegate;
+    private final Project myProject;
 
-    private PersistentAuthenticationProviderProxy(final ISVNAuthenticationProvider delegate) {
+    private PersistentAuthenticationProviderProxy(final ISVNAuthenticationProvider delegate, final Project project) {
       myDelegate = delegate;
+      myProject = project;
     }
 
     public SVNAuthentication requestClientAuthentication(final String kind, final SVNURL url, final String realm, final SVNErrorMessage errorMessage,
@@ -53,7 +57,13 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     }
 
     public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {
-      ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
+      try {
+        ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
+      }
+      catch (SVNException e) {
+        AbstractVcsHelper.getInstance(myProject).showError(new VcsException(e), "Problem when storing Subversion credentials");
+        throw e;
+      }
     }
   }
 
