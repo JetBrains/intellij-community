@@ -1017,6 +1017,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ImplicitNumericConversionInspection.class);
         m_inspectionClasses.add(IntegerDivisionInFloatingPointContextInspection.class);
         m_inspectionClasses.add(IntegerMultiplicationImplicitCastToLongInspection.class);
+        m_inspectionClasses.add(IntLiteralMayBeLongLiteralInspection.class);
         m_inspectionClasses.add(LongLiteralsEndingWithLowercaseLInspection.class);
         m_inspectionClasses.add(NonReproducibleMathCallInspection.class);
         m_inspectionClasses.add(OctalLiteralInspection.class);

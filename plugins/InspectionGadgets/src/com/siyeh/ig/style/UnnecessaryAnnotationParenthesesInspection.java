@@ -33,14 +33,14 @@ public class UnnecessaryAnnotationParenthesesInspection extends BaseInspection {
     @NotNull()
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "unnecessary.annotation.parentheses.diplay.name");
+                "unnecessary.annotation.parentheses.display.name");
     }
 
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "unnecessary.annotation.parentheses.error.descriptor");
+                "unnecessary.annotation.parentheses.problem.descriptor");
     }
 
     @Override
