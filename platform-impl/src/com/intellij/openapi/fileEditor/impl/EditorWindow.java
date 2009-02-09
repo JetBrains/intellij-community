@@ -109,7 +109,7 @@ public class EditorWindow {
       public void run() {
         try {
           final List<EditorWithProviderComposite> editors = editorManager.getEditorComposites(file);
-          LOG.assertTrue(!editors.isEmpty());
+          if (editors.isEmpty()) return;
           final EditorWithProviderComposite editor = findFileComposite(file);
 
           if (myTabbedPane != null) {
