@@ -79,7 +79,20 @@
         <setting name="PREFIX" value=""/>
         <setting name="SUFFIX" value=""/>
         <setting name="TAGNAME" value="ejb-ql"/>
-        <setting name="TAGNAMESPACE" value="http://java.sun.com/xml/ns/javaee|http://java.sun.com/xml/ns/j2ee|http://java.sun.com/j2ee/dtds/ejb-jar_1_0.dtd|http://java.sun.com/j2ee/dtds/ejb-jar_1_1.dtd|http://java.sun.com/dtd/ejb-jar_2_0.dtd"/>
+        <setting name="TAGNAMESPACE"
+                 value="http://java.sun.com/xml/ns/javaee|http://java.sun.com/xml/ns/j2ee|http://java.sun.com/j2ee/dtds/ejb-jar_1_0.dtd|http://java.sun.com/j2ee/dtds/ejb-jar_1_1.dtd|http://java.sun.com/dtd/ejb-jar_2_0.dtd"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="APPLY_TO_SUBTAGS" value="false"/>
+      </XmlTagInjection>
+    </entry>
+    <entry>
+      <XmlTagInjection>
+        <setting name="LANGUAGE" value="EJBQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="ejbql"/>
+        <setting name="TAGNAMESPACE" value="http://jboss.com/products/seam/framework"/>
         <setting name="VALUE_PATTERN" value=""/>
         <setting name="XPATH_CONDITION" value=""/>
         <setting name="APPLY_TO_SUBTAGS" value="false"/>
@@ -149,6 +162,19 @@
         <setting name="VALUE_PATTERN" value=""/>
         <setting name="XPATH_CONDITION" value=""/>
         <setting name="ATT_NAME" value="select"/>
+        <setting name="ATT_NAMESPACE" value=""/>
+      </XmlAttributeInjection>
+    </entry>
+    <entry>
+      <XmlAttributeInjection>
+        <setting name="LANGUAGE" value="EJBQL"/>
+        <setting name="PREFIX" value=""/>
+        <setting name="SUFFIX" value=""/>
+        <setting name="TAGNAME" value="entity-query"/>
+        <setting name="TAGNAMESPACE" value="http://jboss.com/products/seam/framework"/>
+        <setting name="VALUE_PATTERN" value=""/>
+        <setting name="XPATH_CONDITION" value=""/>
+        <setting name="ATT_NAME" value="ejbql"/>
         <setting name="ATT_NAMESPACE" value=""/>
       </XmlAttributeInjection>
     </entry>
