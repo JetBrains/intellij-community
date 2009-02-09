@@ -81,7 +81,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   private boolean isExcluded(final VirtualFile file) {
-    return myIndex.isInContent(file) && myIndex.isExcludedFile(file);
+    return myIndex.isExcludedFile(file);
   }
 
   public void processUnversionedFile(final VirtualFile file) {

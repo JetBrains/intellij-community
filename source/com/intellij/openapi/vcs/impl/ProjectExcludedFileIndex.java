@@ -23,12 +23,6 @@ public class ProjectExcludedFileIndex extends ExcludedFileIndex {
   }
 
   public boolean isExcludedFile(final VirtualFile file) {
-    if (! myRootManager.getFileIndex().isInContent(file)) {
-      if (file.getParent() != null && myProject.getBaseDir() != null) {
-        return ! ((myProject.getBaseDir().getUrl().equals(file.getParent().getUrl()) && (! file.isDirectory())));
-      }
-      return true;
-    }
     return myRootManager.getFileIndex().isIgnored(file);
   }
 

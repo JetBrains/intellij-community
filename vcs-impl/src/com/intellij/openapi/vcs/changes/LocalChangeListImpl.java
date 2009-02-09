@@ -165,7 +165,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   private static boolean isIgnoredRevision(final ContentRevision revision, final ExcludedFileIndex fileIndex) {
     VirtualFile vFile = revision.getFile().getVirtualFile();
-    return vFile != null && fileIndex.isInContent(vFile) && fileIndex.isExcludedFile(vFile);
+    return vFile != null && fileIndex.isExcludedFile(vFile);
   }
 
   synchronized boolean processChange(Change change) {
