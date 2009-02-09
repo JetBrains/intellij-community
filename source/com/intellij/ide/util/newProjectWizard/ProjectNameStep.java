@@ -62,7 +62,9 @@ public class ProjectNameStep extends ModuleWizardStep {
     myNamePathComponent.setVisible(myWizardContext.getProject() == null);
     projectFileFormatPanel.setVisible(myWizardContext.getProject() == null);
 
-    projectFileFormatPanel.add(new JLabel("Project storage format"), BorderLayout.WEST);
+    final JLabel label = new JLabel("Project storage format:");
+    label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));
+    projectFileFormatPanel.add(label, BorderLayout.WEST);
     projectFileFormatPanel.add(myStorageFormatCombo, BorderLayout.CENTER);
     myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
     myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
