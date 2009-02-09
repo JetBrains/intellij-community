@@ -2,6 +2,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
@@ -54,7 +55,14 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
     }
     if (myReadUsages.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      String name = classes.size() == 1 ? classes.get(0).getPresentation().getPresentableText() : "";
+      String name;
+      if (classes.size() == 1) {
+        final ItemPresentation presentation = classes.get(0).getPresentation();
+        name = presentation != null ? presentation.getPresentableText() : "";
+      }
+      else {
+        name = "";
+      }
       myHintText = CodeInsightBundle.message("no.methods.overriding.0.are.found", classes.size(), name);
     }
     else {
