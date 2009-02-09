@@ -102,7 +102,7 @@ public abstract class Timer implements Disposable {
   }
 
   public final void dispose() {
-    if (myThread.isAlive()) {
+    if (myThread != null && myThread.isAlive()) {
       myInterruptRequest = true;
       myThread.interrupt();
       myDisposed = true;
