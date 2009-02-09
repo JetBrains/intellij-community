@@ -119,11 +119,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void broadcastStateAfterLoad() {
+    final List<LocalChangeList> listCopy;
     synchronized (myDataLock) {
-      final List<LocalChangeList> listCopy = getChangeListsCopy();
-      if (! listCopy.isEmpty()) {
-        myProject.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(listCopy);
-      }
+      listCopy = getChangeListsCopy();
+    }
+    if (! listCopy.isEmpty()) {
+      myProject.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(listCopy);
     }
   }
 
@@ -267,7 +268,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       synchronized (myDataLock) {
         // do same modifications to change lists as was done during update + do delayed notifications
         if (wasEverythingDirty) {
-          changeListWorker.notifyDoneProcessingChanges(myListeners);
+          changeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
         }
         myModifier.exitUpdate();
         myModifier.apply(changeListWorker);
@@ -279,7 +280,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           boolean statusChanged = !myComposite.equals(composite);
           myComposite = composite;
           if (statusChanged) {
-            myListeners.getMulticaster().unchangedFileStatusChanged();
+            myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
           }
         }
 
@@ -302,7 +303,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     finally {
       synchronized (myDataLock) {
-        myListeners.getMulticaster().changeListUpdateDone();
+        myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
     }
@@ -337,7 +338,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     finally {
       if ((! myUpdater.isStopped()) && !wasEverythingDirty) {
-        changeListWorker.notifyDoneProcessingChanges(myListeners);
+        changeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
       }
     }
   }
@@ -451,7 +452,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     return new Runnable() {
       public void run() {
-        final ChangeListListener multicaster = myListeners.getMulticaster();
+        final ChangeListListener multicaster = myDelayedNotificator.getProxyDispatcher();
         synchronized (myDataLock) {
           for (Map.Entry<String, List<Change>> entry : map.entrySet()) {
             final List<Change> changes = entry.getValue();

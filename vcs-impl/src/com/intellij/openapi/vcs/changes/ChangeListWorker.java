@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -279,7 +278,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
   }
 
-  public void notifyDoneProcessingChanges(final EventDispatcher<ChangeListListener> dispatcher) {
+  public void notifyDoneProcessingChanges(final ChangeListListener dispatcher) {
     List<ChangeList> changedLists = new ArrayList<ChangeList>();
     final Map<LocalChangeListImpl, List<Change>> removedChanges = new HashMap<LocalChangeListImpl, List<Change>>();
       for (LocalChangeList list : myMap.values()) {
@@ -293,10 +292,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         }
       }
     for (Map.Entry<LocalChangeListImpl, List<Change>> entry : removedChanges.entrySet()) {
-      dispatcher.getMulticaster().changesRemoved(entry.getValue(), entry.getKey());
+      dispatcher.changesRemoved(entry.getValue(), entry.getKey());
     }
     for(ChangeList changeList: changedLists) {
-      dispatcher.getMulticaster().changeListChanged(changeList);
+      dispatcher.changeListChanged(changeList);
     }
   }
 
