@@ -81,23 +81,7 @@ public abstract class MappedBufferWrapper {
   public static boolean clean(final ByteBuffer buffer) {
     if (buffer == null) return true;
 
-    int i;
-    for (i = 0; i < MAX_FORCE_ATTEMPTS; i++) {
-      try {
-        ((MappedByteBuffer)buffer).force();
-        break;
-      }
-      catch (Throwable e) {
-        try {
-          Thread.sleep(10);
-        }
-        catch (InterruptedException e1) {
-          // Can't be
-        }
-      }
-    }
-
-    if (i == MAX_FORCE_ATTEMPTS) {
+    if (!tryForce(buffer)) {
       return false;
     }
 
@@ -117,6 +101,24 @@ public abstract class MappedBufferWrapper {
         return null;
       }
     }) == null;
+  }
+
+  public static boolean tryForce(ByteBuffer buffer) {
+    for (int i = 0; i < MAX_FORCE_ATTEMPTS; i++) {
+      try {
+        ((MappedByteBuffer)buffer).force();
+        return true;
+      }
+      catch (Throwable e) {
+        try {
+          Thread.sleep(10);
+        }
+        catch (InterruptedException e1) {
+          // Can't be
+        }
+      }
+    }
+    return false;
   }
 
   private static Method CLEAN_METHOD;
@@ -149,11 +151,8 @@ public abstract class MappedBufferWrapper {
 
   public void flush() {
     final ByteBuffer buffer = getIfCached();
-    if (buffer != null) {
-      if (buffer instanceof MappedByteBuffer) {
-        final MappedByteBuffer mappedByteBuffer = (MappedByteBuffer)buffer;
-        mappedByteBuffer.force();
-      }
+    if (buffer instanceof MappedByteBuffer) {
+      tryForce(buffer);
     }
   }
 

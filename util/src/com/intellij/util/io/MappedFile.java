@@ -229,7 +229,7 @@ public class MappedFile implements Forceable {
       writeLength(mySize);
       final ByteBuffer buf = buf();
       if (buf instanceof MappedByteBuffer) {
-        ((MappedByteBuffer)buf).force();
+        MappedBufferWrapper.tryForce(buf);
       }
       myIsDirty = false;
     }
