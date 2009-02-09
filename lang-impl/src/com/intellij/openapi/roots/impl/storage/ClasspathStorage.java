@@ -93,9 +93,17 @@ public class ClasspathStorage implements StateStorage {
     try {
       final Module module = ((ModuleRootManagerImpl)component).getModule();
       final Element element = new Element(COMPONENT_TAG);
-      final ModifiableRootModel model = ((ModuleRootManagerImpl)component).getModifiableModel();
-      final Set<String> macros = myConverter.getClasspath(model, element);
-      model.dispose();
+      final Set<String> macros;
+      ModifiableRootModel model = null;
+      try {
+        model = ((ModuleRootManagerImpl)component).getModifiableModel();
+        macros = myConverter.getClasspath(model, element);
+      }
+      finally {
+        if (model != null) {
+          model.dispose();
+        }
+      }
       final HashMap<String, String> map = new HashMap<String, String>();
       for (String v : macros) {
         map.put(v, null);
