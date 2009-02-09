@@ -1,11 +1,14 @@
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.projectImport.ProjectFormatPanel;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -24,6 +27,8 @@ public class MavenImportingSettingsForm {
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myUpdateFoldersOnImportCheckBox;
   private JCheckBox myResolveInBackgroundCheckBox;
+  private JPanel myFormatPanel;
+  private ProjectFormatPanel myProjectFormatPanel;
 
   public MavenImportingSettingsForm() {
     this(false);
@@ -42,6 +47,8 @@ public class MavenImportingSettingsForm {
                                                new FileChooserDescriptor(false, true, false, false, false, false));
 
     if(isImportStep){
+      myProjectFormatPanel = new ProjectFormatPanel();
+      myFormatPanel.add(myProjectFormatPanel.getPanel(), BorderLayout.WEST);
       myCreateGroupsCheckBox.setVisible(false);
       myUseMavenOutputCheckBox.setVisible(false);
       myUpdateFoldersOnImportCheckBox.setVisible(false);
@@ -97,5 +104,9 @@ public class MavenImportingSettingsForm {
     MavenImportingSettings formData = new MavenImportingSettings();
     getData(formData);
     return !formData.equals(settings);
+  }
+
+  public void updateData(WizardContext wizardContext) {
+    myProjectFormatPanel.updateData(wizardContext);
   }
 }

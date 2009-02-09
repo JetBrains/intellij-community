@@ -6,9 +6,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.projectImport.ProjectImportWizardStep;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -22,6 +24,9 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   private JTextField myTestSourcesMask;
   private TextFieldWithBrowseButton myDirComponent;
   private TextFieldWithBrowseButton myWorkspaceRootComponent;
+  private ProjectFormatPanel myProjectFormatPanel;
+  private JPanel myFormatPanel;
+
 
   private EclipseProjectWizardContext myContext;
   private EclipseImportBuilder.Parameters myParameters;
@@ -48,6 +53,9 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
 
     rbModulesColocated.addActionListener(listener);
     rbModulesDedicated.addActionListener(listener);
+
+    myProjectFormatPanel = new ProjectFormatPanel();
+    myFormatPanel.add(myProjectFormatPanel.getPanel(), BorderLayout.WEST);
   }
 
   public JComponent getComponent() {
@@ -65,6 +73,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     getParameters().converterOptions.testPattern = wildcardToRegexp(myTestSourcesMask.getText());
     getParameters().linkConverted = myLinkCheckBox.isSelected();
     getParameters().projectsToConvert = null;
+    myProjectFormatPanel.updateData(getWizardContext());
   }
 
   public void updateStep() {
