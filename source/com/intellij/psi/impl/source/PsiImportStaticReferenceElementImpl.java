@@ -128,10 +128,10 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     }
     else {
       final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
-      TreeUtil.insertAfter(newRef, dot);
+      newRef.rawInsertAfterMe(dot);
       final CompositeElement errorElement =
         Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
-      TreeUtil.insertAfter(dot, errorElement);
+      dot.rawInsertAfterMe(errorElement);
       final CompositeElement parentComposite = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent());
       parentComposite.addInternal(newRef, errorElement, this, Boolean.TRUE);
       parentComposite.deleteChildInternal(this);

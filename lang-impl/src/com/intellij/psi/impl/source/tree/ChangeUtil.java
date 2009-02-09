@@ -10,7 +10,6 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
-import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,7 +24,6 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -47,208 +45,6 @@ public class ChangeUtil {
     ourTreeGenerators.add(generator);
   }
 
-  public static void addChild(final CompositeElement parent, TreeElement child, final TreeElement anchorBefore) {
-    LOG.assertTrue(anchorBefore == null || anchorBefore.getTreeParent() == parent, "anchorBefore == null || anchorBefore.getTreeParent() == parent");
-    transformAll(parent.getFirstChildNode());
-    final TreeElement last = child.getTreeNext();
-    final TreeElement first = transformAll(child);
-
-    final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
-    final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(child);
-
-    removeChildrenInner(first, last, oldCharTab);
-
-    if (newCharTab != oldCharTab) registerLeafsInCharTab(newCharTab, child, oldCharTab);
-
-    prepareAndRunChangeAction(new ChangeAction(){
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        if (anchorBefore != null) {
-          insertBefore(destinationTreeChange, anchorBefore, first);
-        }
-        else {
-          add(destinationTreeChange, parent, first);
-        }
-      }
-    }, parent);
-  }
-
-  public static void removeChild(final CompositeElement parent, final TreeElement child) {
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(parent);
-    removeChildInner(child, charTableByTree);
-  }
-
-  public static void removeChildren(final CompositeElement parent, final TreeElement first, final TreeElement last) {
-    if(first == null) return;
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(parent);
-    removeChildrenInner(first, last, charTableByTree);
-  }
-
-  public static void replaceChild(final CompositeElement parent, @NotNull final TreeElement old, @NotNull final TreeElement newC) {
-    LOG.assertTrue(old.getTreeParent() == parent);
-    final TreeElement oldChild = transformAll(old);
-    final TreeElement newChildNext = newC.getTreeNext();
-    final TreeElement newChild = transformAll(newC);
-
-    if(oldChild == newChild) return;
-    final CharTable newCharTable = SharedImplUtil.findCharTableByTree(parent);
-    final CharTable oldCharTable = SharedImplUtil.findCharTableByTree(newChild);
-
-    removeChildrenInner(newChild, newChildNext, oldCharTable);
-
-    if (oldCharTable != newCharTable) registerLeafsInCharTab(newCharTable, newChild, oldCharTable);
-
-    prepareAndRunChangeAction(new ChangeAction(){
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        replace(destinationTreeChange, oldChild, newChild);
-        repairRemovedElement(parent, newCharTable, oldChild);
-      }
-    }, parent);
-  }
-
-  public static void replaceAllChildren(final CompositeElement parent, final ASTNode newChildrenParent) {
-    transformAll(parent.getFirstChildNode());
-    transformAll((TreeElement)newChildrenParent.getFirstChildNode());
-
-    final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
-    final CharTable oldCharTab = SharedImplUtil.findCharTableByTree(newChildrenParent);
-
-    final ASTNode firstChild = newChildrenParent.getFirstChildNode();
-    prepareAndRunChangeAction(new ChangeAction(){
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        destinationTreeChange.addElementaryChange(newChildrenParent, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, newChildrenParent));
-        TreeUtil.removeRange((TreeElement)newChildrenParent.getFirstChildNode(), null);
-      }
-    }, (TreeElement)newChildrenParent);
-
-    if (firstChild != null) {
-      registerLeafsInCharTab(newCharTab, firstChild, oldCharTab);
-      prepareAndRunChangeAction(new ChangeAction(){
-        public void makeChange(TreeChangeEvent destinationTreeChange) {
-          if(parent.getTreeParent() != null){
-            final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, parent);
-            changeInfo.setOldLength(parent.getTextLength());
-            destinationTreeChange.addElementaryChange(parent, changeInfo);
-            TreeUtil.removeRange(parent.getFirstChildNode(), null);
-            TreeUtil.addChildren(parent, (TreeElement)firstChild);
-          }
-          else{
-            final TreeElement first = parent.getFirstChildNode();
-            remove(destinationTreeChange, first, null);
-            add(destinationTreeChange, parent, (TreeElement)firstChild);
-            repairRemovedElement(parent, newCharTab, first);
-          }
-        }
-      }, parent);
-    }
-    else {
-      removeChildren(parent, parent.getFirstChildNode(), null);
-    }
-  }
-
-  private static TreeElement transformAll(TreeElement first){
-    ASTNode newFirst = null;
-    ASTNode child = first;
-    while (child != null) {
-      if (child instanceof ChameleonElement) {
-        ASTNode next = child.getTreeNext();
-        child = ChameleonTransforming.transform((ChameleonElement)child);
-        if (child == null) {
-          child = next;
-        }
-        continue;
-      }
-      if(newFirst == null) newFirst = child;
-      child = child.getTreeNext();
-    }
-    return (TreeElement)newFirst;
-  }
-
-  private static void repairRemovedElement(final CompositeElement oldParent, final CharTable newCharTable, final TreeElement oldChild) {
-    if(oldChild == null) return;
-    final FileElement treeElement = DummyHolderFactory.createHolder(oldParent.getManager(), newCharTable, false).getTreeElement();
-    TreeUtil.addChildren(treeElement, oldChild);
-  }
-
-  private static void add(final TreeChangeEvent destinationTreeChange,
-                          final CompositeElement parent,
-                          final TreeElement first) {
-    TreeUtil.addChildren(parent, first);
-    TreeElement child = first;
-    while(child != null){
-      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child));
-      child = child.getTreeNext();
-    }
-  }
-
-  private static void remove(final TreeChangeEvent destinationTreeChange,
-                             final TreeElement first,
-                             final TreeElement last) {
-    TreeElement child = first;
-    while(child != last && child != null){
-      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child));
-      child = child.getTreeNext();
-    }
-    TreeUtil.removeRange(first, last);
-  }
-
-  private static void insertBefore(final TreeChangeEvent destinationTreeChange,
-                                   final TreeElement anchorBefore,
-                                   final TreeElement first) {
-    TreeUtil.insertBefore(anchorBefore, first);
-    TreeElement child = first;
-    while(child != anchorBefore){
-      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child));
-      child = child.getTreeNext();
-    }
-  }
-
-  private static void replace(final TreeChangeEvent sourceTreeChange,
-                              final TreeElement oldChild,
-                              final TreeElement newChild) {
-    TreeUtil.replaceWithList(oldChild, newChild);
-    final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newChild);
-    sourceTreeChange.addElementaryChange(newChild, change);
-    change.setReplaced(oldChild);
-  }
-
-  private static void registerLeafsInCharTab(CharTable newCharTab, ASTNode child, CharTable oldCharTab) {
-    if (newCharTab == oldCharTab) return;
-    while (child != null) {
-      CharTable charTable = child.getUserData(CharTable.CHAR_TABLE_KEY);
-      if (child instanceof LeafElement) {
-          ((LeafElement)child).registerInCharTable(newCharTab);
-          ((LeafElement)child).registerInCharTable(newCharTab);
-        ((LeafElement)child).registerInCharTable(newCharTab);
-      }
-      else {
-        registerLeafsInCharTab(newCharTab, child.getFirstChildNode(), charTable != null ? charTable : oldCharTab);
-      }
-      if (charTable != null) {
-        child.putUserData(CharTable.CHAR_TABLE_KEY, null);
-      }
-      child = child.getTreeNext();
-    }
-  }
-
-  private static void removeChildInner(final TreeElement child, final CharTable oldCharTab) {
-    removeChildrenInner(child, child.getTreeNext(), oldCharTab);
-  }
-
-  private static void removeChildrenInner(final TreeElement first, final TreeElement last, final CharTable oldCharTab) {
-    final FileElement fileElement = TreeUtil.getFileElement(first);
-    if (fileElement != null) {
-      prepareAndRunChangeAction(new ChangeAction() {
-        public void makeChange(TreeChangeEvent destinationTreeChange) {
-          remove(destinationTreeChange, first, last);
-          repairRemovedElement(fileElement, oldCharTab, first);
-        }
-      }, first.getTreeParent());
-    }
-    else {
-      TreeUtil.removeRange(first, last);
-    }
-  }
-
   public static void changeElementInPlace(final ASTNode element, final ChangeAction action){
     prepareAndRunChangeAction(new ChangeAction() {
       public void makeChange(TreeChangeEvent destinationTreeChange) {
@@ -262,44 +58,6 @@ public class ChangeUtil {
         }
       }
     }, (TreeElement) element);
-  }
-
-  public interface ChangeAction{
-    void makeChange(TreeChangeEvent destinationTreeChange);
-  }
-
-  private static void prepareAndRunChangeAction(final ChangeAction action, final TreeElement changedElement){
-    final FileElement changedFile = TreeUtil.getFileElement(changedElement);
-    final PsiManager manager = changedFile.getManager();
-    final PomModel model = PomManager.getModel(manager.getProject());
-    try{
-      final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
-      model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {
-        public PomModelEvent runInner() {
-          final PomModelEvent event = new PomModelEvent(model);
-          final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
-          event.registerChangeSet(treeAspect, destinationTreeChange);
-          final PsiManagerEx psiManager = (PsiManagerEx) manager;
-          final PsiFile file = (PsiFile)changedFile.getPsi();
-
-          if (file.isPhysical()) {
-            SmartPointerManagerImpl.fastenBelts(file);
-          }
-
-          action.makeChange(destinationTreeChange);
-
-          psiManager.invalidateFile(file);
-          TreeUtil.clearCaches(changedElement);
-          if (changedElement instanceof CompositeElement) {
-            ((CompositeElement) changedElement).subtreeChanged();
-          }
-          return event;
-        }
-      });
-    }
-    catch(IncorrectOperationException ioe){
-      LOG.error(ioe);
-    }
   }
 
   public static void encodeInformation(TreeElement element) {
@@ -354,8 +112,6 @@ public class ChangeUtil {
   public static TreeElement copyElement(TreeElement original, CharTable table) {
     final TreeElement element = (TreeElement)original.clone();
     final PsiManager manager = original.getManager();
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(original);
-    registerLeafsInCharTab(table, element, charTableByTree);
     CompositeElement treeParent = original.getTreeParent();
     DummyHolderFactory.createHolder(manager, element, treeParent == null ? null : treeParent.getPsi(), table).getTreeElement();
     encodeInformation(element, original);
@@ -377,7 +133,7 @@ public class ChangeUtil {
     final FileElement holderElement = holder.getTreeElement();
     final TreeElement treeElement = generateTreeElement(original, holderElement.getCharTable(), original.getManager());
     //  TreeElement treePrev = treeElement.getTreePrev(); // This is hack to support bug used in formater
-    TreeUtil.addChildren(holderElement, treeElement);
+    holderElement.rawAddChildren(treeElement);
     TreeUtil.clearCaches(holderElement);
     //  treeElement.setTreePrev(treePrev);
     saveIndentationToCopy((TreeElement)original.getNode(), treeElement);
@@ -399,14 +155,41 @@ public class ChangeUtil {
     }
   }
 
-  public static void addChildren(final ASTNode parent,
-                                 ASTNode firstChild,
-                                 final ASTNode lastChild,
-                                 final ASTNode anchorBefore) {
-    while (firstChild != lastChild) {
-      final ASTNode next = firstChild.getTreeNext();
-      parent.addChild(firstChild, anchorBefore);
-      firstChild = next;
+  public static void prepareAndRunChangeAction(final ChangeAction action, final TreeElement changedElement){
+    final FileElement changedFile = TreeUtil.getFileElement(changedElement);
+    final PsiManager manager = changedFile.getManager();
+    final PomModel model = PomManager.getModel(manager.getProject());
+    try{
+      final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
+      model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {
+        public PomModelEvent runInner() {
+          final PomModelEvent event = new PomModelEvent(model);
+          final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
+          event.registerChangeSet(treeAspect, destinationTreeChange);
+          final PsiManagerEx psiManager = (PsiManagerEx) manager;
+          final PsiFile file = (PsiFile)changedFile.getPsi();
+
+          if (file.isPhysical()) {
+            SmartPointerManagerImpl.fastenBelts(file);
+          }
+
+          action.makeChange(destinationTreeChange);
+
+          psiManager.invalidateFile(file);
+          TreeUtil.clearCaches(changedElement);
+          if (changedElement instanceof CompositeElement) {
+            ((CompositeElement) changedElement).subtreeChanged();
+          }
+          return event;
+        }
+      });
     }
+    catch(IncorrectOperationException ioe){
+      LOG.error(ioe);
+    }
+  }
+
+  public interface ChangeAction{
+    void makeChange(TreeChangeEvent destinationTreeChange);
   }
 }

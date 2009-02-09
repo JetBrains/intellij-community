@@ -7,7 +7,6 @@ import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
@@ -31,13 +30,10 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
   public static FileElement createCDATAElement(final PsiManager manager, final CharTable charTableByTree, final String displayText) {
     final FileElement dummyParent = DummyHolderFactory.createHolder(manager, null, charTableByTree).getTreeElement();
     final CompositeElement cdata = ASTFactory.composite(XmlElementType.XML_CDATA);
-    TreeUtil.addChildren(dummyParent, cdata);
-    TreeUtil.addChildren(
-      cdata, ASTFactory.leaf(XmlTokenType.XML_CDATA_START, "<![CDATA[", 0, 9, dummyParent.getCharTable()));
-    TreeUtil.addChildren(
-      cdata, ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, displayText, 0, displayText.length(), dummyParent.getCharTable()));
-    TreeUtil.addChildren(
-      cdata, ASTFactory.leaf(XmlTokenType.XML_CDATA_END, "]]>", 0, 3, dummyParent.getCharTable()));
+    dummyParent.rawAddChildren(cdata);
+    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_CDATA_START, "<![CDATA[", 0, 9, dummyParent.getCharTable()));
+    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, displayText, 0, displayText.length(), dummyParent.getCharTable()));
+    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_CDATA_END, "]]>", 0, 3, dummyParent.getCharTable()));
     dummyParent.acceptTree(new GeneratedMarkerVisitor());
     return dummyParent;
   }

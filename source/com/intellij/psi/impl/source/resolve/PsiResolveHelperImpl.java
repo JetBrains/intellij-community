@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
@@ -71,7 +70,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
     CompositeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;
-    TreeUtil.addChildren(holderElement, ref);
+    holderElement.rawAddChildren(ref);
 
     return ResolveClassUtil.resolveClass((PsiJavaCodeReferenceElement)ref.getPsi());
   }
@@ -80,7 +79,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
     TreeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;
-    TreeUtil.addChildren(holderElement, ref);
+    holderElement.rawAddChildren(ref);
     PsiJavaCodeReferenceElement psiRef = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(ref);
     return ResolveVariableUtil.resolveVariable(psiRef, null, null);
   }

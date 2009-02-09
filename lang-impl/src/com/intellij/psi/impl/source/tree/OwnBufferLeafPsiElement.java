@@ -121,7 +121,7 @@ public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl imple
     LOG.assertTrue(getTreeParent() != null);
     CheckUtil.checkWritable(this);
     getTreeParent().deleteChildInternal(this);
-    TreeUtil.invalidate(this);
+    this.invalidate();
   }
 
   public void checkDelete() throws IncorrectOperationException {
@@ -140,7 +140,7 @@ public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl imple
     elementCopy = ChangeUtil.decodeInformation(elementCopy);
     final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
 
-    TreeUtil.invalidate(this);
+    this.invalidate();
     return result;
   }
 

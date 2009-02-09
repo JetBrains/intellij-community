@@ -36,11 +36,11 @@ public class FileTextParsing extends Parsing {
     if (!skipHeader){
       TreeElement packageStatement = (TreeElement)context.getFileTextParsing().parsePackageStatement(filterLexer);
       if (packageStatement != null) {
-        TreeUtil.addChildren(dummyRoot, packageStatement);
+        dummyRoot.rawAddChildren(packageStatement);
       }
 
       final TreeElement importList = (TreeElement)parseImportList(filterLexer, context);
-      TreeUtil.addChildren(dummyRoot, importList);
+      dummyRoot.rawAddChildren(importList);
     }
 
     CompositeElement invalidElementsGroup = null;
@@ -48,7 +48,7 @@ public class FileTextParsing extends Parsing {
       if (filterLexer.getTokenType() == null) break;
 
       if (filterLexer.getTokenType() == ElementType.SEMICOLON){
-        TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(filterLexer, dummyRoot.getCharTable()));
+        dummyRoot.rawAddChildren(ParseUtil.createTokenElement(filterLexer, dummyRoot.getCharTable()));
         filterLexer.advance();
         invalidElementsGroup = null;
         continue;
@@ -56,16 +56,16 @@ public class FileTextParsing extends Parsing {
 
       TreeElement first = context.getDeclarationParsing().parseDeclaration(filterLexer, DeclarationParsing.Context.FILE_CONTEXT);
       if (first != null) {
-        TreeUtil.addChildren(dummyRoot, first);
+        dummyRoot.rawAddChildren(first);
         invalidElementsGroup = null;
         continue;
       }
 
       if (invalidElementsGroup == null){
         invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("expected.class.or.interface"));
-        TreeUtil.addChildren(dummyRoot, invalidElementsGroup);
+        dummyRoot.rawAddChildren(invalidElementsGroup);
       }
-      TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(filterLexer, context.getCharTable()));
+      invalidElementsGroup.rawAddChildren(ParseUtil.createTokenElement(filterLexer, context.getCharTable()));
       filterLexer.advance();
     }
 
@@ -90,26 +90,26 @@ public class FileTextParsing extends Parsing {
 
     if (lexer.getTokenType() != PACKAGE_KEYWORD) {
       FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      TreeUtil.addChildren(packageStatement, myContext.getDeclarationParsing().parseAnnotationList(filterLexer));
+      packageStatement.rawAddChildren(myContext.getDeclarationParsing().parseAnnotationList(filterLexer));
       if (lexer.getTokenType() != PACKAGE_KEYWORD) {
         lexer.restore(startPos);
         return null;
       }
     }
 
-    TreeUtil.addChildren(packageStatement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+    packageStatement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
     TreeElement packageReference = parseJavaCodeReference(lexer, true, false);
     if (packageReference == null) {
       lexer.restore(startPos);
       return null;
     }
-    TreeUtil.addChildren(packageStatement, packageReference);
+    packageStatement.rawAddChildren(packageReference);
     if (lexer.getTokenType() == SEMICOLON) {
-      TreeUtil.addChildren(packageStatement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      packageStatement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     } else {
-      TreeUtil.addChildren(packageStatement, Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
+      packageStatement.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
     }
     return packageStatement;
   }

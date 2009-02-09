@@ -53,8 +53,8 @@ public class OldXmlParsing implements XmlElementType {
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
     CompositeElement root = ASTFactory.composite(XML_DOCUMENT);
-    TreeUtil.addChildren(dummyRoot, root);
-    TreeUtil.addChildren(root, parseProlog(lexer));
+    dummyRoot.rawAddChildren(root);
+    root.rawAddChildren(parseProlog(lexer));
     parseGenericXml(lexer, root, new HashSet<String>());
 
     insertMissingTokens(root,
@@ -91,19 +91,19 @@ public class OldXmlParsing implements XmlElementType {
 
     while ((tokenType = lexer.getTokenType()) != null) {
       if (tokenType == XML_ATTLIST_DECL_START) {
-        TreeUtil.addChildren(root, parseAttlistDecl(lexer));
+        root.rawAddChildren(parseAttlistDecl(lexer));
       }
       else if (tokenType == XML_ELEMENT_DECL_START) {
-        TreeUtil.addChildren(root, parseElementDecl(lexer));
+        root.rawAddChildren(parseElementDecl(lexer));
       }
       else if (tokenType == XML_ENTITY_DECL_START) {
-        TreeUtil.addChildren(root, parseEntityDecl(lexer));
+        root.rawAddChildren(parseEntityDecl(lexer));
       }
       else if (tokenType == XML_NOTATION_DECL_START) {
-        TreeUtil.addChildren(root, parseNotationDecl(lexer));
+        root.rawAddChildren(parseNotationDecl(lexer));
       }
       else if (tokenType == XML_ENTITY_REF_TOKEN) {
-        TreeUtil.addChildren(root, parseEntityRef(lexer));
+        root.rawAddChildren(parseEntityRef(lexer));
       }
       else if (parseProcessingInstruction(root, lexer)) {
       }
@@ -183,7 +183,7 @@ public class OldXmlParsing implements XmlElementType {
       if (lexer.getTokenType() == XML_LEFT_PAREN) {
         parseGroup(decl, lexer);
       } else {
-        TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
+        decl.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
         return true;
       }
     }
@@ -195,7 +195,7 @@ public class OldXmlParsing implements XmlElementType {
     if (tokenType != XML_ATTRIBUTE_VALUE_START_DELIMITER &&
         tokenType != XML_DOCTYPE_PUBLIC &&
         tokenType != XML_DOCTYPE_SYSTEM) {
-      TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.literal.public.system.expected")));
+      decl.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.literal.public.system.expected")));
       return;
     }
 
@@ -216,7 +216,7 @@ public class OldXmlParsing implements XmlElementType {
       return false;
     }
     CompositeElement conditionalSection = ASTFactory.composite(XML_CONDITIONAL_SECTION);
-    TreeUtil.addChildren(parent, conditionalSection);
+    parent.rawAddChildren(conditionalSection);
 
     addToken(conditionalSection, lexer);
     IElementType tokenType = lexer.getTokenType();
@@ -227,7 +227,7 @@ public class OldXmlParsing implements XmlElementType {
     }
 
     if (tokenType == XML_ENTITY_REF_TOKEN) {
-      TreeUtil.addChildren(conditionalSection, parseEntityRef(lexer) );
+      conditionalSection.rawAddChildren(parseEntityRef(lexer) );
     } else {
       addToken(conditionalSection, lexer);
     }
@@ -250,7 +250,7 @@ public class OldXmlParsing implements XmlElementType {
       return false;
     }
     CompositeElement tag = ASTFactory.composite(XML_PROCESSING_INSTRUCTION);
-    TreeUtil.addChildren(parent, tag);
+    parent.rawAddChildren(tag);
 
     addToken(tag, lexer);
     if (lexer.getTokenType() != XML_PI_TARGET) {
@@ -270,7 +270,7 @@ public class OldXmlParsing implements XmlElementType {
     }
 
     CompositeElement tag = ASTFactory.composite(XML_TAG);
-    TreeUtil.addChildren(parent, tag);
+    parent.rawAddChildren(tag);
 
     addToken(tag, lexer);
 
@@ -305,7 +305,7 @@ public class OldXmlParsing implements XmlElementType {
         else if (lexer.getTokenType() == XML_DATA_CHARACTERS) {
           if (text == null) {
             text = ASTFactory.composite(XML_TEXT);
-            TreeUtil.addChildren(tag, text);
+            tag.rawAddChildren(text);
           }
           addToken(text, lexer);
         }
@@ -319,7 +319,7 @@ public class OldXmlParsing implements XmlElementType {
           addToken(tag, lexer);
         }
         else if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
-          TreeUtil.addChildren(tag, parseEntityRef(lexer));
+          tag.rawAddChildren(parseEntityRef(lexer));
         }
         else {
           break;
@@ -332,7 +332,7 @@ public class OldXmlParsing implements XmlElementType {
       final LexerPosition pos = lexer.getCurrentPosition();
 
       if (lexer.getTokenType() != XML_END_TAG_START) {
-        TreeUtil.insertAfter(tagEnd, Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
+        tagEnd.rawInsertAfterMe(Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
 
         return false;
       }
@@ -340,7 +340,7 @@ public class OldXmlParsing implements XmlElementType {
       lexer.advance();
 
       if (lexer.getTokenType() != XML_TAG_NAME) {
-        TreeUtil.addChildren(tag, endTagStart);
+        tag.rawAddChildren(endTagStart);
         return true;
       }
 
@@ -353,14 +353,14 @@ public class OldXmlParsing implements XmlElementType {
           final TreeElement start = tagEnd.getTreeNext();
           tagEnd.setTreeNext(null);
           if (start != null) {
-            TreeUtil.addChildren(parent, start);
+            parent.rawAddChildren(start);
           }
         }
-        TreeUtil.insertAfter(tagEnd, Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
+        tagEnd.rawInsertAfterMe(Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
         return true;
       }
 
-      TreeUtil.addChildren(tag, endTagStart);
+      tag.rawAddChildren(endTagStart);
       addToken(tag, lexer);
 
       if (lexer.getTokenType() != XML_TAG_END) {
@@ -373,7 +373,7 @@ public class OldXmlParsing implements XmlElementType {
       addToken(tag, lexer);
     }
     else {
-      TreeUtil.insertAfter(tag.getLastChildNode(), Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
+      tag.getLastChildNode().rawInsertAfterMe(Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
     }
 
     return true;
@@ -403,14 +403,14 @@ public class OldXmlParsing implements XmlElementType {
     }
 
     if (lexer.getTokenType() == XML_DECL_START) {
-      TreeUtil.addChildren(prolog, parseDecl(lexer));
+      prolog.rawAddChildren(parseDecl(lexer));
     }
 
     while (parseProcessingInstruction(prolog, lexer)) {
     }
 
     if (lexer.getTokenType() == XML_DOCTYPE_START) {
-      TreeUtil.addChildren(prolog, parseDocType(lexer));
+      prolog.rawAddChildren(parseDocType(lexer));
     }
 
     while (parseProcessingInstruction(prolog, lexer)) {
@@ -454,7 +454,7 @@ public class OldXmlParsing implements XmlElementType {
     }
 
     if (lexer.getTokenType() == XML_MARKUP_START) {
-      TreeUtil.addChildren(docType, parseMarkupDecl(lexer));
+      docType.rawAddChildren(parseMarkupDecl(lexer));
     }
 
     if (lexer.getTokenType() != XML_DOCTYPE_END) {
@@ -484,18 +484,18 @@ public class OldXmlParsing implements XmlElementType {
       tokenType = lexer.getTokenType();
       
       if (tokenType == XML_ELEMENT_DECL_START) {
-        TreeUtil.addChildren(decl, parseElementDecl(lexer));
+        decl.rawAddChildren(parseElementDecl(lexer));
       }
       else if (tokenType == XML_ATTLIST_DECL_START) {
-        TreeUtil.addChildren(decl, parseAttlistDecl(lexer));
+        decl.rawAddChildren(parseAttlistDecl(lexer));
       }
       else if (tokenType == XML_ENTITY_DECL_START) {
-        TreeUtil.addChildren(decl, parseEntityDecl(lexer));
+        decl.rawAddChildren(parseEntityDecl(lexer));
       }
       else if (tokenType == XML_NOTATION_DECL_START) {
-        TreeUtil.addChildren(decl, parseNotationDecl(lexer));
+        decl.rawAddChildren(parseNotationDecl(lexer));
       } else if (tokenType == XML_ENTITY_REF_TOKEN) {
-        TreeUtil.addChildren(decl, parseEntityRef(lexer));
+        decl.rawAddChildren(parseEntityRef(lexer));
       }
       else if (parseConditionalSection(decl, lexer)) {
       }
@@ -537,7 +537,7 @@ public class OldXmlParsing implements XmlElementType {
     }
 
     if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
-      TreeUtil.addChildren(decl, parseEntityRef(lexer));
+      decl.rawAddChildren(parseEntityRef(lexer));
       return true;
     }
 
@@ -550,7 +550,7 @@ public class OldXmlParsing implements XmlElementType {
 
   private ASTNode doParseContentSpec(final CompositeElement parent, final Lexer lexer, boolean topLevel) {
     if (myLastTokenEnd == lexer.getTokenStart()) {
-      TreeUtil.addChildren(parent, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.whitespace.expected")));
+      parent.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.whitespace.expected")));
     } else if (!topLevel) {
       final IElementType tokenType = lexer.getTokenType();
       String tokenText;
@@ -561,12 +561,12 @@ public class OldXmlParsing implements XmlElementType {
           tokenType != XML_CONTENT_EMPTY &&
           (tokenType != XML_NAME || ( !(tokenText = TreeUtil.getTokenText(lexer)).equals("-") && !tokenText.equals("O"))) // sgml compatibility
         ) {
-        TreeUtil.addChildren(parent,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.left.paren.or.entityref.or.empty.or.any.expected")));
+        parent.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.left.paren.or.entityref.or.empty.or.any.expected")));
       }
     }
 
     CompositeElement spec = ASTFactory.composite(XML_ELEMENT_CONTENT_SPEC);
-    TreeUtil.addChildren(parent, spec);
+    parent.rawAddChildren(spec);
 
     parseElementContentSpecInner(lexer, spec, topLevel);
 
@@ -594,7 +594,7 @@ public class OldXmlParsing implements XmlElementType {
         endedWithDelimiter = false;
       } else
       if (tokenType == XML_ENTITY_REF_TOKEN) {
-        TreeUtil.addChildren(spec, parseEntityRef(lexer));
+        spec.rawAddChildren(parseEntityRef(lexer));
         endedWithDelimiter = false;
       } else if (tokenType == XML_NAME ||
                  tokenType == XML_CONTENT_EMPTY ||
@@ -605,7 +605,7 @@ public class OldXmlParsing implements XmlElementType {
         endedWithDelimiter = false;
       }
       else {
-        TreeUtil.addChildren(spec,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.or.entity.ref.expected")));
+        spec.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.or.entity.ref.expected")));
         return false;
       }
 
@@ -631,7 +631,7 @@ public class OldXmlParsing implements XmlElementType {
     }
 
     if (endedWithDelimiter && tokenType == XML_RIGHT_PAREN) {
-      TreeUtil.addChildren(spec,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.or.entity.ref.expected")));
+      spec.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.or.entity.ref.expected")));
     }
     return true;
   }
@@ -643,7 +643,7 @@ public class OldXmlParsing implements XmlElementType {
       addToken(spec, lexer);
       return true;
     } else if (b) {
-      TreeUtil.addChildren(spec,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.rbrace.expected")));
+      spec.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.rbrace.expected")));
       return false;
     }
     return b;
@@ -663,7 +663,7 @@ public class OldXmlParsing implements XmlElementType {
       if (tokenType == XML_LEFT_PAREN) {
         parseGroup(decl, lexer);
       } else {
-        TreeUtil.addChildren(decl, Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
+        decl.rawAddChildren(Factory.createErrorElement(XmlBundle.message("dtd.parser.message.name.expected")));
         return decl;
       }
     }
@@ -680,7 +680,7 @@ public class OldXmlParsing implements XmlElementType {
   public void parseAttlistContent(CompositeElement parent, Lexer lexer) {
     while (true) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
-        TreeUtil.addChildren(parent, parseEntityRef(lexer));
+        parent.rawAddChildren(parseEntityRef(lexer));
       }
       else if (parseAttributeDecl(parent, lexer)) {
       }
@@ -696,7 +696,7 @@ public class OldXmlParsing implements XmlElementType {
     }
 
     CompositeElement decl = ASTFactory.composite(XML_ATTRIBUTE_DECL);
-    TreeUtil.addChildren(parent, decl);
+    parent.rawAddChildren(decl);
 
     addToken(decl, lexer);
 
@@ -707,7 +707,7 @@ public class OldXmlParsing implements XmlElementType {
     if (parseName(parent, lexer)) {
     }
     else if (lexer.getTokenType() == XML_LEFT_PAREN) {
-      TreeUtil.addChildren(parent, parseEnumeratedType(lexer));
+      parent.rawAddChildren(parseEnumeratedType(lexer));
     }
     else {
       return true;
@@ -749,7 +749,7 @@ public class OldXmlParsing implements XmlElementType {
   public void parseEnumeratedTypeContent(CompositeElement enumeratedType, Lexer lexer) {
     while (true) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
-        TreeUtil.addChildren(enumeratedType, parseEntityRef(lexer));
+        enumeratedType.rawAddChildren(parseEntityRef(lexer));
       continue;
       }
 
@@ -772,7 +772,7 @@ public class OldXmlParsing implements XmlElementType {
       addToken(decl, lexer);
     }
     else {
-      TreeUtil.addChildren(decl, Factory.createErrorElement(XmlErrorMessages.message("expected.prologue.tag.termination.expected")));
+      decl.rawAddChildren(Factory.createErrorElement(XmlErrorMessages.message("expected.prologue.tag.termination.expected")));
     }
 
     return decl;
@@ -783,7 +783,7 @@ public class OldXmlParsing implements XmlElementType {
     int lastPosition = -1;
     while (true) {
       if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
-        TreeUtil.addChildren(tag, parseEntityRef(lexer));
+        tag.rawAddChildren(parseEntityRef(lexer));
       continue;
       }
 
@@ -793,21 +793,21 @@ public class OldXmlParsing implements XmlElementType {
 
       if (lastPosition != -1) {
         if (lastPosition == lexer.getTokenStart()) {
-          TreeUtil.addChildren(tag, Factory.createErrorElement(XmlErrorMessages.message("expected.whitespace")));
+          tag.rawAddChildren(Factory.createErrorElement(XmlErrorMessages.message("expected.whitespace")));
           lastPosition = -1;
         }
       }
 
       if (tag instanceof XmlTag) {
         CompositeElement attribute = ASTFactory.composite(XML_ATTRIBUTE);
-        TreeUtil.addChildren(tag, attribute);
+        tag.rawAddChildren(attribute);
         parent = attribute;
       }
       
       addToken(parent, lexer);
 
       if (lexer.getTokenType() != XML_EQ) {
-        TreeUtil.addChildren(parent, Factory.createErrorElement(XmlErrorMessages.message("expected.attribute.eq.sign")));
+        parent.rawAddChildren(Factory.createErrorElement(XmlErrorMessages.message("expected.attribute.eq.sign")));
         continue;
       }
 
@@ -815,7 +815,7 @@ public class OldXmlParsing implements XmlElementType {
       
       if (tag instanceof XmlTag) {
         CompositeElement attributeValue = ASTFactory.composite(XML_ATTRIBUTE_VALUE);
-        TreeUtil.addChildren(parent,attributeValue);
+        parent.rawAddChildren(attributeValue);
         parent = attributeValue;
       }
 
@@ -857,7 +857,7 @@ public class OldXmlParsing implements XmlElementType {
 
     CompositeElement value = ASTFactory.composite(XML_ATTRIBUTE_VALUE);
 
-    TreeUtil.addChildren(parent, value);
+    parent.rawAddChildren(value);
 
     addToken(value, lexer);
 
@@ -869,7 +869,7 @@ public class OldXmlParsing implements XmlElementType {
         addToken(value, lexer);
       }
       else if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
-        TreeUtil.addChildren(value, parseEntityRef(lexer));
+        value.rawAddChildren(parseEntityRef(lexer));
       }
       else {
         break;
@@ -888,7 +888,7 @@ public class OldXmlParsing implements XmlElementType {
   private TreeElement addToken(CompositeElement decl, Lexer lexer) {
     final TreeElement element = createTokenElement(lexer, myContext.getCharTable());
     if (element != null) {
-      TreeUtil.addChildren(decl, element);
+      decl.rawAddChildren(element);
       myLastTokenEnd = lexer.getTokenEnd();
       lexer.advance();
     }
@@ -913,7 +913,7 @@ public class OldXmlParsing implements XmlElementType {
         lexer.advance();
       }
 
-      TreeUtil.addChildren(dummyRoot, children);
+      dummyRoot.rawAddChildren(children);
     }
     originalLexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
     insertMissingTokens(dummyRoot, originalLexer, start, end, _OldXmlLexer.DOCTYPE,
@@ -969,7 +969,7 @@ public class OldXmlParsing implements XmlElementType {
       while (lexer.getTokenType() != null && XML_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
         final TreeElement tokenElement = createTokenElement(lexer, context.getCharTable());
         lexer.advance();
-        TreeUtil.addChildren(comment, tokenElement);
+        comment.rawAddChildren(tokenElement);
       }
 
       return comment;
@@ -994,7 +994,7 @@ public class OldXmlParsing implements XmlElementType {
     if (leaf == null) {
       final TreeElement firstMissing = processor.process(lexer, context);
       if (firstMissing != null) {
-        TreeUtil.addChildren(root, firstMissing);
+        root.rawAddChildren(firstMissing);
       }
       return;
     }
@@ -1004,7 +1004,7 @@ public class OldXmlParsing implements XmlElementType {
       if (tokenType != leaf.getElementType() && processor.isTokenValid(tokenType)) {
         final TreeElement firstMissing = processor.process(lexer, context);
         if (firstMissing != null) {
-          TreeUtil.insertBefore(root.getFirstChildNode(), firstMissing);
+          root.getFirstChildNode().rawInsertBeforeMe(firstMissing);
         }
       }
       passTokenOrChameleon(leaf, lexer);
@@ -1021,10 +1021,10 @@ public class OldXmlParsing implements XmlElementType {
           current = current.getLastChildNode();
         }
         if (current instanceof CompositeElement) {
-          TreeUtil.addChildren((CompositeElement)current, firstMissing);
+          ((CompositeElement)current).rawAddChildren(firstMissing);
         }
         else {
-          TreeUtil.insertAfter(root.getLastChildNode(), firstMissing);
+          root.getLastChildNode().rawInsertAfterMe(firstMissing);
         }
       }
     }
@@ -1052,10 +1052,10 @@ public class OldXmlParsing implements XmlElementType {
         final CompositeElement unclosedElement = commonParents.strongWhiteSpaceHolder;
         if (unclosedElement != null) {
           if (commonParents.isStrongElementOnRisingSlope || unclosedElement.getFirstChildNode() == null) {
-            TreeUtil.addChildren(unclosedElement, firstMissing);
+            unclosedElement.rawAddChildren(firstMissing);
           }
           else {
-            TreeUtil.insertBefore(unclosedElement.getFirstChildNode(), firstMissing);
+            unclosedElement.getFirstChildNode().rawInsertBeforeMe(firstMissing);
           }
         }
         else {
@@ -1070,12 +1070,12 @@ public class OldXmlParsing implements XmlElementType {
             }
             if (treeNext.getUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY) != null) {
               insertAfter = null;
-              TreeUtil.addChildren((CompositeElement)treeNext, firstMissing);
+              ((CompositeElement)treeNext).rawAddChildren(firstMissing);
               break;
             }
             current = treeNext;
           }
-          if (insertAfter != null) TreeUtil.insertAfter(insertAfter, firstMissing);
+          if (insertAfter != null) insertAfter.rawInsertAfterMe(firstMissing);
         }
       }
       passTokenOrChameleon(next, lexer);

@@ -4,9 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +13,6 @@ public abstract class LeafElement extends TreeElement {
   private static final int TEXT_MATCHES_THRESHOLD = 5;
 
   public abstract char charAt(int position);
-
-  public abstract int searchWord(int startOffset, StringSearcher searcher);
 
   public abstract int copyTo(char[] buffer, int start);
 
@@ -53,8 +49,6 @@ public abstract class LeafElement extends TreeElement {
 
     return true;
   }
-
-  public void registerInCharTable(CharTable table) { }
 
   public IElementType getElementType() {
     return myType;
@@ -153,5 +147,4 @@ public abstract class LeafElement extends TreeElement {
     return false;
   }
 
-  public abstract void setInternedText(CharSequence id);
 }

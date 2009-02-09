@@ -52,8 +52,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers;
   private List<PsiLanguageInjectionHost.Shred> shreds;
   private StringBuilder outChars;
-  boolean isOneLineEditor;
-  boolean cleared;
+  private boolean isOneLineEditor;
+  private boolean cleared;
   private final Project myProject;
   private final PsiManager myPsiManager;
   private DocumentEx myHostDocument;
@@ -363,11 +363,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
           FileElement oldFileElement = oldFile.getTreeElement();
 
           if (oldFileElement.getFirstChildNode() != null) {
-            TreeUtil.removeRange(oldFileElement.getFirstChildNode(), null);
+            oldFileElement.rawRemoveAllChildren();
           }
           final ASTNode firstChildNode = newFileElement.getFirstChildNode();
           if (firstChildNode != null) {
-            TreeUtil.addChildren(oldFileElement, (TreeElement)firstChildNode);
+            oldFileElement.rawAddChildren((TreeElement)firstChildNode);
           }
           oldFileElement.setCharTable(newFileElement.getCharTable());
 

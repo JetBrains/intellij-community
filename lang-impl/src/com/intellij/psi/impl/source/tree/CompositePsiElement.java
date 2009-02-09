@@ -150,7 +150,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     LOG.assertTrue(getTreeParent() != null, "Parent not found for " + this);
     CheckUtil.checkWritable(this);
     getTreeParent().deleteChildInternal(this);
-    TreeUtil.invalidate(this);
+    invalidate();
   }
 
   public void checkDelete() throws IncorrectOperationException {
@@ -174,7 +174,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     elementCopy = ChangeUtil.decodeInformation(elementCopy);
     final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
 
-    TreeUtil.invalidate(this);
+    invalidate();
     return result;
   }
 

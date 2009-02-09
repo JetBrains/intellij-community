@@ -16,7 +16,6 @@ import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiUtil;
@@ -100,13 +99,13 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
 
     final boolean onDemand = isOnDemand();
     if (onDemand) {
-      TreeUtil.addChildren(holderElement, (TreeElement)refElement);
+      holderElement.rawAddChildren((TreeElement)refElement);
       ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(
         PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND);
     }
     else {
       refElement = (PsiImportStaticReferenceElement)context.getImportsTextParsing().convertToImportStaticReference(parsedRef);
-      TreeUtil.addChildren(holderElement, (TreeElement)refElement);
+      holderElement.rawAddChildren((TreeElement)refElement);
     }
     return refElement;
   }
@@ -123,7 +122,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     refElement = (PsiJavaCodeReferenceElementImpl) Parsing.parseJavaCodeReferenceText(manager, refText, holderElement.getCharTable());
     if(refElement == null) return null;
 
-    TreeUtil.addChildren(holderElement, refElement);
+    holderElement.rawAddChildren(refElement);
     refElement.setKindWhenDummy(
         isOnDemand()
         ? PsiJavaCodeReferenceElementImpl.CLASS_FQ_OR_PACKAGE_NAME_KIND

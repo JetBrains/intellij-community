@@ -19,7 +19,7 @@ public class AstBufferUtil {
       return ((LeafElement)element).copyTo(buffer, offset);
     }
     int curOffset = offset;
-    for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.next) {
+    for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       curOffset = toBuffer(child, buffer, curOffset, skipTypes);
     }
     return curOffset;

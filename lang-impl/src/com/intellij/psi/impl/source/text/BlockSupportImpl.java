@@ -207,14 +207,15 @@ public class BlockSupportImpl extends BlockSupport {
     LeafElement newElement = ASTFactory.leaf(leafElementToChange.getElementType(), newFileText, leafRangeToChange.getStartOffset(),
                                              leafRangeToChange.getEndOffset() + lengthDiff, treeFileElement.getCharTable());
     newElement.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
-    ChangeUtil.replaceChild(leafElementToChange.getTreeParent(), leafElementToChange, newElement);
+
+    leafElementToChange.getTreeParent().replaceChild(leafElementToChange, newElement);
     return true;
   }
 
   private static void makeFullParse(ASTNode parent, CharSequence newFileText, int textLength, final PsiFileImpl fileImpl) {
     if (parent instanceof CodeFragmentElement) {
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
-      TreeUtil.addChildren(holderElement, fileImpl.createContentLeafElement(newFileText, 0, textLength, holderElement.getCharTable()));
+      holderElement.rawAddChildren(fileImpl.createContentLeafElement(newFileText, 0, textLength, holderElement.getCharTable()));
       parent.replaceAllChildrenToChildrenOf(holderElement);
     }
     else {
@@ -247,7 +248,7 @@ public class BlockSupportImpl extends BlockSupport {
 
   private static void replaceFileElementWithEvents(final PsiFileImpl fileImpl, final FileElement fileElement, final FileElement newFileElement) {
     fileImpl.getTreeElement().setCharTable(newFileElement.getCharTable());
-    ChangeUtil.replaceAllChildren(fileElement, newFileElement);
+    fileElement.replaceAllChildrenToChildrenOf(newFileElement);
   }
 
   static void replaceFileElement(final PsiFileImpl fileImpl, final FileElement fileElement,
@@ -255,9 +256,9 @@ public class BlockSupportImpl extends BlockSupport {
                                          final PsiManagerEx manager) {
     final int oldLength = fileElement.getTextLength();
     sendPsiBeforeEvent(fileImpl);
-    if (fileElement.getFirstChildNode() != null) TreeUtil.removeRange(fileElement.getFirstChildNode(), null);
+    if (fileElement.getFirstChildNode() != null) fileElement.rawRemoveAllChildren();
     final ASTNode firstChildNode = newFileElement.getFirstChildNode();
-    if (firstChildNode != null) TreeUtil.addChildren(fileElement, (TreeElement)firstChildNode);
+    if (firstChildNode != null) fileElement.rawAddChildren((TreeElement)firstChildNode);
     fileImpl.getTreeElement().setCharTable(newFileElement.getCharTable());
     manager.invalidateFile(fileImpl);
     fileElement.subtreeChanged();

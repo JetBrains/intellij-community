@@ -827,7 +827,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         lexIndex = insertLeafs(lexIndex, childMarker.myLexemIndex, ast);
 
         CompositeElement childNode = createComposite(childMarker);
-        TreeUtil.addChildren(ast, childNode);
+        ast.rawAddChildren(childNode);
         lexIndex = bind(childNode, childMarker, lexIndex);
 
         lexIndex = insertLeafs(lexIndex, childMarker.myDoneMarker.myLexemIndex, ast);
@@ -836,7 +836,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         lexIndex = insertLeafs(lexIndex, child.myLexemIndex, ast);
         final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
         errorElement.setErrorDescription(((ErrorItem)child).myMessage);
-        TreeUtil.addChildren(ast, errorElement);
+        ast.rawAddChildren(errorElement);
       }
 
       child = child.next;
@@ -853,7 +853,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in phyton
         final IElementType type = myLexTypes[curToken];
         final LeafElement leaf = createLeaf(type, start, end);
-        TreeUtil.addChildren(curToken == myLexemCount - 1 && whitespaceOrComment(type) ? getRoot(curNode) : curNode, leaf);
+        (curToken == myLexemCount - 1 && whitespaceOrComment(type) ? getRoot(curNode) : curNode).rawAddChildren(leaf);
       }
       curToken++;
     }

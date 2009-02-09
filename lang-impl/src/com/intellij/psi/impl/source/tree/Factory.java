@@ -22,7 +22,7 @@ public class Factory  {
     FileElement holderElement = dummyHolder.getTreeElement();
     
     LeafElement newElement = ASTFactory.leaf(type, buffer, startOffset, endOffset, holderElement.getCharTable());
-    TreeUtil.addChildren(holderElement, newElement);
+    holderElement.rawAddChildren(newElement);
     CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;
   }
@@ -30,7 +30,7 @@ public class Factory  {
   public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
     final FileElement holderElement = DummyHolderFactory.createHolder(manager, table, type.getLanguage()).getTreeElementNoLock();
     final LeafElement newElement = ASTFactory.leaf(type, buffer, startOffset, endOffset, holderElement.getCharTable());
-    TreeUtil.addChildren(holderElement, newElement);
+    holderElement.rawAddChildren(newElement);
     if(generatedFlag) CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;
   }
@@ -50,7 +50,7 @@ public class Factory  {
                                                         final PsiManager manager) {
     final FileElement treeElement = DummyHolderFactory.createHolder(manager, null, charTableByTree).getTreeElement();
     final CompositeElement composite = ASTFactory.composite(type);
-    TreeUtil.addChildren(treeElement, composite);
+    treeElement.rawAddChildren(composite);
     return composite;
   }
 }

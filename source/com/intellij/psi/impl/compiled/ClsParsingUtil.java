@@ -3,11 +3,10 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.DummyHolderFactory;
 
 /**
  * @author ven
@@ -22,7 +21,7 @@ public class ClsParsingUtil {
       LOG.error("Could not parse expression:'" + exprText + "'");
       return null;
     }
-    TreeUtil.addChildren(holderElement, _expr);
+    holderElement.rawAddChildren(_expr);
     PsiExpression expr = (PsiExpression)_expr.getPsi();
     if (expr instanceof PsiLiteralExpression){
       PsiLiteralExpression literal = (PsiLiteralExpression)expr;

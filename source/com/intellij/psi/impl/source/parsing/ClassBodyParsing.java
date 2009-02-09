@@ -48,31 +48,31 @@ public class ClassBodyParsing extends Parsing {
   private void parseEnumConstants(Lexer lexer, CompositeElement dummyRoot) {
     while (lexer.getTokenType() != null) {
       if (lexer.getTokenType() == JavaTokenType.SEMICOLON) {
-        TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        dummyRoot.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
         return;
       }
 
       if (lexer.getTokenType() == JavaTokenType.PRIVATE_KEYWORD || lexer.getTokenType() == JavaTokenType.PROTECTED_KEYWORD) {
-        TreeUtil.addChildren(dummyRoot, Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
+        dummyRoot.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
         return;
       }
 
 
       final TreeElement enumConstant = myContext.getDeclarationParsing().parseEnumConstant(lexer);
       if (enumConstant != null) {
-        TreeUtil.addChildren(dummyRoot, enumConstant);
+        dummyRoot.rawAddChildren(enumConstant);
       }
       else {
-        TreeUtil.addChildren(dummyRoot, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
+        dummyRoot.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
       }
 
       if (lexer.getTokenType() == COMMA) {
-        TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        dummyRoot.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
       }
       else if (lexer.getTokenType() != null && lexer.getTokenType() != SEMICOLON) {
-        TreeUtil.addChildren(dummyRoot, Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.semicolon")));
+        dummyRoot.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.semicolon")));
         return;
       }
     }
@@ -87,7 +87,7 @@ public class ClassBodyParsing extends Parsing {
       if (tokenType == null || tokenType == RBRACE) break;
 
       if (tokenType == SEMICOLON){
-        TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
+        dummyRoot.rawAddChildren(ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
         filterLexer.advance();
         invalidElementsGroup = null;
         continue;
@@ -96,24 +96,24 @@ public class ClassBodyParsing extends Parsing {
       TreeElement declaration = myContext.getDeclarationParsing().parseDeclaration(filterLexer,
                                                                                    declarationParsingContext);
       if (declaration != null){
-        TreeUtil.addChildren(dummyRoot, declaration);
+        dummyRoot.rawAddChildren(declaration);
         invalidElementsGroup = null;
         continue;
       }
 
       if (invalidElementsGroup == null){
         invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
-        TreeUtil.addChildren(dummyRoot, invalidElementsGroup);
+        dummyRoot.rawAddChildren(invalidElementsGroup);
       }
 
       // adding a reference, not simple tokens allows "Browse .." to work well
       CompositeElement ref = parseJavaCodeReference(filterLexer, true, true);
       if (ref != null){
-        TreeUtil.addChildren(invalidElementsGroup, ref);
+        invalidElementsGroup.rawAddChildren(ref);
         continue;
       }
 
-      TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
+      invalidElementsGroup.rawAddChildren(ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
       filterLexer.advance();
     }
   }

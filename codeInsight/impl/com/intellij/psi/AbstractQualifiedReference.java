@@ -10,14 +10,11 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -92,9 +89,9 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     CheckUtil.checkWritable(this);
     final PsiElement firstChildNode = ObjectUtils.assertNotNull(getFirstChild());
     final PsiElement firstInIdentifier = getClass().isInstance(firstChildNode) ? ObjectUtils.assertNotNull(firstChildNode.getNextSibling()).getNextSibling() : firstChildNode;
-    ChangeUtil.removeChildren((CompositeElement)getNode(), (TreeElement)firstInIdentifier, null);
+    getNode().removeRange(firstInIdentifier.getNode(), null);
     final PsiElement referenceName = ObjectUtils.assertNotNull(parseReference(newElementName).getReferenceNameElement());
-    ChangeUtil.addChild((CompositeElement)getNode(), (TreeElement)referenceName.getNode(), null);
+    getNode().addChild(referenceName.getNode());
     return this;
   }
 

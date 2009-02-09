@@ -274,7 +274,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     TreeElement contentElement = createContentLeafElement(docText, 0, docText.length(), treeElement.getCharTable());
-    TreeUtil.addChildren(treeElement, contentElement);
+    treeElement.rawAddChildren(contentElement);
     return treeElement;
   }
 

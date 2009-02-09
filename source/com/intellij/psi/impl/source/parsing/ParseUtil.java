@@ -139,17 +139,17 @@ public class ParseUtil implements Constants {
           element.getElementType() == ENUM_CONSTANT || element.getElementType() == ANNOTATION_METHOD) {
         TreeElement first = element.getFirstChildNode();
         if (startSpaces != null) {
-          TreeUtil.removeRange(docComment, element);
+          docComment.rawRemoveUpTo(element);
         }
         else {
-          TreeUtil.remove(docComment);
+          docComment.rawRemove();
         }
 
-        TreeUtil.insertBefore(first, docComment);
+        first.rawInsertBeforeMe(docComment);
 
         if (importList != null) {
-          TreeUtil.remove(importList);
-          TreeUtil.insertBefore(element, importList);
+          importList.rawRemove();
+          element.rawInsertBeforeMe(importList);
         }
 
         return true;
@@ -173,11 +173,11 @@ public class ParseUtil implements Constants {
         if (space == null || (!space.textContains('\n') && !space.textContains('\r'))) {
           if (!comment.textContains('\n') && !comment.textContains('\r')) {
             if (space != null) {
-              TreeUtil.remove(space);
-              TreeUtil.addChildren((CompositeElement)element, space);
+              space.rawRemove();
+              ((CompositeElement)element).rawAddChildren(space);
             }
-            TreeUtil.remove(comment);
-            TreeUtil.addChildren((CompositeElement)element, comment);
+            comment.rawRemove();
+            ((CompositeElement)element).rawAddChildren(comment);
             return true;
           }
         }
@@ -223,8 +223,8 @@ public class ParseUtil implements Constants {
         while (child != bindTo) {
           TreeElement next = child.getTreeNext();
           if (child.getElementType() != IMPORT_LIST) {
-            TreeUtil.remove(child);
-            TreeUtil.insertBefore(first, child);
+            child.rawRemove();
+            first.rawInsertBeforeMe(child);
           }
           child = next;
         }

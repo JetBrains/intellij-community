@@ -6,7 +6,6 @@ import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
@@ -21,16 +20,16 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
       if (toCode(displayText.charAt(offset))) {
         final String plainSection = displayText.substring(sectionStartOffset, offset);
         if (plainSection.length() > 0) {
-          TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, text, charTableByTree));
+          dummyParent.rawAddChildren((TreeElement)super.encodeXmlTextContents(plainSection, text, charTableByTree));
         }
-        TreeUtil.addChildren(dummyParent, createCharEntity(displayText.charAt(offset), dummyParent.getCharTable()));
+        dummyParent.rawAddChildren(createCharEntity(displayText.charAt(offset), dummyParent.getCharTable()));
         sectionStartOffset = offset + 1;
       }
       offset++;
     }
     final String plainSection = displayText.substring(sectionStartOffset, offset);
     if (plainSection.length() > 0) {
-      TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, text, charTableByTree));
+      dummyParent.rawAddChildren((TreeElement)super.encodeXmlTextContents(plainSection, text, charTableByTree));
     }
 
     dummyParent.acceptTree(new GeneratedMarkerVisitor());

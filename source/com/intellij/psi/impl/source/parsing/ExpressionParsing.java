@@ -38,7 +38,7 @@ public class ExpressionParsing extends Parsing {
 
     ParseUtil.insertMissingTokens(expression, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
-    TreeUtil.addChildren(dummyRoot, expression);
+    dummyRoot.rawAddChildren(expression);
     return expression;
   }
 
@@ -53,19 +53,19 @@ public class ExpressionParsing extends Parsing {
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     CompositeElement expression = parseExpression(lexer);
     if (expression != null)
-      TreeUtil.addChildren(dummyRoot, expression);
+      dummyRoot.rawAddChildren(expression);
 
     CompositeElement parent = dummyRoot;
     final IElementType tokenType = lexer.getTokenType();
 
     if(tokenType != null && tokenType != TokenType.BAD_CHARACTER){
       final CompositeElement errorElement = Factory.createErrorElement("Unexpected tokens");
-      TreeUtil.addChildren(dummyRoot, errorElement);
+      dummyRoot.rawAddChildren(errorElement);
       parent = errorElement;
     }
 
     while(lexer.getTokenType() != null){
-      TreeUtil.addChildren(parent, ParseUtil.createTokenElement(lexer, table));
+      parent.rawAddChildren(ParseUtil.createTokenElement(lexer, table));
       lexer.advance();
     }
 
@@ -87,13 +87,13 @@ public class ExpressionParsing extends Parsing {
 
     CompositeElement expression = parseExpression(lexer);
     if (expression != null) {
-      TreeUtil.addChildren(dummyRoot, expression);
+      dummyRoot.rawAddChildren(expression);
     }
 
     if (lexer.getTokenType() != null) {
-      TreeUtil.addChildren(dummyRoot, Factory.createErrorElement(JavaErrorMessages.message("unexpected.tokens.beyond.the.end.of.expression")));
+      dummyRoot.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("unexpected.tokens.beyond.the.end.of.expression")));
       while (lexer.getTokenType() != null) {
-        TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        dummyRoot.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
       }
     }
@@ -212,16 +212,16 @@ public class ExpressionParsing extends Parsing {
       if (!opSignBitSet.contains(tokenType)) break;
 
       CompositeElement result = ASTFactory.composite(BINARY_EXPRESSION);
-      TreeUtil.addChildren(result, element);
-      TreeUtil.addChildren(result, GTTokens.createTokenElementAndAdvance(tokenType, lexer, myContext.getCharTable()));
+      result.rawAddChildren(element);
+      result.rawAddChildren(GTTokens.createTokenElementAndAdvance(tokenType, lexer, myContext.getCharTable()));
 
       TreeElement element1 = parseConstruct(lexer, argNumber);
       if (element1 == null) {
-        TreeUtil.addChildren(result, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+        result.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
         return result;
       }
 
-      TreeUtil.addChildren(result, element1);
+      result.rawAddChildren(element1);
 
       element = result;
     }
@@ -247,17 +247,17 @@ public class ExpressionParsing extends Parsing {
         tokenType == OREQ ||
         tokenType == XOREQ) {
       CompositeElement element = ASTFactory.composite(ASSIGNMENT_EXPRESSION);
-      TreeUtil.addChildren(element, element1);
+      element.rawAddChildren(element1);
 
-      TreeUtil.addChildren(element, GTTokens.createTokenElementAndAdvance(tokenType, lexer, myContext.getCharTable()));
+      element.rawAddChildren(GTTokens.createTokenElementAndAdvance(tokenType, lexer, myContext.getCharTable()));
 
       TreeElement element2 = parseAssignmentExpression(lexer);
       if (element2 == null) {
-        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+        element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
         return element;
       }
 
-      TreeUtil.addChildren(element, element2);
+      element.rawAddChildren(element2);
       return element;
     }
     else {
@@ -272,34 +272,34 @@ public class ExpressionParsing extends Parsing {
     if (lexer.getTokenType() != QUEST) return element1;
 
     CompositeElement element = ASTFactory.composite(CONDITIONAL_EXPRESSION);
-    TreeUtil.addChildren(element, element1);
+    element.rawAddChildren(element1);
 
-    TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+    element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
     CompositeElement element2 = parseExpression(lexer);
     if (element2 == null) {
-      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+      element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
       return element;
     }
 
-    TreeUtil.addChildren(element, element2);
+    element.rawAddChildren(element2);
 
     if (lexer.getTokenType() != COLON) {
-      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.colon")));
+      element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.colon")));
       return element;
     }
 
-    TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+    element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
     CompositeElement element3 = parseConditionalExpression(lexer);
     if (element3 == null) {
-      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+      element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
       return element;
     }
 
-    TreeUtil.addChildren(element, element3);
+    element.rawAddChildren(element3);
 
     return element;
   }
@@ -327,19 +327,19 @@ public class ExpressionParsing extends Parsing {
       }
 
       CompositeElement result = ASTFactory.composite(elementType);
-      TreeUtil.addChildren(result, element);
-      TreeUtil.addChildren(result, GTTokens.createTokenElementAndAdvance(tokenType, lexer, myContext.getCharTable()));
+      result.rawAddChildren(element);
+      result.rawAddChildren(GTTokens.createTokenElementAndAdvance(tokenType, lexer, myContext.getCharTable()));
 
       TreeElement element1 = parseConstruct(lexer, argNumber);
       if (element1 == null) {
         CompositeElement errorElement = Factory.createErrorElement(argNumber == PARSE_TYPE ?
                                                                    JavaErrorMessages.message("expected.type") :
                                                                    JavaErrorMessages.message("expected.expression"));
-        TreeUtil.addChildren(result, errorElement);
+        result.rawAddChildren(errorElement);
         return result;
       }
 
-      TreeUtil.addChildren(result, element1);
+      result.rawAddChildren(element1);
 
       element = result;
     }
@@ -351,14 +351,14 @@ public class ExpressionParsing extends Parsing {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == PLUS || tokenType == MINUS || tokenType == PLUSPLUS || tokenType == MINUSMINUS || tokenType == TILDE || tokenType == EXCL) {
       CompositeElement element = ASTFactory.composite(PREFIX_EXPRESSION);
-      TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       CompositeElement element1 = parseUnaryExpression(lexer);
       if (element1 == null) {
-        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+        element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
         return element;
       }
-      TreeUtil.addChildren(element, element1);
+      element.rawAddChildren(element1);
       return element;
     }
     else if (tokenType == LPARENTH) {
@@ -394,13 +394,13 @@ public class ExpressionParsing extends Parsing {
       }
 
       CompositeElement element = ASTFactory.composite(TYPE_CAST_EXPRESSION);
-      TreeUtil.addChildren(element, lparenth);
-      TreeUtil.addChildren(element, type);
-      TreeUtil.addChildren(element, rparenth);
+      element.rawAddChildren(lparenth);
+      element.rawAddChildren(type);
+      element.rawAddChildren(rparenth);
       if (expr != null) {
-        TreeUtil.addChildren(element, expr);
+        element.rawAddChildren(expr);
       } else {
-        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+        element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
       }
       return element;
     }
@@ -415,8 +415,8 @@ public class ExpressionParsing extends Parsing {
 
     while (lexer.getTokenType() == PLUSPLUS || lexer.getTokenType() == MINUSMINUS) {
       CompositeElement element1 = ASTFactory.composite(POSTFIX_EXPRESSION);
-      TreeUtil.addChildren(element1, element);
-      TreeUtil.addChildren(element1, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      element1.rawAddChildren(element);
+      element1.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       element = element1;
     }
@@ -441,16 +441,16 @@ public class ExpressionParsing extends Parsing {
         if (tokenType == LT) {
           final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false);
           CompositeElement element1 = ASTFactory.composite(REFERENCE_EXPRESSION);
-          TreeUtil.addChildren(element1, element);
-          TreeUtil.addChildren(element1, dot);
+          element1.rawAddChildren(element);
+          element1.rawAddChildren(dot);
 
-          TreeUtil.addChildren(element1, referenceParameterList);
+          element1.rawAddChildren(referenceParameterList);
           if (lexer.getTokenType() == IDENTIFIER) {
-            TreeUtil.addChildren(element1, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+            element1.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
             lexer.advance();
           }
           else {
-            TreeUtil.addChildren(element1, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
+            element1.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
             return element1;
           }
 
@@ -463,8 +463,8 @@ public class ExpressionParsing extends Parsing {
           CompositeElement element1 = parseClassObjectAccessExpression(lexer);
           if (lexer.getTokenStart() <= pos1.getOffset()) {
             lexer.restore(pos1);
-            TreeUtil.addChildren(element, dot);
-            TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
+            element.rawAddChildren(dot);
+            element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
             return element;
           }
           element = element1;
@@ -485,38 +485,38 @@ public class ExpressionParsing extends Parsing {
 
           IElementType type = tokenType == THIS_KEYWORD ? THIS_EXPRESSION : SUPER_EXPRESSION;
           CompositeElement element2 = ASTFactory.composite(type);
-          TreeUtil.addChildren(element2, element1);
-          TreeUtil.addChildren(element2, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          element2.rawAddChildren(element1);
+          element2.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
           if (lexer.getTokenType() != tokenType) {
             lexer.restore(pos);
             return element;
           }
-          TreeUtil.addChildren(element2, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          element2.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
           element = element2;
         }
         else if (tokenType == SUPER_KEYWORD) {
           CompositeElement element1 = ASTFactory.composite(REFERENCE_EXPRESSION);
-          TreeUtil.addChildren(element1, element);
-          TreeUtil.addChildren(element1, dot);
-          TreeUtil.addChildren(element1, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          element1.rawAddChildren(element);
+          element1.rawAddChildren(dot);
+          element1.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
           element = element1;
         }
         else {
           final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false);
           CompositeElement element1 = ASTFactory.composite(REFERENCE_EXPRESSION);
-          TreeUtil.addChildren(element1, element);
-          TreeUtil.addChildren(element1, dot);
+          element1.rawAddChildren(element);
+          element1.rawAddChildren(dot);
 
-          TreeUtil.addChildren(element1, referenceParameterList);
+          element1.rawAddChildren(referenceParameterList);
           if (lexer.getTokenType() == IDENTIFIER) {
-            TreeUtil.addChildren(element1, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+            element1.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
             lexer.advance();
           }
           else {
-            TreeUtil.addChildren(element1, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
+            element1.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
             return element1;
           }
 
@@ -532,15 +532,15 @@ public class ExpressionParsing extends Parsing {
             CompositeElement qualifier = parsePrimaryExpressionStart(lexer);
             if (qualifier != null) {
               CompositeElement element1 = ASTFactory.composite(REFERENCE_EXPRESSION);
-              TreeUtil.addChildren(element1, qualifier);
+              element1.rawAddChildren(qualifier);
               if (lexer.getTokenType() == DOT) {
                 TreeElement dot = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
                 lexer.advance();
-                TreeUtil.addChildren(element1, dot);
+                element1.rawAddChildren(dot);
                 if (lexer.getTokenType() == SUPER_KEYWORD) {
                   TreeElement superKeyword = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
                   lexer.advance();
-                  TreeUtil.addChildren(element1, superKeyword);
+                  element1.rawAddChildren(superKeyword);
                   element = element1;
                   continue;
                 }
@@ -552,9 +552,9 @@ public class ExpressionParsing extends Parsing {
           } else return element;
         }
         CompositeElement element1 = ASTFactory.composite(METHOD_CALL_EXPRESSION);
-        TreeUtil.addChildren(element1, element);
+        element1.rawAddChildren(element);
         TreeElement argumentList = parseArgumentList(lexer);
-        TreeUtil.addChildren(element1, argumentList);
+        element1.rawAddChildren(argumentList);
         element = element1;
       }
       else if (i == LBRACKET) {
@@ -572,23 +572,23 @@ public class ExpressionParsing extends Parsing {
         }
         else {
           CompositeElement element1 = ASTFactory.composite(ARRAY_ACCESS_EXPRESSION);
-          TreeUtil.addChildren(element1, element);
-          TreeUtil.addChildren(element1, lbracket);
+          element1.rawAddChildren(element);
+          element1.rawAddChildren(lbracket);
 
           TreeElement expr = parseExpression(lexer);
           if (expr == null) {
-            TreeUtil.addChildren(element1, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+            element1.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
             return element1;
           }
 
-          TreeUtil.addChildren(element1, expr);
+          element1.rawAddChildren(expr);
 
           if (lexer.getTokenType() != RBRACKET) {
-            TreeUtil.addChildren(element1, Factory.createErrorElement(JavaErrorMessages.message("expected.rbracket")));
+            element1.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.rbracket")));
             return element1;
           }
 
-          TreeUtil.addChildren(element1, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          element1.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
 
           element = element1;
@@ -612,31 +612,31 @@ public class ExpressionParsing extends Parsing {
         tokenType == CHARACTER_LITERAL ||
         tokenType == STRING_LITERAL) {
       CompositeElement element = ASTFactory.composite(LITERAL_EXPRESSION);
-      TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       return element;
     }
     else if (tokenType == LPARENTH) {
       CompositeElement element = ASTFactory.composite(PARENTH_EXPRESSION);
       //int pos = ParseUtil.savePosition(lexer);
-      TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
 
       TreeElement expression = parseExpression(lexer);
       if (expression == null) {
-        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+        element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
       }
       else {
-        TreeUtil.addChildren(element, expression);
+        element.rawAddChildren(expression);
       }
 
       if (lexer.getTokenType() != RPARENTH) {
         if (expression != null) {
-          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
+          element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
         }
       }
       else {
-        TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
       }
 
@@ -647,8 +647,8 @@ public class ExpressionParsing extends Parsing {
     }
     else if (tokenType == IDENTIFIER) {
       CompositeElement element = ASTFactory.composite(REFERENCE_EXPRESSION);
-      TreeUtil.addChildren(element, ASTFactory.composite(REFERENCE_PARAMETER_LIST));
-      TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      element.rawAddChildren(ASTFactory.composite(REFERENCE_PARAMETER_LIST));
+      element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       return element;
     }
@@ -664,8 +664,8 @@ public class ExpressionParsing extends Parsing {
         element = ASTFactory.composite(REFERENCE_EXPRESSION);
       }
 
-      TreeUtil.addChildren(element, ASTFactory.composite(REFERENCE_PARAMETER_LIST));
-      TreeUtil.addChildren(element, thisKeyword);
+      element.rawAddChildren(ASTFactory.composite(REFERENCE_PARAMETER_LIST));
+      element.rawAddChildren(thisKeyword);
 
       return element;
     }
@@ -681,8 +681,8 @@ public class ExpressionParsing extends Parsing {
         element = ASTFactory.composite(REFERENCE_EXPRESSION);
       }
 
-      TreeUtil.addChildren(element, ASTFactory.composite(REFERENCE_PARAMETER_LIST));
-      TreeUtil.addChildren(element, superKeyword);
+      element.rawAddChildren(ASTFactory.composite(REFERENCE_PARAMETER_LIST));
+      element.rawAddChildren(superKeyword);
       return element;
     }
     else if (tokenType == NEW_KEYWORD) {//final TreeElement referenceParameterList = parseReferenceParameterList(lexer, false);
@@ -704,13 +704,13 @@ public class ExpressionParsing extends Parsing {
     CompositeElement element = ASTFactory.composite(NEW_EXPRESSION);
 
     if (qualifier != null) {
-      TreeUtil.addChildren(element, qualifier);
-      TreeUtil.addChildren(element, dot);
+      element.rawAddChildren(qualifier);
+      element.rawAddChildren(dot);
     }
 
-    TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+    element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
-    TreeUtil.addChildren(element, parseReferenceParameterList(lexer, false));
+    element.rawAddChildren(parseReferenceParameterList(lexer, false));
 
     boolean isPrimitive;
     TreeElement refOrType;
@@ -724,7 +724,7 @@ public class ExpressionParsing extends Parsing {
       lexer.advance();
     }
     else {
-      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
+      element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
       return element;
     }
 
@@ -732,24 +732,24 @@ public class ExpressionParsing extends Parsing {
       TreeElement argumentList = parseArgumentList(lexer);
       if (lexer.getTokenType() == LBRACE && refOrType.getElementType() == JAVA_CODE_REFERENCE) { // anonymous class
         CompositeElement classElement = ASTFactory.composite(ANONYMOUS_CLASS);
-        TreeUtil.addChildren(element, classElement);
-        TreeUtil.addChildren(classElement, refOrType);
-        TreeUtil.addChildren(classElement, argumentList);
+        element.rawAddChildren(classElement);
+        classElement.rawAddChildren(refOrType);
+        classElement.rawAddChildren(argumentList);
         myContext.getDeclarationParsing().parseClassBodyWithBraces(classElement, lexer, false, false);
       }
       else {
-        TreeUtil.addChildren(element, refOrType);
-        TreeUtil.addChildren(element, argumentList);
+        element.rawAddChildren(refOrType);
+        element.rawAddChildren(argumentList);
       }
     }
     else {
-      TreeUtil.addChildren(element, refOrType);
+      element.rawAddChildren(refOrType);
 
       if (lexer.getTokenType() != LBRACKET) {
         String description = isPrimitive ?
                              JavaErrorMessages.message("expected.lbracket") :
                              JavaErrorMessages.message("expected.lparen.or.lbracket");
-        TreeUtil.addChildren(element, Factory.createErrorElement(description));
+        element.rawAddChildren(Factory.createErrorElement(description));
         return element;
       }
 
@@ -758,24 +758,24 @@ public class ExpressionParsing extends Parsing {
       while (true) {
         if (lexer.getTokenType() != LBRACKET) break;
 
-        TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
 
         if (bracketCount == dimCount) {
           TreeElement dimExpr = parseExpression(lexer);
           if (dimExpr != null) {
-            TreeUtil.addChildren(element, dimExpr);
+            element.rawAddChildren(dimExpr);
             dimCount++;
           }
         }
         bracketCount++;
 
         if (lexer.getTokenType() != RBRACKET) {
-          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbracket")));
+          element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.rbracket")));
           return element;
         }
 
-        TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
       }
 
@@ -783,11 +783,11 @@ public class ExpressionParsing extends Parsing {
         if (lexer.getTokenType() == LBRACE) {
           TreeElement initializer = parseArrayInitializerExpression(lexer);
           if (initializer != null) {
-            TreeUtil.addChildren(element, initializer);
+            element.rawAddChildren(initializer);
           }
         }
         else {
-          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.array.initializer")));
+          element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.array.initializer")));
         }
       }
     }
@@ -810,9 +810,9 @@ public class ExpressionParsing extends Parsing {
       return null;
     }
     CompositeElement element = ASTFactory.composite(CLASS_OBJECT_ACCESS_EXPRESSION);
-    TreeUtil.addChildren(element, type);
-    TreeUtil.addChildren(element, dot);
-    TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+    element.rawAddChildren(type);
+    element.rawAddChildren(dot);
+    element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
     return element;
   }
@@ -825,7 +825,7 @@ public class ExpressionParsing extends Parsing {
     LOG.assertTrue(lexer.getTokenType() == LPARENTH);
 
     CompositeElement element = ASTFactory.composite(EXPRESSION_LIST);
-    TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+    element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
     boolean first = true;
@@ -836,13 +836,13 @@ public class ExpressionParsing extends Parsing {
       boolean errored = false;
       if (!first) {
         if (lexer.getTokenType() == COMMA) {
-          TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
         }
         else {
           errored = true;
-          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.rparen")));
-          TreeUtil.addChildren(element, ASTFactory.composite(EMPTY_EXPRESSION));
+          element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.rparen")));
+          element.rawAddChildren(ASTFactory.composite(EMPTY_EXPRESSION));
         }
       }
       first = false;
@@ -850,26 +850,26 @@ public class ExpressionParsing extends Parsing {
       TreeElement arg = parseExpression(lexer);
       if (arg == null) {
         if (!errored) {
-          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
-          TreeUtil.addChildren(element, ASTFactory.composite(EMPTY_EXPRESSION));
+          element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+          element.rawAddChildren(ASTFactory.composite(EMPTY_EXPRESSION));
         }
         if (isArgListFinished(lexer)) break;
 
         if (lexer.getTokenType() != COMMA) {
-          TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
         }
       } else {
-        TreeUtil.addChildren(element, arg);
+        element.rawAddChildren(arg);
       }
     }
 
     if (lexer.getTokenType() == RPARENTH) {
-      TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     }
     else {
-      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
+      element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
       element.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
     }
 
@@ -885,26 +885,26 @@ public class ExpressionParsing extends Parsing {
     if (lexer.getTokenType() != LBRACE) return null;
 
     CompositeElement element = ASTFactory.composite(ARRAY_INITIALIZER_EXPRESSION);
-    TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+    element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
     boolean firstExpressionMissing = false;
     while (true) {
       if (lexer.getTokenType() == RBRACE) {
-        TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
         return element;
       }
 
       if (lexer.getTokenType() == null) {
-        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
+        element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
         element.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
         return element;
       }
 
       if (firstExpressionMissing) {
         // before comma must be an expression 
-        TreeUtil.insertBefore(element.getLastChildNode(), Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+        element.getLastChildNode().rawInsertBeforeMe(Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
       }
 
       TreeElement arg = parseExpression(lexer);
@@ -913,27 +913,27 @@ public class ExpressionParsing extends Parsing {
           firstExpressionMissing = true;
         }
         else {
-          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
+          element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
           element.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
           return element;
         }
       }
       else {
-        TreeUtil.addChildren(element, arg);
+        element.rawAddChildren(arg);
       }
 
       if (lexer.getTokenType() == RBRACE) {
-        TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
         return element;
       }
 
       if (lexer.getTokenType() == COMMA) {
-        TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        element.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
       }
       else {
-        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.comma")));
+        element.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.comma")));
       }
     }
   }

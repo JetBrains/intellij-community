@@ -1,13 +1,13 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.lang.ASTNode;
 import com.intellij.util.CharTable;
 
 public class JavaSourceUtil {
@@ -41,7 +41,7 @@ public class JavaSourceUtil {
         if (qualifier != null) {
           final CharTable systemCharTab = SharedImplUtil.findCharTableByTree(qualifier);
           final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, systemCharTab, SharedImplUtil.getManagerByTree(qualifier));
-          TreeUtil.insertAfter(qualifier, dot);
+          qualifier.rawInsertAfterMe(dot);
           reference.addInternal(qualifier, dot, null, Boolean.FALSE);
         }
       }

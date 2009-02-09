@@ -19,7 +19,10 @@ import com.intellij.psi.impl.source.parsing.DeclarationParsing;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiUtil;
@@ -48,7 +51,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (annotationElement == null || annotationElement.getElementType() != JavaElementType.ANNOTATION) {
       throw new IncorrectOperationException("Incorrect annotation \"" + annotationText + "\".");
     }
-    TreeUtil.addChildren(holderElement, annotationElement);
+    holderElement.rawAddChildren(annotationElement);
     return (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(annotationElement);
   }
 
@@ -97,7 +100,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (decl == null || decl.getElementType() != JavaElementType.FIELD) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
     }
-    TreeUtil.addChildren(holderElement, decl);
+    holderElement.rawAddChildren(decl);
     return (PsiField)SourceTreeToPsiMap.treeElementToPsi(decl);
   }
 
@@ -117,7 +120,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (decl == null || decl.getElementType() != JavaElementType.METHOD) {
       throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
     }
-    TreeUtil.addChildren(holderElement, decl);
+    holderElement.rawAddChildren(decl);
     return (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(decl);
   }
 
@@ -133,7 +136,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (param == null) {
       throw new IncorrectOperationException("Incorrect parameter \"" + text + "\".");
     }
-    TreeUtil.addChildren(holderElement, param);
+    holderElement.rawAddChildren(param);
     return (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(param);
   }
 
@@ -150,7 +153,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (typeElement == null) {
       throw new IncorrectOperationException("Incorrect type \"" + text + "\"");
     }
-    TreeUtil.addChildren(holderElement, typeElement);
+    holderElement.rawAddChildren(typeElement);
     if (markAsCopy) {
       holderElement.acceptTree(new GeneratedMarkerVisitor());
     }
@@ -168,7 +171,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect code block \"" + text + "\".");
     }
-    TreeUtil.addChildren(holderElement, treeElement);
+    holderElement.rawAddChildren(treeElement);
     return (PsiCodeBlock)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
@@ -179,7 +182,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect statement \"" + text + "\".");
     }
-    TreeUtil.addChildren(treeHolder, treeElement);
+    treeHolder.rawAddChildren(treeElement);
     return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
@@ -191,7 +194,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect expression \"" + text + "\".");
     }
-    TreeUtil.addChildren(treeHolder, treeElement);
+    treeHolder.rawAddChildren(treeElement);
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
@@ -211,7 +214,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\"");
     }
-    TreeUtil.addChildren(holderElement, treeElement);
+    holderElement.rawAddChildren(treeElement);
     return (PsiTypeParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
@@ -239,7 +242,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     if (decl == null || decl.getElementType() != JavaElementType.ENUM_CONSTANT) {
       throw new IncorrectOperationException("Incorrect enum constant text \"" + text + "\".");
     }
-    TreeUtil.addChildren(holderElement, decl);
+    holderElement.rawAddChildren(decl);
     return (PsiEnumConstant)SourceTreeToPsiMap.treeElementToPsi(decl);
   }
 
@@ -255,7 +258,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
     TreeElement catchSection = getJavaParsingContext(holderElement).getStatementParsing().parseCatchSectionText(catchSectionText);
     LOG.assertTrue(catchSection != null && catchSection.getElementType() == JavaElementType.CATCH_SECTION);
-    TreeUtil.addChildren(holderElement, catchSection);
+    holderElement.rawAddChildren(catchSection);
     PsiCatchSection psiCatchSection = (PsiCatchSection)SourceTreeToPsiMap.treeElementToPsi(catchSection);
 
     setupCatchBlock(exceptionName, context, psiCatchSection);

@@ -60,7 +60,7 @@ public class CodeEditUtil {
       }
     }
 
-    ChangeUtil.addChildren(parent, first, lastChild, anchorBefore);
+    parent.addChildren(first, lastChild, anchorBefore);
     final ASTNode firstAddedLeaf = findFirstLeaf(first, last);
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
     if(firstAddedLeaf != null){
@@ -100,10 +100,10 @@ public class CodeEditUtil {
   public static void checkForOuters(final ASTNode element) {
     if (element instanceof OuterLanguageElement && element.getCopyableUserData(OUTER_OK) == null) throw new AbnormalCommandTerminationException();
     if (element instanceof CompositeElement) {
-      TreeElement child = ((CompositeElement)element).firstChild;
+      TreeElement child = ((CompositeElement)element).getFirstChildNode();
       while (child != null) {
         checkForOuters(child);
-        child = child.next;
+        child = child.getTreeNext();
       }
     }
   }
@@ -130,7 +130,7 @@ public class CodeEditUtil {
     while (child != null) {
       //checkForOuters(child);
       if (child == last) break;
-      child = child.next;
+      child = child.getTreeNext();
     }
 
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);

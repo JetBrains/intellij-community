@@ -6,12 +6,12 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -86,7 +86,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     if (parsed != null) {
       final TreeElement element = parsed.getFirstChildNode();
       if (element != null) {
-        TreeUtil.addChildren(treeElement, element);
+        treeElement.rawAddChildren(element);
       }
     }
 
@@ -145,7 +145,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     if (lexer.getTokenType() != null) {
       assert lexer.getTokenType() != myTemplateElementType;
       final OuterLanguageElementImpl newLeaf = createOuterLanguageElement(lexer, table, myOuterElementType);
-      TreeUtil.addChildren((CompositeElement)root, newLeaf);
+      ((CompositeElement)root).rawAddChildren(newLeaf);
       ((CompositeElement)root).subtreeChanged();
     }
   }

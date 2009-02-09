@@ -37,9 +37,9 @@ public class SourceUtil {
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(newChild);
     new DummyHolder(manager, parenthExpr, null, charTableByTree);
     parenthExpr.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-    TreeUtil.addChildren(parenthExpr, ASTFactory.leaf(JavaTokenType.LPARENTH, "(", 0, 1, charTableByTree));
-    TreeUtil.addChildren(parenthExpr, dummyExpr);
-    TreeUtil.addChildren(parenthExpr, ASTFactory.leaf(JavaTokenType.RPARENTH, ")", 0, 1, charTableByTree));
+    parenthExpr.rawAddChildren(ASTFactory.leaf(JavaTokenType.LPARENTH, "(", 0, 1, charTableByTree));
+    parenthExpr.rawAddChildren(dummyExpr);
+    parenthExpr.rawAddChildren(ASTFactory.leaf(JavaTokenType.RPARENTH, ")", 0, 1, charTableByTree));
 
     try {
       CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
@@ -52,7 +52,7 @@ public class SourceUtil {
     }
 
     newChild.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(newChild));
-    TreeUtil.replaceWithList(dummyExpr, newChild);
+    dummyExpr.rawReplaceWithList(newChild);
 
     newChild = parenthExpr;
     // TODO remove explicit caches drop since this should be ok iff we will use ChangeUtil for the modification 

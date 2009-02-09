@@ -36,6 +36,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class InjectedLanguageUtil {
   static final Key<List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
+  private InjectedLanguageUtil() {
+  }
+
   public static void forceInjectionOnElement(@NotNull final PsiElement host) {
     enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {

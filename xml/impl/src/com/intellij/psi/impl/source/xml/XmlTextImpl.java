@@ -19,7 +19,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlTextLiteralEscaper;
 import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
@@ -406,7 +409,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           int splitOffset = physicalOffset - childElement.getStartOffsetInParent();
           myRight = (XmlTextImpl)ASTFactory.composite(XmlElementType.XML_TEXT);
           CodeEditUtil.setNodeGenerated(myRight, true);
-          TreeUtil.addChildren(holder, myRight);
+          holder.rawAddChildren(myRight);
 
           PsiElement e = childElement;
           while (e != null) {
@@ -425,14 +428,14 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           LeafElement leftElement = ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, leftText, 0, leftText.length(), holder.getCharTable());
           CodeEditUtil.setNodeGenerated(leftElement, true);
 
-          TreeUtil.insertAfter(XmlTextImpl.this, myRight);
+          rawInsertAfterMe(myRight);
 
-          TreeUtil.addChildren(myRight, rightElement);
+          myRight.rawAddChildren(rightElement);
           if (childElement.getNextSibling() != null) {
-            TreeUtil.addChildren(myRight, (TreeElement)childElement.getNextSibling());
+            myRight.rawAddChildren((TreeElement)childElement.getNextSibling());
           }
-          TreeUtil.remove((TreeElement)childElement);
-          TreeUtil.addChildren(XmlTextImpl.this, leftElement);
+          ((TreeElement)childElement).rawRemove();
+          XmlTextImpl.this.rawAddChildren(leftElement);
         }
         else {
           final PsiFile containingFile = xmlTag.getContainingFile();
@@ -441,7 +444,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           final XmlTextImpl rightText = (XmlTextImpl)ASTFactory.composite(XmlElementType.XML_TEXT);
           CodeEditUtil.setNodeGenerated(rightText, true);
 
-          TreeUtil.addChildren(holder, rightText);
+          holder.rawAddChildren(rightText);
 
           ((ASTNode)xmlTag).addChild(rightText, getTreeNext());
 

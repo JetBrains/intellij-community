@@ -5,7 +5,10 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
@@ -31,17 +34,17 @@ public class ImportsTextParsing extends Parsing {
 
       TreeElement element = (TreeElement)parseImportStatement(filterLexer);
       if (element != null){
-        TreeUtil.addChildren(parentNode, element);
+        parentNode.rawAddChildren(element);
         invalidElementsGroup = null;
         continue;
       }
 
       if (invalidElementsGroup == null){
         invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
-        TreeUtil.addChildren(parentNode, invalidElementsGroup);
+        parentNode.rawAddChildren(invalidElementsGroup);
       }
 
-      TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
+      invalidElementsGroup.rawAddChildren(ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
       filterLexer.advance();
     }
   }
@@ -56,19 +59,19 @@ public class ImportsTextParsing extends Parsing {
     final boolean isStatic;
     if (lexer.getTokenType() != STATIC_KEYWORD) {
       statement = ASTFactory.composite(IMPORT_STATEMENT);
-      TreeUtil.addChildren(statement, importToken);
+      statement.rawAddChildren(importToken);
       isStatic = false;
     }
     else {
       statement = ASTFactory.composite(IMPORT_STATIC_STATEMENT);
-      TreeUtil.addChildren(statement, importToken);
-      TreeUtil.addChildren(statement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      statement.rawAddChildren(importToken);
+      statement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       isStatic = true;
     }
 
     if (lexer.getTokenType() != IDENTIFIER){
-      TreeUtil.addChildren(statement, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
+      statement.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
       return statement;
     }
 
@@ -77,16 +80,15 @@ public class ImportsTextParsing extends Parsing {
     if (refParameterList.getTreePrev().getElementType() == ERROR_ELEMENT){
       final ASTNode qualifier = refElement.findChildByRole(ChildRole.QUALIFIER);
       LOG.assertTrue(qualifier != null);
-      TreeUtil.remove(refParameterList.getTreePrev());
-      TreeUtil.remove(refParameterList);
-      TreeUtil.addChildren(statement, (TreeElement)qualifier);
+      refParameterList.getTreePrev().rawRemove();
+      refParameterList.rawRemove();
+      statement.rawAddChildren((TreeElement)qualifier);
       if (lexer.getTokenType() == ASTERISK){
-        TreeUtil.addChildren(statement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        statement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
       }
       else{
-        TreeUtil.addChildren(statement,
-                             Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected.")));
+        statement.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected.")));
         return statement;
       }
     }
@@ -95,15 +97,15 @@ public class ImportsTextParsing extends Parsing {
         // convert JAVA_CODE_REFERENCE into IMPORT_STATIC_REFERENCE
         refElement = convertToImportStaticReference(refElement);
       }
-      TreeUtil.addChildren(statement, refElement);
+      statement.rawAddChildren(refElement);
     }
 
     if (lexer.getTokenType() == SEMICOLON){
-      TreeUtil.addChildren(statement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      statement.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     }
     else{
-      TreeUtil.addChildren(statement, Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
+      statement.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
     }
 
     return statement;
@@ -112,15 +114,15 @@ public class ImportsTextParsing extends Parsing {
   public static CompositeElement convertToImportStaticReference(CompositeElement refElement) {
     final CompositeElement importStaticReference = ASTFactory.composite(IMPORT_STATIC_REFERENCE);
     final CompositeElement referenceParameterList = (CompositeElement)refElement.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
-    TreeUtil.addChildren(importStaticReference, refElement.getFirstChildNode());
+    importStaticReference.rawAddChildren(refElement.getFirstChildNode());
     if (referenceParameterList != null) {
       if (referenceParameterList.getFirstChildNode() == null) {
-        TreeUtil.remove(referenceParameterList);
+        referenceParameterList.rawRemove();
       }
       else {
         final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
-        TreeUtil.replaceWithList(referenceParameterList, errorElement);
-        TreeUtil.addChildren(errorElement, referenceParameterList);
+        referenceParameterList.rawReplaceWithList(errorElement);
+        errorElement.rawAddChildren(referenceParameterList);
       }
     }
     refElement = importStaticReference;

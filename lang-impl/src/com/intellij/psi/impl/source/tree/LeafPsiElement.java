@@ -127,7 +127,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     LOG.assertTrue(getTreeParent() != null);
     CheckUtil.checkWritable(this);
     getTreeParent().deleteChildInternal(this);
-    TreeUtil.invalidate(this);
+    invalidate();
   }
 
   public void checkDelete() throws IncorrectOperationException {
@@ -146,7 +146,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     elementCopy = ChangeUtil.decodeInformation(elementCopy);
     final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
 
-    TreeUtil.invalidate(this);
+    invalidate();
     return result;
   }
 

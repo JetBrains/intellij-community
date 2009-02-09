@@ -46,7 +46,7 @@ public class MissingTokenInserter {
     if (leaf == null) {
       final TreeElement firstMissing = myProcessor.process(myLexer, myContext);
       if (firstMissing != null) {
-        TreeUtil.addChildren(myRoot, firstMissing);
+        myRoot.rawAddChildren(firstMissing);
       }
       return;
     }
@@ -56,7 +56,7 @@ public class MissingTokenInserter {
       if (tokenType != leaf.getElementType() && myProcessor.isTokenValid(tokenType)) {
         final TreeElement firstMissing = myProcessor.process(myLexer, myContext);
         if (firstMissing != null) {
-          TreeUtil.insertBefore(myRoot.getFirstChildNode(), firstMissing);
+          myRoot.getFirstChildNode().rawInsertBeforeMe(firstMissing);
         }
       }
       passTokenOrChameleon(leaf);
@@ -73,10 +73,10 @@ public class MissingTokenInserter {
           current = current.getLastChildNode();
         }
         if (current instanceof CompositeElement) {
-          TreeUtil.addChildren((CompositeElement)current, firstMissing);
+          ((CompositeElement)current).rawAddChildren(firstMissing);
         }
         else {
-          TreeUtil.insertAfter(myRoot.getLastChildNode(), firstMissing);
+          myRoot.getLastChildNode().rawInsertAfterMe(firstMissing);
         }
       }
     }
@@ -105,10 +105,10 @@ public class MissingTokenInserter {
         final CompositeElement unclosedElement = commonParents.strongWhiteSpaceHolder;
         if (unclosedElement != null) {
           if (commonParents.isStrongElementOnRisingSlope || unclosedElement.getFirstChildNode() == null) {
-            TreeUtil.addChildren(unclosedElement, firstMissing);
+            unclosedElement.rawAddChildren(firstMissing);
           }
           else {
-            TreeUtil.insertBefore(unclosedElement.getFirstChildNode(), firstMissing);
+            unclosedElement.getFirstChildNode().rawInsertBeforeMe(firstMissing);
           }
         }
         else {
@@ -127,12 +127,12 @@ public class MissingTokenInserter {
             }
             if (treeNext.getUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY) != null) {
               insertAfter = null;
-              TreeUtil.addChildren((CompositeElement)treeNext, firstMissing);
+              ((CompositeElement)treeNext).rawAddChildren(firstMissing);
               break;
             }
             current = treeNext;
           }
-          if (insertAfter != null) TreeUtil.insertAfter(insertAfter, firstMissing);
+          if (insertAfter != null) insertAfter.rawInsertAfterMe(firstMissing);
         }
       }
       passTokenOrChameleon(next);

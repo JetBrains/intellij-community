@@ -40,7 +40,7 @@ public class ChameleonTransforming {
     TreeElement newElement = chameleon.transform(file.getTreeElementNoLock().getCharTable());
     //LOG.assertTrue(newElement.getTreeParent().getTextLength() == chameleon.getTextLength());
     final TreeElement treeNext = chameleon.getTreeNext();
-    TreeUtil.replaceWithList(chameleon, newElement);
+    chameleon.rawReplaceWithList(newElement);
     if (DebugUtil.CHECK) {
       if (newElement != null) {
         DebugUtil.checkTreeStructure(newElement);

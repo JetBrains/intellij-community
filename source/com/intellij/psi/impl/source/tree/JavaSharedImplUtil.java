@@ -89,10 +89,10 @@ public class JavaSharedImplUtil {
       final CharTable treeCharTable = SharedImplUtil.findCharTableByTree(type);
       for (int i = 0; i < arrayCount; i++) {
         CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
-        TreeUtil.addChildren(newType1, newType);
+        newType1.rawAddChildren(newType);
 
-        TreeUtil.addChildren(newType1, ASTFactory.leaf(JavaTokenType.LBRACKET, "[", 0, 1, treeCharTable));
-        TreeUtil.addChildren(newType1, ASTFactory.leaf(JavaTokenType.RBRACKET, "]", 0, 1, treeCharTable));
+        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "[", 0, 1, treeCharTable));
+        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]", 0, 1, treeCharTable));
         newType = newType1;
         newType.acceptTree(new GeneratedMarkerVisitor());
       }

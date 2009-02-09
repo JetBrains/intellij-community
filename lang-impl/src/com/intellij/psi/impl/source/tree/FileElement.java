@@ -26,7 +26,7 @@ public class FileElement extends CompositeElement{
 
   public PsiManagerEx getManager() {
     if (myManager == null) {
-      if(parent != null) return parent.getManager();
+      if(getTreeParent() != null) return getTreeParent().getManager();
       return (PsiManagerEx)SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
     }
     return myManager;

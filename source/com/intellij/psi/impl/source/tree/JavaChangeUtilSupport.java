@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.light.LightTypeElement;
@@ -29,11 +28,12 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -137,8 +137,8 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         if (componentTypeCopy == null) return null;
         CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
-        TreeUtil.addChildren(element, componentTypeCopy);
-        TreeUtil.addChildren(element, createLeafFromText("...", table, manager, original, JavaTokenType.ELLIPSIS));
+        element.rawAddChildren(componentTypeCopy);
+        element.rawAddChildren(createLeafFromText("...", table, manager, original, JavaTokenType.ELLIPSIS));
         return element;
       }
       else if (type instanceof PsiArrayType) {
@@ -149,9 +149,9 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         if (componentTypeCopy == null) return null;
         CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
-        TreeUtil.addChildren(element, componentTypeCopy);
-        TreeUtil.addChildren(element, createLeafFromText("[", table, manager, original, JavaTokenType.LBRACKET));
-        TreeUtil.addChildren(element, createLeafFromText("]", table, manager, original, JavaTokenType.RBRACKET));
+        element.rawAddChildren(componentTypeCopy);
+        element.rawAddChildren(createLeafFromText("[", table, manager, original, JavaTokenType.LBRACKET));
+        element.rawAddChildren(createLeafFromText("]", table, manager, original, JavaTokenType.RBRACKET));
         return element;
       }
       else if (type instanceof PsiPrimitiveType) {
@@ -163,7 +163,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         CodeEditUtil.setNodeGenerated(keyword, generated);
         CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
-        TreeUtil.addChildren(element, keyword);
+        element.rawAddChildren(keyword);
         return element;
       }
       else if (type instanceof PsiWildcardType) {
@@ -187,14 +187,14 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
           final CompositeElement reference = createReference(original.getManager(), classType.getPresentableText(), table, generated);
           final CompositeElement immediateTypeElement = ASTFactory.composite(JavaElementType.TYPE);
           CodeEditUtil.setNodeGenerated(immediateTypeElement, generated);
-          TreeUtil.addChildren(immediateTypeElement, reference);
+          immediateTypeElement.rawAddChildren(reference);
           encodeInfoInTypeElement(immediateTypeElement, classType);
           return immediateTypeElement;
         }
 
         CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
-        TreeUtil.addChildren(element, ChangeUtil.generateTreeElement(ref, table,manager));
+        element.rawAddChildren(ChangeUtil.generateTreeElement(ref, table,manager));
         return element;
       }
     }

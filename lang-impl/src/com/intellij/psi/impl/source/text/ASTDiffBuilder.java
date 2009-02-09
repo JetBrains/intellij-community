@@ -44,8 +44,8 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
 
       newNode = transformNewChameleon(oldNode, newNode);
 
-      TreeUtil.remove((TreeElement)newNode);
-      TreeUtil.replaceWithList((TreeElement)oldNode, (TreeElement)newNode);
+      ((TreeElement)newNode).rawRemove();
+      ((TreeElement)oldNode).rawReplaceWithList((TreeElement)newNode);
 
       final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newNode);
 
@@ -66,7 +66,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
           oldNode.getPsi().getContainingFile(), 
           SharedImplUtil.findCharTableByTree(oldNode)
       ).getTreeElement();
-      TreeUtil.addChildren(dummyRoot, (TreeElement)newNode);
+      dummyRoot.rawAddChildren((TreeElement)newNode);
       newNode = ChameleonTransforming.transform((ChameleonElement)newNode);
     }
     return newNode;
@@ -85,7 +85,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     }
 
     myEvent.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child));
-    TreeUtil.remove((TreeElement)child);
+    ((TreeElement)child).rawRemove();
     ((CompositeElement)parent).subtreeChanged();
 
     /*if (event != null) {
@@ -108,16 +108,16 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
       }
     }
 
-    TreeUtil.remove((TreeElement)node);
+    ((TreeElement)node).rawRemove();
     if (anchor != null) {
-      TreeUtil.insertAfter((TreeElement)anchor, (TreeElement)node);
+      ((TreeElement)anchor).rawInsertAfterMe((TreeElement)node);
     }
     else {
       if (oldParent.getFirstChildNode() != null) {
-        TreeUtil.insertBefore((TreeElement)oldParent.getFirstChildNode(), (TreeElement)node);
+        ((TreeElement)oldParent.getFirstChildNode()).rawInsertBeforeMe((TreeElement)node);
       }
       else {
-        TreeUtil.addChildren((CompositeElement)oldParent, (TreeElement)node);
+        ((CompositeElement)oldParent).rawAddChildren((TreeElement)node);
       }
     }
 

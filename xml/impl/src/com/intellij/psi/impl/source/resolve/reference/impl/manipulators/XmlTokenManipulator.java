@@ -6,7 +6,6 @@ import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.IncorrectOperationException;
@@ -22,7 +21,7 @@ public class XmlTokenManipulator extends AbstractElementManipulator<XmlToken> {
 
     FileElement holder = DummyHolderFactory.createHolder(xmlToken.getManager(), null).getTreeElement();
     LeafElement leaf = ASTFactory.leaf(tokenType, newText, 0, newText.length(), holder.getCharTable());
-    TreeUtil.addChildren(holder, leaf);
+    holder.rawAddChildren(leaf);
     return (XmlToken)xmlToken.replace(leaf.getPsi());
   }
 }

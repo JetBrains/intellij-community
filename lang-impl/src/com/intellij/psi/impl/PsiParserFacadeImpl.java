@@ -11,7 +11,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
   public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
     final LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, text, 0, text.length(), holderElement.getCharTable());
-    TreeUtil.addChildren(holderElement, newElement);
+    holderElement.rawAddChildren(newElement);
     return newElement.getPsi();
   }
 

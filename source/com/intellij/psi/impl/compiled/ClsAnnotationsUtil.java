@@ -4,12 +4,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,7 +80,7 @@ public class ClsAnnotationsUtil {
       LOG.error("Could not parse initializer:'" + text + "'");
       return null;
     }
-    TreeUtil.addChildren(holderElement, element);
+    holderElement.rawAddChildren(element);
     PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
     return getMemberValue(psiElement, parent);
   }

@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,9 +38,9 @@ public class DummyHolder extends PsiFileImpl {
     super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     myContext = context;
-    myTable = table;
+    myTable = table != null ? table : new IdentityCharTable();
     if(contentElement != null) {
-      TreeUtil.addChildren(getTreeElement(), contentElement);
+      getTreeElement().rawAddChildren(contentElement);
       clearCaches();
     }
     myExplicitlyValid = validity;

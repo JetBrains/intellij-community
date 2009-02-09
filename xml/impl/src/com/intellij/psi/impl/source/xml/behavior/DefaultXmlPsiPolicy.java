@@ -31,8 +31,8 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
       LOG.assertTrue(child != null, "Child is null for tag: " + rootTag.getText());
 
       final TreeElement element = (TreeElement)child.getNode();
-      TreeUtil.removeRange((TreeElement)tagChildren[tagChildren.length - 1].getNode().getTreeNext(), null);
-      TreeUtil.addChildren(dummyParent, element);
+      ((TreeElement)tagChildren[tagChildren.length - 1].getNode().getTreeNext()).rawRemoveUpToLast();
+      dummyParent.rawAddChildren(element);
       TreeUtil.clearCaches(dummyParent);
       return element.getFirstChildNode();
   }

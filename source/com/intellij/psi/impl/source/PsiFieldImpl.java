@@ -254,7 +254,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
           PsiManager manager = getManager();
           final FileElement holderElement = DummyHolderFactory.createHolder(manager, this).getTreeElement();
           CompositeElement exprElement = ExpressionParsing.parseExpressionText(manager, initializerText, 0, initializerText.length(), holderElement.getCharTable());
-          TreeUtil.addChildren(holderElement, exprElement);
+          holderElement.rawAddChildren(exprElement);
           initializer = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprElement);
         }
         catch(InitializerTooLongException e){

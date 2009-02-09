@@ -176,7 +176,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   protected Object clone() {
     CompositeElement treeElement = calcTreeElement();
     CompositeElement treeElementClone
-      = (CompositeElement)(treeElement.parent != null ? treeElement.copyElement() : (ASTNode)treeElement.clone());
+      = (CompositeElement)(treeElement.getTreeParent() != null ? treeElement.copyElement() : (ASTNode)treeElement.clone());
     /*
     if (treeElementClone.getPsiElement() != null) {
       return treeElementClone.getPsiElement();

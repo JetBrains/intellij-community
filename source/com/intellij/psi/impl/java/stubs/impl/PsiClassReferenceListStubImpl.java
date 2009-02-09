@@ -14,11 +14,10 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.io.StringRef;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.StringRef;
 
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
   private final PsiReferenceList.Role myRole;
@@ -71,7 +70,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
         final PsiJavaCodeReferenceElementImpl ref =
             (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(manager, StringRef.toString(myNames[i]), holderElement.getCharTable());
         if (ref != null) {
-          TreeUtil.addChildren(holderElement, ref);
+          holderElement.rawAddChildren(ref);
           ref.setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
           types[i] = factory.createType(ref);
         }

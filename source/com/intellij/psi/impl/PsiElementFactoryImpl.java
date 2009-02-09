@@ -215,7 +215,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     final FileElement treeHolder = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
     final CompositeElement treeElement =
     getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(PsiKeyword.INT + " " + name);
-    TreeUtil.addChildren(treeHolder, treeElement);
+    treeHolder.rawAddChildren(treeElement);
 
     TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
     treeElement.replaceChild(treeElement.findChildByRole(ChildRole.TYPE), typeElement);

@@ -18,6 +18,10 @@ import java.util.Set;
 public class TreeUtil {
   public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
 
+  private TreeUtil() {
+  }
+
+  @Nullable
   public static ASTNode findChildBackward(ASTNode parent, IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -28,6 +32,7 @@ public class TreeUtil {
     return null;
   }
 
+  @Nullable
   public static ASTNode skipElements(ASTNode element, TokenSet types) {
     while(true){
       if (element == null) return null;
@@ -37,6 +42,7 @@ public class TreeUtil {
     return element;
   }
 
+  @Nullable
   public static ASTNode skipElementsBack(ASTNode element, TokenSet types) {
     if (!types.contains(element.getElementType())) return element;
 
@@ -56,6 +62,7 @@ public class TreeUtil {
     return lastRelevant;
   }
 
+  @Nullable
   public static ASTNode findParent(ASTNode element, IElementType type) {
     for(ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()){
       if (parent.getElementType() == type) return parent;
@@ -91,162 +98,7 @@ public class TreeUtil {
     }
   }
 
-  public static void addChildren(CompositeElement parent, @NotNull TreeElement first) {
-    final TreeElement lastChild = parent.lastChild;
-    if (lastChild == null){
-      parent.firstChild = first;
-      first.setTreePrev(null);
-      while(true){
-        final TreeElement treeNext = first.getTreeNext();
-        first.setTreeParent(parent);
-        if(treeNext == null) break;
-        first = treeNext;
-      }
-      parent.lastChild = first;
-      first.setTreeParent(parent);
-    }
-    else insertAfter(lastChild, first);
-    if (DebugUtil.CHECK){
-      DebugUtil.checkTreeStructure(parent);
-    }
-  }
-
-  public static void insertBefore(@NotNull final TreeElement anchor, @NotNull TreeElement firstNew) {
-    final TreeElement anchorPrev = anchor.getTreePrev();
-    if(anchorPrev == null){
-      removeRange(firstNew, null);
-      final CompositeElement parent = anchor.getTreeParent();
-      if(parent != null) parent.firstChild = firstNew;
-      while(true){
-        final TreeElement treeNext = firstNew.getTreeNext();
-        assert treeNext != anchor : "Attempt to create cycle";
-        firstNew.setTreeParent(parent);
-        if(treeNext == null) break;
-        firstNew = treeNext;
-      }
-      anchor.setTreePrev(firstNew);
-      firstNew.setTreeNext(anchor);
-    }
-    else insertAfter(anchorPrev, firstNew);
-
-    if (DebugUtil.CHECK){
-      DebugUtil.checkTreeStructure(anchor);
-    }
-  }
-
-  public static void insertAfter(@NotNull final TreeElement anchor, @NotNull TreeElement firstNew) {
-    removeRange(firstNew, null);
-    final CompositeElement parent = anchor.getTreeParent();
-    final TreeElement treeNext = anchor.getTreeNext();
-    firstNew.setTreePrev(anchor);
-    anchor.setTreeNext(firstNew);
-    while(true){
-      final TreeElement next = firstNew.getTreeNext();
-      assert next != anchor : "Attempt to create cycle";
-      firstNew.setTreeParent(parent);
-      if(next == null) break;
-      firstNew = next;
-    }
-
-    if(treeNext == null){
-      if(parent != null){
-        firstNew.setTreeParent(parent);
-        parent.lastChild = firstNew;
-      }
-    }
-    else{
-      firstNew.setTreeNext(treeNext);
-      treeNext.setTreePrev(firstNew);
-    }
-    if (DebugUtil.CHECK){
-      DebugUtil.checkTreeStructure(anchor);
-    }
-  }
-
-  public static void remove(TreeElement element) {
-    final TreeElement next = element.getTreeNext();
-    final CompositeElement parent = element.getTreeParent();
-    final TreeElement prev = element.getTreePrev();
-    if(prev != null){
-      prev.setTreeNext(next);
-    }
-    else if(parent != null){
-      parent.firstChild = next;
-    }
-
-    if(next != null){
-      next.setTreePrev(prev);
-    }
-    else if(parent != null){
-      parent.lastChild = prev;
-    }
-
-    if (DebugUtil.CHECK){
-      if (element.getTreeParent() != null){
-        DebugUtil.checkTreeStructure(element.getTreeParent());
-      }
-      if (element.getTreePrev() != null){
-        DebugUtil.checkTreeStructure(element.getTreePrev());
-      }
-      if (element.getTreeNext() != null){
-        DebugUtil.checkTreeStructure(element.getTreeNext());
-      }
-    }
-    invalidate(element);
-  }
-
-  // remove nodes from start[including] to end[excluding] from the parent
-  public static void removeRange(TreeElement start, TreeElement end) {
-    if (start == null) return;
-    if(start == end) return;
-    final CompositeElement parent = start.getTreeParent();
-    final TreeElement startPrev = start.getTreePrev();
-    final TreeElement endPrev = end != null ? end.getTreePrev() : null;
-
-    assert end == null || end.getTreeParent() == parent : "Trying to remove non-child";
-
-    if (parent != null){
-      if (start == parent.getFirstChildNode()){
-        parent.firstChild = end;
-      }
-      if (end == null){
-        parent.lastChild = startPrev;
-      }
-    }
-    if (startPrev != null){
-      startPrev.setTreeNext(end);
-    }
-    if (end != null){
-      end.setTreePrev(startPrev);
-    }
-
-    start.setTreePrev(null);
-    if (endPrev != null){
-      endPrev.setTreeNext(null);
-    }
-
-    if (parent != null){
-      for(TreeElement element = start; element != null; element = element.getTreeNext()){
-        element.setTreeParent(null);
-        element.onInvalidated();
-      }
-    }
-
-    if (DebugUtil.CHECK){
-      if (parent != null){
-        DebugUtil.checkTreeStructure(parent);
-      }
-      DebugUtil.checkTreeStructure(start);
-    }
-  }
-
-  public static void replaceWithList(TreeElement old, TreeElement firstNew) {
-    if (firstNew != null){
-      insertAfter(old, firstNew);
-    }
-    remove(old);
-  }
-
+  @Nullable
   public static ASTNode findSibling(ASTNode start, IElementType elementType) {
     ASTNode child = start;
     while (true) {
@@ -256,6 +108,7 @@ public class TreeUtil {
     }
   }
 
+  @Nullable
   public static ASTNode findCommonParent(ASTNode one, ASTNode two){
     // optimization
     if(one == two) return one;
@@ -298,6 +151,7 @@ public class TreeUtil {
     }
   }
 
+  @Nullable
   public static ASTNode nextLeaf(@NotNull final ASTNode node) {
     return nextLeaf((TreeElement)node, null);
   }
@@ -307,14 +161,6 @@ public class TreeUtil {
       parent = parent.getTreeParent();
     }
     return (FileElement)parent;
-  }
-
-  public static void invalidate(final TreeElement element) {
-    // invalidate replaced element
-    element.setTreeNext(null);
-    element.setTreePrev(null);
-    element.setTreeParent(null);
-    element.onInvalidated();
   }
 
   @Nullable
@@ -358,7 +204,7 @@ public class TreeUtil {
     return nextLeaf(parent, commonParent, searchedType);
   }
 
-  public static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
+  private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
     if (start instanceof CompositeElement &&
         (isStrongWhitespaceHolder(start.getElementType()) || slopeSide && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)) {
       commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
@@ -367,7 +213,7 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static TreeElement findFirstLeaf(TreeElement element, IElementType searchedType, CommonParentState commonParent) {
+  private static TreeElement findFirstLeaf(TreeElement element, IElementType searchedType, CommonParentState commonParent) {
     if (commonParent != null) {
       initStrongWhitespaceHolder(commonParent, element, false);
     }
