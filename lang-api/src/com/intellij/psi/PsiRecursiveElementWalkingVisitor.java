@@ -21,10 +21,13 @@ import java.util.List;
  * Represents a PSI element visitor which recursively visits the children of the element
  * on which the visit was started.
  */
-public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisitor {
+public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisitor  {
   private final boolean myVisitAllFileRoots;
-  private boolean isDown;
-  private boolean startedWalking;
+  private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
+    public void elementFinished(PsiElement element) {
+      PsiRecursiveElementWalkingVisitor.this.elementFinished(element);
+    }
+  };
 
   protected PsiRecursiveElementWalkingVisitor() {
     this(false);
@@ -34,41 +37,12 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
     myVisitAllFileRoots = visitAllFileRoots;
   }
 
-  private void walk(PsiElement root) {
-    for (PsiElement element = next(root, root); element != null; element = next(element, root)) {
-      isDown = false; // if client visitor did not call default visitElement it means skip subtree
-      PsiElement parent = element.getParent();
-      PsiElement next = element.getNextSibling();
-      element.accept(this);
-      assert element.getNextSibling() == next;
-      assert element.getParent() == parent;
-    }
-    startedWalking = false;
-  }
-
-  private PsiElement next(PsiElement element, PsiElement root) {
-    if (isDown) {
-      PsiElement child = element.getFirstChild();
-      if (child != null) return child;
-    }
-    else {
-      isDown = true;
-    }
-    // up
-    while (element != root) {
-      PsiElement next = element.getNextSibling();
-      if (next != null) return next;
-      element = element.getParent();
-    }
-    return null;
-  }
-
   public void visitElement(final PsiElement element) {
-    isDown = true;
-    if (!startedWalking) {
-      startedWalking = true;
-      walk(element);
-    }
+    myWalkingState.elementStarted(element);
+  }
+
+  protected void elementFinished(PsiElement element) {
+                 
   }
 
   @Override
@@ -80,7 +54,6 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
         if (file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
           for (PsiFile lFile : allFiles) {
             lFile.acceptChildren(this);
-            startedWalking = false;
           }
           return;
         }
