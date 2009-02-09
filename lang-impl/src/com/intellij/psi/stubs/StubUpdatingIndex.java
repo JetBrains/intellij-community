@@ -302,6 +302,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         checkNameStorage();
       }
       catch (StorageException e) {
+        LOG.info(e);
         owner.requestRebuild(INDEX_ID);
       }
     }

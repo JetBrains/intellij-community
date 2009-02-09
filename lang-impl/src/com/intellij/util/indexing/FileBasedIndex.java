@@ -781,6 +781,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   public void requestRebuild(ID<?, ?> indexId) {
     cleanupProcessedFlag();
+    LOG.info("Rebuild requested for index " + indexId, new Throwable());
     myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
 
