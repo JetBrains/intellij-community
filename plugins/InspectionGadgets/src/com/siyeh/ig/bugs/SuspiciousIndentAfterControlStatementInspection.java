@@ -99,7 +99,7 @@ public class SuspiciousIndentAfterControlStatementInspection
 
         private void checkLoopStatement(PsiLoopStatement statement) {
             final PsiStatement body = statement.getBody();
-            if (body instanceof PsiBlockStatement) {
+            if (body instanceof PsiBlockStatement || body == null) {
                 return;
             }
             if (!isWhitespaceSuspicious(statement, body)) {
