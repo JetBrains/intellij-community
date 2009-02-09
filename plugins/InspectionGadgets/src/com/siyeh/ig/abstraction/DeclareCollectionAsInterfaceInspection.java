@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -86,8 +86,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
         private final String typeString;
 
-        public DeclareCollectionAsInterfaceFix(
-                String typeString) {
+        DeclareCollectionAsInterfaceFix(String typeString) {
             this.typeString = typeString;
         }
 
@@ -212,7 +211,10 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             final PsiClass objectClass = javaLangObject.resolve();
             weaklingList.remove(objectClass);
             if (weaklingList.isEmpty()) {
-                registerError(nameElement, "java.util.Collection");
+                final String typeText = type.getCanonicalText();
+                final String interfaceText =
+                        CollectionUtils.getInterfaceForClass(typeText);
+                registerError(nameElement, interfaceText);
             } else {
                 final PsiClass weakling = weaklingList.get(0);
                 final String qualifiedName = weakling.getQualifiedName();

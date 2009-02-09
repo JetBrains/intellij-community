@@ -79,9 +79,9 @@ public class TypeUtils {
         if (aClass == null) {
             return false;
         }
-	    if (ClassUtils.isSubclass(aClass, typeName)) {
-		    return true;
-	    }
+        if (ClassUtils.isSubclass(aClass, typeName)) {
+            return true;
+        }
         for (String typeName1 : typeNames) {
             if (ClassUtils.isSubclass(aClass, typeName1)) {
                 return true;

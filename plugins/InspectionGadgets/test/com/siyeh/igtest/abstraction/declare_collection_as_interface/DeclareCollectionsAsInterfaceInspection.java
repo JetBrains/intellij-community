@@ -1,4 +1,4 @@
-package com.siyeh.igtest.abstraction;
+package com.siyeh.igtest.abstraction.declare_collection_as_interface;
 
 import java.util.*;
 
@@ -32,4 +32,11 @@ public class DeclareCollectionsAsInterfaceInspection
     {
         return new HashSet();
     }
+
+    void writeContent() {
+        final HashMap<String, Object> templateMap = new HashMap();
+        processTemplate(templateMap);
+    }
+
+    void processTemplate(Object o) {}
 }
