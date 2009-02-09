@@ -483,7 +483,10 @@ public class CompositeElement extends TreeElement {
       }, this);
     }
     else {
-      removeRange(getFirstChildNode(), null);
+      final TreeElement child = getFirstChildNode();
+      if (child != null) {
+        removeRange(child, null);
+      }
     }
   }
 
