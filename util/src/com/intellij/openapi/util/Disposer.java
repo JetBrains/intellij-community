@@ -120,7 +120,7 @@ public class Disposer {
     final Field[] all = object.getClass().getDeclaredFields();
     for (Field each : all) {
       if ((each.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) continue;
-      ReflectionUtil.resetField(object, each.getType(), each.getName());
+      ReflectionUtil.resetField(object, each);
     }
   }
 }

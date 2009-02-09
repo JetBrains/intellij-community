@@ -165,7 +165,7 @@ public final class SwingCleanuper implements ApplicationComponent{
 
   private static void resetField(Object object, Class type, @NonNls String name) {
     try {
-      ReflectionUtil.resetField(object, type, name);
+      ReflectionUtil.resetField(object, ReflectionUtil.findField(object.getClass(), type, name));
     }
     catch (Exception e) {
       // Ignore

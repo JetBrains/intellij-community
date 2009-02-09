@@ -202,7 +202,7 @@ public class ReflectionUtil {
     }
   }
 
-  private static void resetField(@Nullable final Object object, final Field field)  {
+  public static void resetField(@Nullable final Object object, final Field field)  {
     field.setAccessible(true);
     Class<?> type = field.getType();
     try {
