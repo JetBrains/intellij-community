@@ -61,4 +61,13 @@ public class StringUtilTest extends TestCase {
     assertEquals("s", StringUtil.unpluralize("s"));
     assertEquals("z", StringUtil.unpluralize("zs"));
   }
+
+  public void testStartsWithConcatenation() {
+    assertTrue(StringUtil.startsWithConcatenationOf("something.withdot", "something", "."));
+    assertTrue(StringUtil.startsWithConcatenationOf("something.withdot", "", "something."));
+    assertTrue(StringUtil.startsWithConcatenationOf("something.", "something", "."));
+    assertTrue(StringUtil.startsWithConcatenationOf("something", "something", ""));
+    assertFalse(StringUtil.startsWithConcatenationOf("something", "something", "."));
+    assertFalse(StringUtil.startsWithConcatenationOf("some", "something", ""));
+  }
 }

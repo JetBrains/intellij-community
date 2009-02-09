@@ -249,10 +249,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   public boolean packagePrefixExists(String packageQName) {
     for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(null)) {
-        if (prefix.startsWith(packageQName + '.') || prefix.equals(packageQName)) {
-          return true;
-        }
+      if (StringUtil.startsWithConcatenationOf(prefix, packageQName, ".") || prefix.equals(packageQName)) {
+        return true;
       }
+    }
+
     return false;
   }
 
