@@ -1051,13 +1051,16 @@ public class AbstractPopup implements JBPopup, Disposable {
   }
 
   public boolean isFocused() {
-    return isFocused(new Component[] {SwingUtilities.getWindowAncestor(myComponent)}) || isFocused(myFocusOwners);
+    if (myComponent != null && isFocused(new Component[] {SwingUtilities.getWindowAncestor(myComponent)}))
+      return true;
+    return isFocused(myFocusOwners);
   }
 
   public static boolean isFocused(@Nullable Component[] components) {
     if (components == null) return false;
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    
     if (owner == null) return false;
     for (Component each : components) {
       if (each != null && SwingUtilities.isDescendingFrom(owner, each)) return true;
