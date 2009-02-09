@@ -287,7 +287,7 @@ public class SvnChangeProvider implements ChangeProvider {
             }
             FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
             final VirtualFile vFile = path.getVirtualFile();
-            if (vFile != null && (! context.getBuilder().reportChangesOutsideProject()) && myExcludedFileIndex.isExcludedFile(vFile)) {
+            if (vFile != null && myExcludedFileIndex.isExcludedFile(vFile)) {
               return;
             }
             processStatusFirstPass(path, status, context, parentStatus);
@@ -316,7 +316,7 @@ public class SvnChangeProvider implements ChangeProvider {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
         final VirtualFile virtualFile = path.getVirtualFile();
         if (virtualFile != null) {
-          if ((! context.getBuilder().reportChangesOutsideProject()) && myExcludedFileIndex.isExcludedFile(virtualFile)) return;
+          if (myExcludedFileIndex.isExcludedFile(virtualFile)) return;
           if (parentStatus != FileStatus.IGNORED) {
             if (! SvnUtil.isWorkingCopyRoot(new File(virtualFile.getPath()))) {
               context.getBuilder().processUnversionedFile(virtualFile);
