@@ -1,5 +1,6 @@
 <idea-plugin>
-  <name>Git4Idea</name>
+  <name>Git Integration</name>
+  <id>Git4Idea</id>
   <description>Provides integration with Git version control system</description>
   <version>8.1</version>
   <category>VCS Integration</category>
