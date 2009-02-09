@@ -114,6 +114,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private DefaultVcsRootPolicy myDefaultVcsRootPolicy;
 
   private volatile int myBackgroundOperationCounter = 0;
+  private final ExcludedFileIndex myExcludedIdx;
 
   public ProjectLevelVcsManagerImpl(Project project, final MessageBus bus) {
     this(project, new AbstractVcs[0], bus);
@@ -124,6 +125,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myDirectoryMappingList = new VcsDirectoryMappingList(project);
     myVcss = new ArrayList<AbstractVcs>(Arrays.asList(vcses));
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
+    myExcludedIdx = ExcludedFileIndex.getInstance(myProject);
   }
 
   private final Map<String, VcsShowOptionsSettingImpl> myOptions = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
@@ -606,7 +608,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           if (filesToExclude != null && filesToExclude.contains(child)) {
             continue;
           }
-          if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(child)) {
+          if (myExcludedIdx.isInContent(child) && myExcludedIdx.isExcludedFile(child)) {
             continue;
           }
         }

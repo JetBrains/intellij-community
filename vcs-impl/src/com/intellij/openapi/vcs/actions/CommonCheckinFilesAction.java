@@ -85,7 +85,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
         final ExcludedFileIndex index = ExcludedFileIndex.getInstance(project);
         final VirtualFileFilter filter = new VirtualFileFilter() {
           public boolean accept(final VirtualFile file) {
-            return !index.isExcludedFile(file);
+            return (! index.isInContent(file)) || (! index.isExcludedFile(file));
           }
         };
         FileIndexImplUtil.iterateRecursively(file, filter, new ContentIterator() {

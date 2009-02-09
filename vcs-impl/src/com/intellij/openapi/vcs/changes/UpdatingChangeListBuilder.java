@@ -80,10 +80,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     processChangeInList(change, list);
   }
 
+  private boolean isExcluded(final VirtualFile file) {
+    return myIndex.isInContent(file) && myIndex.isExcludedFile(file);
+  }
+
   public void processUnversionedFile(final VirtualFile file) {
     if (file == null || ! myUpdateUnversioned) return;
     checkIfDisposed();
-    if (myIndex.isExcludedFile(file)) return;
+    if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       if (myIgnoredFilesComponent.isIgnoredFile(file)) {
         myComposite.getVFHolder(FileHolder.HolderType.IGNORED).addFile(file);
@@ -108,7 +112,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processModifiedWithoutCheckout(final VirtualFile file) {
     if (file == null || ! myUpdateUnversioned) return;
     checkIfDisposed();
-    if (myIndex.isExcludedFile(file)) return;
+    if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).addFile(file);
     }
@@ -117,7 +121,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processIgnoredFile(final VirtualFile file) {
     if (file == null || ! myUpdateUnversioned) return;
     checkIfDisposed();
-    if (myIndex.isExcludedFile(file)) return;
+    if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       myComposite.getVFHolder(FileHolder.HolderType.IGNORED).addFile(file);
     }
@@ -136,7 +140,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
     if (file == null || ! myUpdateUnversioned) return;
     checkIfDisposed();
-    if (myIndex.isExcludedFile(file)) return;
+    if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       myComposite.getSwitchedFileHolder().addFile(file, branch, recursive);
     }
