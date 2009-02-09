@@ -335,11 +335,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     final ResolveCache resolveCache = manager.getResolveCache();
     final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
-    final JavaResolveResult[] javaResults = new JavaResolveResult[results.length];
-    for (int i = 0; i < results.length; i++) {
-      javaResults[i] = (JavaResolveResult)results[i];
-    }
-    return javaResults;
+    return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
   private PsiSubstitutor updateSubstitutor(PsiSubstitutor subst, final PsiClass psiClass) {
@@ -412,12 +408,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         final PsiManager manager = getManager();
         final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
         if (aPackage == null || !aPackage.isValid()) {
-          if (!JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)) {
-            return JavaResolveResult.EMPTY_ARRAY;
-          }
-          else {
-            return CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE;
-          }
+          return JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)
+                 ? CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE
+                 : JavaResolveResult.EMPTY_ARRAY;
         }
         return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
 
@@ -483,7 +476,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         else {
           throw cannotBindError(element);
         }
-
       case CLASS_IN_QUALIFIED_NEW_KIND:
         if (element instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)element;

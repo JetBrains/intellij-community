@@ -6,12 +6,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class HighlightLevelUtil {
   private HighlightLevelUtil() {
   }
 
-  public static boolean shouldHighlight(final PsiElement psiRoot) {
+  public static boolean shouldHighlight(@NotNull PsiElement psiRoot) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());
     if (component == null) return true;
 
@@ -19,7 +20,7 @@ public class HighlightLevelUtil {
     return settingForRoot != FileHighlighingSetting.SKIP_HIGHLIGHTING;
   }
 
-  public static boolean shouldInspect(final PsiElement psiRoot) {
+  public static boolean shouldInspect(@NotNull PsiElement psiRoot) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
 
     if (!shouldHighlight(psiRoot)) return false;
@@ -38,7 +39,7 @@ public class HighlightLevelUtil {
     return settingForRoot != FileHighlighingSetting.SKIP_INSPECTION;
   }
 
-  public static void forceRootHighlighting(final PsiElement root, FileHighlighingSetting level) {
+  public static void forceRootHighlighting(@NotNull PsiElement root, @NotNull FileHighlighingSetting level) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
     if (component == null) return;
 

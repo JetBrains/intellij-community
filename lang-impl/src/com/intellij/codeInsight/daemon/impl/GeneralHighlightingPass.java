@@ -458,6 +458,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               }
             }
           }
+          advanceProgress(elements.size() - (nextLimit-chunkSize));
         }
       };
       if (!visitor.analyze(action, myUpdateAll, myFile)) {

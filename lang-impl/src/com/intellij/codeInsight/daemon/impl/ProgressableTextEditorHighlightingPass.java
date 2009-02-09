@@ -72,8 +72,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myProgessLimit = limit;
   }
 
-  public void advanceProgress(int progress) {
-    myProgressCount.addAndGet(progress);
+  public void advanceProgress(int delta) {
+    myProgressCount.addAndGet(delta);
   }
 
   public static class EmptyPass extends TextEditorHighlightingPass {

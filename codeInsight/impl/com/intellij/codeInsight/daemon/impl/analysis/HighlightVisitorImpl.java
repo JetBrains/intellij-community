@@ -122,8 +122,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         RefCountHolder refCountHolder = RefCountHolder.getInstance(file);
         myRefCountHolder = refCountHolder;
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        TextRange fileRange = file.getTextRange();
-        TextRange dirtyScope = document == null ? fileRange : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
+        TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
         success = refCountHolder.analyze(action, dirtyScope, file);
       }
       else {
