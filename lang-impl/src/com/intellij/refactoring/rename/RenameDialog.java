@@ -7,7 +7,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -268,6 +270,13 @@ public class RenameDialog extends RefactoringDialog {
     }
 
     invokeRefactoring(processor);
+  }
+
+  @Override
+  protected void canRun() throws ConfigurationException {
+    if (!areButtonsValid()) {
+      throw new ConfigurationException("\'" + StringUtil.first(getNewName(), 10, true) + "\' is invalid identifier");
+    }
   }
 
   protected boolean areButtonsValid() {

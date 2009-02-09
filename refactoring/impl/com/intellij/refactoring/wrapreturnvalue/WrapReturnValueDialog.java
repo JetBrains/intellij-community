@@ -3,6 +3,7 @@ package com.intellij.refactoring.wrapreturnvalue;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Iconable;
@@ -12,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.psi.PackageNameUtil;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -80,22 +80,35 @@ class WrapReturnValueDialog extends RefactoringDialog {
       new WrapReturnValueProcessor(className, packageName, sourceMethod, useExistingClass, createInnerClass, (PsiField)myFieldsCombo.getSelectedItem()));
   }
 
-  protected boolean areButtonsValid() {
+  @Override
+  protected void canRun() throws ConfigurationException {
     final Project project = sourceMethod.getProject();
-    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
-    if (useExistingClassButton.isSelected()) {
-      return myFieldsCombo.getSelectedItem() != null && existingClassField.getText().length() != 0;
-    }
+    final JavaPsiFacade manager = JavaPsiFacade.getInstance(project);
+    final PsiNameHelper nameHelper = manager.getNameHelper();
     if (myCreateInnerClassButton.isSelected()) {
       final String innerClassName = getInnerClassName().trim();
-      return nameHelper.isIdentifier(innerClassName) && sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) == null;
+      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + StringUtil.first(innerClassName, 10, true) + "\' is invalid inner class name");
+      if (sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException("Inner class with name \'" + StringUtil.first(innerClassName, 10, true) + "\' already exist");
+    } else if (useExistingClassButton.isSelected()) {
+      final String className = existingClassField.getText().trim();
+      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
+        throw new ConfigurationException("\'" + StringUtil.last(className, 10, true) + "\' is invalid qualified wrapper class name");
+      }
+      final Object item = myFieldsCombo.getSelectedItem();
+      if (item == null) {
+        throw new ConfigurationException("Wrapper field not found");
+      }
+    } else {
+      final String className = getClassName();
+      if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
+        throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid wrapper class name");
+      }
+      final String packageName = getPackageName();
+
+      if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
+        throw new ConfigurationException("\'" + StringUtil.last(packageName, 10, true) + "\' is invalid wrapper class package name");
+      }
     }
-    final String packageName = getPackageName();
-    if (packageName.length() == 0 || PackageNameUtil.containsNonIdentifier(nameHelper, packageName)) {
-      return false;
-    }
-    final String className = getClassName();
-    return !(className.length() == 0 || !nameHelper.isIdentifier(className));
   }
 
   private String getInnerClassName() {

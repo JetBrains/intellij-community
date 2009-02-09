@@ -3,6 +3,7 @@ package com.intellij.refactoring.introduceparameterobject;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +11,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.psi.PackageNameUtil;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
@@ -142,35 +142,35 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   }
 
   @Override
-  protected boolean areButtonsValid() {
+  protected void canRun() throws ConfigurationException {
     final Project project = sourceMethod.getProject();
     final JavaPsiFacade manager = JavaPsiFacade.getInstance(project);
     final PsiNameHelper nameHelper = manager.getNameHelper();
 
-
     final List<PsiParameter> parametersToExtract = getParametersToExtract();
     if (parametersToExtract.isEmpty()) {
-      return false;
+      throw new ConfigurationException("Nothing found to extract");
     }
     if (myCreateInnerClassRadioButton.isSelected()) {
       final String innerClassName = getInnerClassName().trim();
-      return nameHelper.isIdentifier(innerClassName) && sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) == null;
+      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + StringUtil.first(innerClassName, 10, true) + "\' is invalid inner class name");
+      if (sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException("Inner class with name \'" + StringUtil.first(innerClassName, 10, true) + "\' already exist");
     } else if (!useExistingClass()) {
       final String className = getClassName();
       if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
-        return false;
+        throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid parameter class name");
       }
       final String packageName = getPackageName();
 
-      if (packageName.length() == 0 || PackageNameUtil.containsNonIdentifier(nameHelper, packageName)) {
-        return false;
-      }
-      else {
-        return true;
+      if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
+        throw new ConfigurationException("\'" + StringUtil.last(packageName, 10, true) + "\' is invalid parameter class package name");
       }
     }
     else {
-      return getExistingClassName().length() != 0;
+      final String className = getExistingClassName();
+      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
+        throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid qualified parameter class name");
+      }
     }
   }
 

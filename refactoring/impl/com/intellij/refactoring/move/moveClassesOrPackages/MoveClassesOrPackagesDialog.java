@@ -6,9 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -17,11 +19,13 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -241,13 +245,18 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return myCbSearchInComments.isSelected();
   }
 
-  protected boolean areButtonsValid() {
+  @Override
+  protected void canRun() throws ConfigurationException {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
-      return name.length() == 0 || JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name);
+      if (name.length() == 0 || !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name)) {
+        throw new ConfigurationException("\'" + StringUtil.last(name, 10, true) + "\' is invalid destination package name");
+      }
     }
     else {
-      return findTargetClass() != null && getValidationError() == null;
+      if (findTargetClass() == null) throw new ConfigurationException("Destination class not found");
+      final String validationError = getValidationError();
+      if (validationError != null) throw new ConfigurationException(validationError);
     }
   }
 

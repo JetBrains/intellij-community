@@ -6,6 +6,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -239,8 +240,9 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     JavaRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
   }
 
-  protected boolean areButtonsValid() {
-    return getTargetClassName().length() > 0;
+  @Override
+  protected void canRun() throws ConfigurationException {
+    if (getTargetClassName().length() == 0) throw new ConfigurationException("Destination class name not found");
   }
 
   private String validateInputData() {

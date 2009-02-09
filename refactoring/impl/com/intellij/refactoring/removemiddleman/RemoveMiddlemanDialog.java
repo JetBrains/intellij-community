@@ -90,8 +90,4 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
   protected void doAction() {
     invokeRefactoring(new RemoveMiddlemanProcessor(myField, delegateMethods));
   }
-
-  protected boolean areButtonsValid() {
-    return true;
-  }
 }

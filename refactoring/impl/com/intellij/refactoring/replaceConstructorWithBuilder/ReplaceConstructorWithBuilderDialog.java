@@ -8,6 +8,7 @@ import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,12 +53,12 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   protected ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
     super(project, false);
     myConstructors = constructors;
-    init();
-    setTitle(ReplaceConstructorWithBuilderProcessor.REFACTORING_NAME);
     myParametersMap = new LinkedHashMap<String, ParameterData>();
     for (PsiMethod constructor : constructors) {
       ParameterData.createFromConstructor(constructor, myParametersMap);
     }
+    init();
+    setTitle(ReplaceConstructorWithBuilderProcessor.REFACTORING_NAME);
   }
 
   protected void doAction() {
@@ -148,19 +149,20 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   }
 
   @Override
-  protected boolean areButtonsValid() {
+  protected void canRun() throws ConfigurationException {
     final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myProject).getNameHelper();
     for (ParameterData parameterData : myParametersMap.values()) {
-      if (!nameHelper.isIdentifier(parameterData.getFieldName())) return false;
-      if (!nameHelper.isIdentifier(parameterData.getSetterName())) return false;
+      if (!nameHelper.isIdentifier(parameterData.getFieldName())) throw new ConfigurationException("\'" + StringUtil.first(parameterData.getFieldName(), 10, true) + "\' is not a valid field name");
+      if (!nameHelper.isIdentifier(parameterData.getSetterName())) throw new ConfigurationException("\'" + StringUtil.first(parameterData.getSetterName(), 10, true) + "\' is not a valid setter name");
     }
     if (myCreateBuilderClassRadioButton.isSelected()) {
       final String className = myNewClassName.getText().trim();
-      if (className.length() == 0) return false;
-      return nameHelper.isQualifiedName(className) && nameHelper.isQualifiedName(myPackageTextField.getText().trim());
+      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid builder class name");
+      final String packageName = myPackageTextField.getText().trim();
+      if (!nameHelper.isQualifiedName(packageName)) throw new ConfigurationException("\'" + StringUtil.last(packageName , 10, true)+ "\' is invalid builder package name");
     } else {
       final String qualifiedName = myExistentClassTF.getText().trim();
-      return qualifiedName.length() > 0 && nameHelper.isQualifiedName(qualifiedName);
+      if (qualifiedName.length() == 0 || !nameHelper.isQualifiedName(qualifiedName)) throw new ConfigurationException("\'" + StringUtil.last(qualifiedName, 10, true) + "\' is invalid builder qualified class name");
     }
   }
 

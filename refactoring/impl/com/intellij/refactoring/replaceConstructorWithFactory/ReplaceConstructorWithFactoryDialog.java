@@ -3,7 +3,9 @@ package com.intellij.refactoring.replaceConstructorWithFactory;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
@@ -184,9 +186,13 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
                                                                  targetClass, getName()));
   }
 
-  protected boolean areButtonsValid() {
+
+  @Override
+  protected void canRun() throws ConfigurationException {
     final String name = myNameField.getEnteredName();
     final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myContainingClass.getProject()).getNameHelper();
-    return nameHelper.isIdentifier(name);
+    if (!nameHelper.isIdentifier(name)) {
+      throw new ConfigurationException("\'" + StringUtil.first(name, 10, true) + "\' is invalid factory method name");
+    }
   }
 }

@@ -9,13 +9,15 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -435,9 +437,12 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
 
-  protected boolean areButtonsValid () {
+  @Override
+  protected void canRun() throws ConfigurationException {
     String name = getParameterName();
-    return name != null && JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name.trim());
+    if (name == null || !JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name.trim())) {
+      throw new ConfigurationException("\'" + StringUtil.first(name != null ? name : "", 10 , true) + "\' is invalid parameter name");
+    }
   }
 
 

@@ -31,6 +31,7 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -100,8 +101,20 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   protected boolean areButtonsValid () { return true; }
 
+  protected void canRun() throws ConfigurationException{
+    if (!areButtonsValid()) throw new ConfigurationException(null);
+  }
+
   protected void validateButtons() {
-    final boolean enabled = areButtonsValid ();
+    boolean enabled = true;
+    try {
+      setErrorText(null);
+      canRun();
+    }
+    catch (ConfigurationException e) {
+      enabled = false;
+      setErrorText(e.getMessage());
+    }
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
   }

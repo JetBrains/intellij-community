@@ -2,15 +2,16 @@ package com.intellij.refactoring.extractclass;
 
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.psi.PackageNameUtil;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -109,23 +110,26 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     invokeRefactoring(processor);
   }
 
-  protected boolean areButtonsValid() {
+  @Override
+  protected void canRun() throws ConfigurationException {
     final Project project = sourceClass.getProject();
     final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
     final List<PsiMethod> methods = getMethodsToExtract();
     final List<PsiField> fields = getFieldsToExtract();
     final List<PsiClass> innerClasses = getClassesToExtract();
     if (methods.isEmpty() && fields.isEmpty() && innerClasses.isEmpty()) {
-      return false;
+      throw new ConfigurationException("Nothing found to extract");
     }
 
     final String className = getClassName();
     if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
-      return false;
+      throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid extracted class name");
     }
 
     final String packageName = getPackageName();
-    return !(packageName.length() == 0 || PackageNameUtil.containsNonIdentifier(nameHelper, packageName));
+    if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)){
+      throw new ConfigurationException("\'" + StringUtil.last(packageName, 10, true) + "\' is invalid extracted class package name");
+    }
   }
 
   @NotNull

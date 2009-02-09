@@ -1,14 +1,16 @@
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -81,15 +83,19 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     return myCbGenerateGetter.isSelected();
   }
 
-  protected boolean areButtonsValid() {
+  @Override
+  protected void canRun() throws ConfigurationException {
     final String fieldName = getFieldName();
     final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
-    if (!helper.isIdentifier(fieldName)) return false;
+    if (!helper.isIdentifier(fieldName)){
+      throw new ConfigurationException("\'" + StringUtil.first(fieldName, 10, true) + "\' is invalid field name for delegation");
+    }
     if (myInnerClassNameField != null) {
       final String className = myInnerClassNameField.getEnteredName();
-      if (!helper.isIdentifier(className)) return false;
+      if (!helper.isIdentifier(className)) {
+        throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid inner class name");
+      }
     }
-    return true;
   }
 
   public MemberInfo[] getSelectedMemberInfos() {
