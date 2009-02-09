@@ -199,6 +199,7 @@ public class SSHConfig {
         char ch = arg.charAt(i);
         if (i == 0 && ch == '~') {
           rc.append(USER_HOME);
+          continue;
         }
         if (ch == '%' && i + 1 < arg.length()) {
           //noinspection AssignmentToForLoopParameter
