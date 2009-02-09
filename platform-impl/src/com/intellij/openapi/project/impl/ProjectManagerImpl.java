@@ -365,64 +365,71 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         convertorComponent = null;
       }
 
-      final IOException[] io = {null};
-      final StateStorage.StateStorageException[] stateStorage = {null};
+      Project project = loadProjectWithProgress(filePath, convertorComponent);
+      if (project == null) return null;
 
-      if (filePath != null) {
-        refreshProjectFiles(filePath);
-      }
-
-      final Project[] project = new Project[1];
-      boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          try {
-            if (indicator != null) {
-              indicator.setText(ProjectBundle.message("loading.components.for", filePath));
-              indicator.setIndeterminate(true);
-            }
-            project[0] = loadProject(filePath, convertorComponent);
-          }
-          catch (IOException e) {
-            io[0] = e;
-            return;
-          }
-          catch (StateStorage.StateStorageException e) {
-            stateStorage[0] = e;
-            return;
-          }
-
-          if (indicator != null) {
-            indicator.setText(ProjectBundle.message("initializing.components"));
-          }
-        }
-      }, ProjectBundle.message("project.load.progress"), true, null);
-
-      if (!ok) {
-        if (project[0] != null) {
-          Disposer.dispose(project[0]);
-          project[0] = null;
-        }
-        notifyProjectOpenFailed();
-      }
-
-      if (io[0] != null) throw io[0];
-      if (stateStorage[0] != null) throw stateStorage[0];
-
-      if (project[0] == null || !ok) {
+      if (!openProject(project)) {
+        Disposer.dispose(project);
         return null;
       }
 
-      else if (!openProject(project[0])) {
-        Disposer.dispose(project[0]);
-        return null;
-      }
-
-      return project[0];
+      return project;
     }
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
     }
+  }
+
+  @Nullable
+  public Project loadProjectWithProgress(final String filePath, final Pair<Class, Object> convertorComponent) throws IOException {
+    final IOException[] io = {null};
+    final StateStorage.StateStorageException[] stateStorage = {null};
+
+    if (filePath != null) {
+      refreshProjectFiles(filePath);
+    }
+
+    final Project[] project = new Project[1];
+    boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        try {
+          if (indicator != null) {
+            indicator.setText(ProjectBundle.message("loading.components.for", filePath));
+            indicator.setIndeterminate(true);
+          }
+          project[0] = loadProject(filePath, convertorComponent);
+        }
+        catch (IOException e) {
+          io[0] = e;
+          return;
+        }
+        catch (StateStorage.StateStorageException e) {
+          stateStorage[0] = e;
+          return;
+        }
+
+        if (indicator != null) {
+          indicator.setText(ProjectBundle.message("initializing.components"));
+        }
+      }
+    }, ProjectBundle.message("project.load.progress"), true, null);
+
+    if (!ok) {
+      if (project[0] != null) {
+        Disposer.dispose(project[0]);
+        project[0] = null;
+      }
+      notifyProjectOpenFailed();
+    }
+
+    if (io[0] != null) throw io[0];
+    if (stateStorage[0] != null) throw stateStorage[0];
+
+    if (project[0] == null || !ok) {
+      return null;
+    }
+    return project [0];
   }
 
   private static void refreshProjectFiles(final String filePath) {

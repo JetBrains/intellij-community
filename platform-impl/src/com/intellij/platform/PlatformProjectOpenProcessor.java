@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +61,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     Project project = null;
     if (projectDir.exists()) {
       try {
-        project = projectManager.loadProject(baseDir.getPath());
+        project = ((ProjectManagerImpl) projectManager).loadProjectWithProgress(baseDir.getPath(), null);
       }
       catch (Exception e) {
         // ignore
