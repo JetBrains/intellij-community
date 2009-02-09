@@ -73,7 +73,7 @@ public class SharedPsiElementImplUtil {
         return i < children.length - 1 ? children[i + 1] : null;
       }
     }
-    LOG.assertTrue(false);
+    LOG.error("Cannot find element among its parent' children. element: '"+element+"'; parent:'" + parent+"'; file:"+element.getContainingFile());
     return null;
   }
 
