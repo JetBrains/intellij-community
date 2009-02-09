@@ -36,18 +36,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   private NewVirtualFile findChild(final String name, final boolean createIfNotFound) {
-    final NewVirtualFile result = doFindChild(name, createIfNotFound);
-    synchronized (this) {
-      if (result == null && myChildren instanceof Map) {
-        ensureAsMap().put(name, NullVirtualFile.INSTANCE);
-      }
-    }
-
-    return result;
-  }
-
-  @Nullable
-  private NewVirtualFile doFindChild(String name, final boolean createIfNotFound) {
     if (name.length() == 0) {
       return null;
     }
@@ -76,14 +64,27 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     final NewVirtualFileSystem delegate = getFileSystem();
     VirtualFile fake = new FakeVirtualFile(name, this);
-    name = delegate.getCanonicallyCasedName(fake);
+    String name1 = delegate.getCanonicallyCasedName(fake);
+
+    int id = ourPersistence.getId(this, name1);
+    if (id > 0) {
+      synchronized (this) {
+        VirtualFile alreadyCreated = map.get(name1);
+        if (alreadyCreated != null) {
+          if (alreadyCreated == NullVirtualFile.INSTANCE) {
+            return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
+          }
+          return (NewVirtualFile)alreadyCreated;
+        }
+        NewVirtualFile child = createChild(name1, id);
+        map.put(name1, child);
+        return child;
+      }
+    }
 
     synchronized (this) {
-      int id = ourPersistence.getId(this, name);
-      if (id > 0) {
-        NewVirtualFile child = createChild(name, id);
-        map.put(name, child);
-        return child;
+      if (myChildren instanceof Map) {
+        ensureAsMap().put(name1, NullVirtualFile.INSTANCE);
       }
     }
 
@@ -91,15 +92,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public VirtualFileSystemEntry createChild(String name, int id) {
-    final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
-    if (ourPersistence.isDirectory(id)) {
-      child = new VirtualDirectoryImpl(name, this, fs, id);
-    }
-    else {
-      child = new VirtualFileImpl(name, this, id);
-    }
-
+    final VirtualFileSystemEntry child = ourPersistence.isDirectory(id) ?
+                                         new VirtualDirectoryImpl(name, this, fs, id) :
+                                         new VirtualFileImpl(name, this, id);
     if (fs.markNewFilesAsDirty()) {
       child.markDirty();
     }
@@ -260,9 +256,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (map == null) return Collections.emptyList();
 
     List<String> names = new ArrayList<String>();
-    for (String name : map.keySet()) {
-      if (map.get(name) == NullVirtualFile.INSTANCE) {
-        names.add(name);
+    for (Map.Entry<String, VirtualFile> entry : map.entrySet()) {
+      if (entry.getValue() == NullVirtualFile.INSTANCE) {
+        names.add(entry.getKey());
       }
     }
 
@@ -307,6 +303,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     throw new IOException("getInputStream() must not be called against a directory: " + getUrl());
   }
 
+  @NotNull
   public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, final long newTimeStamp) throws IOException {
     throw new IOException("getOutputStream() must not be called against a directory: " + getUrl());
   }
