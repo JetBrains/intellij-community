@@ -19,6 +19,8 @@ public abstract class DirectoryIndex {
 
   public abstract DirectoryInfo getInfoForDirectory(VirtualFile dir);
 
+  public abstract boolean isExcludeRoot(VirtualFile dir);
+
   @NotNull
   public abstract
   Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);

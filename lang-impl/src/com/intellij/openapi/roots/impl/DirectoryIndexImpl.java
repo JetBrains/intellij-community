@@ -635,6 +635,11 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return myDirToInfoMap.get(dir);
   }
 
+  @Override
+  public boolean isExcludeRoot(VirtualFile dir) {
+    return myExcludeRootsMap.containsKey(dir);
+  }
+
   private final PackageSink mySink = new PackageSink();
 
   private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
