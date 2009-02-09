@@ -373,7 +373,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     Color value = myColorsMap.get(key);
     if (myParentScheme != null) {
       if (myParentScheme instanceof AbstractColorsScheme) {
-        if (Comparing.equal(((AbstractColorsScheme)myParentScheme).getOwnColor(key), value)) {
+        if (Comparing.equal(((AbstractColorsScheme)myParentScheme).getOwnColor(key), value) && ((AbstractColorsScheme)myParentScheme).myColorsMap.containsKey(key)) {
           return false;
         }
       }
