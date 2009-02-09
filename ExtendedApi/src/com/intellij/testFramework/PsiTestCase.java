@@ -152,7 +152,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
       System.out.println("Text found:");
       printText(actualText);
 
-      assertTrue("text", false);
+      fail("text");
     }
 
 //    assertEquals(myTestDataAfter.getText(), myFile.getText());

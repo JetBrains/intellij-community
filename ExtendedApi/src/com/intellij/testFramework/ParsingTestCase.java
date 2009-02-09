@@ -22,7 +22,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
   @NonNls private final String myFullDataPath;
   protected PsiFile myFile;
 
-  public ParsingTestCase(String dataPath, String fileExt) {
+  public ParsingTestCase(@NonNls String dataPath, String fileExt) {
     myFullDataPath = getTestDataPath() + "/psi/" + dataPath;
     myFileExt = fileExt;
   }
@@ -63,12 +63,13 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     }
   }
 
-  protected void checkResult(String targetDataName, final String text) throws Exception {
+  protected void checkResult(@NonNls String targetDataName, final String text) throws Exception {
     doCheckResult(myFullDataPath, targetDataName, text);
   }
 
   private static void doCheckResult(String myFullDataPath, String targetDataName, String text) throws Exception {
-    try{
+    try {
+      text = text.trim();
       String expectedText = doLoadFile(myFullDataPath, targetDataName);
       assertEquals(expectedText, text);
     }
@@ -89,7 +90,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     return DebugUtil.psiToString(file, false);
   }
 
-  protected String loadFile(String name) throws Exception {
+  protected String loadFile(@NonNls String name) throws Exception {
     return doLoadFile(myFullDataPath, name);
   }
 
