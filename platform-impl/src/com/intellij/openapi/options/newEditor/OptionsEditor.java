@@ -63,7 +63,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
   History myHistory = new History(this);
 
-  OptionsTree myTree;
+  final OptionsTree myTree;
   MySearchField mySearch;
   Splitter myMainSplitter;
   //[back/forward] JComponent myToolbarComponent;

@@ -39,7 +39,7 @@ import java.util.List;
 
 public class OptionsTree extends JPanel implements Disposable, OptionsEditorColleague {
   Project myProject;
-  SimpleTree myTree;
+  final SimpleTree myTree;
   List<ConfigurableGroup> myGroups;
   FilteringTreeBuilder myBuilder;
   Root myRoot;
