@@ -68,13 +68,14 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
     DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info != null) return false;
+    if (myDirectoryIndex.isProjectExcludeRoot(dir)) return true;
 
     VirtualFile parent = dir.getParent();
     while (true) {
       if (parent == null) return false;
       DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
       if (parentInfo != null) return true;
-      if (myDirectoryIndex.isExcludeRoot(parent)) return true;
+      if (myDirectoryIndex.isProjectExcludeRoot(parent)) return true;
       parent = parent.getParent();
     }
   }

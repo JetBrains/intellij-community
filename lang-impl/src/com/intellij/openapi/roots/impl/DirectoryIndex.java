@@ -19,7 +19,7 @@ public abstract class DirectoryIndex {
 
   public abstract DirectoryInfo getInfoForDirectory(VirtualFile dir);
 
-  public abstract boolean isExcludeRoot(VirtualFile dir);
+  public abstract boolean isProjectExcludeRoot(VirtualFile dir);
 
   @NotNull
   public abstract

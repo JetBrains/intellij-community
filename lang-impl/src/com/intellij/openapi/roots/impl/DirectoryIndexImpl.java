@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.HashSet;
 
 public class DirectoryIndexImpl extends DirectoryIndex implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
@@ -47,6 +48,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private final boolean myIsLasyMode;
 
   private Map<VirtualFile, Set<String>> myExcludeRootsMap;
+  private Set<VirtualFile> myProjectExcludeRoots;
   private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new ConcurrentHashMap<VirtualFile, DirectoryInfo>();
   private Map<String, VirtualFile[]> myPackageNameToDirsMap = new ConcurrentHashMap<String, VirtualFile[]>();
 
@@ -251,6 +253,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     // exclude roots should be merged to prevent including excluded dirs of an inner module into the outer
     // exclude root should exclude from its content root and all outer content roots
     Map<VirtualFile, Set<String>> result = new THashMap<VirtualFile, Set<String>>();
+    Set<VirtualFile> projectExcludeRoots = new HashSet<VirtualFile>();
 
     for (Module module : modules) {
       for (ContentEntry contentEntry : getContentEntries(module)) {
@@ -276,10 +279,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     for(DirectoryIndexExcludePolicy policy: myExcludePolicies) {
       for(VirtualFile file: policy.getExcludeRootsForProject()) {
         putForFileAndAllAncestors(result, file, file.getUrl());
+        projectExcludeRoots.add(file);
       }
     }
 
     myExcludeRootsMap = result;
+    myProjectExcludeRoots = projectExcludeRoots;
   }
 
   private static void putForFileAndAllAncestors(Map<VirtualFile, Set<String>> map, VirtualFile file, String value) {
@@ -636,8 +641,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   @Override
-  public boolean isExcludeRoot(VirtualFile dir) {
-    return myExcludeRootsMap.containsKey(dir);
+  public boolean isProjectExcludeRoot(VirtualFile dir) {
+    return myProjectExcludeRoots.contains(dir);
   }
 
   private final PackageSink mySink = new PackageSink();
