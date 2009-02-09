@@ -609,7 +609,8 @@ public class FileUtil {
   //TODO: does only %20 need to be unescaped?
   public static String unquote(String urlString) {
     urlString = urlString.replace('/', File.separatorChar);
-    return StringUtil.replace(urlString, "%20", " ");
+    urlString = StringUtil.replace(urlString, "%20", " ");
+    return StringUtil.replace(urlString, "%21", "!");
   }
 
   public static boolean isFilePathAcceptable(File file, @Nullable FileFilter fileFilter) {

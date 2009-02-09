@@ -34,10 +34,7 @@ import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.URLDecoder;
+import java.net.*;
 import java.util.*;
 
 /**
@@ -797,9 +794,9 @@ public class PluginManager {
 
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
 
-      URL fileURL = file.toURL();
+      URI fileURL = file.toURI();
       URL jarURL = new URL(
-        "jar:" + fileURL.toExternalForm() + "!/META-INF/" + fileName
+        "jar:" + fileURL.toASCIIString().replace("!", "%21") + "!/META-INF/" + fileName
       );
 
       descriptor.readExternal(jarURL);
