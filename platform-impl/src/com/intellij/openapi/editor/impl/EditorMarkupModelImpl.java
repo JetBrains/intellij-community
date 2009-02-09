@@ -512,6 +512,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     protected void paintComponent(Graphics g) {
+      if (getEditor().isDisposed()) return;
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
       try {
