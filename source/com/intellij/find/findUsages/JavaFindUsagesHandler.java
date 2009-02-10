@@ -267,9 +267,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       addElementUsages(element, processor, options);
     }
 
-    if (ThrowSearchUtil.isSearchable (element) && options.isThrowUsages) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (ThrowSearchUtil.isSearchable (element) && options.isThrowUsages) {
           ThrowSearchUtil.Root root = options.getUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY);
           if (root == null) {
             final ThrowSearchUtil.Root[] roots = ThrowSearchUtil.getSearchRoots(element);
@@ -281,8 +281,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
             ThrowSearchUtil.addThrowUsages(processor, root, options);
           }
         }
-      });
-    }
+      }
+    });
 
     if (element instanceof PsiPackage && options.isClassesUsages){
       addClassesUsages((PsiPackage)element, processor, options);
