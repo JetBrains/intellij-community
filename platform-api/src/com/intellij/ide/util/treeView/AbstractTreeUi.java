@@ -1277,6 +1277,8 @@ class AbstractTreeUi {
               if (isReleased()) return;
 
               final Application app = ApplicationManager.getApplication();
+              if (app == null) return;
+
               app.runReadAction(runnable);
               if (postRunnable != null) {
                 final JTree tree = myTree;
