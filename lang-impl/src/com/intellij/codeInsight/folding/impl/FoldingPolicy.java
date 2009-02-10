@@ -34,7 +34,7 @@ class FoldingPolicy {
     final Language lang = file.getLanguage();
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
     if (foldingBuilder != null) {
-      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+      //PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
       final ASTNode node = file.getNode();
       ChameleonTransforming.transformChildren(node, true);
       final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(node, document);
