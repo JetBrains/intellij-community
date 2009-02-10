@@ -11,6 +11,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.text.StringTokenizer;
@@ -90,7 +91,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
 
         while (tokenizer.hasMoreElements()) {
           final String each = tokenizer.nextElement();
-          tipBuilder.append(each);
+          tipBuilder.append(JDOMUtil.legalizeText(each));
           tipBuilder.append("<br>");
         }
 

@@ -199,7 +199,7 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static String legalizeText(final String str) {
+  public static String legalizeText(@NotNull final String str) {
     StringReader reader = new StringReader(str);
     StringBuilder result = new StringBuilder();
     while(true) {
