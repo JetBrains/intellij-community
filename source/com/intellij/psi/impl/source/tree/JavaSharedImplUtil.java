@@ -64,7 +64,7 @@ public class JavaSharedImplUtil {
     ASTNode lastBracket = null;
     int arrayCount = 0;
     ASTNode element = name;
-    while (true) {
+    while (element != null) {
       element = TreeUtil.skipElements(element.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (element == null || element.getElementType() != JavaTokenType.LBRACKET) break;
       if (firstBracket == null) firstBracket = element;
