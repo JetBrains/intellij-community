@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.WatermarkIcon;
 
@@ -22,7 +23,10 @@ class ContentTabLabel extends BaseLabel {
 
     myBehavior = new BaseButtonBehavior(this) {
       protected void execute(final MouseEvent e) {
-        myUi.myWindow.getContentManager().setSelectedContent(myContent, true);
+        final ContentManager mgr = myUi.myWindow.getContentManager();
+        if (mgr.getIndexOfContent(myContent) >= 0) {
+          mgr.setSelectedContent(myContent, true);
+        }
       }
     };
 
