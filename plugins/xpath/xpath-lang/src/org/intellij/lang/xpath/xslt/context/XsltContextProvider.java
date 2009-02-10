@@ -360,8 +360,7 @@ public class XsltContextProvider extends ContextProvider {
         if (element == null) {
             return null;
         }
-        final PsiFile file = element.getContainingFile();
-        return file.isPhysical() ? file : file.getOriginalFile();
+      return element.getContainingFile().getOriginalFile();
     }
 
 

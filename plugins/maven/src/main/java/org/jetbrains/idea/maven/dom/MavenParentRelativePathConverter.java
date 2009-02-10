@@ -35,7 +35,6 @@ public class MavenParentRelativePathConverter extends MavenPropertyResolvingConv
   public String toString(@Nullable PsiFile f, ConvertContext context) {
     if (f == null) return null;
     PsiFile currentPsiFile = context.getFile().getOriginalFile();
-    if (currentPsiFile == null) currentPsiFile = context.getFile();
     VirtualFile currentFile = currentPsiFile.getVirtualFile();
     return MavenDomUtil.calcRelativePath(currentFile.getParent(), f.getVirtualFile());
   }

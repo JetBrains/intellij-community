@@ -73,7 +73,6 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
             final PsiFile containingFile = tag.getContainingFile();
             assert containingFile != null;
             PsiFile file = containingFile.getOriginalFile();
-            if (file == null || file.getVirtualFile() == null) file = containingFile;
 
             final PsiFile psiFile = ResolveUtil.resolveFile(tag.getAttribute("href", null), file);
             if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {

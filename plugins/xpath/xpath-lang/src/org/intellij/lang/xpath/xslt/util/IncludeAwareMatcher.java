@@ -45,7 +45,7 @@ public abstract class IncludeAwareMatcher extends BaseMatcher {
                 final PsiFile psiFile = element.getContainingFile();
                 assert psiFile != null;
                 PsiFile f = psiFile.getOriginalFile();
-                if (f == null || f.getVirtualFile() == null) f = myDocument.getContainingFile();
+                if (f == psiFile || f.getVirtualFile() == null) f = myDocument.getContainingFile();
 
                 final PsiFile file = ResolveUtil.resolveFile(href, f);
                 if (file instanceof XmlFile) {
