@@ -57,26 +57,27 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     doRename(element, editor, dataContext);
   }
 
-  private static void doRename(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  private void doRename(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+    if (!isAvailableOnDataContext(dataContext)) {
+      LOG.error("Recursive invokation");
+      RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
+        elementToRename.getProject(),
+        editor,
+        elementToRename.getContainingFile(), dataContext
+      );
+      return;
+    }
+
     final boolean startedRename = new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor).performInplaceRename();
 
     if (!startedRename) {
       final DataContext ourDataContext = new DataContext() {
-        boolean myRecursionGuard;
-
         public Object getData(@NonNls final String dataId) {
           if (INVOKING_DEFAULT.equals(dataId)) {
             return Boolean.TRUE;
           }
 
-          if (myRecursionGuard) return null;
-
-          try {
-            myRecursionGuard = true;
-            return dataContext.getData(dataId);
-          } finally {
-            myRecursionGuard = false;
-          }
+          return dataContext.getData(dataId);
         }
       };
       RenameHandlerRegistry.getInstance().getRenameHandler(ourDataContext).invoke(
