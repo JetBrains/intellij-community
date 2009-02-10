@@ -70,7 +70,9 @@ public class SidePanel extends JPanel {
       public void valueChanged(final ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
         final Object value = myList.getSelectedValue();
-        myNavigator.navigateTo(((Place)value), false);
+        if (value != null) {
+          myNavigator.navigateTo(((Place)value), false);
+        }
       }
     });
   }
