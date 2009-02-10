@@ -447,12 +447,21 @@ public class JavaFoldingBuilder implements FoldingBuilder {
                                       baseClass.getName());
               }
 
+              final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+                public String fun(final PsiParameter psiParameter) {
+                  return psiParameter.getType().getPresentableText() + " " + psiParameter.getName();
+                }
+              }, ", ");
+              @NonNls final String lambdas = baseClass.getName() + "(" + params + ") {";
+
+              final int closureStart = expression.getTextRange().getStartOffset();
+              final int closureEnd = expression.getTextRange().getEndOffset();
               boolean oneLine = false;
               String contents = seq.subSequence(firstLineStart, lastLineEnd).toString();
               if (contents.indexOf('\n') < 0) {
-                final int beforeLength = rangeStart - document.getLineStartOffset(document.getLineNumber(rangeStart));
-                final int afterLength = document.getLineEndOffset(document.getLineNumber(rangeEnd)) - rangeEnd;
-                final int resultLineLength = beforeLength + contents.length() + afterLength;
+                final int beforeLength = closureStart - document.getLineStartOffset(document.getLineNumber(closureStart));
+                final int afterLength = document.getLineEndOffset(document.getLineNumber(closureEnd)) - closureEnd;
+                final int resultLineLength = beforeLength + lambdas.length() + contents.length() + 5 + afterLength;
 
                 if (resultLineLength <= settings.RIGHT_MARGIN) {
                   rangeStart = CharArrayUtil.shiftForward(seq, rangeStart, " \n\t");
@@ -460,31 +469,24 @@ public class JavaFoldingBuilder implements FoldingBuilder {
                   oneLine = true;
                 }
               }
-              else {
-                //foldElements.add(new FoldingDescriptor(body.getNode(), new TextRange(rangeStart, rangeEnd))); //...
-              }
 
               if (rangeStart >= rangeEnd) return false;
 
               FoldingGroup group = FoldingGroup.newGroup("lambda");
-              final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-                public String fun(final PsiParameter psiParameter) {
-                  return psiParameter.getType().getPresentableText() + " " + psiParameter.getName();
-                }
-              }, ", ");
+
               final String prettySpace = oneLine ? " " : "";
-              @NonNls final String lambdas = baseClass.getName() + "(" + params + ") {" + prettySpace;
+
               foldElements.add(
-                new FoldingDescriptor(expression.getNode(), new TextRange(expression.getTextRange().getStartOffset(), rangeStart), group) {
+                new FoldingDescriptor(expression.getNode(), new TextRange(closureStart, rangeStart), group) {
                   @Override
                   public String getPlaceholderText() {
-                    return lambdas;
+                    return lambdas + prettySpace;
                   }
                 });
 
               if (rbrace != null) {
                 foldElements
-                  .add(new FoldingDescriptor(rbrace.getNode(), new TextRange(rangeEnd, expression.getTextRange().getEndOffset()), group) {
+                  .add(new FoldingDescriptor(rbrace.getNode(), new TextRange(rangeEnd, closureEnd), group) {
                     @Override
                     public String getPlaceholderText() {
                       return prettySpace + "}";
