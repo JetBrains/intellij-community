@@ -58,6 +58,11 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     init();
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myFieldNameField;
+  }
+
   protected void dispose() {
     myInnerClassNameField.removeDataChangedListener(myDataChangedListener);
     myFieldNameField.removeDataChangedListener(myDataChangedListener);
