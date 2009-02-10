@@ -206,7 +206,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public void refreshIoFiles(Iterable<File> files) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
-    manager.fireBeforeRefreshStart(false);
+    Application app = ApplicationManager.getApplication();
+    boolean fireCommonRefreshSession = app.isDispatchThread() || app.isWriteAccessAllowed();
+    if (fireCommonRefreshSession) manager.fireBeforeRefreshStart(false);
+
     try {
       List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
 
@@ -218,8 +221,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
 
       RefreshQueue.getInstance().refresh(false, false, null, filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]));
-    } finally {
-      manager.fireAfterRefreshFinish(false);
+    }
+    finally {
+      if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
     }
   }
 
