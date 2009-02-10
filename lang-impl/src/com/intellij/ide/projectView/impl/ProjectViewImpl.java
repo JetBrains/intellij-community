@@ -538,7 +538,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private final FocusListener myLabelFocusListener = new FocusListener() {
     public void focusGained(FocusEvent e) {
-      if (!myCombo.isPopupVisible()) {
+      if (!myCombo.isPopupVisible() && myCombo.isShowing()) {
         myCombo.requestFocusInWindow();
         myCombo.showPopup();
       }
