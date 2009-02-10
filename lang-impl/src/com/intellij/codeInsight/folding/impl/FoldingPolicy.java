@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -33,6 +34,7 @@ class FoldingPolicy {
     final Language lang = file.getLanguage();
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
     if (foldingBuilder != null) {
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
       final ASTNode node = file.getNode();
       ChameleonTransforming.transformChildren(node, true);
       final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(node, document);
