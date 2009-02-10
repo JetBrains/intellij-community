@@ -758,7 +758,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         int prevProductionLexIndex = fProduction.get(i - 1).myLexemIndex;
         IElementType prevTokenType;
 
-        while (item.myLexemIndex > prevProductionLexIndex && item.myLexemIndex < myLexemCount &&
+        while (item.myLexemIndex > prevProductionLexIndex && item.myLexemIndex - 1 < myLexemCount &&
                ( myWhitespaces.contains(prevTokenType = myLexTypes[item.myLexemIndex - 1]) ||
                  myComments.contains(prevTokenType)
                )
@@ -853,20 +853,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in phyton
         final IElementType type = myLexTypes[curToken];
         final LeafElement leaf = createLeaf(type, start, end);
-        (curToken == myLexemCount - 1 && whitespaceOrComment(type) ? getRoot(curNode) : curNode).rawAddChildren(leaf);
+        curNode.rawAddChildren(leaf);
       }
       curToken++;
     }
 
     return curToken;
-  }
-
-  private static CompositeElement getRoot(@NotNull CompositeElement curNode) {
-     while (true) {
-      CompositeElement parent = curNode.getTreeParent();
-      if (parent == null) return curNode;
-      curNode = parent;
-    }
   }
 
   private static CompositeElement createComposite(final StartMarker marker) {
@@ -1035,7 +1027,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       while (curToken < lastIdx) {
         final int start = myLexStarts[curToken];
         final int end = myLexEnds[curToken];
-        final IElementType type = myLexTypes[curToken];        
+        final IElementType type = myLexTypes[curToken];
         if (start < end || type instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in phyton
           Token lexem = myPool.alloc();
 
