@@ -114,6 +114,7 @@ public class IgnoredFileBean {
       if (myPathIsAbsolute) {
         return StringUtil.startsWithIgnoreCase(ioFileAbsPath, myAbsolutePath);
       }
+      if (baseDir == null) return false;
       final File file = FileUtil.createFileByRelativePath(baseDir, myPath);
       if (file == null) return false;
       String absPath = file.getAbsolutePath();
