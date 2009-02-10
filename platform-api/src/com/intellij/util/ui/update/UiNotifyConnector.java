@@ -59,7 +59,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
         }
       };
       final Application app = ApplicationManager.getApplication();
-      if (app != null) {
+      if (app != null && app.isDispatchThread()) {
         app.invokeLater(runnable, ModalityState.current());
       } else {
         //noinspection SSBasedInspection
