@@ -598,6 +598,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void exit(final boolean force) {
+    if (!force && getDefaultModalityState() != ModalityState.NON_MODAL) {
+      return;
+    }
+
     Runnable runnable = new Runnable() {
       public void run() {
         if (!force) {
