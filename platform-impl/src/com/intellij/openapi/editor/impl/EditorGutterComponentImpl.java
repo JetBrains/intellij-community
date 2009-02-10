@@ -726,6 +726,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                           int anchorX, boolean active, boolean paintBackground) {
     if (foldRange.isValid()) {
       VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
+
+      final int endOffset = getEndOffset(foldRange);
+      VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
+      if (foldStart.line == foldEnd.line) {
+        return;
+      }
+
       int y = myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() -
               width;
       int height = width + 2;
@@ -741,24 +748,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       else {
-        final int endOffset = getEndOffset(foldRange);
-        VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
-        if (foldStart.line == foldEnd.line) {
-          drawSquareWithMinus(g, anchorX, y, width, active, paintBackground);
+        int endY = myEditor.visibleLineNumberToYPosition(foldEnd.line) + myEditor.getLineHeight() -
+                   myEditor.getDescent();
+
+        if (y <= clip.y + clip.height && y + height >= clip.y) {
+          if (drawTop) {
+            drawDirectedBox(g, anchorX, y, width, height, width - 2, active, paintBackground);
+          }
         }
-        else {
-          int endY = myEditor.visibleLineNumberToYPosition(foldEnd.line) + myEditor.getLineHeight() -
-                     myEditor.getDescent();
 
-          if (y <= clip.y + clip.height && y + height >= clip.y) {
-            if (drawTop) {
-              drawDirectedBox(g, anchorX, y, width, height, width - 2, active, paintBackground);
-            }
-          }
-
-          if (endY - height <= clip.y + clip.height && endY >= clip.y) {
-            drawDirectedBox(g, anchorX, endY, width, -height, -width + 2, active, paintBackground);
-          }
+        if (endY - height <= clip.y + clip.height && endY >= clip.y) {
+          drawDirectedBox(g, anchorX, endY, width, -height, -width + 2, active, paintBackground);
         }
       }
     }
@@ -937,15 +937,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         continue;
       }
 
-      if (rectByFoldOffset(foldRange.getStartOffset(), anchorWidth, anchorX).contains(x, y)) return foldRange;
-      if ((group == null || foldRange.isExpanded()) && rectByFoldOffset(getEndOffset(foldRange), anchorWidth, anchorX).contains(x, y)) return foldRange;
+      VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
+      VisualPosition foldEnd = offsetToLineStartPosition(getEndOffset(foldRange));
+      if (foldStart.line == foldEnd.line) {
+        continue;
+      }
+
+      if (rectByFoldOffset(foldStart, anchorWidth, anchorX).contains(x, y)) return foldRange;
+      if ((group == null || foldRange.isExpanded()) && rectByFoldOffset(foldEnd, anchorWidth, anchorX).contains(x, y)) return foldRange;
     }
 
     return null;
   }
 
-  private Rectangle rectByFoldOffset(int offset, int anchorWidth, int anchorX) {
-    VisualPosition foldStart = offsetToLineStartPosition(offset);
+  private Rectangle rectByFoldOffset(VisualPosition foldStart, int anchorWidth, int anchorX) {
     int anchorY = myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() -
                   myEditor.getDescent() - anchorWidth;
     return new Rectangle(anchorX, anchorY, anchorWidth, anchorWidth);
