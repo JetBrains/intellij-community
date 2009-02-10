@@ -44,7 +44,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
@@ -52,11 +52,13 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
@@ -465,10 +467,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
             final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
             if (myUpdatedFiles.isEmpty() && myVcsExceptions.isEmpty()) {
-              Messages.showMessageDialog(getAllFilesAreUpToDateMessage(myRoots),
-                                         getTemplatePresentation().getText(),
-                                         Messages.getInformationIcon());
-
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(
+                ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO, getAllFilesAreUpToDateMessage(myRoots));
             }
             else if (! myUpdatedFiles.isEmpty()) {
               showUpdateTree(continueChainFinal && updateSuccess && noMerged);
