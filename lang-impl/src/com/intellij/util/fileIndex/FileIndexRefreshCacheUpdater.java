@@ -8,13 +8,13 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Collection;
-import java.util.Arrays;
 
 /**
  * @author nik
@@ -88,10 +88,10 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
   }
 
   private void handleCreateDeleteFile(final VirtualFile file, final boolean fromRefresh, final boolean create) {
+    if (!myFileIndex.getProjectFileIndex().isInContent(file)) {
+      return;
+    }
     if (file.isDirectory()) {
-      if (!myFileIndex.getProjectFileIndex().isInContent(file)) {
-        return;
-      }
       final Collection<VirtualFile> children = create ? Arrays.asList(file.getChildren()) : ((NewVirtualFile)file).getCachedChildren();
       for (VirtualFile child : children) {
         handleCreateDeleteFile(child, fromRefresh, create);
