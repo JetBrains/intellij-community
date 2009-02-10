@@ -7,13 +7,12 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -182,15 +181,18 @@ public class JavaCompletionUtil {
       }
     }
 
-    LookupItemUtil.addLookupItems(set, getUnresolvedReferences(element.getParent(), true), matcher);
+    PsiClass ourClassParent = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (ourClassParent == null) return;
+    LookupItemUtil.addLookupItems(set, getUnresolvedReferences(ourClassParent, true), matcher);
+
     if(!((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)){
-      LookupItemUtil.addLookupItems(set, getOverides((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)),
+      LookupItemUtil.addLookupItems(set, getOverides(ourClassParent, PsiUtil.getTypeByPsiElement(element)),
                                     matcher);
-      LookupItemUtil.addLookupItems(set, getImplements((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)),
+      LookupItemUtil.addLookupItems(set, getImplements(ourClassParent, PsiUtil.getTypeByPsiElement(element)),
                                     matcher);
     }
     LookupItemUtil.addLookupItems(set, getPropertiesHandlersNames(
-      (PsiClass)element.getParent(),
+      ourClassParent,
       ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC),
       PsiUtil.getTypeByPsiElement(element), element), matcher);
   }
