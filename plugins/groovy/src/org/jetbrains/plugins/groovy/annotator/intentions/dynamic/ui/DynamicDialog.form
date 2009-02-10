@@ -76,10 +76,8 @@
           <autoResizeMode value="4"/>
           <background swing-color="ArrowButton.background"/>
           <enabled value="true"/>
-          <fillsViewportHeight value="false"/>
           <showHorizontalLines value="true"/>
           <showVerticalLines value="true"/>
-          <updateSelectionOnSort value="false"/>
         </properties>
       </component>
       <component id="b438c" class="javax.swing.JCheckBox" binding="myStaticCheckBox">
