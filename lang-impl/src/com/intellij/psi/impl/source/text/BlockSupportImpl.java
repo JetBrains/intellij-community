@@ -27,6 +27,7 @@ import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -109,9 +110,10 @@ public class BlockSupportImpl extends BlockSupport {
     boolean theOnlyReparseable = false;
 
     while (parent != null && !(parent instanceof FileElement)) {
-      if (parent.getElementType()instanceof IChameleonElementType) {
+      IElementType elementType = parent.getElementType();
+      if (elementType instanceof IChameleonElementType) {
         final TextRange textRange = parent.getTextRange();
-        final IChameleonElementType reparseable = (IChameleonElementType)parent.getElementType();
+        final IChameleonElementType reparseable = (IChameleonElementType)elementType;
 
         if (reparseable.getLanguage() == baseLanguage) {
           boolean languageChanged = false;
@@ -125,10 +127,11 @@ public class BlockSupportImpl extends BlockSupport {
                                                                                                  textRange.getStartOffset(),
                                                                                                  textRange.getEndOffset() + lengthShift,
                                                                                                  charTable, file.getManager(), fileImpl);
-            mergeTrees(fileImpl, parent, reparseable.parseContents(chameleon).getTreeParent());
+            TreeElement reparsed = ChameleonElement.reparse(charTable, reparseable, (CompositeElement)parent.getTreeParent(), chameleon);
+            mergeTrees(fileImpl, parent, reparsed);
             return;
           }
-          else if (reparseable instanceof IErrorCounterChameleonElementType) {
+          if (reparseable instanceof IErrorCounterChameleonElementType) {
             int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr, project);
             if (currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR) {
               prevReparseable = parent;
