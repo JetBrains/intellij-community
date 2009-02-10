@@ -430,7 +430,7 @@ public class VfsUtil {
     String protocol = url.getProtocol();
     String path = url.getPath();
     if (protocol.equals(JAR)) {
-      if (path.startsWith(FILE + PROTOCOL_DELIMITER)) {
+      if (StringUtil.startsWithConcatenationOf(path, FILE, PROTOCOL_DELIMITER)) {
         try {
           URL subURL = new URL(path);
           path = subURL.getPath();

@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +126,7 @@ public class CvsChangeList implements CommittedChangeList {
         File localFile;
         if (myRootFile != null) {
           String directorySuffix = myRootFile.isDirectory() ? "/" : "";
-          if (path.startsWith(myRootPath + directorySuffix)) {
+          if (StringUtil.startsWithConcatenationOf(path, myRootPath, directorySuffix)) {
             path = path.substring(myRootPath.length() + directorySuffix.length());
             localFile = new File(myRootFile.getPresentableUrl(), path);
           }
@@ -219,7 +220,7 @@ public class CvsChangeList implements CommittedChangeList {
   }
 
   public static boolean isAncestor(final String parent, final String child) {
-    return child.equals(parent) || child.startsWith(parent + "/");
+    return child.equals(parent) || StringUtil.startsWithConcatenationOf(child, parent, "/");
   }
 
   public boolean equals(final Object o) {

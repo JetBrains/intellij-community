@@ -3,6 +3,7 @@ package com.intellij.xml.impl.schema;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -362,7 +363,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     if(namespace != null && namespace.length() > 0){
       return checkSchemaNamespace(namespace);
     }
-    return context.getName().startsWith(XSD_PREFIX + ":");
+    return StringUtil.startsWithConcatenationOf(context.getName(), XSD_PREFIX, ":");
   }
 
   private static @NotNull XmlNSDescriptorImpl getNSDescriptorToSearchIn(XmlTag rootTag, final String name, XmlNSDescriptorImpl defaultNSDescriptor) {

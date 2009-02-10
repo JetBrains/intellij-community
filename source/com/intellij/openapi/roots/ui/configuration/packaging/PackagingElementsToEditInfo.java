@@ -105,7 +105,7 @@ class PackagingElementsToEditInfo {
       }
       else {
         prefix = StringUtil.commonPrefix(prefix, path);
-        if (!path.equals(prefix) && !path.startsWith(prefix + "/")) {
+        if (!path.equals(prefix) && !StringUtil.startsWithConcatenationOf(path, prefix, "/")) {
           int i = prefix.lastIndexOf('/');
           prefix = i != -1 ? prefix.substring(0, i) : "";
         }

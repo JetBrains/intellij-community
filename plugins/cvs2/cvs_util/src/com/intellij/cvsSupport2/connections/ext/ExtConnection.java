@@ -7,6 +7,7 @@ import com.intellij.cvsSupport2.javacvsImpl.io.InputStreamWrapper;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.CvsBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
@@ -78,7 +79,7 @@ public class ExtConnection extends ConnectionOnProcess {
       }
       String read = buffer.toString().trim();
       if (!expectedResult.equals(read)) {
-        if (read.startsWith(myUserName + "@" + myHost)) {
+        if (StringUtil.startsWithConcatenationOf(read, myUserName + "@", myHost)) {
           throw new AuthenticationException(CvsBundle.message("exception.text.ext.server.rejected.access"), null);
         }
         else {

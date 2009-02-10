@@ -10,6 +10,7 @@ import com.intellij.cvsSupport2.connections.ssh.SshConnectionSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.CvsBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
@@ -56,7 +57,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     if (!localizedMessage.startsWith(UNCHANDLED_RESPONSE_PREFIX)) return t;
     String response = localizedMessage.substring(UNCHANDLED_RESPONSE_PREFIX.length(),
                                                  localizedMessage.length() - 1);
-    if (response.startsWith(USER + "@" + HOST)) {
+    if (StringUtil.startsWithConcatenationOf(response, USER + "@", HOST)) {
       return new IOCommandException(new IOException(CvsBundle.message("exception.text.ext.server.rejected.access")));
     }
     else {

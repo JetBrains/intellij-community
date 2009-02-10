@@ -284,7 +284,7 @@ public class PathManager {
       int delimiter = fullPath.indexOf(JAR_DELIMITER);
       if (delimiter >= 0) {
         String archivePath = fullPath.substring(0, delimiter);
-        if (archivePath.startsWith(FILE + PROTOCOL_DELIMITER)) {
+        if (StringUtil.startsWithConcatenationOf(archivePath, FILE, PROTOCOL_DELIMITER)) {
           resultPath = archivePath.substring(FILE.length() + PROTOCOL_DELIMITER.length());
         }
       }

@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -464,7 +465,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       result.currentGrandparent = result.current.getParent();
       if (result.currentGrandparent != null && result.currentParentMatch && !result.closedPath) {
         final String currentGrandparentText = result.currentGrandparent.getAbsolutePath();
-        if (typedText.startsWith(currentGrandparentText + myFinder.getSeparator())) {
+        if (StringUtil.startsWithConcatenationOf(typedText, currentGrandparentText, myFinder.getSeparator())) {
           result.grandparentPrefix =
             currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length()).toUpperCase();
         }

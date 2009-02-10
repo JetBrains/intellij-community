@@ -311,7 +311,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         }
       }
       for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(scope)) {
-        if (prefix.startsWith(qualifiedName + '.') || StringUtil.isEmpty(qualifiedName)) {
+        if (StringUtil.isEmpty(qualifiedName) || StringUtil.startsWithConcatenationOf(prefix, qualifiedName, ".")) {
           final int i = prefix.indexOf('.', qualifiedName.length() + 1);
           String childName = i >= 0 ? prefix.substring(0, i) : prefix;
           if (!packagesMap.containsKey(childName)) {

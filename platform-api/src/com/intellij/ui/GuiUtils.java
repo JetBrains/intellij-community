@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -322,10 +323,10 @@ public class GuiUtils {
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
-        if (text.startsWith("<html>"+changeColorString) && enabled) {
+        if (StringUtil.startsWithConcatenationOf(text, "<html>", changeColorString) && enabled) {
           text = "<html>"+text.substring(("<html>"+changeColorString).length());
         }
-        else if (!text.startsWith("<html>"+changeColorString) && !enabled) {
+        else if (!StringUtil.startsWithConcatenationOf(text, "<html>", changeColorString) && !enabled) {
           text = "<html>"+changeColorString+text.substring("<html>".length());
         }
         label.setText(text);

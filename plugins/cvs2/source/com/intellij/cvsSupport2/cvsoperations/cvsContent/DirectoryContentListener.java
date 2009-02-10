@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 import java.util.regex.Pattern;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 
 class DirectoryContentListener {
   private String myModulePath;
@@ -24,7 +26,7 @@ class DirectoryContentListener {
     }
     else if (fileMessage(message)) {
       String fileName = fileNameFromMessage(message);
-      if (fileName.startsWith(myModuleName + "/")) {
+      if (StringUtil.startsWithConcatenationOf(fileName, myModuleName, "/")) {
         fileName = fileName.substring(myModuleName.length() + 1);
       }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -443,7 +444,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
         int lookupStart = caretOffset - prefix.length() - myAdditionalPrefix.length();
 
         final String lookupString = item.getLookupString();
-        if (!lookupString.startsWith(prefix + myAdditionalPrefix)) {
+        if (!StringUtil.startsWithConcatenationOf(lookupString, prefix, myAdditionalPrefix)) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
         }
 

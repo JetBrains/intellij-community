@@ -77,7 +77,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     //noinspection unchecked
     final List<SymbolicName> symNames = myLogInformation.getAllSymbolicNames();
     for (final SymbolicName symName : symNames) {
-      if (symName.getRevision().startsWith(myCvsRevision.getNumber() + ".") &&
+      if (StringUtil.startsWithConcatenationOf(symName.getRevision(), myCvsRevision.getNumber(), ".") &&
           !processedSymbolicNames.contains(symName)) {
         CvsRevisionNumber number = new CvsRevisionNumber(symName.getRevision().trim());
         final int[] subRevisions = number.getSubRevisions();

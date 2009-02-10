@@ -166,13 +166,13 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
     int idx = 0;
     for (String protocol : PROTOCOLS) {
-      if (macroReplacement.startsWith(protocol + "://")) {
+      if (StringUtil.startsWithConcatenationOf(macroReplacement, protocol, "://")) {
         idx = protocol.length() + 3;
       }
-      else if (macroReplacement.startsWith(protocol + ":/")) {
+      else if (StringUtil.startsWithConcatenationOf(macroReplacement, protocol, ":/")) {
         idx = protocol.length() + 2;
       }
-      else if (macroReplacement.startsWith(protocol + ":")) {
+      else if (StringUtil.startsWithConcatenationOf(macroReplacement, protocol, ":")) {
         idx = protocol.length() + 1;
       }
     }
