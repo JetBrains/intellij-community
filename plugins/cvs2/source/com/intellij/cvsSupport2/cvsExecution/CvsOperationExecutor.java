@@ -155,7 +155,7 @@ public class CvsOperationExecutor {
     else {
       PerformInBackgroundOption backgroundOption = handler.getBackgroundOption(myProject);
       if (backgroundOption != null) {
-        Task.ConditionalModal task = new Task.ConditionalModal(myProject, handler.getTitle(), handler.canBeCanceled(), backgroundOption) {
+        Task.Backgroundable task = new Task.Backgroundable(myProject, handler.getTitle(), handler.canBeCanceled(), backgroundOption) {
           public void run(@NotNull final ProgressIndicator indicator) {
             cvsAction.run();
           }

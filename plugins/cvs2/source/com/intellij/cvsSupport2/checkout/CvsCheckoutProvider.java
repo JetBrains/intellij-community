@@ -5,13 +5,14 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
+import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.experts.checkout.CheckoutWizard;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,18 +36,23 @@ public class CvsCheckoutProvider implements CheckoutProvider {
       collectCheckoutPaths(selectedElements),
       checkoutDirectory,
       useAlternateCheckoutPath,
-      CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY
-    );
+      CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY, VcsConfiguration.getInstance(project).getCheckoutOption());
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(null);
-    executor.performActionSync(checkoutHandler, CvsOperationExecutorCallback.EMPTY);
+    executor.performActionSync(checkoutHandler, new CvsOperationExecutorCallback() {
+      public void executionFinished(boolean successfully) {
+        if (!executor.hasNoErrors()) {
+          Messages.showErrorDialog(CvsBundle.message("message.error.checkout", executor.getResult().composeError().getLocalizedMessage()),
+                                   CvsBundle.message("operation.name.check.out.project"));
+        }
 
-    if (!executor.hasNoErrors()) {
-      Messages.showErrorDialog(CvsBundle.message("message.error.checkout", executor.getResult().composeError().getLocalizedMessage()),
-                               CvsBundle.message("operation.name.check.out.project"));
-    }
-
-    refreshAfterCheckout(listener, selectedElements, checkoutDirectory, useAlternateCheckoutPath);
+        refreshAfterCheckout(listener, selectedElements, checkoutDirectory, useAlternateCheckoutPath);
+      }
+      public void executionFinishedSuccessfully() {
+      }
+      public void executeInProgressAfterAction(ModalityContext modaityContext) {
+      }
+    });
   }
 
   public void refreshAfterCheckout(final Listener listener, final CvsElement[] selectedElements, final File checkoutDirectory,
@@ -54,15 +60,11 @@ public class CvsCheckoutProvider implements CheckoutProvider {
     VirtualFileManager.getInstance().refresh(true, new Runnable() {
       public void run() {
         // shouldn't hold write action when calling this (IDEADEV-20086)
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            for (CvsElement element : selectedElements) {
-              File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
-              listener.directoryCheckedOut(path);
-            }
-            listener.checkoutCompleted();
-          }
-        });
+        for (CvsElement element : selectedElements) {
+          File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
+          listener.directoryCheckedOut(path);
+        }
+        listener.checkoutCompleted();
       }
     });
   }

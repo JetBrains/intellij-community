@@ -16,7 +16,6 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -24,6 +23,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -125,8 +125,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
         myCvsRootConfiguration,
         new String[]{selectedElement.getCheckoutPath()},
         myCheckoutHelper.getCheckoutLocation(),
-        false, CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY
-      );
+        false, CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY, VcsConfiguration.getInstance(myProject).getCheckoutOption());
 
       CvsContextAdapter context = new CvsContextAdapter() {
         public Project getProject() {

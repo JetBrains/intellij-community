@@ -12,7 +12,9 @@ import com.intellij.cvsSupport2.ui.experts.checkout.CheckoutWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.project.Project;
 
 import java.io.File;
 
@@ -38,7 +40,8 @@ public class CheckoutAction extends AbstractAction {
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
-    CheckoutWizard checkoutWizard = new CheckoutWizard(context.getProject());
+    final Project project = context.getProject();
+    CheckoutWizard checkoutWizard = new CheckoutWizard(project);
     checkoutWizard.show();
     if (!checkoutWizard.isOK()) return CvsHandler.NULL;
     myUseAlternativeCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
@@ -50,8 +53,8 @@ public class CheckoutAction extends AbstractAction {
       collectCheckoutPaths(),
       myCheckoutDirectory,
       myUseAlternativeCheckoutPath,
-      CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY
-    );
+      CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY,
+        project == null ? null : VcsConfiguration.getInstance(project).getCheckoutOption());
   }
 
   private String[] collectCheckoutPaths() {

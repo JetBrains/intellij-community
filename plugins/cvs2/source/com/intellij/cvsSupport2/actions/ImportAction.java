@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.actions;
 
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.cvsSupport2.config.ImportConfiguration;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
@@ -57,10 +58,12 @@ public class ImportAction extends ActionOnSelectedElement {
       }
 
       protected CvsHandler getCvsHandler(CvsContext context) {
+        final Project project = context.getProject();
         return CommandCvsHandler.createCheckoutHandler(myImportDetails.getCvsRoot(),
                                                        new String[]{myImportDetails.getModuleName()},
                                                        myImportDetails.getWorkingDirectory(),
-                                                       true, makeNewFilesReadOnly);
+                                                       true, makeNewFilesReadOnly,
+                                                       project == null ? null : VcsConfiguration.getInstance(project).getCheckoutOption());
       }
 
       protected void onActionPerformed(CvsContext context,

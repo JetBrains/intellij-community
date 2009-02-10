@@ -119,12 +119,13 @@ public class CommandCvsHandler extends AbstractCvsHandler {
                                                  String[] checkoutPath,
                                                  final File target,
                                                  boolean useAltCheckoutDir,
-                                                 boolean makeNewFilesReadOnly) {
+                                                 boolean makeNewFilesReadOnly, final PerformInBackgroundOption option) {
     CheckoutProjectOperation checkoutOperation
       = CheckoutProjectOperation.create(environment, checkoutPath, target,
                                         useAltCheckoutDir, makeNewFilesReadOnly);
 
-    return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.project"), checkoutOperation, FileSetToBeUpdated.allFiles()) {
+    return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.project"), checkoutOperation, FileSetToBeUpdated.allFiles(),
+                                 (option == null) ? PerformInBackgroundOption.DEAF : option) {
       public void runComplitingActivities() {
         CvsEntriesManager.getInstance().clearAll();
       }
