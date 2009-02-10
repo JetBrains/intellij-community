@@ -136,9 +136,11 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   }
 
   public void finish(final TaskInfo task) {
-    if (myFinished.contains(task)) return;
+    synchronized (myFinished) {
+      if (myFinished.contains(task)) return;
 
-    myFinished.add(task);
+      myFinished.add(task);
+    }
 
     delegateRunningChange(new IndicatorAction() {
       public void execute(final ProgressIndicatorEx each) {
@@ -148,7 +150,9 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   }
 
   public boolean isFinished(final TaskInfo task) {
-    return myFinished.contains(task);
+    synchronized (myFinished) {
+      return myFinished.contains(task);
+    }
   }
 
   protected void setOwnerTask(TaskInfo owner) {
