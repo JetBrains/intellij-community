@@ -81,12 +81,9 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   @Nullable
   private static Editor getEditorForFile(@NotNull final PsiFile psiFile) {
-    VirtualFile virtualFile = psiFile.getVirtualFile();
+    VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
     if (virtualFile == null) {
-      PsiFile originalFile = psiFile.getOriginalFile();
-      if (originalFile == null) return null;
-      virtualFile = originalFile.getVirtualFile();
-      if (virtualFile == null) return null;
+      return null;
     }
     final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
     for (FileEditor editor : editors) {

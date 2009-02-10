@@ -409,16 +409,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public PsiFile getOriginalFile() {
-    return myOriginalFile;
+    return myOriginalFile == null ? this : myOriginalFile;
   }
 
   public void setOriginalFile(@NotNull final PsiFile originalFile) {
-    if (originalFile.getOriginalFile() != null) {
-      myOriginalFile = originalFile.getOriginalFile();
-    }
-    else {
-      myOriginalFile = originalFile;
-    }
+    myOriginalFile = originalFile.getOriginalFile();
   }
 
   @NotNull

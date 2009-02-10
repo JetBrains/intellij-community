@@ -182,7 +182,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       String contextNs;
       PsiFile containingFile = context != null ? context.getContainingFile():null;
 
-      if (context != null && !containingFile.isPhysical() && containingFile.getOriginalFile() != null) {
+      if (context != null && !containingFile.isPhysical()) {
         containingFile = containingFile.getOriginalFile();
         //context = context.getParentTag();
       }

@@ -45,13 +45,7 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
     if (module == null || psiFile == null) {
       return ProjectScope.getAllScope(project);
      }
-     VirtualFile file = psiFile.getVirtualFile();
-     if (file == null) {
-       final PsiFile originalFile = psiFile.getOriginalFile();
-       if (originalFile != null) {
-         file = originalFile.getVirtualFile();
-       }
-     }
+     VirtualFile file = psiFile.getOriginalFile().getVirtualFile();
      if (file == null) {
        return ProjectScope.getAllScope(project);
      }

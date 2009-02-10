@@ -59,14 +59,8 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     if (myType == null) {
       myType = getLanguage().getAssociatedFileType();
       if (myType == null) {
-        PsiFile originalFile = getOriginalFile();
-        if (originalFile != null) {
-          myType = originalFile.getFileType();
-        }
-        else {
-          VirtualFile virtualFile = getVirtualFile();
-          myType = virtualFile == null ? FileTypeManager.getInstance().getFileTypeByFileName(getName()) : virtualFile.getFileType();
-        }
+        VirtualFile virtualFile = getOriginalFile().getVirtualFile();
+        myType = virtualFile == null ? FileTypeManager.getInstance().getFileTypeByFileName(getName()) : virtualFile.getFileType();
       }
     }
     return myType;

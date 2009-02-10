@@ -62,7 +62,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     final FileElement treeElement = new DummyHolder(((TreeElement)chameleon).getManager(), null, table).getTreeElement();
     final PsiFile file = (PsiFile)TreeUtil.getFileElement((TreeElement)chameleon).getPsi();
     PsiFile originalFile = file.getOriginalFile();
-    if (originalFile == null) originalFile = file;
 
     final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)originalFile.getViewProvider();
 

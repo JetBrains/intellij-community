@@ -212,7 +212,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   public PsiFile getOriginalFile() {
-    return null;
+    return this;
   }
 
   @NonNls

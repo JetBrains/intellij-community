@@ -284,13 +284,7 @@ public class FileManagerImpl implements FileManager {
       else if (contextFile instanceof FileResolveScopeProvider) {
         return ((FileResolveScopeProvider) contextFile).getFileResolveScope();
       }
-      vFile = contextFile.getVirtualFile();
-      if (vFile == null) {
-        PsiFile originalFile = contextFile.getOriginalFile();
-        if (originalFile != null) {
-          vFile = originalFile.getVirtualFile();
-        }
-      }
+      vFile = contextFile.getOriginalFile().getVirtualFile();
     }
     if (vFile == null) {
       return GlobalSearchScope.allScope(project);

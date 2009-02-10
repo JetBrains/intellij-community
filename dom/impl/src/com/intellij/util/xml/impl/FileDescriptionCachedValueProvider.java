@@ -122,7 +122,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
     if (sb != null) {
       sb.append("original: " + originalFile + "\n");
     }
-    if (originalFile != null) {
+    if (originalFile != myXmlFile) {
       final FileDescriptionCachedValueProvider<T> provider = myDomManager.getOrCreateCachedValueProvider(originalFile);
       final DomFileElementImpl<T> element = provider.getFileElement();
       if (sb != null) {

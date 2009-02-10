@@ -143,16 +143,11 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   public PsiFile getOriginalFile() {
-    return myOriginalFile;
+    return myOriginalFile == null ? this : myOriginalFile;
   }
 
   public void setOriginalFile(final PsiFile originalFile) {
-    if (originalFile.getOriginalFile() != null) {
-      myOriginalFile = originalFile.getOriginalFile();
-    }
-    else {
-      myOriginalFile = originalFile;
-    }
+    myOriginalFile = originalFile.getOriginalFile();
   }
 
   @NotNull

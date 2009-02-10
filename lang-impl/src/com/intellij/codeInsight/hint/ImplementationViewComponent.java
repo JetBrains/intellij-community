@@ -322,9 +322,7 @@ public class ImplementationViewComponent extends JPanel {
   private static PsiFile getContainingFile(final PsiElement elt) {
     PsiFile psiFile = elt.getContainingFile();
     if (psiFile == null) return null;
-    PsiFile originalFile = psiFile.getOriginalFile();
-    if (originalFile != null) psiFile = originalFile;
-    return psiFile;
+    return psiFile.getOriginalFile();
   }
 
   public void removeNotify() {

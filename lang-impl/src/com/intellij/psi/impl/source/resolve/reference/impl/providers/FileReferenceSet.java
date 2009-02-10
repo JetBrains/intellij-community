@@ -237,8 +237,7 @@ public class FileReferenceSet {
       LOG.assertTrue(false, "Invalid element: " + myElement);
     }
 
-    if (!file.isPhysical()) file = file.getOriginalFile();
-    return file;
+    return file.getOriginalFile();
   }
 
   @Nullable
@@ -260,11 +259,7 @@ public class FileReferenceSet {
       }
     }
 
-    VirtualFile virtualFile = file.getVirtualFile();
-    final PsiFile originalFile = file.getOriginalFile();
-    if (virtualFile == null && originalFile != null) {
-      virtualFile = originalFile.getVirtualFile();
-    }
+    VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
 
     if (virtualFile != null) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();

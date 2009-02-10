@@ -134,7 +134,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     private PsiFile getRealFile() {
       PsiFile psiFile = myElement.getContainingFile();
-      if (psiFile != null && psiFile.getOriginalFile() != null) psiFile = psiFile.getOriginalFile();
+      if (psiFile != null) psiFile = psiFile.getOriginalFile();
       return psiFile;
     }
 

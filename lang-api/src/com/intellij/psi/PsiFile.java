@@ -61,7 +61,7 @@ public interface PsiFile extends PsiFileSystemItem {
    *
    * @return the original file of a copy, or null if the file is not a copy.
    */
-  @Nullable PsiFile getOriginalFile();
+  @NotNull PsiFile getOriginalFile();
 
   /**
    * Returns the file type for the file.

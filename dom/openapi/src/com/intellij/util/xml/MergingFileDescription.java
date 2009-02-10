@@ -53,7 +53,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     Set<XmlFile> files = new HashSet<XmlFile>();
     files.add(xmlFile);
     final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
-    if (originalFile != null) {
+    if (originalFile != xmlFile) {
       final DomFileElement originalElement = domManager.getFileElement(originalFile);
       if (originalElement != null) {
         element = originalElement;

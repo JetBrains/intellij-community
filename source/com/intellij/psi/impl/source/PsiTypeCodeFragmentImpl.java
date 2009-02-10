@@ -58,7 +58,6 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
   }
 
   public boolean isVoidValid() {
-    return getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null ||
-           getOriginalFile() != null && getOriginalFile().getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null;
+    return getOriginalFile().getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null;
   }
 }

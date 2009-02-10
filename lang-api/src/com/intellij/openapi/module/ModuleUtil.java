@@ -155,13 +155,7 @@ public class ModuleUtil {
         return containingFile.getUserData(KEY_MODULE);
       }
 
-      VirtualFile virtualFile = containingFile.getVirtualFile();
-      if (virtualFile == null) {
-        PsiFile originalFile = containingFile.getOriginalFile();
-        if (originalFile != null) {
-          virtualFile = originalFile.getVirtualFile();
-        }
-      }
+      VirtualFile virtualFile = containingFile.getOriginalFile().getVirtualFile();
       if (virtualFile != null) {
         return fileIndex.getModuleForFile(virtualFile);
       }

@@ -2,7 +2,6 @@ package com.intellij.util.xml.model.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
@@ -31,10 +30,7 @@ public abstract class CachedSimpleDomModelFactory<T extends DomElement, M extend
     myModelCache = new DomModelCache<M, XmlFile>(project, name + " model") {
        @NotNull
        protected CachedValueProvider.Result<M> computeValue(@NotNull XmlFile file) {
-         final PsiFile originalFile = file.getOriginalFile();
-         if (originalFile != null) {
-           file = (XmlFile)originalFile;
-         }
+         file = (XmlFile)file.getOriginalFile();
 
          final Scope scope = getModelScope(file);
          final M model = computeModel(file, scope);

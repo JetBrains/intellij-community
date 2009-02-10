@@ -332,11 +332,9 @@ public class DomUtil {
     final XmlElement psiElement = domElement.getXmlElement();
     if (psiElement == null) return domElement;
 
-    final PsiFile psiFile = psiElement.getContainingFile();
-    final PsiFile originalFile = psiFile.getOriginalFile();
-    if (originalFile == null) return domElement;
+    final PsiFile psiFile = psiElement.getContainingFile().getOriginalFile();
     final TextRange range = psiElement.getTextRange();
-    final PsiElement element = originalFile.findElementAt(range.getStartOffset());
+    final PsiElement element = psiFile.findElementAt(range.getStartOffset());
     final int maxLength = range.getLength();
     final boolean isAttribute = psiElement instanceof XmlAttribute;
     final Class<? extends XmlElement> clazz = isAttribute ? XmlAttribute.class : XmlTag.class;

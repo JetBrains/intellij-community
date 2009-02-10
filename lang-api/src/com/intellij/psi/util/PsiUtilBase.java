@@ -375,7 +375,7 @@ public class PsiUtilBase {
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();
     final PsiFile originalFile = psiFile.getOriginalFile();
-    if (originalFile == null) return psiElement;
+    if (originalFile == psiFile) return psiElement;
     final TextRange range = psiElement.getTextRange();
     final PsiElement element = originalFile.findElementAt(range.getStartOffset());
     final int maxLength = range.getLength();

@@ -241,14 +241,8 @@ public class XmlUtil {
     PsiFile result = null;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      String data = base.getUserData(TEST_PATH);
+      String data = base.getOriginalFile().getUserData(TEST_PATH);
 
-      if (data == null) {
-        PsiFile originalFile = base.getOriginalFile();
-        if (originalFile != null) {
-          data = originalFile.getUserData(TEST_PATH);
-        }
-      }
       if (data != null) {
         String filePath = data + "/" + uri;
         final VirtualFile path = LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
@@ -462,13 +456,7 @@ public class XmlUtil {
           if (tag.getAttributeValue("default") != null) {
             return true;
           }
-          VirtualFile vFile = xmlFile.getVirtualFile();
-          if (vFile == null) {
-            final PsiFile origFile = xmlFile.getOriginalFile();
-            if (origFile != null) {
-              vFile = origFile.getVirtualFile();
-            }
-          }
+          VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
           if (vFile != null && vFile.getUserData(ANT_FILE_SIGN) != null) {
             return true;
           }
@@ -482,8 +470,7 @@ public class XmlUtil {
   public static PsiFile findRelativeFile(String uri, PsiElement base) {
     if (base instanceof PsiFile) {
       PsiFile baseFile = (PsiFile) base;
-      if (baseFile.getOriginalFile() != null) return findRelativeFile(uri, baseFile.getOriginalFile());
-      VirtualFile file = UriUtil.findRelativeFile(uri, baseFile.getVirtualFile());
+      VirtualFile file = UriUtil.findRelativeFile(uri, baseFile.getOriginalFile().getVirtualFile());
       if (file == null) return null;
       return base.getManager().findFile(file);
     }

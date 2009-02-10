@@ -238,12 +238,7 @@ public class HtmlUtil {
   @Nullable
   public static String getEntitiesString(XmlElement context, int type) {
     if (context == null) return null;
-    PsiFile containingFile = context.getContainingFile();
-    if (containingFile.getOriginalFile() != null) {
-      containingFile = containingFile.getOriginalFile();
-    }
-
-    assert containingFile != null;
+    PsiFile containingFile = context.getContainingFile().getOriginalFile();
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile(containingFile);
 

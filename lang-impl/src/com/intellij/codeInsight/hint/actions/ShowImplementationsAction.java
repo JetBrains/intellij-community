@@ -202,9 +202,7 @@ public class ShowImplementationsAction extends AnAction {
       protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
         Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
         for (PsiElement elt : targetElements) {
-          PsiFile psiFile = elt.getContainingFile();
-          final PsiFile originalFile = psiFile.getOriginalFile();
-          if (originalFile != null) psiFile = originalFile;
+          PsiFile psiFile = elt.getContainingFile().getOriginalFile();
           if (psiFile.getVirtualFile() == null) unique.remove(elt);
         }
         return unique.toArray(new PsiElement[unique.size()]);

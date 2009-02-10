@@ -26,13 +26,7 @@ public class AntLanguageExtension implements LanguageFilter {
         if (tag.getAttributeValue(AntFileImpl.DEFAULT_ATTR) != null) {
           return true;
         }
-        VirtualFile vFile = xmlFile.getVirtualFile();
-        if (vFile == null) {
-          final PsiFile origFile = xmlFile.getOriginalFile();
-          if (origFile != null) {
-            vFile = origFile.getVirtualFile();
-          }
-        }
+        VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
         if (vFile != null && ForcedAntFileAttribute.isAntFile(vFile)) {
           return true;
         }

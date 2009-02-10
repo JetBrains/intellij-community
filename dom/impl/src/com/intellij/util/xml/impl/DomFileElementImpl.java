@@ -3,12 +3,11 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
@@ -140,11 +139,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @NotNull
   public XmlFile getOriginalFile() {
-    final PsiFile originalFile = myFile.getOriginalFile();
-    if (originalFile != null) {
-      return (XmlFile)originalFile;
-    }
-    return myFile;
+    return (XmlFile)myFile.getOriginalFile();
   }
 
   @Nullable

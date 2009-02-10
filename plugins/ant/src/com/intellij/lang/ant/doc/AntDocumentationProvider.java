@@ -107,7 +107,7 @@ public class AntDocumentationProvider implements DocumentationProvider {
       return null;
     }
     final AntFile originalFile = (AntFile)antFile.getOriginalFile();
-    final AntInstallation installation = originalFile != null? originalFile.getAntInstallation() : antFile.getAntInstallation();
+    final AntInstallation installation = originalFile.getAntInstallation();
     if (installation == null) {
       return null; // not configured properly and bundled installation missing
     }

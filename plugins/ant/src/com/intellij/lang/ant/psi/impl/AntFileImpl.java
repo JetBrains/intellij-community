@@ -129,14 +129,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   public VirtualFile getVirtualFile() {
-    VirtualFile result = getSourceElement().getVirtualFile();
-    if (result == null) {
-      final PsiFile origFile = getOriginalFile();
-      if (origFile instanceof AntFile) {
-        result = origFile.getVirtualFile();
-      }
-    }
-    return result;
+    return getSourceElement().getOriginalFile().getVirtualFile();
   }
 
   public AntElementRole getRole() {
@@ -378,7 +371,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           }
           final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
           myProject = project;
-          if (getOriginalFile() == null || myProperties == null) {
+          if (getSourceElement().isPhysical() || myProperties == null) {
             buildPropertiesMap();
           }
           for (final AntFile imported : project.getImportedFiles()) {

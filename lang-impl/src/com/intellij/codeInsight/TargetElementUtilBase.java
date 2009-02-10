@@ -194,8 +194,7 @@ public class TargetElementUtilBase {
     if (!element.isValid()) return false;
     PsiFile file = element.getContainingFile();
     if (file == null) return false;
-    if (file.getOriginalFile() != null) file = file.getOriginalFile();
-    return file != null && file.getVirtualFile() != null;
+    return file.getOriginalFile().getVirtualFile() != null;
   }
 
   @Nullable

@@ -82,26 +82,18 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
     @Nullable
     protected String getPath(final Object value) {
       final PsiFile psiFile = (PsiFile)value;
-      //String path = WebUtil.getWebUtil().getWebPath(psiFile);
-      String path = null;
-      if (path == null) {
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
-        VirtualFile file = psiFile.getVirtualFile();
-        final PsiFile originalFile = psiFile.getOriginalFile();
-        if (file == null && originalFile != null) {
-          file = originalFile.getVirtualFile();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
+      VirtualFile file = psiFile.getOriginalFile().getVirtualFile();
+      if (file != null) {
+        VirtualFile root = fileIndex.getSourceRootForFile(file);
+        if (root == null) {
+          root = fileIndex.getContentRootForFile(file);
         }
-        if (file != null) {
-          VirtualFile root = fileIndex.getSourceRootForFile(file);
-          if (root == null) {
-            root = fileIndex.getContentRootForFile(file);
-          }
-          if (root != null) {
-            path = VfsUtil.getRelativePath(file, root, '/');
-          }
+        if (root != null) {
+          return VfsUtil.getRelativePath(file, root, '/');
         }
       }
-      return path;
+      return null;
     }
 
     private String trimPath(String path, Component component, String separator, int length) {
