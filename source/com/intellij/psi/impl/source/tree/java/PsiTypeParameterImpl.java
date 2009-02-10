@@ -290,7 +290,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @NonNls
   public String toString() {
-    return "PsiTypeParameter";
+    return "PsiTypeParameter:" + getName();
   }
 
   public PsiMetaData getMetaData(){
