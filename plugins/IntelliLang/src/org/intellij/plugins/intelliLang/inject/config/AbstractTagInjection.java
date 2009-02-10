@@ -213,7 +213,7 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
     return result;
   }
 
-  protected static List<TextRange> getMatchingRanges(Matcher matcher, int offset) {
+  protected static List<TextRange> getMatchingRanges(Matcher matcher) {
     final List<TextRange> list = new SmartList<TextRange>();
     int start = 0;
     while (matcher.find(start)) {
@@ -221,7 +221,7 @@ public abstract class AbstractTagInjection<T extends AbstractTagInjection, I ext
       if (group != null) {
         start = matcher.start(1);
         final int length = group.length();
-        list.add(TextRange.from(start + offset, length));
+        list.add(TextRange.from(start, length));
         start += length;
       }
       else {

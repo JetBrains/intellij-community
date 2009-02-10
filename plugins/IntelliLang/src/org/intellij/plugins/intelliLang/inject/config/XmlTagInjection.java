@@ -50,7 +50,7 @@ public class XmlTagInjection extends AbstractTagInjection<XmlTagInjection, XmlTe
       return Collections.singletonList(TextRange.from(0, element.getTextLength()));
     }
     else {
-      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(element.getValue()), 0);
+      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(element.getValue()));
       return ranges.size() > 0 ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
         public TextRange fun(TextRange s) {
           return new TextRange(element.displayToPhysical(s.getStartOffset()), element.displayToPhysical(s.getEndOffset()));

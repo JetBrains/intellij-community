@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Function;
@@ -85,15 +86,16 @@ public class XmlAttributeInjection extends AbstractTagInjection<XmlAttributeInje
 
   @NotNull
   public List<TextRange> getInjectedArea(final XmlAttributeValue element) {
+    final TextRange textRange = ElementManipulators.getValueTextRange(element);
     if (myCompiledValuePattern == null) {
-      return Collections.singletonList(TextRange.from(1, element.getTextLength() - 2));
+      return Collections.singletonList(textRange);
     }
     else {
       final XmlAttribute attr = (XmlAttribute)element.getParent();
-      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(attr.getDisplayValue()), 1);
+      final List<TextRange> ranges = getMatchingRanges(myCompiledValuePattern.matcher(attr.getDisplayValue()));
       return ranges.size() > 0 ? ContainerUtil.map(ranges, new Function<TextRange, TextRange>() {
         public TextRange fun(TextRange s) {
-          return new TextRange(attr.displayToPhysical(s.getStartOffset()), attr.displayToPhysical(s.getEndOffset()));
+          return new TextRange(attr.displayToPhysical(s.getStartOffset()), attr.displayToPhysical(s.getEndOffset())).shiftRight(textRange.getStartOffset());
         }
       }) : Collections.<TextRange>emptyList();
     }
