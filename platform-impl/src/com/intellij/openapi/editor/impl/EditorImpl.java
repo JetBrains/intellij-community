@@ -67,8 +67,6 @@ import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.text.AttributedCharacterIterator;
@@ -3707,7 +3705,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         FoldRegion fold = myFoldingModel.getFoldingPlaceholderAt(e.getPoint());
         TooltipController controller = TooltipController.getInstance();
         if (fold != null) {
-          DocumentFragment range = new DocumentFragment(myDocument, fold.getStartOffset(), fold.getEndOffset());
+          final FoldingGroup group = fold.getGroup();
+          final int endOffset = group == null ? fold.getEndOffset() : myFoldingModel.getEndOffset(group);
+          DocumentFragment range = new DocumentFragment(myDocument, fold.getStartOffset(), endOffset);
           final Point p =
             SwingUtilities.convertPoint((Component)e.getSource(), e.getPoint(), getComponent().getRootPane().getLayeredPane());
           controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
