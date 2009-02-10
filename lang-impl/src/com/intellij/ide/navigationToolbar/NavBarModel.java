@@ -332,7 +332,11 @@ public class NavBarModel {
   protected SimpleTextAttributes getTextAttributes(final Object object, final boolean selected) {
     if (!checkValid(object)) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
     if (object instanceof PsiElement) {
-      if (!((PsiElement)object).isValid()) return SimpleTextAttributes.GRAYED_ATTRIBUTES;
+      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return ((PsiElement)object).isValid();
+        }
+      }).booleanValue()) return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       PsiFile psiFile = ((PsiElement)object).getContainingFile();
       if (psiFile != null) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
