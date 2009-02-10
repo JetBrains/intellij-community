@@ -1093,7 +1093,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       ModalityState modalityState = listener.getModalityState();
       if (modalityState == null) return;
       if (!ModalityState.current().dominates(modalityState)) {
-        listener.run();
+        try {
+          listener.run();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
