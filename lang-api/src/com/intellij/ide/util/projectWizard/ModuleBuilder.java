@@ -156,8 +156,10 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return true;
   }
 
+  @Nullable
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    return Collections.singletonList(commitModule(project, model));
+    final Module module = commitModule(project, model);
+    return module != null ? Collections.singletonList(module) : null;
   }
 
   public Module commitModule(final Project project, final ModifiableModuleModel model) {
