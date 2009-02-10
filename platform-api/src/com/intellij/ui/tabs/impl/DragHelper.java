@@ -161,11 +161,14 @@ class DragHelper extends MouseDragHelper {
   }
 
 
+  @Nullable
   private TabLabel findLabel(Point dragPoint) {
     final Component at = myTabs.findComponentAt(dragPoint);
     if (at instanceof InplaceButton) return null;
     final TabLabel label = findLabel(at);
-    return label != null && label.getInfo() != myDragSource ? label : null;
+
+    return label != null && label.getParent() == myTabs && label.getInfo() != myDragSource ? label : null;
+
   }
 
   @Nullable
