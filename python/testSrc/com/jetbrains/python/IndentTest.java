@@ -1,10 +1,13 @@
 package com.jetbrains.python;
 
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.Bombed;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.testFramework.LightCodeInsightTestCase;
+
+import java.util.Calendar;
 
 /**
  * @author yole
@@ -55,6 +58,7 @@ public class IndentTest extends LightCodeInsightTestCase {
                "if a:\n    if b:\n        <caret>print c\n    print d");
     }
 
+  @Bombed(month = Calendar.FEBRUARY, day = 17, user="yole")
     public void testAlignInList() throws Exception {
         doTest("__all__ = [a,<caret>",
                "__all__ = [a,\n" +
@@ -78,7 +82,7 @@ public class IndentTest extends LightCodeInsightTestCase {
                "           <caret>\n" +
                "           c]");
     }
-
+    @Bombed(month = Calendar.FEBRUARY, day = 17, user="yole")
     public void testAlignInListComp() throws Exception {
         doTest("__all__ = [a for<caret>",
                "__all__ = [a for\n" +
