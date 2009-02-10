@@ -382,7 +382,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
   }
 
-  private void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
+  void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
                                     final List<ShelvedBinaryFile> remainingBinaries) {
     final File newPath = getPatchPath(changeList.DESCRIPTION);
     try {

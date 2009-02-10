@@ -17,14 +17,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
@@ -43,6 +43,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -51,6 +52,7 @@ import javax.swing.tree.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -398,7 +400,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
-  private class ShelvedChangeDeleteProvider implements DeleteProvider {
+  private class MyChangeListDeleteProvider implements DeleteProvider {
     public void deleteElement(DataContext dataContext) {
       //noinspection unchecked
       final List<ShelvedChangeList> shelvedChangeLists = getLists(dataContext);
@@ -411,6 +413,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       for(ShelvedChangeList changeList: shelvedChangeLists) {
         ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
       }
+    }
+
+    public boolean canDeleteElement(DataContext dataContext) {
+      //noinspection unchecked
+      return ! getLists(dataContext).isEmpty();
     }
 
     private List<ShelvedChangeList> getLists(final DataContext dataContext) {
@@ -427,10 +434,87 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       return shelvedChangeLists;
     }
+  }
+
+  private class MyChangesDeleteProvider implements DeleteProvider {
+    public void deleteElement(DataContext dataContext) {
+      final ShelvedChangeList[] shelved = (ShelvedChangeList[])dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
+      if (shelved == null || (shelved.length != 1)) return;
+      final List<ShelvedChange> changes = SHELVED_CHANGE_KEY.getData(dataContext);
+      final List<ShelvedBinaryFile> binaryFiles = SHELVED_BINARY_FILE_KEY.getData(dataContext);
+
+      final ShelvedChangeList list = shelved[0];
+
+      final String message = VcsBundle.message("shelve.changes.delete.files.from.list", (changes == null ? 0 : changes.size()) +
+                                                                                        (binaryFiles == null ? 0 : binaryFiles.size()));
+      int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelve.changes.delete.files.from.list.title"), Messages.getWarningIcon());
+      if (rc != 0) return;
+
+      final ArrayList<ShelvedBinaryFile> oldBinaries = new ArrayList<ShelvedBinaryFile>(list.getBinaryFiles());
+      final ArrayList<ShelvedChange> oldChanges = new ArrayList<ShelvedChange>(list.getChanges());
+
+      oldBinaries.removeAll(binaryFiles);
+      oldChanges.removeAll(changes);
+
+      final List<FilePatch> patches = new ArrayList<FilePatch>();
+      final List<VcsException> exceptions = new ArrayList<VcsException>();
+      for (ShelvedChange change : oldChanges) {
+        try {
+          patches.add(change.loadFilePatch());
+        }
+        catch (IOException e) {
+          exceptions.add(new VcsException(e));
+        }
+        catch (PatchSyntaxException e) {
+          exceptions.add(new VcsException(e));
+        }
+      }
+
+      myShelveChangesManager.saveRemainingPatches(list, patches, oldBinaries);
+
+      if (! exceptions.isEmpty()) {
+        String title = list.DESCRIPTION == null ? "" : list.DESCRIPTION;
+        title = title.substring(0, Math.min(10, list.DESCRIPTION.length()));
+        AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, "Deleting files from '" + title + "'");
+      }
+    }
 
     public boolean canDeleteElement(DataContext dataContext) {
-      //noinspection unchecked
-      return ! getLists(dataContext).isEmpty();
+      final ShelvedChangeList[] shelved = (ShelvedChangeList[])dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
+      if (shelved == null || (shelved.length != 1)) return false;
+      final List<ShelvedChange> changes = SHELVED_CHANGE_KEY.getData(dataContext);
+      if (changes != null && (! changes.isEmpty())) return true;
+      final List<ShelvedBinaryFile> binaryFiles = SHELVED_BINARY_FILE_KEY.getData(dataContext);
+      return (binaryFiles != null && (! binaryFiles.isEmpty()));
+    }
+  }
+
+  private class ShelvedChangeDeleteProvider implements DeleteProvider {
+    private final List<DeleteProvider> myProviders;
+
+    private ShelvedChangeDeleteProvider() {
+      myProviders = Arrays.asList(new MyChangesDeleteProvider(), new MyChangeListDeleteProvider());
+    }
+
+    @Nullable
+    private DeleteProvider selectDelegate(final DataContext dataContext) {
+      for (DeleteProvider provider : myProviders) {
+        if (provider.canDeleteElement(dataContext)) {
+          return provider;
+        }
+      }
+      return null;
+    }
+
+    public void deleteElement(DataContext dataContext) {
+      final DeleteProvider delegate = selectDelegate(dataContext);
+      if (delegate != null) {
+        delegate.deleteElement(dataContext);
+      }
+    }
+
+    public boolean canDeleteElement(DataContext dataContext) {
+      return selectDelegate(dataContext) != null;
     }
   }
 
