@@ -68,13 +68,15 @@ class RecordsTable implements Disposable, Forceable {
     }
   }
 
-  public int createNewRecord() {
+  public int createNewRecord() throws IOException {
     markDirty();
     ensureFreeRecordsScanned();
 
     if (myFreeRecordsList.isEmpty()) {
       final int filelength = (int)myStorage.length();
-      assert filelength % RECORD_SIZE == 0;
+      if ((filelength % RECORD_SIZE) != 0) {
+        throw new IOException("Corrupted records");
+      }
 
       int result = filelength / RECORD_SIZE;
       cleanRecord(result);

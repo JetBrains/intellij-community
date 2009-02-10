@@ -844,8 +844,13 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   private int findAttributePage(int fileId, int attributeId, boolean createIfNotFound) throws IOException {
-    assert fileId > 0;
-    assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0; // TODO: This assertion is a bit timey, will remove when bug is caught.
+    if (fileId <= 0) {
+      throw DbConnection.handleError(new AssertionError("assert fileId > 0 failed"));
+    }
+
+    if ((getFlags(fileId) & FREE_RECORD_FLAG) != 0) { // TODO: This assertion is a bit timey, will remove when bug is caught.
+      throw DbConnection.handleError(new AssertionError("Trying to find an attribute of deleted page"));
+    }
 
     int attrsRecord = getAttributeRecordId(fileId);
 

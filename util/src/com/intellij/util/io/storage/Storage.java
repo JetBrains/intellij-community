@@ -198,13 +198,13 @@ public class Storage implements Disposable, Forceable {
     }
   }
 
-  public int createNewRecord() {
+  public int createNewRecord() throws IOException {
     synchronized (lock) {
       return myRecordsTable.createNewRecord();
     }
   }
 
-  public StorageDataOutput createStream() {
+  public StorageDataOutput createStream() throws IOException {
     return writeStream(createNewRecord());
   }
 
