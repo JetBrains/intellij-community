@@ -405,7 +405,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @NotNull
-  public <K, V> List<V> getValues(final ID<K, V> indexId, K dataKey, final VirtualFileFilter filter) {
+  public <K, V> List<V> getValues(final ID<K, V> indexId, @NotNull K dataKey, final VirtualFileFilter filter) {
     final List<V> values = new ArrayList<V>();
     processValuesImpl(indexId, dataKey, true, null, new ValueProcessor<V>() {
       public void process(final VirtualFile file, final V value) {
@@ -416,7 +416,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @NotNull
-  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, K dataKey, final VirtualFileFilter filter) {
+  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, @NotNull K dataKey, final VirtualFileFilter filter) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
     processValuesImpl(indexId, dataKey, false, null, new ValueProcessor<V>() {
       public void process(final VirtualFile file, final V value) {
@@ -431,7 +431,7 @@ public class FileBasedIndex implements ApplicationComponent {
     void process(VirtualFile file, V value);
   }
 
-  public <K, V> void processValues(final ID<K, V> indexId, final K dataKey, @Nullable final VirtualFile inFile,
+  public <K, V> void processValues(final ID<K, V> indexId, final @NotNull K dataKey, @Nullable final VirtualFile inFile,
                                    ValueProcessor<V> processor, final VirtualFileFilter filter) {
     processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
   }
