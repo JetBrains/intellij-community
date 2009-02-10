@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 public class PathUtil {
 
   public static final String UNRESOLVED_PREFIX = "?";
@@ -59,8 +61,8 @@ public class PathUtil {
     if (path.equals(oldRoot)) {
       return normalize(newRoot);
     }
-    if ( path.startsWith ( oldRoot +"/")) {
-      return concatPath(newRoot, path.substring(oldRoot.length()+1));
+    if (StringUtil.startsWithConcatenationOf(path, oldRoot, "/")) {
+      return concatPath(newRoot, path.substring(oldRoot.length() + 1));
     }
     return path;
   }
@@ -68,7 +70,7 @@ public class PathUtil {
   public static boolean isUnder(String root, String path) {
     path = normalize(path);
     root = normalize(root);
-    return path.equals(root) || path.startsWith(root+"/");
+    return path.equals(root) || StringUtil.startsWithConcatenationOf(path, root, "/");
   }
 
   public static String getRelative(String baseRoot, String path) {

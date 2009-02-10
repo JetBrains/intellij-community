@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -204,8 +205,8 @@ class XsltDocumentationProvider implements DocumentationProvider {
                     final String prefix = tag.getNamespacePrefix();
                     if (prefix.length() == 0) {
                         return new DocElement(mgr, psiElement, "element", (String)object);
-                    } else if (((String)object).startsWith(prefix + ":")) {
-                        return new DocElement(mgr, psiElement, "element", ((String)object).substring(prefix.length() + 1));
+                    } else if (StringUtil.startsWithConcatenationOf(((String)object), prefix, ":")) {
+                      return new DocElement(mgr, psiElement, "element", ((String)object).substring(prefix.length() + 1));
                     }
                 }
             }

@@ -138,13 +138,13 @@ public class SvnChangeProvider implements ChangeProvider {
             continue;
           }
           final String childURL = childUrl.toString();
-          if (childURL.startsWith(copyFromURL + "/")) {
+          if (StringUtil.startsWithConcatenationOf(childURL, copyFromURL, "/")) {
             String relativePath = childURL.substring(copyFromURL.length());
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = myFactory.createFilePathOn(newPath);
-            if (! context.isDeleted(newFilePath)) {
-              builder.processChangeInList(new Change(createBeforeRevision(deletedChild, true),
-                                             CurrentContentRevision.create(newFilePath)), clName);
+            if (!context.isDeleted(newFilePath)) {
+              builder.processChangeInList(new Change(createBeforeRevision(deletedChild, true), CurrentContentRevision.create(newFilePath)),
+                                          clName);
               deletedToDelete.add(deletedChild);
             }
           }

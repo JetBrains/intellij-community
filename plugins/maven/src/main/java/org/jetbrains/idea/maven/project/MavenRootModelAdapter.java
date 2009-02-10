@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -109,7 +110,7 @@ public class MavenRootModelAdapter {
   }
 
   private boolean isEqualOrAncestor(String ancestor, String child) {
-    return ancestor.equals(child) || child.startsWith(ancestor + "/");
+    return ancestor.equals(child) || StringUtil.startsWithConcatenationOf(child, ancestor, "/");
   }
 
   private boolean exists(String path) {

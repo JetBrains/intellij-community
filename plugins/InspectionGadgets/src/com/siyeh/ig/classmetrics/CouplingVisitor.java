@@ -16,6 +16,7 @@
 package com.siyeh.ig.classmetrics;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -170,9 +171,9 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
                 return;
             }
         }
-        if (baseTypeName.startsWith(qualifiedName + '.')) {
-            return;
-        }
+      if (StringUtil.startsWithConcatenationOf(baseTypeName, qualifiedName, ".")) {
+        return;
+      }
         m_dependencies.add(baseTypeName);
     }
 
