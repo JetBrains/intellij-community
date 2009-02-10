@@ -139,11 +139,7 @@ public class ResolveImportUtil {
       }
       // unqualified import can be found:
       // in the same dir
-      PsiFile pfile = importRef.getContainingFile();
-      VirtualFile vfile = pfile.getVirtualFile();
-      if (vfile == null) { // we're probably within a copy, e.g. for completion; get the real thing
-        pfile = pfile.getOriginalFile();
-      }
+      PsiFile pfile = importRef.getContainingFile().getOriginalFile();
       if (pfile != null) {
         PsiDirectory pdir = pfile.getContainingDirectory();
         if (pdir != null) {
