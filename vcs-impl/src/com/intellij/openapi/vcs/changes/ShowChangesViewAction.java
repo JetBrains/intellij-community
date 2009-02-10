@@ -16,10 +16,17 @@ import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
 
 public class ShowChangesViewAction extends AbstractVcsAction {
   protected void actionPerformed(VcsContext e) {
-    ToolWindowManager.getInstance(e.getProject()).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).show(null);
+    final ToolWindowManager manager = ToolWindowManager.getInstance(e.getProject());
+    if (manager != null) {
+      final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+      if (window != null) {
+        window.show(null);
+      }
+    }
   }
 
   protected void update(VcsContext vcsContext, Presentation presentation) {
