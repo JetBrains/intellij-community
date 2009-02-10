@@ -320,7 +320,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return result;
   }
 
-  private ActionCallback initConfigurable(final Configurable configurable) {
+  private ActionCallback initConfigurable(@NotNull final Configurable configurable) {
     final ActionCallback result = new ActionCallback();
 
     final Ref<ConfigurableContent> content = new Ref<ConfigurableContent>();
