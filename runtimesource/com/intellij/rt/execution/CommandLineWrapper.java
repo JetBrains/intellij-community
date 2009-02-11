@@ -35,7 +35,16 @@ public class CommandLineWrapper {
     String progClass = args[1];
     String[] progArgs = new String[args.length - 2];
     System.arraycopy(args, 2, progArgs, 0, progArgs.length);
-    final URLClassLoader loader = new URLClassLoader((URL[])urls.toArray(new URL[urls.size()]), null);
+    ClassLoader loader = new URLClassLoader((URL[])urls.toArray(new URL[urls.size()]), null);
+    final String classloader = System.getProperty("java.system.class.loader");
+    if (classloader != null) {
+      try {
+        loader = (ClassLoader)Class.forName(classloader).getConstructor(new Class[]{ClassLoader.class}).newInstance(new Object[]{loader});
+      }
+      catch (Exception e) {
+        //leave URL class loader
+      }
+    }
     Class mainClass = loader.loadClass(progClass);
     Thread.currentThread().setContextClassLoader(loader);
     Class mainArgType = (new String[0]).getClass();
