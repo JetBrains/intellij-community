@@ -1,3 +1,11 @@
+== version 1.2.2
+
++ Changes made in Subversion since version 1.5.4 implemented, 
+  all Subversion 1.5.5 features are supported.
++ Merge tracking implementation changed to match Subversion 1.5.5.
++ HP-UX support added.
++ Other stability and performance improvements.
+
 == version 1.2.1
 
 + Changes made in Subversion since version 1.5.0 implemented, 
