@@ -17,7 +17,7 @@ import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ResoureBundleEditorProvider extends FileTypeFactory implements FileEditorProvider, ApplicationComponent {
+public class ResourceBundleEditorProvider extends FileTypeFactory implements FileEditorProvider, ApplicationComponent {
   private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
 
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file){

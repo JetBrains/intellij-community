@@ -1,4 +1,4 @@
-<idea-plugin version="2" use-idea-classloader="true">
+<idea-plugin version="2">
   <id>com.intellij.java</id>
   <name>IDEA Java</name>
 
@@ -13,5 +13,6 @@
     <referenceProviderType key="Properties File Key Provider"
                            implementationClass="com.intellij.lang.properties.PropertiesReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
+    <psi.referenceContributor implementation="com.intellij.lang.properties.PropertiesReferenceContributor"/>
   </extensions>
 </idea-plugin>

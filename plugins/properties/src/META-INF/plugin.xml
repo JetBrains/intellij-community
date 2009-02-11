@@ -1,4 +1,4 @@
-<idea-plugin version="2" use-idea-classloader="true">
+<idea-plugin version="2">
   <id>com.intellij.properties</id>
   <name>Properties Support</name>
 
@@ -36,5 +36,21 @@
     <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>
     <elementDescriptionProvider implementation="com.intellij.lang.properties.PropertiesDeleteTypeDescriptionProvider"/>
     <fileTypeFactory implementation="com.intellij.lang.properties.PropertiesFileTypeFactory"/>
+    <fileTypeFactory implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider" />
   </extensions>
+
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.lang.properties.PropertiesFilesManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.lang.properties.editor.ResourceBundleEditorProvider</implementation-class>
+    </component>
+  </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.lang.properties.PropertiesReferenceManager</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
 </idea-plugin>
