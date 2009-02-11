@@ -25,6 +25,7 @@
   <depends optional="true" config-file="groovy-spring-integration.xml">com.intellij.spring</depends>
   <depends optional="true" config-file="groovy-javaee-integration.xml">com.intellij.javaee</depends>
   <depends>com.intellij.css</depends>
+  <depends>com.intellij.properties</depends>
 
   <extensionPoints>
     <extensionPoint name="grails.facetProvider" interface="org.jetbrains.plugins.grails.util.GrailsFacetProvider"/>
