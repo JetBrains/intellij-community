@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.java</id>
   <name>IDEA Java</name>
-
+  <depends>com.intellij.properties</depends>
   <extensionPoints>
     <extensionPoint name="resourceBundleManager"
                     interface="com.intellij.lang.properties.psi.ResourceBundleManager"
