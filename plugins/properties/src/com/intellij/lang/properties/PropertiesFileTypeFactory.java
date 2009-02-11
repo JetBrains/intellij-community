@@ -2,10 +2,6 @@ package com.intellij.lang.properties;
 
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
-import com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer;
-import com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +14,5 @@ import org.jetbrains.annotations.NotNull;
 public class PropertiesFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     consumer.consume(PropertiesFileType.FILE_TYPE, PropertiesFileType.DEFAULT_EXTENSION);
-    IdTableBuilding.registerIdIndexer(StdFileTypes.PROPERTIES, new PropertiesIdIndexer());
-    IdTableBuilding.registerTodoIndexer(StdFileTypes.PROPERTIES, new PropertiesTodoIndexer());
   }
 }
