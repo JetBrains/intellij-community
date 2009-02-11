@@ -7,12 +7,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="properties" exported="" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="boot" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="idea" />
   </component>
 </module>
 

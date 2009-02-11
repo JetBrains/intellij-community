@@ -3,6 +3,7 @@
   <id>com.intellij.uiDesigner</id>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <resource-bundle>messages.UIDesignerBundle</resource-bundle>
+  <depends>com.intellij.java</depends>
 
   <extensionPoints>
     <extensionPoint name="formInspectionTool"

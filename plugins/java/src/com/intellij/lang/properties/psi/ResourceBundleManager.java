@@ -1,21 +1,15 @@
 package com.intellij.lang.properties.psi;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.properties.PropertiesFilesManager;
+import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public abstract class ResourceBundleManager {
@@ -33,16 +27,7 @@ public abstract class ResourceBundleManager {
   public abstract PsiClass getResourceBundle();
 
   public List<String> suggestPropertiesFiles(){
-    Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getInstance().getAllPropertiesFiles();
-    List<String> paths = new ArrayList<String>();
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    for (VirtualFile virtualFile : allPropertiesFiles) {
-      if (projectFileIndex.isInContent(virtualFile)) {
-        String path = FileUtil.toSystemDependentName(virtualFile.getPath());
-        paths.add(path);
-      }
-    }
-    return paths;
+    return I18nUtil.defaultGetPropertyFiles(myProject);
   }
 
   @Nullable

@@ -11,14 +11,9 @@ import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection;
 import com.intellij.codeInspection.dependencyViolation.DependencyInspection;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
-import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
-import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
 import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
-import com.intellij.codeInspection.i18n.I18nInspection;
-import com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection;
-import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
@@ -45,8 +40,6 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection;
-import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
-import com.intellij.lang.properties.UnusedPropertyInspection;
 
 /**
  * @author max
@@ -81,18 +74,11 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
 
       Java15APIUsageInspection.class,
 
-      I18nInspection.class,
-      InvalidPropertyKeyInspection.class,
-      UnusedPropertyInspection.class,
-
       DependencyInspection.class,
       FieldCanBeLocalInspection.class,
       NullableStuffInspection.class,
       TestOnlyInspection.class,
 
-      DuplicateStringLiteralInspection.class,
-      DuplicatePropertyInspection.class,
-      UnusedMessageFormatParameterInspection.class,
       WrongPackageStatementInspection.class,
       SillyAssignmentInspection.class,
       RedundantThrowsDeclaration.class,
@@ -105,7 +91,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       UncheckedWarningLocalInspection.class,
       SuspiciousNameCombinationInspection.class,
       DuplicateThrowsInspection.class,
-      InconsistentResourceBundleInspection.class,
       LossyEncodingInspection.class
     };
   }

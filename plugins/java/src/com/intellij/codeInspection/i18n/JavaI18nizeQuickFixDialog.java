@@ -13,7 +13,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -37,12 +36,10 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog");
-
   private final PsiLiteralExpression myLiteralExpression;
 
   private JLabel myPreviewLabel;
@@ -52,6 +49,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   private JPanel myJavaCodeInfoPanel;
   private JPanel myPreviewPanel;
   private PsiClassType myResourceBundleType;
+  protected final ResourceBundleManager myResourceBundleManager;
 
   private final boolean myShowJavaCodeInfo;
   private final boolean myShowPreview;
@@ -68,6 +66,15 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
                                final boolean showJavaCodeInfo,
                                final boolean showPreview) {
     super(project, context, defaultPropertyValue, customization, true);
+
+    ResourceBundleManager resourceBundleManager = null;
+    try {
+      resourceBundleManager = ResourceBundleManager.getManager(context);
+      LOG.assertTrue(resourceBundleManager != null);
+    }
+    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
+    }
+    myResourceBundleManager = resourceBundleManager;
 
     JavaExtensibilityData data = new JavaExtensibilityData();
     myExtensibilityPanel.setLayout(new BorderLayout());
@@ -198,6 +205,21 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       myPreviewLabel.setText(getI18nizedText());
     }
     super.somethingChanged();
+  }
+
+  @Nullable
+  protected String getTemplateName() {
+    return myResourceBundleManager.getTemplateName();
+  }
+
+  @Override
+  protected String defaultSuggestPropertyKey(String value) {
+    return myResourceBundleManager.suggestPropertyKey(value);
+  }
+
+  @Override
+  protected List<String> defaultSuggestPropertiesFiles() {
+    return myResourceBundleManager.suggestPropertiesFiles();
   }
 
   public String getI18nizedText() {

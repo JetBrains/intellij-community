@@ -10,7 +10,6 @@ import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.lang.properties.LastSelectedPropertiesFileStore;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -34,7 +33,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -47,7 +45,7 @@ import java.util.*;
 import java.util.List;
 
 public class I18nizeQuickFixDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog");
 
   private JTextField myValue;
   private JComboBox myKey;
@@ -61,8 +59,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   protected JPanel myExtensibilityPanel;
 
   protected final String myDefaultPropertyValue;
-
-  protected final ResourceBundleManager myResourceBundleManager;
   protected final DialogCustomization myCustomization;
 
   public static class DialogCustomization {
@@ -107,15 +103,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     myDefaultPropertyValue = defaultPropertyValue;
     myCustomization = customization != null ? customization:new DialogCustomization();
     setTitle(myCustomization.title != null ? myCustomization.title:CodeInsightBundle.message("i18nize.dialog.title"));
-
-    ResourceBundleManager resourceBundleManager = null;
-    try {
-      resourceBundleManager = ResourceBundleManager.getManager(context);
-      LOG.assertTrue(resourceBundleManager != null);
-    }
-    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
-    }
-    myResourceBundleManager = resourceBundleManager;
 
     myPropertiesFile = new TextFieldWithHistory();
     myPropertiesFile.setHistorySize(-1);
@@ -178,11 +165,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     return (JTextField)myKey.getEditor().getEditorComponent();
   }
 
-  @Nullable
-  protected String getTemplateName() {
-    return myResourceBundleManager.getTemplateName();
-  }
-
   @NotNull
   protected List<String> getExistingValueKeys(String value) {
     if(!myCustomization.suggestExistingProperties) {
@@ -208,7 +190,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     }
 
     // suggest property key not existing in this file
-    String key = myResourceBundleManager.suggestPropertyKey(value);
+    String key = defaultSuggestPropertyKey(value);
     if (key == null) {
       final StringBuilder result = new StringBuilder();
       boolean insertDotBeforeNextWord = false;
@@ -253,6 +235,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     else {
       return key;
     }
+  }
+
+  protected String defaultSuggestPropertyKey(String value) {
+    return null;  
   }
 
   private void propertiesFileChanged() {
@@ -326,7 +312,11 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       }
       return list;
     }
-    return myResourceBundleManager.suggestPropertiesFiles();
+    return defaultSuggestPropertiesFiles();
+  }
+
+  protected List<String> defaultSuggestPropertiesFiles() {
+    return I18nUtil.defaultGetPropertyFiles(myProject);
   }
 
   protected PropertiesFile getPropertiesFile() {
