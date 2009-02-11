@@ -19,6 +19,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  *
  */
@@ -195,31 +198,58 @@ public class DebugUtil {
       }
     }
     else {
+      Set<ASTNode> children = new HashSet<ASTNode>();
       for (ASTNode child = root.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        if (child instanceof CompositeElement) {
-          checkSubtree(child);
+        if (children.contains(child)) {
+          throw new IncorrectTreeStructureException(child, "Looping in next siblings");
         }
-        if (child.getTreeParent() != root) {
-          throw new IncorrectTreeStructureException(child, "child has wrong parent value");
+
+        children.add(child);
+        checkChild(root, child);
+      }
+
+      Set<ASTNode> prevs = new HashSet<ASTNode>();
+      for (ASTNode child = root.getLastChildNode(); child != null; child = child.getTreePrev()) {
+        if (prevs.contains(child)) {
+          throw new IncorrectTreeStructureException(child, "Looping in prev siblings");
         }
-        if (child == root.getFirstChildNode()) {
-          if (child.getTreePrev() != null) {
-            throw new IncorrectTreeStructureException(root, "firstChild.prev != null");
-          }
+
+        if (!children.contains(child)) {
+          throw new IncorrectTreeStructureException(child, "There's prev, which is not in nexts");
         }
-        else {
-          if (child.getTreePrev() == null) {
-            throw new IncorrectTreeStructureException(child, "not first child has prev == null");
-          }
-          if (child.getTreePrev().getTreeNext() != child) {
-            throw new IncorrectTreeStructureException(child, "element.prev.next != element");
-          }
-        }
-        if (child.getTreeNext() == null) {
-          if (root.getLastChildNode() != child) {
-            throw new IncorrectTreeStructureException(child, "not last child has next == null");
-          }
-        }
+        children.remove(child);
+        prevs.add(child);
+      }
+
+      if (!children.isEmpty()) {
+        throw new IncorrectTreeStructureException(children.iterator().next(), "There's next, which is not in prevs");
+      }
+    }
+  }
+
+  private static void checkChild(ASTNode root, ASTNode child) {
+    if (child instanceof CompositeElement) {
+      checkSubtree(child);
+    }
+    if (child.getTreeParent() != root) {
+      throw new IncorrectTreeStructureException(child, "child has wrong parent value");
+    }
+    if (child == root.getFirstChildNode()) {
+      if (child.getTreePrev() != null) {
+        throw new IncorrectTreeStructureException(root, "firstChild.prev != null");
+      }
+    }
+    else {
+      if (child.getTreePrev() == null) {
+        throw new IncorrectTreeStructureException(child, "not first child has prev == null");
+      }
+      if (child.getTreePrev().getTreeNext() != child) {
+        throw new IncorrectTreeStructureException(child, "element.prev.next != element");
+      }
+    }
+    if (child.getTreeNext() == null) {
+      if (root.getLastChildNode() != child) {
+        throw new IncorrectTreeStructureException(child, "not last child has next == null");
       }
     }
   }

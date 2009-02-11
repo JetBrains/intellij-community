@@ -28,90 +28,17 @@ public class CompositeElement extends TreeElement {
 
   private volatile TreeElement firstChild = null; // might be modified by transforming chameleons
   private volatile TreeElement lastChild = null; // might be modified by transforming chameleons
-  private final IElementType type;
-  private volatile int myParentModifications = -1;
-  private volatile int myStartOffset = 0;
   private volatile int myModificationsCount = 0;
   private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper = null;
 
   public CompositeElement(@NotNull IElementType type) {
-    this.type = type;
+    super(type);
   }
 
   public int getModificationCount() {
     return myModificationsCount;
-  }
-
-  public int getStartOffset() {
-    assert getTreePrev() != this: "Loop in tree";
-
-    if(getTreeParent() == null) return 0;
-    synchronized(PsiLock.LOCK){
-      CompositeElement p = getTreeParent();
-      int sum = 0;
-      while (p != null) {
-        sum += p.getModificationCount();
-        p = p.getTreeParent();
-      }
-      recalcStartOffset(sum);
-      return myStartOffset;
-    }
-  }
-
-  private void recalcStartOffset(final int parentModificationsCount) {
-    if(parentModificationsCount == myParentModifications || getTreeParent() == null) return;
-
-    // recalc on parent if needed
-    final int parentParentModificationsCount = parentModificationsCount - getTreeParent().getModificationCount();
-    getTreeParent().recalcStartOffset(parentParentModificationsCount);
-
-    CompositeElement lastKnownStart = null;
-
-    TreeElement treePrev = getTreePrev();
-    TreeElement last = this;
-    // Step 1: trying to find known startOffset in previous composites (getTreePrev for composite is cheap)
-    while (treePrev instanceof CompositeElement) {
-      final CompositeElement compositeElement = (CompositeElement)treePrev;
-      if (compositeElement.myParentModifications == parentModificationsCount) {
-        lastKnownStart = compositeElement;
-        break;
-      }
-      last = treePrev;
-      treePrev = treePrev.getTreePrev();
-    }
-
-    TreeElement current;
-    if(lastKnownStart == null){
-      // Step 2: if leaf found cheaper to start from begining to find known startOffset composite
-      lastKnownStart = getTreeParent();
-      current = getTreeParent().getFirstChildNode();
-
-      while(current != last){
-        assert current != null: "Invalid tree";
-        if(current instanceof CompositeElement) {
-          final CompositeElement compositeElement = (CompositeElement)current;
-          if(compositeElement.myParentModifications == parentModificationsCount)
-            lastKnownStart = compositeElement;
-        }
-        current = current.getTreeNext();
-      }
-    }
-    current = lastKnownStart == getTreeParent() ? getTreeParent().getFirstChildNode() : lastKnownStart;
-    int start = lastKnownStart.myStartOffset;
-    while(current != this) {
-      if(current instanceof CompositeElement){
-        final CompositeElement compositeElement = (CompositeElement)current;
-        compositeElement.myParentModifications = parentModificationsCount;
-        compositeElement.myStartOffset = start;
-      }
-      start += current.getTextLength();
-      current = current.getTreeNext();
-    }
-
-    myStartOffset = start;
-    myParentModifications = parentModificationsCount;
   }
 
   public Object clone() {
@@ -121,7 +48,6 @@ public class CompositeElement extends TreeElement {
     clone.firstChild = null;
     clone.lastChild = null;
     clone.myModificationsCount = 0;
-    clone.myParentModifications = -1;
     clone.myWrapper = null;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       clone.rawAddChildren((TreeElement)child.clone());
@@ -146,19 +72,17 @@ public class CompositeElement extends TreeElement {
   }
 
   public void clearCaches() {
+    super.clearCaches();
     myCachedLength = -1;
 
     myModificationsCount++;
-    myParentModifications = -1;
     myHC = -1;
+    
+    clearRelativeOffsets(getFirstChildNode());
   }
 
   public void acceptTree(TreeElementVisitor visitor) {
     visitor.visitComposite(this);
-  }
-
-  public IElementType getElementType() {
-    return type;
   }
 
   public LeafElement findLeafElementAt(int offset) {
@@ -483,10 +407,14 @@ public class CompositeElement extends TreeElement {
       }, this);
     }
     else {
-      final TreeElement child = getFirstChildNode();
-      if (child != null) {
-        removeRange(child, null);
-      }
+      removeAllChildren();
+    }
+  }
+
+  public void removeAllChildren() {
+    final TreeElement child = getFirstChildNode();
+    if (child != null) {
+      removeRange(child, null);
     }
   }
 
@@ -501,6 +429,7 @@ public class CompositeElement extends TreeElement {
   public PsiElement getPsi() {
     PsiElement wrapper = myWrapper;
     if (wrapper != null) return wrapper;
+
     synchronized (PsiLock.LOCK) {
       wrapper = myWrapper;
       if (wrapper != null) return wrapper;
@@ -512,6 +441,7 @@ public class CompositeElement extends TreeElement {
         //noinspection ConstantConditions
         LOG.assertTrue(wrapper != null, "ParserDefinition.createElement() may not return null");
       }
+
       return wrapper;
     }
   }

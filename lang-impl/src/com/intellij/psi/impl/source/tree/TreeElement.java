@@ -6,23 +6,33 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
-  private volatile TreeElement next = null;
-  private volatile TreeElement prev = null;
-  private volatile CompositeElement parent = null;
+  private volatile TreeElement myNextSibling = null;
+  private volatile TreeElement myPrevSibling = null;
+  private volatile CompositeElement myParent = null;
+
+  private final IElementType myType;
+  private volatile int myStartOffsetInParent = -1;
+  private static final String START_OFFSET_LOCK = new String("TreeElement.START_OFFSET_LOCK");
+
+  public TreeElement(IElementType type) {
+    myType = type;
+  }
 
   public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
     clone.clearCaches();
 
-    clone.next = null;
-    clone.prev = null;
-    clone.parent = null;
+    clone.myNextSibling = null;
+    clone.myPrevSibling = null;
+    clone.myParent = null;
+    clone.myStartOffsetInParent = -1;
 
     return clone;
   }
@@ -63,21 +73,37 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   public int getStartOffset() {
-    if (parent == null) return 0;
-    int offset = parent.getStartOffset();
-    for (TreeElement element1 = parent.getFirstChildNode(); element1 != this; element1 = element1.next) {
-      offset += element1.getTextLength();
-    }
-    return offset;
+    if (myParent == null) return 0;
+    return myParent.getStartOffset() + getStartOffsetInParent();
   }
 
   public final int getStartOffsetInParent() {
-    if (parent == null) return -1;
-    int offset = 0;
-    for (TreeElement child = parent.getFirstChildNode(); child != this; child = child.next) {
-      offset += child.getTextLength();
+    if (myParent == null) return -1;
+    int offset = myStartOffsetInParent;
+    if (offset != -1) return offset;
+    
+    synchronized (START_OFFSET_LOCK) {
+      TreeElement cur = this;
+
+      while (true) {
+        if (cur.myStartOffsetInParent != -1) break;
+        TreeElement prev = cur.getTreePrev();
+        if (prev == null) break;
+        cur = prev;
+      }
+
+      if (cur.myStartOffsetInParent == -1) {
+        cur.myStartOffsetInParent = 0;
+      }
+
+      while (cur != this) {
+        TreeElement next = cur.getTreeNext();
+        next.myStartOffsetInParent = cur.myStartOffsetInParent + cur.getTextLength();
+        cur = next;
+      }
+      return myStartOffsetInParent;
     }
-    return offset;
+
   }
 
   public int getTextOffset() {
@@ -95,7 +121,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     }
     else {
       int curOffset = startOffset;
-      for (TreeElement child = ((CompositeElement)element).getFirstChildNode(); child != null; child = child.next) {
+      for (TreeElement child = ((CompositeElement)element).getFirstChildNode(); child != null; child = child.myNextSibling) {
         curOffset = textMatches(child, buffer, curOffset);
         if (curOffset == -1) return -1;
       }
@@ -117,30 +143,41 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   public final CompositeElement getTreeParent() {
-    return parent;
+    return myParent;
   }
 
   public final TreeElement getTreePrev() {
-    return prev;
+    return myPrevSibling;
   }
 
   public final void setTreeParent(CompositeElement parent) {
-    this.parent = parent;
+    myParent = parent;
   }
 
   public final void setTreePrev(TreeElement prev) {
-    this.prev = prev;
+    myPrevSibling = prev;
+    clearRelativeOffsets(this);
   }
 
   public final TreeElement getTreeNext() {
-    return next;
+    return myNextSibling;
   }
 
   public final void setTreeNext(TreeElement next) {
-    this.next = next;
+    myNextSibling = next;
+    clearRelativeOffsets(next);
   }
 
-  public void clearCaches() { }
+  protected static void clearRelativeOffsets(TreeElement element) {
+    TreeElement cur = element;
+    while (cur != null && cur.myStartOffsetInParent != -1) {
+      cur.myStartOffsetInParent = -1;
+      cur = cur.getTreeNext();
+    }
+  }
+
+  public void clearCaches() {
+  }
 
   public final boolean equals(Object obj) {
     return obj == this;
@@ -320,6 +357,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       }
       DebugUtil.checkTreeStructure(this);
     }
+  }
+
+  public IElementType getElementType() {
+    return myType;
   }
 }
 

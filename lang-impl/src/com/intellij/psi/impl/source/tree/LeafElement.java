@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
-  private final IElementType myType;
   private static final int TEXT_MATCHES_THRESHOLD = 5;
 
   public abstract char charAt(int position);
@@ -17,7 +16,7 @@ public abstract class LeafElement extends TreeElement {
   public abstract int copyTo(char[] buffer, int start);
 
   protected LeafElement(IElementType type) {
-    myType = type;
+    super(type);
   }
 
   public LeafElement findLeafElementAt(int offset) {
@@ -48,10 +47,6 @@ public abstract class LeafElement extends TreeElement {
     }
 
     return true;
-  }
-
-  public IElementType getElementType() {
-    return myType;
   }
 
   public void acceptTree(TreeElementVisitor visitor) {
