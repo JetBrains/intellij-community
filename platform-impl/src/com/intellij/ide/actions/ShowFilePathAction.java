@@ -169,7 +169,7 @@ public class ShowFilePathAction extends AnAction {
         desktopObject.getClass().getMethod("open", File.class).invoke(desktopObject, ioFile);
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.debug(e);
       }
     } else {
       throw new UnsupportedOperationException();
