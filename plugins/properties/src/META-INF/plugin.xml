@@ -37,6 +37,8 @@
     <elementDescriptionProvider implementation="com.intellij.lang.properties.PropertiesDeleteTypeDescriptionProvider"/>
     <fileTypeFactory implementation="com.intellij.lang.properties.PropertiesFileTypeFactory"/>
     <fileTypeFactory implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider" />
+    <referencesSearch implementation="com.intellij.psi.impl.search.PropertyReferenceViaLastWordSearcher"/>
+    <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
   </extensions>
 
   <application-components>

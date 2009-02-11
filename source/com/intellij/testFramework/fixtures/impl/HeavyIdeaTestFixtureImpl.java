@@ -7,7 +7,6 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -120,7 +119,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       moduleFixtureBuilder.getFixture().setUp();
     }
 
-    PropertiesReferenceManager.getInstance(myProject).projectOpened();
+    //PropertiesReferenceManager.getInstance(myProject).projectOpened();
 
     StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
     sm.runStartupActivities();
