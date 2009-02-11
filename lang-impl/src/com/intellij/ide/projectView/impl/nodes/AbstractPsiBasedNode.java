@@ -1,28 +1,29 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.util.treeView.ValidateableNode;
+import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.navigation.NavigationItem;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -30,7 +31,7 @@ import java.util.Collections;
  * method that extract PsiElement from Value.
  * @param <Value> Value of node descriptor
  */
-public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> {
+public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode {
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
 
   protected AbstractPsiBasedNode(final Project project,
@@ -58,6 +59,11 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
     final Collection<AbstractTreeNode> children = getChildrenImpl();
     return children != null ? children : Collections.<AbstractTreeNode>emptyList();
+  }
+
+  public boolean isValid() {
+    final PsiElement psiElement = extractPsiFromValue();
+    return psiElement != null && psiElement.isValid();
   }
 
   protected boolean isMarkReadOnly() {

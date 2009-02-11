@@ -783,7 +783,7 @@ class AbstractTreeUi {
     Object[] children = getChildrenFor(getBuilder().getTreeStructureElement(descriptor));
     int index = 0;
     for (Object child : children) {
-      if (!getBuilder().validateNode(child)) continue;
+      if (!isValid(child)) continue;
       elementToIndexMap.put(child, Integer.valueOf(index));
       index++;
     }
@@ -1224,7 +1224,7 @@ class AbstractTreeUi {
 
             getBuilder().updateNodeDescriptor(descriptor);
             Object element = getBuilder().getTreeStructureElement(descriptor);
-            if (element == null) return;
+            if (element == null && !isValid(element)) return;
 
             Object[] children = getChildrenFor(element);
             hasNoChildren[0] = children.length == 0;
@@ -1257,6 +1257,13 @@ class AbstractTreeUi {
     }
 
     insertLoadingNode(node, true);
+  }
+
+  private boolean isValid(Object element) {
+    if (element instanceof ValidateableNode) {
+      if (!((ValidateableNode)element).isValid()) return false;
+    }
+    return getBuilder().validateNode(element);
   }
 
   private void insertLoadingNode(final DefaultMutableTreeNode node, boolean addToUnbuilt) {
@@ -1609,7 +1616,7 @@ class AbstractTreeUi {
       Object eachElement = element;
       DefaultMutableTreeNode firstVisible = null;
       while (true) {
-        if (!getBuilder().validateNode(eachElement)) break;
+        if (!isValid(eachElement)) break;
 
         firstVisible = getNodeForElement(eachElement, true);
         if (eachElement != element || !parentsOnly) {
