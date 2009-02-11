@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings.ImportLayoutTable.Entry;
 import com.intellij.psi.codeStyle.CodeStyleSettings.ImportLayoutTable.PackageEntry;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.jsp.JspFile;
@@ -522,20 +523,15 @@ public class ImportHelper{
 
   private static String[] collectNamesToImport(PsiJavaFile file, Set<String> namesToImportStaticly){
     Set<String> names = new THashSet<String>();
-    collectNamesToImport(names, file, namesToImportStaticly);
 
     final JspFile jspFile = PsiUtil.getJspFile(file);
+    collectNamesToImport(names, file, namesToImportStaticly, jspFile);
     if (jspFile != null) {
-      for (PsiFile includingFile : JspSpiUtil.getReferencingFiles(jspFile)) {
+      PsiFile[] files = ArrayUtil.mergeArrays(JspSpiUtil.getIncludingFiles(jspFile), JspSpiUtil.getIncludedFiles(jspFile), PsiFile.class);
+      for (PsiFile includingFile : files) {
         final PsiFile javaRoot = includingFile.getViewProvider().getPsi(StdLanguages.JAVA);
         if (javaRoot instanceof PsiJavaFile && file != javaRoot) {
-          collectNamesToImport(names, (PsiJavaFile)javaRoot, namesToImportStaticly);
-        }
-      }
-      for (PsiFile includingFile : JspSpiUtil.getIncludedFiles(jspFile)) {
-        final PsiFile javaRoot = includingFile.getViewProvider().getPsi(StdLanguages.JAVA);
-        if (javaRoot instanceof PsiJavaFile && file != javaRoot) {
-          collectNamesToImport(names, (PsiJavaFile)javaRoot, namesToImportStaticly);
+          collectNamesToImport(names, (PsiJavaFile)javaRoot, namesToImportStaticly, jspFile);
         }
       }
     }
@@ -545,24 +541,25 @@ public class ImportHelper{
     return ArrayUtil.toStringArray(names);
   }
 
-  private static void collectNamesToImport(final Set<String> names, final PsiJavaFile file, final Set<String> namesToImportStaticly) {
+  private static void collectNamesToImport(final Set<String> names, final PsiJavaFile file, final Set<String> namesToImportStaticly,
+                                           PsiFile context) {
     String packageName = file.getPackageName();
 
     final PsiElement[] roots = file.getPsiRoots();
     for (PsiElement root : roots) {
-      addNamesToImport(names, root, packageName, namesToImportStaticly);
+      addNamesToImport(names, root, packageName, namesToImportStaticly, context);
     }
   }
 
   private static void addNamesToImport(Set<String> names,
                                        PsiElement scope,
                                        String thisPackageName,
-                                       Set<String> namesToImportStaticly){
+                                       Set<String> namesToImportStaticly, PsiFile context){
     if (scope instanceof PsiImportList) return;
 
     final PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
-      addNamesToImport(names, child, thisPackageName, namesToImportStaticly);
+      addNamesToImport(names, child, thisPackageName, namesToImportStaticly, context);
       for(final PsiReference reference : child.getReferences()){
         if (!(reference instanceof PsiJavaReference)) continue;
         final PsiJavaReference javaReference = (PsiJavaReference)reference;
@@ -589,6 +586,9 @@ public class ImportHelper{
 
         PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
         if (!(currentFileResolveScope instanceof PsiImportStatementBase)) continue;
+        if (context != null && currentFileResolveScope instanceof JspxImportStatement && context != ((JspxImportStatement)currentFileResolveScope).getDeclarationFile()) {
+          continue;
+        }
 
         if (refElement != null) {
           //Add names imported statically

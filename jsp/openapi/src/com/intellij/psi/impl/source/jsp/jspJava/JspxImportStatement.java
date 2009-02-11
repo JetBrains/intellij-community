@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.jsp.jspJava;
 
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportStatement;
 
 /**
@@ -22,4 +23,5 @@ import com.intellij.psi.PsiImportStatement;
  */
 public interface JspxImportStatement extends PsiImportStatement {
   boolean isForeignFileImport();
+  PsiFile getDeclarationFile();
 }

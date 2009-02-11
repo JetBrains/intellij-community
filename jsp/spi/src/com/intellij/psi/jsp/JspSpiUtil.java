@@ -131,6 +131,13 @@ public abstract class JspSpiUtil {
     return util == null ? PsiFile.EMPTY_ARRAY : util._getIncludedFiles(jspFile);
   }
 
+  public static PsiFile[] getIncludingFiles(@NotNull JspFile jspFile) {
+    final JspSpiUtil util = getJspSpiUtil();
+    return util == null ? PsiFile.EMPTY_ARRAY : util._getIncludingFiles(jspFile);
+  }
+
+  protected abstract PsiFile[] _getIncludingFiles(@NotNull PsiFile file);
+
   @NotNull
   protected abstract PsiFile[] _getIncludedFiles(@NotNull final JspFile jspFile);
 
