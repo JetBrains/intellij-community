@@ -1741,7 +1741,7 @@ class AbstractTreeUi {
     return myRootNode;
   }
 
-  public void setRootNode(final DefaultMutableTreeNode rootNode) {
+  public void setRootNode(@NotNull final DefaultMutableTreeNode rootNode) {
     myRootNode = rootNode;
   }
 
