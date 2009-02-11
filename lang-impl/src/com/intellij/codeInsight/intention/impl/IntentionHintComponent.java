@@ -286,6 +286,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         }
       });
       Disposer.register(IntentionHintComponent.this, myPopup);
+      Disposer.register(myPopup, new Disposable() {
+        public void dispose() {
+          ApplicationManager.getApplication().assertIsDispatchThread();
+        }
+      });
     }
 
     public int getDefaultOptionIndex() { return 0; }
