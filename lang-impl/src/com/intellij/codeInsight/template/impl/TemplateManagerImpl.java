@@ -50,12 +50,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   public void projectOpened() {
     myEditorFactoryListener = new EditorFactoryAdapter() {
       public void editorReleased(EditorFactoryEvent event) {
-        Editor removedEditor = event.getEditor();
-        TemplateState tState = getTemplateState(removedEditor);
+        Editor editor = event.getEditor();
+        if (editor.getProject() != null && editor.getProject() != myProject) return;
+        TemplateState tState = getTemplateState(editor);
         if (tState != null) {
           disposeState(tState);
         }
-        removedEditor.putUserData(TEMPLATE_STATE_KEY, null);
+        editor.putUserData(TEMPLATE_STATE_KEY, null);
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);

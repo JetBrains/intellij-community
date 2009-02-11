@@ -126,6 +126,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       MouseEvent mouseEvent = e.getMouseEvent();
 
       Editor editor = e.getEditor();
+      if (editor.getProject() != null && editor.getProject() != myProject) return;
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       Point point = new Point(mouseEvent.getPoint());
       if (!PsiDocumentManager.getInstance(myProject).isUncommited(editor.getDocument())) {

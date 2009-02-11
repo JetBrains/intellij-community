@@ -177,7 +177,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
       Place place = new Place(shreds, null);
       DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, place);
-      VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
+      VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(myHostVirtualFile, documentWindow, myLanguage, outChars);
       myLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject);
       virtualFile.setLanguage(myLanguage);
 
@@ -199,7 +199,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       PsiFile psiFile = parserDefinition.createFile(viewProvider);
       place.setInjectedPsi(psiFile);
 
-      assert InjectedLanguageManager.getInstance(myProject).isInjectedFragment(psiFile) : psiFile.getViewProvider();
+      InjectedLanguageManagerImpl injectedManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject);
+
+      assert injectedManager.isInjectedFragment(psiFile) : psiFile.getViewProvider();
 
       SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
       psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
@@ -225,14 +227,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       virtualFile.setContent(null, documentWindow.getText(), false);
       FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
       synchronized (PsiLock.LOCK) {
-        psiFile = registerDocument(documentWindow, psiFile, place, myHostPsiFile, documentManager);
+        psiFile = registerDocument(documentWindow, virtualFile, psiFile, place, myHostPsiFile, documentManager, injectedManager);
         InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
         myFileViewProvider.forceCachedPsi(psiFile);
         documentWindow = (DocumentWindowImpl)myFileViewProvider.getDocument();
         virtualFile = (VirtualFileWindowImpl)myFileViewProvider.getVirtualFile();
 
         // need to keep tree reacheable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
-        // and thus being reparsed from wrong (escaped) document content
+        // and being reparsed from wrong (escaped) document content
         ASTNode node = psiFile.getNode();
         assert !(node.getFirstChildNode() instanceof ChameleonElement);
         psiFile.putUserData(TREE_HARD_REF, node);
@@ -297,9 +299,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
            };
   }
 
-  private static void patchLeafs(final ASTNode parsedNode,
-                                 final List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
-                                 final Place shreds) {
+  private static void patchLeafs(ASTNode parsedNode, List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers, Place shreds) {
     LeafPatcher patcher = new LeafPatcher(shreds, escapers);
     ((TreeElement)parsedNode).acceptTree(patcher);
 
@@ -320,11 +320,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     ((TreeElement)parsedNode).acceptTree(CLEAR_CACHES_VISITOR);
   }
 
-  private static PsiFile registerDocument(final DocumentWindowImpl documentWindow,
-                                          final PsiFile injectedPsi,
+  private static PsiFile registerDocument(final DocumentWindowImpl documentWindow, VirtualFileWindowImpl virtualFile, final PsiFile injectedPsi,
                                           Place shreds,
                                           final PsiFile hostPsiFile,
-                                          PsiDocumentManager documentManager) {
+                                          PsiDocumentManager documentManager,
+                                          InjectedLanguageManagerImpl injectedManager) {
     DocumentEx hostDocument = documentWindow.getDelegate();
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
 
@@ -336,7 +336,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       if (oldFile == null ||
           !oldFile.isValid() ||
           !((viewProvider = oldFile.getViewProvider()) instanceof InjectedFileViewProvider) ||
-          ((InjectedFileViewProvider)viewProvider).isDisposed()) {
+          ((InjectedFileViewProvider)viewProvider).isDisposed()
+        ) {
         injected.remove(i);
         Disposer.dispose(oldDocument);
         continue;
@@ -378,8 +379,18 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
         oldFile.subtreeChanged();
         return oldFile;
       }
+      else {
+        int is = 0;
+        is++;
+      }
     }
     injected.add(documentWindow);
+
+    cacheInjectedRegion(documentWindow, hostDocument);
+    return injectedPsi;
+  }
+
+  private static void cacheInjectedRegion(DocumentWindowImpl documentWindow, DocumentEx hostDocument) {
     List<RangeMarker> injectedRegions = InjectedLanguageUtil.getCachedInjectedRegions(hostDocument);
     RangeMarker newMarker = documentWindow.getHostRanges()[0];
     TextRange newRange = InjectedLanguageUtil.toTextRange(newMarker);
@@ -398,7 +409,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     if (injectedRegions.isEmpty() || newRange.getStartOffset() > injectedRegions.get(injectedRegions.size()-1).getEndOffset()) {
       injectedRegions.add(newMarker);
     }
-    return injectedPsi;
   }
 
   private static boolean isPSItheSame(ASTNode injectedNode, ASTNode oldFileNode) {

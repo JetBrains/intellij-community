@@ -129,6 +129,8 @@ public class DiffSideView {
 
     private final EditorMouseMotionAdapter myMouseMotionListener = new EditorMouseMotionAdapter() {
       public void mouseMoved(EditorMouseEvent e) {
+        Editor editor = e.getEditor();
+        if (editor.getProject() != null && editor.getProject() != myProject && myProject != null/*???*/) return;
         if (!isInMyArea(e)) return;
         Cursor cursor = getOpenFileDescriptor(e) != null ? HAND__CURSOR : Cursor.getDefaultCursor();
         e.getMouseEvent().getComponent().setCursor(cursor);

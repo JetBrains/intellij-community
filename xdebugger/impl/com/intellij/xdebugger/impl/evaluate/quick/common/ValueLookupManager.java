@@ -48,6 +48,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
     }
 
     Editor editor = e.getEditor();
+    if (editor.getProject() != null && editor.getProject() != myProject) return;
     Point point = e.getMouseEvent().getPoint();
     if (myRequest != null) {
       if(myRequest.isKeepHint(editor, point)) return;

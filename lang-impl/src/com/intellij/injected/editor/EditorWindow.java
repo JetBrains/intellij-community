@@ -58,6 +58,9 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
           return editorWindow;
         }
       }
+      if (editorWindow.getDocument().areRangesEqual(documentRange)) {
+        int i = 0;
+      }
     }
     return new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
   }
@@ -534,7 +537,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.putUserDataIfAbsent(key, value);
   }
 
-  public <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue) {
+  public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
     return myDelegate.replace(key, oldValue, newValue);
   }
 

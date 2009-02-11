@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
@@ -87,7 +88,9 @@ public class DaemonListeners implements Disposable {
     eventMulticaster.addDocumentListener(new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       public void beforeDocumentChange(final DocumentEvent e) {
-        if (!worthBothering(e.getDocument())) {
+        Document document = e.getDocument();
+        VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+        if (!worthBothering(document, virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile))) {
           return; //no need to stop daemon if something happened in the console
         }
         stopDaemon(true);
@@ -98,7 +101,7 @@ public class DaemonListeners implements Disposable {
     eventMulticaster.addCaretListener(new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
         Editor editor = e.getEditor();
-        if (!worthBothering(editor.getDocument())) {
+        if (!worthBothering(editor.getDocument(), editor.getProject())) {
           return; //no need to stop daemon if something happened in the console
         }
 
@@ -124,7 +127,7 @@ public class DaemonListeners implements Disposable {
       public void editorCreated(EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
-        if (!worthBothering(document)) {
+        if (!worthBothering(document, editor.getProject())) {
           return;
         }
         myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
@@ -204,9 +207,11 @@ public class DaemonListeners implements Disposable {
     LaterInvocator.addModalityStateListener(myModalityStateListener);
   }
 
-  private boolean worthBothering(final Document document) {
+  private boolean worthBothering(final Document document, Project project) {
     if (document == null) return true;
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (project != null && project != myProject) return false;
+    // cached is essential here since we do not want to create PSI file in alien project
+    PsiFile psiFile = PsiDocumentManager.getInstance(project == null ? myProject : project).getPsiFile(document);
     return psiFile != null;
   }
 
@@ -250,7 +255,7 @@ public class DaemonListeners implements Disposable {
       }
       if (action instanceof DocumentRunnable) {
         Document document = ((DocumentRunnable)action).getDocument();
-        if (!worthBothering(document)) {
+        if (!worthBothering(document, ((DocumentRunnable)action).getProject())) {
           return;
         }
       }
@@ -263,7 +268,7 @@ public class DaemonListeners implements Disposable {
       }
       if (action instanceof DocumentRunnable) {
         Document document = ((DocumentRunnable)action).getDocument();
-        if (!worthBothering(document)) {
+        if (!worthBothering(document, ((DocumentRunnable)action).getProject())) {
           return;
         }
       }
@@ -277,7 +282,7 @@ public class DaemonListeners implements Disposable {
 
     public void commandStarted(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (!worthBothering(affectedDocument)) {
+      if (!worthBothering(affectedDocument, event.getProject())) {
         return;
       }
 
@@ -301,7 +306,7 @@ public class DaemonListeners implements Disposable {
 
     public void commandFinished(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (!worthBothering(affectedDocument)) {
+      if (!worthBothering(affectedDocument, event.getProject())) {
         return;
       }
 
@@ -357,7 +362,7 @@ public class DaemonListeners implements Disposable {
     public void beforeEditorTyping(char c, DataContext dataContext) {
       Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       //no need to stop daemon if something happened in the console
-      if (editor != null && !worthBothering(editor.getDocument())) {
+      if (editor != null && !worthBothering(editor.getDocument(), editor.getProject())) {
         return;
       }
       stopDaemon(true);

@@ -32,7 +32,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
         return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument()) {
+    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
       public void run() {
         final SelectionModel selectionModel = editor.getSelectionModel();
         if (selectionModel.hasBlockSelection()) {

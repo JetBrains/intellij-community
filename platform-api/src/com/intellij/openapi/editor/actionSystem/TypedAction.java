@@ -101,7 +101,7 @@ public class TypedAction {
 
     Runnable command = new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument()) {
+        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
           public void run() {
             Document doc = editor.getDocument();
             doc.startGuardedBlockChecking();

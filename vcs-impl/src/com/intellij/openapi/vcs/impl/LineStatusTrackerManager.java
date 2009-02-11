@@ -56,15 +56,15 @@ public class LineStatusTrackerManager implements ProjectComponent {
   private HashMap<Document, LineStatusTracker> myLineStatusTrackers =
     new HashMap<Document, LineStatusTracker>();
 
-  private HashMap<Document, Alarm> myLineStatusUpdateAlarms =
+  private final HashMap<Document, Alarm> myLineStatusUpdateAlarms =
     new HashMap<Document, Alarm>();
 
   private final Object TRACKERS_LOCK = new Object();
   private boolean myIsDisposed = false;
   @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
-  private ProjectLevelVcsManagerImpl myVcsManager;
+  private final ProjectLevelVcsManagerImpl myVcsManager;
   private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
-  private EditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
+  private final EditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
   private final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
   private final EditorColorsListener myEditorColorsListener = new EditorColorsListener() {
     public void globalSchemeChange(EditorColorsScheme scheme) {
@@ -335,6 +335,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
   private class MyEditorFactoryListener extends EditorFactoryAdapter {
     public void editorCreated(EditorFactoryEvent event) {
       Editor editor = event.getEditor();
+      if (editor.getProject() != null && editor.getProject() != myProject) return;
       Document document = editor.getDocument();
       VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
       installTracker(virtualFile, document);
@@ -342,6 +343,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
 
     public void editorReleased(EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
+      if (editor.getProject() != null && editor.getProject() != myProject) return;
       final Document doc = editor.getDocument();
       final Editor[] editors = event.getFactory().getEditors(doc, myProject);
       if (editors.length == 0) {

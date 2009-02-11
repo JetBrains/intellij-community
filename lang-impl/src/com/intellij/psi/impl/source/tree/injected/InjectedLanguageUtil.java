@@ -267,10 +267,6 @@ public class InjectedLanguageUtil {
     VirtualFileWindow virtualFile = (VirtualFileWindow)injected.getVirtualFile();
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
     psiManagerEx.getFileManager().setViewProvider((VirtualFile)virtualFile, null);
-    Project project = psiManagerEx.getProject();
-    if (!project.isDisposed()) {
-      InjectedLanguageManagerImpl.getInstanceImpl(project).clearCaches(virtualFile);
-    }
   }
 
 

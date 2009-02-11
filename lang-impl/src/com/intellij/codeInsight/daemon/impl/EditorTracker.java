@@ -246,6 +246,7 @@ public class EditorTracker implements ProjectComponent {
 
     public void editorCreated(EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
+      if (editor.getProject() != null && editor.getProject() != myProject) return;
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile == null) return;
 
@@ -279,6 +280,7 @@ public class EditorTracker implements ProjectComponent {
 
     public void editorReleased(EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
+      if (editor.getProject() != null && editor.getProject() != myProject) return;
       unregisterEditor(editor);
       dispose(editor);
     }
