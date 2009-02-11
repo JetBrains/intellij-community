@@ -11,13 +11,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Document;
+import org.jdom.Element;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DumpIntentionsAction extends AnAction {
   public DumpIntentionsAction() {
@@ -30,22 +35,47 @@ public class DumpIntentionsAction extends AnAction {
     if (files.length > 0) {
       final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
       final File root = VfsUtil.virtualToIoFile(files[0]);
+      Element el = new Element("root");
+      Map<String, Element> categoryMap = new HashMap<String, Element>();
       for (IntentionActionMetaData metaData : list) {
-        File dir = root;
-        for (String rec : metaData.myCategory) {
-          dir = new File(dir, rec);
-          dir.mkdir();
-        }
-        dir = new File(dir, metaData.getFamily());
 
         try {
-          FileUtil.copyDir(VfsUtil.virtualToIoFile(VfsUtil.findFileByURL(metaData.getDirURL())), dir);
+          Element metadataElement = new Element("intention");
+          metadataElement.setAttribute("family", metaData.getFamily());
+          metadataElement.setAttribute("description", metaData.getDescription().getText());
+
+          String key = StringUtil.join(metaData.myCategory, ".");
+          Element element = getCategoryElement(categoryMap, el, metaData, key, metaData.myCategory.length - 1);
+          element.addContent(metadataElement);
         }
         catch (IOException e1) {
           e1.printStackTrace();
         }
       }
+
+      try {
+        JDOMUtil.writeDocument(new Document(el), new File(root, "intentions.xml"), "\n");
+      }
+      catch (IOException e1) {
+        e1.printStackTrace();
+      }
     }
+  }
+
+  private static Element getCategoryElement(Map<String, Element> categoryMap, Element rootElement, IntentionActionMetaData metaData, String key, int idx) {
+    Element element = categoryMap.get(key);
+    if (element == null) {
+
+      element = new Element("category");
+      element.setAttribute("name", metaData.myCategory[idx]);
+      categoryMap.put(key, element);
+      if (idx == 0) {
+        rootElement.addContent(element);
+      } else {
+        getCategoryElement(categoryMap, rootElement, metaData, StringUtil.join(metaData.myCategory, 0, metaData.myCategory.length - 1, "."), idx - 1).addContent(element);
+      }
+    }
+    return element;
   }
 
   public void update(final AnActionEvent e) {
