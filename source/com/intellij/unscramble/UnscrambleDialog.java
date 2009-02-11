@@ -28,6 +28,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
@@ -466,9 +467,6 @@ public class UnscrambleDialog extends DialogWrapper{
   private static class ThreadDumpPanel extends JPanel {
     public ThreadDumpPanel(final ConsoleView consoleView, final ActionGroup toolbarActions, final List<ThreadState> threadDump) {
       super(new BorderLayout());
-      JPanel leftPanel = new JPanel(new BorderLayout());
-      leftPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent(),
-                    BorderLayout.WEST);
 
       final JList threadList = new JList(threadDump.toArray(new ThreadState[threadDump.size()]));
       threadList.setCellRenderer(new ColoredListCellRenderer() {
@@ -521,11 +519,14 @@ public class UnscrambleDialog extends DialogWrapper{
           threadList.repaint();
         }
       });
-      leftPanel.add(new JScrollPane(threadList), BorderLayout.CENTER);
+      ListToolTipHandler.install(threadList);
+      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent(), BorderLayout.WEST);
 
+      final Splitter splitter = new Splitter(false, 0.3f);
+      splitter.setFirstComponent(new JScrollPane(threadList));
+      splitter.setSecondComponent(consoleView.getComponent());
 
-      add(leftPanel, BorderLayout.WEST);
-      add(consoleView.getComponent(), BorderLayout.CENTER);
+      add(splitter, BorderLayout.CENTER);
     }
 
     private static Icon getThreadStateIcon(final ThreadState threadState) {
