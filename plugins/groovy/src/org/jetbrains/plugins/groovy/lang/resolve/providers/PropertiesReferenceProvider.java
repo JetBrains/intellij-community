@@ -15,7 +15,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.providers;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.lang.properties.PropertyReference;
+import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
@@ -44,7 +44,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
       final Map<String, Object> annotationParams = new HashMap<String, Object>();
       annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-      /*if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
+      /*if (JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
         soft = false;
         final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
         if (resourceBundleName instanceof PsiExpression) {
