@@ -112,14 +112,22 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> void assertOrderedEquals(Collection<T> actual, T... expected) {
+    assertOrderedEquals(null, actual, expected);
+  }
+
+  public static <T> void assertOrderedEquals(final String errorMsg, Collection<T> actual, T... expected) {
     assertNotNull(actual);
     assertNotNull(expected);
-    assertOrderedEquals(actual, Arrays.asList(expected));
+    assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
   public static <T> void assertOrderedEquals(final Collection<? extends T> actual, final Collection<? extends T> expected) {
+    assertOrderedEquals(null, actual, expected);
+  }
+
+  public static <T> void assertOrderedEquals(final String erroMsg, final Collection<? extends T> actual, final Collection<? extends T> expected) {
     if (!new ArrayList<T>(actual).equals(new ArrayList<T>(expected))) {
-      assertEquals(toString(expected), toString(actual));
+      assertEquals(erroMsg, toString(expected), toString(actual));
       fail();
     }
   }
@@ -259,7 +267,11 @@ public abstract class UsefulTestCase extends TestCase {
   }
   
   public static void assertEmpty(final Collection<?> collection) {
-    assertOrderedEquals(collection);
+    assertEmpty(null, collection);
+  }
+
+  public static void assertEmpty(final String errorMsg, final Collection<?> collection) {
+    assertOrderedEquals(errorMsg, collection);
   }
 
   protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
