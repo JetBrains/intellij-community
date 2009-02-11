@@ -53,7 +53,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   protected JPanel myPanel;
   private JCheckBox myUseResourceBundle;
   protected final Project myProject;
-  private final PsiFile myContext;
+  protected final PsiFile myContext;
 
   private JPanel myPropertiesFilePanel;
   protected JPanel myExtensibilityPanel;
@@ -117,7 +117,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
         myPropertiesFile.setText(FileUtil.toSystemDependentName(selectedFile.getVirtualFile().getPath()));
       }
     }), BorderLayout.CENTER);
-    populatePropertiesFiles();
 
     myPropertiesFile.addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -154,6 +153,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
   @Override
   protected void init() {
+    populatePropertiesFiles();
     propertiesFileChanged();
     somethingChanged();
     setKeyValueEditBoxes();

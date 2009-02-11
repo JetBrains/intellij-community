@@ -2,6 +2,7 @@
   <id>com.intellij.java</id>
   <name>IDEA Java</name>
   <depends>com.intellij.properties</depends>
+  <resource-bundle>messages.PropertiesBundle</resource-bundle>
   <extensionPoints>
     <extensionPoint name="resourceBundleManager"
                     interface="com.intellij.lang.properties.psi.ResourceBundleManager"
@@ -16,4 +17,9 @@
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
     <psi.referenceContributor implementation="com.intellij.lang.properties.PropertiesReferenceContributor"/>
   </extensions>
+  <actions>
+    <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">
+      <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="ExtractInclude" />
+    </action>
+  </actions>
 </idea-plugin>
