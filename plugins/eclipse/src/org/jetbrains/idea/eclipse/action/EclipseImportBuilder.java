@@ -182,6 +182,13 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
                                                                 getParameters().converterOptions.testPattern, classpathElement);
         ClasspathStorage.setStorageType(module,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
+        if (model != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              rootModel.commit();
+            }
+          });
+        }
       }
       if (model == null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
