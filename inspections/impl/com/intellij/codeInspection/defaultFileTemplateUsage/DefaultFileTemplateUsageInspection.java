@@ -2,6 +2,7 @@ package com.intellij.codeInspection.defaultFileTemplateUsage;
 
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -125,6 +126,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
         boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
         if (ok) {
           replaceTemplateFix.applyFix(project, descriptor);
+          FileTemplateManager.getInstance().saveAll();
         }
       }
     };
