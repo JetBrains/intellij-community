@@ -73,6 +73,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       LOG.assertTrue(resourceBundleManager != null);
     }
     catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
+      LOG.error(e);
     }
     myResourceBundleManager = resourceBundleManager;
 
@@ -147,7 +148,6 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
     init();
   }
-
 
   public static boolean isAvailable(PsiFile file) {
     final Project project = file.getProject();
