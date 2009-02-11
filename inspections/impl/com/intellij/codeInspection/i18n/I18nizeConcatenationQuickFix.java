@@ -32,7 +32,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     throw new IncorrectOperationException(message);
   }
 
-  public I18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
+  public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
     PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile,editor);
     PsiLiteralExpression literalExpression = ConcatenationToMessageFormatAction.getContainingLiteral(concatenation);
     if (literalExpression == null) return null;
@@ -65,7 +65,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     return result.toString();
   }
 
-  protected I18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
+  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
     PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(literalExpression);
     StringBuffer formatString = new StringBuffer();
     final List<PsiExpression> args = new ArrayList<PsiExpression>();
@@ -79,7 +79,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
 
     String value = ConcatenationToMessageFormatAction.prepareString(formatString.toString());
 
-    return new I18nizeQuickFixDialog(project, context, literalExpression, value, true, true) {
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, null, true, true) {
       @Nullable
       protected String getTemplateName() {
         return myResourceBundleManager.getConcatenationTemplateName();

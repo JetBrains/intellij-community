@@ -90,7 +90,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     }
   }
 
-  public I18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
+  public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
     final PsiLiteralExpression literalExpression = I18nizeAction.getEnclosingStringLiteral(psiFile, editor);
     return createDialog(project, psiFile, literalExpression);
   }
@@ -98,10 +98,10 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   private void doFix(final ProblemDescriptor descriptor, final Project project) {
     final PsiLiteralExpression literalExpression = (PsiLiteralExpression)descriptor.getPsiElement();
     final PsiFile psiFile = literalExpression.getContainingFile();
-    if (!I18nizeQuickFixDialog.isAvailable(psiFile)) {
+    if (!JavaI18nizeQuickFixDialog.isAvailable(psiFile)) {
       return;
     }
-    final I18nizeQuickFixDialog dialog = createDialog(project, psiFile, literalExpression);
+    final JavaI18nizeQuickFixDialog dialog = createDialog(project, psiFile, literalExpression);
     dialog.show();
     if (!dialog.isOK()) return;
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
@@ -130,9 +130,12 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   }
 
   private static Editor getEditorForFile(@NotNull final PsiFile psiFile) {
-    VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
-      return null;
+      PsiFile originalFile = psiFile.getOriginalFile();
+      if (originalFile == null) return null;
+      virtualFile = originalFile.getVirtualFile();
+      if (virtualFile == null) return null;
     }
     final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
     for (FileEditor editor : editors) {
@@ -156,7 +159,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     CodeStyleManager.getInstance(project).reformat(newExpression);
   }
 
-  protected I18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
+  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
     String value = (String)literalExpression.getValue();
     if (mySelectionRange != null) {
       TextRange literalRange = literalExpression.getTextRange();
@@ -164,7 +167,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
       value = literalExpression.getText().substring(intersection.getStartOffset() - literalRange.getStartOffset(), intersection.getEndOffset() - literalRange.getStartOffset());
     }
     value = StringUtil.escapeStringCharacters(value);
-    return new I18nizeQuickFixDialog(project, context, literalExpression, value, true, true);
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, null, true, true);
   }
 
   @Nullable

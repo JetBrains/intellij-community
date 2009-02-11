@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.i18n.I18nUtil;
+import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -193,7 +193,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private boolean shouldCheck(final PsiLiteralExpression expression) {
-    if (IGNORE_PROPERTY_KEYS && I18nUtil.mustBePropertyKey(expression, new THashMap<String, Object>())) return false;
+    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, new THashMap<String, Object>())) return false;
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class, true, PsiCodeBlock.class, PsiField.class);
     return annotation == null || !"java.lang.SuppressWarnings".equals(annotation.getQualifiedName());
   }

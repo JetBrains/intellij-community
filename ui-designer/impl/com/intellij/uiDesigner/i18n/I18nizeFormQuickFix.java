@@ -2,8 +2,8 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInspection.i18n.I18nizeQuickFixDialog;
-import com.intellij.codeInspection.i18n.I18nUtil;
+import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInspection.i18n.JavaI18nizeQuickFixDialog;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -39,11 +39,11 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
 
     PsiFile psiFile = myEditor.getPsiFile();
 
-    if (!I18nizeQuickFixDialog.isAvailable(myEditor.getPsiFile())) {
+    if (!JavaI18nizeQuickFixDialog.isAvailable(myEditor.getPsiFile())) {
       return;
     }
     String initialValue = StringUtil.escapeStringCharacters(descriptor.getValue());
-    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, psiFile, null, initialValue, false, false){
+    final JavaI18nizeQuickFixDialog dialog = new JavaI18nizeQuickFixDialog(project, psiFile, null, initialValue, null, false, false){
       protected String getDimensionServiceKey() {
         return "#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog_Form";
       }
@@ -70,7 +70,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run() {
             try {
-              I18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
+              JavaI18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);

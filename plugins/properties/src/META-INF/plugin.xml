@@ -1,0 +1,39 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij.properties</id>
+  <name>Properties Support</name>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.lang.properties.LastSelectedPropertiesFileStore"
+                        serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
+    <annotator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesAnnotator"/>
+    <lang.refactoringSupport language="Properties" implementationClass="com.intellij.lang.properties.PropertiesRefactoringSupportProvider"/>
+    <lang.documentationProvider language="Properties" implementationClass="com.intellij.lang.properties.PropertiesDocumentationProvider"/>
+    <lang.findUsagesProvider language="Properties"
+                                 implementationClass="com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider"/>
+    <applicationService serviceInterface="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"
+                            serviceImplementation="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"/>
+    <codeInsight.wordCompletionFilter language="Properties"
+                                      implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
+    <lang.psiStructureViewFactory language="Properties"
+                                  implementationClass="com.intellij.lang.properties.PropertiesStructureViewBuilderFactory"/>
+    <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
+    <joinLinesHandler implementation="com.intellij.lang.properties.PropertiesJoinLinesHandler"/>
+    
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInPropertiesFileHandler"/>
+
+    <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
+    <renameHandler implementation="com.intellij.lang.properties.ResourceBundleRenameHandler"/>
+    <renameHandler implementation="com.intellij.lang.properties.PropertyRenameHandler"/>
+    <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePropertyProcessor"/>
+    <lang.commenter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCommenter"/>
+    <elementLookupRenderer implementation="com.intellij.lang.properties.PropertyLookupRenderer"/>
+    <stubIndex implementation="com.intellij.lang.properties.psi.PropertyKeyIndex"/>
+    <lang.namesValidator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesNamesValidator"/>
+    <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.PropertiesSafeDeleteProcessor"/>
+
+    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.PropertiesColorsPage"/>
+    <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>
+    <elementDescriptionProvider implementation="com.intellij.lang.properties.PropertiesDeleteTypeDescriptionProvider"/>
+  </extensions>
+</idea-plugin>

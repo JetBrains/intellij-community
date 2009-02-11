@@ -5,17 +5,12 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
-import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -32,15 +27,15 @@ import java.util.*;
 /**
  * @author max
  */
-public class I18nUtil {
+public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER = new PropertyCreationHandler() {
     public void createProperty(final Project project, final Collection<PropertiesFile> propertiesFiles, final String key, final String value,
                                final PsiExpression[] parameters) throws IncorrectOperationException {
-      I18nUtil.createProperty(project, propertiesFiles, key, value);
+      JavaI18nUtil.createProperty(project, propertiesFiles, key, value);
     }
   };
 
-  private I18nUtil() {
+  private JavaI18nUtil() {
   }
 
   public static boolean mustBePropertyKey(final PsiLiteralExpression expression, @NotNull Map<String, Object> annotationAttributeValues) {
@@ -176,26 +171,6 @@ public class I18nUtil {
     }
   }
 
-  @NotNull
-  public static List<PropertiesFile> propertiesFilesByBundleName(final String resourceBundleName, final PsiElement context) {
-    final PsiFile containingFile = context.getContainingFile();
-    VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null) {
-      final PsiFile originalFile = containingFile.getOriginalFile();
-      if (originalFile != null) {
-        virtualFile = originalFile.getVirtualFile();
-      }
-    }
-    if (virtualFile != null) {
-      final Module module = ProjectRootManager.getInstance(context.getProject()).getFileIndex().getModuleForFile(virtualFile);
-      if (module != null) {
-        PropertiesReferenceManager refManager = context.getProject().getComponent(PropertiesReferenceManager.class);
-        return refManager.findPropertiesFiles(module, resourceBundleName);
-      }
-    }
-    return Collections.emptyList();
-  }
-
   public static Set<String> suggestExpressionOfType(final PsiClassType type, final PsiLiteralExpression context) {
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(context, "");
     Set<String> result = new LinkedHashSet<String>();
@@ -238,22 +213,5 @@ public class I18nUtil {
 
       }
     }, context, null);
-  }
-
-  public static void createProperty(final Project project,
-                                    final Collection<PropertiesFile> propertiesFiles,
-                                    final String key,
-                                    final String value)
-    throws IncorrectOperationException {
-    Property property = PropertiesElementFactory.createProperty(project, key, value);
-    for (PropertiesFile file : propertiesFiles) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      documentManager.commitDocument(documentManager.getDocument(file));
-
-      Property existingProperty = file.findPropertyByKey(property.getUnescapedKey());
-      if (existingProperty == null) {
-        file.addProperty(property);
-      }
-    }
   }
 }

@@ -156,7 +156,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private void insertLinebreakBefore(final ASTNode anchorBefore) {
     String text = "\n";
     LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), getTreeElement().getCharTable(), myManager);
-    ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, (TreeElement)anchorBefore);
+    getPropertiesList().addChild(ws, anchorBefore);
   }
 
   private boolean haveToAddNewLine() {

@@ -1,10 +1,8 @@
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInspection.i18n.CreatePropertyFix;
-import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.properties.psi.PropertiesFile;

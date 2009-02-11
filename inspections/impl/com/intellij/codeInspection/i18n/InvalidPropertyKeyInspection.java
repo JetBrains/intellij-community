@@ -134,13 +134,13 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       String key = (String)value;
       if (isComputablePropertyExpression(expression)) return;
       Ref<String> resourceBundleName = new Ref<String>();
-      if (!I18nUtil.isValidPropertyReference(expression, key, resourceBundleName)) {
+      if (!JavaI18nUtil.isValidPropertyReference(expression, key, resourceBundleName)) {
         final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
         final String bundleName = resourceBundleName.get();
-        final List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(bundleName, expression);
+        final List<PropertiesFile> propertiesFiles = JavaI18nUtil.propertiesFilesByBundleName(bundleName, expression);
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description,
-                                                                            new CreatePropertyFix(expression, key, propertiesFiles),
+                                                                            new JavaCreatePropertyFix(expression, key, propertiesFiles),
                                                                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         myProblems.add(problem);
       }

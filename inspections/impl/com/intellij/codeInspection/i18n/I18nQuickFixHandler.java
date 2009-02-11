@@ -27,5 +27,5 @@ public interface I18nQuickFixHandler {
                           PsiExpression[] parameters,
                           PropertyCreationHandler propertyCreationHandler) throws IncorrectOperationException;
 
-  I18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile);
+  JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile);
 }

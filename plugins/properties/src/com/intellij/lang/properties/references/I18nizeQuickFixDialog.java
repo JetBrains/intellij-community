@@ -1,25 +1,22 @@
 /**
  * @author cdr
  */
-package com.intellij.codeInspection.i18n;
+package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
-import com.intellij.lang.properties.psi.*;
+import com.intellij.lang.properties.LastSelectedPropertiesFileStore;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -30,19 +27,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashMap;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.TextFieldWithHistory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -57,76 +52,70 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   private JTextField myValue;
   private JComboBox myKey;
   private final TextFieldWithHistory myPropertiesFile;
-  private JPanel myPanel;
+  protected JPanel myPanel;
   private JCheckBox myUseResourceBundle;
-  private final Project myProject;
+  protected final Project myProject;
   private final PsiFile myContext;
-  private final PsiLiteralExpression myLiteralExpression;
-  private JPanel myPropertiesFilePanel;
-  private JLabel myPreviewLabel;
-  private JPanel myHyperLinkPanel;
-  private JPanel myResourceBundleSuggester;
-  private EditorComboBox myRBEditorTextField;
-  private JPanel myJavaCodeInfoPanel;
-  private JPanel myPreviewPanel;
-  private PsiClassType myResourceBundleType;
-  private final String myDefaultPropertyValue;
-  private final boolean myShowJavaCodeInfo;
-  private final boolean myShowPreview;
-  protected final ResourceBundleManager myResourceBundleManager;
 
-  @NonNls private static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
-  @NonNls private static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
-  @NonNls private static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
+  private JPanel myPropertiesFilePanel;
+  protected JPanel myExtensibilityPanel;
+
+  protected final String myDefaultPropertyValue;
+
+  protected final ResourceBundleManager myResourceBundleManager;
+  protected final DialogCustomization myCustomization;
+
+  public static class DialogCustomization {
+    private final String title;
+    private final boolean suggestExistingProperties;
+    private final boolean focusValueComponent;
+    private final List<PropertiesFile> propertiesFiles;
+    private final String suggestedName;
+
+    public DialogCustomization(String title, boolean suggestExistingProperties, boolean focusValueComponent,
+                               List<PropertiesFile> propertiesFiles,
+                               String suggestedName) {
+      this.title = title;
+      this.suggestExistingProperties = suggestExistingProperties;
+      this.focusValueComponent = focusValueComponent;
+      this.propertiesFiles = propertiesFiles;
+      this.suggestedName = suggestedName;
+    }
+
+    public DialogCustomization() {
+      this(null, true, false, null, null);
+    }
+  }
 
   public I18nizeQuickFixDialog(@NotNull Project project,
                                @NotNull final PsiFile context,
-                               @Nullable final PsiLiteralExpression literalExpression,
                                String defaultPropertyValue,
-                               final boolean showJavaCodeInfo,
-                               final boolean showPreview) {
+                               DialogCustomization customization
+                               ) {
+    this(project, context, defaultPropertyValue, customization, false);
+  }
+
+  protected I18nizeQuickFixDialog(@NotNull Project project,
+                               @NotNull final PsiFile context,
+                               String defaultPropertyValue,
+                               DialogCustomization customization,
+                               boolean ancestorResponsible) {
     super(false);
     myProject = project;
     myContext = context;
-    myLiteralExpression = literalExpression;
 
     myDefaultPropertyValue = defaultPropertyValue;
+    myCustomization = customization != null ? customization:new DialogCustomization();
+    setTitle(myCustomization.title != null ? myCustomization.title:CodeInsightBundle.message("i18nize.dialog.title"));
 
-    myShowPreview = showPreview;
-
-    setTitle(CodeInsightBundle.message("i18nize.dialog.title"));
-
-    myResourceBundleSuggester.setLayout(new BorderLayout());
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-    PsiClass resourceBundle = null;
     ResourceBundleManager resourceBundleManager = null;
     try {
       resourceBundleManager = ResourceBundleManager.getManager(context);
       LOG.assertTrue(resourceBundleManager != null);
-      resourceBundle = resourceBundleManager.getResourceBundle();
     }
     catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
-      LOG.error(e);
     }
     myResourceBundleManager = resourceBundleManager;
-    myShowJavaCodeInfo = showJavaCodeInfo && myResourceBundleManager.canShowJavaCodeInfo();
-    if (myShowJavaCodeInfo) {
-      LOG.assertTrue(resourceBundle != null);
-      myResourceBundleType = factory.createType(resourceBundle);
-      @NonNls String defaultVarName = "resourceBundle";
-      PsiExpressionCodeFragment expressionCodeFragment =
-        factory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(expressionCodeFragment);
-      myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
-      myResourceBundleSuggester.add(myRBEditorTextField, BorderLayout.CENTER);
-      suggestAvailableResourceBundleExpressions();
-      myRBEditorTextField.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
-        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
-          somethingChanged();
-        }
-      });
-    }
 
     myPropertiesFile = new TextFieldWithHistory();
     myPropertiesFile.setHistorySize(-1);
@@ -162,37 +151,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       }
     });
 
-    myHyperLinkPanel.setLayout(new BorderLayout());
-    final String templateName = getTemplateName();
-    if (templateName != null) {
-      HyperlinkLabel link = new HyperlinkLabel(CodeInsightBundle.message("i18nize.dialog.template.link.label"));
-      link.addHyperlinkListener(new HyperlinkListener() {
-        public void hyperlinkUpdate(HyperlinkEvent e) {
-          final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
-          final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              configurable.setTemplate(template, null);
-            }
-          });
-          boolean ok = ShowSettingsUtil.getInstance().editConfigurable(myPanel, configurable);
-          if (ok) {
-            somethingChanged();
-            if (myShowJavaCodeInfo) {
-              suggestAvailableResourceBundleExpressions();
-            }
-          }
-        }
-      });
-      myHyperLinkPanel.add(link, BorderLayout.CENTER);
-    }
 
-    if (!myShowJavaCodeInfo) {
-      myJavaCodeInfoPanel.setVisible(false);
-    }
-    if (!myShowPreview) {
-      myPreviewPanel.setVisible(false);
-    }
     @NonNls final String KEY = "I18NIZE_DIALOG_USE_RESOURCE_BUNDLE";
     final boolean useBundleByDefault =
       !PropertiesComponent.getInstance().isValueSet(KEY) || PropertiesComponent.getInstance().isTrueValue(KEY);
@@ -203,44 +162,20 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       }
     });
 
+    if (!ancestorResponsible) init();
+  }
+
+  @Override
+  protected void init() {
     propertiesFileChanged();
     somethingChanged();
     setKeyValueEditBoxes();
 
-    init();
-  }
-
-  public static boolean isAvailable(PsiFile file) {
-    final Project project = file.getProject();
-    final String title = CodeInsightBundle.message("i18nize.dialog.error.jdk.title");
-    try {
-      return ResourceBundleManager.getManager(file) != null;
-    }
-    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
-      final IntentionAction fix = e.getFix();
-      if (fix != null) {
-        if (Messages.showOkCancelDialog(project, e.getMessage(), title, Messages.getErrorIcon()) == OK_EXIT_CODE) {
-          try {
-            fix.invoke(project, null, file);
-            return false;
-          }
-          catch (IncorrectOperationException e1) {
-            LOG.error(e1);
-          }
-        }
-      }
-      Messages.showErrorDialog(project, e.getMessage(), title);
-      return false;
-    }
+    super.init();
   }
 
   private JTextField getKeyTextField() {
     return (JTextField)myKey.getEditor().getEditorComponent();
-  }
-
-  public PropertyCreationHandler getPropertyCreationHandler() {
-    PropertyCreationHandler handler = myResourceBundleManager.getPropertyCreationHandler();
-    return handler != null ? handler : I18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER;
   }
 
   @Nullable
@@ -248,30 +183,11 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     return myResourceBundleManager.getTemplateName();
   }
 
-  private void suggestAvailableResourceBundleExpressions() {
-    String templateName = getTemplateName();
-    if (templateName == null) return;
-
-    if (myShowJavaCodeInfo) {
-      FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
-      boolean showResourceBundleSuggester = template.getText().contains("${" + RESOURCE_BUNDLE_OPTION_KEY + "}");
-      myJavaCodeInfoPanel.setVisible(showResourceBundleSuggester);
-    }
-    Set<String> result = I18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression);
-    if (result.isEmpty()) {
-      result.add(getResourceBundleText());
-    }
-
-    myRBEditorTextField.setHistory(ArrayUtil.toStringArray(result));
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myRBEditorTextField.setSelectedIndex(0);
-      }
-    });
-  }
-
   @NotNull
   protected List<String> getExistingValueKeys(String value) {
+    if(!myCustomization.suggestExistingProperties) {
+      return Collections.emptyList();
+    }
     final ArrayList<String> result = new ArrayList<String>();
 
     // check if property value already exists among properties file values and suggest corresponding key
@@ -287,6 +203,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   }
 
   protected String suggestPropertyKey(String value) {
+    if (myCustomization.suggestedName != null) {
+      return myCustomization.suggestedName;
+    }
+
     // suggest property key not existing in this file
     String key = myResourceBundleManager.suggestPropertyKey(value);
     if (key == null) {
@@ -359,46 +279,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     myValue.setText(myDefaultPropertyValue);
   }
 
-  private void somethingChanged() {
-    if (myShowPreview) {
-      myPreviewLabel.setText(getI18nizedText());
-    }
+  protected void somethingChanged() {
     setOKActionEnabled(!StringUtil.isEmptyOrSpaces(getKey()));
-  }
-
-  public String getI18nizedText() {
-    String propertyKey = StringUtil.escapeStringCharacters(getKey());
-    I18nizedTextGenerator textGenerator = myResourceBundleManager.getI18nizedTextGenerator();
-    if (textGenerator != null) {
-      return generateText(textGenerator, propertyKey, getPropertiesFile(), myLiteralExpression);
-    }
-
-    String templateName = getTemplateName();
-    LOG.assertTrue(templateName != null);
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
-    Map<String, String> attributes = new THashMap<String, String>();
-    attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
-    attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
-    addAdditionalAttributes(attributes);
-    attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));
-    String text = null;
-    try {
-      text = template.getText(attributes);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return text;
-  }
-
-  protected String generateText(final I18nizedTextGenerator textGenerator,
-                                final String propertyKey,
-                                final PropertiesFile propertiesFile,
-                                final PsiLiteralExpression literalExpression) {
-    return textGenerator.getI18nizedText(propertyKey, propertiesFile, literalExpression);
-  }
-
-  protected void addAdditionalAttributes(final Map<String, String> attributes) {
   }
 
   private void populatePropertiesFiles() {
@@ -434,10 +316,20 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   }
 
   protected List<String> suggestPropertiesFiles() {
+    if (myCustomization.propertiesFiles != null && myCustomization.propertiesFiles.size() > 0 ) {
+      ArrayList<String> list = new ArrayList<String>();
+      for (PropertiesFile propertiesFile : myCustomization.propertiesFiles) {
+        final VirtualFile virtualFile = propertiesFile.getVirtualFile();
+        if (virtualFile != null) {
+          list.add(virtualFile.getPath());
+        }
+      }
+      return list;
+    }
     return myResourceBundleManager.suggestPropertiesFiles();
   }
 
-  private PropertiesFile getPropertiesFile() {
+  protected PropertiesFile getPropertiesFile() {
     String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (virtualFile != null) {
@@ -501,7 +393,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myKey;
+    return myCustomization.focusValueComponent ? myValue:myKey;
   }
 
   public void dispose() {
@@ -566,17 +458,5 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       propertiesFiles = Collections.singleton(propertiesFile);
     }
     return propertiesFiles;
-  }
-
-  private String getResourceBundleText() {
-    return myShowJavaCodeInfo ? myRBEditorTextField.getText() : null;
-  }
-
-  public PsiLiteralExpression getLiteralExpression() {
-    return myLiteralExpression;
-  }
-
-  public PsiExpression[] getParameters() {
-    return PsiExpression.EMPTY_ARRAY;
   }
 }

@@ -148,7 +148,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
       return;
     }
 
-    final I18nizeQuickFixDialog dialog = handler.createDialog(project, editor, psiFile);
+    final JavaI18nizeQuickFixDialog dialog = handler.createDialog(project, editor, psiFile);
     if (dialog == null) return;
     dialog.show();
     if (!dialog.isOK()) return;
@@ -177,13 +177,13 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
     });
   }
 
-  public I18nizeQuickFixDialog createDialog(final Project project, final Editor editor, final PsiFile psiFile) {
+  public JavaI18nizeQuickFixDialog createDialog(final Project project, final Editor editor, final PsiFile psiFile) {
     JspFile jspFile = (JspFile)psiFile;
 
     TextRange selectedRange = getSelectedRange(editor, psiFile);
     if (selectedRange == null) return null;
     String text = selectedRange.substring(editor.getDocument().getText());
-    return new I18nizeQuickFixDialog(project, jspFile, null, text, false, true){
+    return new JavaI18nizeQuickFixDialog(project, jspFile, null, text, null, false, true){
       protected String getTemplateName() {
         return JavaTemplateUtil.TEMPLATE_I18NIZED_JSP_EXPRESSION;
       }

@@ -1,8 +1,11 @@
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -27,7 +30,7 @@ import java.util.Set;
  * @author nik
  */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertyReferenceBase");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.references.PropertyReferenceBase");
   protected final String myKey;
   protected final PsiElement myElement;
   protected boolean mySoft;
@@ -57,7 +60,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    PropertyReference other = (PropertyReference)o;
+    PropertyReferenceBase other = (PropertyReferenceBase)o;
 
     return getElement() == other.getElement() && getKeyText().equals(other.getKeyText());
   }
@@ -81,19 +84,19 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
+    /*PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
 
     if (myElement instanceof PsiLiteralExpression) {
       PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myElement);
       return myElement.replace(newExpression);
     }
-    else {
+    else {*/
       ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(myElement);
       if (manipulator == null) {
         LOG.assertTrue(false, "Cannot find manipulator for " + myElement + " of class " + myElement.getClass());
       }
       return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
-    }
+    /*}*/
   }
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {

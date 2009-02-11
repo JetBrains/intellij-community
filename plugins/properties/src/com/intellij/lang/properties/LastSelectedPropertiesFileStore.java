@@ -1,4 +1,4 @@
-package com.intellij.codeInspection.i18n;
+package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.PersistentStateComponent;

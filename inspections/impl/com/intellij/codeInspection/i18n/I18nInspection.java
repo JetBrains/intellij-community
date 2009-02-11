@@ -454,7 +454,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       nonNlsTargets.add(parentField);
     }
 
-    if (I18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
       return false;
     }
 
@@ -470,7 +470,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (I18nUtil.mustBePropertyKey(expression, new HashMap<String, Object>())) {
+    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<String, Object>())) {
       return false;
     }
 
@@ -492,7 +492,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (ignoreForClassReferences && isClassRef(expression, value)) {
       return false;
     }
-    if (ignoreForPropertyKeyReferences && I18nUtil.isPropertyRef(expression, value, null)) {
+    if (ignoreForPropertyKeyReferences && JavaI18nUtil.isPropertyRef(expression, value, null)) {
       return false;
     }
     if (ignoreToString && isToString(expression)) {
@@ -566,7 +566,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
   }
 
   private boolean isPassedToNonNlsVariable(final PsiLiteralExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
-    PsiExpression toplevel = I18nUtil.getToplevelExpression(expression);
+    PsiExpression toplevel = JavaI18nUtil.getToplevelExpression(expression);
     PsiVariable var = null;
     if (toplevel instanceof PsiAssignmentExpression) {
       PsiExpression lExpression = ((PsiAssignmentExpression)toplevel).getLExpression();
@@ -607,7 +607,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       if (declarationScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declarationScope;
         final int index = method.getParameterList().getParameterIndex(parameter);
-        return I18nUtil.isMethodParameterAnnotatedWith(method, index, new HashSet<PsiMethod>(), AnnotationUtil.NON_NLS,
+        return JavaI18nUtil.isMethodParameterAnnotatedWith(method, index, new HashSet<PsiMethod>(), AnnotationUtil.NON_NLS,
                                                        new HashMap<String, Object>(), null);
       }
     }
@@ -663,7 +663,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
   }
 
   private static boolean isInNonNlsCall(PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
-    expression = I18nUtil.getToplevelExpression(expression);
+    expression = JavaI18nUtil.getToplevelExpression(expression);
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList) {
       final PsiElement grParent = parent.getParent();

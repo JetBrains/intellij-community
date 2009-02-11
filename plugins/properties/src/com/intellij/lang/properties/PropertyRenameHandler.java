@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.lang.properties.references.PropertyReferenceBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +28,8 @@ public class PropertyRenameHandler extends PsiElementRenameHandler {
   @Nullable
   private static PsiElement getPsiElement(final Editor editor) {
     final PsiReference reference = TargetElementUtilBase.findReference(editor);
-    if (reference instanceof PropertyReference) {
-      final ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
+    if (reference instanceof PropertyReferenceBase) {
+      final ResolveResult[] resolveResults = ((PropertyReferenceBase)reference).multiResolve(false);
       return resolveResults.length > 0 ? resolveResults[0].getElement() : null;
     }
     return null;

@@ -1,4 +1,4 @@
-package com.intellij.codeInspection.i18n;
+package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
@@ -14,18 +14,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
@@ -72,7 +67,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   public void invoke(@NotNull final Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    invokeAction(project, file, myElement, myKey, null, myPropertiesFiles);
+    invokeAction(project, file, myElement, myKey, myPropertiesFiles);
   }
 
   @Nullable
@@ -80,48 +75,26 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
                                                      @NotNull PsiFile file,
                                                      @NotNull PsiElement psiElement,
                                                      @Nullable final String suggestedKey,
-                                                     @Nullable String suggestedValue,
                                                      @Nullable final List<PropertiesFile> propertiesFiles) {
-    final PsiLiteralExpression literalExpression = psiElement instanceof PsiLiteralExpression ? (PsiLiteralExpression)psiElement : null;
-    final String propertyValue = suggestedValue == null ? "" : suggestedValue;
+    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(
+      project,
+      file,
+      NAME,
+      createDefaultCustomization(suggestedKey, propertiesFiles)
+    );
+    return doAction(project, psiElement, dialog);
+  }
 
-    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, file, literalExpression, propertyValue, false, false) {
-      protected void init() {
-        super.init();
-        setTitle(NAME);
-      }
+  protected static I18nizeQuickFixDialog.DialogCustomization createDefaultCustomization(String suggestedKey, List<PropertiesFile> propertiesFiles) {
+    return new I18nizeQuickFixDialog.DialogCustomization(NAME, false, true, propertiesFiles, suggestedKey == null ? "" : suggestedKey);
+  }
 
-      public JComponent getPreferredFocusedComponent() {
-        return getValueComponent();
-      }
-
-      protected List<String> suggestPropertiesFiles() {
-        if (propertiesFiles == null || propertiesFiles.isEmpty()) {
-          return super.suggestPropertiesFiles();
-        }
-        ArrayList<String> list = new ArrayList<String>();
-        for (PropertiesFile propertiesFile : propertiesFiles) {
-          final VirtualFile virtualFile = propertiesFile.getVirtualFile();
-          if (virtualFile != null) {
-            list.add(virtualFile.getPath());
-          }
-        }
-        return list;
-      }
-
-      // do not suggest existing keys
-      @NotNull
-      protected List<String> getExistingValueKeys(String value) {
-        return Collections.emptyList();
-      }
-
-      @NotNull
-      protected String suggestPropertyKey(String value) {
-        return suggestedKey == null ? "" : suggestedKey;
-      }
-    };
-    dialog.show();
-    if (!dialog.isOK()) return null;
+  protected static Pair<String, String> doAction(Project project, PsiElement psiElement, 
+                                               I18nizeQuickFixDialog dialog) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      dialog.show();
+      if (!dialog.isOK()) return null;
+    }
     final String key = dialog.getKey();
     final String value = dialog.getValue();
 

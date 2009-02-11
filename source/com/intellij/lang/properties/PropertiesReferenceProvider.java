@@ -1,7 +1,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.i18n.I18nUtil;
+import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.PsiReferenceProvider;
@@ -12,6 +12,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.lang.properties.references.PropertyReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -46,7 +47,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
       final Map<String, Object> annotationParams = new HashMap<String, Object>();
       annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-      if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
+      if (JavaI18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
         soft = false;
         final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
         if (resourceBundleName instanceof PsiExpression) {

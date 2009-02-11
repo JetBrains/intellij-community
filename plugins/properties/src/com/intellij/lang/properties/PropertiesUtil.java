@@ -7,10 +7,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -87,11 +90,11 @@ public class PropertiesUtil {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         PsiDirectory directory = psiFile.getParent();
-        PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
-        if (pkg == null) {
+        String packageQualifiedName = getPackageQualifiedName(directory);
+        if (packageQualifiedName == null) {
           return null;
         }
-        StringBuilder qName = new StringBuilder(pkg.getQualifiedName());
+        StringBuilder qName = new StringBuilder(packageQualifiedName);
           if (qName.length() > 0) {
             qName.append(".");
           }
@@ -160,7 +163,7 @@ public class PropertiesUtil {
       PsiFile psiFile = PsiManager.getInstance(searchFromModule.getProject()).findFile(vFile);
       if (psiFile instanceof PropertiesFile) return (PropertiesFile) psiFile;
     }
-    return null;    
+    return null;
   }
 
   @Nullable
@@ -169,5 +172,9 @@ public class PropertiesUtil {
                                                  @Nullable Locale locale) {
     PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(searchFromModule.getProject());
     return manager.findPropertiesFile(searchFromModule, bundleName, locale);
+  }
+
+  public static String getPackageQualifiedName(PsiDirectory directory) {
+    return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
 }
