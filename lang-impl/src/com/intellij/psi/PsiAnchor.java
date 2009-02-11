@@ -8,8 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
@@ -33,7 +33,7 @@ public abstract class PsiAnchor {
   public abstract int getStartOffset();
   public abstract int getEndOffset();
 
-  public static PsiAnchor create(PsiElement element) {
+  public static PsiAnchor create(final PsiElement element) {
     if (element instanceof PsiCompiledElement) {
       return new HardReference(element);
     }
