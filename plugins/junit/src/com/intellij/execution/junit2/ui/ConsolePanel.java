@@ -95,7 +95,7 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
     myPrinter = printer;
     myLeftPane = ScrollPaneFactory.createScrollPane();
     myStatisticsPanel = new StatisticsPanel();
-    myToolbarPanel = new JUnitToolbarPanel(properties, runnerSettings, configurationSettings);
+    myToolbarPanel = new JUnitToolbarPanel(properties, runnerSettings, configurationSettings, this);
     myStatusLine = new StatusLine();
     myTreeView = new JUnitTestTreeView();
     final Splitter splitter = createSplitter(PROPORTION_PROPERTY, DEFAULT_PROPORTION);

@@ -23,7 +23,10 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestsUIUtil;
+import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -32,6 +35,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
+
 public class JUnitToolbarPanel extends ToolbarPanel {
   @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
   private RerunFailedTestsAction myRerunFailedTestsAction;
@@ -39,16 +44,18 @@ public class JUnitToolbarPanel extends ToolbarPanel {
 
   public JUnitToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,
-                      final ConfigurationPerRunnerSettings configurationSettings) {
-    super(properties, runnerSettings, configurationSettings);
+                      final ConfigurationPerRunnerSettings configurationSettings,
+                      final JComponent parentComponent) {
+    super(properties, runnerSettings, configurationSettings, parentComponent);
   }
 
   protected void appendAdditionalActions(final DefaultActionGroup actionGroup, final TestConsoleProperties properties, final RunnerSettings runnerSettings,
-                                         final ConfigurationPerRunnerSettings configurationSettings) {
+                                         final ConfigurationPerRunnerSettings configurationSettings,
+                                         JComponent parent) {
     myTrackCoverageAction = new TrackCoverageAction(properties);
     actionGroup.add(myTrackCoverageAction);
-    myRerunFailedTestsAction = new RerunFailedTestsAction();
-    myRerunFailedTestsAction.init((JavaAwareTestConsoleProperties)properties, runnerSettings, configurationSettings);
+    myRerunFailedTestsAction = new RerunFailedTestsAction(parent);
+    myRerunFailedTestsAction.init(properties, runnerSettings, configurationSettings);
     actionGroup.add(myRerunFailedTestsAction);
   }
 

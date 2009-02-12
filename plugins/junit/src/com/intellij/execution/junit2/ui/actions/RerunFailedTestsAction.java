@@ -27,13 +27,16 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /**
  * @author Alexey
  */
 public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
-  public RerunFailedTestsAction() {
+  public RerunFailedTestsAction(JComponent parent) {
     copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
+    registerCustomShortcutSet(getShortcutSet(), parent);
   }
 
   @Override

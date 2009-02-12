@@ -22,13 +22,15 @@ import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGRunnableState;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
 public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
-  public RerunFailedTestsAction() {
+  public RerunFailedTestsAction(JComponent parent) {
     copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
+    registerCustomShortcutSet(getShortcutSet(), parent);
   }
 
   @Override
