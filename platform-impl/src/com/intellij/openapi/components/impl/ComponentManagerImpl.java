@@ -540,6 +540,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private final ComponentConfig myConfig;
     private ComponentAdapter myDelegate;
     private boolean myInitialized = false;
+    private boolean myInitializing = false;
 
     public ComponentConfigComponentAdapter(final ComponentConfig config) {
       myConfig = config;
@@ -606,6 +607,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                 componentInstance = super.getComponentInstance(picoContainer);
 
                 if (!myInitialized) {
+                  if (myInitializing) LOG.error(new Throwable("Cyclic component initialization: " + componentKey));
+                  myInitializing = true;
                   myComponentsRegistry.registerComponentInstance(componentInstance);
                   initComponent(componentInstance);
                   long endTime = System.nanoTime();
@@ -613,6 +616,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                   if (ms > 10 && LOG.isDebugEnabled()) {
                     LOG.debug(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
                   }
+                  myInitializing = false;
                   myInitialized = true;
                 }
               }
