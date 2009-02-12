@@ -882,7 +882,11 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
-    Disposer.register(Disposer.get("ui"), myDisposable); // ensure everything is disposed on app quit
+
+    final Disposable uiParent = Disposer.get("ui");
+    if (uiParent != null) { // may be null if no app yet (license agreement)
+      Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
+    }
 
     myPeer.show();
   }
