@@ -29,7 +29,7 @@ public class SystemNotificationsImpl implements SystemNotifications, PersistentS
 
     final GrowlNotifications nofications;
     try {
-      nofications = GrowlNotifications.getNofications();
+      nofications = GrowlNotifications.getNotifications();
     }
     catch (Throwable e) {
       myGrowlDisabled = true;
@@ -43,7 +43,7 @@ public class SystemNotificationsImpl implements SystemNotifications, PersistentS
   private boolean isGrowlEnabled() {
     if (myGrowlDisabled || !SystemInfo.isMac) return false;
 
-    if ("true".equalsIgnoreCase(System.getProperty("growl.disable")) || System.getProperty("java.version").startsWith("1.6")) {
+    if ("true".equalsIgnoreCase(System.getProperty("growl.disable"))) {
       myGrowlDisabled = true;
     }
 

@@ -1,10 +1,8 @@
 package com.intellij.ui;
 
-import com.apple.cocoa.application.NSApplication;
-import com.apple.cocoa.foundation.NSArray;
-import com.growl.Growl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.growl.Growl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,18 +16,15 @@ class GrowlNotifications {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GrowlNotifications");
 
   private static GrowlNotifications ourNotifications;
-  private Growl myGrowl;
   private final Set<String> myNotifications = new TreeSet<String>();
+  private Growl myGrowl;
 
   public GrowlNotifications() {
     this(ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   GrowlNotifications(String fullProductName) {
-    myGrowl = new Growl(
-      fullProductName,
-      NSApplication.sharedApplication().applicationIconImage().TIFFRepresentation(),
-        new NSArray(), new NSArray(), false);
+    myGrowl = new Growl(fullProductName);
     register();
   }
 
@@ -37,7 +32,7 @@ class GrowlNotifications {
     return ArrayUtil.toStringArray(myNotifications);
   }
 
-  public static synchronized GrowlNotifications getNofications() {
+  public static synchronized GrowlNotifications getNotifications() {
     if (ourNotifications == null) {
       ourNotifications = new GrowlNotifications();
     }
