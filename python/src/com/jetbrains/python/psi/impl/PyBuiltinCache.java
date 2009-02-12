@@ -39,6 +39,8 @@ public class PyBuiltinCache {
       if (builtinFiles.length == 1) {
         myBuiltinsFile = (PyFile) builtinFiles [0];
       }
+      // TODO: make builtins file a per-SDK object.
+      // maybe use ResolveImportUtil.resolveInRoots() somehow.
     }
     return myBuiltinsFile;
   }
@@ -120,6 +122,12 @@ public class PyBuiltinCache {
    * @return true iff target is inside the __builtins__.py 
    */
   public static boolean hasInBuiltins(@Nullable PsiElement target) {
-    return target != null && PyBuiltinCache.BUILTIN_FILE.equals(target.getContainingFile().getName());
+    if (target == null) return false;
+    if (! target.isValid()) return false;
+    final PsiFile the_file = target.getContainingFile();
+    if (the_file == null) {
+      return false;
+    }
+    return PyBuiltinCache.BUILTIN_FILE.equals(the_file.getName());
   }
 }

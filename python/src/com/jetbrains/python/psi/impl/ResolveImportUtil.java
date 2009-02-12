@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -14,6 +15,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,11 +26,11 @@ import java.util.Set;
  * @author yole
  */
 public class ResolveImportUtil {
-  
+
   /** Name of the __init__.py special file. */
   @NonNls public static final String INIT_PY = "__init__.py";
-  @NonNls public static final String PY_SUFFIX = ".py"; 
-  
+  @NonNls public static final String PY_SUFFIX = ".py";
+
   private ResolveImportUtil() {
   }
 
@@ -43,7 +45,7 @@ public class ResolveImportUtil {
   /**
    * Resolves a reference in an import statement into whatever object it refers to.
    * @param importRef a reference within an import element.
-   * @return the object importRef refers to, or null. 
+   * @return the object importRef refers to, or null.
    */
   @Nullable
   static PsiElement resolveImportReference(final PyReferenceExpression importRef) {
@@ -76,13 +78,13 @@ public class ResolveImportUtil {
    * Finds a named submodule file/dir under given root.
    */
   @Nullable
-  private static PsiElement matchToFile(String name, PyReferenceExpression importRef, VirtualFile root_file) {
+  private static PsiElement matchToFile(String name, PsiManager manager, VirtualFile root_file) {
     VirtualFile child_file = root_file.findChild(name);
     if (child_file != null) {
       if (name.equals(child_file.getName())) {
         VirtualFile initpy = child_file.findChild(INIT_PY);
         if (initpy != null) {
-          PsiFile initfile = importRef.getManager().findFile(initpy);
+          PsiFile initfile = manager.findFile(initpy);
           if (initfile != null) {
             initfile.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE); // we really resolved to the dir
             return initfile;
@@ -92,7 +94,7 @@ public class ResolveImportUtil {
     }
     return null;
   }
-  
+
   /**
    * Resolves either <tt>import foo</tt> or <tt>from foo import bar</tt>.
    * @param importRef refers to the name of the module being imported (the <tt>foo</tt>).
@@ -123,31 +125,23 @@ public class ResolveImportUtil {
         }
         else return null; // topmost qualifier not found
         while (it.hasNext()) {
-          last_resolved =  resolveChild(last_resolved, it.next().getName(), containing_file);
+          last_resolved =  resolveChild(last_resolved, it.next().getName(), containing_file, true);
           if (last_resolved == null) return null; // anything in the chain unresolved means that the whole chain fails
         }
         if (referencedName != null) {
-          return resolveChild(last_resolved, referencedName, containing_file);
+          return resolveChild(last_resolved, referencedName, containing_file, false);
         }
         else return last_resolved;
       }
 
       // non-qualified name
       if (referencedName != null) {
-        return resolveChild(importRef.resolve(), referencedName, containing_file);
+        return resolveChild(importRef.resolve(), referencedName, containing_file, false);
         // the importRef.resolve() does not recurse infinitely because we're asked to resolve referencedName, not importRef itself
       }
       // unqualified import can be found:
       // in the same dir
-      PsiFile pfile = importRef.getContainingFile().getOriginalFile();
-      if (pfile != null) {
-        PsiDirectory pdir = pfile.getContainingDirectory();
-        if (pdir != null) {
-          PsiElement elt = resolveChild(pdir, the_name, containing_file);
-          if (elt != null) return elt;
-        }
-
-      }
+      /*
 
       final Module module = ModuleUtil.findModuleForPsiElement(importRef);
       if (module != null) {
@@ -193,7 +187,7 @@ public class ResolveImportUtil {
                 importRef.getContainingFile().getVirtualFile()
             )
           ) {
-            PsiElement elt = resolveInRoots(entry.getFiles(OrderRootType.SOURCES), the_name, importRef);
+            PsiElement elt = resolveWithinRoots(entry.getFiles(OrderRootType.SOURCES), the_name, importRef);
             if (elt != null) return elt;
           }
         }
@@ -201,11 +195,92 @@ public class ResolveImportUtil {
           return null; // any cut corners might result in an NPE; resolution fails, but not the IDE.
         }
       }
+      */
+      PsiElement root_elt = resolveInRoots(importRef, the_name);
+      if (root_elt != null) return root_elt;
     }
     finally {
       being_imported.remove(import_fqname); // unmark
     }
     return null; // not resolved by any means
+  }
+
+  /**
+   * Looks for a name among element's module's roots; if there's no module, then among project's roots.
+   * @param elt PSI element that defines the module and/or the project.
+   * @param refName module name to be found among roots.
+   * @return a PsiFile, a child of a root.
+   */
+  @Nullable
+  public static PsiElement resolveInRoots(@NotNull final PsiElement elt, final String refName) {
+    // NOTE: a quick and ditry temporary fix for "current dir" root path, which is assumed to be present first (but may be not).
+    PsiFile pfile = elt.getContainingFile();
+    VirtualFile vfile = pfile.getVirtualFile();
+    if (vfile == null) { // we're probably within a copy, e.g. for completion; get the real thing
+      pfile = pfile.getOriginalFile();
+    }
+    if (pfile != null) {
+      PsiDirectory pdir = pfile.getContainingDirectory();
+      if (pdir != null) {
+        PsiElement child_elt = resolveChild(pdir, refName, pfile, true);
+        if (child_elt != null) return child_elt;
+      }
+
+    }
+    // real search
+    final Module module = ModuleUtil.findModuleForPsiElement(elt);
+    if (module != null) {
+      // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
+      // Module-based approach works only in the IDEA plugin.
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      // look in module sources
+      boolean source_entries_missing = true;
+      for (ContentEntry entry: rootManager.getContentEntries()) {
+        VirtualFile root_file = entry.getFile();
+
+        PsiElement ret = matchToFile(refName, elt.getManager(), root_file);
+        if (ret != null) return ret;
+        for (VirtualFile folder : entry.getSourceFolderFiles()) {
+          source_entries_missing = false;
+          ret = matchToFile(refName, elt.getManager(), folder);
+          if (ret != null) return ret;
+        }
+      }
+      if (source_entries_missing) {
+        // fallback for a case without any source entries: use project root
+        VirtualFile project_root = module.getProject().getBaseDir();
+        PsiElement ret = matchToFile(refName, elt.getManager(), project_root);
+        if (ret != null) return ret;
+      }
+      // else look in SDK roots
+      RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
+        @Nullable
+        public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
+          if (value != null) return value;
+          LookupRootVisitor visitor = new LookupRootVisitor(refName, elt.getManager());
+          visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
+          return visitor.getResult();
+        }
+      };
+      PsiElement ret = rootManager.processOrder(resolvePolicy, null);
+      if (ret != null) return ret;
+    }
+    else {
+      // no module, another way to look in SDK roots
+      try {
+        for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(
+              elt.getContainingFile().getVirtualFile()
+          )
+        ) {
+          PsiElement root_elt = resolveWithinRoots(entry.getFiles(OrderRootType.SOURCES), refName, elt.getProject());
+          if (root_elt != null) return root_elt;
+        }
+      }
+      catch (NullPointerException ex) { // NOTE: not beautiful
+        return null; // any cut corners might result in an NPE; resolution fails, but not the IDE.
+      }
+    }
+    return null; // nothing matched
   }
 
   @Nullable
@@ -220,9 +295,9 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveInRoots(final VirtualFile[] roots, final String referencedName, final PyReferenceExpression importRef) {
+  private static PsiElement resolveWithinRoots(final VirtualFile[] roots, final String referencedName, final Project project) {
     for(VirtualFile contentRoot: roots) {
-      PsiElement result = resolveInRoot(contentRoot, referencedName, importRef);
+      PsiElement result = resolveWithinRoot(contentRoot, referencedName, project);
       if (result != null) return result;
     }
     return null;
@@ -238,12 +313,12 @@ public class ResolveImportUtil {
   Tries to find referencedName under a root.
   @param root where to look for the referenced name.
   @param referencedName which name to look for.
-  @param importRef import reference which resolution led to this call.
+  @param project Project to use.
   @return the element the referencedName resolves to, or null.
   */
   @Nullable
-  private static PsiElement resolveInRoot(final VirtualFile root, final String referencedName, final PyReferenceExpression importRef) {
-    final PsiManager psi_mgr = PsiManager.getInstance(importRef.getProject());
+  private static PsiElement resolveWithinRoot(final VirtualFile root, final String referencedName, final Project project) {
+    final PsiManager psi_mgr = PsiManager.getInstance(project);
     final VirtualFile childFile = root.findChild(referencedName + PY_SUFFIX);
     if (childFile != null) {
       return psi_mgr.findFile(childFile);
@@ -335,19 +410,20 @@ public class ResolveImportUtil {
   For details of this ugly magic, see {@link com.jetbrains.python.psi.impl.PyReferenceExpressionImpl#resolve()}.
   @param parent element under which to look for referenced name.
   @param referencedName which name to look for.
-  @param containingFile where we're in
+  @param containingFile where we're in.
+  @param fileOnly if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
   @return the element the referencedName resolves to, or null.
   @todo: Honor module's __all__ value.
   @todo: Honor package's __path__ value (hard).
   */
   @Nullable
-  public static PsiElement resolveChild(final PsiElement parent, final String referencedName, final PsiFile containingFile) {
+  public static PsiElement resolveChild(final PsiElement parent, final String referencedName, final PsiFile containingFile, boolean fileOnly) {
     PsiDirectory dir = null;
     PsiElement ret = null;
     PyResolveUtil.ResolveProcessor processor = null;
     if (parent instanceof PyFile) {
       boolean is_dir = (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE);
-      PyFile pfparent = (PyFile)parent; 
+      PyFile pfparent = (PyFile)parent;
       if (! is_dir) {
         // look for name in the file:
         processor = new PyResolveUtil.ResolveProcessor(referencedName);
@@ -366,11 +442,14 @@ public class ResolveImportUtil {
       final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
       for(PsiDirectory childDir: container.getDirectories()) {
         final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, processor);
+        if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
         if (result != null) return result;
       }
     }
     if (dir != null) {
-      return resolveInDirectory(referencedName, containingFile, dir, processor);
+      final PsiElement result =  resolveInDirectory(referencedName, containingFile, dir, processor);
+      if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
+      return result;
     }
     return ret;
   }

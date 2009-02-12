@@ -39,7 +39,7 @@ public class PyModuleType implements PyType { // TODO: make it a PyClassType ref
 
   public PsiElement resolveMember(final String name) {
     //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
-    return ResolveImportUtil.resolveChild(myModule, name, null);
+    return ResolveImportUtil.resolveChild(myModule, name, null, false);
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {

@@ -5,4 +5,9 @@
     <line>2</line>
     <description>Unresolved reference 'testcase'</description>
   </problem>
+  <problem>
+    <file>testcase.py</file>
+    <line>4</line>
+    <description>Unresolved reference 'wurm'</description>
+  </problem>
 </problems>

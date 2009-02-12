@@ -15,12 +15,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import static com.jetbrains.python.PyNames.DOT_PY;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ResolveImportUtil;
@@ -57,14 +55,110 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
   }
 
   @Nullable
-  protected String getRefName() {
-    return ((PyReferenceExpression)myReference).getReferencedName();
+  private String getRefName() {
+    return getRefName(myReference);
   }
-  
-  protected PsiFile[] getRefFiles(final String referenceName) {
-    PsiFile[] files = FilenameIndex.getFilesByName(myProject, referenceName + DOT_PY, GlobalSearchScope.allScope(myProject));
+
+  @Nullable
+  private static String getRefName(PsiReference ref) {
+    return ((PyReferenceExpression)ref).getReferencedName();
+  }
+
+  /**
+   * Finds first import statement that imports given name. 
+   */
+  private static class ImportLookupProcessor implements PsiScopeProcessor {
+
+    String name;
+    PsiElement found;
+
+    private ImportLookupProcessor(String name) {
+      this.name = name;
+      this.found = null;
+    }
+
+    public boolean execute(PsiElement element, ResolveState state) {
+      if (element instanceof PyImportElement) {
+        PyImportElement imp = ((PyImportElement)element);
+        PyReferenceExpression ref = imp.getImportReference();
+        if (ref != null) {
+          String refname = ref.getReferencedName();
+          if (refname != null && refname.equals(name)) {
+            found = element;
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    public <T> T getHint(Class<T> hintClass) {
+      return null;
+    }
+
+    public void handleEvent(Event event, Object associated) { }
+
+    public PsiElement getFound() {
+      return found;
+    }
+  }
+
+  /*
+  private PsiFile[] getRefFiles(final String referenceName) {
+    return getRefFiles(referenceName, myProject);
+  }
+
+  private static PsiFile[] getRefFiles(final String referenceName, Project project) {
+    PsiFile[] files = FilenameIndex.getFilesByName(project, referenceName + DOT_PY, GlobalSearchScope.allScope(project));
     if (files == null) files = PsiFile.EMPTY_ARRAY;
     return files;
+  }
+  */
+
+  /**
+   * @param ref a reference to something potentially importable.
+   * @return true if the referred name can actually be made resolvable by adding an import statement.
+   */
+  public static boolean isAvailableAt(PsiReference ref) {
+    if (ref == null) return false;
+    final PsiElement element = ref.getElement();
+    // not within import
+    if (PsiTreeUtil.getParentOfType(element, PyImportStatement.class) != null) return false;
+    if (PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class) != null) return false;
+    // don't propose to import unknown fields, etc qualified things
+    if (ref instanceof PyReferenceExpression) {
+      final PyExpression qual = ((PyReferenceExpression)ref).getQualifier();
+      if (qual != null) return false;
+    }
+    // don't propose to import unimportable
+    if (
+      !(ref instanceof PyReferenceExpression)  ||
+      (ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)ref, null) == null)
+    ) return false;
+
+    final String referenceName = getRefName(ref);
+    /*
+    // don't propose to import what's already imported, under different name or unsuccessfully for any reason
+    ImportLookupProcessor ilp = new ImportLookupProcessor(referenceName);
+    PyResolveUtil.treeCrawlUp(ilp, element);
+    if (ilp.getFound() != null) return false; // we found such an import already
+    */
+
+    // see if there's something to import
+    return (ResolveImportUtil.resolveInRoots(element, referenceName) != null);
+  }
+
+  /**
+   * @param ref supposed reference to a module
+   * @return true if a module with the referenced name is already imported, maybe under a different alias.
+   */
+  public static boolean isAlreadyImportedDifferently(PsiReference ref) {
+    if (ref == null) return false;
+    final PsiElement element = ref.getElement();
+    final String referenceName = getRefName(ref);
+    ImportLookupProcessor ilp = new ImportLookupProcessor(referenceName);
+    PyResolveUtil.treeCrawlUp(ilp, element);
+    return (ilp.getFound() != null);
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
@@ -82,10 +176,18 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
       !(myReference instanceof PyReferenceExpression)  ||
       (ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)myReference, null) == null)
     ) return false;
-    //
+    // don't propose to import what's already imported, under different name or unsuccessfully for any reason
     final String referenceName = getRefName();
+    ImportLookupProcessor ilp = new ImportLookupProcessor(referenceName);
+    PyResolveUtil.treeCrawlUp(ilp, element);
+    if (ilp.getFound() != null) return false; // we found such an import already
+
+    // see if there's something to import
+    /*
     final PsiFile[] files = getRefFiles(referenceName);
     return files != null && files.length > 0;
+    */
+    return (ResolveImportUtil.resolveInRoots(file, referenceName) != null);
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -96,8 +198,8 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final String referenceName = getRefName();
-        final PsiFile[] files = getRefFiles(referenceName);
-        if (files.length == 1) {
+        if (ResolveImportUtil.resolveInRoots(file, referenceName) != null) { 
+          // TODO: annotate the case of multiple files
           final PyImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createImportStatementFromText(
               myProject, "import " + referenceName + "\n\n"
           );
@@ -137,8 +239,11 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
 
   public boolean showHint(final Editor editor) {
     final String referenceName = getRefName();
+    /*
     final PsiFile[] files = getRefFiles(referenceName);
     if (!(files != null && files.length > 0)) return false;
+    */
+    if (ResolveImportUtil.resolveInRoots(myReference.getElement(), referenceName) == null) return false;
     String hintText = ShowAutoImportPass.getMessage(false, getRefName());
     HintManager.getInstance().showQuestionHint(editor, hintText, myReference.getElement().getTextOffset(),
                                                myReference.getElement().getTextRange().getEndOffset(), this);
