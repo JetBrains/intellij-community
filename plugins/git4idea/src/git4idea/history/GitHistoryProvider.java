@@ -28,6 +28,7 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -55,8 +56,8 @@ public class GitHistoryProvider implements VcsHistoryProvider {
   /**
    * {@inheritDoc}
    */
-  public ColumnInfo[] getRevisionColumns(final VcsHistorySession session) {
-    return new ColumnInfo[0];
+  public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
+    return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[0]);
   }
 
   /**

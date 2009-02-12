@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,8 +32,11 @@ import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -81,11 +87,54 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     return true;
   }
 
-  public ColumnInfo[] getRevisionColumns(final VcsHistorySession session) {
+  public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
+    final ColumnInfo[] columns;
+    final Consumer<VcsFileRevision> listener;
+    final JComponent addComp;
     if (((MyHistorySession) session).isSupports15()) {
-      return new ColumnInfo[] {new CopyFromColumnInfo(), new MergeSourceColumnInfo((MyHistorySession) session)};
+      final MergeSourceColumnInfo mergeSourceColumn = new MergeSourceColumnInfo((MyHistorySession)session);
+      columns = new ColumnInfo[] {new CopyFromColumnInfo(), mergeSourceColumn};
+
+      final JTextArea field = new JTextArea();
+      field.setEditable(false);
+      field.setBackground(UIUtil.getComboBoxDisabledBackground());
+      field.setWrapStyleWord(true);
+      listener = new Consumer<VcsFileRevision>() {
+        public void consume(VcsFileRevision vcsFileRevision) {
+          field.setText(mergeSourceColumn.getText(vcsFileRevision));
+        }
+      };
+      final JPanel panel = new JPanel(new GridBagLayout());
+      final GridBagConstraints gb =
+        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+
+      final JLabel mergeLabel = new JLabel("Merge Sources:");
+      final MergeSourceDetailsAction sourceAction = new MergeSourceDetailsAction();
+      sourceAction.registerSelf(forShortcutRegistration);
+      final DefaultActionGroup group = new DefaultActionGroup();
+      group.add(sourceAction);
+      final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+
+      panel.add(mergeLabel, gb);
+      ++ gb.gridx;
+      gb.insets.left = 10;
+      gb.anchor = GridBagConstraints.NORTHWEST;
+      panel.add(toolbar, gb);
+
+      ++ gb.gridy;
+      gb.insets.left = 0;
+      gb.gridx = 0;
+      gb.gridwidth = 2;
+      gb.weightx = gb.weighty = 1;
+      gb.fill = GridBagConstraints.BOTH;
+      panel.add(ScrollPaneFactory.createScrollPane(field), gb);
+      addComp = panel;
+    } else {
+      columns = new ColumnInfo[] {new CopyFromColumnInfo()};
+      addComp = null;
+      listener = null;
     }
-    return new ColumnInfo[] {new CopyFromColumnInfo()};
+    return new VcsDependentHistoryComponents(columns, listener, addComp);
   }
 
   private class MyHistorySession extends VcsHistorySession {
@@ -254,7 +303,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   }
 
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
-    return new AnAction[]{new ShowAllSubmittedFilesAction()};
+    final MergeSourceDetailsAction mergeSourceAction = new MergeSourceDetailsAction();
+    return new AnAction[]{new ShowAllSubmittedFilesAction(), mergeSourceAction};
   }
 
   public boolean isDateOmittable() {
@@ -375,9 +425,18 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       return (VcsFileRevision) vcsFileRevision;
     }
 
+    public String getText(final VcsFileRevision vcsFileRevision) {
+      return myRenderer.getText(vcsFileRevision);
+    }
+
     @Override
     public int getAdditionalWidth() {
-      return 6;
+      return 20;
+    }
+
+    @Override
+    public String getPreferredStringValue() {
+      return "1234567, 1234567, 1234567";
     }
   }
 
@@ -437,6 +496,26 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       myFile = session.getCommittedPath().getVirtualFile();
     }
 
+    public String getText(final VcsFileRevision value) {
+      if (! (value instanceof SvnFileRevision)) return "";
+      final SvnFileRevision revision = (SvnFileRevision) value;
+      final List<SvnFileRevision> mergeSources = revision.getMergeSources();
+      if (mergeSources.isEmpty()) {
+        return "";
+      }
+      final StringBuilder sb = new StringBuilder();
+      for (SvnFileRevision source : mergeSources) {
+        if (sb.length() != 0) {
+          sb.append(", ");
+        }
+        sb.append(source.getRevisionNumber().asString());
+        if (! source.getMergeSources().isEmpty()) {
+          sb.append("*");
+        }
+      }
+      return sb.toString();
+    }
+
     protected void customizeCellRenderer(final JTable table,
                                          final Object value,
                                          final boolean selected,
@@ -452,24 +531,34 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
         return;
       }
       final SvnFileRevision revision = (SvnFileRevision) value;
-      final List<SvnFileRevision> mergeSources = revision.getMergeSources();
-      if (mergeSources.isEmpty()) {
+      final String text = getText(revision);
+      if (text.length() == 0) {
         append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         return;
       }
-      final StringBuilder sb = new StringBuilder();
-      for (SvnFileRevision source : mergeSources) {
-        if (sb.length() != 0) {
-          sb.append(", ");
-        }
-        sb.append(source.getRevisionNumber().asString());
-        if (! source.getMergeSources().isEmpty()) {
-          sb.append("*");
+
+      append(cutString(text, table.getCellRect(row, column, false).getWidth()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+
+    private String cutString(final String text, final double value) {
+      final FontMetrics m = getFontMetrics(getFont());
+      final Graphics g = getGraphics();
+
+      if (m.getStringBounds(text, g).getWidth() < value) return text;
+
+      final String dots = "...";
+      final double dotsWidth = m.getStringBounds(dots, g).getWidth();
+      if (dotsWidth >= value) {
+        return dots;
+      }
+
+      for (int i = 1; i < text.length(); i++) {
+        if ((m.getStringBounds(text, 0, i, g).getWidth() + dotsWidth) >= value) {
+          if (i < 2) return dots;
+          return text.substring(0, i - 1) + dots;
         }
       }
-      append(sb.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append("more...", SimpleTextAttributes.LINK_ATTRIBUTES, MERGE_SOURCE_DETAILS_TAG);
+      return text;
     }
   }
 
