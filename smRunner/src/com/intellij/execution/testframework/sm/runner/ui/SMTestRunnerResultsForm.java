@@ -502,7 +502,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
                                                  final ConfigurationPerRunnerSettings configurationSettings) {
     toolbarPanel.setLayout(new BorderLayout());
     final SMTRunnerToolbarPanel toolbar =
-        new SMTRunnerToolbarPanel(consoleProperties, runnerSettings, configurationSettings, this);
+        new SMTRunnerToolbarPanel(consoleProperties, runnerSettings, configurationSettings, this,myContentPane);
     toolbarPanel.add(toolbar);
 
     return toolbar;

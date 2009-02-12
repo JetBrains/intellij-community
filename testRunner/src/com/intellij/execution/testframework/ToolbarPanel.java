@@ -29,7 +29,7 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
 
   public ToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,
-                      final ConfigurationPerRunnerSettings configurationSettings) {
+                      final ConfigurationPerRunnerSettings configurationSettings, JComponent parent) {
     super (new BorderLayout());
     add(new JLabel(IconLoader.getIcon("/general/inactiveSeparator.png")), BorderLayout.WEST);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
@@ -44,11 +44,11 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
                                               properties, TestConsoleProperties.TRACK_RUNNING_TEST));
 
     actionGroup.addSeparator();
-    AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
+    AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, parent);
     action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.collapse.test.action.name"));
     actionGroup.add(action);
 
-    action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
+    action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, parent);
     action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.expand.test.action.name"));
     actionGroup.add(action);
 
@@ -72,7 +72,7 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
                                               ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
                                               IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
                                               properties, TestConsoleProperties.OPEN_FAILURE_LINE));
-    appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings);
+    appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
 
     add(ActionManager.getInstance().
         createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
@@ -80,7 +80,8 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
   }
 
   protected abstract void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties, RunnerSettings runnerSettings,
-                                         ConfigurationPerRunnerSettings configurationSettings);
+                                                  ConfigurationPerRunnerSettings configurationSettings,
+                                                  JComponent parent);
 
   public void setModel(final TestFrameworkRunningModel model) {
     TestFrameworkActions.installFilterAction(model);
