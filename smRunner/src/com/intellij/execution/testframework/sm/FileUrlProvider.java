@@ -93,6 +93,10 @@ public class FileUrlProvider implements TestLocationProvider {
         elementAtLine = elementAtLine.getNextSibling();
       }
     }
-    return PsiLocation.fromPsiElement(project, elementAtLine != null ? elementAtLine : psiFile);
+    final PsiElement leafPsiElementAtLine = elementAtLine == null
+        ? null
+        : psiFile.findElementAt(elementAtLine.getTextOffset());
+
+    return PsiLocation.fromPsiElement(project, leafPsiElementAtLine != null ? leafPsiElementAtLine : psiFile);
   }
 }
