@@ -438,14 +438,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   public String getUnresolvedMessagePattern() {
     final StringBuilder builder = new StringBuilder(LangBundle.message("error.cannot.resolve"));
-    builder.append(" ").append(LangBundle.message("terms.file"));
-    if (!isLast()) {
-      for (final FileReferenceHelper helper : getHelpers()) {
-        builder.append(" ").append(LangBundle.message("error.cannot.resolve.infix")).append(" ")
-          .append(helper.getDirectoryTypeName());
-      }
-    }
-    builder.append(" ''{0}''.");
+    builder.append(" ").append(isLast() ? LangBundle.message("terms.file") : LangBundle.message("terms.directory"));
+    builder.append(" ''{0}''");
     return builder.toString();
   }
 

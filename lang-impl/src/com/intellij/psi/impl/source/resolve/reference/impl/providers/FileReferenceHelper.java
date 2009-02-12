@@ -26,6 +26,8 @@ public interface FileReferenceHelper {
 
   @NotNull String trimUrl(@NotNull String url);
 
+  /** will be removed */
+  @Deprecated
   @NotNull String getDirectoryTypeName();
 
   @Nullable
