@@ -71,7 +71,11 @@ public class IElementType {
    */
   public static IElementType[] enumerate(Predicate p) {
     List<IElementType> matches = new ArrayList<IElementType>();
-    for (IElementType value : ourRegistry) {
+    IElementType[] copy;
+    synchronized (ourRegistry) {
+      copy = ourRegistry.toArray(new IElementType[ourRegistry.size()]);
+    }
+    for (IElementType value : copy) {
       if (p.matches(value)) {
         matches.add(value);
       }
@@ -96,7 +100,9 @@ public class IElementType {
     if (register) {
       myIndex = ourCounter++;
       LOG.assertTrue(ourCounter < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
-      ourRegistry.add(this);
+      synchronized (ourRegistry) {
+        ourRegistry.add(this);
+      }
     }
     else {
       myIndex = -1;
@@ -137,8 +143,10 @@ public class IElementType {
    */
 
   public static IElementType find(short idx) {
-    if (idx == 0) return ourRegistry.get(0); // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.  
-    return ourRegistry.get(idx - FIRST_TOKEN_INDEX);
+    synchronized (ourRegistry) {
+      if (idx == 0) return ourRegistry.get(0); // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.  
+      return ourRegistry.get(idx - FIRST_TOKEN_INDEX);
+    }
   }
 
   /**
