@@ -16,7 +16,7 @@ import javax.swing.tree.TreePath;
  * @author: Roman Chernyatchik
  */
 public class SMTRunnerTestTreeView extends TestTreeView {
-  public static DataKey<SMTRunnerTestTreeView> SM_TEST_RUNNER_VIEW  = DataKey.create("SM_TEST_RUNNER_VIEW");
+  public static final DataKey<SMTRunnerTestTreeView> SM_TEST_RUNNER_VIEW  = DataKey.create("SM_TEST_RUNNER_VIEW");
 
   @Nullable private TestResultsViewer myResultsViewer;
 
