@@ -29,7 +29,7 @@ public class RTestUnitStatisticsPanelTest extends BaseSMTRunnerTestCase {
     myRootSuite = createSuiteProxy("root");
 
     myResultsForm = (SMTestRunnerResultsForm)createResultsViewer(createConsoleProperties());
-    myStatisticsPanel = new StatisticsPanel(getProject());
+    myStatisticsPanel = new StatisticsPanel(getProject(), myResultsForm);
     myTestEventsListener = myStatisticsPanel.createTestEventsListener();
   }
 

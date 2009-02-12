@@ -56,7 +56,7 @@ public class SMTestRunnerConnectionUtil {
     final SMTRunnerConsoleView testRunnerConsole = new SMTRunnerConsoleView(consoleProperties, resultsViewer);
 
     // Statistics tab
-    final StatisticsPanel statisticsPane = new StatisticsPanel(project);
+    final StatisticsPanel statisticsPane = new StatisticsPanel(project, resultsViewer);
     resultsViewer.addTab(ExecutionBundle.message("statistics.tab.title"), null,
                          StatisticsPanel.STATISTICS_TAB_ICON,
                          statisticsPane.getContentPane());

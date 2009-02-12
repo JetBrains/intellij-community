@@ -1,5 +1,6 @@
 package com.intellij.execution.testframework.sm.runner.ui.statistics;
 
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
@@ -7,12 +8,19 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.TestProxySelectionChangedListener;
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ide.DataManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,20 +36,23 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class StatisticsPanel {
+public class StatisticsPanel implements DataProvider {
   public static final Icon STATISTICS_TAB_ICON = TestsUIUtil.loadIcon("testStatistics");
+  public static final DataKey<StatisticsPanel> SM_TEST_RUNNER_STATISTICS  = DataKey.create("SM_TEST_RUNNER_STATISTICS");
 
   private TableView<SMTestProxy> myStatisticsTableView;
   private JPanel myContentPane;
 
-  private StatisticsTableModel myTableModel;
+  private final StatisticsTableModel myTableModel;
   private final List<TestProxySelectionChangedListener> myChangeSelectionListeners = new ArrayList<TestProxySelectionChangedListener>();
-  private Project myProject;
+  private final Project myProject;
+  private final TestFrameworkRunningModel myFrameworkRunningModel;
 
-  public StatisticsPanel(final Project project) {
+  public StatisticsPanel(final Project project, final TestFrameworkRunningModel model) {
     myProject = project;
     myTableModel = new StatisticsTableModel();
     myStatisticsTableView.setModel(myTableModel);
+    myFrameworkRunningModel = model;
 
     final Runnable gotoSuiteOrParentAction = createGotoSuiteOrParentAction();
     myStatisticsTableView.addMouseListener(new MouseAdapter(){
@@ -69,9 +80,9 @@ public class StatisticsPanel {
                             gotoSuiteOrParentAction,
                             myStatisticsTableView);
     // Contex menu in Table
-    // Works incorrect because sometimes action updates in one context
-    // but actionPerfomed() called in other context
-    //PopupHandler.installPopupHandler(myStatisticsTableView, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
+    PopupHandler.installPopupHandler(myStatisticsTableView, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
+    // set this statistic tab as dataprovider for test's table view
+    myStatisticsTableView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, this);
   }
 
   public void addChangeSelectionListener(final TestProxySelectionChangedListener listener) {
@@ -134,13 +145,12 @@ public class StatisticsPanel {
     };
   }
 
-  //public Object getData(@NonNls final String dataId) {
-  //  final SMTestProxy testProxy = getSelectedItem();
-  //  if (testProxy == null) {
-  //    return null;
-  //  }
-  //  return TestsUIUtil.getData(testProxy, dataId, myModel);
-  //}
+  public Object getData(@NonNls final String dataId) {
+    if (SM_TEST_RUNNER_STATISTICS.getName().equals(dataId)) {
+      return this;
+    }
+    return TestsUIUtil.getData(getSelectedItem(), dataId, myFrameworkRunningModel);
+  }
 
   /**
    * On event change selection and probably requests focus. Is used when we want

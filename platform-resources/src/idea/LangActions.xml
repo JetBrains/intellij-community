@@ -789,6 +789,14 @@
               text="Show statistics"/>
       <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </group>
+    <group id="SMTestRunnerStatistics">
+      <separator/>
+      <action id="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowTestProxy"
+              class="com.intellij.execution.testframework.sm.runner.ui.statistics.ShowTestProxy"
+              text="Navigate to test"/>
+      <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
+    </group>
+
 
   </actions>
 </component>
