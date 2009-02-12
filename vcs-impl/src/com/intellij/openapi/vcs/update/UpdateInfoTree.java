@@ -54,6 +54,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -78,7 +79,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.UpdateInfoTree");
 
   private VirtualFile mySelectedFile;
-  private final JTree myTree = new Tree();
+  private final Tree myTree = new Tree();
   @NotNull private final Project myProject;
   private final UpdatedFiles myUpdatedFiles;
   private UpdateRootNode myRoot;
@@ -182,6 +183,15 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
     TreeUIHelper.getInstance().installToolTipHandler(myTree);
     TreeUtil.installActions(myTree);
+    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      public String convert(TreePath path) {
+        Object last = path.getLastPathComponent();
+        if (last instanceof AbstractTreeNode) {
+          return ((AbstractTreeNode)last).getName();
+        }
+        return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
+      }
+    });
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
