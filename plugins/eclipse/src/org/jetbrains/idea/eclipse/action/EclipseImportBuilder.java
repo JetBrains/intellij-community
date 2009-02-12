@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jdom.Element;
@@ -224,7 +225,12 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
 
     refsToModules.removeAll(getParameters().existingModuleNames);
-    refsToModules.removeAll(getParameters().projectsToConvert);
+    for (String path : getParameters().projectsToConvert) {
+      final String projectName = EclipseClasspathReader.getLastPathComponent(FileUtil.toSystemIndependentName(path));
+      if (projectName != null) {
+        refsToModules.remove(projectName);
+      }
+    }
     if (!refsToModules.isEmpty()) {
       if (message.length() > 0) message.append("\n");
       message.append("Unknown modules detected");
