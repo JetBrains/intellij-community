@@ -128,10 +128,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return false;
   }
 
-  public ColumnInfo[] getRevisionColumns(final VcsHistorySession session) {
-    return new ColumnInfo[]{
+  public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
+    return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[]{
       STATE, TAG, BRANCHES
-    };
+    });
   }
 
   public String getHelpId() {

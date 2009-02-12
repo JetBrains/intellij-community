@@ -47,6 +47,7 @@ import com.intellij.ui.dualView.DualTreeElement;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.ColumnInfo;
@@ -88,6 +89,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
 
   private final JEditorPane myComments;
+  private JComponent myAdditionalDetails;
+  private Consumer<VcsFileRevision> myListener;
   private String myOriginalComment = "";
   private final DefaultActionGroup myPopupActions;
 
@@ -364,8 +367,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myComments.setTransferHandler(newHandler);
   }
 
-  private static DualViewColumnInfo[] createColumnList(Project project, VcsHistoryProvider provider, final VcsHistorySession session) {
-    ColumnInfo[] additionalColunms = provider.getRevisionColumns(session);
+  private DualViewColumnInfo[] createColumnList(Project project, VcsHistoryProvider provider, final VcsHistorySession session) {
+    final VcsDependentHistoryComponents components = provider.getUICustomization(session, this);
+    myAdditionalDetails = components.getDetailsComponent();
+    myListener = components.getRevisionListener();
+
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
     if (provider.isDateOmittable()) {
       columns.addAll(Arrays.asList(REVISION, AUTHOR));
@@ -374,7 +380,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       columns.addAll(Arrays.asList(REVISION, DATE, AUTHOR));
     }
 
-    columns.addAll(wrapAdditionalColumns(additionalColunms));
+    columns.addAll(wrapAdditionalColumns(components.getColumns()));
     columns.add(new MessageColumnInfo(project));
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
   }
@@ -498,16 +504,22 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   private void updateMessage() {
     List selection = getSelection();
+    final VcsFileRevision revision;
     if (selection.size() != 1) {
+      revision = null;
       myComments.setText("");
       myOriginalComment = "";
     }
     else {
-      final String message = getFirstSelectedRevision().getCommitMessage();
+      revision = getFirstSelectedRevision();
+      final String message = revision.getCommitMessage();
       myOriginalComment = message;
       @NonNls final String text = "<html><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, message) + "</body></html>";
       myComments.setText(text);
       myComments.setCaretPosition(0);
+    }
+    if (myListener != null) {
+      myListener.consume(revision);
     }
   }
 
@@ -576,6 +588,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   protected JComponent createCenterPanel() {
     Splitter splitter = new Splitter(true, getSplitterProportion());
+    splitter.setDividerWidth(4);
+    //splitter.getDivider().setBackground(UIUtil.getBgFillColor(splitter.getDivider()).brighter());
 
     splitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
@@ -585,12 +599,21 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       }
     });
 
+    final Splitter detailsSplitter = new Splitter(false, 0.5f);
     JPanel commentGroup = new JPanel(new BorderLayout(4, 4));
-    commentGroup.add(new JLabel(COMMIT_MESSAGE_TITLE + ":"), BorderLayout.NORTH);
+    final JLabel commentLabel = new JLabel(COMMIT_MESSAGE_TITLE + ":") {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(super.getWidth(), 21);
+      }
+    };
+    commentGroup.add(commentLabel, BorderLayout.NORTH);
     commentGroup.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
+    detailsSplitter.setFirstComponent(commentGroup);
+    detailsSplitter.setSecondComponent(myAdditionalDetails);
 
     splitter.setFirstComponent(myDualView);
-    splitter.setSecondComponent(commentGroup);
+    splitter.setSecondComponent(detailsSplitter);
     return splitter;
   }
 

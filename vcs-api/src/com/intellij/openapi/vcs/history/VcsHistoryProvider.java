@@ -18,13 +18,14 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public interface VcsHistoryProvider {
 
-  ColumnInfo[] getRevisionColumns(final VcsHistorySession session);
+  VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, final JComponent forShortcutRegistration);
 
   AnAction[] getAdditionalActions(final FileHistoryPanel panel);
 

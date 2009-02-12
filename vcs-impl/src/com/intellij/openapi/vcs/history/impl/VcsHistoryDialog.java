@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.history.impl;
 
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
@@ -15,10 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -42,7 +40,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-public class VcsHistoryDialog extends DialogWrapper {
+public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
   private final AbstractVcs myActiveVcs;
@@ -111,7 +109,8 @@ public class VcsHistoryDialog extends DialogWrapper {
     myFile = file;
     String helpId = vcsHistoryProvider.getHelpId();
     myHelpId = helpId != null ? helpId : "reference.dialogs.vcs.selection.history";
-    myList = new TableView(new ListTableModel(createColumns(vcsHistoryProvider.getRevisionColumns(session))));
+    final VcsDependentHistoryComponents components = vcsHistoryProvider.getUICustomization(session, getRootPane());
+    myList = new TableView(new ListTableModel(createColumns(components.getColumns())));
     ((SortableColumnModel)myList.getModel()).setSortable(false);
 
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject);
@@ -135,7 +134,7 @@ public class VcsHistoryDialog extends DialogWrapper {
     mySplitter = new Splitter(true, getVcsConfiguration().FILE_HISTORY_DIALOG_SPLITTER_PROPORTION);
 
     mySplitter.setFirstComponent(myDiffPanel.getComponent());
-    mySplitter.setSecondComponent(createBottomPanel());
+    mySplitter.setSecondComponent(createBottomPanel(components.getDetailsComponent()));
 
     mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
@@ -149,13 +148,18 @@ public class VcsHistoryDialog extends DialogWrapper {
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
+        final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1) {
-          VcsFileRevision revision = (VcsFileRevision) myList.getItems().get(myList.getSelectedRow());
+          revision = (VcsFileRevision) myList.getItems().get(myList.getSelectedRow());
           myComments.setText(revision.getCommitMessage());
           myComments.setCaretPosition(0);
         }
         else {
+          revision = null;
           myComments.setText("");
+        }
+        if (components.getRevisionListener() != null) {
+          components.getRevisionListener().consume(revision);
         }
         updateDiff();
       }
@@ -337,9 +341,10 @@ public class VcsHistoryDialog extends DialogWrapper {
     return getContentOf(firstRev);
   }
 
-  private JComponent createBottomPanel() {
+  private JComponent createBottomPanel(final JComponent addComp) {
     Splitter splitter = new Splitter(true, getVcsConfiguration()
                                            .FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION);
+    splitter.setDividerWidth(4);
 
     splitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
@@ -355,7 +360,7 @@ public class VcsHistoryDialog extends DialogWrapper {
     tablePanel.add(myChangesOnlyCheckBox, BorderLayout.NORTH);
 
     splitter.setFirstComponent(tablePanel);
-    splitter.setSecondComponent(createComments());
+    splitter.setSecondComponent(createComments(addComp));
 
     return splitter;
   }
@@ -364,11 +369,26 @@ public class VcsHistoryDialog extends DialogWrapper {
     return myActiveVcs.getConfiguration();
   }
 
-  private JComponent createComments() {
+  private JComponent createComments(final JComponent addComp) {
+    final Splitter splitter = new Splitter(false);
+    final JLabel label = new JLabel("Commit Message:") {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(getWidth(), 21);
+      }
+    };
+
+    JPanel panel = new JPanel(new BorderLayout(4, 4));
+    panel.add(label, BorderLayout.NORTH);
+    panel.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
+
     myComments.setRows(5);
     myComments.setEditable(false);
     myComments.setLineWrap(true);
-    return new JScrollPane(myComments);
+
+    splitter.setFirstComponent(panel);
+    splitter.setSecondComponent(addComp);
+    return splitter;
   }
 
   private JComponent createTablePanel() {
@@ -398,4 +418,14 @@ public class VcsHistoryDialog extends DialogWrapper {
     return "VCS.FileHistoryDialog";
   }
 
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.PROJECT.getName().equals(dataId)) {
+      return myProject;
+    } else if (VcsDataKeys.VCS_VIRTUAL_FILE.getName().equals(dataId)) {
+      return myFile;
+    } else if (VcsDataKeys.VCS_FILE_REVISION.getName().equals(dataId)) {
+      return myList.getSelectedObject();
+    }
+    return null;
+  }
 }
