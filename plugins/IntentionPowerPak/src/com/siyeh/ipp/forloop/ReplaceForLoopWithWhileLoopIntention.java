@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Bas Leijdekkers
+ * Copyright 2006-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceForLoopWithWhileLoopIntention extends Intention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new ForLoopPredicate();
     }
 
+    @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiForStatement forStatement =
@@ -36,7 +38,8 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
             return;
         }
         final PsiStatement initialization = forStatement.getInitialization();
-        if (initialization != null) {
+        if (initialization != null &&
+                !(initialization instanceof PsiEmptyStatement)) {
             final PsiElement parent = forStatement.getParent();
             parent.addBefore(initialization, forStatement);
         }
@@ -72,9 +75,25 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
         }
         final PsiStatement update = forStatement.getUpdate();
         if (update != null) {
-            final PsiStatement updateStatement = factory.createStatementFromText(
-                    update.getText() + ';', element);
-            newBody.addBefore(updateStatement, newBody.getLastChild());
+            if (update instanceof PsiExpressionListStatement) {
+                final PsiExpressionListStatement expressionListStatement =
+                        (PsiExpressionListStatement) update;
+                final PsiExpressionList expressionList =
+                        expressionListStatement.getExpressionList();
+                final PsiExpression[] expressions =
+                        expressionList.getExpressions();
+                for (PsiExpression expression : expressions) {
+                    final PsiStatement updateStatement =
+                            factory.createStatementFromText(
+                                    expression.getText() + ';', element);
+                    newBody.addBefore(updateStatement, newBody.getLastChild());
+                }
+            } else {
+                final PsiStatement updateStatement =
+                        factory.createStatementFromText(
+                                update.getText() + ';', element);
+                newBody.addBefore(updateStatement, newBody.getLastChild());
+            }
         }
         forStatement.replace(whileStatement);
     }
