@@ -1,5 +1,6 @@
 package org.jetbrains.idea.eclipse.action;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
@@ -16,6 +17,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
+  private static final String _DIR = "eclipse.imported.project.dir";
 
   private JPanel myPanel;
   private JCheckBox myLinkCheckBox;
@@ -67,7 +69,14 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   }
 
   public void updateDataModel() {
-    final String projectFilesDir = myDirComponent.isEnabled() ? myDirComponent.getText() : null;
+    final String projectFilesDir;
+    if (myDirComponent.isEnabled()) {
+      projectFilesDir = myDirComponent.getText();
+      PropertiesComponent.getInstance().setValue(_DIR, projectFilesDir);
+    }
+    else {
+      projectFilesDir = null;
+    }
     suggestProjectNameAndPath(projectFilesDir, myWorkspaceRootComponent.getText());
     getParameters().converterOptions.commonModulesDirectory = projectFilesDir;
     getParameters().converterOptions.testPattern = wildcardToRegexp(myTestSourcesMask.getText());
@@ -89,7 +98,15 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     rbModulesColocated.setSelected(colocated);
     rbModulesDedicated.setSelected(!colocated);
     myDirComponent.setEnabled(!colocated);
-    myDirComponent.setText(StringUtil.isEmptyOrSpaces(getParameters().converterOptions.commonModulesDirectory) ? storageDir : getParameters().converterOptions.commonModulesDirectory);
+    if (StringUtil.isEmptyOrSpaces(getParameters().converterOptions.commonModulesDirectory)) {
+      PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+      myDirComponent.setText(!colocated
+                             ? propertiesComponent.getOrInit(_DIR, storageDir)
+                             : propertiesComponent.isValueSet(_DIR) ? propertiesComponent.getValue(_DIR) : storageDir);
+    }
+    else {
+      myDirComponent.setText(getParameters().converterOptions.commonModulesDirectory);
+    }
 
     myTestSourcesMask.setText(regexpToWildcard(getParameters().converterOptions.testPattern));
 
