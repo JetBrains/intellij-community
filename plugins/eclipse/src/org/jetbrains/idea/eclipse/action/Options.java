@@ -36,13 +36,10 @@ public class Options {
 
   public static final String ECLIPSE_REMOTE_PROJECT_STORAGE = "eclipse.remote.project.storage";
   public static String getProjectStorageDir(Project project){
-    if (project == null) return null;
-    return PropertiesComponent.getInstance(project).getValue(ECLIPSE_REMOTE_PROJECT_STORAGE);
+    return PropertiesComponent.getInstance().getValue(ECLIPSE_REMOTE_PROJECT_STORAGE);
   }
 
-  public static void saveProjectStorageDir(Project project, String dir) {
-    if (project != null) {
-      PropertiesComponent.getInstance(project).setValue(ECLIPSE_REMOTE_PROJECT_STORAGE, dir);
-    }
+  public static void saveProjectStorageDir(String dir) {
+    PropertiesComponent.getInstance().setValue(ECLIPSE_REMOTE_PROJECT_STORAGE, dir);
   }
 }

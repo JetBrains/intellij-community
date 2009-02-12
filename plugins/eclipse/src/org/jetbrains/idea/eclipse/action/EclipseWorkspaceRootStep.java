@@ -17,7 +17,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
-  private static final String _DIR = "eclipse.imported.project.dir";
+  private static final String _ECLIPSE_PROJECT_DIR = "eclipse.project.dir";
 
   private JPanel myPanel;
   private JCheckBox myLinkCheckBox;
@@ -72,7 +72,6 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     final String projectFilesDir;
     if (myDirComponent.isEnabled()) {
       projectFilesDir = myDirComponent.getText();
-      PropertiesComponent.getInstance().setValue(_DIR, projectFilesDir);
     }
     else {
       projectFilesDir = null;
@@ -83,12 +82,14 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     getParameters().linkConverted = myLinkCheckBox.isSelected();
     getParameters().projectsToConvert = null;
     myProjectFormatPanel.updateData(getWizardContext());
+    PropertiesComponent.getInstance().setValue(_ECLIPSE_PROJECT_DIR, myWorkspaceRootComponent.getText());
+    Options.saveProjectStorageDir(getParameters().converterOptions.commonModulesDirectory);
   }
 
   public void updateStep() {
     String path = getContext().getRootDirectory();
     if (path == null) {
-      path = getWizardContext().getProjectFileDirectory();
+      path = PropertiesComponent.getInstance().isValueSet(_ECLIPSE_PROJECT_DIR) ? PropertiesComponent.getInstance().getValue(_ECLIPSE_PROJECT_DIR) : getWizardContext().getProjectFileDirectory();
     }
     myWorkspaceRootComponent.setText(path.replace('/', File.separatorChar));
     myWorkspaceRootComponent.getTextField().selectAll();
@@ -99,10 +100,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     rbModulesDedicated.setSelected(!colocated);
     myDirComponent.setEnabled(!colocated);
     if (StringUtil.isEmptyOrSpaces(getParameters().converterOptions.commonModulesDirectory)) {
-      PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-      myDirComponent.setText(!colocated
-                             ? propertiesComponent.getOrInit(_DIR, storageDir)
-                             : propertiesComponent.isValueSet(_DIR) ? propertiesComponent.getValue(_DIR) : storageDir);
+      myDirComponent.setText(storageDir);
     }
     else {
       myDirComponent.setText(getParameters().converterOptions.commonModulesDirectory);

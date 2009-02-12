@@ -157,7 +157,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   }
 
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    Options.saveProjectStorageDir(project, getParameters().converterOptions.commonModulesDirectory);
+    
     final Collection<String> unknownLibraries = new TreeSet<String>();
     final Collection<String> unknownJdks = new TreeSet<String>();
     final Set<String> refsToModules = new HashSet<String>();
