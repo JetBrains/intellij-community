@@ -31,7 +31,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     super(stub, nodeType);
   }
 
-  public JavaStubPsiElement(final ASTNode node) {
+  public JavaStubPsiElement(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -145,32 +145,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-    CompositeElement treeElement = calcTreeElement();
-    TreeElement childNode = treeElement.getFirstChildNode();
-
-    TreeElement prevSibling = null;
-    while (childNode != null) {
-      if (childNode instanceof ChameleonElement) {
-      TreeElement newChild = (TreeElement)childNode.getTransformedFirstOrSelf();
-        if (newChild == null) {
-          childNode = prevSibling == null ? treeElement.getFirstChildNode() : prevSibling.getTreeNext();
-          continue;
-        }
-        childNode = newChild;
-      }
-
-      final PsiElement psi;
-      if (childNode instanceof PsiElement) {
-        psi = (PsiElement)childNode;
-      }
-      else {
-        psi = childNode.getPsi();
-      }
-      psi.accept(visitor);
-
-      prevSibling = childNode;
-      childNode = childNode.getTreeNext();
-    }
+    SharedImplUtil.acceptChildren(visitor, calcTreeElement());
   }
 
   protected Object clone() {

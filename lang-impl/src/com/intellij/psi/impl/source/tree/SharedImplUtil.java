@@ -2,10 +2,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -165,5 +162,33 @@ public class SharedImplUtil {
     }
 
     return count;
+  }
+
+  public static void acceptChildren(PsiElementVisitor visitor, CompositeElement root) {
+    TreeElement childNode = root.getFirstChildNode();
+
+    TreeElement prevSibling = null;
+    while (childNode != null) {
+      if (childNode instanceof ChameleonElement) {
+      TreeElement newChild = (TreeElement)childNode.getTransformedFirstOrSelf();
+        if (newChild == null) {
+          childNode = prevSibling == null ? root.getFirstChildNode() : prevSibling.getTreeNext();
+          continue;
+        }
+        childNode = newChild;
+      }
+
+      final PsiElement psi;
+      if (childNode instanceof PsiElement) {
+        psi = (PsiElement)childNode;
+      }
+      else {
+        psi = childNode.getPsi();
+      }
+      psi.accept(visitor);
+
+      prevSibling = childNode;
+      childNode = childNode.getTreeNext();
+    }
   }
 }

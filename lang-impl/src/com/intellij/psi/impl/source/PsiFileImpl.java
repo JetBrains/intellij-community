@@ -152,6 +152,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (!getViewProvider().isPhysical()) return true; // "dummy" file
     final VirtualFile vFile = getViewProvider().getVirtualFile();
     return vFile.isValid() && isPsiUpToDate(vFile);
+
+    //FileViewProvider viewProvider = getViewProvider();
+    //if (!viewProvider.isPhysical()) return true; // "dummy" file
+    //final VirtualFile vFile = viewProvider.getVirtualFile();
+    //if (!vFile.isValid() || !isPsiUpToDate(vFile)) return false;
+    //PsiManager manager = getManager();
+    //boolean valid = manager != null && !manager.getProject().isDisposed();
+    //return valid;
   }
 
   protected boolean isPsiUpToDate(VirtualFile vFile) {
@@ -630,32 +638,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-    CompositeElement treeElement = calcTreeElement();
-    TreeElement childNode = treeElement.getFirstChildNode();
-
-    TreeElement prevSibling = null;
-    while (childNode != null) {
-      if (childNode instanceof ChameleonElement) {
-      TreeElement newChild = (TreeElement)childNode.getTransformedFirstOrSelf();
-        if (newChild == null) {
-          childNode = prevSibling == null ? treeElement.getFirstChildNode() : prevSibling.getTreeNext();
-          continue;
-        }
-        childNode = newChild;
-      }
-
-      final PsiElement psi;
-      if (childNode instanceof PsiElement) {
-        psi = (PsiElement)childNode;
-      }
-      else {
-        psi = childNode.getPsi();
-      }
-      psi.accept(visitor);
-
-      prevSibling = childNode;
-      childNode = childNode.getTreeNext();
-    }
+    SharedImplUtil.acceptChildren(visitor, calcTreeElement());
   }
 
   public int getStartOffsetInParent() {
