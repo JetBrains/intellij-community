@@ -237,8 +237,8 @@ public class OverrideImplementUtil {
 
     for (Iterator<PsiMethod> iterator = results.iterator(); iterator.hasNext();) {
       PsiMethod result = iterator.next();
-      result.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, aClass.isInterface());
-      result.getModifierList().setModifierProperty(PsiModifier.NATIVE, false);
+      PsiUtil.setModifierProperty(result, PsiModifier.ABSTRACT, aClass.isInterface());
+      PsiUtil.setModifierProperty(result, PsiModifier.NATIVE, false);
 
       if (!toCopyJavaDoc){
         PsiDocComment comment = result.getDocComment();

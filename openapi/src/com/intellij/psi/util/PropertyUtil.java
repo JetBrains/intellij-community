@@ -376,9 +376,9 @@ public class PropertyUtil {
     String getName = suggestGetterName(project, field);
     try {
       PsiMethod getMethod = factory.createMethod(getName, field.getType());
-      getMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+      PsiUtil.setModifierProperty(getMethod, PsiModifier.PUBLIC, true);
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        getMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        PsiUtil.setModifierProperty(getMethod, PsiModifier.STATIC, true);
       }
 
       annotateWithNullableStuff(field, factory, getMethod);
@@ -420,8 +420,8 @@ public class PropertyUtil {
       annotateWithNullableStuff(field, factory, param);
 
       setMethod.getParameterList().add(param);
-      setMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
-      setMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
+      PsiUtil.setModifierProperty(setMethod, PsiModifier.PUBLIC, true);
+      PsiUtil.setModifierProperty(setMethod, PsiModifier.STATIC, isStatic);
 
       @NonNls StringBuffer buffer = new StringBuffer();
       buffer.append("{\n");

@@ -227,7 +227,7 @@ class ExtractedClassBuilder {
   private void outputMutatedInnerClass(StringBuffer out, PsiClass innerClass, boolean makePublic) {
     if (makePublic) {
       try {
-        innerClass.getModifierList().setModifierProperty(PsiModifier.PUBLIC, false);
+        PsiUtil.setModifierProperty(innerClass, PsiModifier.PUBLIC, false);
       }
       catch (IncorrectOperationException e) {
         LOGGER.error(e);

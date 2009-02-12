@@ -13,6 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +81,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
       boolean isFinal =
         CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS && !CreateFromUsageUtils.isAccessedForWriting(expressions);
-      var.getModifierList().setModifierProperty(PsiModifier.FINAL, isFinal);
+      PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
       var = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(var);
       if (var == null) return;

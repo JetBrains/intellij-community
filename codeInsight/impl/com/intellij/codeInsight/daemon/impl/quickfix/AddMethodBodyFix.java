@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,7 @@ public class AddMethodBodyFix implements IntentionAction {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
 
     try {
-      myMethod.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
+      PsiUtil.setModifierProperty(myMethod, PsiModifier.ABSTRACT, false);
       CreateFromUsageUtils.setupMethodBody(myMethod);
       CreateFromUsageUtils.setupEditor(myMethod, editor);
     } catch (IncorrectOperationException e) {

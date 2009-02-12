@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +82,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     LOG.assertTrue(myOutOfScopeVariable != null);
     PsiManager manager = file.getManager();
 
-    myOutOfScopeVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+    PsiUtil.setModifierProperty(myOutOfScopeVariable, PsiModifier.FINAL, false);
     PsiElement commonParent = PsiTreeUtil.findCommonParent(myOutOfScopeVariable, myUnresolvedReference);
     LOG.assertTrue(commonParent != null);
     PsiElement child = myOutOfScopeVariable.getTextRange().getStartOffset() < myUnresolvedReference.getTextRange().getStartOffset() ? myOutOfScopeVariable

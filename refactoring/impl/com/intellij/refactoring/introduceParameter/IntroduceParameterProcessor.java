@@ -21,6 +21,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
@@ -432,7 +433,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       PsiMethod constructor = factory.createMethodFromText(aClass.getName() + "(){}", aClass);
       constructor = (PsiMethod) CodeStyleManager.getInstance(myProject).reformat(constructor);
       constructor = (PsiMethod) aClass.add(constructor);
-      constructor.getModifierList().setModifierProperty(VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
+      PsiUtil.setModifierProperty(constructor, VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
       addSuperCall(constructor);
     }
   }
@@ -816,7 +817,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     });
 
     PsiParameter parameter = factory.createParameter(myParameterName, initializerType);
-    parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, myDeclareFinal);
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, myDeclareFinal);
     final PsiParameter anchorParameter = getAnchorParameter(methodToReplaceIn);
     final PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     parameter = (PsiParameter)parameterList.addAfter(parameter, anchorParameter);

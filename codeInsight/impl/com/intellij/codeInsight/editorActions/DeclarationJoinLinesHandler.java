@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -107,7 +108,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
       PsiDeclarationStatement newDecl = factory.createVariableDeclarationStatement(var.getName(), var.getType(), initializerExpression);
       PsiVariable newVar = (PsiVariable)newDecl.getDeclaredElements()[0];
       if (var.getModifierList().getText().length() > 0) {
-        newVar.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        PsiUtil.setModifierProperty(newVar, PsiModifier.FINAL, true);
       }
       newVar.getModifierList().replace(var.getModifierList());
       PsiVariable variable = (PsiVariable)newDecl.getDeclaredElements()[0];

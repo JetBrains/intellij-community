@@ -217,7 +217,7 @@ public class CreateFromUsageUtils {
 
       PsiParameter parameter = factory.createParameter(names[0], argType);
       if (isInterface) {
-        parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+        PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, false);
       }
       parameter = (PsiParameter) parameterList.add(parameter);
 
@@ -342,7 +342,7 @@ public class CreateFromUsageUtils {
                 return null;
               }
               if (!facade.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
-                targetClass.getModifierList().setModifierProperty(PsiKeyword.PUBLIC, true);
+                PsiUtil.setModifierProperty(targetClass, PsiKeyword.PUBLIC, true);
               }
             }
             else { //tests

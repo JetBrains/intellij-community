@@ -19,6 +19,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.JavaDocPolicy;
@@ -68,11 +69,11 @@ public class PullUpHelper {
       if (info.getMember() instanceof PsiClass && info.getOverrides() != null) continue;
       PsiModifierListOwner modifierListOwner = info.getMember();
       if (myIsTargetInterface) {
-        modifierListOwner.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+        PsiUtil.setModifierProperty(modifierListOwner, PsiModifier.PUBLIC, true);
       }
       else if (modifierListOwner.hasModifierProperty(PsiModifier.PRIVATE)) {
         if (info.isToAbstract() || willBeUsedInSubclass(modifierListOwner, movedMembers, myTargetSuperClass, mySourceClass)) {
-          modifierListOwner.getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);
+          PsiUtil.setModifierProperty(modifierListOwner, PsiModifier.PROTECTED, true);
         }
       }
       ChangeContextUtil.encodeContextInfo(info.getMember(), true);
@@ -98,7 +99,7 @@ public class PullUpHelper {
         }
         else {
           if (isOriginalMethodAbstract) {
-            myTargetSuperClass.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
+            PsiUtil.setModifierProperty(myTargetSuperClass, PsiModifier.ABSTRACT, true);
           }
           fixReferencesToStatic(method, movedMembers);
           final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(method, false);
@@ -117,7 +118,7 @@ public class PullUpHelper {
         field.normalizeDeclaration();
         fixReferencesToStatic(field, movedMembers);
         if (myIsTargetInterface) {
-          field.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+          PsiUtil.setModifierProperty(field, PsiModifier.PUBLIC, true);
         }
         final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(field);
         myMembersAfterMove.add(movedElement);
@@ -262,7 +263,7 @@ public class PullUpHelper {
     if (constructor == null) {
       constructor = (PsiMethod) myTargetSuperClass.add(factory.createConstructor());
       final String visibilityModifier = VisibilityUtil.getVisibilityModifier(myTargetSuperClass.getModifierList());
-      constructor.getModifierList().setModifierProperty(visibilityModifier, true);
+      PsiUtil.setModifierProperty(constructor, visibilityModifier, true);
     }
 
 

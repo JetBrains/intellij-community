@@ -229,7 +229,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     try{
       if (myDialog.getFieldsVisibility() != null){
         field.normalizeDeclaration();
-        field.getModifierList().setModifierProperty(myDialog.getFieldsVisibility(), true);
+        PsiUtil.setModifierProperty(field, myDialog.getFieldsVisibility(), true);
       }
     }
     catch(IncorrectOperationException e){
@@ -242,7 +242,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     PsiMethod result = existing;
     try{
       if (existing == null){
-        prototype.getModifierList().setModifierProperty(myDialog.getAccessorsVisibility(), true);
+        PsiUtil.setModifierProperty(prototype, myDialog.getAccessorsVisibility(), true);
         result = (PsiMethod) myClass.add(prototype);
       }
       else{

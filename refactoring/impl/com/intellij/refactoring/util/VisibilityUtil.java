@@ -54,7 +54,7 @@ public class VisibilityUtil  {
     }
     for(;index < visibilityModifiers.length && !PsiUtil.isAccessible(modifierListOwner, place, null); index++) {
       @Modifier String modifier = visibilityModifiers[index];
-      modifierListOwner.getModifierList().setModifierProperty(modifier, true);
+      PsiUtil.setModifierProperty(modifierListOwner, modifier, true);
     }
   }
 

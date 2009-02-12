@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
@@ -71,7 +72,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
       final String classParameterName = mySettings.getClassParameterName();
       PsiParameter parameter = factory.createParameter(classParameterName, parameterType);
       if(makeClassParameterFinal(usages)) {
-        parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
       }
       addParameterAfter = paramList.addAfter(parameter, null);
       anchor = javaDocHelper.addParameterAfter(classParameterName, anchor);
@@ -85,7 +86,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         final PsiParameter parameter = factory.createParameter(fieldParameter.name, fieldParameterType);
         addedTypes.add(fieldParameterType);
         if (makeFieldParameterFinal(fieldParameter.field, usages)) {
-          parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+          PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
         }
         addParameterAfter = paramList.addAfter(parameter, addParameterAfter);
         anchor = javaDocHelper.addParameterAfter(fieldParameter.name, anchor);

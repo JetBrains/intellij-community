@@ -289,11 +289,11 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
 
     if (!myTargetClass.isInterface()) {
-      aClass.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+      PsiUtil.setModifierProperty(aClass, PsiModifier.PRIVATE, true);
     }
     PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(myAnonClass, PsiModifierListOwner.class);
     if (owner != null && owner.hasModifierProperty(PsiModifier.STATIC)) {
-      aClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+      PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
     }
     PsiJavaCodeReferenceElement baseClassRef = myAnonClass.getBaseClassReference();
     PsiClass baseClass = (PsiClass)baseClassRef.resolve();
@@ -338,7 +338,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
 
     if (!needsThis() && myMakeStatic) {
-      aClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+      PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
     }
     PsiElement lastChild = aClass.getLastChild();
     if (lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.SEMICOLON) {
@@ -433,7 +433,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         PsiType type = info.variable.getType();
         if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
         PsiField field = factory.createField(info.fieldName, type);
-        field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
         aClass.add(field);
       }
     }

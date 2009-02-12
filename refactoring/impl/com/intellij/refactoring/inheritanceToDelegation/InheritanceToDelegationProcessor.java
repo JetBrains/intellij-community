@@ -367,7 +367,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     } else {
       innerClass.getImplementsList().add(baseClassReferenceElement);
     }
-    innerClass.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+    PsiUtil.setModifierProperty(innerClass, PsiModifier.PRIVATE, true);
     innerClass = (PsiClass) myClass.add(innerClass);
 
     List<InnerClassMethod> innerClassMethods = getInnerClassMethods();
@@ -478,7 +478,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
         String visibility = myDelegatedMethodsVisibility.get(method);
         if (visibility != null) {
-          methodToAdd.getModifierList().setModifierProperty(visibility, true);
+          PsiUtil.setModifierProperty(methodToAdd, visibility, true);
         }
 
         myClass.add(methodToAdd);
@@ -771,7 +771,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           PsiMethod method = delegateMethod(myClass.getName() + ".this", myMethod, substitutor);
           final PsiClass containingClass = myMethod.getContainingClass();
           if (myBaseClass.isInterface() || containingClass.isInterface()) {
-            method.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+            PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true);
           }
           innerClass.add(method);
           if (!myImplicitImplementation) {
@@ -780,7 +780,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             if (outerMethod == null) {
               @Modifier String visibility = checkOuterClassAbstractMethod(signature);
               PsiMethod newOuterMethod = (PsiMethod)myClass.add(myMethod);
-              newOuterMethod.getModifierList().setModifierProperty(visibility, true);
+              PsiUtil.setModifierProperty(newOuterMethod, visibility, true);
               final PsiDocComment docComment = newOuterMethod.getDocComment();
               if (docComment != null) {
                 docComment.delete();

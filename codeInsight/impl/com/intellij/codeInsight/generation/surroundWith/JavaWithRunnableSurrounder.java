@@ -80,7 +80,7 @@ public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
             parent = parent.getParent();
           }
           if ((parent == null) && canBeDeclaredFinal(variable, enclosingMethod)) {
-            variable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+            PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
           }
         }
       }

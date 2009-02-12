@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -98,7 +99,7 @@ public class MethodParameterFix implements IntentionAction {
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, myParameterType);
     PsiParameter newParameter = factory.createParameter(nameInfo.names[0], myParameterType);
     if (myMethod.getContainingClass().isInterface()) {
-        newParameter.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+      PsiUtil.setModifierProperty(newParameter, PsiModifier.FINAL, false);
       }
 
     for (int i = 0; i < parameters.length; i++) {

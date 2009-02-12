@@ -250,7 +250,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         if (memberInfo.isToAbstract()) {
           final PsiMethod method = (PsiMethod)member;
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-            method.getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);
+            PsiUtil.setModifierProperty(method, PsiModifier.PROTECTED, true);
           }
           RefactoringUtil.abstractizeMethod(myClass, method);
           myJavaDocPolicy.processOldJavaDoc(method.getDocComment());
@@ -302,7 +302,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           newMember = (PsiMethod)targetClass.add(method);
           if (memberInfo.isToAbstract()) {
             if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
-              newMember.getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);
+              PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
             }
             myJavaDocPolicy.processNewJavaDoc(((PsiMethod)newMember).getDocComment());
           }

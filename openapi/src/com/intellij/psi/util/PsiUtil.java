@@ -892,4 +892,8 @@ public final class PsiUtil extends PsiUtilBase {
       return compareElementsByPosition(o1, o2);
     }
   };
+
+  public static void setModifierProperty(@NotNull PsiModifierListOwner owner, @NotNull @Modifier String property, boolean value) {
+    owner.getModifierList().setModifierProperty(property, value);
+  }
 }

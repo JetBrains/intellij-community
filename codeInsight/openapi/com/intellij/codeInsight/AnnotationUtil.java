@@ -71,26 +71,28 @@ public class AnnotationUtil {
     ALL_ANNOTATIONS.add(NOT_NULL);
   }
 
-  public static boolean isNullable(PsiModifierListOwner owner) {
+  public static boolean isNullable(@NotNull PsiModifierListOwner owner) {
     return !isNotNull(owner) && isAnnotated(owner, NULLABLE, true);
   }
 
-  public static boolean isNotNull(PsiModifierListOwner owner) {
+  public static boolean isNotNull(@NotNull PsiModifierListOwner owner) {
     return isAnnotated(owner, NOT_NULL, true);
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, String... annotationNames) {
+  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, @NotNull String... annotationNames) {
     return findAnnotation(listOwner, false, annotationNames);
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, final boolean skipExternal, String... annotationNames) {
-    return findAnnotation(listOwner, new HashSet<String>(Arrays.asList(annotationNames)), skipExternal);
+  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, final boolean skipExternal, @NotNull String... annotationNames) {
+    if (annotationNames.length == 0) return null;
+    Set<String> set = annotationNames.length == 1 ? Collections.singleton(annotationNames[0]) : new HashSet<String>(Arrays.asList(annotationNames));
+    return findAnnotation(listOwner, set, skipExternal);
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, Set<String> annotationNames) {
+  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, @NotNull Set<String> annotationNames) {
     return findAnnotation(listOwner, (Collection<String>)annotationNames);
   }
 
@@ -125,18 +127,19 @@ public class AnnotationUtil {
   }
 
   @NotNull
-  public static PsiAnnotation[] findAnnotations(final PsiMember psiMember, Collection<String> annotationNames) {
+  public static PsiAnnotation[] findAnnotations(final PsiMember psiMember, @NotNull Collection<String> annotationNames) {
     if (psiMember == null) return PsiAnnotation.EMPTY_ARRAY;
     final PsiModifierList modifierList = psiMember.getModifierList();
     if (modifierList == null) return PsiAnnotation.EMPTY_ARRAY;
     final PsiAnnotation[] annotations = modifierList.getAnnotations();
-    final ArrayList<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
+    ArrayList<PsiAnnotation> result = null;
     for (final PsiAnnotation psiAnnotation : annotations) {
       if (annotationNames.contains(psiAnnotation.getQualifiedName())) {
+        if (result == null) result = new ArrayList<PsiAnnotation>();
         result.add(psiAnnotation);
       }
     }
-    return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
+    return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
   }
 
   @Nullable

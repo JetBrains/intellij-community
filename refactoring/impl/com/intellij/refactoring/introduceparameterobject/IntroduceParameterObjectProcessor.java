@@ -17,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.MergeMethodArguments;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.ReplaceParameterAssignmentWithCall;
@@ -261,7 +262,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
         final PsiClass[] classes = newFile.getClasses();
         assert classes.length > 0 : classString;
         final PsiClass innerClass = (PsiClass)containingClass.add(classes[0]);
-        innerClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        PsiUtil.setModifierProperty(innerClass, PsiModifier.STATIC, true);
         JavaCodeStyleManager.getInstance(newFile.getProject()).shortenClassReferences(innerClass);
       } else {
         final PsiFile containingFile = method.getContainingFile();

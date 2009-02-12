@@ -504,7 +504,7 @@ public class RefactoringUtil {
 
     for (PsiParameter param : params) {
       if (param.hasModifierProperty(PsiModifier.FINAL)) {
-        param.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+        PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
       }
     }
   }
@@ -667,7 +667,7 @@ public class RefactoringUtil {
     }
     PsiDeclarationStatement decl = factory.createVariableDeclarationStatement(id, expr.getType(), expr);
     if (declareFinal) {
-      ((PsiLocalVariable)decl.getDeclaredElements()[0]).getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+      PsiUtil.setModifierProperty(((PsiLocalVariable)decl.getDeclaredElements()[0]), PsiModifier.FINAL, true);
     }
     anchorStatement.getParent().addBefore(decl, anchorStatement);
 
@@ -752,13 +752,13 @@ public class RefactoringUtil {
       body.delete();
     }
 
-    method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
-    method.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
-    method.getModifierList().setModifierProperty(PsiModifier.SYNCHRONIZED, false);
-    method.getModifierList().setModifierProperty(PsiModifier.NATIVE, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
+    PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);
 
     if (!targetClass.isInterface()) {
-      targetClass.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
+      PsiUtil.setModifierProperty(targetClass, PsiModifier.ABSTRACT, true);
     }
 
     removeFinalParameters(method);

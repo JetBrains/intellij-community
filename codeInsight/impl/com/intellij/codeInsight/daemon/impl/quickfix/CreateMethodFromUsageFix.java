@@ -148,7 +148,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       setupVisibility(parentClass, targetClass, method.getModifierList());
 
       if (shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !targetClass.isInterface()) {
-        method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
       }
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);

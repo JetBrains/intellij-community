@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,12 +82,12 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       setupVisibility(parentClass, targetClass, field.getModifierList());
 
       if (shouldCreateStaticMember(myReferenceExpression, targetClass)) {
-        field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
       }
 
       if (createConstantField()) {
-        field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
-        field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
       }
 
       TemplateBuilder builder = new TemplateBuilder(field);

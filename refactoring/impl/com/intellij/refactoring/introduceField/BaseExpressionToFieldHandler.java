@@ -179,12 +179,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           ChangeContextUtil.encodeContextInfo(initializer, true);
           PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, fieldName, initializer) : createField(fieldName, type, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null);
           if (!settings.isIntroduceEnumConstant()) {
-            field.getModifierList().setModifierProperty(settings.getFieldVisibility(), true);
+            PsiUtil.setModifierProperty(field, settings.getFieldVisibility(), true);
             if (settings.isDeclareFinal()) {
-              field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+              PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
             }
             if (settings.isDeclareStatic()) {
-              field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+              PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
             }
             if (settings.isAnnotateAsNonNls()) {
               PsiAnnotation annotation = JavaPsiFacade.getInstance(myParentClass.getProject()).getElementFactory()

@@ -234,7 +234,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
             final PsiExpression initializer = expression.getRExpression();
             final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), initializer);
             if (!mayBeFinal) {
-              ((PsiModifierListOwner)decl.getDeclaredElements()[0]).getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+              PsiUtil.setModifierProperty(((PsiModifierListOwner)decl.getDeclaredElements()[0]), PsiModifier.FINAL, false);
             }
             newDeclaration = anchor.replace(decl);
             refsSet.remove(expression.getLExpression());

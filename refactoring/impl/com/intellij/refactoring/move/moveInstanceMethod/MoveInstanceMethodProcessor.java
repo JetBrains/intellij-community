@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
@@ -443,7 +444,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     final PsiMethod methodCopy = (PsiMethod)myMethod.copy();
     String name = myTargetClass.isInterface() ? PsiModifier.PUBLIC : myNewVisibility;
     if (name != null) {
-      methodCopy.getModifierList().setModifierProperty(name, true);
+      PsiUtil.setModifierProperty(methodCopy, name, true);
     }
     if (myTargetVariable instanceof PsiParameter) {
       final int index = myMethod.getParameterList().getParameterIndex((PsiParameter)myTargetVariable);
@@ -460,7 +461,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       final PsiClassType type = factory.createType(entry.getKey());
       final PsiParameter parameter = factory.createParameter(entry.getValue(), type);
       if (isInterface) {
-        parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+        PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, false);
       }
       methodCopy.getParameterList().add(parameter);
     }

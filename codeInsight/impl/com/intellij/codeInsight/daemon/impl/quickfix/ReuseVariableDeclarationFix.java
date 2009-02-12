@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -56,7 +57,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     PsiVariable refVariable = findPreviousVariable();
     if (refVariable == null) return;
     if (!CodeInsightUtil.preparePsiElementsForWrite(variable, refVariable)) return;
-    refVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+    PsiUtil.setModifierProperty(refVariable, PsiModifier.FINAL, false);
     if (variable.getInitializer() == null)  {
       variable.delete();
       return;

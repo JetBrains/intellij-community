@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
@@ -247,7 +248,7 @@ class InlineToAnonymousConstructorProcessor {
     try {
       final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
-      variable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+      PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
       myNewStatement.getParent().addBefore(declaration, myNewStatement);
       return variable;
     }

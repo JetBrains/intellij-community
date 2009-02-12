@@ -223,8 +223,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     PsiParameter parameter = (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
-    parameter.getModifierList()
-      .setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
     treeElement.acceptTree(new GeneratedMarkerVisitor());
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
@@ -525,8 +524,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(buffer.toString(), null);
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
     variable.getTypeElement().replace(createTypeElement(type));
-    variable.getModifierList()
-      .setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_LOCALS);
+    PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_LOCALS);
     if (initializer != null) {
       variable.getInitializer().replace(initializer);
     }

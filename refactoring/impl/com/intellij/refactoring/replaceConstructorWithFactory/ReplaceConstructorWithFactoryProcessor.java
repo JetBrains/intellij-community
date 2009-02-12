@@ -178,7 +178,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
         (PsiReferenceExpression)myFactory.createExpressionFromText("A." + myFactoryName, null);
       PsiMethod factoryMethod = (PsiMethod)myTargetClass.add(createFactoryMethod());
       if (myConstructor != null) {
-        myConstructor.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+        PsiUtil.setModifierProperty(myConstructor, PsiModifier.PRIVATE, true);
         VisibilityUtil.escalateVisibility(myConstructor, factoryMethod);
         for (PsiElement place : myNonNewConstructorUsages) {
           VisibilityUtil.escalateVisibility(myConstructor, place);
@@ -187,7 +187,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
       if (myConstructor == null) {
         PsiMethod constructor = myFactory.createConstructor();
-        constructor.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+        PsiUtil.setModifierProperty(constructor, PsiModifier.PRIVATE, true);
         constructor = (PsiMethod)getConstructorContainingClass().add(constructor);
         VisibilityUtil.escalateVisibility(constructor, myTargetClass);
       }
@@ -258,11 +258,10 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     }
     factoryMethod.getBody().add(returnStatement);
 
-    factoryMethod.getModifierList().setModifierProperty(
-      getDefaultFactoryVisibility(), true);
+    PsiUtil.setModifierProperty(factoryMethod, getDefaultFactoryVisibility(), true);
 
     if (!myIsInner) {
-      factoryMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+      PsiUtil.setModifierProperty(factoryMethod, PsiModifier.STATIC, true);
     }
 
     return (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(factoryMethod);

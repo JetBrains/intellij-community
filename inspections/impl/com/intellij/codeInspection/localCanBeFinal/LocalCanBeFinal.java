@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -242,7 +243,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       if (psiVariable == null) return;
       try {
         psiVariable.normalizeDeclaration();
-        psiVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+        PsiUtil.setModifierProperty(psiVariable, PsiModifier.FINAL, true);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

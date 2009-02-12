@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -194,7 +195,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
       PsiField field = targetClass.findFieldByName(fieldName, true);
       if (field == null) {
         field = factory.createField(fieldName, type);
-        field.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
+        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic);
       }
       PsiMethod accessor;
       PsiElement fieldReference;
@@ -216,7 +217,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
         typeReference = accessor.getParameterList().getParameters()[0].getTypeElement();
       }
       accessor.setName(callText);
-      accessor.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
+      PsiUtil.setModifierProperty(accessor, PsiModifier.STATIC, isStatic);
 
       TemplateBuilder builder = new TemplateBuilder(accessor);
       builder.replaceElement(typeReference, TYPE_VARIABLE, new TypeExpression(project, expectedTypes), true);
@@ -252,7 +253,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
                 try {
                   PsiField field = factory.createField(fieldName, type);
                   field = (PsiField)aClass.add(field);
-                  field.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic1);
+                  PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic1);
                   positionCursor(project, field.getContainingFile(), field);
                 }
                 catch (IncorrectOperationException e) {

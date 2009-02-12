@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -357,8 +358,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiCodeBlock methodBody = getMethod().getBody();
     LOG.assertTrue(methodBody != null);
     replacedMethodBody.replace(methodBody);
-    newMethod.getModifierList().setModifierProperty(PsiModifier.STATIC,
-                                                    innerClass.hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields());
+    PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, innerClass.hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields());
     myInnerMethod = (PsiMethod)innerClass.add(newMethod);
   }
 
@@ -522,7 +522,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         final PsiModifierList modifierList = myInnerMethod.getContainingClass().getModifierList();
         LOG.assertTrue(modifierList != null);
         modifierList.setModifierProperty(PsiModifier.STATIC, true);
-        myInnerMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        PsiUtil.setModifierProperty(myInnerMethod, PsiModifier.STATIC, true);
       }
       PsiMethodCallExpression methodCallExpression = null;
       if (element instanceof PsiMethodCallExpression) {
@@ -586,7 +586,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
               final PsiElement[] psiElements = ((PsiDeclarationStatement)st).getDeclaredElements();
               assert psiElements.length > 0;
               PsiVariable var = (PsiVariable)psiElements[0];
-              var.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+              PsiUtil.setModifierProperty(var, PsiModifier.FINAL, false);
             }
           }
           else {

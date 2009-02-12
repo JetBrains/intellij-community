@@ -20,6 +20,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -168,12 +169,12 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         }
 
         newClass = (PsiClass)newClass.replace(myInnerClass);
-        newClass.getModifierList().setModifierProperty(PsiModifier.STATIC, false);
-        newClass.getModifierList().setModifierProperty(PsiModifier.PRIVATE, false);
-        newClass.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
+        PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, false);
+        PsiUtil.setModifierProperty(newClass, PsiModifier.PRIVATE, false);
+        PsiUtil.setModifierProperty(newClass, PsiModifier.PROTECTED, false);
         final boolean makePublic = needPublicAccess();
         if (makePublic) {
-          newClass.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+          PsiUtil.setModifierProperty(newClass, PsiModifier.PUBLIC, true);
         }
 
         final PsiMethod[] constructors = newClass.getConstructors();

@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
@@ -408,7 +409,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
         }
       }
       // set the modifiers with which the method is supposed to be created
-      prototype.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+      PsiUtil.setModifierProperty(prototype, PsiModifier.PRIVATE, true);
     } catch (IncorrectOperationException e) {
       return;
     }

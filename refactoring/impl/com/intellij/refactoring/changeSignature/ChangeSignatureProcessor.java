@@ -587,7 +587,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     else {
       delegate.add(factory.createCodeBlock());
     }
-    delegate.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
+    PsiUtil.setModifierProperty(delegate, PsiModifier.ABSTRACT, false);
   }
 
   public static PsiCallExpression addDelegatingCallTemplate(final PsiMethod delegate, final String newName) throws IncorrectOperationException {
@@ -623,7 +623,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       PsiMethod defaultConstructor = myFactory.createMethodFromText(aClass.getName() + "(){}", aClass);
       defaultConstructor = (PsiMethod) CodeStyleManager.getInstance(myProject).reformat(defaultConstructor);
       defaultConstructor = (PsiMethod) aClass.add(defaultConstructor);
-      defaultConstructor.getModifierList().setModifierProperty(VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
+      PsiUtil.setModifierProperty(defaultConstructor, VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
       addSuperCall(defaultConstructor, null, usages);
     } else {
       final PsiElement parent = aClass.getParent();

@@ -211,7 +211,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       match.changeSignature(myMethod);
       final PsiClass containingClass = myMethod.getContainingClass();
       if (isEssentialStaticContextAbsent(match)) {
-        myMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        PsiUtil.setModifierProperty(myMethod, PsiModifier.STATIC, true);
       }
 
       final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();

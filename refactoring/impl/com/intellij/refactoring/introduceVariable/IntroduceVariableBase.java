@@ -541,7 +541,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
           declaration = (PsiDeclarationStatement) putStatementInLoopBody(declaration, container, finalAnchorStatement);
           PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
-          var.getModifierList().setModifierProperty(PsiModifier.FINAL, declareFinal);
+          PsiUtil.setModifierProperty(var, PsiModifier.FINAL, declareFinal);
 
           fieldConflictsResolver.fix();
         } catch (IncorrectOperationException e) {

@@ -2,6 +2,7 @@ package com.intellij.refactoring.safeDelete.usageInfo;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -17,6 +18,6 @@ public class SafeDeletePrivatizeMethod extends SafeDeleteUsageInfo implements Sa
   }
 
   public void performRefactoring() throws IncorrectOperationException {
-    getMethod().getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+    PsiUtil.setModifierProperty(getMethod(), PsiModifier.PRIVATE, true);
   }
 }

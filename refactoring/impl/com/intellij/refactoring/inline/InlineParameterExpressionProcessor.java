@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -173,7 +174,7 @@ public class InlineParameterExpressionProcessor {
         SameParameterValueInspection.InlineParameterValueFix.removeParameter(myMethod, myParameter);
         if (createLocal) {
           final PsiLocalVariable declaredVar = (PsiLocalVariable) localDeclaration.getDeclaredElements()[0];
-          declaredVar.getModifierList().setModifierProperty(PsiModifier.FINAL, parameterIsFinal);
+          PsiUtil.setModifierProperty(declaredVar, PsiModifier.FINAL, parameterIsFinal);
           final PsiCodeBlock body = myMethod.getBody();
           if (body != null) {
             body.addAfter(localDeclaration, body.getLBrace());

@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -161,7 +162,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     PsiMethod constructor = factory.createConstructor();
     @Modifier String modifier = getConstructorModifier(aClass);
     if (modifier != null) {
-      constructor.getModifierList().setModifierProperty(modifier, true);
+      PsiUtil.setModifierProperty(constructor, modifier, true);
     }
 
     if (baseConstructor != null){

@@ -866,7 +866,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                 final PsiParameter param = parameters[index];
                 if (param.hasModifierProperty(PsiModifier.FINAL) && PsiUtil.isAccessedForWriting(expression)) {
                   try {
-                    param.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+                    PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
                   }
                   catch (IncorrectOperationException e) {
                     exc[0] = e;
@@ -887,7 +887,7 @@ public class ExtractMethodProcessor implements MatchProvider {
               final PsiParameter param = parameters[index];
               if (!param.hasModifierProperty(PsiModifier.FINAL) && RefactoringUtil.isInsideAnonymous(expression, method)) {
                 try {
-                  param.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+                  PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
                 }
                 catch (IncorrectOperationException e) {
                   exc[0] = e;
@@ -932,7 +932,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
     match.changeSignature(myExtractedMethod);
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
-      myExtractedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+      PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }
     final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression(), false);
 
@@ -1019,9 +1019,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     else {
       newMethod = myElementFactory.createMethod(myMethodName, myReturnType);
-      newMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic);
     }
-    newMethod.getModifierList().setModifierProperty(myMethodVisibility, true);
+    PsiUtil.setModifierProperty(newMethod, myMethodVisibility, true);
     if (myTypeParameterList != null) {
       newMethod.getTypeParameterList().replace(myTypeParameterList);
     }
@@ -1034,7 +1034,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (data.passAsParameter) {
         PsiParameter parm = myElementFactory.createParameter(data.name, data.type);
         if (isFinal) {
-          parm.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+          PsiUtil.setModifierProperty(parm, PsiModifier.FINAL, true);
         }
         list.add(parm);
       }
@@ -1150,7 +1150,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           final PsiElement[] psiElements = statement.getDeclaredElements();
           assert psiElements.length > 0;
           PsiVariable var = (PsiVariable) psiElements [0];
-          var.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+          PsiUtil.setModifierProperty(var, PsiModifier.FINAL, false);
         }
         addToMethodCallLocation(statement);
       }

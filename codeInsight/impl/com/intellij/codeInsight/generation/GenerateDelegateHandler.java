@@ -133,10 +133,10 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     method.getBody().add(stmt);
 
     if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-      method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+      PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
     }
 
-    method.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+    PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true);
 
     final Project project = method.getProject();
     for (PsiAnnotation annotation : methodCandidate.getElement().getModifierList().getAnnotations()) {

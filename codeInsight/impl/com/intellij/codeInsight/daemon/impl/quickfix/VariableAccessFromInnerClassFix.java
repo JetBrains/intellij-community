@@ -82,7 +82,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     try {
       switch (myFixType) {
         case MAKE_FINAL:
-          myVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+          PsiUtil.setModifierProperty(myVariable, PsiModifier.FINAL, true);
           break;
         case COPY_TO_FINAL:
           copyToFinal();
@@ -105,11 +105,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiType newType = type.createArrayType();
 
     PsiDeclarationStatement variableDeclarationStatement;
-    if (myVariable.hasInitializer()) {
-      PsiExpression init = factory.createExpressionFromText("new " + newType.getCanonicalText() + " { " + myVariable.getInitializer().getText() + " }", myVariable);
-      variableDeclarationStatement = factory.createVariableDeclarationStatement(myVariable.getName(), newType, init);
-    }
-    else {
+    PsiExpression initializer = myVariable.getInitializer();
+    if (initializer == null) {
       String expression = "[1]";
       while (type instanceof PsiArrayType) {
         expression += "[1]";
@@ -118,8 +115,12 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       PsiExpression init = factory.createExpressionFromText("new " + type.getCanonicalText() + expression, myVariable);
       variableDeclarationStatement = factory.createVariableDeclarationStatement(myVariable.getName(), newType, init);
     }
+    else {
+      PsiExpression init = factory.createExpressionFromText(" { " + initializer.getText() + " }", myVariable);
+      variableDeclarationStatement = factory.createVariableDeclarationStatement(myVariable.getName(), newType, init);
+    }
     PsiVariable newVariable = (PsiVariable)variableDeclarationStatement.getDeclaredElements()[0];
-    newVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+    PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, true);
     PsiElement newExpression = factory.createExpressionFromText(myVariable.getName() + "[0]", myVariable);
 
     PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(myVariable, null);
@@ -138,7 +139,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiType type = myVariable.getType();
     PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
     PsiVariable newVariable = (PsiVariable)copyDecl.getDeclaredElements()[0];
-    newVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+    PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, true);
     PsiElement statement = getStatementToInsertBefore();
     if (statement == null) return;
     statement.getParent().addBefore(copyDecl, statement);

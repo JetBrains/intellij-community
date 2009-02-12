@@ -197,7 +197,7 @@ public class GenerateEqualsHelper implements Runnable {
     buffer.append("\nreturn true;\n}");
     PsiMethod result = myFactory.createMethodFromText(buffer.toString(), null);
     final PsiParameter parameter = result.getParameterList().getParameters()[0];
-    parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, styleSettings.GENERATE_FINAL_PARAMETERS);
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, styleSettings.GENERATE_FINAL_PARAMETERS);
 
     PsiMethod method = (PsiMethod)myCodeStyleManager.reformat(result);
     method = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(method);

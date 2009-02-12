@@ -109,7 +109,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       saveNonCodeUsages(usages);
       ChangeContextUtil.encodeContextInfo(myClassToMove, true);
       PsiClass newClass = (PsiClass)myTargetClass.addBefore(myClassToMove, myTargetClass.getRBrace());
-      newClass.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+      PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, true);
       newClass = (PsiClass)ChangeContextUtil.decodeContextInfo(newClass, null, null);
 
       retargetClassRefs(myClassToMove, newClass);

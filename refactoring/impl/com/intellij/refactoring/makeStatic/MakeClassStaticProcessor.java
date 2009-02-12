@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -72,7 +73,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         PsiType parameterType = factory.createType(containingClass, PsiSubstitutor.EMPTY);
         final String classParameterName = mySettings.getClassParameterName();
         PsiParameter parameter = factory.createParameter(classParameterName, parameterType);
-        parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, makeClassParameterFinal(usages) || generateFinalParams);
+        PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, makeClassParameterFinal(usages) || generateFinalParams);
         addParameterAfter = paramList.addAfter(parameter, null);
         anchor = javaDocHelper.addParameterAfter(classParameterName, anchor);
 
@@ -86,8 +87,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         for (Settings.FieldParameter fieldParameter : parameters) {
           final PsiType fieldParameterType = fieldParameter.field.getType();
           final PsiParameter parameter = factory.createParameter(fieldParameter.name, fieldParameterType);
-          parameter.getModifierList()
-            .setModifierProperty(PsiModifier.FINAL, makeFieldParameterFinal(fieldParameter.field, usages) || generateFinalParams);
+          PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL,
+                                      makeFieldParameterFinal(fieldParameter.field, usages) || generateFinalParams);
           addParameterAfter = paramList.addAfter(parameter, addParameterAfter);
           anchor = javaDocHelper.addParameterAfter(fieldParameter.name, anchor);
           addAssignmentToField(fieldParameter.name, constructor);

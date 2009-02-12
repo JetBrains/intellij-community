@@ -566,7 +566,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         myFactory.createVariableDeclarationStatement(name, callSubstitutor.substitute(paramType), initializer);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       parmVars[i] = (PsiLocalVariable)declaration.getDeclaredElements()[0];
-      parmVars[i].getModifierList().setModifierProperty(PsiModifier.FINAL, parm.hasModifierProperty(PsiModifier.FINAL));
+      PsiUtil.setModifierProperty(parmVars[i], PsiModifier.FINAL, parm.hasModifierProperty(PsiModifier.FINAL));
     }
 
     PsiLocalVariable thisVar = null;
@@ -894,7 +894,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
       if (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) {
         if (strictlyFinal || RefactoringUtil.canBeDeclaredFinal((PsiVariable)refElement)) {
-          ((PsiVariable)refElement).getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+          PsiUtil.setModifierProperty(((PsiVariable)refElement), PsiModifier.FINAL, true);
         }
       }
     }
@@ -1054,7 +1054,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           assignment.getRExpression().replace(initializer);
           addMarkedElements(refsVector, statement);
           if (field.hasModifierProperty(PsiModifier.STATIC)) {
-            classInitializer.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+            PsiUtil.setModifierProperty(classInitializer, PsiModifier.STATIC, true);
           }
           myAddedClassInitializers.put(field, classInitializer);
           continue;

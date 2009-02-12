@@ -152,16 +152,16 @@ public class LocalToFieldHandler {
                                                               : createField(local, fieldName, initializerPlace == IN_FIELD_DECLARATION);
           if (!settings.isIntroduceEnumConstant()) {
             if (isStatic) {
-              field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+              PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
             }
             if (declareFinal) {
-              field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+              PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
             }
             if (annotateAsNonNls) {
               PsiAnnotation annotation = JavaPsiFacade.getInstance(local.getProject()).getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
               field.getModifierList().addAfter(annotation, null);
             }
-            field.getModifierList().setModifierProperty(fieldVisibility, true);
+            PsiUtil.setModifierProperty(field, fieldVisibility, true);
           }
 
           field = (PsiField)aaClass.add(field);
