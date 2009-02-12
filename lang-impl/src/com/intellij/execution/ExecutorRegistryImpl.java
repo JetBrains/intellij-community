@@ -144,7 +144,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       final RunnerAndConfigurationSettingsImpl selectedConfiguration = getConfiguration(project);
-      if (selectedConfiguration != null && RunManagerImpl.canRunConfiguration(selectedConfiguration, myExecutor)) {
+      if (selectedConfiguration != null) {
         final ProgramRunner runner =
           RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
         enabled = runner != null;
@@ -186,7 +186,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "component MUST not be null!");
-      if (runManager.getConfig().isShowSettingsBeforeRun()) {
+      if (runManager.getConfig().isShowSettingsBeforeRun() || !RunManagerImpl.canRunConfiguration(configuration, myExecutor)) {
         final RunDialog dialog = new RunDialog(project, myExecutor);
         dialog.show();
         if (!dialog.isOK()) return;
