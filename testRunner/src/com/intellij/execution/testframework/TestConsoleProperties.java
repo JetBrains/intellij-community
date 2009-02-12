@@ -53,7 +53,10 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public <T> void removeListener(final AbstractProperty<T> property, final TestFrameworkPropertyListener listener) {
-    myListeners.get(property).remove(listener);
+    final ArrayList<TestFrameworkPropertyListener> listeners = myListeners.get(property);
+    if (listeners != null) {
+      listeners.remove(listener);
+    }
   }
 
   public abstract boolean isDebug();
