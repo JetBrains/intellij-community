@@ -43,7 +43,7 @@ public class FileInfoManager implements Disposable {
     }
 
     final PsiFile file = (PsiFile)psiElement;
-    return getFileInfoManager()._getLookupItem(file, file.getName(), file.getFileType().getIcon());
+    return getFileInfoManager()._getLookupItem(file, file.getName(), file.getIcon(0));
   }
 
   @Nullable
