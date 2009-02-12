@@ -56,8 +56,10 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     rbModulesColocated.addActionListener(listener);
     rbModulesDedicated.addActionListener(listener);
 
-    myProjectFormatPanel = new ProjectFormatPanel();
-    myFormatPanel.add(myProjectFormatPanel.getPanel(), BorderLayout.WEST);
+    if (context.isCreatingNewProject()) {
+      myProjectFormatPanel = new ProjectFormatPanel();
+      myFormatPanel.add(myProjectFormatPanel.getPanel(), BorderLayout.WEST);
+    }
   }
 
   public JComponent getComponent() {
@@ -81,7 +83,9 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
     getParameters().converterOptions.testPattern = wildcardToRegexp(myTestSourcesMask.getText());
     getParameters().linkConverted = myLinkCheckBox.isSelected();
     getParameters().projectsToConvert = null;
-    myProjectFormatPanel.updateData(getWizardContext());
+    if (getWizardContext().isCreatingNewProject()) {
+      myProjectFormatPanel.updateData(getWizardContext());
+    }
     PropertiesComponent.getInstance().setValue(_ECLIPSE_PROJECT_DIR, myWorkspaceRootComponent.getText());
     Options.saveProjectStorageDir(getParameters().converterOptions.commonModulesDirectory);
   }
