@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
   @NotNull
@@ -50,9 +51,7 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
   }
 
   private boolean isTestOnlyMethodCalled(PsiCallExpression e) {
-    PsiMethod m = e.resolveMethod();
-    if (m == null) return false;
-    return isAnnotatedAsTestOnly(m);
+    return isAnnotatedAsTestOnly(e.resolveMethod());
   }
 
   private boolean isInsideTestOnlyMethod(PsiCallExpression e) {
@@ -60,12 +59,14 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
     return isAnnotatedAsTestOnly(m);
   }
 
-  private boolean isAnnotatedAsTestOnly(PsiMethod m) {
+  private boolean isAnnotatedAsTestOnly(@Nullable PsiMethod m) {
+    if (m == null) return false;
     return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false);
   }
 
   private boolean isInsideTestClass(PsiCallExpression e) {
     PsiClass c = getTopLevelParentOfType(e, PsiClass.class);
+    if (c == null) return false;
     return TestUtil.isTestClass(c);
   }
 
