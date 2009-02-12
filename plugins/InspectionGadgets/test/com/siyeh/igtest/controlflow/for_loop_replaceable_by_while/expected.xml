@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ForLoopReplaceableByWhile.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'for' loop may be replaced with 'while' loop</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; loop statement may be replace by 'while' loop #loc</description>
+  </problem>
+</problems>

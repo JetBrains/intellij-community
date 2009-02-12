@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -23,7 +24,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,29 +34,34 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignoreLoopsWithoutConditions = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "for.loop.replaceable.by.while.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "ForLoopReplaceableByWhile";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "for.loop.replaceable.by.while.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "for.loop.replaceable.by.while.ignore.option"),
                 this, "m_ignoreLoopsWithoutConditions");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ReplaceForByWhileFix();
     }
@@ -69,6 +74,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
                     "for.loop.replaceable.by.while.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement forKeywordElement = descriptor.getPsiElement();
@@ -95,6 +101,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ForLoopReplaceableByWhileVisitor();
     }
@@ -102,7 +109,8 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     private class ForLoopReplaceableByWhileVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(
+                @NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement initialization = statement.getInitialization();
             if (initialization != null &&
