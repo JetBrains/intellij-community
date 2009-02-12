@@ -27,9 +27,9 @@ public class ShowStatisticsAction extends AnAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    final Presentation presentation = getTemplatePresentation();
+    final Presentation presentation = e.getPresentation();
 
-    // visible onle in SMTRunnerTestTreeView 
+    // visible only in SMTRunnerTestTreeView 
     presentation.setVisible(e.getData(SMTRunnerTestTreeView.SM_TEST_RUNNER_VIEW) != null);
     // enabled if some proxy is selected
     presentation.setEnabled(getSelectedTestProxy(e) != null);
