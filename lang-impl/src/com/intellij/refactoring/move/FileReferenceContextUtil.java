@@ -15,7 +15,7 @@ public class FileReferenceContextUtil {
   }
 
   public static void encodeFileReferences(PsiElement element) {
-    element.accept(new PsiRecursiveElementVisitor(true) {
+    element.accept(new PsiRecursiveElementWalkingVisitor(true) {
       @Override public void visitElement(PsiElement element) {
         final PsiReference[] refs = element.getReferences();
         if (refs.length > 0 && refs[0] instanceof FileReferenceOwner) {
@@ -24,13 +24,13 @@ public class FileReferenceContextUtil {
             final ResolveResult[] results = ref.multiResolve(false);
             for (ResolveResult result : results) {
               if (result.getElement() instanceof PsiFileSystemItem) {
-                element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, ((PsiFileSystemItem)result.getElement()));
+                element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, (PsiFileSystemItem)result.getElement());
                 break;
               }
             }
           }
         }
-        element.acceptChildren(this);
+        super.visitElement(element);
       }
     });
   }

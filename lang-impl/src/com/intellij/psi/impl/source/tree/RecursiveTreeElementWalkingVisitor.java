@@ -5,29 +5,38 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor{
   private boolean startedWalking;
   private boolean isDown;
+  private final boolean myDoTransform;
+
+  protected RecursiveTreeElementWalkingVisitor() {
+    this(true);
+  }
+  protected RecursiveTreeElementWalkingVisitor(boolean doTransform) {
+    myDoTransform = doTransform;
+  }
+
   @Override public void visitLeaf(LeafElement leaf) {
     visitNode(leaf);
   }
 
   @Override public void visitComposite(CompositeElement composite) {
-    ChameleonTransforming.transformChildren(composite);
+    if (myDoTransform) ChameleonTransforming.transformChildren(composite);
     isDown = visitNode(composite);
     if (!startedWalking) {
       startedWalking = true;
       walk(composite);
+      startedWalking = false;
     }
   }
 
   private void walk(TreeElement root) {
     for (TreeElement element = next(root, root); element != null; element = next(element, root)) {
-      ChameleonTransforming.transformChildren(element);
+      if (myDoTransform) ChameleonTransforming.transformChildren(element);
       CompositeElement parent = element.getTreeParent();
       TreeElement next = element.getTreeNext();
       element.acceptTree(this);
       assert element.getTreeNext() == next;
       assert element.getTreeParent() == parent;
     }
-    startedWalking = false;
   }
 
   private TreeElement next(TreeElement element, TreeElement root) {
@@ -48,5 +57,7 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
     return null;
   }
 
-  protected abstract boolean visitNode(TreeElement element);
+  protected boolean visitNode(TreeElement element){
+    return true;
+  }
 }

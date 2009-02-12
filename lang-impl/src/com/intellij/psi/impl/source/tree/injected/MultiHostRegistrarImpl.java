@@ -8,7 +8,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.RangeMarker;
@@ -58,7 +57,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private final PsiManager myPsiManager;
   private DocumentEx myHostDocument;
   private VirtualFile myHostVirtualFile;
-  private final InjectedLanguageManagerImpl myInjectedManager;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
   private static final RecursiveTreeElementWalkingVisitor CLEAR_CACHES_VISITOR = new RecursiveTreeElementWalkingVisitor(){
@@ -68,9 +66,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     }
   };
 
-  MultiHostRegistrarImpl(@NotNull Project project, @NotNull InjectedLanguageManagerImpl injectedManager, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
+  MultiHostRegistrarImpl(@NotNull Project project, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
     myProject = project;
-    myInjectedManager = injectedManager;
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilBase.getTemplateLanguageFile(hostPsiFile);
     myPsiManager = myHostPsiFile.getManager();
@@ -199,10 +196,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       PsiFile psiFile = parserDefinition.createFile(viewProvider);
       place.setInjectedPsi(psiFile);
 
-      InjectedLanguageManagerImpl injectedManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject);
-
-      assert injectedManager.isInjectedFragment(psiFile) : psiFile.getViewProvider();
-
       SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
       psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
 
@@ -227,7 +220,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       virtualFile.setContent(null, documentWindow.getText(), false);
       FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
       synchronized (PsiLock.LOCK) {
-        psiFile = registerDocument(documentWindow, virtualFile, psiFile, place, myHostPsiFile, documentManager, injectedManager);
+        psiFile = registerDocument(documentWindow, psiFile, place, myHostPsiFile, documentManager);
         InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
         myFileViewProvider.forceCachedPsi(psiFile);
         documentWindow = (DocumentWindowImpl)myFileViewProvider.getDocument();
@@ -320,11 +313,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     ((TreeElement)parsedNode).acceptTree(CLEAR_CACHES_VISITOR);
   }
 
-  private static PsiFile registerDocument(final DocumentWindowImpl documentWindow, VirtualFileWindowImpl virtualFile, final PsiFile injectedPsi,
-                                          Place shreds,
+  private static PsiFile registerDocument(final DocumentWindowImpl documentWindow,
+                                          final PsiFile injectedPsi,
+                                          final Place shreds,
                                           final PsiFile hostPsiFile,
-                                          PsiDocumentManager documentManager,
-                                          InjectedLanguageManagerImpl injectedManager) {
+                                          final PsiDocumentManager documentManager) {
     DocumentEx hostDocument = documentWindow.getDelegate();
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
 
@@ -378,10 +371,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
 
         oldFile.subtreeChanged();
         return oldFile;
-      }
-      else {
-        int is = 0;
-        is++;
       }
     }
     injected.add(documentWindow);

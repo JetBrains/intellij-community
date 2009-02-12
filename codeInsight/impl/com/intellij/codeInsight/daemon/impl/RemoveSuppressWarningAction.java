@@ -66,7 +66,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
             removeFromJavaDoc((PsiDocComment)psiElement);
           } else { //try to remove from all comments
             final Set<PsiComment> comments = new HashSet<PsiComment>();
-            commentOwner.accept(new PsiRecursiveElementVisitor() {
+            commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
               @Override public void visitComment(final PsiComment comment) {
                 super.visitComment(comment);
                 if (comment.getText().contains(myID)) {

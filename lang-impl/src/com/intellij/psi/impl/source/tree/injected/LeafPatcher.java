@@ -9,7 +9,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import gnu.trove.THashMap;
 
 import java.util.List;
@@ -31,10 +30,6 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   LeafPatcher(Place shreds, List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers) {
     myShreds = shreds;
     myEscapers = escapers;
-  }
-
-  protected boolean visitNode(TreeElement element) {
-    return true;
   }
 
   @Override

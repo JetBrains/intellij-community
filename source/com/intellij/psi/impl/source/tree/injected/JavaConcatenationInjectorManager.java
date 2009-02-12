@@ -107,7 +107,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
         anchor = context;
       }
       Project project = context.getProject();
-      MultiHostRegistrarImpl registrar = new MultiHostRegistrarImpl(project, InjectedLanguageManagerImpl.getInstanceImpl(project), context.getContainingFile(), context);
+      MultiHostRegistrarImpl registrar = new MultiHostRegistrarImpl(project, context.getContainingFile(), context);
       for (ConcatenationAwareInjector concatenationInjector : myConcatenationInjectors) {
         concatenationInjector.getLanguagesToInject(registrar, operands);
       }

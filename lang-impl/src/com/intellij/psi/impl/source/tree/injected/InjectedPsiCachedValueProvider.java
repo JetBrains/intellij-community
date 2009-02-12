@@ -34,26 +34,24 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
 
   @Nullable
   static Places doCompute(final PsiElement element, InjectedLanguageManagerImpl injectedManager, Project project, PsiFile hostPsiFile) {
-    MyInjProcessor processor = new MyInjProcessor(injectedManager, project, hostPsiFile);
+    MyInjProcessor processor = new MyInjProcessor(project, hostPsiFile);
     injectedManager.processInPlaceInjectorsFor(element, processor);
     return processor.hostRegistrar == null ? null : processor.hostRegistrar.result;
   }
 
   private static class MyInjProcessor implements InjectedLanguageManagerImpl.InjProcessor {
     private MultiHostRegistrarImpl hostRegistrar;
-    private final InjectedLanguageManagerImpl myInjectedManager;
     private final Project myProject;
     private final PsiFile myHostPsiFile;
 
-    private MyInjProcessor(InjectedLanguageManagerImpl injectedManager, Project project, PsiFile hostPsiFile) {
-      myInjectedManager = injectedManager;
+    private MyInjProcessor(Project project, PsiFile hostPsiFile) {
       myProject = project;
       myHostPsiFile = hostPsiFile;
     }
 
     public boolean process(PsiElement element, MultiHostInjector injector) {
       if (hostRegistrar == null) {
-        hostRegistrar = new MultiHostRegistrarImpl(myProject, myInjectedManager, myHostPsiFile, element);
+        hostRegistrar = new MultiHostRegistrarImpl(myProject, myHostPsiFile, element);
       }
       injector.getLanguagesToInject(hostRegistrar, element);
       return hostRegistrar.result == null;
