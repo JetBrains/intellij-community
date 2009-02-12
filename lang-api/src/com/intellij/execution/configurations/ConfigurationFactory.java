@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.RunManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,10 @@ public abstract class ConfigurationFactory {
   }
 
   public abstract RunConfiguration createTemplateConfiguration(Project project);
+
+  public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
+    return createTemplateConfiguration(project);
+  }
 
   public String getName() {
     return myType.getDisplayName();
