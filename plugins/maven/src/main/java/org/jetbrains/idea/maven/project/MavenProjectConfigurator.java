@@ -102,45 +102,47 @@ public class MavenProjectConfigurator {
   private void configSettings() {
     ((ProjectEx)myProject).setSavePathsRelative(true);
 
-    String level = getTargetLevel();
-    if (level != null) {
-      String options = JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING;
-      Pattern pattern = Pattern.compile("(-target ([\\d\\.]+))");
-      Matcher matcher = pattern.matcher(options);
+    String level = calcTargetLevel();
+    if (level == null) return;
 
-      if (matcher.find()) {
-        String value = matcher.group(2);
-        if (level.compareToIgnoreCase(value) < 0) {
-          StringBuffer buffer = new StringBuffer();
-          matcher.appendReplacement(buffer, "-target " + level);
-          matcher.appendTail(buffer);
-          options = buffer.toString();
-        }
+    String options = JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING;
+    Pattern pattern = Pattern.compile("(-target (\\S+))");
+    Matcher matcher = pattern.matcher(options);
+
+    if (matcher.find()) {
+      String currentValue = MavenProjectModel.normalizeCompilerLevel(matcher.group(2));
+
+      if (compareCompilerLevel(level, currentValue) < 0) {
+        StringBuffer buffer = new StringBuffer();
+        matcher.appendReplacement(buffer, "-target " + level);
+        matcher.appendTail(buffer);
+        options = buffer.toString();
       }
-      else {
-        if (!StringUtil.isEmptyOrSpaces(options)) options += " ";
-        options += "-target " + level;
-      }
-      JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = options;
     }
+    else {
+      if (!StringUtil.isEmptyOrSpaces(options)) options += " ";
+      options += "-target " + level;
+    }
+    JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = options;
   }
 
-  private String getTargetLevel() {
-    String result = null;
+  private String calcTargetLevel() {
+    String resultSource = null;
+    String resultTarget = null;
     for (MavenProjectModel each : myMavenTree.getProjects()) {
-      String targetString = each.findPluginConfigurationValue("org.apache.maven.plugins",
-                                                              "maven-compiler-plugin",
-                                                              "target");
-      if (targetString != null) {
-        if (result == null) {
-          result = targetString;
-        }
-        else {
-          if (targetString.compareTo(result) < 0) result = targetString;
-        }
-      }
+      String source = each.getSourceLevel();
+      String target = each.getTargetLevel();
+      if (resultSource == null || compareCompilerLevel(source, resultSource) > 0) resultSource = source;
+      if (compareCompilerLevel(target, resultTarget) < 0) resultTarget = target;
     }
-    return result;
+    return resultSource != null && compareCompilerLevel(resultSource, resultTarget) > 0 ? resultSource : resultTarget;
+  }
+
+  private int compareCompilerLevel(String left, String right) {
+    if (left == null && right == null) return 0;
+    if (left == null) return 1;
+    if (right == null) return -1;
+    return left.compareTo(right);
   }
 
   private void deleteObsoleteModules() {

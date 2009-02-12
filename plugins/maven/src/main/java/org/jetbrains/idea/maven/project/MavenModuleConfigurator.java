@@ -93,17 +93,8 @@ public class MavenModuleConfigurator {
   }
 
   private void configLanguageLevel() {
-    String mavenLevel = extractLanguageLevel();
-    LanguageLevel ideaLevel = translateLanguageLevel(mavenLevel);
-
-    myRootModelAdapter.setLanguageLevel(ideaLevel);
-  }
-
-  @Nullable
-  private String extractLanguageLevel() {
-    return myMavenProject.findPluginConfigurationValue("org.apache.maven.plugins",
-                                                       "maven-compiler-plugin",
-                                                       "source");
+    LanguageLevel level = translateLanguageLevel(myMavenProject.getSourceLevel());
+    myRootModelAdapter.setLanguageLevel(level);
   }
 
   @Nullable

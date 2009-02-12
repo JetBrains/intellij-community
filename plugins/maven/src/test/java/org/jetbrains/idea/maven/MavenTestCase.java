@@ -15,9 +15,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import junit.framework.TestCase;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProcess;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +54,8 @@ public abstract class MavenTestCase extends TestCase {
     setUpFixtures();
 
     myProject = myTestFixture.getProject();
+
+    MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
 
     restoreSettingsFile();
 
