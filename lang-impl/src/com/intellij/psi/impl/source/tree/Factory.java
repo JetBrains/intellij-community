@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -45,6 +46,7 @@ public class Factory  {
     return errorElement;
   }
 
+  @NotNull
   public static CompositeElement createCompositeElement(final IElementType type,
                                                         final CharTable charTableByTree,
                                                         final PsiManager manager) {
