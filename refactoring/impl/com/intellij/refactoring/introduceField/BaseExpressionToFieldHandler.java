@@ -97,13 +97,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return false;
     }
 
-    PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
-    if (tempAnchorElement == null) {
-      //TODO : work outside code block (e.g. field initializer)
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
-      return false;
-    }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
@@ -117,6 +110,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       highlighters = RefactoringUtil.highlightAllOccurences(project, occurrences, editor);
     }
 
+    PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
 
     final Settings settings =
       showRefactoringDialog(project, editor, myParentClass, selectedExpr, tempType,
@@ -147,7 +141,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     PsiElement anchor = getNormalizedAnchor(anchorElement);
 
-    boolean tempDeleteSelf = false;
+    boolean tempDeleteSelf = anchorElement == null;
     if (element.getParent() instanceof PsiExpressionStatement && anchor.equals(anchorElement)) {
       PsiStatement statement = (PsiStatement)element.getParent();
       if (statement.getParent() instanceof PsiCodeBlock) {
@@ -245,8 +239,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             expr = (PsiExpression)expr.getParent();
           }
           if (deleteSelf) {
-            PsiStatement statement = (PsiStatement)element.getParent();
-            statement.delete();
+            element.getParent().delete();
           }
 
           if (replaceAll) {
@@ -256,7 +249,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                 occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
               }
               if (deleteSelf && occurrence.equals(expr)) continue;
-              array.add(RefactoringUtil.replaceOccurenceWithFieldRef(occurrence, field, destClass, file));
+              final PsiElement replaced = RefactoringUtil.replaceOccurenceWithFieldRef(occurrence, field, destClass);
+              if (replaced != null) {
+                array.add(replaced);
+              }
             }
 
             if (editor != null) {
@@ -271,7 +267,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           else {
             if (!deleteSelf) {
               expr = RefactoringUtil.outermostParenthesizedExpression(expr);
-              RefactoringUtil.replaceOccurenceWithFieldRef(expr, field, destClass, file);
+              RefactoringUtil.replaceOccurenceWithFieldRef(expr, field, destClass);
             }
           }
 

@@ -101,9 +101,9 @@ public class RefactoringUtil {
     }).booleanValue();
   }
 
-  public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass, final PsiFile file)
+  public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass)
     throws IncorrectOperationException {
-    final PsiManager manager = occurrence.getManager();
+    final PsiManager manager = destinationClass.getManager();
     final String fieldName = newField.getName();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiElement element = occurrence.getUserData(ElementToWorkOn.PARENT);
@@ -114,6 +114,7 @@ public class RefactoringUtil {
     }
     else {
       final PsiReferenceExpression ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + fieldName, null);
+      if (!occurrence.isValid()) return null;
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
         ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
       }
