@@ -40,8 +40,12 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   MavenRunConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
+        throw new UnsupportedOperationException();
+      }
+
+      public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
         MavenRunConfiguration result = new MavenRunConfiguration(project, this, "");
-        resetBeforeRunTasks(project, result);
+        resetBeforeRunTasks(runManager, result);
         return result;
       }
     };
@@ -164,12 +168,12 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     if (generalSettings != null) runConfiguration.setGeneralSettings(generalSettings);
     if (runnerSettings != null) runConfiguration.setRunnerSettings(runnerSettings);
 
-    if (resetBeforeRunTasks) resetBeforeRunTasks(project, runConfiguration);
+    if (resetBeforeRunTasks) resetBeforeRunTasks(RunManager.getInstance(project), runConfiguration);
 
     return settings;
   }
 
-  private static void resetBeforeRunTasks(Project project, MavenRunConfiguration runConfiguration) {
-    RunManagerImpl.getInstanceImpl(project).setCompileMethodBeforeRun(runConfiguration, new HashMap<String, Boolean>());
+  private static void resetBeforeRunTasks(RunManager runManager, MavenRunConfiguration runConfiguration) {
+    ((RunManagerImpl)runManager).setCompileMethodBeforeRun(runConfiguration, new HashMap<String, Boolean>());
   }
 }
