@@ -1,15 +1,12 @@
 package com.intellij.execution.testframework.sm.runner.ui.statistics;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
-
-import java.awt.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
@@ -17,25 +14,23 @@ import java.awt.*;
 public class ShowStatisticsAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
-    //To change body of implemented methods use File | Settings | File Templates.
-    final SMTRunnerTestTreeView sender = (SMTRunnerTestTreeView)e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    assert sender != null;
+    final SMTRunnerTestTreeView sender = e.getData(SMTRunnerTestTreeView.SM_TEST_RUNNER_VIEW);
+    if (sender == null) {
+      return;
+    }
 
     final TestResultsViewer resultsViewer = sender.getResultsViewer();
     assert resultsViewer != null;
-
-    //final SMTestProxy test = (SMTestProxy)getSelectedTestProxy(e);
 
     resultsViewer.showStatisticsForSelectedProxy();
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    final Component sender = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-
     final Presentation presentation = getTemplatePresentation();
+
     // visible onle in SMTRunnerTestTreeView 
-    presentation.setVisible(sender instanceof SMTRunnerTestTreeView);
+    presentation.setVisible(e.getData(SMTRunnerTestTreeView.SM_TEST_RUNNER_VIEW) != null);
     // enabled if some proxy is selected
     presentation.setEnabled(getSelectedTestProxy(e) != null);
   }
