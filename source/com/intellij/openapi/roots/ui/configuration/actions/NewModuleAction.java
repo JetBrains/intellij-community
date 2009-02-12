@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,9 @@ public class NewModuleAction extends AnAction {
       }
       else {
         builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
+        if (builder.isOpenProjectSettingsAfter()) {
+          ModulesConfigurator.showDialog(project, null, null, true);
+        }
       }
     }
   }
