@@ -21,6 +21,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -48,7 +49,7 @@ public class CreateConstructorFix extends BaseFix {
     final PsiClass clazz = (PsiClass)myElement;
 
     PsiMethod ctor = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory().createConstructor();
-    ctor.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+    PsiUtil.setModifierProperty(ctor, PsiModifier.PUBLIC, true);
 
     final PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length > 0) {

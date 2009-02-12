@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -37,7 +38,7 @@ public class MakePublicFix extends BaseFix {
   }
 
   protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {
-    ((PsiModifierListOwner)myElement).getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+    PsiUtil.setModifierProperty(((PsiModifierListOwner)myElement), PsiModifier.PUBLIC, true);
   }
 
   @NotNull

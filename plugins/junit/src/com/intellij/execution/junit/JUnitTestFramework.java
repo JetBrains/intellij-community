@@ -23,6 +23,7 @@ package com.intellij.execution.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFramework;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
@@ -51,8 +52,8 @@ public class JUnitTestFramework implements TestFramework {
     if (baseClass != null) {
       final PsiMethod baseMethod = baseClass.findMethodBySignature(patternMethod, false);
       if (baseMethod != null && baseMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
-        patternMethod.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
-        patternMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+        PsiUtil.setModifierProperty(patternMethod, PsiModifier.PROTECTED, false);
+        PsiUtil.setModifierProperty(patternMethod, PsiModifier.PUBLIC, true);
       }
     }
 

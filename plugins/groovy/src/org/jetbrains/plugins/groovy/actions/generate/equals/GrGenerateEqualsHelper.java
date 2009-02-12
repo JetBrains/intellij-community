@@ -312,8 +312,7 @@ public class GrGenerateEqualsHelper {
 
     GrMethod result = myFactory.createMethodFromText(buffer.toString());
     final PsiParameter parameter = result.getParameterList().getParameters()[0];
-    parameter.getModifierList()
-        .setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS);
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS);
 
     try {
       result = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(result));
