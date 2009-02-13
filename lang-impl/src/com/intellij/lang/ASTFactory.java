@@ -27,7 +27,7 @@ public abstract class ASTFactory {
   @Deprecated
   @NotNull
   public static LeafElement leaf(IElementType type, CharSequence fileText, int start, int end, CharTable table) {
-    return leaf(type, fileText);
+    return leaf(type, table.intern(fileText, start, end));
   }
 
   @NotNull
