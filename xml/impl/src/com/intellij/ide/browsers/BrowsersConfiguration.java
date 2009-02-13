@@ -1,6 +1,5 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.BrowserSettingsProvider;
 import com.intellij.ide.browsers.actions.WebOpenInAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -12,7 +11,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -33,7 +31,7 @@ import java.util.Map;
  * @author spleaner
  */
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(id = "other", file = "$APP_CONFIG$/browsers.xml")})
-public class BrowsersConfiguration extends BrowserSettingsProvider implements ApplicationComponent, PersistentStateComponent<Element> {
+public class BrowsersConfiguration implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.BrowsersConfiguration");
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -82,7 +80,6 @@ public class BrowsersConfiguration extends BrowserSettingsProvider implements Ap
     }
   }
 
-  private WebBrowsersPanel mySettingsPanel;
   private final Map<BrowserFamily, Pair<String, Boolean>> myBrowserToPathMap = new HashMap<BrowserFamily, Pair<String, Boolean>>();
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -148,34 +145,6 @@ public class BrowsersConfiguration extends BrowserSettingsProvider implements Ap
   }
 
   public void disposeComponent() {
-  }
-
-  public JComponent createComponent() {
-    if (mySettingsPanel == null) {
-      mySettingsPanel = new WebBrowsersPanel(this);
-    }
-
-    return mySettingsPanel;
-  }
-
-  public boolean isModified() {
-    LOG.assertTrue(mySettingsPanel != null);
-    return mySettingsPanel.isModified();
-  }
-
-  public void apply() throws ConfigurationException {
-    LOG.assertTrue(mySettingsPanel != null);
-    mySettingsPanel.apply();
-  }
-
-  public void reset() {
-    LOG.assertTrue(mySettingsPanel != null);
-    mySettingsPanel.reset();
-  }
-
-  public void disposeUIResources() {
-    mySettingsPanel.dispose();
-    mySettingsPanel = null;
   }
 
   public static void launchBrowser(final BrowserFamily family, @NotNull final String url) {

@@ -239,9 +239,11 @@
 
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
 
-    <browserSettingsProvider implementation="com.intellij.ide.browsers.BrowsersConfiguration"/>
+    <browserSettingsProvider implementation="com.intellij.ide.browsers.BrowserSettingsProviderImpl"/>
     
     <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
+
+    <!--<multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>-->
 
     <intentionAction>
       <category>XML</category>
