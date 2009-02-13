@@ -9,6 +9,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,5 +59,9 @@ public abstract class WizardMode implements Disposable {
   @Nullable
   public String getFootnote(final WizardContext wizardContext) {
     return null;
+  }
+
+  public boolean validate() throws ConfigurationException {
+    return true;
   }
 }

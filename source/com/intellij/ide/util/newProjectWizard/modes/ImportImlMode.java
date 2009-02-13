@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 
 public class ImportImlMode extends WizardMode {
   private TextFieldWithBrowseButton myModulePathFieldPanel;
@@ -71,6 +73,14 @@ public class ImportImlMode extends WizardMode {
       "prompt.select.module.file.to.import", productName), null, new ModuleFileChooserDescriptor()));
     onChosen(false);
     return myModulePathFieldPanel;
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    final String imlPath = myModulePathFieldPanel.getText().trim();
+    if (!new File(imlPath).exists()) throw new ConfigurationException("File \'" + imlPath + "\' doesn't exist");
+    if (!FileTypeManager.getInstance().getFileTypeByFileName(imlPath).equals(StdFileTypes.IDEA_MODULE)) throw new ConfigurationException("File \'" + imlPath + "\' doesn't contain IDEA module");
+    return super.validate();
   }
 
   public void onChosen(final boolean enabled) {

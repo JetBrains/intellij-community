@@ -10,6 +10,7 @@ import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
@@ -119,6 +120,11 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
   }
 
   protected void update() {
+  }
+
+  @Override
+  public boolean validate() throws ConfigurationException {
+    return super.validate() && myMode.validate();
   }
 
   @NonNls
