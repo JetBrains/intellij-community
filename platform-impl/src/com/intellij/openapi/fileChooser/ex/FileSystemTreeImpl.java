@@ -376,6 +376,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
       return true;
     }
     for (VirtualFile root : roots) {
+      if (root == null) continue;
       if (VfsUtil.isAncestor(root, file, false)) {
         return true;
       }
