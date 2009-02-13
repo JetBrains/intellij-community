@@ -126,8 +126,11 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       public void run() {
         try {
           for (String path : getParameters().projectsToConvert) {
-            final Element classpathElement = JDOMUtil.loadDocument(new File(path, EclipseXml.DOT_CLASSPATH_EXT)).getRootElement();
-            EclipseClasspathReader.collectVariables(variables, classpathElement);
+            final File classpathfile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
+            if (classpathfile.exists()) {
+              final Element classpathElement = JDOMUtil.loadDocument(classpathfile).getRootElement();
+              EclipseClasspathReader.collectVariables(variables, classpathElement);
+            }
           }
         }
         catch (IOException e) {
@@ -173,14 +176,17 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         if (modulesDirectory == null) {
           modulesDirectory = path;
         }
-        final Element classpathElement = JDOMUtil.loadDocument(new File(path, EclipseXml.DOT_CLASSPATH_EXT)).getRootElement();
         final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
         result.add(module);
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         rootModels[idx++] = rootModel;
 
-        new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
-                                                                getParameters().converterOptions.testPattern, classpathElement);
+        final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
+        if (classpathFile.exists()) {
+          final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();
+          new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
+                                                                  getParameters().converterOptions.testPattern, classpathElement);
+        }
         ClasspathStorage.setStorageType(module,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
         if (model != null) {

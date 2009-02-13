@@ -69,7 +69,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   public static boolean isCompatible(final ModuleRootModel model) {
-    return model.getContentEntries().length == 1;
+    return model.getContentEntries().length <= 1;
   }
 
   @Nullable
@@ -224,15 +224,19 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);
         final CachedXmlDocumentSet fileSet = getFileSet();
 
-        Element element;
-        try {
-          element = fileSet.read(EclipseXml.CLASSPATH_FILE).getRootElement();
+        if (model.getContentRoots().length > 0) {
+          Element element;
+          try {
+            element = fileSet.read(EclipseXml.CLASSPATH_FILE).getRootElement();
+          }
+          catch (Exception e) {
+            element = null;
+          }
+          classpathWriter.writeClasspath(classpathElement, element);
+          fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
+        } else {
+          fileSet.delete(EclipseXml.CLASSPATH_FILE);
         }
-        catch (Exception e) {
-          element = null;
-        }
-        classpathWriter.writeClasspath(classpathElement, element);
-        fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
 
         final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
         final String emlFilename = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
