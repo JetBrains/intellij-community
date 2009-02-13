@@ -95,7 +95,7 @@ public class XsltCodeInsightUtil {
         if (attribute != null) {
             final PsiFile[] files = XsltSupport.getInstance(xsltElement.getProject()).getFiles(attribute);
             if (files.length > 0) {
-                assert files.length == 1;
+                assert files.length == 1 : "Unexpected number of XPathFiles in @" + attributeName + ": " + Arrays.toString(files);
                 return PsiTreeUtil.getChildOfType(files[0], XPathExpression.class);
             }
         }

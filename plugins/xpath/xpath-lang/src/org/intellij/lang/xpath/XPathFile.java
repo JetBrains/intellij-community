@@ -34,6 +34,6 @@ public class XPathFile extends PsiFileBase implements XPathElement {
     }
 
     public String toString() {
-        return "XPathFile:" + getName();
+        return "XPathFile:" + getName() + " {" + getText() + "}";
     }
 }
