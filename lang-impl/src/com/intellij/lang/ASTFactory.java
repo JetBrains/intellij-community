@@ -24,6 +24,12 @@ public abstract class ASTFactory {
   @Nullable
   public abstract LeafElement createLeaf(IElementType type, CharSequence text);
 
+  @Deprecated
+  @NotNull
+  public static LeafElement leaf(IElementType type, CharSequence fileText, int start, int end, CharTable table) {
+    return leaf(type, fileText);
+  }
+
   @NotNull
   public static LeafElement leaf(IElementType type, CharSequence text) {
     if (type == TokenType.WHITE_SPACE) {
