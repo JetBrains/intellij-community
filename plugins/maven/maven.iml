@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module relativePaths="true" type="JAVA_MODULE" version="4">
+<module relativePaths="true" MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -150,13 +150,12 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="forms_rt" />
-    <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="J2EE" />
     <orderEntry type="module" module-name="web-impl" />
