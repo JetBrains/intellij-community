@@ -104,7 +104,12 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
           if (realFile.exists()/* && new File(realFile, "../../" + GroovyScriptRunConfiguration.GROOVY_STARTER_CONF).exists()*/) {
             try {
               JarFile jarFile = new JarFile(realFile);
-              return isSDKJar(jarFile) && !GrailsConfigUtils.getInstance().isSDKLibrary(library);
+              try {
+                return isSDKJar(jarFile) && !GrailsConfigUtils.getInstance().isSDKLibrary(library);
+              }
+              finally {
+                jarFile.close();
+              }
             }
             catch (IOException e) {
               return false;

@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -111,21 +112,33 @@ public abstract class AbstractConfigUtils {
         return null;
       }
       JarFile jarFile = new JarFile(jars[0]);
-      JarEntry jarEntry = jarFile.getJarEntry(manifestPath);
-      if (jarEntry == null) {
+      try {
+        JarEntry jarEntry = jarFile.getJarEntry(manifestPath);
+        if (jarEntry == null) {
+          return null;
+        }
+        final InputStream inputStream = jarFile.getInputStream(jarEntry);
+        Manifest manifest;
+        try {
+          manifest = new Manifest(inputStream);
+        }
+        finally {
+          inputStream.close();
+        }
+        final String version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+        if (version != null) {
+          return version;
+        }
+
+        final Matcher matcher = Pattern.compile(jarRegex).matcher(jars[0].getName());
+        if (matcher.matches() && matcher.groupCount() == 1) {
+          return matcher.group(1);
+        }
         return null;
       }
-      Manifest manifest = new Manifest(jarFile.getInputStream(jarEntry));
-      final String version = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-      if (version != null) {
-        return version;
+      finally {
+        jarFile.close();
       }
-
-      final Matcher matcher = Pattern.compile(jarRegex).matcher(jars[0].getName());
-      if (matcher.matches() && matcher.groupCount() == 1) {
-        return matcher.group(1);
-      }
-      return null;
     }
     catch (Exception e) {
       return null;
