@@ -475,8 +475,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, 0,
-                                                     DUMMY_IDENTIFIER.length(), charTable, file.getManager());
+    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
     parent.addChild(marker, space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
   }

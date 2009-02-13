@@ -338,7 +338,7 @@ public class CompositeElement extends TreeElement {
 
   public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
     FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
-    final LeafElement leaf = ASTFactory.leaf(leafType, leafText, 0, leafText.length(), holder.getCharTable());
+    final LeafElement leaf = ASTFactory.leaf(leafType, holder.getCharTable().intern(leafText));
     CodeEditUtil.setNodeGenerated(leaf, true);
     holder.rawAddChildren(leaf);
 

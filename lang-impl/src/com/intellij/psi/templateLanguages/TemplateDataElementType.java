@@ -161,7 +161,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       LOG.assertTrue(false, "Invalid end: " + tokenEnd + "; " + lexer);
     }
 
-    return new OuterLanguageElementImpl(outerElementType, buffer, tokenStart, tokenEnd, table);
+    return new OuterLanguageElementImpl(outerElementType, table.intern(buffer, tokenStart, tokenEnd));
   }
 
   private PsiFile createFromText(final Language language, CharSequence text, PsiManager manager) {

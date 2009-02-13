@@ -157,7 +157,7 @@ public class StatementParsing extends Parsing {
           lexer.advance();
         }
       }
-      final TreeElement chameleon = ASTFactory.leaf(CODE_BLOCK, lexer.getBufferSequence(), start, end, myContext.getCharTable());
+      final TreeElement chameleon = ASTFactory.leaf(CODE_BLOCK, myContext.getCharTable().intern(lexer.getBufferSequence(), start, end));
       if (braceCount != 0){
         chameleon.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
       }
@@ -316,7 +316,7 @@ public class StatementParsing extends Parsing {
     }
     else if (tokenType instanceof IChameleonElementType) {
       LeafElement declaration =
-        ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
+        ASTFactory.leaf(tokenType, myContext.tokenText(lexer));
       lexer.advance();
       return declaration;
     }

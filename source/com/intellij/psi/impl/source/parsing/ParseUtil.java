@@ -4,6 +4,7 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
@@ -26,10 +27,10 @@ public class ParseUtil implements Constants {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
     if (tokenType == JavaTokenType.DOC_COMMENT) {
-      return ASTFactory.leaf(JavaDocElementType.DOC_COMMENT, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
+      return ASTFactory.leaf(JavaDocElementType.DOC_COMMENT, LexerUtil.internToken(lexer, table));
     }
     else {
-      return ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
+      return ASTFactory.leaf(tokenType, LexerUtil.internToken(lexer, table));
     }
   }
 

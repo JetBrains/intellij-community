@@ -109,6 +109,6 @@ class GTTokens implements JavaTokenType {
       lexer.advance();
     }
     final int tokenEnd = lexer.getTokenEnd();
-    return ASTFactory.leaf(tokenType, lexer.getBufferSequence(), tokenStart, tokenEnd, table);
+    return ASTFactory.leaf(tokenType, table.intern(lexer.getBufferSequence(), tokenStart, tokenEnd));
   }
 }

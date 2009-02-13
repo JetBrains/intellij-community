@@ -6,7 +6,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
@@ -41,11 +44,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
       throw e;
     }
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(attrNode);
-    final LeafElement newValueElement = Factory.createSingleLeafElement(
-      XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
-      text,
-      0,
-      text.length(), charTableByTree, element.getManager());
+    final LeafElement newValueElement = Factory.createSingleLeafElement(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, text, charTableByTree, element.getManager());
 
     attrNode.replaceChildInternal(valueNode, newValueElement);
     return element;

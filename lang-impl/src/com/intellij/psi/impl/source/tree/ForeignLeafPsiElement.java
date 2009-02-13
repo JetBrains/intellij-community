@@ -5,16 +5,11 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 public class ForeignLeafPsiElement extends LeafPsiElement {
-  public ForeignLeafPsiElement(IElementType type, CharSequence text, CharTable table) {
-    this(type, text, 0, text.length(), table);
-  }
-
-  public ForeignLeafPsiElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    super(type, buffer, startOffset, endOffset, table);
+  public ForeignLeafPsiElement(IElementType type, CharSequence text) {
+    super(type, text);
   }
 
   public LeafElement findLeafElementAt(int offset) {

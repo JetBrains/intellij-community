@@ -26,8 +26,8 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
-import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -153,10 +153,11 @@ public class BlockSupportImpl extends BlockSupport {
     if (bestReparseable != null && !theOnlyReparseable) {
       // best reparseable available
       final TextRange textRange = bestReparseable.getTextRange();
-      final ChameleonElement chameleon = (ChameleonElement)ASTFactory.leaf(bestReparseable.getElementType(), newFileText,
-                                                                           textRange.getStartOffset(),
-                                                                           textRange.getEndOffset() + lengthShift,
-                                                                           treeFileElement.getCharTable());
+      final ChameleonElement chameleon =
+        (ChameleonElement)ASTFactory.leaf(bestReparseable.getElementType(),
+                                          treeFileElement.getCharTable().intern(newFileText,
+                                                                                textRange.getStartOffset(),
+                                                                                textRange.getEndOffset() + lengthShift));
       chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
       chameleon.setTreeParent((CompositeElement)parent);
       bestReparseable.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable()).getTreeParent());
@@ -207,8 +208,8 @@ public class BlockSupportImpl extends BlockSupport {
     final LeafElement leafElementToChange = treeFileElement.findLeafElementAt(changedOffset);
     if (leafElementToChange == null) return false;
     TextRange leafRangeToChange = leafElementToChange.getTextRange();
-    LeafElement newElement = ASTFactory.leaf(leafElementToChange.getElementType(), newFileText, leafRangeToChange.getStartOffset(),
-                                             leafRangeToChange.getEndOffset() + lengthDiff, treeFileElement.getCharTable());
+    LeafElement newElement = ASTFactory.leaf(leafElementToChange.getElementType(), treeFileElement.getCharTable().intern(
+        newFileText, leafRangeToChange.getStartOffset(), leafRangeToChange.getEndOffset() + lengthDiff));
     newElement.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
 
     leafElementToChange.getTreeParent().replaceChild(leafElementToChange, newElement);
@@ -218,7 +219,7 @@ public class BlockSupportImpl extends BlockSupport {
   private static void makeFullParse(ASTNode parent, CharSequence newFileText, int textLength, final PsiFileImpl fileImpl) {
     if (parent instanceof CodeFragmentElement) {
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
-      holderElement.rawAddChildren(fileImpl.createContentLeafElement(newFileText, 0, textLength, holderElement.getCharTable()));
+      holderElement.rawAddChildren(fileImpl.createContentLeafElement(holderElement.getCharTable().intern(newFileText, 0, textLength)));
       parent.replaceAllChildrenToChildrenOf(holderElement);
     }
     else {

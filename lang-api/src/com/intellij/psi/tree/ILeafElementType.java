@@ -5,7 +5,6 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,6 +13,6 @@ import org.jetbrains.annotations.NotNull;
 public interface ILeafElementType {
 
   @NotNull
-  ASTNode createLeafNode(CharSequence text, int start, int end, CharTable table);
+  ASTNode createLeafNode(CharSequence leafText);
 
 }

@@ -10,16 +10,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.xml.IDTDElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik
  */
 public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatable {
-
-  public XmlTokenImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    super(type, buffer, startOffset, endOffset, table);
+  public XmlTokenImpl(IElementType type, CharSequence text) {
+    super(type, text);
   }
 
   public boolean processElements(PsiElementProcessor processor, PsiElement place) {

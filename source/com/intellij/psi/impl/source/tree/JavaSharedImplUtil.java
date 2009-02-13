@@ -91,8 +91,8 @@ public class JavaSharedImplUtil {
         CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
         newType1.rawAddChildren(newType);
 
-        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "[", 0, 1, treeCharTable));
-        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]", 0, 1, treeCharTable));
+        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
+        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
         newType = newType1;
         newType.acceptTree(new GeneratedMarkerVisitor());
       }

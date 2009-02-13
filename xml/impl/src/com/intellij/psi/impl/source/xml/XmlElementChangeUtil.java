@@ -6,25 +6,26 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ProjectRootManager;
 
 public class XmlElementChangeUtil {
+  private XmlElementChangeUtil() {}
+
   static void doNameReplacement(final PsiNamedElement xmlElementDecl, XmlElement nameElement, final String name) throws
                                                                                                                  IncorrectOperationException {
     if (xmlElementDecl.isWritable() && isInProjectContent(xmlElementDecl.getProject(), xmlElementDecl.getContainingFile().getVirtualFile())) {
 
       if (nameElement!=null) {
         nameElement.replace(
-          SourceTreeToPsiMap.treeElementToPsi(Factory.createSingleLeafElement(XmlTokenType.XML_NAME,name,0, name.length(),null,
-                                                                              xmlElementDecl.getManager()))
+          SourceTreeToPsiMap.treeElementToPsi(Factory.createSingleLeafElement(XmlTokenType.XML_NAME, name, null, xmlElementDecl.getManager()))
         );
       }
     }

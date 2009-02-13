@@ -85,7 +85,7 @@ public class DeclarationParsing extends Parsing {
     }
     else if (tokenType instanceof IChameleonElementType) {
       LeafElement declaration =
-        ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
+        ASTFactory.leaf(tokenType, myContext.tokenText(lexer));
       lexer.advance();
       return declaration;
     }

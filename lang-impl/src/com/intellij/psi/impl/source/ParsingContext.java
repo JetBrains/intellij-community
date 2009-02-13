@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerUtil;
 import com.intellij.util.CharTable;
 
 /**
@@ -14,5 +16,9 @@ public class ParsingContext {
 
   public CharTable getCharTable() {
     return myTable;
+  }
+
+  public CharSequence tokenText(Lexer lexer) {
+    return LexerUtil.internToken(lexer, myTable);
   }
 }

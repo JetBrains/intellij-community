@@ -15,6 +15,8 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.util.CharTable;
+
 /**
  * @author max
  */
@@ -23,5 +25,9 @@ public class LexerUtil {
 
   public static CharSequence getTokenText(Lexer lexer) {
     return lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd());
+  }
+
+  public static CharSequence internToken(Lexer lexer, CharTable table) {
+    return table.intern(getTokenText(lexer));
   }
 }

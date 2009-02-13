@@ -1,6 +1,7 @@
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
@@ -14,7 +15,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -154,9 +156,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private void insertLinebreakBefore(final ASTNode anchorBefore) {
-    String text = "\n";
-    LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), getTreeElement().getCharTable(), myManager);
-    getPropertiesList().addChild(ws, anchorBefore);
+    getPropertiesList().addChild(ASTFactory.whitespace("\n"), anchorBefore);
   }
 
   private boolean haveToAddNewLine() {

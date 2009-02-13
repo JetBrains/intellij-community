@@ -3,10 +3,7 @@ package com.intellij.psi.impl.source.parsing.xml;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerPosition;
-import com.intellij.lexer._OldXmlLexer;
+import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -382,7 +379,7 @@ public class OldXmlParsing implements XmlElementType {
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
-    return ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
+    return ASTFactory.leaf(tokenType, LexerUtil.internToken(lexer, table));
   }
 
 

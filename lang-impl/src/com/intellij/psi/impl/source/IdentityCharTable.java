@@ -12,4 +12,9 @@ public class IdentityCharTable implements CharTable {
   public CharSequence intern(final CharSequence text) {
     return text;
   }
+
+  public CharSequence intern(CharSequence baseText, int startOffset, int endOffset) {
+    if (endOffset - startOffset == baseText.length()) return baseText.toString();
+    return baseText.subSequence(startOffset, endOffset);
+  }
 }

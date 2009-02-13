@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -98,8 +99,7 @@ public class ShiftIndentInsideHelper {
           }
           else {
             if (newSpace.length() > 0) {
-              LeafElement newLeaf = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, newSpace, 0, newSpace.length(), charTableByTree,
-                                                                    SharedImplUtil.getManagerByTree(next));
+              LeafElement newLeaf = ASTFactory.leaf(TokenType.WHITE_SPACE, newSpace, charTableByTree);
               next.getTreeParent().addChild(newLeaf, next);
             }
             text = text.substring(0, offset + 1) + newSpace + text.substring(offset1);
@@ -115,8 +115,7 @@ public class ShiftIndentInsideHelper {
         String leafText = leaf.getText();
         String newLeafText = leafText.substring(0, startOffset) + newSpace + leafText.substring(endOffset);
         if (newLeafText.length() > 0) {
-          LeafElement newLeaf = Factory.createSingleLeafElement(leaf.getElementType(), newLeafText, 0,
-                                                                newLeafText.length(), charTableByTree, SharedImplUtil.getManagerByTree(leaf));
+          LeafElement newLeaf = Factory.createSingleLeafElement(leaf.getElementType(), newLeafText,charTableByTree, SharedImplUtil.getManagerByTree(leaf));
           if (leaf.getTreeParent() != null) {
             leaf.getTreeParent().replaceChild(leaf, newLeaf);
           }

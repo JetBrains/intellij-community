@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.formatter;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -43,9 +44,7 @@ public class XmlFormatterUtilHelper implements FormatterUtilHelper {
     else {
       final String text = before ? whiteSpaceElement.getText() + anchorInText.getText() : anchorInText.getText() +
                                                                                           whiteSpaceElement.getText();
-      final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, text, 0,
-                                                                            text.length(), charTable, xmlText.getManager());
-      node.replaceChild(anchorInText, singleLeafElement);
+      node.replaceChild(anchorInText, ASTFactory.whitespace(text));
     }
   }
 

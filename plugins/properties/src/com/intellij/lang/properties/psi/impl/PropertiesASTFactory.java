@@ -5,7 +5,6 @@ import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.util.CharTable;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -21,15 +20,15 @@ public class PropertiesASTFactory extends ASTFactory {
   }
 
   @Nullable
-  public LeafElement createLeaf(final IElementType type, final CharSequence fileText, final int start, final int end, final CharTable table) {
+  public LeafElement createLeaf(final IElementType type, CharSequence text) {
     if (type == PropertiesTokenTypes.VALUE_CHARACTERS) {
-      return new PropertyValueImpl(type, fileText, start, end, table);
+      return new PropertyValueImpl(type, text);
     }
 
     if (type == PropertiesTokenTypes.END_OF_LINE_COMMENT) {
-      return new PsiCommentImpl(type, fileText, start, end, table);
+      return new PsiCommentImpl(type, text);
     }
 
-    return new LeafPsiElement(type, fileText, start, end, table);
+    return new LeafPsiElement(type, text);
   }
 }

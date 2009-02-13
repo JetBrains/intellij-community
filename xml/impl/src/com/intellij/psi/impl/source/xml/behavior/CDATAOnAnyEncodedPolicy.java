@@ -31,9 +31,9 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
     final FileElement dummyParent = DummyHolderFactory.createHolder(manager, null, charTableByTree).getTreeElement();
     final CompositeElement cdata = ASTFactory.composite(XmlElementType.XML_CDATA);
     dummyParent.rawAddChildren(cdata);
-    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_CDATA_START, "<![CDATA[", 0, 9, dummyParent.getCharTable()));
-    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, displayText, 0, displayText.length(), dummyParent.getCharTable()));
-    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_CDATA_END, "]]>", 0, 3, dummyParent.getCharTable()));
+    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_CDATA_START, "<![CDATA["));
+    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, dummyParent.getCharTable().intern(displayText)));
+    cdata.rawAddChildren(ASTFactory.leaf(XmlTokenType.XML_CDATA_END, "]]>"));
     dummyParent.acceptTree(new GeneratedMarkerVisitor());
     return dummyParent;
   }

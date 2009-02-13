@@ -46,7 +46,7 @@ public abstract class ReferenceListElement extends CompositeElement implements C
     keywordType = getKeywordType();
     keywordText = getKeywordText();
     if (findChildByType(keywordType) == null && findChildByType(JAVA_CODE_REFERENCE) != null){
-      LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText, 0, keywordText.length(), SharedImplUtil.findCharTableByTree(this), getManager());
+      LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText, SharedImplUtil.findCharTableByTree(this), getManager());
       super.addInternal(keyword, keyword, getFirstChildNode(), Boolean.TRUE);
     }
     return firstAdded;

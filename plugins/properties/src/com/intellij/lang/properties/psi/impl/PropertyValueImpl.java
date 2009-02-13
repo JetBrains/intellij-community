@@ -1,16 +1,16 @@
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 /**
  * @author cdr
@@ -33,8 +33,8 @@ public class PropertyValueImpl extends LeafPsiElement {
     }
   }
 
-  public PropertyValueImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    super(type, buffer, startOffset, endOffset, table);
+  public PropertyValueImpl(IElementType type, CharSequence text) {
+    super(type, text);
   }
 
   @NotNull

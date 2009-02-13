@@ -28,7 +28,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
   @NotNull
   public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
-    final LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, text, 0, text.length(), holderElement.getCharTable());
+    final LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, holderElement.getCharTable().intern(text));
     holderElement.rawAddChildren(newElement);
     return newElement.getPsi();
   }

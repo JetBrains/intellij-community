@@ -40,25 +40,25 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
   private static TreeElement createCharEntity(char ch, CharTable charTable) {
     switch (ch) {
       case '<':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&lt;", 0, 4, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&lt;");
       case '\'':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&apos;", 0, 6, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&apos;");
       case '"':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&quot;", 0, 6, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&quot;");
       case '>':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&gt;", 0, 4, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&gt;");
       case '&':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&amp;", 0, 5, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&amp;");
       case '\u00a0':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&nbsp;", 0, 6, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&nbsp;");
 
       default:
         final String charEncoding = "&#" + (int)ch + ";";
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, charEncoding, 0, charEncoding.length(), charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, charTable.intern(charEncoding));
     }
   }
 
-  private static final boolean toCode(String str) {
+  private static boolean toCode(String str) {
     for (int i = 0; i < str.length(); i++) {
       final char ch = str.charAt(i);
       if ( toCode(ch)) return true;

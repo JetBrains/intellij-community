@@ -7,14 +7,13 @@ import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 
 public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJavaToken {
-  public PsiKeywordImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    super(type, buffer, startOffset, endOffset, table);
+  public PsiKeywordImpl(IElementType type, CharSequence text) {
+    super(type, text);
   }
 
   public IElementType getTokenType(){

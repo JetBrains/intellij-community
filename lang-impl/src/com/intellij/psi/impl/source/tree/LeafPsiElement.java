@@ -18,15 +18,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class LeafPsiElement extends CharTableBasedLeafElementImpl implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
 
-  public LeafPsiElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    super(type, buffer, startOffset, endOffset, table);
+  public LeafPsiElement(IElementType type, CharSequence text) {
+    super(type, text);
   }
 
   @NotNull

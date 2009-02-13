@@ -1079,10 +1079,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @NotNull
   private LeafElement createLeaf(final IElementType type, final int start, final int end) {
     if (myWhitespaces.contains(type)) {
-      return new PsiWhiteSpaceImpl(myText, start, end, myCharTable);
+      return new PsiWhiteSpaceImpl(myCharTable.intern(myText, start, end));
     }
 
-    return ASTFactory.leaf(type, myText, start, end, myCharTable);
+    return ASTFactory.leaf(type, myCharTable.intern(myText, start, end));
   }
 
   /**

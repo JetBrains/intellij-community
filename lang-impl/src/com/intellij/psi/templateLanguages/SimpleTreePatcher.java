@@ -19,8 +19,8 @@ public class SimpleTreePatcher implements TreePatcher {
 
   public LeafElement split(LeafElement leaf, int offset, final CharTable table) {
     final CharSequence chars = leaf.getInternedText();
-    final LeafElement leftPart = ASTFactory.leaf(leaf.getElementType(), chars, 0, offset, table);
-    final LeafElement rightPart = ASTFactory.leaf(leaf.getElementType(), chars, offset, chars.length(), table);
+    final LeafElement leftPart = ASTFactory.leaf(leaf.getElementType(), table.intern(chars, 0, offset));
+    final LeafElement rightPart = ASTFactory.leaf(leaf.getElementType(), table.intern(chars, offset, chars.length()));
     leaf.rawInsertAfterMe(leftPart);
     leftPart.rawInsertAfterMe(rightPart);
     leaf.rawRemove();

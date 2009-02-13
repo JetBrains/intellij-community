@@ -422,10 +422,10 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
 
           LeafElement rightElement =
-            ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, rightText, 0, rightText.length(), holder.getCharTable());
+            ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, holder.getCharTable().intern(rightText));
           CodeEditUtil.setNodeGenerated(rightElement, true);
 
-          LeafElement leftElement = ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, leftText, 0, leftText.length(), holder.getCharTable());
+          LeafElement leftElement = ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, holder.getCharTable().intern(leftText));
           CodeEditUtil.setNodeGenerated(leftElement, true);
 
           rawInsertAfterMe(myRight);

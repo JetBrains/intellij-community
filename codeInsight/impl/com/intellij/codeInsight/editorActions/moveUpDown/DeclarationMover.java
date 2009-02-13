@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -11,8 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -83,8 +82,8 @@ class DeclarationMover extends LineMover {
     PsiElement element2 = whitespace.getNextSibling();
     if (element2 == null || element1 == null) return;
     String ws = CodeEditUtil.getStringWhiteSpaceBetweenTokens(whitespace.getNode(), element2.getNode(), element1.getContainingFile());
-    LeafElement node = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, ws, 0, ws.length(), SharedImplUtil.findCharTableByTree(whitespace.getNode()), whitespace.getManager());
-    whitespace.getParent().getNode().replaceChild(whitespace.getNode(), node);
+
+    whitespace.getParent().getNode().replaceChild(whitespace.getNode(), ASTFactory.whitespace(ws));
   }
 
   @Override

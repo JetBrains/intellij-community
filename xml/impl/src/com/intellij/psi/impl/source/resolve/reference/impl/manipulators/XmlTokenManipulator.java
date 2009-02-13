@@ -20,7 +20,7 @@ public class XmlTokenManipulator extends AbstractElementManipulator<XmlToken> {
     IElementType tokenType = xmlToken.getTokenType();
 
     FileElement holder = DummyHolderFactory.createHolder(xmlToken.getManager(), null).getTreeElement();
-    LeafElement leaf = ASTFactory.leaf(tokenType, newText, 0, newText.length(), holder.getCharTable());
+    LeafElement leaf = ASTFactory.leaf(tokenType, holder.getCharTable().intern(newText));
     holder.rawAddChildren(leaf);
     return (XmlToken)xmlToken.replace(leaf.getPsi());
   }

@@ -53,7 +53,7 @@ public class TypeParameterExtendsBoundsListElement extends CompositeElement impl
     final IElementType keywordType = JavaTokenType.EXTENDS_KEYWORD;
     final String keywordText = PsiKeyword.EXTENDS;
     if (findChildByType(keywordType) == null && findChildByType(JAVA_CODE_REFERENCE) != null){
-      LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText, 0, keywordText.length(), treeCharTab, getManager());
+      LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText, treeCharTab, getManager());
       super.addInternal(keyword, keyword, getFirstChildNode(), Boolean.TRUE);
     }
     return firstAdded;

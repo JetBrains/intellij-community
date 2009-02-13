@@ -37,7 +37,6 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
@@ -92,8 +91,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myContentElementType = contentElementType;
   }
 
-  public TreeElement createContentLeafElement(final CharSequence text, final int startOffset, final int endOffset, final CharTable table) {
-    return ASTFactory.leaf(myContentElementType, text, startOffset, endOffset, table);
+  public TreeElement createContentLeafElement(CharSequence leafText) {
+    return ASTFactory.leaf(myContentElementType, leafText);
   }
 
   public boolean isDirectory() {
@@ -281,7 +280,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       treeElement.setCharTable(new IdentityCharTable());
     }
 
-    TreeElement contentElement = createContentLeafElement(docText, 0, docText.length(), treeElement.getCharTable());
+    TreeElement contentElement = createContentLeafElement(treeElement.getCharTable().intern(docText, 0, docText.length()));
     treeElement.rawAddChildren(contentElement);
     return treeElement;
   }

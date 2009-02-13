@@ -4,6 +4,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
+import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.tree.java.*;
@@ -11,8 +12,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.psi.PlainTextTokenTypes;
-import com.intellij.util.CharTable;
 
 public class JavaASTFactory extends ASTFactory implements Constants {
   public CompositeElement createComposite(final IElementType type) {
@@ -276,26 +275,26 @@ public class JavaASTFactory extends ASTFactory implements Constants {
     return element;
   }
 
-  public LeafElement createLeaf(final IElementType type, final CharSequence fileText, final int start, final int end, final CharTable table) {
+  public LeafElement createLeaf(final IElementType type, CharSequence text) {
     LeafElement element = null;
     if (type == C_STYLE_COMMENT || type == END_OF_LINE_COMMENT) {
-      element = new PsiCommentImpl(type, fileText, start, end, table);
+      element = new PsiCommentImpl(type, text);
     }
     else if (type == IDENTIFIER) {
-      element = new PsiIdentifierImpl(fileText, start, end, table);
+      element = new PsiIdentifierImpl(text);
     }
     else if (KEYWORD_BIT_SET.contains(type)) {
-      element = new PsiKeywordImpl(type, fileText, start, end, table);
+      element = new PsiKeywordImpl(type, text);
     }
     else if (type instanceof IJavaElementType) {
-      element = new PsiJavaTokenImpl(type, fileText, start, end, table);
+      element = new PsiJavaTokenImpl(type, text);
     }
     else if (type instanceof IJavaDocElementType) {
-      element = new PsiDocTokenImpl(type, fileText, start, end, table);
+      element = new PsiDocTokenImpl(type, text);
     }
 
     if (element == null) {
-      element = new LeafPsiElement(type, fileText, start, end, table);
+      element = new LeafPsiElement(type, text);
     }
 
     return element;

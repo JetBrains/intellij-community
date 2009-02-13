@@ -14,8 +14,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -209,7 +209,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       }
 
       if (treeElement.findChildByType(type) == null){
-        TreeElement keyword = Factory.createSingleLeafElement(type, name, 0, name.length(), null, getManager());
+        TreeElement keyword = Factory.createSingleLeafElement(type, name, null, getManager());
         treeElement.addInternal(keyword, keyword, null, null);
       }
       if ((type == ABSTRACT_KEYWORD || type == NATIVE_KEYWORD) && parentTreeElement.getElementType() == METHOD){

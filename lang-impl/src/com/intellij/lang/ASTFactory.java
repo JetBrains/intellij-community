@@ -3,45 +3,56 @@
  */
 package com.intellij.lang;
 
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerUtil;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
-import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ASTFactory {
   public static final ASTFactory DEFAULT = new DefaultFactory();
+  private static final CharTable WHITSPACES = new CharTableImpl();
 
   @Nullable
   public abstract CompositeElement createComposite(IElementType type);
   @Nullable
-  public abstract LeafElement createLeaf(IElementType type, CharSequence fileText, int start, int end, CharTable table);
+  public abstract LeafElement createLeaf(IElementType type, CharSequence text);
 
   @NotNull
-  public static LeafElement leaf(IElementType type, CharSequence fileText, int start, int end, CharTable table) {
+  public static LeafElement leaf(IElementType type, CharSequence text) {
     if (type == TokenType.WHITE_SPACE) {
-      return new PsiWhiteSpaceImpl(fileText, start, end, table);
+      return new PsiWhiteSpaceImpl(text);
     }
-    
+
     if (type instanceof IChameleonElementType) {
-      return new ChameleonElement(type, fileText, start, end, table);
+      return new ChameleonElement(type, text);
     }
 
     if (type instanceof ILeafElementType) {
-      return (LeafElement)((ILeafElementType)type).createLeafNode(fileText, start, end, table);
+      return (LeafElement)((ILeafElementType)type).createLeafNode(text);
     }
 
     final Language lang = type.getLanguage();
     final ASTFactory factory = LanguageASTFactory.INSTANCE.forLanguage(lang);
-    final LeafElement customLeaf = factory.createLeaf(type, fileText, start, end, table);
-    return customLeaf != null ? customLeaf : DEFAULT.createLeaf(type, fileText, start, end, table);
+    final LeafElement customLeaf = factory.createLeaf(type, text);
+    return customLeaf != null ? customLeaf : DEFAULT.createLeaf(type, text);
+  }
+
+  public static LeafElement whitespace(CharSequence text) {
+    return new PsiWhiteSpaceImpl(WHITSPACES.intern(text));
+  }
+
+  public static LeafElement leaf(IElementType type, CharSequence text, CharTable table) {
+    return leaf(type, table.intern(text));
   }
 
   public static LeafElement leaf(final Lexer lexer, final CharTable charTable) {
-    return leaf(lexer.getTokenType(), lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), charTable);
+    return leaf(lexer.getTokenType(), LexerUtil.internToken(lexer, charTable));
   }
 
   @NotNull
@@ -72,15 +83,15 @@ public abstract class ASTFactory {
 
     @Override
     @NotNull
-    public LeafElement createLeaf(IElementType type, CharSequence fileText, int start, int end, CharTable table) {
+    public LeafElement createLeaf(IElementType type, CharSequence text) {
       final Language lang = type.getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       if (parserDefinition != null) {
         if (parserDefinition.getCommentTokens().contains(type)) {
-          return new PsiCommentImpl(type, fileText, start, end, table);
+          return new PsiCommentImpl(type, text);
         }
       }
-      return new LeafPsiElement(type, fileText, start, end, table);
+      return new LeafPsiElement(type, text);
     }
   }
 }

@@ -29,4 +29,6 @@ public interface CharTable{
   Key<CharTable> CHAR_TABLE_KEY = new Key<CharTable>("Char table");
 
   CharSequence intern(final CharSequence text);
+
+  CharSequence intern(CharSequence baseText, int startOffset, int endOffset);
 }

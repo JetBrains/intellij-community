@@ -37,9 +37,9 @@ public class SourceUtil {
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(newChild);
     new DummyHolder(manager, parenthExpr, null, charTableByTree);
     parenthExpr.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-    parenthExpr.rawAddChildren(ASTFactory.leaf(JavaTokenType.LPARENTH, "(", 0, 1, charTableByTree));
+    parenthExpr.rawAddChildren(ASTFactory.leaf(JavaTokenType.LPARENTH, "("));
     parenthExpr.rawAddChildren(dummyExpr);
-    parenthExpr.rawAddChildren(ASTFactory.leaf(JavaTokenType.RPARENTH, ")", 0, 1, charTableByTree));
+    parenthExpr.rawAddChildren(ASTFactory.leaf(JavaTokenType.RPARENTH, ")"));
 
     try {
       CodeStyleManager codeStyleManager = manager.getCodeStyleManager();

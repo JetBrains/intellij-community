@@ -236,8 +236,7 @@ public class CodeEditUtil {
       else if (leaveRightText) text = right.getText();
       else text = left.getText();
       if(leaveRightText || forceReformat){
-        final LeafElement merged =
-          Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), null, left.getPsi().getManager());
+        final LeafElement merged = ASTFactory.whitespace(text);
         if(!leaveRightText){
           left.getTreeParent().replaceChild(left, merged);
           right.getTreeParent().removeChild(right);
@@ -264,8 +263,7 @@ public class CodeEditUtil {
 
   private static void markWhitespaceForReformat(final ASTNode right) {
     final String text = right.getText();
-    final LeafElement merged = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), null,
-                                                               right.getPsi().getManager());
+    final LeafElement merged = ASTFactory.whitespace(text);
     right.getTreeParent().replaceChild(right, merged);
   }
 

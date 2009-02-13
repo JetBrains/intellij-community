@@ -42,6 +42,11 @@ public class CharTableImpl implements CharTable {
     }
   }
 
+  public CharSequence intern(CharSequence baseText, int startOffset, int endOffset) {
+    if (endOffset - startOffset == baseText.length()) return baseText.toString();
+    return intern(baseText.subSequence(startOffset, endOffset));
+  }
+
   private static CharSequence createSequence(final CharSequence text) {
     final char[] buf = new char[text.length()];
     CharArrayUtil.getChars(text, buf, 0);

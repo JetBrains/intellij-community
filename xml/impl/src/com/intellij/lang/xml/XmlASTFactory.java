@@ -13,7 +13,6 @@ import com.intellij.psi.templateLanguages.TemplateDataElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import static com.intellij.psi.xml.XmlElementType.*;
-import com.intellij.util.CharTable;
 
 public class XmlASTFactory extends ASTFactory {
   public CompositeElement createComposite(final IElementType type) {
@@ -105,12 +104,12 @@ public class XmlASTFactory extends ASTFactory {
     return element;
   }
 
-  public LeafElement createLeaf(final IElementType type, final CharSequence fileText, final int start, final int end, final CharTable table) {
+  public LeafElement createLeaf(final IElementType type, CharSequence text) {
     if (type instanceof IXmlLeafElementType) {
       if (type == XML_REAL_WHITE_SPACE) {
-        return new PsiWhiteSpaceImpl(fileText, start, end, table);
+        return new PsiWhiteSpaceImpl(text);
       }
-      return new XmlTokenImpl(type, fileText, start, end, table);
+      return new XmlTokenImpl(type, text);
     }
 
     return null;
