@@ -11,6 +11,6 @@
   <xsl:template name="foo">
     <xsl:param name="a" />
     <xsl:param name="b" />
-    <xsl:value-of select="$a" /><xsl:value-of select="$b" />
+    <xsl:value-of select="$a + $b" />
   </xsl:template>
 </xsl:stylesheet>

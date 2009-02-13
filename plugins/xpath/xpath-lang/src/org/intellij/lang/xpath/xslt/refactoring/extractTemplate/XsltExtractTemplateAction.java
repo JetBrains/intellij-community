@@ -44,7 +44,8 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -142,7 +143,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         final XmlTag parentScope = PsiTreeUtil.getParentOfType(start, XmlTag.class, true);
 
         final StringBuilder sb = new StringBuilder("\n");
-        final Set<XPathVariableReference> refs = new HashSet<XPathVariableReference>();
+        final Set<XPathVariableReference> refs = new LinkedHashSet<XPathVariableReference>();
 
         final int startOffset = start.getTextRange().getStartOffset();
         final int endOffset = end.getTextRange().getEndOffset();
@@ -165,7 +166,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
             }
             sb.append(e.getText());
 
-            final Set<XPathVariableReference> references = RefactoringUtil.collectVariableReferences(e);
+            final List<XPathVariableReference> references = RefactoringUtil.collectVariableReferences(e);
             for (XPathVariableReference reference : references) {
                 final XPathVariable variable = reference.resolve();
                 if (variable != null) {

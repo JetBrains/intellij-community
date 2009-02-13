@@ -47,6 +47,11 @@ public class XsltCodeInsightUtil {
             return element instanceof XmlTag && XsltSupport.isParam((XmlTag)element);
         }
     };
+    public static final Comparator<PsiElement> POSITION_COMPARATOR = new Comparator<PsiElement>() {
+        public int compare(PsiElement o1, PsiElement o2) {
+            return o1.getTextOffset() - o2.getTextOffset();
+        }
+    };
 
     private XsltCodeInsightUtil() {
     }
@@ -167,11 +172,7 @@ public class XsltCodeInsightUtil {
 
     public static XmlTag findVariableInsertionPoint(final XmlTag currentUsageTag, PsiElement usageBlock, final String referenceName, XmlTag... moreUsages) {
         // sort tags by document order
-        final Set<XmlTag> usages = new TreeSet<XmlTag>(new Comparator<XmlTag>() {
-            public int compare(XmlTag o1, XmlTag o2) {
-                return o1.getTextOffset() - o2.getTextOffset();
-            }
-        });
+        final Set<XmlTag> usages = new TreeSet<XmlTag>(POSITION_COMPARATOR);
         usages.add(currentUsageTag);
         usages.addAll(Arrays.asList(moreUsages));
 

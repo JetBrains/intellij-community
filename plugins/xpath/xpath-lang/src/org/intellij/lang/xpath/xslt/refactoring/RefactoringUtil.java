@@ -30,9 +30,7 @@ import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class RefactoringUtil {
     private RefactoringUtil() {
@@ -48,11 +46,13 @@ public class RefactoringUtil {
         return visitor.getMatches();
     }
 
-    public static Set<XPathVariableReference> collectVariableReferences(PsiElement block) {
+    public static List<XPathVariableReference> collectVariableReferences(PsiElement block) {
         final VariableReferenceCollector visitor = new VariableReferenceCollector(block.getProject());
         block.accept(visitor);
 
-        return visitor.getMatches();
+        final List<XPathVariableReference> list = new ArrayList<XPathVariableReference>(visitor.getMatches());
+        Collections.sort(list, XsltCodeInsightUtil.POSITION_COMPARATOR);
+        return list;
     }
 
     public static XmlTag addParameter(XmlTag templateTag, XmlTag paramTag) throws IncorrectOperationException {

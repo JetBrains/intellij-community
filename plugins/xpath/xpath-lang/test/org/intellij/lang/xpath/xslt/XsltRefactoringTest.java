@@ -37,6 +37,10 @@ public class XsltRefactoringTest extends TestBase {
         doExtractTemplate();
     }
 
+    public void testExtractTemplateTwoVars2() throws Throwable {
+        doExtractTemplate();
+    }
+
     public void testExtractTemplateUnresolvedVar() throws Throwable {
         doExtractTemplate();
     }
