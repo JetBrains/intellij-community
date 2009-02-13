@@ -8,6 +8,7 @@ import com.intellij.lexer.LexerUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.CodeFragmentElement;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
@@ -44,7 +45,9 @@ public abstract class ASTFactory {
   }
 
   public static LeafElement whitespace(CharSequence text) {
-    return new PsiWhiteSpaceImpl(WHITSPACES.intern(text));
+    PsiWhiteSpaceImpl w = new PsiWhiteSpaceImpl(WHITSPACES.intern(text));
+    CodeEditUtil.setNodeGenerated(w, true);
+    return w;
   }
 
   public static LeafElement leaf(IElementType type, CharSequence text, CharTable table) {
