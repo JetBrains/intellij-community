@@ -356,6 +356,58 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("target/classes/file.properties", "value=value");
   }
 
+  public void testCustomFiltersFromProfiles() throws Exception {
+    createProjectSubFile("filters/filter1.properties", "xxx=value1");
+    createProjectSubFile("filters/filter2.properties", "yyy=value2");
+    createProjectSubFile("resources/file.properties",
+                         "value1=${xxx}\n" +
+                         "value2=${yyy}\n");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<profiles>" +
+                  "  <profile>" +
+                  "    <id>one</id>" +
+                  "    <build>" +
+                  "      <filters>" +
+                  "        <filter>filters/filter1.properties</filter>" +
+                  "      </filters>" +
+                  "    </build>" +
+                  "  </profile>" +
+                  "  <profile>" +
+                  "    <id>two</id>" +
+                  "    <activation>" +
+                  "      <activeByDefault>true</activeByDefault>" +
+                  "    </activation>" +
+                  "    <build>" +
+                  "      <filters>" +
+                  "        <filter>filters/filter2.properties</filter>" +
+                  "      </filters>" +
+                  "    </build>" +
+                  "  </profile>" +
+                  "</profiles>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    assertSources("project", "resources");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value1=${xxx}\n" +
+                                                   "value2=value2\n");
+
+    importProjectWithProfiles("one");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value1=value1\n" +
+                                                   "value2=value2\n");
+  }
+
   private void assertResult(String relativePath, String content) throws IOException {
     assertResult(myProjectPom, relativePath, content);
   }
