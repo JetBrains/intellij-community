@@ -22,7 +22,7 @@ public interface JavaDocElementType {
 
   IElementType DOC_REFERENCE_HOLDER = new IChameleonElementType("DOC_REFERENCE_HOLDER", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       //no language features from higher java language versions are present in javadoc
@@ -34,7 +34,7 @@ public interface JavaDocElementType {
 
   IElementType DOC_TYPE_HOLDER = new IChameleonElementType("DOC_TYPE_HOLDER", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       //no language features from higher java language versions are present in javadoc
@@ -46,7 +46,7 @@ public interface JavaDocElementType {
 
   IElementType DOC_COMMENT = new IChameleonElementType("DOC_COMMENT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       //no higher java language level features are allowed in javadoc
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), LanguageLevel.JDK_1_3);

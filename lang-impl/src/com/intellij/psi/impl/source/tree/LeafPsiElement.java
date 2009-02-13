@@ -22,7 +22,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class LeafPsiElement extends CharTableBasedLeafElementImpl implements PsiElement, NavigationItem {
+public class LeafPsiElement extends LeafElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
 
   public LeafPsiElement(IElementType type, CharSequence text) {

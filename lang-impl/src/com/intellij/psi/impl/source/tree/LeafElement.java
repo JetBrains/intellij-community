@@ -5,30 +5,77 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
   private static final int TEXT_MATCHES_THRESHOLD = 5;
 
-  public abstract char charAt(int position);
+  private volatile CharSequence myText;
 
-  public abstract int copyTo(char[] buffer, int start);
-
-  protected LeafElement(IElementType type) {
+  protected LeafElement(IElementType type, CharSequence text) {
     super(type);
+    myText = text;
   }
 
-  public LeafElement findLeafElementAt(int offset) {
-    return this;
+  public int getTextLength() {
+    return myText.length();
+  }
+
+  public CharSequence getInternedText() {
+    return myText;
   }
 
   public String getText() {
     return getInternedText().toString();
   }
 
-  public abstract void setText(String text);
-  public abstract int textMatches(CharSequence buffer, int start);
+  public char charAt(int position) {
+    return myText.charAt(position);
+  }
+
+  public int copyTo(char[] buffer, int start) {
+    if (buffer != null) {
+      CharArrayUtil.getChars(myText, buffer, start);
+    }
+    return start + myText.length();
+  }
+
+  @NotNull
+  public char[] textToCharArray() {
+    final char[] buffer = new char[myText.length()];
+    CharArrayUtil.getChars(myText, buffer, 0);
+    return buffer;
+  }
+
+  public boolean textContains(char c) {
+    CharSequence text = myText;
+    for (int i = 0; i < text.length(); i++) {
+      if (c == text.charAt(i)) return true;
+    }
+
+    return false;
+  }
+
+  public int textMatches(CharSequence buffer, int start) {
+    final CharSequence entry = myText;
+    final int length = entry.length();
+    if(buffer.length() - start < length) return -1;
+    for(int i = 0; i < length; i++){
+      if(entry.charAt(i) != buffer.charAt(i + start)) return -1;
+    }
+    return start + length;
+  }
+
+  public void setText(String text) {
+    myText = SharedImplUtil.findCharTableByTree(this).intern(text);
+    clearCaches();
+  }
+
+  public LeafElement findLeafElementAt(int offset) {
+    return this;
+  }
 
   @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
   public boolean textMatches(final CharSequence buf, int start, int end) {
@@ -52,8 +99,6 @@ public abstract class LeafElement extends TreeElement {
   public void acceptTree(TreeElementVisitor visitor) {
     visitor.visitLeaf(this);
   }
-
-  public abstract CharSequence getInternedText();
 
   public ASTNode findChildByType(IElementType type) {
     return null;

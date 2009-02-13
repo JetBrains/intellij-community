@@ -138,7 +138,7 @@ public interface JavaElementType {
 
   IElementType EXPRESSION_STATEMENT = new IChameleonElementType("EXPRESSION_STATEMENT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), languageLevel);
@@ -150,7 +150,7 @@ public interface JavaElementType {
   //The following are the children of code fragment
   IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
@@ -163,7 +163,7 @@ public interface JavaElementType {
 
   IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), languageLevel);
@@ -174,7 +174,7 @@ public interface JavaElementType {
 
   IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       return Parsing.parseJavaCodeReferenceText(chameleon.getTreeParent().getPsi().getManager(), chars, 0, chars.length(), SharedImplUtil.findCharTableByTree(chameleon), true);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
@@ -182,7 +182,7 @@ public interface JavaElementType {
 
   IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      final CharSequence chars = ((LeafElement)chameleon).getInternedText();
       return Parsing.parseTypeText(chameleon.getTreeParent().getPsi().getManager(), null, chars, 0, chars.length(), 0, SharedImplUtil.findCharTableByTree(chameleon));
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}

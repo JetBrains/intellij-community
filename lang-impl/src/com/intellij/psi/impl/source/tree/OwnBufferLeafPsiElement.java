@@ -15,7 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl implements PsiElement {
+public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
 
   public OwnBufferLeafPsiElement(IElementType type, CharSequence text) {
