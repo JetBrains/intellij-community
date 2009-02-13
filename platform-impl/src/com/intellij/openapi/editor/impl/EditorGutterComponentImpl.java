@@ -729,7 +729,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       final int endOffset = getEndOffset(foldRange);
       VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
-      if (foldStart.line == foldEnd.line) {
+      final Document document = myEditor.getDocument();
+      if (document.getLineNumber(foldRange.getStartOffset()) == document.getLineNumber(endOffset)) {
         return;
       }
 
@@ -938,8 +939,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
 
       VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
-      VisualPosition foldEnd = offsetToLineStartPosition(getEndOffset(foldRange));
-      if (foldStart.line == foldEnd.line) {
+      final int endOffset = getEndOffset(foldRange);
+      VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
+      final Document document = myEditor.getDocument();
+      if (document.getLineNumber(foldRange.getStartOffset()) == document.getLineNumber(endOffset)) {
         continue;
       }
 
