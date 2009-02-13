@@ -1,6 +1,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,7 +13,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 public class PropertiesInspectionToolsProvider implements InspectionToolProvider{
   public Class[] getInspectionClasses() {
     return new Class[] {
-      UnusedPropertyInspection.class,
+      UnusedPropertyInspection.class, DuplicatePropertyInspection.class
     };
   }
 }

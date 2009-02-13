@@ -32,7 +32,7 @@
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="java" exported="" />
+    <orderEntry type="module" module-name="java-i18n" exported="" />
   </component>
   <component name="copyright">
     <Base>

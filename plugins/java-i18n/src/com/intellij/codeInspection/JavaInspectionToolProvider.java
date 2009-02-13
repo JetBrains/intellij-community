@@ -1,6 +1,5 @@
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection;
@@ -21,9 +20,7 @@ public class JavaInspectionToolProvider implements InspectionToolProvider {
       InvalidPropertyKeyInspection.class,
       InconsistentResourceBundleInspection.class,
       UnusedMessageFormatParameterInspection.class,
-      DuplicateStringLiteralInspection.class,
-      DuplicatePropertyInspection.class,
-
+      DuplicateStringLiteralInspection.class
     };
   }
 }

@@ -1,5 +1,5 @@
 <idea-plugin version="2">
-  <id>com.intellij.java</id>
+  <id>com.intellij.java-i18n</id>
   <name>IDEA Java</name>
   <depends>com.intellij.properties</depends>
   <resource-bundle>messages.PropertiesBundle</resource-bundle>
