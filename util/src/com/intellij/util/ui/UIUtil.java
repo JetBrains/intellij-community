@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
@@ -421,6 +422,18 @@ public class UIUtil {
 
   public static Icon getWarningIcon() {
     return UIManager.getIcon("OptionPane.warningIcon");
+  }
+
+  public static Icon getBalloonInformationIcon() {
+    return IconLoader.getIcon("/general/balloonInformation.png");
+  }
+
+  public static Icon getBalloonWarningIcon() {
+    return IconLoader.getIcon("/general/balloonWarning.png");
+  }
+
+  public static Icon getBalloonErrorIcon() {
+    return IconLoader.getIcon("/general/balloonError.png");
   }
 
   public static Icon getRadioButtonIcon() {

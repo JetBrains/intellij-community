@@ -594,7 +594,7 @@ public class BalloonImpl implements Disposable, Balloon {
           pane.setPreferredSize(size);
 
           balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true));
-          balloon.get().setShowPointer(true);
+          balloon.get().setShowPointer(false);
 
           if (e.isControlDown()) {
             balloon.get().show(new RelativePoint(e), BalloonImpl.ABOVE);
