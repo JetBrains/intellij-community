@@ -15,20 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.context;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
-import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathVariable;
@@ -45,6 +31,19 @@ import org.intellij.lang.xpath.xslt.quickfix.CreateVariableFix;
 import org.intellij.lang.xpath.xslt.util.ElementProcessor;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +55,6 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
             return resolveInner((XPathVariableReference)psiReference);
         }
     };
-    private static final Key<Boolean> RESOLVING = Key.create("RESOLVING");
 
     @NotNull
     public XsltVariable[] getVariablesInScope(XPathElement element) {
@@ -70,14 +68,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     public XPathVariable resolve(final XPathVariableReference reference) {
         final PsiManager mgr = reference.getManager();
         if (mgr instanceof PsiManagerEx) {
-            if (reference.getUserData(RESOLVING) != Boolean.TRUE) { // XPVRI calls this from equals(), needToPreventRecursion below won't work 
-                reference.putUserData(RESOLVING, Boolean.TRUE);
-                try {
-                    return (XPathVariable)((PsiManagerEx)mgr).getResolveCache().resolveWithCaching(reference, RESOLVER, true, false);
-                } finally {
-                    reference.putUserData(RESOLVING, null);
-                }
-            }
+            return (XPathVariable)((PsiManagerEx)mgr).getResolveCache().resolveWithCaching(reference, RESOLVER, true, false);
         }
         return resolveInner(reference);
     }

@@ -15,15 +15,6 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.VariableContext;
@@ -31,6 +22,17 @@ import org.intellij.lang.xpath.psi.PrefixedName;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +41,16 @@ import javax.xml.namespace.QName;
 public class XPathVariableReferenceImpl extends XPathElementImpl implements XPathVariableReference {
     private static final TokenSet QNAME_FILTER = TokenSet.create(XPathTokenTypes.VARIABLE_PREFIX, XPathTokenTypes.VARIABLE_NAME);
 
-    private final VariableContext resolver;
-
+    private final NotNullLazyValue<ContextProvider> myContext = new NotNullLazyValue<ContextProvider>() {
+        @NotNull
+        @Override
+        protected synchronized ContextProvider compute() {
+            return ContextProvider.getContextProvider(XPathVariableReferenceImpl.this);
+        }
+    };
+    
     public XPathVariableReferenceImpl(ASTNode node) {
         super(node);
-        resolver = ContextProvider.getContextProvider(this).getVariableContext();
     }
 
     @NotNull
@@ -78,10 +85,11 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
 
     @Nullable
     public XPathVariable resolve() {
-        if (resolver != null) {
-            return resolver.resolve(this);
+        final VariableContext context = myContext.getValue().getVariableContext();
+        if (context == null) {
+            return null;
         }
-        return null;
+        return context.resolve(this);
     }
 
     public String getCanonicalText() {
@@ -119,8 +127,9 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
                 }
             }
         }
-        if (resolver != null) {
-            return resolver.isReferenceTo(element, this);
+        final VariableContext context = myContext.getValue().getVariableContext();
+        if (context != null) {
+            return context.isReferenceTo(element, this);
         }
         return false;
     }
@@ -160,11 +169,6 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
             return Comparing.equal(getReferencedName(), ref.getReferencedName());
         }
 
-        if (!Comparing.equal(name, ContextProvider.getContextProvider(ref).getQName(ref))) {
-            return false;
-        }
-
-        final XPathVariable variable = resolve();
-        return Comparing.equal(variable, ref.resolve());
+        return Comparing.equal(name, ContextProvider.getContextProvider(ref).getQName(ref));
     }
 }

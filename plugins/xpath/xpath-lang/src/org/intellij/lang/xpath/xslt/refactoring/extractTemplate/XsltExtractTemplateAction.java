@@ -64,7 +64,12 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
             super.invoke(project, editor, file, dataContext);
         }
     }
-    public boolean invokeImpl(Editor editor, PsiFile file) {
+
+    private boolean invokeImpl(Editor editor, PsiFile file) {
+        return invokeImpl(editor, file, null);
+    }
+
+    public boolean invokeImpl(Editor editor, PsiFile file, String newName) {
         final SelectionModel selectionModel = editor.getSelectionModel();
         if (!selectionModel.hasSelection()) {
             return false;
@@ -85,7 +90,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                 endOffset = end.getTextRange().getEndOffset();
             }
         }
-        
+
         if (start == null || end == null) {
             return false;
         }
@@ -100,7 +105,8 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
             if (end.getTextRange().getEndOffset() != endOffset) {
                 return false;
             }
-            return extractFrom(start, end);
+            selectionModel.removeSelection(); // tests dislike empty selection
+            return extractFrom(start, end, newName);
         } else {
             final XmlTag startTag = PsiTreeUtil.getParentOfType(start, XmlTag.class);
             if (startTag == null) {
@@ -123,11 +129,12 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                     return false;
                 }
             }
-            return extractFrom(startTag, endTag);
+            selectionModel.removeSelection();
+            return extractFrom(startTag, endTag, newName);
         }
     }
 
-    private boolean extractFrom(final @NotNull PsiElement start, final PsiElement end) {
+    private boolean extractFrom(final @NotNull PsiElement start, final PsiElement end, String newName) {
         final XmlTag outerTemplate = XsltCodeInsightUtil.getTemplateTag(start, false);
         if (outerTemplate == null) {
             return false;
@@ -182,7 +189,10 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         }
         sb.append("\n");
 
-        final String s = Messages.showInputDialog(start.getProject(), "Template Name: ", getRefactoringName(), Messages.getQuestionIcon());
+        final String s = newName == null ?
+                Messages.showInputDialog(start.getProject(), "Template Name: ", getRefactoringName(), Messages.getQuestionIcon()) :
+                newName;
+
         if (s != null) {
             new WriteCommandAction(start.getProject()) {
                 protected void run(Result result) throws Throwable {
@@ -207,7 +217,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                     final PsiElement parent = start.getParent();
                     XmlTag callTag = parentScope.createChildTag("call-template", XsltSupport.XSLT_NS, null, false);
                     callTag.setAttribute("name", s);
-                    
+
                     if (start instanceof XmlToken && ((XmlToken)start).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
                         assert start == end;
                         callTag = (XmlTag)start.replace(callTag);

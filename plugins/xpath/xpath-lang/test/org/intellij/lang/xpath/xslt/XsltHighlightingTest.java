@@ -3,7 +3,15 @@ package org.intellij.lang.xpath.xslt;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
+import com.intellij.mock.MockProgressIndicator;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
+
+import java.util.List;
 
 /*
 * Created by IntelliJ IDEA.
@@ -67,6 +75,30 @@ public class XsltHighlightingTest extends TestBase {
 
     public void testInValidPattern5() throws Throwable {
         doXsltHighlighting();
+    }
+
+    public void testPerformance() throws Throwable {
+        myFixture.configureByFile(getTestFileName() + ".xsl");
+        final long l = runHighlighting();
+        assertTrue(l < 5000);
+    }
+
+    private long runHighlighting() {
+        final Project project = myFixture.getProject();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+        final long l = System.currentTimeMillis();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    public void run() {
+                        List<TextEditorHighlightingPass> passes =
+                                TextEditorHighlightingPassRegistrarEx.getInstanceEx(myFixture.getProject()).instantiatePasses(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
+                        MockProgressIndicator progress = new MockProgressIndicator();
+                        for (TextEditorHighlightingPass pass : passes) {
+                            pass.collectInformation(progress);
+                        }
+                    }
+                });
+        return System.currentTimeMillis() - l;
     }
 
     private void doXsltHighlighting(String... moreFiles) throws Throwable {
