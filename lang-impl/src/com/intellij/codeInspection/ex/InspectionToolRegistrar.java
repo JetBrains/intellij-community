@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
@@ -98,6 +99,7 @@ public class InspectionToolRegistrar {
     ensureInitialized();
     InspectionTool[] tools = new InspectionTool[myInspectionToolFactories.size()];
     for(int i=0; i<tools.length; i++) {
+      ProgressManager.getInstance().checkCanceled();
       tools [i] = myInspectionToolFactories.get(i).create();
     }
     buildInspectionIndex(tools);
