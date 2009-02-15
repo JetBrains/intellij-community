@@ -87,11 +87,6 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
   public void testAlienRoot() throws Throwable {
     final AlienTree alienTree = new AlienTree(myAlienRoot.getAbsolutePath());
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
-
-    Assert.assertEquals(2, vcs.getSvnFileUrlMapping().getAllWcInfos().size());
-
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
@@ -99,6 +94,11 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
     Assert.assertNotNull(tmpVf);
 
     tmpVf.refresh(false, true);
+    
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
+
+    Assert.assertEquals(2, vcs.getSvnFileUrlMapping().getAllWcInfos().size());
 
     final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(alienTree.myFile);
     editFileInCommand(myProject, vf, "78");
