@@ -1,7 +1,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.ContentFactory;
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 public class CacheUpdaterProcessor {
-  private ILocalVcs myVcs;
+  private LocalVcs myVcs;
 
   // usage of Set is for quick search
   // usage of LinkedHashSet is for preserving order of files
@@ -20,7 +20,7 @@ public class CacheUpdaterProcessor {
   private Set<VirtualFile> myFilesToCreate = new LinkedHashSet<VirtualFile>();
   private Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
 
-  public CacheUpdaterProcessor(ILocalVcs vcs) {
+  public CacheUpdaterProcessor(LocalVcs vcs) {
     myVcs = vcs;
   }
 

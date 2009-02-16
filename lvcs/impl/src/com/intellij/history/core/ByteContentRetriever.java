@@ -45,7 +45,7 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
     try {
       final List<Change> result = new ArrayList<Change>();
 
-      myVcs.accept(new ChangeVisitor() {
+      myVcs.acceptRead(new ChangeVisitor() {
         @Override
         public void begin(ChangeSet c) {
           if (c.affects(myEntry)) result.add(c);

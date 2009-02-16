@@ -1,7 +1,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.ContentFactory;
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.Reversed;
 import com.intellij.history.utils.LocalHistoryLog;
@@ -12,13 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalHistoryFacade {
-  private ILocalVcs myVcs;
+  private LocalVcs myVcs;
   private IdeaGateway myGateway;
   private int myChangeSetDepth = 0;
 
   private List<String> myLog = new ArrayList<String>();
 
-  public LocalHistoryFacade(ILocalVcs vcs, IdeaGateway gw) {
+  public LocalHistoryFacade(LocalVcs vcs, IdeaGateway gw) {
     myGateway = gw;
     myVcs = vcs;
   }

@@ -99,22 +99,38 @@ public class ChangeList {
     return result;
   }
 
-  public void accept(Entry root, ChangeVisitor v) throws IOException {
-    v.started(root.copy());
-    try {
-      for (Change change : Reversed.list(myChanges)) {
-        change.accept(v);
+  public AcceptFun getAcceptFun(Entry root, ChangeVisitor v, boolean copyChangeList) throws IOException {
+    return new AcceptFun(v, root.copy(), copyChangeList ? new ArrayList<Change>(myChanges) : myChanges);
+  }
+
+  public static class AcceptFun {
+    private final ChangeVisitor myVisitor;
+    private final Entry myRoot;
+    private final List<Change> myChanges;
+
+    public AcceptFun(ChangeVisitor visitor, Entry root, List<Change> changes) {
+      myVisitor = visitor;
+      myRoot = root;
+      myChanges = changes;
+    }
+
+    public void doAccept() throws IOException {
+      myVisitor.started(myRoot);
+      try {
+        for (Change change : Reversed.list(myChanges)) {
+          change.accept(myVisitor);
+        }
       }
+      catch (ChangeVisitor.StopVisitingException e) {
+      }
+      myVisitor.finished();
     }
-    catch (ChangeVisitor.StopVisitingException e) {
-    }
-    v.finished();
   }
 
   public List<Change> getChangesFor(Entry root, String path) {
     try {
       ChangeCollectingVisitor v = new ChangeCollectingVisitor(path);
-      accept(root, v);
+      getAcceptFun(root, v, false).doAccept();
       return v.getResult();
     }
     catch (IOException ex) {

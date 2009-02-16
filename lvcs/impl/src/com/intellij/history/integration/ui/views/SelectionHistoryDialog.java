@@ -1,6 +1,6 @@
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,7 +17,7 @@ public class SelectionHistoryDialog extends FileHistoryDialog {
   }
 
   @Override
-  protected FileHistoryDialogModel createModel(ILocalVcs vcs) {
+  protected FileHistoryDialogModel createModel(LocalVcs vcs) {
     return new SelectionHistoryDialogModel(myGateway, vcs, myFile, myFrom, myTo);
   }
 }

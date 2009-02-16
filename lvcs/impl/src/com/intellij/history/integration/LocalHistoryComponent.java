@@ -1,12 +1,10 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.*;
-import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.ThreadSafeLocalVcs;
-import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.storage.Storage;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -32,8 +30,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   private CommandProcessor myCommandProcessor;
   private LocalHistoryConfiguration myConfiguration;
   private Storage myStorage;
-  private ILocalVcs myVcs;
-  private LocalVcs myVcsImpl;
+  private LocalVcs myVcs;
   private LocalHistoryService myService;
   private IdeaGateway myGateway;
 
@@ -45,13 +42,8 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   // todo bad method - extend interface instead
-  public static ILocalVcs getLocalVcsFor(Project p) {
+  public static LocalVcs getLocalVcsFor(Project p) {
     return getComponentInstance(p).getLocalVcs();
-  }
-
-  @TestOnly
-  public static LocalVcs getLocalVcsImplFor(Project p) {
-    return getComponentInstance(p).getLocalVcsImpl();
   }
 
   public LocalHistoryComponent(Project p,
@@ -86,9 +78,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   protected void initVcs() {
     myStorage = new Storage(getStorageDir());
-
-    myVcsImpl = new LocalVcs(myStorage);
-    myVcs = new ThreadSafeLocalVcs(myVcsImpl);
+    myVcs = new LocalVcs(myStorage);
   }
 
   protected void initService() {
@@ -224,13 +214,8 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return "Local History";
   }
 
-  public ILocalVcs getLocalVcs() {
+  public LocalVcs getLocalVcs() {
     return myVcs;
-  }
-
-  @TestOnly
-  public LocalVcs getLocalVcsImpl() {
-    return myVcsImpl;
   }
 
   public void projectOpened() {

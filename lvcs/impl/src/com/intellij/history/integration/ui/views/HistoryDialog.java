@@ -3,7 +3,7 @@ package com.intellij.history.integration.ui.views;
 import com.intellij.CommonBundle;
 import com.intellij.util.Consumer;
 import com.intellij.history.LocalHistoryConfiguration;
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.integration.IdeaGateway;
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.integration.LocalHistoryComponent;
@@ -60,12 +60,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private void initModel() {
-    ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(getProject());
+    LocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(getProject());
     myModel = createModel(vcs);
     restoreShowChangesOnlyOption();
   }
 
-  protected abstract T createModel(ILocalVcs vcs);
+  protected abstract T createModel(LocalVcs vcs);
 
   @Override
   protected JComponent createCenterPanel() {

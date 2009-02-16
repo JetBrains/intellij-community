@@ -1,6 +1,6 @@
 package com.intellij.history.integration.revertion;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
@@ -20,7 +20,7 @@ public class SelectionReverter extends Reverter {
   private int myFromLine;
   private int myToLine;
 
-  public SelectionReverter(ILocalVcs vcs,
+  public SelectionReverter(LocalVcs vcs,
                            IdeaGateway gw,
                            SelectionCalculator c,
                            Revision leftRevision,

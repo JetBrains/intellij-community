@@ -1,6 +1,6 @@
 package com.intellij.history.integration;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.LocalHistoryLog;
@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener, CacheUpdater {
-  private ILocalVcs myVcs;
+  private LocalVcs myVcs;
   private IdeaGateway myGateway;
   private LocalHistoryFacade myFacade;
 
@@ -26,7 +26,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   private int myRefreshDepth = 0;
   private CacheUpdaterProcessor myProcessor;
 
-  public EventDispatcher(ILocalVcs vcs, IdeaGateway gw) {
+  public EventDispatcher(LocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
     myFacade = new LocalHistoryFacade(vcs, gw);

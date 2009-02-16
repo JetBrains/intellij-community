@@ -1,6 +1,6 @@
 package com.intellij.history.integration.revertion;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.IdPath;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.StructuralChange;
@@ -14,10 +14,10 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class Reverter {
-  protected ILocalVcs myVcs;
+  protected LocalVcs myVcs;
   protected IdeaGateway myGateway;
 
-  protected Reverter(ILocalVcs vcs, IdeaGateway gw) {
+  protected Reverter(LocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
   }
@@ -51,7 +51,7 @@ public abstract class Reverter {
   protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
 
-    myVcs.accept(selective(new ChangeVisitor() {
+    myVcs.acceptRead(selective(new ChangeVisitor() {
       @Override
       public void visit(StructuralChange c) {
         for (IdPath p : c.getAffectedIdPaths()) {

@@ -1,6 +1,6 @@
 package com.intellij.history.integration.ui.actions;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,7 +29,7 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   }
 
   @Override
-  protected boolean isEnabled(ILocalVcs vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+  protected boolean isEnabled(LocalVcs vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
     return super.isEnabled(vcs, gw, f, e) && !f.isDirectory() && getSelection(e) != null;
   }
 

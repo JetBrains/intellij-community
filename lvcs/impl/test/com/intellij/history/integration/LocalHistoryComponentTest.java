@@ -93,12 +93,12 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     setCurrentTimestamp(30);
     c.getLocalVcs().createDirectory("3");
 
-    assertEquals(3, c.getLocalVcsImpl().getChangeList().getChanges().size());
+    assertEquals(3, c.getLocalVcs().getChangeList().getChanges().size());
 
     config.PURGE_PERIOD = 5;
     c.disposeComponent();
 
-    assertEquals(1, c.getLocalVcsImpl().getChangeList().getChanges().size());
+    assertEquals(1, c.getLocalVcs().getChangeList().getChanges().size());
   }
 
   private void assertHasSavedEntry(String path) {

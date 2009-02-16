@@ -3,7 +3,7 @@ package com.intellij.history.integration;
 import com.intellij.CommonBundle;
 import com.intellij.history.Clock;
 import com.intellij.history.core.ContentFactory;
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -118,7 +118,7 @@ public class IdeaGateway {
     return result;
   }
 
-  public void registerUnsavedDocuments(ILocalVcs vcs) {
+  public void registerUnsavedDocuments(LocalVcs vcs) {
     vcs.beginChangeSet();
     for (Document d : getUnsavedDocuments()) {
       VirtualFile f = getDocumentFile(d);

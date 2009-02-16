@@ -66,13 +66,13 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
       }
     };
 
-    vcs.accept(visitor);
+    vcs.acceptRead(visitor);
     assertEquals("started begin create end finished ", visitor.getLog());
   }
 
   private void assertVisitorLog(final String expected) throws Exception {
     TestVisitor visitor = new TestVisitor();
-    vcs.accept(visitor);
+    vcs.acceptRead(visitor);
     assertEquals(expected, visitor.getLog());
   }
 

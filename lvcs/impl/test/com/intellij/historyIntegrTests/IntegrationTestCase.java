@@ -150,7 +150,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   }
 
   protected LocalVcs getVcs() {
-    return LocalHistoryComponent.getLocalVcsImplFor(myProject);
+    return LocalHistoryComponent.getLocalVcsFor(myProject);
   }
 
   protected boolean hasVcsEntry(VirtualFile f) {

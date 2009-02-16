@@ -1,6 +1,6 @@
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
@@ -15,9 +15,9 @@ import java.util.List;
 
 public class RecentChangesPopup {
   private IdeaGateway myGateway;
-  private ILocalVcs myVcs;
+  private LocalVcs myVcs;
 
-  public RecentChangesPopup(IdeaGateway gw, ILocalVcs vcs) {
+  public RecentChangesPopup(IdeaGateway gw, LocalVcs vcs) {
     myGateway = gw;
     myVcs = vcs;
   }

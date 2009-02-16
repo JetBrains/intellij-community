@@ -1,6 +1,6 @@
 package com.intellij.history.integration;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ContentChange;
@@ -14,9 +14,9 @@ import java.io.IOException;
 public class CheckpointImpl implements Checkpoint {
   private Change myLastChange;
   private IdeaGateway myGateway;
-  private ILocalVcs myVcs;
+  private LocalVcs myVcs;
 
-  public CheckpointImpl(IdeaGateway gw, ILocalVcs vcs) {
+  public CheckpointImpl(IdeaGateway gw, LocalVcs vcs) {
     myGateway = gw;
     myVcs = vcs;
     myLastChange = myVcs.getLastChange();
@@ -32,7 +32,7 @@ public class CheckpointImpl implements Checkpoint {
 
   private void doRevert(boolean revertLastChange) throws IOException {
     ChangeVisitor v = new ChangeRevertionVisitor(myGateway);
-    myVcs.accept(new SelectiveChangeVisitor(v, revertLastChange));
+    myVcs.acceptWrite(new SelectiveChangeVisitor(v, revertLastChange));
   }
 
   private class SelectiveChangeVisitor extends ChangeVisitor {

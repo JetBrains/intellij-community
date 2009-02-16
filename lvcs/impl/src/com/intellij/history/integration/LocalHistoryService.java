@@ -2,7 +2,7 @@ package com.intellij.history.integration;
 
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistoryConfiguration;
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 
 public class LocalHistoryService {
-  private ILocalVcs myVcs;
+  private LocalVcs myVcs;
   private IdeaGateway myGateway;
   private LocalHistoryConfiguration myConfiguration;
   // todo get rid of all this managers...
@@ -25,7 +25,7 @@ public class LocalHistoryService {
   private CacheUpdater myCacheUpdater;
   private EventDispatcher myEventDispatcher;
 
-  public LocalHistoryService(ILocalVcs vcs,
+  public LocalHistoryService(LocalVcs vcs,
                              IdeaGateway gw,
                              LocalHistoryConfiguration c,
                              StartupManager sm,

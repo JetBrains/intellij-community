@@ -1,7 +1,7 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.CommonBundle;
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
@@ -22,7 +22,7 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
   }
 
   @Override
-  protected DirectoryHistoryDialogModel createModel(ILocalVcs vcs) {
+  protected DirectoryHistoryDialogModel createModel(LocalVcs vcs) {
     return new RecentChangeDialogModel(myGateway, vcs, myChange);
   }
 

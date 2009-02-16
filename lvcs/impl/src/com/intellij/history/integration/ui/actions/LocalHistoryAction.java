@@ -1,6 +1,6 @@
 package com.intellij.history.integration.ui.actions;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,11 +28,11 @@ public abstract class LocalHistoryAction extends AnAction {
     return e.getPresentation().getTextWithMnemonic();
   }
 
-  protected boolean isEnabled(ILocalVcs vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+  protected boolean isEnabled(LocalVcs vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
     return true;
   }
 
-  protected ILocalVcs getVcs(AnActionEvent e) {
+  protected LocalVcs getVcs(AnActionEvent e) {
     return LocalHistoryComponent.getLocalVcsFor(getProject(e));
   }
 

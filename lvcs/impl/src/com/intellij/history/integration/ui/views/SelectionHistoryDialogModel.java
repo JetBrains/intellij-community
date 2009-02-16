@@ -1,6 +1,6 @@
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
@@ -18,7 +18,7 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   private int myFrom;
   private int myTo;
 
-  public SelectionHistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f, int from, int to) {
+  public SelectionHistoryDialogModel(IdeaGateway gw, LocalVcs vcs, VirtualFile f, int from, int to) {
     super(gw, vcs, f);
     myFrom = from;
     myTo = to;

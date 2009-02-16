@@ -1,6 +1,6 @@
 package com.intellij.history.integration.revertion;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.FormatUtil;
@@ -17,7 +17,7 @@ public abstract class RevisionReverter extends Reverter {
   protected Entry myLeftEntry;
   protected Entry myRightEntry;
 
-  public RevisionReverter(ILocalVcs vcs, IdeaGateway gw, Revision leftRevision, Entry leftEntry, Entry rightEntry) {
+  public RevisionReverter(LocalVcs vcs, IdeaGateway gw, Revision leftRevision, Entry leftEntry, Entry rightEntry) {
     super(vcs, gw);
     myLeftRevision = leftRevision;
     myLeftEntry = leftEntry;

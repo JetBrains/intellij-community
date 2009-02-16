@@ -1,6 +1,6 @@
 package com.intellij.history.integration.ui.models;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class HistoryDialogModel {
-  protected ILocalVcs myVcs;
+  protected LocalVcs myVcs;
   protected VirtualFile myFile;
   protected IdeaGateway myGateway;
   private List<Revision> myRevisionsCache;
@@ -26,7 +26,7 @@ public abstract class HistoryDialogModel {
   private int myLeftRevisionIndex;
   private boolean myIsChangesSelected = false;
 
-  public HistoryDialogModel(IdeaGateway gw, ILocalVcs vcs, VirtualFile f) {
+  public HistoryDialogModel(IdeaGateway gw, LocalVcs vcs, VirtualFile f) {
     myVcs = vcs;
     myFile = f;
     myGateway = gw;

@@ -1,6 +1,6 @@
 package com.intellij.history.integration.revertion;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class ChangeReverter extends Reverter {
-  private ILocalVcs myVcs;
+  private LocalVcs myVcs;
   private final IdeaGateway myGateway;
   private Change myChange;
   private List<Change> myChainCache;
 
-  public ChangeReverter(ILocalVcs vcs, IdeaGateway gw, Change c) {
+  public ChangeReverter(LocalVcs vcs, IdeaGateway gw, Change c) {
     super(vcs, gw);
     myVcs = vcs;
     myGateway = gw;
@@ -27,7 +27,7 @@ public class ChangeReverter extends Reverter {
   public List<String> askUserForProceeding() throws IOException {
     final List<String> result = new ArrayList<String>();
 
-    myVcs.accept(new ChangeVisitor() {
+    myVcs.acceptRead(new ChangeVisitor() {
       @Override
       public void begin(ChangeSet c) throws StopVisitingException {
         if (isBeforeMyChange(c, false)) stop();
@@ -45,7 +45,7 @@ public class ChangeReverter extends Reverter {
   protected void doCheckCanRevert(final List<String> errors) throws IOException {
     super.doCheckCanRevert(errors);
 
-    myVcs.accept(selective(new ChangeVisitor() {
+    myVcs.acceptRead(selective(new ChangeVisitor() {
       @Override
       public void visit(StructuralChange c) {
         if (!c.canRevertOn(myRoot)) {
@@ -70,7 +70,7 @@ public class ChangeReverter extends Reverter {
 
   @Override
   protected void doRevert() throws IOException {
-    myVcs.accept(selective(new ChangeRevertionVisitor(myGateway)));
+    myVcs.acceptWrite(selective(new ChangeRevertionVisitor(myGateway)));
   }
 
   @Override

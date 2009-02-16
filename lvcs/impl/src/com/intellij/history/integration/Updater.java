@@ -1,7 +1,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.diagnostic.Diagnostic;
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.ide.startup.CacheUpdater;
@@ -16,13 +16,13 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Updater implements CacheUpdater {
-  private ILocalVcs myVcs;
+  private LocalVcs myVcs;
   private IdeaGateway myGateway;
   private VirtualFile[] myVfsRoots;
 
   private CacheUpdaterProcessor myProcessor;
 
-  public Updater(ILocalVcs vcs, IdeaGateway gw) {
+  public Updater(LocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
     myVfsRoots = selectParentlessRootsAndSort(gw.getContentRoots());

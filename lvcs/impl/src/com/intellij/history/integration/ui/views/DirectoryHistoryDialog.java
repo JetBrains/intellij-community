@@ -1,7 +1,7 @@
 package com.intellij.history.integration.ui.views;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.core.LocalVcs;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
@@ -39,7 +39,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   @Override
-  protected DirectoryHistoryDialogModel createModel(ILocalVcs vcs) {
+  protected DirectoryHistoryDialogModel createModel(LocalVcs vcs) {
     return new DirectoryHistoryDialogModel(myGateway, vcs, myFile);
   }
 
