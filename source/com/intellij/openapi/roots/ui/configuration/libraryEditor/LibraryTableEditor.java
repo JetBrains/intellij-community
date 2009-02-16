@@ -91,7 +91,7 @@ public class LibraryTableEditor implements Disposable {
   private static final Icon JAR_DIRECTORY_ICON = IconLoader.getIcon("/nodes/jarDirectory.png");
 
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
-  @Nullable private final Project myProject = null;
+  @Nullable private final Project myProject;
 
   private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
 
@@ -117,6 +117,7 @@ public class LibraryTableEditor implements Disposable {
 
 
   private LibraryTableEditor(LibraryTableModifiableModelProvider provider, Project project){
+    myProject = project;
     myLibraryTableProvider = provider;
     myTableModifiableModel = myLibraryTableProvider.getModifiableModel();
     final String tableLevel = provider.getTableLevel();
