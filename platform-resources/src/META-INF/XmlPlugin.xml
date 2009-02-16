@@ -291,16 +291,16 @@
       <add-to-group anchor="last" group-id="GenerateGroup"/>
     </action>
 
-    <action id="HtmlTableCellNavigateUp" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateUpAction">
+    <action id="HtmlTableCellNavigateUp" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateUpAction" text="Navigate to previous table row">
       <keyboard-shortcut first-keystroke="control shift alt UP" keymap="$default"/>
     </action>
-    <action id="HtmlTableCellNavigateDown" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateDownAction">
+    <action id="HtmlTableCellNavigateDown" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateDownAction" text="Navigate to next table row">
       <keyboard-shortcut first-keystroke="control shift alt DOWN" keymap="$default"/>
     </action>
-    <action id="HtmlTableCellNavigateLeft" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateLeftAction">
+    <action id="HtmlTableCellNavigateLeft" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateLeftAction" text="Navigate to previous table column">
       <keyboard-shortcut first-keystroke="control shift alt LEFT" keymap="$default"/>
     </action>
-    <action id="HtmlTableCellNavigateRight" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateRightAction">
+    <action id="HtmlTableCellNavigateRight" class="com.intellij.xml.actions.navigation.HtmlTableCellNavigateRightAction" text="Navigate to next table column">
       <keyboard-shortcut first-keystroke="control shift alt RIGHT" keymap="$default"/>
     </action>
   </actions>
