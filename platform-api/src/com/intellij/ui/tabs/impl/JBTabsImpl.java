@@ -129,6 +129,7 @@ public class JBTabsImpl extends JComponent
 
   private boolean myTabDraggingEnabled;
   private DragHelper myDragHelper;
+  private boolean myNavigationActionsEnabled = true;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -202,13 +203,20 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  public void setNavigationActiondBinding(String prevActionId, String nextActionId) {
+  public JBTabs setNavigationActiondBinding(String prevActionId, String nextActionId) {
     if (myNextAction != null) {
       myNextAction.reconnect(nextActionId);
     }
     if (myPrevAction != null) {
       myPrevAction.reconnect(prevActionId);
     }
+
+    return this;
+  }
+
+  public JBTabs setNavigationActionsEnabled(boolean enabled) {
+    myNavigationActionsEnabled = enabled;
+    return this;
   }
 
   public final boolean isDisposed() {
@@ -218,7 +226,7 @@ public class JBTabsImpl extends JComponent
   public void dispose() {
     myDisposed = true;
     mySelectedInfo = null;
-    myAllTabs = null;
+    resetTabsCache();
     myAttractions.clear();
     myVisibleInfos.clear();
     myUiDecorator = null;
@@ -227,6 +235,10 @@ public class JBTabsImpl extends JComponent
     myInfo2Label.clear();
     myInfo2Toolbar.clear();
     myTabListeners.clear();
+  }
+
+  void resetTabsCache() {
+    myAllTabs = null;
   }
 
   private void processFocusChange() {
@@ -536,7 +548,7 @@ public class JBTabsImpl extends JComponent
       myVisibleInfos.add(index, info);
     }
 
-    myAllTabs = null;
+    resetTabsCache();
 
 
     updateText(info);
@@ -823,7 +835,7 @@ public class JBTabsImpl extends JComponent
 
 
     if (update) {
-      myAllTabs = null;
+      resetTabsCache();
       if (mySelectedInfo != null && myHiddenInfos.containsKey(mySelectedInfo)) {
         mySelectedInfo = getToSelectOnRemoveOf(mySelectedInfo);
       }
@@ -1942,7 +1954,7 @@ public class JBTabsImpl extends JComponent
     myHiddenInfos.remove(info);
     myInfo2Label.remove(info);
     myInfo2Toolbar.remove(info);
-    myAllTabs = null;
+    resetTabsCache();
 
     updateAll(false, false);
   }
@@ -2265,7 +2277,7 @@ public class JBTabsImpl extends JComponent
       if (tabs == null) return;
 
       final int selectedIndex = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
-      final boolean enabled = tabs == myTabs && myTabs.isNavigationVisible() && selectedIndex >= 0;
+      final boolean enabled = tabs == myTabs && myTabs.isNavigationVisible() && selectedIndex >= 0 && myTabs.myNavigationActionsEnabled;
       e.getPresentation().setEnabled(enabled);
       if (enabled) {
         _update(e, tabs, selectedIndex);

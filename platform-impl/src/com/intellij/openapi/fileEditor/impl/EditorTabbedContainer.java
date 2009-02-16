@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
@@ -52,57 +53,18 @@ final class EditorTabbedContainer implements Disposable {
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBTabsImpl(project, actionManager, IdeFocusManager.getInstance(project), this);
-    myTabs.setDataProvider(new DataProvider() {
-      public Object getData(@NonNls final String dataId) {
-        if (DataConstants.PROJECT.equals(dataId)) {
-          return myProject;
-        }
-        if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
-          final VirtualFile selectedFile = myWindow.getSelectedFile();
-          return selectedFile != null && selectedFile.isValid() ? selectedFile : null;
-        }
-        if (DataConstantsEx.EDITOR_WINDOW.equals(dataId)) {
-          return myWindow;
-        }
-        if (DataConstants.HELP_ID.equals(dataId)) {
-          return HELP_ID;
-        }
-        return null;
-      }
-    }).setPopupGroup(new Getter<ActionGroup>() {
+    myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
       }
-    }, ActionPlaces.EDITOR_POPUP, false).addTabMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(final MouseEvent e) {
-        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_CLICKED)) {
-          final TabInfo info = myTabs.findInfo(e);
-          if (info != null) {
-            myWindow.closeFile((VirtualFile)info.getObject());
-            return;
-          }
-        }
-
-        if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
-          ActionUtil.execute("HideAllWindows", e, null, ActionPlaces.UNKNOWN, 0);
-        }
-        else if (UIUtil.isActionClick(e) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
-          final TabInfo info = myTabs.findInfo(e);
-          if (info != null && info.getObject() != null) {
-            final VirtualFile vFile = (VirtualFile)info.getObject();
-            ShowFilePathAction.show(vFile, e);
-          }
-        }
-      }
-    }).getPresentation().setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
+    }, ActionPlaces.EDITOR_POPUP, false).setNavigationActionsEnabled(false).addTabMouseListener(new TabMouseListener()).getPresentation().
+      setTabDraggingEnabled(true).setUiDecorator(new UiDecorator() {
       @NotNull
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
     }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
-      .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())
-      .setPaintFocus(false).getJBTabs()
+      .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
       .addListener(new TabsListener.Adapter() {
         public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
           final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
@@ -282,7 +244,50 @@ final class EditorTabbedContainer implements Disposable {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      myWindow.closeFile((VirtualFile)myTabInfo.getObject());
+      FileEditorManagerEx.getInstance(myProject).closeFile((VirtualFile)myTabInfo.getObject());
+    }
+  }
+
+  private class MyDataProvider implements DataProvider {
+    public Object getData(@NonNls final String dataId) {
+      if (DataConstants.PROJECT.equals(dataId)) {
+        return myProject;
+      }
+      if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+        final VirtualFile selectedFile = myWindow.getSelectedFile();
+        return selectedFile != null && selectedFile.isValid() ? selectedFile : null;
+      }
+      if (DataConstantsEx.EDITOR_WINDOW.equals(dataId)) {
+        return myWindow;
+      }
+      if (DataConstants.HELP_ID.equals(dataId)) {
+        return HELP_ID;
+      }
+      return null;
+    }
+  }
+
+  private class TabMouseListener extends MouseAdapter {
+    @Override
+    public void mouseClicked(final MouseEvent e) {
+      if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_CLICKED)) {
+        final TabInfo info = myTabs.findInfo(e);
+        if (info != null) {
+          myWindow.closeFile((VirtualFile)info.getObject());
+          return;
+        }
+      }
+
+      if (UIUtil.isActionClick(e) && (e.getClickCount() % 2) == 0) {
+        ActionUtil.execute("HideAllWindows", e, null, ActionPlaces.UNKNOWN, 0);
+      }
+      else if (UIUtil.isActionClick(e) && (e.isMetaDown() || (!SystemInfo.isMac && e.isControlDown()))) {
+        final TabInfo info = myTabs.findInfo(e);
+        if (info != null && info.getObject() != null) {
+          final VirtualFile vFile = (VirtualFile)info.getObject();
+          ShowFilePathAction.show(vFile, e);
+        }
+      }
     }
   }
 }

@@ -193,6 +193,7 @@ class DragHelper extends MouseDragHelper {
     myDragSource = null;
     myDragRec = null;
 
+    myTabs.resetTabsCache();
     myTabs.relayout(true, false);
   }
 }
