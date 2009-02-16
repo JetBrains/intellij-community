@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 
 public class DfaValueFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaValueFactory");
@@ -122,26 +123,31 @@ public class DfaValueFactory {
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
 
-
+  @NotNull
   public DfaVariableValue.Factory getVarFactory() {
     return myVarFactory;
   }
 
+  @NotNull
   public DfaConstValue.Factory getConstFactory() {
     return myConstFactory;
   }
+  @NotNull
   public DfaBoxedValue.Factory getBoxedFactory() {
     return myBoxedFactory;
   }
 
+  @NotNull
   public DfaNotNullValue.Factory getNotNullFactory() {
     return myNotNullFactory;
   }
 
+  @NotNull
   public DfaTypeValue.Factory getTypeFactory() {
     return myTypeFactory;
   }
 
+  @NotNull
   public DfaRelationValue.Factory getRelationFactory() {
     return myRelationFactory;
   }

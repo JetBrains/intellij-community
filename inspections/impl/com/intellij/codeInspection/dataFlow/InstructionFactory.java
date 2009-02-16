@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +23,8 @@ public class InstructionFactory {
     return new AssignInstruction(RExpression);
   }
 
-  public BinopInstruction createBinopInstruction(@NonNls String opSign, PsiElement psiAnchor) {
-    return new BinopInstruction(opSign, psiAnchor);
+  public BinopInstruction createBinopInstruction(@NonNls String opSign, PsiElement psiAnchor, Project project) {
+    return new BinopInstruction(opSign, psiAnchor, project);
   }
 
   public CheckReturnValueInstruction createCheckReturnValueInstruction(final PsiReturnStatement aReturn) {

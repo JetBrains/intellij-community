@@ -12,10 +12,11 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -24,10 +25,11 @@ public class BinopInstruction extends BranchingInstruction {
   private boolean myIsInstanceofRedundant = true;
   private boolean myIsReachable = false;
   private boolean myCanBeNullInInstanceof = false;
+  private final Project myProject;
 
-  public BinopInstruction(@NonNls String opSign, PsiElement psiAnchor) {
-    if (opSign != null &&
-        ("==".equals(opSign) || "!=".equals(opSign) || "instanceof".equals(opSign) || "+".equals(opSign))) {
+  public BinopInstruction(@NonNls String opSign, PsiElement psiAnchor, @NotNull Project project) {
+    myProject = project;
+    if (opSign != null && ("==".equals(opSign) || "!=".equals(opSign) || "instanceof".equals(opSign) || "+".equals(opSign))) {
       myOperationSign = opSign;
       if (!"instanceof".equals(opSign)) myIsInstanceofRedundant = false;
     }
@@ -123,7 +125,9 @@ public class BinopInstruction extends BranchingInstruction {
   }
 
   private DfaValue getNonNullStringValue(final DfaValueFactory factory) {
-    return factory.getNotNullFactory().create(PsiType.getJavaLangString(getPsiAnchor().getManager(), getPsiAnchor().getResolveScope()));
+    PsiElement anchor = getPsiAnchor();
+    PsiClassType string = PsiType.getJavaLangString(PsiManager.getInstance(myProject), anchor == null ? GlobalSearchScope.allScope(myProject) : anchor.getResolveScope());
+    return factory.getNotNullFactory().create(string);
   }
 
   public boolean isInstanceofRedundant() {

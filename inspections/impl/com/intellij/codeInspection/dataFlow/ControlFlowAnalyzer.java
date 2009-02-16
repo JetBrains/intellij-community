@@ -31,7 +31,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final InstructionFactory myInstructionFactory;
   private boolean myHonorRuntimeExceptions = true;
 
-  public ControlFlowAnalyzer(final DfaValueFactory valueFactory, final InstructionFactory instructionFactory) {
+  ControlFlowAnalyzer(final DfaValueFactory valueFactory, final InstructionFactory instructionFactory) {
     myFactory = valueFactory;
     myInstructionFactory = instructionFactory;
   }
@@ -172,7 +172,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(lExpr,exprType);
     rExpr.accept(this);
     generateBoxingUnboxingInstructionFor(rExpr,exprType);
-    addInstruction(myInstructionFactory.createBinopInstruction(null, null));
+    addInstruction(myInstructionFactory.createBinopInstruction(null, null,lExpr.getProject()));
   }
 
   @Override public void visitAssertStatement(PsiAssertStatement statement) {
@@ -283,9 +283,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiStatement body = ((PsiForeachStatement)continuedStatement).getBody();
         offset = myPass1Flow.getEndOffset(body);
       }
-      Instruction instruction = offset != -1
-                                ? new GotoInstruction(offset)
-                                : new EmptyInstruction();
+      Instruction instruction = offset == -1 ? new EmptyInstruction() : new GotoInstruction(offset);
       addInstruction(instruction);
     }
     finishElement(statement);
@@ -662,13 +660,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     private final PsiCodeBlock myBlock;
     private final boolean myIsFinally;
 
-    public CatchDescriptor(PsiCodeBlock finallyBlock) {
+    CatchDescriptor(PsiCodeBlock finallyBlock) {
       myType = null;
       myBlock = finallyBlock;
       myIsFinally = true;
     }
 
-    public CatchDescriptor(PsiParameter parameter, PsiCodeBlock catchBlock) {
+    CatchDescriptor(PsiParameter parameter, PsiCodeBlock catchBlock) {
       myType = parameter.getType();
       myParameter = parameter;
       myBlock = catchBlock;
@@ -886,7 +884,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             }
           }
           
-          addInstruction(myInstructionFactory.createBinopInstruction(opSign, expression.isPhysical() ? expression : null));
+          addInstruction(myInstructionFactory.createBinopInstruction(opSign, expression.isPhysical() ? expression : null, expression.getProject()));
         }
       }
     }
@@ -918,7 +916,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(lExpr,exprType);
     rExpr.accept(this);
     generateBoxingUnboxingInstructionFor(rExpr,exprType);
-    addInstruction(myInstructionFactory.createBinopInstruction("!=", expression.isPhysical() ? expression : null));
+    addInstruction(myInstructionFactory.createBinopInstruction("!=", expression.isPhysical() ? expression : null, expression.getProject()));
   }
 
   private void generateOrExpression(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
@@ -1029,7 +1027,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         type = ((PsiClassType)type).rawType();
       }
       addInstruction(myInstructionFactory.createPushInstruction(myFactory.getTypeFactory().create(type), null));
-      addInstruction(myInstructionFactory.createBinopInstruction("instanceof", expression));
+      addInstruction(myInstructionFactory.createBinopInstruction("instanceof", expression,expression.getProject()));
     }
     else {
       pushUnknown();
@@ -1134,7 +1132,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             pushParameters(params, true);
 
             addInstruction(myInstructionFactory.createPushInstruction(myFactory.getConstFactory().getNull(), null));
-            addInstruction(myInstructionFactory.createBinopInstruction("==", null));
+            addInstruction(myInstructionFactory.createBinopInstruction("==", null, expression.getProject()));
             conditionalExit(exitPoint, false);
             return true;
           }
@@ -1142,7 +1140,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             pushParameters(params, true);
 
             addInstruction(myInstructionFactory.createPushInstruction(myFactory.getConstFactory().getNull(), null));
-            addInstruction(myInstructionFactory.createBinopInstruction("==", null));
+            addInstruction(myInstructionFactory.createBinopInstruction("==", null, expression.getProject()));
             conditionalExit(exitPoint, true);
             return true;
           }
