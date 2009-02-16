@@ -31,6 +31,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -101,7 +102,9 @@ public class FacetDetectionIndex extends AbstractFileIndex<FacetDetectionIndexEn
         myNewFacetTypes.add(type);
       }
     }
-    LOG.info("Unknown facet types in cache: " + unknownTypes);
+    if (!unknownTypes.isEmpty()) {
+      LOG.info("Unknown facet types in cache: " + new HashSet<String>(unknownTypes));
+    }
   }
 
   @Nullable
