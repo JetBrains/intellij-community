@@ -33,7 +33,7 @@ import java.util.Random;
 
 public class JavaFoldingBuilder implements FoldingBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
-  private static final String[] SMILEYS = {"<:->", "<:-)>", "<:P>", "<:-P>", "<~>", "</>", "<->"};
+  private static final String[] SMILEYS = {"<:->", "<:-)>", "<:*)>", "<;->", "<~>", "<->"};
   private static final String SMILEY = SMILEYS[new Random().nextInt(SMILEYS.length)];
 
   public FoldingDescriptor[] buildFoldRegions(final ASTNode node, final Document document) {
