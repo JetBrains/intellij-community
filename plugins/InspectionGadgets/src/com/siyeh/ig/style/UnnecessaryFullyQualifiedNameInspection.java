@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                     "unnecessary.fully.qualified.name.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiJavaCodeReferenceElement referenceElement =
@@ -106,21 +107,14 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             }
             @NonNls final String packageName =
                     ClassUtil.extractPackageName(qualifiedName);
-            final String filePackageName = file.getPackageName();
-            if (packageName.equals("java.lang") ||
-                    packageName.equals(filePackageName)) {
-                if (ImportUtils.hasOnDemandImportConflict(qualifiedName,
-                        file)) {
+            if (importList.findSingleClassImportStatement(qualifiedName) == null) {
+                if (importList.findOnDemandImportStatement(packageName) == null) {
                     addImport(importList, aClass);
-                } else if (ImportUtils.hasDefaultImportConflict(qualifiedName,
-                        file)) {
+                } else if (ImportUtils.hasDefaultImportConflict(qualifiedName, file)) {
+                    addImport(importList, aClass);
+                } else if (ImportUtils.hasOnDemandImportConflict(qualifiedName, file)) {
                     addImport(importList, aClass);
                 }
-            } else if (importList.findSingleClassImportStatement(qualifiedName)
-                       == null
-                       && importList.findOnDemandImportStatement(packageName)
-                          == null) {
-                addImport(importList, aClass);
             }
             final String fullyQualifiedText = referenceElement.getText();
             final QualificationRemover qualificationRemover =
@@ -150,8 +144,10 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
 
         private static void addImport(PsiImportList importList, PsiClass aClass)
                 throws IncorrectOperationException {
-            final PsiManager manager = importList.getManager();
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final Project project = importList.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory elementFactory =
+                    psiFacade.getElementFactory();
             final PsiImportStatement importStatement =
                     elementFactory.createImportStatement(aClass);
             importList.add(importStatement);
@@ -161,8 +157,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                 extends JavaRecursiveElementVisitor {
 
             private final String fullyQualifiedText;
-            private final List<PsiElement> shortenedElements =
-                    new ArrayList();
+            private final List<PsiElement> shortenedElements = new ArrayList();
 
             QualificationRemover(String fullyQualifiedText) {
                 this.fullyQualifiedText = fullyQualifiedText;
