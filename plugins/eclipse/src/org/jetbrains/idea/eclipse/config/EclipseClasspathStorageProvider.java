@@ -224,7 +224,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);
         final CachedXmlDocumentSet fileSet = getFileSet();
 
-        if (model.getContentRoots().length > 0) {
+        if (model.getSourceRoots().length > 0) {
           Element element;
           try {
             element = fileSet.read(EclipseXml.CLASSPATH_FILE).getRootElement();

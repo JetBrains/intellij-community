@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jdom.Element;
@@ -186,6 +187,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();
           new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
                                                                   getParameters().converterOptions.testPattern, classpathElement);
+        } else {
+          rootModel.addContentEntry(VfsUtil.pathToUrl(path));
         }
         ClasspathStorage.setStorageType(module,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
