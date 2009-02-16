@@ -389,9 +389,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     final List<PsiClassType> extendsTypes = getReferenceListTypes(getExtendsClause());
-    if (isInterface() && !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
-      extendsTypes.add(getDefaultBaseType());
-    }
     return extendsTypes.toArray(new PsiClassType[extendsTypes.size()]);
   }
 

@@ -35,6 +35,12 @@ public class GroovyHighlightingTest extends CodeInsightFixtureTestCase {
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
   }
 
+  public void testJavaClassImplementingGroovyInterface() throws Throwable {
+    addGroovyObject();
+    myFixture.addFileToProject("Foo.groovy", "interface Foo {}");
+    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
+  }
+
   private void addGroovyObject() throws IOException {
     myFixture.addClass("package groovy.lang;" +
                        "public interface GroovyObject  {\n" +
