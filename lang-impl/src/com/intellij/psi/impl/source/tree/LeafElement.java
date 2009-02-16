@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -69,12 +70,13 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public LeafElement rawReplaceWithText(String newText) {
-    LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
+    LeafElement newLeaf = ASTFactory.leaf(getElementType(), newText);
+    copyUserDataTo(newLeaf);
     rawReplaceWithList(newLeaf);
-    clearCaches();
+    newLeaf.clearCaches();
     return newLeaf;
   }
-
+  
   public LeafElement replaceWithText(String newText) {
     LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
     getTreeParent().replaceChild(this, newLeaf);
