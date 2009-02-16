@@ -4,11 +4,9 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -440,14 +438,11 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
     return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
-  public void fixText(@NotNull final String text) {
-    ChangeUtil.changeElementInPlace(this, new ChangeUtil.ChangeAction() {
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        TreeElement valueNode = getFirstChildNode();
-        assert valueNode != null;
-        ((LeafElement)valueNode).setText(text);
-      }
-    });
+  public PsiLanguageInjectionHost fixText(@NotNull final String text) {
+    TreeElement valueNode = getFirstChildNode();
+    assert valueNode instanceof LeafElement;
+    ((LeafElement)valueNode).replaceWithText(text);
+    return this;
   }
 
   @NotNull

@@ -53,7 +53,7 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
         PsiLanguageInjectionHost host = shred.host;
         TextRange rangeInsideHost = shred.getRangeInsideHost();
         String newHostText = StringUtil.replaceSubstring(host.getText(), rangeInsideHost, change);
-        host.fixText(newHostText);
+        shred.host = host.fixText(newHostText);
       }
     }
   }

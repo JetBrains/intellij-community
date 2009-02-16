@@ -40,6 +40,17 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
+  public void copyUserDataTo(UserDataHolderBase other) {
+    if (myUserMap == null) {
+      other.myUserMap = null;
+    }
+    else {
+      LockPoolSynchronizedMap<Key, Object> fresh = createMap();
+      fresh.putAll(myUserMap);
+      other.myUserMap = fresh;
+    }
+  }
+
   public <T> T getUserData(Key<T> key) {
     final Map<Key, Object> map = myUserMap;
     return map == null ? null : (T)map.get(key);
@@ -142,7 +153,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-  protected void copyCopyableDataTo(UserDataHolderBase clone) {
+  public void copyCopyableDataTo(UserDataHolderBase clone) {
     Map<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     if (copyableMap != null) {
       copyableMap = ((LockPoolSynchronizedMap)copyableMap).clone();

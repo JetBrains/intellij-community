@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.CommentLiteralEscaper;
@@ -35,12 +34,8 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
     return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
-  public void fixText(@NotNull final String text) {
-    ChangeUtil.changeElementInPlace(this, new ChangeUtil.ChangeAction() {
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        setText(text);
-      }
-    });
+  public PsiLanguageInjectionHost fixText(@NotNull final String text) {
+    return (PsiCommentImpl)replaceWithText(text);
   }
 
   @NotNull

@@ -50,7 +50,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
 
   void processInjectedPsi(@NotNull InjectedPsiVisitor visitor);
 
-  void fixText(@NotNull String text);
+  PsiLanguageInjectionHost fixText(@NotNull String text);
   
   @NotNull
   LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper();
@@ -61,7 +61,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
   }
 
   class Shred {
-    public final PsiLanguageInjectionHost host;
+    public PsiLanguageInjectionHost host;
     private final RangeMarker relevantRangeInHost;
     public final TextRange range; // range in (decoded) PSI
     public final String prefix;

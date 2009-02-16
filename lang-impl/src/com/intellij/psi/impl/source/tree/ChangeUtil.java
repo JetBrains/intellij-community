@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.PomManager;
@@ -106,6 +107,15 @@ public class ChangeUtil {
       if (handled != null) return handled;
     }
 
+    return element;
+  }
+
+  public static LeafElement copyLeafWithText(LeafElement original, String text) {
+    LeafElement element = ASTFactory.leaf(original.getElementType(), text);
+    original.copyCopyableDataTo(element);
+    encodeInformation(element, original);
+    TreeUtil.clearCaches(element);
+    saveIndentationToCopy(original, element);
     return element;
   }
 

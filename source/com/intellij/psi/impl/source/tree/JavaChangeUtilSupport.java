@@ -301,9 +301,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         final String original = element.getText();
         final String escaped = StringUtil.escapeXml(original);
         if (!Comparing.equal(original, escaped) && element.getCopyableUserData(ALREADY_ESCAPED) == null) {
-          final LeafElement copy = (LeafElement)element.copyElement();
-          copy.setText(escaped);
-          element.getTreeParent().replaceChild(element, copy);
+          LeafElement copy = ((LeafElement)element).rawReplaceWithText(escaped);
           copy.putCopyableUserData(ALREADY_ESCAPED, Boolean.TRUE);
           return copy;
         }
@@ -345,8 +343,9 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         final String originalText = element.getText();
         final String unescapedText = StringUtil.unescapeXml(originalText);
         if (!Comparing.equal(originalText, unescapedText)) {
-          ((LeafElement)element).setText(unescapedText);
+          LeafElement replaced = ((LeafElement)element).rawReplaceWithText(unescapedText);
           element.putCopyableUserData(ALREADY_ESCAPED, null);
+          replaced.putCopyableUserData(ALREADY_ESCAPED, null);
         }
       }
     }

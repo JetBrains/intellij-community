@@ -308,7 +308,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
       LeafElement leaf = entry.getKey();
       String newText = entry.getValue();
-      leaf.setText(newText);
+      leaf.rawReplaceWithText(newText);
     }
     ((TreeElement)parsedNode).acceptTree(CLEAR_CACHES_VISITOR);
   }

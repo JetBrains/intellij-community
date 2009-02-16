@@ -95,7 +95,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return null;
   }
 
-  public void fixText(@NotNull String text) {
+  public PsiLanguageInjectionHost fixText(@NotNull String text) {
     try {
       String contents = StringUtil.trimEnd(StringUtil.trimStart(text, "\""), "\"");
       XmlAttribute newAttribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute("q", contents);
@@ -107,6 +107,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    return this;
   }
 
   @NotNull

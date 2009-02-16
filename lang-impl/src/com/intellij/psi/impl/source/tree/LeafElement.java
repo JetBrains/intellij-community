@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class LeafElement extends TreeElement {
   private static final int TEXT_MATCHES_THRESHOLD = 5;
 
-  private volatile CharSequence myText;
+  private final CharSequence myText;
 
   protected LeafElement(IElementType type, CharSequence text) {
     super(type);
@@ -68,9 +68,17 @@ public abstract class LeafElement extends TreeElement {
     return start + length;
   }
 
-  public void setText(String text) {
-    myText = SharedImplUtil.findCharTableByTree(this).intern(text);
+  public LeafElement rawReplaceWithText(String newText) {
+    LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
+    rawReplaceWithList(newLeaf);
     clearCaches();
+    return newLeaf;
+  }
+
+  public LeafElement replaceWithText(String newText) {
+    LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
+    getTreeParent().replaceChild(this, newLeaf);
+    return newLeaf;
   }
 
   public LeafElement findLeafElementAt(int offset) {
