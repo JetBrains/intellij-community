@@ -14,9 +14,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.license.LicenseManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 
 public class SendFeedbackAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -24,24 +22,12 @@ public class SendFeedbackAction extends AnAction {
   }
 
   public static void launchBrowser() {
-    if (LicenseManager.getInstance().isEap()) {
-      BrowserUtil.launchBrowser("http://jetbrains.net/jira");
-    }
-    else {
-      @NonNls StringBuffer url = new StringBuffer("http://www.jetbrains.com/feedback/feedback.jsp?");
-      url.append("product=");
-      url.append(ApplicationNamesInfo.getInstance().getProductName());
-
-      url.append("&build=");
-      url.append(ApplicationInfo.getInstance().getBuildNumber());
-
-      url.append("&timezone=");
-      url.append(System.getProperty("user.timezone"));
-
-      url.append("&eval=");
-      url.append(LicenseManager.getInstance().isEvaluationLicense() ? "true" : "false");
-
-      BrowserUtil.launchBrowser(url.toString());
-    }
+    final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    String urlTemplate = LicenseManager.getInstance().isEap() ? appInfo.getEAPFeedbackUrl() : appInfo.getReleaseFeedbackUrl();
+    urlTemplate = urlTemplate
+      .replace("$BUILD", appInfo.getBuildNumber())
+      .replace("$TIMEZONE", System.getProperty("user.timezone"))
+      .replace("$EVAL", LicenseManager.getInstance().isEvaluationLicense() ? "true" : "false");
+    BrowserUtil.launchBrowser(urlTemplate);
   }
 }

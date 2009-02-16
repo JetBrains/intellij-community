@@ -57,6 +57,10 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSupportUrl();
 
+  public abstract String getEAPFeedbackUrl();
+
+  public abstract String getReleaseFeedbackUrl();
+
   public static interface UpdateUrls {
     String getCheckingUrl();
     String getPatchesUrl();
