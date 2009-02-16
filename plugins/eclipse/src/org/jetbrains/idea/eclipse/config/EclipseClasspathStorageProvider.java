@@ -193,15 +193,16 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final HashSet<String> usedVariables = new HashSet<String>();
         final CachedXmlDocumentSet documentSet = getFileSet();
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
+          final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
+          if (documentSet.exists(eml)) {
+            EclipseClasspathReader.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
+          }
+
           final VirtualFile vFile = documentSet.getVFile(EclipseXml.CLASSPATH_FILE);
           final EclipseClasspathReader classpathReader = new EclipseClasspathReader(vFile.getParent().getPath(), module.getProject());
           classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
                                         documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
 
-          final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-          if (documentSet.exists(eml)) {
-            EclipseClasspathReader.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
-          }
         }
 
         ((RootModelImpl)model).writeExternal(element);
