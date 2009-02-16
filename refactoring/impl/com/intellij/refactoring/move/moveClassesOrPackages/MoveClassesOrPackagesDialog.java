@@ -30,6 +30,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -241,7 +242,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
 
-  private boolean isSearchInComments() {
+  protected final boolean isSearchInComments() {
     return myCbSearchInComments.isSelected();
   }
 
@@ -344,9 +345,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         }
       }
 
-      MoveClassesOrPackagesProcessor processor = new MoveClassesOrPackagesProcessor(myProject, myElementsToMove, destination,
-                                                                                    isSearchInComments(), isSearchInNonJavaFiles(),
-                                                                                    myMoveCallback);
+      MoveClassesOrPackagesProcessor processor = createMoveToPackageProcessor(destination, myElementsToMove, myMoveCallback);
       if (processor.verifyValidPackageName()) {
         invokeRefactoring(processor);
       }
@@ -355,6 +354,14 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, getProject());
     }
+  }
+
+  //for scala plugin
+  protected MoveClassesOrPackagesProcessor createMoveToPackageProcessor(MoveDestination destination, final PsiElement[] elementsToMove,
+                                                                        final MoveCallback callback) {
+    return new MoveClassesOrPackagesProcessor(getProject(), elementsToMove, destination,
+                                                                                  isSearchInComments(), isSearchInNonJavaFiles(),
+                                                                                  callback);
   }
 
   private void saveRefactoringSettings() {
@@ -393,12 +400,16 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     for (int i = 0; i < myElementsToMove.length; i++) {
       PsiClass psiClass = (PsiClass)myElementsToMove[i];
       // fire callback after last element has been processed
-      invokeRefactoring(new MoveClassToInnerProcessor(myProject, psiClass, targetClass, isSearchInComments(), isSearchInNonJavaFiles(),
-                                                      i == myElementsToMove.length - 1 ? myMoveCallback : null));
+      invokeRefactoring(createMoveToInnerProcessor(targetClass, psiClass, i == myElementsToMove.length - 1 ? myMoveCallback : null));
     }
   }
 
-  private boolean isSearchInNonJavaFiles() {
+  //for scala plugin
+  protected MoveClassToInnerProcessor createMoveToInnerProcessor(PsiClass destination, @NotNull PsiClass psiClass, @Nullable final MoveCallback callback) {
+    return new MoveClassToInnerProcessor(getProject(), psiClass, destination, isSearchInComments(), isSearchInNonJavaFiles(), callback);
+  }
+
+  protected final boolean isSearchInNonJavaFiles() {
     return myCbSearchTextOccurences.isSelected();
   }
 
