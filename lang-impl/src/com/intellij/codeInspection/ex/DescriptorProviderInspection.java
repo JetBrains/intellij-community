@@ -147,7 +147,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         newDescriptors.remove(problem);
         getQuickFixActions().put(refEntity, null);
         if (!newDescriptors.isEmpty()) {
-          getProblemElements().put(refEntity, newDescriptors.toArray(new ProblemDescriptor[newDescriptors.size()]));
+          getProblemElements().put(refEntity, newDescriptors.toArray(new CommonProblemDescriptor[newDescriptors.size()]));
           for (CommonProblemDescriptor descriptor : newDescriptors) {
             collectQuickFixes(descriptor.getFixes(), refEntity);
           }
