@@ -20,4 +20,9 @@ class AssigmentToMethodParameterMissesCompoundAssign {
         System.out.println(s);
     }
 
+    public void method(int decreased, int increased) {
+        decreased += 10; // not highlighted
+        increased -= 10; // highlighted
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ public class AssignmentToMethodParameterInspection
                 final IElementType tokenType =
                         expression.getOperationTokenType();
                 if (tokenType == JavaTokenType.PLUSEQ ||
+                        tokenType == JavaTokenType.MINUSEQ ||
                         tokenType == JavaTokenType.ASTERISKEQ ||
                         tokenType == JavaTokenType.DIVEQ ||
                         tokenType == JavaTokenType.ANDEQ ||
@@ -146,9 +147,9 @@ public class AssignmentToMethodParameterInspection
             if (!(expression instanceof PsiReferenceExpression)) {
                 return null;
             }
-            final PsiReferenceExpression ref =
+            final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) expression;
-            final PsiElement variable = ref.resolve();
+            final PsiElement variable = referenceExpression.resolve();
             if (!(variable instanceof PsiParameter)) {
                 return null;
             }
