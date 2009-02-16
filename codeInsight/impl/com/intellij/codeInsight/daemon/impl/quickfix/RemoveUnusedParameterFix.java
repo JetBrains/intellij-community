@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.IntentionQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -12,13 +12,13 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
-
-public class RemoveUnusedParameterFix implements IntentionAction {
+public class RemoveUnusedParameterFix extends IntentionQuickFix {
   private final PsiParameter myParameter;
 
   public RemoveUnusedParameterFix(PsiParameter parameter) {
@@ -26,7 +26,7 @@ public class RemoveUnusedParameterFix implements IntentionAction {
   }
 
   @NotNull
-  public String getText() {
+  public String getName() {
     return QuickFixBundle.message("remove.unused.parameter.text", myParameter.getName());
   }
 
@@ -35,14 +35,14 @@ public class RemoveUnusedParameterFix implements IntentionAction {
     return QuickFixBundle.message("remove.unused.parameter.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return
       myParameter.isValid()
       && myParameter.getDeclarationScope() instanceof PsiMethod
       && myParameter.getManager().isInProject(myParameter);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
     removeReferences(myParameter);
   }
