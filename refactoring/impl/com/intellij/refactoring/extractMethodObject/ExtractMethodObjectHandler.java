@@ -60,6 +60,9 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
           extractProcessor.doRefactoring();
           processor.run();
           if (processor.isCreateInnerClass()) {
+
+            processor.moveUsedMethodsToInner();
+
             DuplicatesImpl.processDuplicates(extractProcessor, project, editor);
             processor.changeInstanceAccess(project);
           }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,8 +29,10 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
+import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -40,6 +43,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
@@ -57,6 +61,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   private PsiMethod myInnerMethod;
   private boolean myMadeStatic = false;
+  private final Set<MethodToMoveUsageInfo> myUsages = new HashSet<MethodToMoveUsageInfo>();
+  private PsiClass myInnerClass;
 
   public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, final String innerClassName) {
     super(project);
@@ -80,6 +86,35 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         result.add(new UsageInfo(element));
       }
     }
+    if (isCreateInnerClass()) {
+      final Set<PsiMethod> usedMethods = new HashSet<PsiMethod>();
+      getMethod().accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          super.visitMethodCallExpression(expression);
+          final PsiMethod method = expression.resolveMethod();
+          if (method != null) {
+            usedMethods.add(method);
+          }
+        }
+      });
+
+
+      for (PsiMethod usedMethod : usedMethods) {
+        if (usedMethod.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
+          PsiMethod toMove = usedMethod;
+          for (PsiReference reference : ReferencesSearch.search(usedMethod)) {
+            if (!PsiTreeUtil.isAncestor(getMethod(), reference.getElement(), false)) {
+              toMove = null;
+              break;
+            }
+          }
+          if (toMove != null) {
+            myUsages.add(new MethodToMoveUsageInfo(toMove));
+          }
+        }
+      }
+    }
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
@@ -89,8 +124,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {
-        final PsiClass innerClass = (PsiClass)getMethod().getContainingClass().add(myElementFactory.createClass(getInnerClassName()));
-        final boolean isStatic = copyMethodModifiers(innerClass) && notHasGeneratedFields();
+        myInnerClass = (PsiClass)getMethod().getContainingClass().add(myElementFactory.createClass(getInnerClassName()));
+        final boolean isStatic = copyMethodModifiers() && notHasGeneratedFields();
         for (UsageInfo usage : usages) {
           final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(usage.getElement(), PsiMethodCallExpression.class);
           if (methodCallExpression != null) {
@@ -100,21 +135,21 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
         final PsiParameter[] parameters = getMethod().getParameterList().getParameters();
         if (parameters.length > 0) {
-          createInnerClassConstructor(innerClass, parameters);
+          createInnerClassConstructor(parameters);
         } else if (isStatic) {
           final PsiMethod copy = (PsiMethod)getMethod().copy();
           copy.setName("invoke");
-          innerClass.add(copy);
+          myInnerClass.add(copy);
           if (myMultipleExitPoints) {
-            addOutputVariableFieldsWithGetters(innerClass);
+            addOutputVariableFieldsWithGetters();
           }
           return;
         }
         if (myMultipleExitPoints) {
-          addOutputVariableFieldsWithGetters(innerClass);
+          addOutputVariableFieldsWithGetters();
         }
-        copyMethodWithoutParameters(innerClass);
-        copyMethodTypeParameters(innerClass);
+        copyMethodWithoutParameters();
+        copyMethodTypeParameters();
       } else {
         for (UsageInfo usage : usages) {
           final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(usage.getElement(), PsiMethodCallExpression.class);
@@ -129,7 +164,41 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void addOutputVariableFieldsWithGetters(final PsiClass innerClass) throws IncorrectOperationException {
+  protected void moveUsedMethodsToInner() {
+    if (!myUsages.isEmpty()) {
+      final MemberInfo[] memberInfos = new MemberInfo[myUsages.size()];
+      int i = 0;
+      for (MethodToMoveUsageInfo usage : myUsages) {
+        memberInfos[i++] = new MemberInfo((PsiMethod)usage.getElement());
+      }
+
+      final MemberSelectionPanel panel = new MemberSelectionPanel("Methods to move to the extracted class", memberInfos, null);
+      DialogWrapper dlg = new DialogWrapper(myProject, false) {
+        {
+          init();
+          setTitle("Move Methods Used in Extracted Block Only");
+        }
+
+
+        @Override
+        protected JComponent createCenterPanel() {
+          return panel;
+        }
+      };
+      dlg.show();
+      if (dlg.isOK()) {
+        for (MemberInfo memberInfo : panel.getTable().getSelectedMemberInfos()) {
+          if (memberInfo.isChecked()) {
+            myInnerClass.add(memberInfo.getMember().copy());
+            memberInfo.getMember().delete();
+          }
+
+        }
+      }
+    }
+  }
+
+  private void addOutputVariableFieldsWithGetters() throws IncorrectOperationException {
     final Map<String, String> var2FieldNames = new HashMap<String, String>();
     final PsiVariable[] outputVariables = myExtractProcessor.getOutputVariables();
     for (int i = 0; i < outputVariables.length; i++) {
@@ -139,11 +208,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       LOG.assertTrue(name != null);
       if (outputField != null) {
         var2FieldNames.put(var.getName(), outputField.getName());
-        innerClass.add(outputField);
+        myInnerClass.add(outputField);
       }
-      final PsiField field = PropertyUtil.findPropertyField(myProject, innerClass, name, false);
+      final PsiField field = PropertyUtil.findPropertyField(myProject, myInnerClass, name, false);
       LOG.assertTrue(field != null, "i:" + i + "; output variables: " + Arrays.toString(outputVariables) + "; parameters: " + Arrays.toString(getMethod().getParameterList().getParameters()) + "; output field: " + outputField );
-      innerClass.add(PropertyUtil.generateGetterPrototype(field));
+      myInnerClass.add(PropertyUtil.generateGetterPrototype(field));
     }
 
     PsiParameter[] params = getMethod().getParameterList().getParameters();
@@ -153,7 +222,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
     }
     ChangeSignatureProcessor cp = new ChangeSignatureProcessor(myProject, getMethod(), false, null, getMethod().getName(),
-                                                               new PsiImmediateClassType(innerClass, PsiSubstitutor.EMPTY), infos);
+                                                               new PsiImmediateClassType(myInnerClass, PsiSubstitutor.EMPTY), infos);
     cp.run();
     final PsiCodeBlock body = getMethod().getBody();
     LOG.assertTrue(body != null);
@@ -329,10 +398,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
 
-  private boolean copyMethodModifiers(final PsiClass innerClass) throws IncorrectOperationException {
+  private boolean copyMethodModifiers() throws IncorrectOperationException {
     final PsiModifierList methodModifierList = getMethod().getModifierList();
 
-    final PsiModifierList innerClassModifierList = innerClass.getModifierList();
+    final PsiModifierList innerClassModifierList = myInnerClass.getModifierList();
     LOG.assertTrue(innerClassModifierList != null);
     innerClassModifierList.setModifierProperty(VisibilityUtil.getVisibilityModifier(methodModifierList), true);
     final boolean isStatic = methodModifierList.hasModifierProperty(PsiModifier.STATIC);
@@ -340,8 +409,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return isStatic;
   }
 
-  private void copyMethodTypeParameters(final PsiClass innerClass) throws IncorrectOperationException {
-    final PsiTypeParameterList typeParameterList = innerClass.getTypeParameterList();
+  private void copyMethodTypeParameters() throws IncorrectOperationException {
+    final PsiTypeParameterList typeParameterList = myInnerClass.getTypeParameterList();
     LOG.assertTrue(typeParameterList != null);
 
     for (PsiTypeParameter parameter : getMethod().getTypeParameters()) {
@@ -349,7 +418,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void copyMethodWithoutParameters(final PsiClass innerClass) throws IncorrectOperationException {
+  private void copyMethodWithoutParameters() throws IncorrectOperationException {
     final PsiMethod newMethod = myElementFactory.createMethod("invoke", getMethod().getReturnType());
     newMethod.getThrowsList().replace(getMethod().getThrowsList());
 
@@ -358,15 +427,15 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiCodeBlock methodBody = getMethod().getBody();
     LOG.assertTrue(methodBody != null);
     replacedMethodBody.replace(methodBody);
-    PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, innerClass.hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields());
-    myInnerMethod = (PsiMethod)innerClass.add(newMethod);
+    PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, myInnerClass.hasModifierProperty(PsiModifier.STATIC) && notHasGeneratedFields());
+    myInnerMethod = (PsiMethod)myInnerClass.add(newMethod);
   }
 
   private boolean notHasGeneratedFields() {
     return !myMultipleExitPoints && getMethod().getParameterList().getParametersCount() == 0;
   }
 
-  private void createInnerClassConstructor(final PsiClass innerClass, final PsiParameter[] parameters) throws IncorrectOperationException {
+  private void createInnerClassConstructor(final PsiParameter[] parameters) throws IncorrectOperationException {
     final PsiMethod constructor = myElementFactory.createConstructor();
     final PsiParameterList parameterList = constructor.getParameterList();
     for (PsiParameter parameter : parameters) {
@@ -382,15 +451,15 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
       parameterList.add(parm);
 
-      final PsiField field = createField(parm, constructor, innerClass, parameterModifierList.hasModifierProperty(PsiModifier.FINAL));
+      final PsiField field = createField(parm, constructor, parameterModifierList.hasModifierProperty(PsiModifier.FINAL));
       for (PsiReference reference : ReferencesSearch.search(parameter)) {
         reference.handleElementRename(field.getName());
       }
     }
-    innerClass.add(constructor);
+    myInnerClass.add(constructor);
   }
 
-  private PsiField createField(PsiParameter parameter, PsiMethod constructor, PsiClass innerClass, boolean isFinal) {
+  private PsiField createField(PsiParameter parameter, PsiMethod constructor, boolean isFinal) {
     final String parameterName = parameter.getName();
     PsiType type = parameter.getType();
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
@@ -420,7 +489,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       assignmentStmt = (PsiStatement)CodeStyleManager.getInstance(constructor.getProject()).reformat(assignmentStmt);
       methodBody.add(assignmentStmt);
 
-      field = (PsiField)innerClass.add(field);
+      field = (PsiField)myInnerClass.add(field);
       return field;
     }
     catch (IncorrectOperationException e) {
