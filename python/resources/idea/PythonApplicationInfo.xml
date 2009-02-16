@@ -12,4 +12,5 @@
 
   <update-urls check="http://www.jetbrains.com/updates/update.xml" download="http://www.jetbrains.com/idea/download/"/>
   <eap-update-urls check="http://www.jetbrains.com/updates/eap-update.xml" download="http://www.intellij.net/eap/products/idea/download.jsp"/>
+  <feedback eap-url="http://jetbrains.net/jira" release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
 </component>
