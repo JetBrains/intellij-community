@@ -34,7 +34,7 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
     return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
-  public PsiLanguageInjectionHost fixText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
     return (PsiCommentImpl)replaceWithText(text);
   }
 

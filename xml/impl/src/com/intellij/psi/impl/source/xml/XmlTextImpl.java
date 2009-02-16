@@ -369,7 +369,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return new TextRange(start, end);
   }
 
-  public PsiLanguageInjectionHost fixText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
     try {
       doSetValue(text, new DefaultXmlPsiPolicy());
     }

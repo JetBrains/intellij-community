@@ -438,7 +438,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
     return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
-  public PsiLanguageInjectionHost fixText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
     TreeElement valueNode = getFirstChildNode();
     assert valueNode instanceof LeafElement;
     ((LeafElement)valueNode).replaceWithText(text);

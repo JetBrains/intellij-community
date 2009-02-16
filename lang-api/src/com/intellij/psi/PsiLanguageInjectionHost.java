@@ -50,12 +50,12 @@ public interface PsiLanguageInjectionHost extends PsiElement {
 
   void processInjectedPsi(@NotNull InjectedPsiVisitor visitor);
 
-  PsiLanguageInjectionHost fixText(@NotNull String text);
+  PsiLanguageInjectionHost updateText(@NotNull String text);
   
   @NotNull
   LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper();
 
-  
+
   interface InjectedPsiVisitor {
     void visit(@NotNull PsiFile injectedPsi, @NotNull List<Shred> places);
   }
