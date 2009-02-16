@@ -28,7 +28,6 @@ import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -59,6 +58,10 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private final StringBuffer outputBuffer = new StringBuffer();
 
   public void parseOutput(String text) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Received from groovyc: " + text);
+    }
+
     text = text.trim();
     if (text != null && !"".equals(text)) {
       outputBuffer.append(text);
@@ -109,7 +112,8 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
           }
         }
 
-      } else if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_START) != -1) {
+      }
+      else if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_START) != -1) {
         unparsedOutput.setLength(0);
         if (!(outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_END) != -1)) {
           return;
@@ -159,7 +163,8 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         try {
           linenumInt = Integer.parseInt(linenum);
           colomnnumInt = Integer.parseInt(colomnnum);
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
           LOG.error(e);
           linenumInt = 0;
           colomnnumInt = 0;
@@ -168,7 +173,8 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         myContext.getProgressIndicator().setText(url);
 
         compilerMessages.add(new CompilerMessage(category, message, url, linenumInt, colomnnumInt));
-      } else {
+      }
+      else {
         if (outputBuffer.indexOf("Exception") != -1) unparsedOutput.append(outputBuffer);
         outputBuffer.setLength(0);
       }

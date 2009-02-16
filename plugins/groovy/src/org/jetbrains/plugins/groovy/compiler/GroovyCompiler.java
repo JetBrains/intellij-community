@@ -305,6 +305,9 @@ public class GroovyCompiler implements TranslatingCompiler {
   }
 
   private void fillFileWithGroovycParameters(Module module, Set<VirtualFile> virtualFiles, File f) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Running groovyc on: " + virtualFiles.toString());
+    }
 
     FileOutputStream stream;
     try {
