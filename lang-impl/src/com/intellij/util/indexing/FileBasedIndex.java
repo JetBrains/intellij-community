@@ -381,26 +381,44 @@ public class FileBasedIndex implements ApplicationComponent {
     return value == null || value.intValue() == 0;
   }
 
-  public <K> void ensureUpToDate(final ID<K, ?> indexId) {
-    myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
 
-    if (isUpToDateCheckEnabled()) {
-      try {
-        checkRebuild(indexId);
-        indexUnsavedDocuments(indexId);
-      }
-      catch (StorageException e) {
-        scheduleRebuild(indexId, e);
-      }
-      catch (RuntimeException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof StorageException || cause instanceof IOException) {
+  private final ThreadLocal<Boolean> myReentrancyGuard = new ThreadLocal<Boolean>() {
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
+
+  public <K> void ensureUpToDate(final ID<K, ?> indexId) {
+    if (myReentrancyGuard.get().booleanValue()) {
+      //assert false : "ensureUpToDate() is not reentrant!";
+      return;
+    }
+    myReentrancyGuard.set(Boolean.TRUE);
+
+    try {
+      myChangedFilesUpdater.ensureAllInvalidateTasksCompleted();
+
+      if (isUpToDateCheckEnabled()) {
+        try {
+          checkRebuild(indexId);
+          indexUnsavedDocuments(indexId);
+        }
+        catch (StorageException e) {
           scheduleRebuild(indexId, e);
         }
-        else {
-          throw e;
+        catch (RuntimeException e) {
+          final Throwable cause = e.getCause();
+          if (cause instanceof StorageException || cause instanceof IOException) {
+            scheduleRebuild(indexId, e);
+          }
+          else {
+            throw e;
+          }
         }
       }
+    }
+    finally {
+      myReentrancyGuard.set(Boolean.FALSE);
     }
   }
 
@@ -1161,11 +1179,6 @@ public class FileBasedIndex implements ApplicationComponent {
       processFileImpl(fileContent);
     }
 
-    private final ThreadLocal<Boolean> myAlreadyAquired = new ThreadLocal<Boolean>() {
-      protected Boolean initialValue() {
-        return Boolean.FALSE;
-      }
-    };
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
 
     public void forceUpdate() {
@@ -1173,14 +1186,6 @@ public class FileBasedIndex implements ApplicationComponent {
 
       final VirtualFile[] files = queryNeededFiles();
       if (files.length > 0) {
-
-        final boolean alreadyAquired = myAlreadyAquired.get().booleanValue();
-        //assert !alreadyAquired : "forceUpdate() is not reentrant!";
-        if (alreadyAquired) {
-          return;
-        }
-        myAlreadyAquired.set(Boolean.TRUE);
-        
         myForceUpdateSemaphore.down();
         try {
           for (VirtualFile file: files) {
@@ -1189,8 +1194,6 @@ public class FileBasedIndex implements ApplicationComponent {
         }
         finally {
           myForceUpdateSemaphore.up();
-          myAlreadyAquired.set(Boolean.FALSE);
-
           myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
         }
       }
