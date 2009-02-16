@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -42,10 +43,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
@@ -88,22 +87,23 @@ public class CreateTestDialog extends DialogWrapper {
     setTitle(title);
     init();
 
-    if (myDefaultLibraryButton == null) {
-      myDefaultLibraryButton = myLibraryButtons.get(0);
-    }
     myDefaultLibraryButton.doClick();
   }
 
   private void initControls(PsiClass targetClass, PsiPackage targetPackage) {
     ButtonGroup group = new ButtonGroup();
-    String defaultLibrary = getDefaultLibraryName();
+
+    Map<String, JRadioButton> nameToButtonMap = new HashMap<String, JRadioButton>();
+    List<Pair<String, JRadioButton>> attachedLibraries = new ArrayList<Pair<String, JRadioButton>>();
+
     for (final TestFrameworkDescriptor descriptor : Extensions.getExtensions(TestFrameworkDescriptor.EXTENSION_NAME)) {
       final JRadioButton b = new JRadioButton(descriptor.getName());
       myLibraryButtons.add(b);
       group.add(b);
 
-      if (descriptor.getName().equals(defaultLibrary)) {
-        myDefaultLibraryButton = b;
+      nameToButtonMap.put(descriptor.getName(), b);
+      if (descriptor.isLibraryAttached(myTargetModule)) {
+        attachedLibraries.add(Pair.create(descriptor.getName(), b));
       }
 
       b.addActionListener(new ActionListener() {
@@ -111,6 +111,26 @@ public class CreateTestDialog extends DialogWrapper {
           if (b.isSelected()) onLibrarySelected(descriptor);
         }
       });
+    }
+
+    String defaultLibrary = getDefaultLibraryName();
+    if (attachedLibraries.isEmpty()) {
+      if (defaultLibrary != null) {
+        myDefaultLibraryButton = nameToButtonMap.get(defaultLibrary);
+      }
+    }
+    else {
+      if (defaultLibrary != null) {
+        for (Pair<String, JRadioButton> each : attachedLibraries) {
+          if (each.first.equals(defaultLibrary)) {
+            myDefaultLibraryButton = each.second;
+          }
+        }
+      }
+      myDefaultLibraryButton = attachedLibraries.get(0).second;
+    }
+    if (myDefaultLibraryButton == null) {
+      myDefaultLibraryButton = myLibraryButtons.get(0);
     }
 
     myFixLibraryButton = new JButton(CodeInsightBundle.message("intention.create.test.dialog.fix.library"));
@@ -134,7 +154,7 @@ public class CreateTestDialog extends DialogWrapper {
     });
 
     mySuperClassField = JavaReferenceEditorUtil
-        .createReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", PsiManager.getInstance(myProject), true);
+      .createReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", PsiManager.getInstance(myProject), true);
     mySuperClassField.setMinimumSize(mySuperClassField.getPreferredSize());
 
     String targetPackageName = targetPackage != null ? targetPackage.getQualifiedName() : "";
@@ -184,7 +204,7 @@ public class CreateTestDialog extends DialogWrapper {
 
   private void updateMethodsTable() {
     List<MemberInfo> methods = TestIntegrationUtils.extractClassMethods(
-        myTargetClass, myShowInheritedMethodsBox.isSelected());
+      myTargetClass, myShowInheritedMethodsBox.isSelected());
 
     Set<PsiMember> selectedMethods = new HashSet<PsiMember>();
     for (MemberInfo each : myMethodsTable.getSelectedMemberInfos()) {
@@ -463,7 +483,7 @@ public class CreateTestDialog extends DialogWrapper {
     public void actionPerformed(ActionEvent e) {
       TreeClassChooserFactory f = TreeClassChooserFactory.getInstance(myProject);
       TreeClassChooser dialog =
-          f.createAllProjectScopeChooser(CodeInsightBundle.message("intention.create.test.dialog.choose.super.class"));
+        f.createAllProjectScopeChooser(CodeInsightBundle.message("intention.create.test.dialog.choose.super.class"));
       dialog.showDialog();
       PsiClass aClass = dialog.getSelectedClass();
       if (aClass != null) {
