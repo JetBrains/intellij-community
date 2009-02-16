@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.IntentionQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -11,8 +11,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class MakeClassInterfaceFix implements IntentionAction {
+public class MakeClassInterfaceFix extends IntentionQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MakeClassInterfaceFix");
 
   private final PsiClass myClass;
@@ -24,7 +25,7 @@ public class MakeClassInterfaceFix implements IntentionAction {
   }
 
   @NotNull
-  public String getText() {
+  public String getName() {
     return QuickFixBundle.message(myMakeInterface? "make.class.an.interface.text":"make.interface.an.class.text", myClass.getName());
   }
 
@@ -33,11 +34,11 @@ public class MakeClassInterfaceFix implements IntentionAction {
     return QuickFixBundle.message("make.class.an.interface.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return myClass.isValid() && myClass.getManager().isInProject(myClass);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor) {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myClass)) return;
     try {
       final PsiReferenceList extendsList = myMakeInterface? myClass.getExtendsList() : myClass.getImplementsList();
@@ -72,9 +73,5 @@ public class MakeClassInterfaceFix implements IntentionAction {
         }
       }
     }
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

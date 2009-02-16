@@ -94,6 +94,15 @@ public class ProblemsHolder {
     registerProblem(descriptor);
   }
 
+  public void registerProblem(@NotNull final PsiElement psiElement,
+                              final TextRange rangeInElement,
+                              @NotNull final String message,
+                              final LocalQuickFix... fixes) {
+
+    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
+    registerProblem(descriptor);
+  }
+
   @Nullable
   public List<ProblemDescriptor> getResults() {
     final List<ProblemDescriptor> problems = myProblems;

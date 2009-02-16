@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.IntentionQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AddMethodFix implements IntentionAction {
+public class AddMethodFix extends IntentionQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodFix");
 
   private final PsiClass myClass;
@@ -63,7 +63,7 @@ public class AddMethodFix implements IntentionAction {
   }
 
   @NotNull
-  public String getText() {
+  public String getName() {
     return myText;
   }
 
@@ -72,7 +72,7 @@ public class AddMethodFix implements IntentionAction {
     return QuickFixBundle.message("add.method.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return myMethod != null
            && myMethod.isValid()
            && myClass != null
@@ -83,19 +83,17 @@ public class AddMethodFix implements IntentionAction {
         ;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void applyFix(final Project project, final PsiFile file, final Editor editor) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiCodeBlock body;
     if (myClass.isInterface() && (body = myMethod.getBody()) != null) body.delete();
-    PsiMethod method = (PsiMethod)myClass.add(myMethod);
     for (String exception : myExceptions) {
       PsiUtil.addException(myMethod, exception);
     }
+    PsiMethod method = (PsiMethod)myClass.add(myMethod);
     method = (PsiMethod)method.replace(reformat(project, method));
-    GenerateMembersUtil.positionCaret(editor, method, true);
-  }
-
-  public boolean startInWriteAction() {
-    return true;
+    if (editor != null) {
+      GenerateMembersUtil.positionCaret(editor, method, true);
+    }
   }
 }

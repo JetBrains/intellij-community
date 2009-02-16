@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.IntentionQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,14 +16,15 @@ import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModifierFix implements IntentionAction {
+public class ModifierFix extends IntentionQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix");
 
   private final PsiModifierList myModifierList;
@@ -46,7 +47,7 @@ public class ModifierFix implements IntentionAction {
   }
 
   @NotNull
-  public String getText() {
+  public String getName() {
     String name = null;
     PsiElement parent = myVariable == null ? myModifierList.getParent() : myVariable;
     if (parent instanceof PsiClass) {
@@ -79,7 +80,7 @@ public class ModifierFix implements IntentionAction {
     return QuickFixBundle.message("fix.modifiers.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return myModifierList != null &&
            myModifierList.isValid() &&
            myModifierList.getManager().isInProject(myModifierList) &&
@@ -95,7 +96,7 @@ public class ModifierFix implements IntentionAction {
     }
   }
 
-  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor) {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myModifierList)) return;
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     final PsiFile containingFile = myModifierList.getContainingFile();

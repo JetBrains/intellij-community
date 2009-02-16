@@ -137,6 +137,24 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return new LocalInspectionTool[0];
   }
 
+  protected static LocalInspectionTool[] createLocalInspectionTools(final InspectionToolProvider... provider) {
+    final ArrayList<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>();
+    for (InspectionToolProvider toolProvider : provider) {
+      for (Class aClass : toolProvider.getInspectionClasses()) {
+        final Object tool;
+        try {
+          tool = aClass.newInstance();
+          assertTrue(tool instanceof LocalInspectionTool);
+          result.add((LocalInspectionTool)tool);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    }
+    return result.toArray(new LocalInspectionTool[result.size()]);
+  }
+
   protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
     configureByFile(filePath);
     doDoTest(checkWarnings, checkInfos, checkWeakWarnings);

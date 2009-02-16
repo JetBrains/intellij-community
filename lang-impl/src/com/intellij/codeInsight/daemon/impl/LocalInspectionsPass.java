@@ -272,7 +272,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
     switch (highlightType) {
       case GENERIC_ERROR_OR_WARNING:
-      case J2EE_PROBLEM:
         return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
       case LIKE_DEPRECATED:
         return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());

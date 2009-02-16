@@ -1,16 +1,17 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInspection.IntentionQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ImplementMethodsFix implements IntentionAction {
+public class ImplementMethodsFix extends IntentionQuickFix {
   private final PsiClass myClass;
 
   public ImplementMethodsFix(PsiClass aClass) {
@@ -18,7 +19,7 @@ public class ImplementMethodsFix implements IntentionAction {
   }
 
   @NotNull
-  public String getText() {
+  public String getName() {
     return QuickFixBundle.message("implement.methods.fix");
   }
 
@@ -27,12 +28,12 @@ public class ImplementMethodsFix implements IntentionAction {
     return QuickFixBundle.message("implement.methods.fix");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return myClass.isValid() && myClass.getManager().isInProject(myClass);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
+  public void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor) {
+    if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     OverrideImplementUtil.chooseAndImplementMethods(project, editor, myClass);
   }
 

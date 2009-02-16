@@ -27,10 +27,6 @@ public enum ProblemHighlightType {
 
   LIKE_UNUSED_SYMBOL,
 
-  /** @see #GENERIC_ERROR_OR_WARNING */
-  @Deprecated
-  J2EE_PROBLEM,
-
   /** The same as {@link #LIKE_UNKNOWN_SYMBOL} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
   ERROR,
 

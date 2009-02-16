@@ -2,18 +2,18 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.IntentionQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodThrowsFix implements IntentionAction {
+public class MethodThrowsFix extends IntentionQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix");
 
   private final PsiMethod myMethod;
@@ -29,7 +29,7 @@ public class MethodThrowsFix implements IntentionAction {
   }
 
   @NotNull
-  public String getText() {
+  public String getName() {
     String methodName = PsiFormatUtil.formatMethod(myMethod,
                                                    PsiSubstitutor.EMPTY,
                                                    PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS: 0),
@@ -44,13 +44,13 @@ public class MethodThrowsFix implements IntentionAction {
     return QuickFixBundle.message("fix.throws.list.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return myMethod != null
         && myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void applyFix(final Project project, final PsiFile file, final Editor editor) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
     PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
     try {
@@ -75,10 +75,6 @@ public class MethodThrowsFix implements IntentionAction {
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 
 }
