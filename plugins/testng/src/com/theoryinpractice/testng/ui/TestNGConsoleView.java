@@ -42,6 +42,8 @@ public class TestNGConsoleView implements ConsoleView
     private TestNGConsoleProperties consoleProperties;
     private final List<Printable> nonTestOutput = new ArrayList<Printable>();
 
+  private int myExceptionalMark = -1;
+
   public TestNGConsoleView(TestNGConfiguration config, final RunnerSettings runnerSettings,
                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
       consoleProperties = new TestNGConsoleProperties(config);
@@ -75,7 +77,7 @@ public class TestNGConsoleView implements ConsoleView
         if (!testNGResults.wasTestStarted(result)) {
           flushOutput();
         }
-        int exceptionMark = 0;
+        int exceptionMark = myExceptionalMark == -1 ? 0 : myExceptionalMark;
         final String stackTrace = result.getStackTrace();
         if (stackTrace != null && stackTrace.length() > 10) {
           //trim useless crud from stacktrace
@@ -91,6 +93,7 @@ public class TestNGConsoleView implements ConsoleView
         }
         testNGResults.addTestResult(result, new ArrayList<Printable>(currentTestOutput), exceptionMark);
 
+        myExceptionalMark = -1;
         synchronized (currentTestOutput) {
           currentTestOutput.clear();
         }
@@ -198,10 +201,13 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     public void print(String s, ConsoleViewContentType contentType) {
-        Chunk chunk = new Chunk(s, contentType);
-        synchronized (currentTestOutput) {
-            currentTestOutput.add(chunk);
-        }
+      if (myExceptionalMark == -1 && contentType == ConsoleViewContentType.ERROR_OUTPUT) {
+        myExceptionalMark = currentTestOutput.size();
+      }
+      Chunk chunk = new Chunk(s, contentType);
+      synchronized (currentTestOutput) {
+        currentTestOutput.add(chunk);
+      }
     }
 
     public void reset() {

@@ -45,6 +45,7 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
   private TestEventsConsumer myEventsConsumer;
   private int myPreviousMagnitude = -1;
   private int myStateTimestamp = 0;
+  private boolean myMarked = false;
 
 //  private ArrayList myChildren = new ArrayList();
   private final FilterCache myChildren = new FilterCache();
@@ -59,6 +60,10 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
   }
 
   public void onOutput(final String text, final ConsoleViewContentType contentType) {
+    if (!myMarked && contentType == ConsoleViewContentType.ERROR_OUTPUT) {
+      myPrinter.mark();
+      myMarked = true;
+    }
     final ExternalOutput printable = new ExternalOutput(text, contentType);
     addLast(printable);
   }
