@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -16,7 +17,10 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * User: lex
@@ -28,6 +32,14 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
   public ThreadsDebuggerTree(Project project) {
     super(project);
+  }
+
+  protected NodeManagerImpl createNodeManager(Project project) {
+    return new NodeManagerImpl(project, this) {
+      public String getContextKey(StackFrameProxyImpl frame) {
+        return "ThreadsView";
+      }
+    };
   }
 
   protected boolean isExpandable(DebuggerTreeNodeImpl node) {
@@ -47,19 +59,21 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       super(context);
     }
 
-    public void threadAction() {
-      super.threadAction();
+    public void contextAction() throws Exception {
       final DebuggerTreeNodeImpl root = getNodeFactory().getDefaultNode();
 
       final boolean showGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
       try {
         DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
-        if(debugProcess == null || !debugProcess.isAttached()) return;
+        if(debugProcess == null || !debugProcess.isAttached()) {
+          return;
+        }
 
         final ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ?  getSuspendContext().getThread() : null;
-        VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
+        final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
 
-        EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
+        final EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
+        final NodeManagerImpl nodeManager = getNodeFactory();
 
         if (showGroups) {
           ThreadGroupReferenceProxyImpl topCurrentGroup = null;
@@ -73,19 +87,15 @@ public class ThreadsDebuggerTree extends DebuggerTree {
             }
 
             if(topCurrentGroup != null){
-              NodeManagerImpl nodeManager = getNodeFactory();
               root.add(nodeManager.createNode(nodeManager.getThreadGroupDescriptor(null, topCurrentGroup), evaluationContext));
             }
             else {
-              NodeManagerImpl nodeManager = getNodeFactory();
               root.add(nodeManager.createNode(nodeManager.getThreadDescriptor(null, currentThread), evaluationContext));
             }
           }
 
-          for (Iterator it = vm.topLevelThreadGroups().iterator(); it.hasNext();) {
-            ThreadGroupReferenceProxyImpl group = (ThreadGroupReferenceProxyImpl)it.next();
-            NodeManagerImpl nodeManager = getNodeFactory();
-            if(group != topCurrentGroup) {
+          for (ThreadGroupReferenceProxyImpl group : vm.topLevelThreadGroups()) {
+            if (group != topCurrentGroup) {
               DebuggerTreeNodeImpl threadGroup = nodeManager.createNode(nodeManager.getThreadGroupDescriptor(null, group), evaluationContext);
               root.add(threadGroup);
             }
@@ -94,18 +104,15 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         else {
           // do not show thread groups
           if (currentThread != null) {
-            NodeManagerImpl nodeManager = getNodeFactory();
             root.insert(nodeManager.createNode(nodeManager.getThreadDescriptor(null, currentThread), evaluationContext), 0);
           }
           List<ThreadReferenceProxyImpl> allThreads = new ArrayList<ThreadReferenceProxyImpl>(vm.allThreads());
           Collections.sort(allThreads, ThreadReferenceProxyImpl.ourComparator);
 
-          for (Iterator it = allThreads.iterator(); it.hasNext();) {
-            ThreadReferenceProxyImpl threadProxy = (ThreadReferenceProxyImpl)it.next();
+          for (ThreadReferenceProxyImpl threadProxy : allThreads) {
             if (threadProxy.equals(currentThread)) {
               continue;
             }
-            NodeManagerImpl nodeManager = getNodeFactory();
             root.add(nodeManager.createNode(nodeManager.getThreadDescriptor(null, threadProxy), evaluationContext));
           }
         }

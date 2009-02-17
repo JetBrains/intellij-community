@@ -30,6 +30,7 @@ public class XDebuggerUIConstants {
 
   public static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
   public static final Icon FRAMES_TAB_ICON = IconLoader.getIcon("/debugger/frame.png");
+  public static final Icon THREADS_TAB_ICON = IconLoader.getIcon("/debugger/threads.png");
   public static final Icon VARIABLES_TAB_ICON = IconLoader.getIcon("/debugger/value.png");
   public static final Icon WATCHES_TAB_ICON = IconLoader.getIcon("/debugger/watches.png");
   public static final Icon CONSOLE_TAB_ICON = IconLoader.getIcon("/debugger/console.png");

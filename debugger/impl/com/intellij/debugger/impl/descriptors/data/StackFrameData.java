@@ -20,7 +20,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   public StackFrameData(StackFrameProxyImpl frame) {
     super();
     myFrame = frame;
-    myDisplayKey = new FrameDisplayKey(NodeManagerImpl.getContextKey(frame));
+    myDisplayKey = new FrameDisplayKey(NodeManagerImpl.getContextKeyForFrame(frame));
     myMethodsTracker = new MethodsTracker();
     
   }

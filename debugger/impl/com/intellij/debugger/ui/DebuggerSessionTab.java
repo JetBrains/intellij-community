@@ -11,6 +11,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
+import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
@@ -90,6 +91,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
   private RunProfile myConfiguration;
 
   public static final String BREAKPOINT_CONDITION = "breakpoint";
+  private ThreadsPanel myThreadsPanel;
 
   public DebuggerSessionTab(Project project, String sessionName) {
     myProject = project;
@@ -148,6 +150,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
 
     final AlertIcon breakpointAlert = new AlertIcon(IconLoader.getIcon("/debugger/breakpointAlert.png"));
 
+    // watches
     Content watches = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchPanel, XDebuggerBundle.message("debugger.session.tab.watches.title"),
                                          XDebuggerUIConstants.WATCHES_TAB_ICON, null);
     watches.setCloseable(false);
@@ -159,7 +162,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     watches.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myWatchPanel.getTree());
     myUi.addContent(watches, 0, PlaceInGrid.right, false);
 
-
+    // frames
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
                                                XDebuggerUIConstants.FRAMES_TAB_ICON, null);
     framesContent.setCloseable(false);
@@ -175,6 +178,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     framesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myFramesPanel.getFramesList());
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
+    // variables
     myVariablesPanel = new VariablesPanel(myProject, myStateManager, this);
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
     Content vars = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, myVariablesPanel, XDebuggerBundle.message("debugger.session.tab.variables.title"),
@@ -188,6 +192,17 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
     vars.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR, myVariablesPanel.getTree());
     myUi.addContent(vars, 0, PlaceInGrid.center, false);
 
+    // threads
+    myThreadsPanel = new ThreadsPanel(project, getContextManager());
+    Content threadsContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, myThreadsPanel, XDebuggerBundle.message("debugger.session.tab.threads.title"), XDebuggerUIConstants.THREADS_TAB_ICON, null);
+    threadsContent.setCloseable(false);
+    //threadsContent.setAlertIcon(breakpointAlert);
+
+    //final DefaultActionGroup threadsGroup = new DefaultActionGroup();
+    //threadsContent.setActions(threadsGroup, ActionPlaces.DEBUGGER_TOOLBAR, threadsPanel.getThreadsTree());
+
+    myUi.addContent(threadsContent, 0, PlaceInGrid.left, true);
+
     for (Content each : myUi.getContents()) {
       updateStatus(each);  
     }
@@ -197,9 +212,6 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
         updateStatus(event.getContent());
       }
     }, this);
-
-
-
   }
 
   private void updateStatus(final Content content) {
@@ -362,8 +374,10 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
 
   public void dispose() {
     disposeSession();
+    myFramesPanel.dispose();
     myVariablesPanel.dispose();
     myWatchPanel.dispose();
+    myThreadsPanel.dispose();
     myManager.unregisterFileMatcher();
     myConsole = null;
   }

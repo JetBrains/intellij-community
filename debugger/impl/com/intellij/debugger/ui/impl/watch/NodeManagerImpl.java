@@ -77,9 +77,15 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     deriveHistoryTree(descriptorTree, context);
     myHistoryKey = historyKey;
   }
-  
+
+
   @Nullable
-  public static String getContextKey(final StackFrameProxyImpl frame) {
+  public String getContextKey(final StackFrameProxyImpl frame) {
+    return getContextKeyForFrame(frame);
+  }
+
+  @Nullable
+  public static String getContextKeyForFrame(final StackFrameProxyImpl frame) {
     if (frame == null) {
       return null;
     }

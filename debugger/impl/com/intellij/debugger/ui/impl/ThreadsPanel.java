@@ -12,7 +12,6 @@ import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
@@ -23,7 +22,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class ThreadsPanel extends DebuggerPanel implements DataProvider {
+public class ThreadsPanel extends DebuggerTreePanel{
   @NonNls private static final String HELP_ID = "debugging.debugThreads";
 
   public ThreadsPanel(Project project, DebuggerStateManager stateManager) {
@@ -54,8 +53,7 @@ public class ThreadsPanel extends DebuggerPanel implements DataProvider {
 
   protected ActionPopupMenu createPopupMenu() {
     DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction(DebuggerActions.THREADS_PANEL_POPUP);
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(DebuggerActions.THREADS_PANEL_POPUP, group);
-    return popupMenu;
+    return ActionManager.getInstance().createActionPopupMenu(DebuggerActions.THREADS_PANEL_POPUP, group);
   }
 
   public Object getData(String dataId) {
