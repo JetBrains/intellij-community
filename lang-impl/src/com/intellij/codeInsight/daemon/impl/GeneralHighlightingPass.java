@@ -6,11 +6,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
-import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
+import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
@@ -76,6 +75,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       return o1.order() - o2.order();
     }
   };
+  private volatile DaemonProgressIndicator myProgress;
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -122,6 +122,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
+    myProgress = (DaemonProgressIndicator)progress;
     final Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
@@ -368,6 +369,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private boolean isWholeFileHighlighting() {
     return myUpdateAll && myStartOffset == 0 && myEndOffset == myFile.getTextLength();
   }
+
+  private static final Key<Boolean> UPDATE_ALL_FINISHED = Key.create("UPDATE_ALL_FINISHED");
   protected void applyInformationWithProgress() {
     myFile.putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
 
@@ -381,13 +384,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myInjectedPsiHighlights.put(range, collection);
     myHighlights = Collections.emptyList();
 
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
+    Boolean updateAllFinished = myProgress.getUserData(UPDATE_ALL_FINISHED);
+    if (updateAllFinished == null || !updateAllFinished.booleanValue()) {
+      // prevent situation when visible pass finished after updateAll pass and tries to wipe out its results
+      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
+    }
 
     if (myUpdateAll) {
+      myProgress.putUserData(UPDATE_ALL_FINISHED, Boolean.TRUE);
       reportErrorsToWolf();
     }
   }
-
 
   @NotNull
   public Collection<HighlightInfo> getHighlights() {
@@ -398,7 +405,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return list;
   }
 
-  private Collection<HighlightInfo> collectHighlights(@NotNull final List<PsiElement> elements, @NotNull final HighlightVisitor[] highlightVisitors,
+  private Collection<HighlightInfo> collectHighlights(@NotNull final List<PsiElement> elements,
+                                                      @NotNull final HighlightVisitor[] highlightVisitors,
                                                       @NotNull final ProgressIndicator progress) {
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
@@ -552,5 +560,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
     }
     return problems;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + " updateAll="+myUpdateAll+" range=("+myStartOffset+","+myEndOffset+")";
   }
 }

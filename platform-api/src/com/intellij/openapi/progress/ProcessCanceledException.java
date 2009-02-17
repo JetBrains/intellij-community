@@ -16,6 +16,10 @@
 package com.intellij.openapi.progress;
 
 public class ProcessCanceledException extends RuntimeException {
-  public ProcessCanceledException() {}
-  public ProcessCanceledException(Throwable cause) { super(cause); }
+  public ProcessCanceledException() {
+    int i = 0;
+  }
+  public ProcessCanceledException(Throwable cause) {
+    super(cause);
+  }
 }

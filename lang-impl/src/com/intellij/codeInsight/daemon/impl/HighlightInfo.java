@@ -254,8 +254,10 @@ public class HighlightInfo {
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
     }
-    s += " text='" + text + "'" + ", description='" + description + "'" + ", toolTip='" + toolTip + "'";
-
+    if (text != null) s += " text='" + text + "'";
+    if (description != null) s+= ", description='" + description + "'";
+    if (toolTip != null) s+= ", toolTip='" + toolTip + "'";
+    s += " severity=" + severity;
     return s;
   }
 

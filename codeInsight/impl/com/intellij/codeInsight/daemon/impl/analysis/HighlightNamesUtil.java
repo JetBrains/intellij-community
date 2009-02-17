@@ -32,7 +32,8 @@ public class HighlightNamesUtil {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(method, type);
-      return HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, null, attributes);
+      HighlightInfo info = HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, null, attributes);
+      if (info != null) return info;
     }
     return null;
   }

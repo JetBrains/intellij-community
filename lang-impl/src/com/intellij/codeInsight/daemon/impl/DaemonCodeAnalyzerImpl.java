@@ -548,7 +548,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();
         if (activeEditors.isEmpty()) return;
         Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());
-        //setLastIntentionHint(null);
         for (FileEditor fileEditor : activeEditors) {
           BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
           if (highlighter != null) {

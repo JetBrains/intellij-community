@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class VisibleLineMarkersPassFactory extends VisibleHighlightingPassFactory implements TextEditorHighlightingPassFactory {
   public VisibleLineMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, ArrayUtil.EMPTY_INT_ARRAY, new int[]{Pass.UPDATE_VISIBLE}, false,
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_VISIBLE}, false,
                                                                  Pass.VISIBLE_LINE_MARKERS);
   }
 

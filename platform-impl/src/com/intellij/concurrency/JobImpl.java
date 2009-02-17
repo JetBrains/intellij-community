@@ -70,7 +70,7 @@ public class JobImpl<T> implements Job<T> {
 
       int startTaskIndex = JobSchedulerImpl.currentTaskIndex();
       for (final Callable<T> task : myTasks) {
-        final PrioritizedFutureTask<T> future = new PrioritizedFutureTask<T>(task, myJobIndex, startTaskIndex++, myPriority, callerHasReadAccess);
+        final PrioritizedFutureTask<T> future = new PrioritizedFutureTask<T>(task, myJobIndex, startTaskIndex++, myPriority, callerHasReadAccess, false);
         myFutures.add(future);
       }
 
@@ -148,7 +148,7 @@ public class JobImpl<T> implements Job<T> {
 
       int startTaskIndex = JobSchedulerImpl.currentTaskIndex();
       for (final Callable<T> task : myTasks) {
-        final PrioritizedFutureTask<T> future = new PrioritizedFutureTask<T>(task, myJobIndex, startTaskIndex++, myPriority, false);
+        final PrioritizedFutureTask<T> future = new PrioritizedFutureTask<T>(task, myJobIndex, startTaskIndex++, myPriority, false, true);
         myFutures.add(future);
       }
 

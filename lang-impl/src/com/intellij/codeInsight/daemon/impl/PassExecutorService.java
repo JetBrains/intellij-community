@@ -62,14 +62,14 @@ public abstract class PassExecutorService {
     // null keys are ok
     Map<Document, List<FileEditor>> documentToEditors = new HashMap<Document, List<FileEditor>>();
     Map<FileEditor, List<TextEditorHighlightingPass>> textPasses = new HashMap<FileEditor, List<TextEditorHighlightingPass>>(passesMap.size());
-    for (Map.Entry<FileEditor, HighlightingPass[]> fileEditorEntry : passesMap.entrySet()) {
+    for (Map.Entry<FileEditor, HighlightingPass[]> entry : passesMap.entrySet()) {
+      FileEditor fileEditor = entry.getKey();
+      HighlightingPass[] passes = entry.getValue();
       Document document = null;
-      FileEditor fileEditor = fileEditorEntry.getKey();
       if (fileEditor instanceof TextEditor) {
         Editor editor = ((TextEditor)fileEditor).getEditor();
         document = editor.getDocument();
       }
-      HighlightingPass[] passes = fileEditorEntry.getValue();
 
       for (int i = 0; i < passes.length; i++) {
         final HighlightingPass pass = passes[i];
@@ -113,8 +113,7 @@ public abstract class PassExecutorService {
 
     List<ScheduledPass> freePasses = new ArrayList<ScheduledPass>(documentToEditors.size());
     final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
-    for (Map.Entry<Document, List<FileEditor>> documentListEntry : documentToEditors.entrySet()) {
-      List<FileEditor> fileEditors = documentListEntry.getValue();
+    for (List<FileEditor> fileEditors : documentToEditors.values()) {
       List<TextEditorHighlightingPass> passes = textPasses.get(fileEditors.get(0));
       threadsToStartCountdown.addAndGet(passes.size());
 
@@ -183,7 +182,9 @@ public abstract class PassExecutorService {
     return scheduledPass;
   }
 
-  private ScheduledPass findOrCreatePredecessorPass(final List<FileEditor> fileEditors, final Document document, final Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
+  private ScheduledPass findOrCreatePredecessorPass(final List<FileEditor> fileEditors,
+                                                    final Document document,
+                                                    final Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
                                                     final List<TextEditorHighlightingPass> textEditorHighlightingPasses,
                                                     final List<ScheduledPass> freePasses,
                                                     final DaemonProgressIndicator updateProgress,
@@ -279,6 +280,7 @@ public abstract class PassExecutorService {
               }
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
+                myUpdateProgress.cancel(); //for the case then some smartasses throw PCE just for fun
               }
               catch (RuntimeException e) {
                 LOG.error(e);
@@ -303,40 +305,67 @@ public abstract class PassExecutorService {
           }
         }
       }
+      else {
+        int i  = 0;
+      }
     }
   }
 
   protected void applyInformationToEditors(final List<FileEditor> fileEditors, final TextEditorHighlightingPass pass, final DaemonProgressIndicator updateProgress,
                                            final AtomicInteger threadsToStartCountdown) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (isDisposed() || myProject.isDisposed()) return;
-        if (updateProgress.isCanceled()) {
-          log(updateProgress, pass, " is canceled during apply, sorry");
-          return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, true);
         }
-        boolean applied = false;
-        for (final FileEditor fileEditor : fileEditors) {
-          LOG.assertTrue(fileEditor != null);
-          if (fileEditor.getComponent().isDisplayable()) {
-            if (!applied) {
-              applied = true;
-              log(updateProgress, pass, " Applied");
-              pass.applyInformationToEditor();
-            }
-            afterApplyInformationToEditor(pass, fileEditor, updateProgress);
+      });
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, false);
+        }
+      }, ModalityState.stateForComponent(fileEditors.get(0).getComponent()));
+    }
+  }
+
+  private void doApplyInformationToEditors(DaemonProgressIndicator updateProgress,
+                                           TextEditorHighlightingPass pass,
+                                           List<FileEditor> fileEditors,
+                                           AtomicInteger threadsToStartCountdown,
+                                           boolean testMode) {
+    if (isDisposed() || myProject.isDisposed()) {
+      updateProgress.cancel();
+    }
+    if (updateProgress.isCanceled()) {
+      log(updateProgress, pass, " is canceled during apply, sorry");
+      return;
+    }
+    boolean applied = false;
+    for (final FileEditor fileEditor : fileEditors) {
+      LOG.assertTrue(fileEditor != null);
+      try {
+        if (testMode || fileEditor.getComponent().isDisplayable()) {
+          if (!applied) {
+            applied = true;
+            log(updateProgress, pass, " Applied");
+            pass.applyInformationToEditor();
           }
-        }
-        if (threadsToStartCountdown.decrementAndGet() == 0) {
-          log(updateProgress, pass, "Stopping ");
-          updateProgress.stopIfRunning();
-        }
-        else {
-          log(updateProgress, pass, "Finished but there are passes in the queue: "+threadsToStartCountdown.get());
+          afterApplyInformationToEditor(pass, fileEditor, updateProgress);
         }
       }
-    }, ModalityState.stateForComponent(fileEditors.get(0).getComponent()));
+      catch (RuntimeException e) {
+        log(updateProgress, pass, "Error " + e);
+        throw e;
+      }
+    }
+    if (threadsToStartCountdown.decrementAndGet() == 0) {
+      log(updateProgress, pass, "Stopping ");
+      updateProgress.stopIfRunning();
+    }
+    else {
+      log(updateProgress, pass, "Finished but there are passes in the queue: "+threadsToStartCountdown.get());
+    }
   }
 
   protected boolean isDisposed() {
@@ -361,7 +390,7 @@ public abstract class PassExecutorService {
   public static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls Object... info) {
     if (LOG.isDebugEnabled()) {
       synchronized (PassExecutorService.class) {
-        StringBuffer s = new StringBuffer();
+        StringBuilder s = new StringBuilder();
         for (Object o : info) {
           s.append(o.toString());
         }
