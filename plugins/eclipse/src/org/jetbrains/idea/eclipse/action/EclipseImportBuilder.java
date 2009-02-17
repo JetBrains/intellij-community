@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -183,12 +184,11 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         rootModels[idx++] = rootModel;
 
         final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
+        final ContentEntry contentEntry = rootModel.addContentEntry(VfsUtil.pathToUrl(path));
         if (classpathFile.exists()) {
           final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();
-          new EclipseClasspathReader(path, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
+          new EclipseClasspathReader(path, contentEntry, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
                                                                   getParameters().converterOptions.testPattern, classpathElement);
-        } else {
-          rootModel.addContentEntry(VfsUtil.pathToUrl(path));
         }
         ClasspathStorage.setStorageType(module,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
