@@ -1,11 +1,8 @@
 package org.jetbrains.idea.eclipse.util;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
-import java.io.IOException;
-
-import com.intellij.openapi.util.text.StringUtil;
 
 public class PathUtil {
 
@@ -13,12 +10,8 @@ public class PathUtil {
   public static final String HTTP_PREFIX = "http://";
   public static final String HTTPS_PREFIX = "https://";
 
-  public static String normalizeSlashes(String path) {
-    return path.replace("\\", "/");
-  }
-
   public static String normalize(String path) {
-    path = normalizeSlashes(path);
+    path = FileUtil.toSystemIndependentName(path);
     if (path.endsWith("/")) {
       path = path.substring(0, path.length() - 1);
     }
@@ -47,35 +40,9 @@ public class PathUtil {
     return new File(path).isAbsolute();
   }
 
-  public static String concatPath(String baseRoot, String path) {
-    if (isAbsolute(path)) {
-      return path;
-    } else {
-      return normalize(baseRoot + "/" + path);
-    }
-  }
-
-  public static String rebase(String path, String oldRoot, String newRoot) {
-    path = normalize(path);
-    oldRoot = normalize(oldRoot);
-    if (path.equals(oldRoot)) {
-      return normalize(newRoot);
-    }
-    if (StringUtil.startsWithConcatenationOf(path, oldRoot, "/")) {
-      return concatPath(newRoot, path.substring(oldRoot.length() + 1));
-    }
-    return path;
-  }
-
-  public static boolean isUnder(String root, String path) {
-    path = normalize(path);
-    root = normalize(root);
-    return path.equals(root) || StringUtil.startsWithConcatenationOf(path, root, "/");
-  }
-
   public static String getRelative(String baseRoot, String path) {
-    baseRoot = PathUtil.normalize(baseRoot);
-    path = PathUtil.normalize(path);
+    baseRoot = normalize(baseRoot);
+    path = normalize(path);
 
     int prefix = findCommonPathPrefixLength(baseRoot, path);
 
@@ -132,48 +99,6 @@ public class PathUtil {
       }
       return sb.toString();
     }
-  }
-
-  public static String getContainerName(String path) {
-    String[] tokens = path.split("/");
-    return tokens.length > 1 ? tokens[tokens.length - 1] : null;
-  }
-
-  public static boolean isWeb(String path) {
-    return path.startsWith(HTTP_PREFIX) || path.startsWith(HTTPS_PREFIX);
-  }
-
-  public interface RootFinder {
-    @Nullable
-    String getRootByName(String name);
-  }
-
-  public static String convertToRelative(RootFinder rootFinder, String baseRoot, String path) {
-    if (path.startsWith("/")) {
-      if (rootFinder != null) {
-        int moduleNameEnd = endOfToken(path, 1);
-        String otherRoot = rootFinder.getRootByName(path.substring(1, moduleNameEnd));
-        if (otherRoot != null) {
-          return getRelative(baseRoot, otherRoot + path.substring(moduleNameEnd));
-        }
-      }
-      return UNRESOLVED_PREFIX + path.substring(1);
-    }
-
-    if (isAbsolute(path)) {
-      try {
-        return getRelative(normalize(new File(baseRoot).getCanonicalPath()), normalize(new File(path).getCanonicalPath()));
-      }
-      catch (IOException e) {
-        return path;
-      }
-    }
-
-    return path;
-  }
-
-  public static boolean isUnresolved ( final String path ) {
-    return path.startsWith(UNRESOLVED_PREFIX);
   }
 
 }

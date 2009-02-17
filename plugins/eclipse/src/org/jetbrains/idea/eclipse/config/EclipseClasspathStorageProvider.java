@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -130,50 +131,34 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     return fileCache;
   }
 
-  public static void moduleRenamed(final Module module) {
+  public void moduleRenamed(final Module module, String newName) {
     if (ClasspathStorage.getStorageType(module).equals(ID)) {
       try {
         final XmlDocumentSet documentSet = getDocumentSet(module);
-        final Document document = documentSet.read(EclipseXml.PROJECT_FILE);
-        final Element projectNameElement = document.getRootElement().getChild(EclipseXml.NAME_TAG);
-        if (projectNameElement == null) return;
-        final String oldModuleName = projectNameElement.getText();
-        projectNameElement.setText(module.getName());
-        documentSet.write(document, EclipseXml.PROJECT_FILE);
-        final String oldEmlName = oldModuleName + EclipseXml.IDEA_SETTINGS_POSTFIX;
+
+
+        final String oldEmlName = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (documentSet.exists(oldEmlName)) {
           final String root = documentSet.getParent(oldEmlName);
           final File source = new File(root, oldEmlName);
-          final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(source);
-          VfsUtil.copyFile(null, virtualFile, virtualFile.getParent(), module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
-          virtualFile.delete(null);
-
+          final File target = new File(root, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
+          FileUtil.rename(source, target);
+          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
           final CachedXmlDocumentSet fileCache = getFileCache(module);
           fileCache.delete(oldEmlName);
-          registerFiles(fileCache, module, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
-          fileCache.preload();
+          fileCache.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
+          fileCache.load(newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
         }
       }
       catch (IOException ignore) {
       }
-      catch (JDOMException ignore) {
+      catch (JDOMException e) {
+
       }
     }
   }
 
-  @Nullable
-  public static String getEclipseProjectName(final Module module) {
-    if (ClasspathStorage.getStorageType(module).equals(ID)) {
-      try {
-        return getDocumentSet(module).read(EclipseXml.PROJECT_FILE).getRootElement().getChildText(EclipseXml.NAME_TAG);
-      }
-      catch (IOException ignore) {
-      }
-      catch (JDOMException ignore) {
-      }
-    }
-    return null;
-  }
+
 
   public static class EclipseClasspathConverter implements ClasspathConverter {
 

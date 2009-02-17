@@ -1,7 +1,8 @@
 package org.jetbrains.idea.eclipse.util;
 
-import org.jetbrains.idea.eclipse.ConversionException;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.eclipse.ConversionException;
 
 import java.io.IOException;
 
@@ -43,6 +44,6 @@ public class ErrorLog {
 
   public static void report(Level level, @NonNls String module, @NonNls String context, Exception e) {
     String message = e.getMessage();
-    report(level, module, context, message == null ? e.getClass().toString() : PathUtil.normalizeSlashes(message));
+    report(level, module, context, message == null ? e.getClass().toString() : FileUtil.toSystemIndependentName(message));
   }
 }
