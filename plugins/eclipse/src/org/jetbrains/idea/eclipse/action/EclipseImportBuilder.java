@@ -238,6 +238,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       final String projectName = EclipseClasspathReader.getLastPathComponent(FileUtil.toSystemIndependentName(path));
       if (projectName != null) {
         refsToModules.remove(projectName);
+        getParameters().existingModuleNames.add(projectName);
       }
     }
     if (!refsToModules.isEmpty()) {
