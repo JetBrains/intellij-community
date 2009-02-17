@@ -415,6 +415,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     CheckUtil.checkWritable(this);
   }
 
+  @NotNull
   public PsiFile getOriginalFile() {
     return myOriginalFile == null ? this : myOriginalFile;
   }
