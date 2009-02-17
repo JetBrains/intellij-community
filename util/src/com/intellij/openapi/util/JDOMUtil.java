@@ -202,7 +202,9 @@ public class JDOMUtil {
   public static String legalizeText(@NotNull final String str) {
     StringReader reader = new StringReader(str);
     StringBuilder result = new StringBuilder();
+
     while(true) {
+      //noinspection EmptyCatchBlock
       try {
         int each = reader.read();
         if (each == -1) break;
@@ -214,11 +216,10 @@ public class JDOMUtil {
         }
       }
       catch (IOException e) {
-        return result.toString();
       }
     }
 
-    return result.toString();
+    return result.toString().replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   }
 
 
