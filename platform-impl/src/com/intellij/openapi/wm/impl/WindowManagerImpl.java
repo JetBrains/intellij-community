@@ -210,6 +210,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   private static boolean calcAlphaModelSupported() {
+    if (AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.TRANSLUCENT)) return true;
     try {
       return WindowUtils.isWindowAlphaSupported();
     }
@@ -239,7 +240,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         if (window instanceof JWindow) {
           ((JWindow)window).getRootPane().putClientProperty("Window.alpha", 1.0f - ratio);
         }
-      } else {
+      }
+      else if (AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.TRANSLUCENT)) {
+        AWTUtilitiesWrapper.setWindowOpacity(window, 1.0f - ratio);
+      }
+      else {
         WindowUtils.setWindowAlpha(window, 1.0f - ratio);
       }
     }
@@ -250,7 +255,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public void setWindowMask(final Window window, final Shape mask) {
     try {
-      WindowUtils.setWindowMask(window, mask);
+      if (AWTUtilitiesWrapper.isTranslucencySupported(AWTUtilitiesWrapper.PERPIXEL_TRANSPARENT)) {
+        AWTUtilitiesWrapper.setWindowShape(window, mask);
+      }
+      else {
+        WindowUtils.setWindowMask(window, mask);
+      }
     }
     catch (Throwable e) {
       LOG.debug(e);
