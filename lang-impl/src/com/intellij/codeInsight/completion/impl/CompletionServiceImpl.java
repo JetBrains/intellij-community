@@ -42,7 +42,7 @@ public class CompletionServiceImpl extends CompletionService{
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
 
-    final String textBeforePosition = parameters.getOriginalFile().getText().substring(0, parameters.getOffset());
+    final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
 
     return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix));
   }
