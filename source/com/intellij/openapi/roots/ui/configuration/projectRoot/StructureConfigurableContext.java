@@ -127,7 +127,7 @@ public class StructureConfigurableContext implements Disposable {
         for (final Module module : modules) {
           final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
           if (moduleEditor != null) {
-            final OrderEntry[] entries = moduleEditor.getModifiableRootModel().getOrderEntries();
+            final OrderEntry[] entries = moduleEditor.getOrderEntries();
             for (OrderEntry entry : entries) {
               if (myDisposed) return;
               if (condition.value(entry)) {

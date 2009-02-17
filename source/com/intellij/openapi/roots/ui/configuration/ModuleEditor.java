@@ -11,6 +11,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -110,6 +111,15 @@ public class ModuleEditor implements Place.Navigator {
       myModifiableRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(getModule())).getModifiableModel(new UIRootConfigurationAccessor(myProject));
     }
     return myModifiableRootModel;
+  }
+
+  public OrderEntry[] getOrderEntries() {
+    if (myModifiableRootModel == null) { // do not clone all model if not necessary
+      return ModuleRootManager.getInstance(getModule()).getOrderEntries();
+    }
+    else {
+      return myModifiableRootModel.getOrderEntries();
+    }
   }
 
   public ModifiableRootModel getModifiableRootModelProxy() {
