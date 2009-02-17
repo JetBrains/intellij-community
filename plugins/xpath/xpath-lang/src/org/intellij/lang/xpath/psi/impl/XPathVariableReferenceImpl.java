@@ -24,7 +24,6 @@ import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -158,17 +157,9 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return name != null ? name.hashCode() : getReferencedName().hashCode();
     }
 
+    @Override
+    @SuppressWarnings({ "EqualsWhichDoesntCheckParameterClass" })
     public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null) return false;
-        if (obj.getClass() != getClass()) return false;
-
-        final XPathVariableReference ref = (XPathVariableReference)obj;
-        final QName name = ContextProvider.getContextProvider(this).getQName(this);
-        if (name == null) {
-            return Comparing.equal(getReferencedName(), ref.getReferencedName());
-        }
-
-        return Comparing.equal(name, ContextProvider.getContextProvider(ref).getQName(ref));
+        return obj == this;
     }
 }

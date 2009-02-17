@@ -106,8 +106,12 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
             if (end.getTextRange().getEndOffset() != endOffset) {
                 return false;
             }
-            selectionModel.removeSelection(); // tests dislike empty selection
-            return extractFrom(start, end, newName);
+
+            if (extractFrom(start, end, newName)) {
+                // tests dislike empty selection
+                selectionModel.removeSelection();
+                return true;
+            }
         } else {
             final XmlTag startTag = PsiTreeUtil.getParentOfType(start, XmlTag.class);
             if (startTag == null) {
@@ -130,9 +134,13 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                     return false;
                 }
             }
-            selectionModel.removeSelection();
-            return extractFrom(startTag, endTag, newName);
+            if (extractFrom(startTag, endTag, newName)) {
+                // tests dislike empty selection
+                selectionModel.removeSelection();
+                return true;
+            }
         }
+        return false;
     }
 
     private boolean extractFrom(final @NotNull PsiElement start, final PsiElement end, String newName) {
@@ -143,7 +151,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         final XmlTag parentScope = PsiTreeUtil.getParentOfType(start, XmlTag.class, true);
 
         final StringBuilder sb = new StringBuilder("\n");
-        final Set<XPathVariableReference> refs = new LinkedHashSet<XPathVariableReference>();
+        final Set<String> vars = new LinkedHashSet<String>();
 
         final int startOffset = start.getTextRange().getStartOffset();
         final int endOffset = end.getTextRange().getEndOffset();
@@ -174,12 +182,12 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                     if (var.getTextRange().getStartOffset() < startOffset) {
                         // don't pass through global parameters and variables
                         if (XsltCodeInsightUtil.getTemplateTag(variable, false) != null) {
-                            refs.add(reference);
+                            vars.add(variable.getName());
                         }
                     }
                 } else {
                     // TODO just copy unresolved refs or fail?
-                    refs.add(reference);
+                    vars.add(reference.getReferencedName());
                 }
             }
 
@@ -227,15 +235,14 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                         parent.deleteChildRange(start, end);
                     }
 
-                    for (XPathVariableReference ref : refs) {
+                    for (String var : vars) {
                         final XmlTag param = templateTag.createChildTag("param", XsltSupport.XSLT_NS, null, false);
-                        final String varName = ref.getReferencedName();
-                        param.setAttribute("name", varName);
+                        param.setAttribute("name", var);
                         RefactoringUtil.addParameter(templateTag, param);
 
                         final XmlTag arg = RefactoringUtil.addWithParam(callTag);
-                        arg.setAttribute("name", varName);
-                        arg.setAttribute("select", "$" + varName);
+                        arg.setAttribute("name", var);
+                        arg.setAttribute("select", "$" + var);
                     }
                 }
             }.execute().logException(Logger.getInstance(getClass().getName()));
