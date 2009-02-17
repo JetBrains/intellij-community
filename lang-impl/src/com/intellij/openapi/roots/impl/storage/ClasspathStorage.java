@@ -302,6 +302,10 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
+  public static void moduleRenamed(Module module, String newName) {
+    getProvider(getStorageType(module)).moduleRenamed(module, newName);
+  }
+
   @Nullable
   public static String getStorageRoot(final Module module, final Module moduleBeingLoaded) {
     if (module == moduleBeingLoaded) {
@@ -328,6 +332,10 @@ public class ClasspathStorage implements StateStorage {
     }
 
     public void detach(Module module) {
+    }
+
+    public void moduleRenamed(Module module, String newName) {
+      //do nothing
     }
 
     public ClasspathConverter createConverter(Module module) {
@@ -357,6 +365,10 @@ public class ClasspathStorage implements StateStorage {
     }
 
     public void detach(final Module module) {
+      throw new UnsupportedOperationException(getDescription());
+    }
+
+    public void moduleRenamed(Module module, String newName) {
       throw new UnsupportedOperationException(getDescription());
     }
 

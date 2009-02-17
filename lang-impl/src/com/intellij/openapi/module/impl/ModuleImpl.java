@@ -19,6 +19,7 @@ import com.intellij.openapi.module.impl.scopes.ModuleRuntimeClasspathScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -124,6 +125,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     final VirtualFile file = getStateStore().getModuleFile();
     try {
       if (file != null) {
+        ClasspathStorage.moduleRenamed(this, newName);
         file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
         getStateStore().setModuleFilePath(VfsUtil.virtualToIoFile(file).getCanonicalPath());
         return;

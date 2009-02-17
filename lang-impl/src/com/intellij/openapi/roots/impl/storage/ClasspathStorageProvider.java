@@ -30,6 +30,8 @@ public interface ClasspathStorageProvider {
 
   void detach(Module module);
 
+  void moduleRenamed(Module module, String newName);
+
   ClasspathConverter createConverter(Module module);
 
   interface ClasspathConverter {
