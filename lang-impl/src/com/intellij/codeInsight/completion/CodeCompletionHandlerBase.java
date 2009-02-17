@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -51,6 +52,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     myCompletionType = completionType;
   }
 
+  public final void invoke(final Project project, final Editor editor) {
+    invoke(project, editor, PsiUtilBase.getPsiFileInEditor(editor, project));
+  }
+  
   public final void invoke(final Project project, final Editor editor, PsiFile psiFile) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed();
