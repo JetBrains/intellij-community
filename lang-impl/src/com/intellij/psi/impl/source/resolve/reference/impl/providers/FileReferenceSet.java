@@ -315,7 +315,8 @@ public class FileReferenceSet {
       return Collections.emptyList();
     }
     final Project project = file.getProject();
-    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    PsiDirectory parent = file.getParent();
+    final Module module = ModuleUtil.findModuleForPsiElement(parent == null ? file : parent);
     if (module == null) {
       return Collections.emptyList();
     }
