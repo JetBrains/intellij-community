@@ -333,7 +333,7 @@ public final class EditorsSplitters extends JPanel {
 
   public void trimToSize(final int editor_tab_limit) {
     for (final EditorWindow window : myWindows) {
-      window.trimToSize(editor_tab_limit, null);
+      window.trimToSize(editor_tab_limit, null, true);
     }
   }
 

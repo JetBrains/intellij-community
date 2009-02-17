@@ -104,6 +104,10 @@ public class EditorWindow {
   }
 
   public void closeFile(final VirtualFile file, final boolean unsplit) {
+    closeFile(file, unsplit, true);
+  }
+
+  public void closeFile(final VirtualFile file, final boolean unsplit, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new Runnable() {
       public void run() {
@@ -116,7 +120,7 @@ public class EditorWindow {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
-              myTabbedPane.removeTabAt(componentIndex, indexToSelect).doWhenDone(new Runnable() {
+              myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus).doWhenDone(new Runnable() {
                 public void run() {
                   editorManager.disposeComposite(editor);
                 }
@@ -367,7 +371,7 @@ public class EditorWindow {
         final VirtualFile file = editor.getFile();
         final Icon template = IconLoader.getIcon("/fileTypes/text.png");
         myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(editor), null, indexToInsert);
-        trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file);
+        trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
         setSelectedEditor(editor, focusEditor);
         myOwner.updateFileIcon(file);
         myOwner.updateFileColor(file);
@@ -663,21 +667,21 @@ public class EditorWindow {
     updateFileIcon(file);
   }
 
-  void trimToSize(final int limit, final VirtualFile fileToIgnore) {
+  void trimToSize(final int limit, final VirtualFile fileToIgnore, boolean transferFocus) {
     if (myTabbedPane == null) {
       return;
     }
     final boolean closeNonModifiedFilesFirst = UISettings.getInstance().CLOSE_NON_MODIFIED_FILES_FIRST;
     final EditorComposite selectedComposite = getSelectedEditor();
     try {
-      doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst);
+      doTrimSize(limit, fileToIgnore, closeNonModifiedFilesFirst, transferFocus);
     }
     finally {
       setSelectedEditor(selectedComposite, false);
     }
   }
 
-  private void doTrimSize(int limit, VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst) {
+  private void doTrimSize(int limit, VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
     while_label:
     while (myTabbedPane.getTabCount() > limit && myTabbedPane.getTabCount() > 0) {
       // If all tabs are pinned then do nothings. Othrwise we will get infinitive loop
@@ -711,7 +715,7 @@ public class EditorWindow {
               }
             }
             if (!found) {
-              closeFile(file);
+              defaultCloseFile(file, transferFocus);
               continue while_label;
             }
           }
@@ -726,7 +730,7 @@ public class EditorWindow {
           //LOG.assertTrue(composite != null);
           if (composite != null && composite.getInitialFileTimeStamp() == file.getTimeStamp()) {
             // we found non modified file
-            closeFile(file);
+            defaultCloseFile(file, transferFocus);
             continue while_label;
           }
         }
@@ -742,7 +746,7 @@ public class EditorWindow {
           if (!selectedFile.equals(file)) {
             if (composite.getInitialFileTimeStamp() == file.getTimeStamp()) {
               // we found non modified file
-              closeFile(file);
+              defaultCloseFile(file, transferFocus);
               continue while_label;
             }
           }
@@ -767,7 +771,7 @@ public class EditorWindow {
               }
             }
             if (!found) {
-              closeFile(file);
+              defaultCloseFile(file, transferFocus);
               continue while_label;
             }
           }
@@ -776,7 +780,7 @@ public class EditorWindow {
 
         for (final VirtualFile file : histFiles) {
           if (fileCanBeClosed(file, fileToIgnore)) {
-            closeFile(file);
+            defaultCloseFile(file, transferFocus);
             continue while_label;
           }
         }
@@ -791,17 +795,21 @@ public class EditorWindow {
             continue;
           }
           if (!selectedFile.equals(file)) {
-            closeFile(file);
+            defaultCloseFile(file, transferFocus);
             continue while_label;
           }
           else if (i == myTabbedPane.getTabCount() - 1) {
             // if file is selected one and it's last file that we have no choice as close it
-            closeFile(file);
+            defaultCloseFile(file, transferFocus);
             continue while_label;
           }
         }
       }
     }
+  }
+
+  private void defaultCloseFile(VirtualFile file, boolean transferFocus) {
+    closeFile(file, true, transferFocus);
   }
 
   private boolean fileCanBeClosed(final VirtualFile file, final VirtualFile fileToIgnore) {

@@ -1900,6 +1900,10 @@ public class JBTabsImpl extends JComponent
   }
 
   public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTranfer) {
+    return removeTab(info, forcedSelectionTranfer, true);
+  }
+
+  public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTranfer, boolean transferFocus) {
     if (info == null || !getTabs().contains(info)) return new ActionCallback.Done();
 
     final ActionCallback result = new ActionCallback();
@@ -1916,7 +1920,7 @@ public class JBTabsImpl extends JComponent
 
     if (toSelect != null) {
       processRemove(info, false);
-      _setSelected(toSelect, true).doWhenProcessed(new Runnable() {
+      _setSelected(toSelect, transferFocus).doWhenProcessed(new Runnable() {
         public void run() {
           removeDeferred().notifyWhenDone(result);
         }

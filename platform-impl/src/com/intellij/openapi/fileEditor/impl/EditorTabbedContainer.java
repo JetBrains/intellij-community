@@ -121,10 +121,14 @@ final class EditorTabbedContainer implements Disposable {
     return myTabs.getComponent();
   }
 
-  public ActionCallback removeTabAt(final int componentIndex, int indexToSelect) {
+  public ActionCallback removeTabAt(final int componentIndex, int indexToSelect, boolean transferFocus) {
     TabInfo toSelect = indexToSelect >= 0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
-    final ActionCallback callback = myTabs.removeTab(myTabs.getTabAt(componentIndex), toSelect);
+    final ActionCallback callback = myTabs.removeTab(myTabs.getTabAt(componentIndex), toSelect, transferFocus);
     return myProject.isOpen() ? callback : new ActionCallback.Done();
+  }
+
+  public ActionCallback removeTabAt(final int componentIndex, int indexToSelect) {
+    return removeTabAt(componentIndex, indexToSelect, true);
   }
 
   public int getSelectedIndex() {
