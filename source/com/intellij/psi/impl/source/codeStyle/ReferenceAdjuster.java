@@ -104,11 +104,9 @@ public class ReferenceAdjuster implements Constants {
       }
     }
 
-    if (element instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(element);
-      for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        child = process(child, addImports, uncompleteCode);
-      }
+    ChameleonTransforming.transformChildren(element);
+    for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      child = process(child, addImports, uncompleteCode);
     }
 
     return element;
@@ -146,12 +144,11 @@ public class ReferenceAdjuster implements Constants {
       return;
     }
 
-    if (parent instanceof CompositeElement) {
-      addReferencesInRangeForComposite(array, (CompositeElement)parent, startOffset, endOffset);
-    }
+    addReferencesInRangeForComposite(array, parent, startOffset, endOffset);
   }
 
-  private static void addReferencesInRangeForComposite(final ArrayList<ASTNode> array, final CompositeElement parent,
+  private static void addReferencesInRangeForComposite(final ArrayList<ASTNode> array,
+                                                       final TreeElement parent,
                                                        final int startOffset,
                                                        final int endOffset) {
     ChameleonTransforming.transformChildren(parent);
@@ -165,8 +162,8 @@ public class ReferenceAdjuster implements Constants {
 
         if (type == ElementType.JAVA_CODE_REFERENCE || type == ElementType.REFERENCE_EXPRESSION) {
           array.add(child);
-        } else if (child instanceof CompositeElement) {
-          addReferencesInRangeForComposite(array, (CompositeElement)child, startOffset - offset, endOffset - offset);
+        } else {
+          addReferencesInRangeForComposite(array, child, startOffset - offset, endOffset - offset);
         }
       }
       offset += length;

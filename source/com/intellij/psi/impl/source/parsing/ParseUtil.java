@@ -102,9 +102,7 @@ public class ParseUtil implements Constants {
           }
         }
 
-        if (child instanceof CompositeElement) {
-          bindComments(child);
-        }
+        bindComments(child);
         child = child.getTreeNext();
       }
 

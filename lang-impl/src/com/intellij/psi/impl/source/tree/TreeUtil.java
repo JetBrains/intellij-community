@@ -142,12 +142,10 @@ public class TreeUtil {
 
   public static void clearCaches(TreeElement tree) {
     tree.clearCaches();
-    if(tree instanceof CompositeElement){
-      TreeElement child = (TreeElement)((ASTNode)tree).getFirstChildNode();
-      while(child != null){
-        clearCaches(child);
-        child = child.getTreeNext();
-      }
+    TreeElement child = tree.getFirstChildNode();
+    while(child != null){
+      clearCaches(child);
+      child = child.getTreeNext();
     }
   }
 

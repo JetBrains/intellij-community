@@ -89,7 +89,7 @@ public class ChameleonTransforming {
         }
         continue;
       }
-      if (recursive && child instanceof CompositeElement) {
+      if (recursive) {
         transformChildrenNoLock(child, recursive);
       }
       child = child.getTreeNext();

@@ -62,9 +62,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    if (treeElement instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
-    }
+    ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
     PsiFileImpl file = (PsiFileImpl)element.getContainingFile();
     FileType fileType = StdFileTypes.JAVA;
     if (file != null) {
@@ -118,9 +116,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(file);
-    if (treeElement instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
-    }
+    ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
     FileType fileType = file.getFileType();
     Helper helper = HelperFactory.createHelper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
@@ -159,9 +155,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
 
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
-    if (treeElement instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
-    }
+    ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
     FileType fileType = StdFileTypes.JAVA;
     PsiFile file = element.getContainingFile();
     if (file != null) {

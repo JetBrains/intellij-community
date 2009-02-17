@@ -16,7 +16,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +63,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
           final ArrayList<Object> list = new ArrayList<Object>();
           final ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
                                element instanceof ASTNode? (ASTNode)element : null;
-          if (root instanceof CompositeElement) {
+          if (root != null) {
             ChameleonTransforming.transformChildren(root);
             ASTNode child = root.getFirstChildNode();
             while (child != null) {

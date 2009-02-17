@@ -99,12 +99,10 @@ public class CodeEditUtil {
 
   public static void checkForOuters(final ASTNode element) {
     if (element instanceof OuterLanguageElement && element.getCopyableUserData(OUTER_OK) == null) throw new AbnormalCommandTerminationException();
-    if (element instanceof CompositeElement) {
-      TreeElement child = ((CompositeElement)element).getFirstChildNode();
-      while (child != null) {
-        checkForOuters(child);
-        child = child.getTreeNext();
-      }
+    ASTNode child = element.getFirstChildNode();
+    while (child != null) {
+      checkForOuters(child);
+      child = child.getTreeNext();
     }
   }
 

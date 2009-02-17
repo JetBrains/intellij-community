@@ -92,14 +92,11 @@ public class ChangeUtil {
   }
 
   private static TreeElement decodeInformation(TreeElement element, Map<Object, Object> state) {
-    if (element instanceof CompositeElement) {
-      ChameleonTransforming.transformChildren(element);
-      TreeElement child = element.getFirstChildNode();
-      while (child != null) {
-        child = decodeInformation(child, state);
-        child = child.getTreeNext();
-      }
-
+    ChameleonTransforming.transformChildren(element);
+    TreeElement child = element.getFirstChildNode();
+    while (child != null) {
+      child = decodeInformation(child, state);
+      child = child.getTreeNext();
     }
 
     for (TreeCopyHandler handler : ourCopyHandlers) {
