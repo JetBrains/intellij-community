@@ -79,7 +79,7 @@ public class BraceHighlightingHandler {
           public PsiFile compute() {
             Document document = editor.getDocument();
             PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-            return getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
+            return null != psiFile ? getInjectedFileIfAny(editor, project, offset, psiFile, alarm) : null;
           }
         });
         ApplicationManager.getApplication().invokeLater(new Runnable(){
@@ -97,7 +97,7 @@ public class BraceHighlightingHandler {
     job.schedule();
   }
 
-  static PsiFile getInjectedFileIfAny(final Editor editor, final Project project, int offset, PsiFile psiFile, final Alarm alarm) {
+  static PsiFile getInjectedFileIfAny(@NotNull final Editor editor, @NotNull final Project project, int offset, @NotNull PsiFile psiFile, @NotNull final Alarm alarm) {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
     if (!PsiDocumentManager.getInstance(project).isUncommited(document)) {
@@ -109,7 +109,7 @@ public class BraceHighlightingHandler {
         }
       }
     }
-    else if (alarm != null) {
+    else {
       PsiDocumentManager.getInstance(project).performForCommittedDocument(document, new Runnable() {
         public void run() {
           if (!project.isDisposed() && !editor.isDisposed()) {

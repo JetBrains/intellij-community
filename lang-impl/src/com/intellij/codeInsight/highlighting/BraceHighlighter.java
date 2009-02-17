@@ -101,7 +101,7 @@ public class BraceHighlighter implements ProjectComponent {
     });
   }
 
-  static void updateBraces(final Editor editor, final Alarm alarm) {
+  static void updateBraces(@NotNull final Editor editor, @NotNull final Alarm alarm) {
     final Document document = editor.getDocument();
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
 
@@ -113,7 +113,7 @@ public class BraceHighlighter implements ProjectComponent {
     });
   }
 
-  private void clearBraces(final Editor editor) {
+  private void clearBraces(@NotNull final Editor editor) {
     BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, myAlarm, new Processor<BraceHighlightingHandler>() {
       public boolean process(final BraceHighlightingHandler handler) {
         handler.clearBraceHighlighters();
