@@ -18,6 +18,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -113,9 +114,29 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   private static final TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
 
   private static class TypeEvaluator implements Function<PsiExpression, PsiType> {
+    @Nullable
     public PsiType fun(final PsiExpression call) {
       PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
-      final JavaResolveResult result = methodExpression.advancedResolve(false);
+      PsiType theOnly = null;
+      final JavaResolveResult[] results = methodExpression.multiResolve(false);
+      for (int i = 0; i < results.length; i++) {
+        final PsiType type = getResultType(call, methodExpression, results[i]);
+        if (type == null) {
+          return null;
+        }
+
+        if (i == 0) {
+          theOnly = type;
+        } else if (!theOnly.equals(type)) {
+          return null;
+        }
+      }
+
+      return theOnly;
+    }
+
+    @Nullable
+    private static PsiType getResultType(PsiExpression call, PsiReferenceExpression methodExpression, JavaResolveResult result) {
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) return null;
       PsiManager manager = call.getManager();
