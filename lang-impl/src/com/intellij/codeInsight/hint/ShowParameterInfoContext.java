@@ -184,13 +184,14 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
   static class MyBestLocationPointProvider implements ShowParameterInfoHandler.BestLocationPointProvider {
     private final Editor myEditor;
-    private int previousOffset;
+    private int previousOffset = -1;
     private Point previousBestPoint;
 
     public MyBestLocationPointProvider(final Editor editor) {
       myEditor = editor;
     }
 
+    @NotNull
     public Point getBestPointPosition(LightweightHint hint, final PsiElement list, int offset) {
       final TextRange textRange = list.getTextRange();
       offset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;

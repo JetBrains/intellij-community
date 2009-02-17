@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -106,6 +107,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   }
 
   interface BestLocationPointProvider {
+    @NotNull
     Point getBestPointPosition(LightweightHint hint, final PsiElement list, int offset);
   }
 
