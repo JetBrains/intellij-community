@@ -1,16 +1,16 @@
 package org.intellij.lang.xpath.xslt;
 
-import org.intellij.lang.xpath.TestBase;
-import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
-
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
+import org.intellij.lang.xpath.TestBase;
+import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
 
 import java.util.List;
 
@@ -93,7 +93,7 @@ public class XsltHighlightingTest extends TestBase {
                         final long l = System.currentTimeMillis();
                         List<TextEditorHighlightingPass> passes =
                                 TextEditorHighlightingPassRegistrarEx.getInstanceEx(myFixture.getProject()).instantiatePasses(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
-                        MockProgressIndicator progress = new MockProgressIndicator();
+                        ProgressIndicator progress = new DaemonProgressIndicator();
                         for (TextEditorHighlightingPass pass : passes) {
                             pass.collectInformation(progress);
                         }
