@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -47,7 +48,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   public GrEnumConstantImpl(GrFieldStub stub) {
-    super(stub);
+    super(stub, GroovyElementTypes.ENUM_CONSTANT);
   }
 
   public String toString() {

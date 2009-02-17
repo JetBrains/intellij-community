@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
@@ -56,7 +57,11 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public GrFieldImpl(GrFieldStub stub) {
-    super(stub, GroovyElementTypes.FIELD);
+    this(stub, GroovyElementTypes.FIELD);
+  }
+
+  public GrFieldImpl(GrFieldStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   public void accept(GroovyElementVisitor visitor) {
