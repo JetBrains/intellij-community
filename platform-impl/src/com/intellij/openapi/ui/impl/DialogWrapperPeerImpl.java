@@ -334,7 +334,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myWindowManager.doNotSuggestAsParent(myDialog);
     }
 
-    final CommandProcessorEx commandProcessor = ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
+    final CommandProcessorEx commandProcessor =
+      ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
     final boolean appStarted = commandProcessor != null;
 
     if (myDialog.isModal() && !isProgressDialog()) {
@@ -370,7 +371,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
 //[kirillk] for now it only deals with the TaskWindow under Mac OS X: modal dialogs are shown behind JBPopup
-//hopefully this whole code will go away
+
+  //hopefully this whole code will go away
   private void hidePopupsIfNeeded() {
     if (!SystemInfo.isMac) return;
 
@@ -569,7 +571,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
                   disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
                 }
               });
-            } else {
+            }
+            else {
               disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
             }
           }
@@ -593,7 +596,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         if (c == null) {
           myFocusTrackback.dispose();
         }
-      } else {
+      }
+      else {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner == null || !SwingUtilities.isDescendingFrom(owner, wrapper.getContentPane())) {
           myFocusTrackback.dispose();
@@ -656,6 +660,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
         catch (Exception e) {
         }
+      }
+
+      // http://bugs.sun.com/view_bug.do?bug_id=6614056
+      try {
+        final Field field = Dialog.class.getDeclaredField("modalDialogs");
+        field.setAccessible(true);
+        final List<?> list = (List<?>)field.get(null);
+        list.remove(this);
+      }
+      catch (final Exception ex) {
       }
     }
 
