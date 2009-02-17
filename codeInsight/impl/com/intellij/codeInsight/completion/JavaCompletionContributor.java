@@ -314,7 +314,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiFile file = context.getFile();
     final Project project = context.getProject();
 
-    JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
+    JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap(), context.getCompletionType());
 
     PsiReference reference = file.findReferenceAt(context.getStartOffset());
     if (reference instanceof PsiMultiReference) {

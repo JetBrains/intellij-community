@@ -541,7 +541,7 @@ public class JavaCompletionUtil {
     return ArrayUtil.toStringArray(unresolvedRefs);
   }
 
-  public static void initOffsets(final PsiFile file, final Project project, final OffsetMap offsetMap){
+  public static void initOffsets(final PsiFile file, final Project project, final OffsetMap offsetMap, CompletionType type){
     int selectionEndOffset = offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
 
     PsiElement element = file.findElementAt(selectionEndOffset);
@@ -596,6 +596,17 @@ public class JavaCompletionUtil {
 
       offsetMap.addOffset(ARG_LIST_END_OFFSET, list.getTextRange().getEndOffset());
     }
+
+    if (type == CompletionType.SMART) {
+      PsiElement atIdEnd = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+      if (atIdEnd != null && ".".equals(atIdEnd.getText())) {
+        final PsiElement sibling = atIdEnd.getNextSibling();
+        if (sibling != null && "class".equals(sibling.getText())) {
+          offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, sibling.getTextRange().getEndOffset());
+        }
+      }
+    }
+
   }
 
   static boolean isWord(PsiElement element) {

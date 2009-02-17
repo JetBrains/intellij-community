@@ -45,10 +45,10 @@ public class ClassLiteralGetter implements ContextGetter {
             final PsiClass aClass = PsiUtil.resolveClassInType(substitution);
             if (aClass == null) continue;
 
-            createLookupElement(substitution, context, 2, result);
+            createLookupElement(substitution, context, result);
             if (addInheritors && substitution != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(substitution.getCanonicalText())) {
               for (final PsiType type : CodeInsightUtil.addSubtypes(substitution, context, true)) {
-                createLookupElement(type, context, 1, result);
+                createLookupElement(type, context, result);
               }
             }
 
@@ -60,14 +60,14 @@ public class ClassLiteralGetter implements ContextGetter {
     return result.toArray(new MutableLookupElement[result.size()]);
   }
 
-  private static void createLookupElement(@Nullable final PsiType type, final PsiElement context, final int priority, final List<MutableLookupElement<PsiExpression>> list) {
+  private static void createLookupElement(@Nullable final PsiType type, final PsiElement context, final List<MutableLookupElement<PsiExpression>> list) {
     if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters() && !(((PsiClassType) type).resolve() instanceof PsiTypeParameter)) {
       try {
         final PsiManager manager = context.getManager();
         PsiExpression expr =
           JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(type.getCanonicalText() + DOT_CLASS, context);
         expr = (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);
-        list.add(LookupElementFactory.getInstance().createLookupElement(expr, expr.getText()).setPriority(priority));
+        list.add(LookupElementFactory.getInstance().createLookupElement(expr, expr.getText()));
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

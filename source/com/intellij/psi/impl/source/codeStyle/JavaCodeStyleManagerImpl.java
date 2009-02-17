@@ -831,8 +831,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
       String suggestion = buffer.toString();
 
-      if (isArray && variableKind != VariableKind.STATIC_FINAL_FIELD) {
+      if (isArray) {
         suggestion = StringUtil.pluralize(suggestion);
+        if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
+          suggestion = suggestion.toUpperCase();
+        }
       }
 
       suggestion = changeIfNotIdentifier(suggestion + getSuffixByVariableKind(variableKind));

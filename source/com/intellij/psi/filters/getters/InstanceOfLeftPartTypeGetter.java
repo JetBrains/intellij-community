@@ -1,13 +1,11 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiKeyword;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.codeInsight.completion.CompletionContext;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,10 +16,20 @@ import com.intellij.codeInsight.completion.CompletionContext;
  */
 public class InstanceOfLeftPartTypeGetter implements ContextGetter {
   public Object[] get(PsiElement context, CompletionContext completionContext) {
-    if((context = FilterUtil.getPreviousElement((PsiElement) context, true)) == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if((context = FilterUtil.getPreviousElement(context, true)) == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     if(!PsiKeyword.INSTANCEOF.equals(context.getText())) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    if((context = FilterUtil.getPreviousElement((PsiElement) context, false)) == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if((context = FilterUtil.getPreviousElement(context, false)) == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     final PsiExpression contextOfType = PsiTreeUtil.getContextOfType(context, PsiExpression.class, false);
-    return new Object[]{contextOfType.getType()};
+    PsiType type = contextOfType.getType();
+    if (type == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+
+    if (type instanceof PsiClassType) {
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass instanceof PsiTypeParameter) {
+        return psiClass.getExtendsListTypes();
+      }
+    }
+
+    return new Object[]{type};
   }
 }

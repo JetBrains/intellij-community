@@ -2,9 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
@@ -40,9 +38,28 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   public ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, @NotNull PsiType defaultType, @NotNull TailType myTailType) {
     this.type = type;
     this.kind = kind;
-    this.defaultType = defaultType;
+
     this.myTailType = myTailType;
     this.dimCount = dimCount;
+
+    if (type == defaultType) {
+      if (type instanceof PsiClassType) {
+        final PsiClassType psiClassType = (PsiClassType)type;
+        final PsiClass psiClass = psiClassType.resolve();
+        if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
+          final PsiType[] parameters = psiClassType.getParameters();
+          if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType) {
+            final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
+            if (bound instanceof PsiClassType) {
+              final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+              defaultType = factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + bound.getCanonicalText() + ">", null);
+            }
+          }
+        }
+      }
+    }
+
+    this.defaultType = defaultType;
   }
 
   public PsiMethod getCalledMethod() {
