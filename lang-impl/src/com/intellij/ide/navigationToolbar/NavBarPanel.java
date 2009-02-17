@@ -517,6 +517,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private static boolean isInsideIcon(final Point point, final Icon icon) {
+    if (icon == null) return false;
     final int height = icon.getIconHeight();
     return point.x > 0 && point.x < 10 && point.y > height / 2 - 4 && point.y < height / 2 + 4;
   }
