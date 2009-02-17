@@ -234,7 +234,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
   }
 
   protected static class MyDummyCompileContext extends DummyCompileContext {
-    private MockProgressIndicator myProgressIndicator = new MockProgressIndicator();
+    private final ProgressIndicator myProgressIndicator = new MockProgressIndicator();
 
     public ProgressIndicator getProgressIndicator() {
       return myProgressIndicator;
