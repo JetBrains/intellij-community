@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.SearchScope;
@@ -37,6 +38,7 @@ public class ExtractParameterAsLocalVariableFix
                 "extract.parameter.as.local.variable.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException {
         final PsiReferenceExpression parameterReference =
@@ -95,7 +97,6 @@ public class ExtractParameterAsLocalVariableFix
         final PsiReferenceExpression firstReference =
                 (PsiReferenceExpression)element;
         final PsiElement[] children = body.getChildren();
-        final StringBuilder buffer = new StringBuilder();
         final int startIndex;
         final int endIndex;
         if (body instanceof PsiCodeBlock) {
@@ -106,6 +107,7 @@ public class ExtractParameterAsLocalVariableFix
             endIndex = children.length;
         }
         boolean newDeclarationCreated = false;
+        final StringBuilder buffer = new StringBuilder();
         for (int i = startIndex; i < endIndex; i++) {
             final PsiElement child = children[i];
             newDeclarationCreated |=
@@ -114,7 +116,7 @@ public class ExtractParameterAsLocalVariableFix
         }
         final String replacementText;
         if (newDeclarationCreated) {
-            replacementText = "{" + buffer + "}";
+            replacementText = "{" + buffer + '}';
         } else {
             final PsiType type = parameterReference.getType();
             if (type == null) {
@@ -122,7 +124,7 @@ public class ExtractParameterAsLocalVariableFix
             }
             final String className = type.getCanonicalText();
             replacementText = '{' + className + ' ' + variableName + " = " +
-                    parameterName + ';' + buffer + "}";
+                    parameterName + ';' + buffer + '}';
         }
         final PsiElementFactory elementFactory =
               JavaPsiFacade.getInstance(project).getElementFactory();
@@ -142,15 +144,14 @@ public class ExtractParameterAsLocalVariableFix
         if (element instanceof PsiReferenceExpression) {
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression)element;
-            if (isLeftSideOfSimpleAssignment(referenceExpression)) {
-                if (element.equals(firstReference)) {
-                    final PsiType type = firstReference.getType();
-                    if (type != null) {
-                        out.append(type.getCanonicalText());
-                        out.append(' ');
-                        out.append(newName);
-                        return true;
-                    }
+            if (element.equals(firstReference) &&
+                    isLeftSideOfSimpleAssignment(referenceExpression)) {
+                final PsiType type = firstReference.getType();
+                if (type != null) {
+                    out.append(type.getCanonicalText());
+                    out.append(' ');
+                    out.append(newName);
+                    return true;
                 }
             }
             final String text = element.getText();
@@ -189,6 +190,11 @@ public class ExtractParameterAsLocalVariableFix
         }
         final PsiAssignmentExpression assignmentExpression =
                 (PsiAssignmentExpression)parent;
+        final IElementType tokenType =
+                assignmentExpression.getOperationTokenType();
+        if (tokenType != JavaTokenType.EQ) {
+            return false;
+        }
         final PsiExpression lExpression =
                 assignmentExpression.getLExpression();
         if (!reference.equals(lExpression)) {
@@ -202,5 +208,4 @@ public class ExtractParameterAsLocalVariableFix
         final PsiElement grandParent = parent.getParent();
         return grandParent instanceof PsiExpressionStatement;
     }
-
 }
