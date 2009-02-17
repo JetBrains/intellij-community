@@ -82,7 +82,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         final int len = lengths.get(i);
         start += mySeparator.length();
         final int globalIndex = index2Global.get(i);
-        assert mySegments.myRanges[globalIndex] == null;
+        assert mySegments.myRanges[globalIndex] == null : myText;
         mySegments.myRanges[globalIndex] = new MappedRange(mapper, document.createRangeMarker(start, start + len), type);
         start += len;
       }
