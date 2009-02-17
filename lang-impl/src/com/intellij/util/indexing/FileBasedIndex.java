@@ -758,6 +758,7 @@ public class FileBasedIndex implements ApplicationComponent {
   public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
   public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
   public static final Key<Project> PROJECT = new Key<Project>("Context project");
+  public static final Key<VirtualFile> VIRTUAL_FILE = new Key<VirtualFile>("Context virtual file");
 
   @Nullable
   private PsiFile findDominantPsiForDocument(final Document document) {

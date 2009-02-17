@@ -33,12 +33,16 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
@@ -420,7 +424,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (myOriginalFile instanceof PsiJavaFile) return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
     final LanguageLevel forcedLanguageLevel = getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY);
     if (forcedLanguageLevel != null) return forcedLanguageLevel;
-    final VirtualFile virtualFile = getVirtualFile();
+    VirtualFile virtualFile = getVirtualFile();
+
+    if (virtualFile == null) {
+      virtualFile = getUserData(FileBasedIndex.VIRTUAL_FILE);
+    }
+
     if (virtualFile == null) {
       final PsiFile originalFile = getOriginalFile();
       if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();

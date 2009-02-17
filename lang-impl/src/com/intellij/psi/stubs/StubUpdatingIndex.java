@@ -154,6 +154,8 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         false,
         false
       );
+
+      psi.putUserData(FileBasedIndex.VIRTUAL_FILE, inputData.getFile());
     }
 
     return ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
