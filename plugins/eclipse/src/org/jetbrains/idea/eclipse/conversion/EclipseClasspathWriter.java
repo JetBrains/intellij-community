@@ -247,10 +247,19 @@ public class EclipseClasspathWriter {
     boolean isModified = false;
 
     final CompilerModuleExtension compilerModuleExtension = myModel.getModuleExtension(CompilerModuleExtension.class);
-    compilerModuleExtension.writeExternal(root);
-    if (compilerModuleExtension.isCompilerOutputPathInherited() ||
-        compilerModuleExtension.getCompilerOutputUrlForTests() != null ||
-        compilerModuleExtension.isExcludeOutput()) {
+
+    if (compilerModuleExtension.getCompilerOutputPathForTests() != null) {
+      final Element pathElement = new Element(IdeaXml.OUTPUT_TEST_TAG);
+      pathElement.setAttribute(IdeaXml.URL_ATTR, compilerModuleExtension.getCompilerOutputUrlForTests());
+      root.addContent(pathElement);
+      isModified = true;
+    }
+    if (compilerModuleExtension.isCompilerOutputPathInherited()) {
+      root.setAttribute(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR, String.valueOf(true));
+      isModified = true;
+    }
+    if (compilerModuleExtension.isExcludeOutput()) {
+      root.addContent(new Element(IdeaXml.EXCLUDE_OUTPUT_TAG));
       isModified = true;
     }
 
