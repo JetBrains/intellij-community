@@ -4,16 +4,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Processor;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -67,53 +63,116 @@ public class RefreshVFsSynchronously {
   }
 
   private static void refreshDeletedOrReplaced(final File root) {
-    final String path = root.getAbsolutePath();
-    @NonNls final String correctedPath = VfsUtil.pathToUrl(path.replace(File.separatorChar, '/'));
-    final VirtualFile vf = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Nullable
-      public VirtualFile compute() {
-        return VirtualFileManager.getInstance().findFileByUrl(correctedPath);
-      }
-    });
+    final File parent = root.getParentFile();
+    VirtualFile vf = null;
+    // parent should also notice the change
+    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    final VirtualFile rootVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
+    if (parent != null) {
+      vf = localFileSystem.refreshAndFindFileByIoFile(parent);
+    }
+    if (vf == null) {
+      vf = rootVf;
+    }
     if (vf != null) {
-      VfsUtil.processFilesRecursively(vf, new Processor<VirtualFile>() {
-        public boolean process(VirtualFile virtualFile) {
-          virtualFile.refresh(false, false);
-          return true;
-        }
-      });
+      ((NewVirtualFile)vf).markDirtyRecursively();
+      vf.refresh(false, true);
     }
   }
 
+  public static void updateChangesForRollback(final List<Change> changes) {
+    updateChangesImpl(changes, RollbackChangeWrapper.ourInstance);
+  }
+
   public static void updateChanges(final List<Change> changes) {
+    updateChangesImpl(changes, DirectChangeWrapper.ourInstance);
+  }
+
+  private static void updateChangesImpl(final List<Change> changes, final ChangeWrapper wrapper) {
     // approx so ok
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
     if (pi != null) {
       pi.setIndeterminate(false);
     }
     final double num = changes.size();
-    
-    wrapIntoLock(new Runnable() {
-      public void run() {
-        int cnt = 0;
-        for (Change change : changes) {
-          if ((change.getBeforeRevision() != null) &&
-              (change.isMoved() || change.isRenamed() || change.isIsReplaced() || (change.getAfterRevision() == null))) {
-            refreshDeletedOrReplaced(change.getBeforeRevision().getFile().getIOFile());
-          } else if (change.getBeforeRevision() != null) {
-            refresh(change.getBeforeRevision().getFile().getIOFile());
-          }
-          if (change.getAfterRevision() != null && (! Comparing.equal(change.getAfterRevision(), change.getBeforeRevision()))) {
-            refresh(change.getAfterRevision().getFile().getIOFile());
-          }
-          if (pi != null) {
-            ++ cnt;
-            pi.setFraction(cnt/num);
-            pi.setText2("Refreshing: " + change.toString());
-          }
-        }
+
+    int cnt = 0;
+    final FilesForRefresh filesForRefresh = new FilesForRefresh();
+    for (Change change : changes) {
+      if ((! wrapper.beforeNull(change)) && (wrapper.movedOrRenamedOrReplaced(change) || (wrapper.afterNull(change)))) {
+        refreshDeletedOrReplaced(wrapper.getBeforeFile(change));
+      } else if (! wrapper.beforeNull(change)) {
+        refresh(wrapper.getBeforeFile(change));
       }
-    });
+      if ((! wrapper.afterNull(change)) && (! Comparing.equal(change.getAfterRevision(), change.getBeforeRevision()))) {
+        refreshDeletedOrReplaced(wrapper.getAfterFile(change));
+      }
+      if (pi != null) {
+        ++ cnt;
+        pi.setFraction(cnt/num);
+        pi.setText2("Refreshing: " + change.toString());
+      }
+    }
+  }
+
+  private static class RollbackChangeWrapper implements ChangeWrapper {
+    private static final RollbackChangeWrapper ourInstance = new RollbackChangeWrapper();
+
+    public boolean beforeNull(Change change) {
+      return change.getAfterRevision() == null;
+    }
+
+    public boolean afterNull(Change change) {
+      return change.getBeforeRevision() == null;
+    }
+
+    public File getBeforeFile(Change change) {
+      return beforeNull(change) ? null : change.getAfterRevision().getFile().getIOFile();
+    }
+
+    public File getAfterFile(Change change) {
+      return afterNull(change) ? null : change.getBeforeRevision().getFile().getIOFile();
+    }
+
+    public boolean movedOrRenamedOrReplaced(Change change) {
+      return change.isIsReplaced() || change.isRenamed() || change.isIsReplaced();
+    }
+  }
+
+  private static class DirectChangeWrapper implements ChangeWrapper {
+    private static final DirectChangeWrapper ourInstance = new DirectChangeWrapper();
+
+    public boolean beforeNull(Change change) {
+      return change.getBeforeRevision() == null;
+    }
+
+    public boolean afterNull(Change change) {
+      return change.getAfterRevision() == null;
+    }
+
+    @Nullable
+    public File getBeforeFile(Change change) {
+      return beforeNull(change) ? null : change.getBeforeRevision().getFile().getIOFile();
+    }
+
+    @Nullable
+    public File getAfterFile(Change change) {
+      return afterNull(change) ? null : change.getAfterRevision().getFile().getIOFile();
+    }
+
+    public boolean movedOrRenamedOrReplaced(Change change) {
+      return change.isIsReplaced() || change.isRenamed() || change.isIsReplaced();
+    }
+  }
+
+  private interface ChangeWrapper {
+    boolean beforeNull(final Change change);
+    boolean afterNull(final Change change);
+    @Nullable
+    File getBeforeFile(final Change change);
+    @Nullable
+    File getAfterFile(final Change change);
+    boolean movedOrRenamedOrReplaced(final Change change);
   }
 
   private static void wrapIntoLock(final Runnable runnable) {

@@ -189,6 +189,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !abstractVcsExceptions.isEmpty()) {
       throw new RuntimeException(abstractVcsExceptions.get(0));
+    } else if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {

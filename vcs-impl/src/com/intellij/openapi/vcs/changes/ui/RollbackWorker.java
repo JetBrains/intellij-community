@@ -8,29 +8,26 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class RollbackWorker {
   private final Project myProject;
-  private final List<FilePath> myPathsToRefresh;
-  private final boolean mySynchronous;
   private final List<VcsException> myExceptions;
 
   private ProgressIndicator myIndicator;
 
   public RollbackWorker(final Project project, final boolean synchronous) {
     myProject = project;
-    myPathsToRefresh = new ArrayList<FilePath>();
-    mySynchronous = synchronous;
     myExceptions = new ArrayList<VcsException>(0);
   }
 
@@ -63,36 +60,6 @@ public class RollbackWorker {
     ((ChangeListManagerImpl) changeListManager).showLocalChangesInvalidated();
   }
 
-  private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous,
-                                final Runnable runAfter, final String localHistoryActionName) {
-    final String actionName = VcsBundle.message("changes.action.rollback.text");
-    final LocalHistoryAction action = LocalHistory.startAction(project, actionName);
-    RefreshSession session = RefreshQueue.getInstance().createSession(asynchronous, false, new Runnable() {
-      public void run() {
-        action.finish();
-        LocalHistory.putSystemLabel(project, (localHistoryActionName == null) ? actionName : localHistoryActionName);
-        if (!project.isDisposed()) {
-          for (FilePath path : pathsToRefresh) {
-            if (path.isDirectory()) {
-              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(path);
-            }
-            else {
-              VcsDirtyScopeManager.getInstance(project).fileDirty(path);
-            }
-          }
-          runAfter.run();
-        }
-      }
-    });
-    for(FilePath path: pathsToRefresh) {
-      final VirtualFile vf = path.getVirtualFile();
-      if (vf != null) {
-        session.addFile(vf);
-      }
-    }
-    session.launch();
-  }
-
   private class MyRollbackRunnable implements Runnable {
     private final Collection<Change> myChanges;
     private final boolean myDeleteLocallyAddedFiles;
@@ -112,12 +79,13 @@ public class RollbackWorker {
     public void run() {
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
 
+      final List<Change> changesToRefresh = new ArrayList<Change>();
       try {
         ChangesUtil.processChangesByVcs(myProject, myChanges, new ChangesUtil.PerVcsProcessor<Change>() {
           public void process(AbstractVcs vcs, List<Change> changes) {
             final RollbackEnvironment environment = vcs.getRollbackEnvironment();
             if (environment != null) {
-              myPathsToRefresh.addAll(ChangesUtil.getPaths(changes));
+              changesToRefresh.addAll(changes);
 
               if (myIndicator != null) {
                 myIndicator.setText(vcs.getDisplayName() + ": doing rollback...");
@@ -148,9 +116,46 @@ public class RollbackWorker {
         myIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
       }
 
-      doRefresh(myProject, myPathsToRefresh, (! mySynchronous), myAfterRefresh, myLocalHistoryActionName);
+      doRefresh(myProject, changesToRefresh);
 
       AbstractVcsHelper.getInstanceChecked(myProject).showErrors(myExceptions, VcsBundle.message("changes.action.rollback.text"));
+    }
+
+    private void doRefresh(final Project project, final List<Change> changesToRefresh) {
+      final String actionName = VcsBundle.message("changes.action.rollback.text");
+      final LocalHistoryAction action = LocalHistory.startAction(project, actionName);
+
+      final Runnable forAwtThread = new Runnable() {
+        public void run() {
+          action.finish();
+          LocalHistory.putSystemLabel(project, (myLocalHistoryActionName == null) ? actionName : myLocalHistoryActionName);
+          final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(project);
+          for (Change change : changesToRefresh) {
+            if ((! change.isIsReplaced()) && Comparing.equal(change.getBeforeRevision(), change.getAfterRevision())) {
+              manager.fileDirty(change.getBeforeRevision().getFile());
+            } else {
+              if (change.getBeforeRevision() != null) {
+                final FilePath parent = change.getBeforeRevision().getFile().getParentPath();
+                if (parent != null) {
+                  manager.dirDirtyRecursively(parent);
+                }
+              }
+              if (change.getAfterRevision() != null) {
+                final FilePath parent = change.getAfterRevision().getFile().getParentPath();
+                if (parent != null) {
+                  manager.dirDirtyRecursively(parent);
+                }
+              }
+            }
+          }
+
+          myAfterRefresh.run();
+        }
+      };
+
+      RefreshVFsSynchronously.updateChangesForRollback(changesToRefresh);
+
+      ApplicationManager.getApplication().invokeLater(forAwtThread);
     }
 
     private void deleteAddedFilesLocally(final List<Change> changes) {

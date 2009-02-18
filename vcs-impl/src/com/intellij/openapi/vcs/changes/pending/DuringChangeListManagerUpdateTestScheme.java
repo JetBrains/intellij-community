@@ -1,15 +1,16 @@
 package com.intellij.openapi.vcs.changes.pending;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.committed.MockDelayingChangeProvider;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -121,8 +122,9 @@ public class DuringChangeListManagerUpdateTestScheme {
   public static void checkFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
     System.out.println("Checking files for list: " + listName);
     assert manager.findChangeList(listName) != null;
-    final Collection<Change> changes = manager.findChangeList(listName).getChanges();
-    assert changes.size() == files.length;
+    final LocalChangeList list = manager.findChangeList(listName);
+    final Collection<Change> changes = list.getChanges();
+    assert changes.size() == files.length : debugRealListContent(list);
 
     for (Change change : changes) {
       final VirtualFile vf = change.getAfterRevision().getFile().getVirtualFile();
@@ -133,7 +135,37 @@ public class DuringChangeListManagerUpdateTestScheme {
           break;
         }
       }
-      assert found == true;
+      assert found == true  : debugRealListContent(list);
     }
+  }
+
+  public static void checkDeletedFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
+    System.out.println("Checking files for list: " + listName);
+    assert manager.findChangeList(listName) != null;
+    final LocalChangeList list = manager.findChangeList(listName);
+    final Collection<Change> changes = list.getChanges();
+    assert changes.size() == files.length : debugRealListContent(list);
+
+    for (Change change : changes) {
+      final File vf = change.getBeforeRevision().getFile().getIOFile();
+      boolean found = false;
+      for (VirtualFile vfile : files) {
+        final File file = new File(vfile.getPath());
+        if (file.equals(vf)) {
+          found = true;
+          break;
+        }
+      }
+      assert found == true  : debugRealListContent(list);
+    }
+  }
+
+  private static String debugRealListContent(final LocalChangeList list) {
+    final StringBuilder sb = new StringBuilder(list.getName() + ": ");
+    final Collection<Change> changeCollection = list.getChanges();
+    for (Change change : changeCollection) {
+      sb.append(change.toString()).append(' ');
+    }
+    return sb.toString();
   }
 }
