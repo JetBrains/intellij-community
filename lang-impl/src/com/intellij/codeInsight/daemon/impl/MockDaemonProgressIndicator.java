@@ -10,7 +10,7 @@ class MockDaemonProgressIndicator extends DaemonProgressIndicator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.MockDaemonProgressIndicator");
   final Object myStoppedNotify;
 
-  public MockDaemonProgressIndicator(final Object stoppedNotify) {
+  MockDaemonProgressIndicator(final Object stoppedNotify) {
     myStoppedNotify = stoppedNotify;
   }
 

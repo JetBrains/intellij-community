@@ -9,6 +9,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
@@ -18,7 +21,7 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ProgressIndicatorBase implements ProgressIndicatorEx {
+public class ProgressIndicatorBase implements ProgressIndicatorEx, UserDataHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
 
   private volatile String myText;
@@ -44,6 +47,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   private boolean myWasStarted;
 
   private TaskInfo myOwnerTask;
+  private final UserDataHolder myUserDataHolder = new UserDataHolderBase();
 
   public void start() {
     synchronized (this) {
@@ -391,5 +395,13 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
       myFractionStack.add(eachFraction);
     }
     myFraction = indicator.getFraction();
+  }
+
+  public <T> T getUserData(Key<T> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  public <T> void putUserData(Key<T> key, T value) {
+    myUserDataHolder.putUserData(key, value);
   }
 }
