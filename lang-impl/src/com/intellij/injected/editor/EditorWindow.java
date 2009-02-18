@@ -51,6 +51,8 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   private final FoldingModelWindow myFoldingModelWindow;
 
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
+    assert documentRange.isValid();
+    assert injectedFile.isValid();
     for (EditorWindow editorWindow : allEditors) {
       if (editorWindow.getDocument() == documentRange && editorWindow.getDelegate() == editor) {
         editorWindow.myInjectedFile = injectedFile;
@@ -62,7 +64,9 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
         int i = 0;
       }
     }
-    return new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
+    EditorWindow window = new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
+    assert window.isValid();
+    return window;
   }
 
   private EditorWindow(@NotNull DocumentWindowImpl documentWindow, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile, boolean oneLine) {
@@ -75,15 +79,15 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     myMarkupModelDelegate = new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow((FoldingModelEx)delegate.getFoldingModel(), documentWindow);
 
-    disposeInvalidEditors();
+    //disposeInvalidEditors();
     allEditors.add(this);
   }
 
-  private void disposeInvalidEditors() {
+  public static void disposeInvalidEditors() {
     Iterator<EditorWindow> iterator = allEditors.iterator();
     while (iterator.hasNext()) {
       EditorWindow editorWindow = iterator.next();
-      if (!editorWindow.isValid() || myDocumentWindow.intersects(editorWindow.myDocumentWindow)) {
+      if (!editorWindow.isValid()/* || myDocumentWindow.intersects(editorWindow.myDocumentWindow)*/) {
         editorWindow.dispose();
 
         InjectedLanguageUtil.clearCaches(editorWindow.getInjectedFile());

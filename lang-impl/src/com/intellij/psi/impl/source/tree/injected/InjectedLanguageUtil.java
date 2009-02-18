@@ -126,6 +126,7 @@ public class InjectedLanguageUtil {
         return editor;
       }
     }
+    if (!documentWindow.isValid()) return editor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
     return EditorWindow.create(documentWindow, (EditorImpl)editor, injectedFile);
   }
 
@@ -260,6 +261,8 @@ public class InjectedLanguageUtil {
         }
       }, true);
     }
+    EditorWindow.disposeInvalidEditors();  // in write action
+
     PsiDocumentManagerImpl.checkConsistency(hostPsiFile, hostDocument);
   }
 

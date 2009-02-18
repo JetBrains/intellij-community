@@ -7,6 +7,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -19,6 +20,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -352,8 +354,9 @@ public class PsiUtilBase {
     String name = null;
     if (element instanceof PsiMetaOwner) {
       final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
-      if (data != null)
+      if (data != null) {
         name = data.getName(element);
+      }
     }
     if (name == null && element instanceof PsiNamedElement) {
       name = ((PsiNamedElement) element).getName();
@@ -553,12 +556,21 @@ public class PsiUtilBase {
   }
 
   public static int findInjectedElementOffsetInRealDocument(final PsiElement element) {
-    final PsiElement context = element.getContainingFile().getContext();
-    if (context == null) return 0;
+    final PsiFile containingFile = element.getContainingFile();
+    Document document = PsiDocumentManager.getInstance(containingFile.getProject()).getDocument(containingFile);
+    if (document instanceof DocumentWindow && !((DocumentWindow)document).isValid()) {
+      return -1;
+    }
+    final PsiElement context = containingFile.getContext();
+    if (context == null) {
+      return 0;
+    }
     final int[] result = new int[1];
     ((PsiLanguageInjectionHost)context).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        if (injectedPsi != element.getContainingFile()) return;
+        if (injectedPsi != containingFile) {
+          return;
+        }
         final PsiLanguageInjectionHost.Shred shred = places.get(0);
         final TextRange textRange = element.getTextRange();
         if (shred.prefix != null && textRange.getEndOffset() < shred.prefix.length()) {

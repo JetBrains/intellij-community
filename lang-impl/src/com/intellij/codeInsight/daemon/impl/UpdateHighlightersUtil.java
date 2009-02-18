@@ -102,6 +102,13 @@ public class UpdateHighlightersUtil {
     setHighlightersToEditor(project, document, Collections.singletonMap(new TextRange(startOffset, endOffset), highlights), group);
   }
 
+  static boolean hasInfo(Collection<HighlightInfo> infos, int start, int end, String desc) {
+    if (infos == null) return false;
+    for (HighlightInfo info : infos) {
+      if (info.startOffset == start && info.endOffset == end && info.description.equals(desc)) return true;
+    }
+    return false;
+  }
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull Document document,
                                              @NotNull Map<TextRange, Collection<HighlightInfo>> infos,

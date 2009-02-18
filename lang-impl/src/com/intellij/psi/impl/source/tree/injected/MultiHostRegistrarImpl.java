@@ -59,7 +59,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   private VirtualFile myHostVirtualFile;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
-  private static final RecursiveTreeElementWalkingVisitor CLEAR_CACHES_VISITOR = new RecursiveTreeElementWalkingVisitor(){
+  private static final TreeElementVisitor CLEAR_CACHES_VISITOR = new RecursiveTreeElementWalkingVisitor(){  /*Walking*/
     protected boolean visitNode(TreeElement element) {
       element.clearCaches();
       return true;
@@ -161,7 +161,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   }
 
   //public static int count;
-  private static final Key<ASTNode> TREE_HARD_REF = Key.create("TREE_HARD_REF");
   public void doneInjecting() {
     //count++;
     try {
@@ -199,39 +198,46 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
       psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
 
-      final ASTNode parsedNode = psiFile.getNode();
-      assert parsedNode instanceof FileElement : parsedNode;
-
-      String documentText = documentWindow.getText();
-      assert outChars.toString().equals(parsedNode.getText()) : "Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
-      try {
-        patchLeafs(parsedNode, escapers, place);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (RuntimeException e) {
-        throw new RuntimeException("Patch error, lang="+myLanguage+";\n "+myHostVirtualFile+"; places:"+injectionHosts+";\n ranges:"+shreds, e);
-      }
-      assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars+"\n"+myLanguage+";\n "+myHostVirtualFile;
-
-      ((FileElement)parsedNode).setManager((PsiManagerEx)myPsiManager);
-
-      virtualFile.setContent(null, documentWindow.getText(), false);
-      FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
       synchronized (PsiLock.LOCK) {
-        psiFile = registerDocument(documentWindow, psiFile, place, myHostPsiFile, documentManager);
-        InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
-        myFileViewProvider.forceCachedPsi(psiFile);
-        documentWindow = (DocumentWindowImpl)myFileViewProvider.getDocument();
-        virtualFile = (VirtualFileWindowImpl)myFileViewProvider.getVirtualFile();
+        keepTreeFromChameleoningBack(psiFile);
 
-        // need to keep tree reacheable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
-        // and being reparsed from wrong (escaped) document content
-        ASTNode node = psiFile.getNode();
-        assert !(node.getFirstChildNode() instanceof ChameleonElement);
-        psiFile.putUserData(TREE_HARD_REF, node);
-        place.setInjectedPsi(psiFile);
+        final ASTNode parsedNode = psiFile.getNode();
+        assert parsedNode instanceof FileElement : parsedNode;
+
+        String documentText = documentWindow.getText();
+        assert outChars.toString().equals(parsedNode.getText()) : "Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
+        try {
+          patchLeafs(parsedNode, escapers, place);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (RuntimeException e) {
+          throw new RuntimeException("Patch error, lang="+myLanguage+";\n "+myHostVirtualFile+"; places:"+injectionHosts+";\n ranges:"+shreds, e);
+        }
+        assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars+"\n"+myLanguage+";\n "+myHostVirtualFile;
+
+        ((FileElement)parsedNode).setManager((PsiManagerEx)myPsiManager);
+
+        virtualFile.setContent(null, documentWindow.getText(), false);
+        FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
+        documentManager.getDocument(psiFile); //cache file in document user data
+        assert documentManager.getCachedPsiFile(documentWindow) == psiFile;
+        viewProvider.forceCachedPsi(psiFile);
+
+        PsiFile newFile = registerDocument(documentWindow, psiFile, place, myHostPsiFile, documentManager);
+        if (newFile != psiFile) {
+          psiFile = newFile;
+          viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
+          viewProvider.forceCachedPsi(psiFile);
+          documentWindow = (DocumentWindowImpl)viewProvider.getDocument();
+          virtualFile = (VirtualFileWindowImpl)viewProvider.getVirtualFile();
+
+          psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
+
+          keepTreeFromChameleoningBack(psiFile);
+          place.setInjectedPsi(psiFile);
+        }
       }
 
       try {
@@ -254,6 +260,16 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     }
   }
 
+  private static final Key<ASTNode> TREE_HARD_REF = Key.create("TREE_HARD_REF");
+  private static void keepTreeFromChameleoningBack(PsiFile psiFile) {
+    psiFile.getFirstChild();
+    // need to keep tree reacheable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
+    // and then being reparsed from wrong (escaped) document content
+    ASTNode node = psiFile.getNode();
+    assert !(node.getFirstChildNode() instanceof ChameleonElement);
+    psiFile.putUserData(TREE_HARD_REF, node);
+  }
+
   private void assertEverythingIsAllright(PsiDocumentManager documentManager, DocumentWindowImpl documentWindow, PsiFile psiFile) {
     boolean isAncestor = false;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
@@ -265,8 +281,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     InjectedFileViewProvider injectedFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
     assert injectedFileViewProvider.isValid();
     assert documentWindow.getText().equals(psiFile.getText());
-    assert injectedFileViewProvider.getDocument() instanceof DocumentWindowImpl;
-    assert documentManager.getCachedDocument(psiFile) == injectedFileViewProvider.getDocument();
+    assert injectedFileViewProvider.getDocument() == documentWindow;
+    assert documentManager.getCachedDocument(psiFile) == documentWindow;
+    assert injectedFileViewProvider.getDocument() == documentWindow;
     assert psiFile.getVirtualFile() == injectedFileViewProvider.getVirtualFile();
     PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
   }
