@@ -388,6 +388,10 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   };
 
+  /**
+   * DO NOT CALL DIRECTLY IN CLIENT CODE
+   * The method is internal to indexing engine end is called internally. The method is public due to implementation details
+   */
   public <K> void ensureUpToDate(final ID<K, ?> indexId) {
     if (myReentrancyGuard.get().booleanValue()) {
       //assert false : "ensureUpToDate() is not reentrant!";
