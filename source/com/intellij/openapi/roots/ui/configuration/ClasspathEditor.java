@@ -167,11 +167,9 @@ public class ClasspathEditor extends ModuleElementsEditor {
     }
 
     void apply () throws ConfigurationException {
-      if (isModified()) {
-        final String storageID = getSelectedClasspathFormat();
-        ClasspathStorage.getProvider(storageID).assertCompatible(myModel);
-        ClasspathStorage.setStorageType(myModel.getModule(), storageID);
-      }
+      final String storageID = getSelectedClasspathFormat();
+      ClasspathStorage.getProvider(storageID).assertCompatible(myModel);
+      ClasspathStorage.setStorageType(myModel.getModule(), storageID);
     }
   }
 }
