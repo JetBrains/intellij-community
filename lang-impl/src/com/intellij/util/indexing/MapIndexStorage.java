@@ -24,11 +24,12 @@ import java.util.List;
 public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
   private volatile PersistentHashMap<Key, ValueContainer<Value>> myMap;
-  private final SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
+  private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   private Key myKeyBeingRemoved = null;
   private final File myStorageFile;
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
+  private final int myCacheSize;
 
   public MapIndexStorage(File storageFile, final KeyDescriptor<Key> keyDescriptor, final DataExternalizer<Value> valueExternalizer,
                          final int cacheSize) throws IOException {
@@ -36,39 +37,25 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     myStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myValueContainerExternalizer = new ValueContainerExternalizer<Value>(valueExternalizer);
-    myMap = new PersistentHashMap<Key,ValueContainer<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
+    myCacheSize = cacheSize;
+    initMapAndCache();
+  }
 
-    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(cacheSize, (int)(Math.ceil(cacheSize * 0.25)) /* 25% from the main cache size*/) {
-      @NotNull
-      public synchronized ChangeTrackingValueContainer<Value> get(final Key key) {
-        return super.get(key);
-      }
-
-      public synchronized void put(final Key key, final ChangeTrackingValueContainer<Value> value) {
-        super.put(key, value);
-      }
-
-      public synchronized boolean remove(final Key key) {
-        return super.remove(key);
-      }
-
-      public synchronized void clear() {
-        super.clear();
-      }
-
+  private void initMapAndCache() throws IOException {
+    final PersistentHashMap<Key, ValueContainer<Value>> map =
+      new PersistentHashMap<Key, ValueContainer<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
+    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/) {
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
         return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
           public Object getLock() {
-            assert myMap != null;
-            return myMap;
+            return map;
           }
 
           public ValueContainer<Value> compute() {
-            assert myMap != null;
             ValueContainer<Value> value = null;
             try {
-              value = myMap.get(key);
+              value = map.get(key);
               if (value == null) {
                 value = new ValueContainerImpl<Value>();
               }
@@ -82,7 +69,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       }
 
       protected void onDropFromCache(final Key key, final ChangeTrackingValueContainer<Value> valueContainer) {
-        if (myMap == null || key.equals(myKeyBeingRemoved) || !valueContainer.isDirty()) {
+        if (key.equals(myKeyBeingRemoved) || !valueContainer.isDirty()) {
           return;
         }
         try {
@@ -101,7 +88,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
               myValueContainerExternalizer.save(_out, toAppend);
             }
 
-            myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+            map.appendData(key, new PersistentHashMap.ValueDataAppender() {
               public void append(final DataOutput out) throws IOException {
                 final byte[] barr = bytes.toByteArray();
                 out.write(barr);
@@ -110,7 +97,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
           }
           else {
             // rewrite the value container for defragmentation
-            myMap.put(key, valueContainer);
+            map.put(key, valueContainer);
           }
         }
         catch (IOException e) {
@@ -118,16 +105,18 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         }
       }
     };
+
+    myMap = map;
   }
-  
-  public void flush() {
+
+  public synchronized void flush() {
     if (!myMap.isClosed()) {
       myCache.clear();
       myMap.force();
     }
   }
 
-  public void close() throws StorageException {
+  public synchronized void close() throws StorageException {
     try {
       flush();
       myMap.close();
@@ -147,7 +136,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
-  public void clear() throws StorageException{
+  public synchronized void clear() throws StorageException{
     try {
       if (myMap != null) {
         myMap.close();
@@ -157,10 +146,8 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       LOG.error(e);
     }
     try {
-      myMap = null;
-      myCache.clear();
       FileUtil.delete(myStorageFile);
-      myMap = new PersistentHashMap<Key,ValueContainer<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
+      initMapAndCache();
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -177,7 +164,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
-  public boolean processKeys(final Processor<Key> processor) throws StorageException {
+  public synchronized boolean processKeys(final Processor<Key> processor) throws StorageException {
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
       return myMap.processKeys(processor);
@@ -204,7 +191,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   @NotNull
-  public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
+  public synchronized ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
     try {
       return myCache.get(key);
     }
@@ -228,7 +215,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     read(key).removeValue(inputId, value);
   }
 
-  public void remove(final Key key) throws StorageException {
+  public synchronized void remove(final Key key) throws StorageException {
     try {
       myKeyBeingRemoved = key;
       myCache.remove(key);
