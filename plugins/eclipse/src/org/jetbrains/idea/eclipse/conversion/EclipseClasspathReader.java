@@ -146,7 +146,8 @@ public class EclipseClasspathReader {
     }
 
     else if (kind.equals(EclipseXml.LIB_KIND)) {
-      final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(getPresentableName(path));
+      final String libName = getPresentableName(path);
+      final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
       final Library.ModifiableModel modifiableModel = library.getModifiableModel();
 
       modifiableModel.addRoot(getUrl(path), OrderRootType.CLASSES);
@@ -164,6 +165,8 @@ public class EclipseClasspathReader {
       }
 
       modifiableModel.commit();
+
+      setLibraryEntryExported(rootModel, exported, libName);
     }
     else if (kind.equals(EclipseXml.VAR_KIND)) {
       int slash = path.indexOf("/");
@@ -171,7 +174,8 @@ public class EclipseClasspathReader {
         throw new ConversionException("Incorrect 'classpathentry/var@path' format");
       }
 
-      final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(getPresentableName(path));
+      final String libName = getPresentableName(path);
+      final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
       final Library.ModifiableModel modifiableModel = library.getModifiableModel();
 
 
@@ -215,6 +219,8 @@ public class EclipseClasspathReader {
       }
 
       modifiableModel.commit();
+
+      setLibraryEntryExported(rootModel, exported, libName);
     }
     else if (kind.equals(EclipseXml.CON_KIND)) {
       if (path.equals(EclipseXml.ECLIPSE_PLATFORM)) {
@@ -253,6 +259,15 @@ public class EclipseClasspathReader {
     }
     else {
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
+    }
+  }
+
+  private static void setLibraryEntryExported(ModifiableRootModel rootModel, boolean exported, String libName) {
+    for (OrderEntry orderEntry : rootModel.getOrderEntries()) {
+      if (orderEntry instanceof LibraryOrderEntry && ((LibraryOrderEntry)orderEntry).isModuleLevel() && Comparing.strEqual(orderEntry.getPresentableName(), libName)) {
+        ((LibraryOrderEntry)orderEntry).setExported(exported);
+        break;
+      }
     }
   }
 

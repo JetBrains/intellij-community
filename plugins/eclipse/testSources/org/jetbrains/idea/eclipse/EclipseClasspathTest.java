@@ -85,6 +85,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testExportedLibs() throws Exception {
+    doTest();
+  }
+
   public void testPathVariables() throws Exception {
     doTest();
   }
