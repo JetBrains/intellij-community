@@ -59,6 +59,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean PERFORM_EDIT_IN_BACKGROUND = true;
   public boolean PERFORM_CHECKOUT_IN_BACKGROUND = true;
   public boolean PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
+  public boolean PERFORM_ROLLBACK_IN_BACKGROUND = false;
   public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
 
   public enum StandardOption {

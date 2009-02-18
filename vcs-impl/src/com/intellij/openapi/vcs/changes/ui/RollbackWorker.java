@@ -4,16 +4,15 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -48,11 +47,23 @@ public class RollbackWorker {
       }
     };
 
-    Runnable rollbackAction = new MyRollbackRunnable(changes, deleteLocallyAddedFiles, afterRefresh, localHistoryActionName);
+    final Runnable rollbackAction = new MyRollbackRunnable(changes, deleteLocallyAddedFiles, afterRefresh, localHistoryActionName);
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(rollbackAction, VcsBundle.message("changes.action.rollback.text"), true, myProject);
+        .run(new Task.Backgroundable(myProject, VcsBundle.message("changes.action.rollback.text"), true,
+                                     new PerformInBackgroundOption() {
+                                       public boolean shouldStartInBackground() {
+                                         return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
+                                       }
+                                       public void processSentToBackground() {
+                                         VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND = true;
+                                       }
+                                     }) {
+          public void run(@NotNull ProgressIndicator indicator) {
+            rollbackAction.run();
+          }
+        });
     }
     else {
       rollbackAction.run();

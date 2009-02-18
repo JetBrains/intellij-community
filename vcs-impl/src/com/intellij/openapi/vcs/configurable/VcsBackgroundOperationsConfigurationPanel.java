@@ -22,6 +22,7 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
   private JCheckBox myCbEditInBackground;
   private JCheckBox myCbAddRemoveInBackground;
   private JCheckBox myCbCheckoutInBackground;
+  private JCheckBox myPerformRevertInBackgroundCheckBox;
 
   public VcsBackgroundOperationsConfigurationPanel(final Project project) {
 
@@ -38,6 +39,7 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
     settings.PERFORM_CHECKOUT_IN_BACKGROUND = myCbCheckoutInBackground.isSelected();
     settings.PERFORM_EDIT_IN_BACKGROUND = myCbEditInBackground.isSelected();
     settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
+    settings.PERFORM_ROLLBACK_IN_BACKGROUND = myPerformRevertInBackgroundCheckBox.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -66,6 +68,9 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
     if (settings.PERFORM_ADD_REMOVE_IN_BACKGROUND != myCbAddRemoveInBackground.isSelected()) {
       return true;
     }
+    if (settings.PERFORM_ROLLBACK_IN_BACKGROUND != myPerformRevertInBackgroundCheckBox.isSelected()) {
+      return true;
+    }
 
     return false;
   }
@@ -77,6 +82,7 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
     myCbCheckoutInBackground.setSelected(settings.PERFORM_CHECKOUT_IN_BACKGROUND);
     myCbEditInBackground.setSelected(settings.PERFORM_EDIT_IN_BACKGROUND);
     myCbAddRemoveInBackground.setSelected(settings.PERFORM_ADD_REMOVE_IN_BACKGROUND);
+    myPerformRevertInBackgroundCheckBox.setSelected(settings.PERFORM_ROLLBACK_IN_BACKGROUND);
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());
     }
