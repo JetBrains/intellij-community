@@ -71,7 +71,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   public PsiIdentifier getNameIdentifier() {
-    return (PsiIdentifier)(getNode()).findChildByRoleAsPsiElement(ChildRole.NAME);
+    return (PsiIdentifier)getNode().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
   @NotNull
@@ -130,7 +130,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   public PsiTypeElement getReturnTypeElement() {
     if (isConstructor()) return null;
-    return (PsiTypeElement)(getNode()).findChildByRoleAsPsiElement(ChildRole.TYPE);
+    return (PsiTypeElement)getNode().findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
   public PsiTypeParameterList getTypeParameterList() {
@@ -196,7 +196,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   public PsiCodeBlock getBody() {
-    return (PsiCodeBlock)(getNode()).findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
+    return (PsiCodeBlock)getNode().findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
   }
 
   @NotNull

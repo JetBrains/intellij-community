@@ -43,7 +43,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
     return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength()) {
       LocalInspectionTool[] getInspectionTools(InspectionProfileWrapper profile) {
         LocalInspectionTool[] tools = super.getInspectionTools(profile);
-        List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(tools.length);
+        List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>();
         for (LocalInspectionTool tool : tools) {
           if (tool.runForWholeFile()) result.add(tool);
         }
