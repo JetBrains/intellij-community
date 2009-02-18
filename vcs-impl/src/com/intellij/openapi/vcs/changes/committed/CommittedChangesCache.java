@@ -640,7 +640,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           try {
             if (cache.isEmpty()) {
               pendingUpdateProcessed();
-              return;
+              continue;
             }
             debug("Processing updated files in " + cache.getLocation());
             boolean needRefresh = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
