@@ -23,7 +23,7 @@ import java.util.List;
 */
 public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
-  private volatile PersistentHashMap<Key, ValueContainer<Value>> myMap;
+  private PersistentHashMap<Key, ValueContainer<Value>> myMap;
   private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   private Key myKeyBeingRemoved = null;
   private final File myStorageFile;
