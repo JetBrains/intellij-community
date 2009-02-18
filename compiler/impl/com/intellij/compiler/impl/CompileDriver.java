@@ -876,14 +876,18 @@ public class CompileDriver {
         else if (compiler instanceof TranslatingCompiler) {
           if (!myShouldClearOutputDirectory) {
             final ArrayList<Trinity<File, String, Boolean>> toDelete = new ArrayList<Trinity<File, String, Boolean>>();
-            TranslatingCompilerFilesMonitor.getInstance().collectFiles(
-                context, 
-                (TranslatingCompiler)compiler, Arrays.<VirtualFile>asList(allSources).iterator(), 
-                true /*pass true to make sure that every source in scope file is processed*/, 
-                false /*important! should pass false to enable collection of files to delete*/, 
-                new ArrayList<VirtualFile>(), 
-                toDelete
-            );
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                TranslatingCompilerFilesMonitor.getInstance().collectFiles(
+                  context,
+                  (TranslatingCompiler)compiler, Arrays.<VirtualFile>asList(allSources).iterator(),
+                  true /*pass true to make sure that every source in scope file is processed*/,
+                  false /*important! should pass false to enable collection of files to delete*/,
+                  new ArrayList<VirtualFile>(),
+                  toDelete
+                );
+              }
+            });
             for (Trinity<File, String, Boolean> trinity : toDelete) {
               final File file = trinity.getFirst();
               final boolean deleted = deleteFile(file);
