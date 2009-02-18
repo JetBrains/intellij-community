@@ -118,4 +118,13 @@ public class FieldMayBeFinal {
             }
         }
     }
+
+    static class DoubleAssignment {
+        private String result;
+
+        public DoubleAssignment() {
+            result = "";
+            result = "";
+        }
+    }
 }

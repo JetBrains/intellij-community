@@ -73,13 +73,18 @@ public class InitializationUtils{
             return false;
         }
         final PsiStatement[] statements = block.getStatements();
+        int assignmentCount = 0;
         for(final PsiStatement statement : statements){
             if(statementAssignsVariableOrFails(statement, variable,
                     checkedMethods, strict)){
-                return true;
+                if (strict) {
+                    assignmentCount++;
+                } else {
+                    return true;
+                }
             }
         }
-        return false;
+        return assignmentCount == 1;
     }
 
     private static boolean blockFails(@Nullable PsiCodeBlock block){
