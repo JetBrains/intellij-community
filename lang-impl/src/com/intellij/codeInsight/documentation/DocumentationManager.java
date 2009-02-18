@@ -383,15 +383,16 @@ public class DocumentationManager {
     doFetchDocInfo(component, getDefaultCollector(element, null), true);
   }
 
-  public void queueFetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component) {
-    doFetchDocInfo(component, provider, false);
+  public ActionCallback queueFetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component) {
+    return doFetchDocInfo(component, provider, false);
   }
 
-  public void queueFetchDocInfo(final PsiElement element, final DocumentationComponent component) {
-    queueFetchDocInfo(getDefaultCollector(element, null), component);
+  public ActionCallback queueFetchDocInfo(final PsiElement element, final DocumentationComponent component) {
+    return queueFetchDocInfo(getDefaultCollector(element, null), component);
   }
 
-  private void doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests) {
+  private ActionCallback doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests) {
+    final ActionCallback callback = new ActionCallback();
     component.startWait();
     if (cancelRequests) {
       myUpdateDocAlarm.cancelAllRequests();
@@ -420,6 +421,7 @@ public class DocumentationManager {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               component.setText(CodeInsightBundle.message("javadoc.external.fetch.error.message", ex[0].getLocalizedMessage()), true);
+              callback.setDone();
             }
           });
           return;
@@ -440,7 +442,10 @@ public class DocumentationManager {
               }
             });
 
-            if (!element.isValid()) return;
+            if (!element.isValid()) {
+              callback.setDone();
+              return;
+            }
 
             if (text == null) {
               component.setText(CodeInsightBundle.message("no.documentation.found"), true);
@@ -454,6 +459,7 @@ public class DocumentationManager {
 
             final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
             if(jbPopup==null){
+              callback.setDone();
               return;
             }
             jbPopup.setCaption(getTitle(element));
@@ -469,10 +475,12 @@ public class DocumentationManager {
               window.validate();
               window.repaint();
             }
+            callback.setDone();
           }
         });
       }
     }, 10);
+    return callback;
   }
 
   @NotNull 

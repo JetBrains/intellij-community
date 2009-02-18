@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
@@ -16,7 +17,6 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -47,28 +47,25 @@ public final class ShowJavadocAction extends AnAction {
     tabbedPane.addTab(UIDesignerBundle.message("tab.getter"), component1);
     tabbedPane.addTab(UIDesignerBundle.message("tab.setter"), component2);
 
-    final JBPopup hint =
-      JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), inspector)
-        .setDimensionServiceKey(aClass.getProject(), DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
-        .setResizable(true)
-        .setMovable(true)
-        .setRequestFocus(true)
-        .setTitle(UIDesignerBundle.message("property.javadoc.title", introspectedProperty.getName()))
-        .createPopup();
-    component1.setHint(hint);
-    component2.setHint(hint);
-
     documentationManager.fetchDocInfo(getter, component1);
-    documentationManager.queueFetchDocInfo(setter, component2);
-
-    hint.show(new RelativePoint(inspector, new Point(0,0)));
-    SwingUtilities.invokeLater(
-      new Runnable() {
-        public void run() {
-          component1.requestFocus();
-        }
+    documentationManager.queueFetchDocInfo(setter, component2).doWhenProcessed(new Runnable() {
+      public void run() {
+        final JBPopup hint =
+          JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), component1)
+            .setDimensionServiceKey(aClass.getProject(), DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+            .setResizable(true)
+            .setMovable(true)
+            .setRequestFocus(true)
+            .setTitle(UIDesignerBundle.message("property.javadoc.title", introspectedProperty.getName()))
+            .createPopup();
+        component1.setHint(hint);
+        component2.setHint(hint);
+        Disposer.register(hint, component1);
+        Disposer.register(hint, component2);
+        hint.show(new RelativePoint(inspector, new Point(0,0)));
+        //component1.requestFocus();
       }
-    );
+    });
   }
 
   public void update(final AnActionEvent e) {
