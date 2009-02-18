@@ -3,11 +3,8 @@
   <name>Eclipse Integration</name>
   <id>org.jetbrains.idea.eclipse</id>
   <description>Provides possibility to import, export and synchronize Eclipse project files</description>
-  <version>2.0</version>
+  <version>3.0</version>
   <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains s.r.o.</vendor>
-  <change-notes>
-    <![CDATA[]]>
-  </change-notes>
   <idea-version since-build="7020"/>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
@@ -16,9 +13,12 @@
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.idea.eclipse.config.EclipseFileTypeFactory"/>
-    <moduleService serviceInterface="org.jetbrains.idea.eclipse.config.EclipseModuleManager"
-                   serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManager"/>
   </extensions>
+  <module-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.eclipse.config.EclipseModuleManager</implementation-class>
+    </component>
+  </module-components>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export to Eclipse">
       <add-to-group group-id="ExportImportGroup" anchor="after" relative-to-action="ImportSettings"/>

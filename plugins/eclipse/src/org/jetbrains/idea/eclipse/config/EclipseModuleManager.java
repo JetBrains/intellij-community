@@ -17,11 +17,15 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleServiceManager;
+import org.jetbrains.annotations.NotNull;
 
-public class EclipseModuleManager {
+public class EclipseModuleManager implements ModuleComponent{
 
   private CachedXmlDocumentSet myDocumentSet;
+
+  public EclipseModuleManager(Module module) {}
 
   public static EclipseModuleManager getInstance(Module module) {
     return ModuleServiceManager.getService(module, EclipseModuleManager.class);
@@ -34,4 +38,19 @@ public class EclipseModuleManager {
   public void setDocumentSet(final CachedXmlDocumentSet documentSet) {
     myDocumentSet = documentSet;
   }
+
+  public void projectOpened() {}
+
+  public void projectClosed() {}
+
+  public void moduleAdded() {}
+
+  @NotNull
+  public String getComponentName() {
+    return "EclipseModuleManager";
+  }
+
+  public void initComponent() {}
+
+  public void disposeComponent() {}
 }
