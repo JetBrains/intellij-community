@@ -275,7 +275,8 @@ public class ClasspathStorage implements StateStorage {
     }
     else if (new File(storageRef).isAbsolute()) {
       return storageRef;
-    } else {
+    }
+    else {
       return FileUtil.toSystemIndependentName(new File(moduleRoot, storageRef).getPath());
     }
   }
@@ -294,11 +295,7 @@ public class ClasspathStorage implements StateStorage {
     }
     else {
       module.setOption(CLASSPATH_OPTION, storageID);
-      final String storageRoot = getStorageRoot(module, null);
-      final String relPath = storageRoot != null ? FileUtil.getRelativePath(new File(getModuleDir(module)), new File(storageRoot)) : null;
-      if (relPath != null && !relPath.equals(".")) {
-        module.setOption(CLASSPATH_DIR_OPTION, relPath);
-      }
+      module.setOption(CLASSPATH_DIR_OPTION, getStorageRoot(module, null));
     }
   }
 
