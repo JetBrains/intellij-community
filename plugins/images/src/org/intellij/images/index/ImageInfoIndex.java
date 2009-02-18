@@ -5,23 +5,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.KeyDescriptor;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * @author spleaner
  */
-public class ImageInfoIndex implements FileBasedIndexExtension {
+public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfoIndex.ImageInfo> {
   public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
 
   private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
@@ -43,39 +38,23 @@ public class ImageInfoIndex implements FileBasedIndexExtension {
     }
   };
 
-  private DataIndexer<Integer, ImageInfo, FileContent> myDataIndexer = new DataIndexer<Integer, ImageInfo, FileContent>() {
-    @NotNull
-    public Map<Integer, ImageInfo> map(FileContent inputData) {
-      final ImageInfo info = fetchImageInfo(inputData.getContent());
-      //noinspection unchecked
-      return info == null ? Collections.EMPTY_MAP : Collections.singletonMap(Math.abs(FileBasedIndex.getFileId(inputData.getFile())), info);
+  private SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
+    protected ImageInfo computeValue(@NotNull FileContent inputData) {
+      final ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent());
+      return info != null? new ImageInfo(info.width, info.height, info.bpp) : null;
     }
   };
 
-  public ID getName() {
+  public ID<Integer, ImageInfo> getName() {
     return INDEX_ID;
   }
 
-  public DataIndexer getIndexer() {
+  public SingleEntryIndexer<ImageInfo> getIndexer() {
     return myDataIndexer;
   }
 
-  @Nullable
-  private static ImageInfo fetchImageInfo(final byte[] data) {
-    final ImageInfoReader.Info info = ImageInfoReader.getInfo(data);
-    if (info != null) {
-      return new ImageInfo(info.width, info.height, info.bpp);
-    }
-
-    return null;
-  }
-
   public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<ImageInfo> processor) {
-    FileBasedIndex.getInstance().processValues(INDEX_ID, FileBasedIndex.getFileId(virtualFile), virtualFile, processor, VirtualFileFilter.ALL);
-  }
-
-  public KeyDescriptor<Integer> getKeyDescriptor() {
-    return new EnumeratorIntegerDescriptor();
+    FileBasedIndex.getInstance().processValues(INDEX_ID, Math.abs(FileBasedIndex.getFileId(virtualFile)), virtualFile, processor, VirtualFileFilter.ALL);
   }
 
   public DataExternalizer<ImageInfo> getValueExternalizer() {
@@ -86,16 +65,8 @@ public class ImageInfoIndex implements FileBasedIndexExtension {
     return myInputFilter;
   }
 
-  public boolean dependsOnFileContent() {
-    return true;
-  }
-
   public int getVersion() {
     return 2;
-  }
-
-  public int getCacheSize() {
-    return DEFAULT_CACHE_SIZE;
   }
 
   public static class ImageInfo {
