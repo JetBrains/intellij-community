@@ -31,8 +31,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,14 +38,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author spleaner
  */
-public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLinkTagIndex.InfoHolder<HtmlLinkTagIndex.LinkInfo>> {
+public class HtmlLinkTagIndex extends SingleEntryFileBasedIndexExtension<HtmlLinkTagIndex.InfoHolder<HtmlLinkTagIndex.LinkInfo>> {
   public static final ID<Integer, InfoHolder<LinkInfo>> INDEX_ID = ID.create("HtmlLinkTagIndex");
-  private final EnumeratorIntegerDescriptor myKeyDescriptor = new EnumeratorIntegerDescriptor();
 
   @NonNls private static final String LINK = "link";
   @NonNls private static final String HREF_ATTR = "href";
@@ -192,11 +191,9 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
     return result;
   }
 
-  public DataIndexer<Integer, InfoHolder<LinkInfo>, FileContent> getIndexer() {
-    return new DataIndexer<Integer, InfoHolder<LinkInfo>, FileContent>() {
-      @NotNull
-      public Map<Integer, InfoHolder<LinkInfo>> map(final FileContent inputData) {
-        final int id = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
+  public SingleEntryIndexer<InfoHolder<LinkInfo>> getIndexer() {
+    return new SingleEntryIndexer<InfoHolder<LinkInfo>>(false) {
+      protected InfoHolder<LinkInfo> computeValue(@NotNull FileContent inputData) {
         final Language language = ((LanguageFileType)inputData.getFileType()).getLanguage();
 
         final List<LinkInfo> result = new ArrayList<LinkInfo>();
@@ -208,7 +205,7 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
           mapJsp(inputData, language, result);
         }
 
-        return Collections.singletonMap(id, new InfoHolder<LinkInfo>(result.toArray(new LinkInfo[result.size()])));
+        return new InfoHolder<LinkInfo>(result.toArray(new LinkInfo[result.size()]));
       }
     };
   }
@@ -393,10 +390,6 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
     result.add(new LinkInfo(offset, scripted, hrefValue, mediaValue, typeValue, relValue, titleValue));
   }
 
-  public KeyDescriptor<Integer> getKeyDescriptor() {
-    return myKeyDescriptor;
-  }
-
   public DataExternalizer<InfoHolder<LinkInfo>> getValueExternalizer() {
     return myValueExternalizer;
   }
@@ -405,18 +398,9 @@ public class HtmlLinkTagIndex implements FileBasedIndexExtension<Integer, HtmlLi
     return myInputFilter;
   }
 
-  public boolean dependsOnFileContent() {
-    return true;
-  }
-
   public int getVersion() {
     return 4;
   }
-
-  public int getCacheSize() {
-    return DEFAULT_CACHE_SIZE;
-  }
-
 
   public static class LinkInfo {
     public int offset;
