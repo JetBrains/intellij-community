@@ -138,9 +138,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
   public synchronized void clear() throws StorageException{
     try {
-      if (myMap != null) {
-        myMap.close();
-      }
+      myMap.close();
     }
     catch (IOException e) {
       LOG.error(e);
