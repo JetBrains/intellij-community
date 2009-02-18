@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
 import org.jdom.Document;
@@ -71,7 +70,9 @@ public class EclipseImlTest extends IdeaTestCase {
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    new EclipseClasspathReader(path, rootModel.addContentEntry(VfsUtil.pathToUrl(path)), getProject())
+    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, getProject());
+    classpathReader.init(rootModel);
+    classpathReader
       .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null, classpathElement);
     rootModel.commit();
     final RootModelImpl model = (RootModelImpl)ModuleRootManager.getInstance(module).getModifiableModel();

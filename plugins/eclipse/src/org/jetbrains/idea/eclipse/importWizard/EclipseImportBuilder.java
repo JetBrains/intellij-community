@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -27,7 +26,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jdom.Element;
@@ -184,10 +182,11 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         rootModels[idx++] = rootModel;
 
         final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-        final ContentEntry contentEntry = rootModel.addContentEntry(VfsUtil.pathToUrl(path));
+        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project);
+        classpathReader.init(rootModel);
         if (classpathFile.exists()) {
           final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();
-          new EclipseClasspathReader(path, contentEntry, project).readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
+          classpathReader.readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
                                                                   getParameters().converterOptions.testPattern, classpathElement);
         }
         ClasspathStorage.setStorageType(module,

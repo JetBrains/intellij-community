@@ -55,10 +55,14 @@ public class EclipseClasspathReader {
   private final Project myProject;
   private ContentEntry myContentEntry;
 
-  public EclipseClasspathReader(final String rootPath, ContentEntry contentEntry, final Project project) {
+  public EclipseClasspathReader(final String rootPath, final Project project) {
     myRootPath = rootPath;
-    myContentEntry = contentEntry;
     myProject = project;
+  }
+
+  public void init(ModifiableRootModel model) {
+    myContentEntry = model.addContentEntry(VfsUtil.pathToUrl(myRootPath));
+    model.inheritSdk();
   }
 
   public static void collectVariables(Set<String> usedVariables, Element classpathElement) {
@@ -135,7 +139,7 @@ public class EclipseClasspathReader {
         rootModel.addInvalidModuleEntry(moduleName).setExported(exported);
       }
       else {
-        getContentEntry(rootModel).addSourceFolder(VfsUtil.pathToUrl(myRootPath + "/" + path), testPattern != null && path.matches(testPattern));
+        getContentEntry().addSourceFolder(VfsUtil.pathToUrl(myRootPath + "/" + path), testPattern != null && path.matches(testPattern));
       }
     }
 
@@ -301,7 +305,7 @@ public class EclipseClasspathReader {
     return idx < 0 || idx == path.length() - 1 ? null : path.substring(idx + 1);
   }
 
-  private ContentEntry getContentEntry(final ModifiableRootModel rootModel) {
+  private ContentEntry getContentEntry() {
     return myContentEntry;
   }
 

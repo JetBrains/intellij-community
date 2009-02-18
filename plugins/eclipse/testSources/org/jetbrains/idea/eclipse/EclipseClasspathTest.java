@@ -30,7 +30,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
 import org.jdom.Document;
@@ -69,8 +68,9 @@ public class EclipseClasspathTest extends IdeaTestCase {
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    new EclipseClasspathReader(path, rootModel.addContentEntry(VfsUtil.pathToUrl(path)), getProject())
-      .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null, classpathElement);
+    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, getProject());
+    classpathReader.init(rootModel);
+    classpathReader.readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null, classpathElement);
     rootModel.commit();
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final Element resultClasspathElement = new Element(EclipseXml.CLASSPATH_TAG);

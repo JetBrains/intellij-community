@@ -12,7 +12,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -159,14 +158,15 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final CachedXmlDocumentSet documentSet = getFileSet();
         final VirtualFile vFile = documentSet.getVFile(EclipseXml.PROJECT_FILE);
         final String path = vFile.getParent().getPath();
-        final ContentEntry contentEntry = model.addContentEntry(VfsUtil.pathToUrl(path));
+
+        final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path,  module.getProject());
+        classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
           final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
           if (documentSet.exists(eml)) {
             EclipseClasspathReader.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
           }
 
-          final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, contentEntry, module.getProject());
           classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
                                         documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
 
