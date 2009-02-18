@@ -7,6 +7,13 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
   private File remoteRepoDir;
 
   @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    // disable local mirrors
+    setCustomSettingsFile("<settings></settings>");
+  }
+
+  @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
 
@@ -87,19 +94,89 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
 
     removeFromLocalRepository("test");
-    
+
     importProject();
     assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
   }
 
+  public void testAttachingCorrectJavaDocsAndSources() throws Exception {
+    deployArtifact("test", "foo", "1-SNAPSHOT",
+                   "<build>" +
+                   "  <plugins>" +
+                   "    <plugin>" +
+                   "      <artifactId>maven-source-plugin</artifactId>" +
+                   "      <executions>" +
+                   "        <execution>" +
+                   "          <goals>" +
+                   "            <goal>jar</goal>" +
+                   "          </goals>" +
+                   "        </execution>" +
+                   "      </executions>" +
+                   "    </plugin>" +
+                   "    <plugin>" +
+                   "      <artifactId>maven-javadoc-plugin</artifactId>" +
+                   "      <executions>" +
+                   "        <execution>" +
+                   "          <goals>" +
+                   "            <goal>jar</goal>" +
+                   "          </goals>" +
+                   "        </execution>" +
+                   "      </executions>" +
+                   "    </plugin>" +
+                   "  </plugins>" +
+                   "</build>");
+
+    removeFromLocalRepository("test");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  repositoriesSection() +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>foo</artifactId>" +
+                  "    <version>1-SNAPSHOT</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+    assertModuleLibDep("project", "Maven: test:foo:1-SNAPSHOT");
+
+    resolveProject();
+    download();
+    assertModuleLibDep("project",
+                       "Maven: test:foo:1-SNAPSHOT",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/");
+
+    assertTrue(new File(getRepositoryFile(), "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists());
+    assertTrue(new File(getRepositoryFile(), "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists());
+    assertTrue(new File(getRepositoryFile(), "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists());
+  }
+
   private void deployArtifact(String groupId, String artifactId, String version) throws IOException {
+    deployArtifact(groupId, artifactId, version, "");
+  }
+
+  private void deployArtifact(String groupId, String artifactId, String version, String tail) throws IOException {
     String moduleName = "___" + artifactId;
+
+    createProjectSubFile(moduleName + "/src/main/java/Foo.java",
+                         "/**\n" +
+                         " * some doc\n" +
+                         " */\n" +
+                         "public class Foo { }");
+
     createModulePom(moduleName,
                     "<groupId>" + groupId + "</groupId>" +
                     "<artifactId>" + artifactId + "</artifactId>" +
                     "<version>" + version + "</version>" +
 
-                    distributionManagementSection());
+                    distributionManagementSection() +
+
+                    tail);
 
     deploy(moduleName);
   }
@@ -113,16 +190,20 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
            "  <repository>" +
            "    <id>internal</id>" +
            "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
+           "    <snapshots>" +
+           "      <enabled>true</enabled>" +
+           "      <updatePolicy>always</updatePolicy>" +
+           "    </snapshots>" +
            "  </repository>" +
            "</repositories>";
   }
 
   private String distributionManagementSection() {
-     return "<distributionManagement>" +
-            "  <repository>" +
-            "    <id>internal</id>" +
-            "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
-            "  </repository>" +
-            "</distributionManagement>";
+    return "<distributionManagement>" +
+           "  <snapshotRepository>" +
+           "    <id>internal</id>" +
+           "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
+           "  </snapshotRepository>" +
+           "</distributionManagement>";
   }
 }

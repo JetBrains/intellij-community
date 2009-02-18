@@ -348,6 +348,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myMavenProjectsManager.updateFolders();
   }
 
+  protected void download() throws Exception {
+    myMavenProjectsManager.downloadArtifacts();
+  }
+
   protected void executeGoal(String relativePath, String goal) {
     VirtualFile dir = myProjectRoot.findFileByRelativePath(relativePath);
 

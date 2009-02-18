@@ -109,8 +109,4 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
 
     assertTrue(f.exists());
   }
-
-  private void download() throws Exception {
-    myMavenProjectsManager.downloadArtifacts();
-  }
 }
