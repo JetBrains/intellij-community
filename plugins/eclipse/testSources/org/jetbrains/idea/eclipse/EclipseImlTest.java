@@ -37,8 +37,8 @@ import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
-import org.jetbrains.idea.eclipse.reader.EclipseClasspathReader;
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
+import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -66,7 +66,8 @@ public class EclipseImlTest extends IdeaTestCase {
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
         return ModuleManager.getInstance(getProject())
-          .newModule(new File(path).getParent() + File.separator + EclipseProjectFinder.findProjectName(path) + File.separator + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
+          .newModule(new File(path).getParent() + File.separator + EclipseProjectFinder.findProjectName(path) + File.separator + EclipseProjectFinder
+            .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();

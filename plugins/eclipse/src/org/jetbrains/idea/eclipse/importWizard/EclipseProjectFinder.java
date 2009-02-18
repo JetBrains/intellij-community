@@ -18,7 +18,7 @@
  * User: anna
  * Date: 11-Nov-2008
  */
-package org.jetbrains.idea.eclipse.find;
+package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;

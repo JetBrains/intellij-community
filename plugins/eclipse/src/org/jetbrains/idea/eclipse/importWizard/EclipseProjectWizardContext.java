@@ -1,4 +1,4 @@
-package org.jetbrains.idea.eclipse.action;
+package org.jetbrains.idea.eclipse.importWizard;
 
 import org.jetbrains.annotations.Nullable;
 

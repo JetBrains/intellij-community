@@ -16,10 +16,6 @@ public class JDOMCompare {
     return diffElements(documentExpected.getRootElement(), documentActual.getRootElement(), "", 0 );
   }
 
-  public static String diffElements(Element elementExpected, Element elementActual){
-    return diffElements(elementExpected, elementActual, "", 0 );
-  }
-
   public static String diffElements(Element elementExpected, Element elementActual, String pathPrefix, int order) {
     final String expectedTag = elementExpected.getName();
     pathPrefix = MessageFormat.format("{0}/{1}[{2}]", pathPrefix, expectedTag, order);

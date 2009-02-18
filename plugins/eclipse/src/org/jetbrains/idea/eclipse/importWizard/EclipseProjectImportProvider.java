@@ -2,7 +2,7 @@
  * User: anna
  * Date: 12-Jul-2007
  */
-package org.jetbrains.idea.eclipse.action;
+package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;

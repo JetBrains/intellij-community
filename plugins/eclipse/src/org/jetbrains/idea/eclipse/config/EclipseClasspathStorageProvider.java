@@ -20,13 +20,12 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.ConversionException;
+import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.action.EclipseBundle;
-import org.jetbrains.idea.eclipse.reader.EclipseClasspathReader;
-import org.jetbrains.idea.eclipse.util.XmlDocumentSet;
-import org.jetbrains.idea.eclipse.writer.EclipseClasspathWriter;
+import org.jetbrains.idea.eclipse.conversion.ConversionException;
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,38 +93,11 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     return null;
   }
 
-  static void registerFiles(final CachedFileSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
+  static void registerFiles(final CachedXmlDocumentSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
     fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
     fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);
     fileCache.register(EclipseXml.PLUGIN_XML_FILE, storageRoot);
     fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, moduleRoot);
-  }
-
-  static XmlDocumentSet getDocumentSet(final Module module) {
-    final CachedXmlDocumentSet fileCache = getFileCache(module);
-
-    return new XmlDocumentSet() {
-
-      public boolean exists(final String name) {
-        return fileCache.exists(name);
-      }
-
-      public String getParent(String name) {
-        return fileCache.getParent(name);
-      }
-
-      public Document read(String name) throws IOException, JDOMException {
-        return fileCache.read(name);
-      }
-
-      public void write(Document document, String name) throws IOException {
-        fileCache.write(document, name);
-      }
-
-      public void delete(String name) {
-        fileCache.delete(name);
-      }
-    };
   }
 
   static CachedXmlDocumentSet getFileCache(final Module module) {
@@ -142,7 +114,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   public void moduleRenamed(final Module module, String newName) {
     if (ClasspathStorage.getStorageType(module).equals(ID)) {
       try {
-        final XmlDocumentSet documentSet = getDocumentSet(module);
+        final CachedXmlDocumentSet documentSet = getFileCache(module);
 
 
         final String oldEmlName = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;

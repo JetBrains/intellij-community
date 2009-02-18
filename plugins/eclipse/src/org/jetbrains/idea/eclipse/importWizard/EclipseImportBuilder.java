@@ -1,4 +1,4 @@
-package org.jetbrains.idea.eclipse.action;
+package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,11 +34,11 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
-import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
-import org.jetbrains.idea.eclipse.reader.EclipseClasspathReader;
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import javax.swing.*;
 import java.io.File;

@@ -35,9 +35,9 @@ import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
-import org.jetbrains.idea.eclipse.reader.EclipseClasspathReader;
-import org.jetbrains.idea.eclipse.writer.EclipseClasspathWriter;
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
+import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -2,7 +2,7 @@ package org.jetbrains.idea.eclipse.util;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.eclipse.ConversionException;
+import org.jetbrains.idea.eclipse.conversion.ConversionException;
 
 import java.io.IOException;
 

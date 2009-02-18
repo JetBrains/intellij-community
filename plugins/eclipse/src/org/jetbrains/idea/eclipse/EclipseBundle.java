@@ -1,4 +1,4 @@
-package org.jetbrains.idea.eclipse.action;
+package org.jetbrains.idea.eclipse;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;

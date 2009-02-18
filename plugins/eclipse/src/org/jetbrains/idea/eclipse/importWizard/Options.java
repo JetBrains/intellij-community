@@ -18,7 +18,7 @@
  * User: anna
  * Date: 11-Nov-2008
  */
-package org.jetbrains.idea.eclipse.action;
+package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;

@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.action.EclipseBundle;
+import org.jetbrains.idea.eclipse.EclipseBundle;
 
 import javax.swing.*;
 import java.util.List;

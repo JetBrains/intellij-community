@@ -2,14 +2,13 @@
  * User: anna
  * Date: 12-Jul-2007
  */
-package org.jetbrains.idea.eclipse.action;
+package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
-import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
 
 import java.util.List;
 

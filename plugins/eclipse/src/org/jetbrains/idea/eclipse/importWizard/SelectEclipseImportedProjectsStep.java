@@ -2,7 +2,7 @@
  * User: anna
  * Date: 12-Jul-2007
  */
-package org.jetbrains.idea.eclipse.action;
+package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -13,7 +13,6 @@ import com.intellij.projectImport.SelectImportedProjectsStep;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.find.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
 import javax.swing.*;
