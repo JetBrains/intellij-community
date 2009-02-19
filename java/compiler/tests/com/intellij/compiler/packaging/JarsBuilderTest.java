@@ -88,9 +88,9 @@ public class JarsBuilderTest extends IncrementalPackagingTestCase {
 
   private static class MyJarsBuilder extends JarsBuilder {
     private int myTempFileCount = 0;
-    private List<String> myOutput = new ArrayList<String>();
-    private Map<String, String> mySources = new HashMap<String, String>();
-    private Set<String> myCreatedTempFiles = new HashSet<String>();
+    private final List<String> myOutput = new ArrayList<String>();
+    private final Map<String, String> mySources = new HashMap<String, String>();
+    private final Set<String> myCreatedTempFiles = new HashSet<String>();
     private String myCurrentJar;
 
     public MyJarsBuilder(final Set<JarInfo> jarsToBuild) {
