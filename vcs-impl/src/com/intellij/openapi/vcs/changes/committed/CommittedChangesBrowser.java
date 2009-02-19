@@ -38,13 +38,13 @@ import java.util.List;
  * @author max
  */
 public class CommittedChangesBrowser extends JPanel {
-  private Project myProject;
+  private final Project myProject;
   private final TableView<CommittedChangeList> myChangeListsView;
   private final ChangesBrowser myChangesView;
   private CommittedChangesTableModel myTableModel;
   private final JEditorPane myCommitMessageArea;
   private CommittedChangeList mySelectedChangeList;
-  private JPanel myLeftPanel;
+  private final JPanel myLeftPanel;
 
   public CommittedChangesBrowser(final Project project, final CommittedChangesTableModel tableModel) {
     super(new BorderLayout());

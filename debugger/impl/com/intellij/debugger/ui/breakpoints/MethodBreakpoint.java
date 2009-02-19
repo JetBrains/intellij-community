@@ -54,9 +54,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   public static Icon ICON = IconLoader.getIcon("/debugger/db_method_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.png");
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png");
-  private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png");
-  private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png");
-  private static Icon ourVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_method_warning_breakpoint.png");
+  private static final Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png");
+  private static final Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png");
+  private static final Icon ourVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_method_warning_breakpoint.png");
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
 
   protected MethodBreakpoint(Project project) {

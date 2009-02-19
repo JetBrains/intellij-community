@@ -49,7 +49,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   protected ErrorMessagesProcessor myErrorMessageProcessor = new ErrorMessagesProcessor(myErrors);
   private int myFilesToProcess = -1;
   private int myProcessedFiles = 0;
-  private CvsMessagesConsole myMessagesConsole;
+  private final CvsMessagesConsole myMessagesConsole;
   private final String myTitle;
   protected CvsListenerWithProgress myProgressListener;
   private final FileSetToBeUpdated myFiles;

@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class DebuggerAction extends AnAction {
-  private static DebuggerTreeNodeImpl[] EMPTY_TREE_NODE_ARRAY = new DebuggerTreeNodeImpl[0];
+  private static final DebuggerTreeNodeImpl[] EMPTY_TREE_NODE_ARRAY = new DebuggerTreeNodeImpl[0];
 
   @Nullable
   public static DebuggerTree getTree(DataContext dataContext){

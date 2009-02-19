@@ -103,7 +103,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
   }
 
   public static class ChangeListNumberColumn extends ChangeListColumn<CommittedChangeList> {
-    private String myTitle;
+    private final String myTitle;
 
     public ChangeListNumberColumn(final String title) {
       myTitle = title;

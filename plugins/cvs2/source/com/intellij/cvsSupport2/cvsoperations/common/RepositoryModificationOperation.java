@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepositoryModificationOperation extends CompositeOperaton {
-  private CvsOperationOnFiles myRemoveRequests;
-  private CommitFilesOperation myCommitRequests;
+  private final CvsOperationOnFiles myRemoveRequests;
+  private final CommitFilesOperation myCommitRequests;
   private int myAddedFilesCount = 0;
 
   public static RepositoryModificationOperation

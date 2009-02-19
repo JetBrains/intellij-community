@@ -773,7 +773,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return findLatestKnownPsiForUncomittedDocument(document);
   }
 
-  private StorageGuard myStorageLock = new StorageGuard();
+  private final StorageGuard myStorageLock = new StorageGuard();
 
   private StorageGuard.Holder setDataBufferingEnabled(final boolean enabled) {
     final StorageGuard.Holder holder = myStorageLock.enter(enabled);

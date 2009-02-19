@@ -80,18 +80,18 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
 
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
-  private Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
-  private Map<AdditionalTabComponent, ContentManagerListener> myContentListeners =
+  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
+  private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners =
     new HashMap<AdditionalTabComponent, ContentManagerListener>();
 
   private final LogFilesManager myManager;
-  private FramesPanel myFramesPanel;
-  private RunnerLayoutUi myUi;
+  private final FramesPanel myFramesPanel;
+  private final RunnerLayoutUi myUi;
   private ExecutionEnvironment myEnvironment;
   private RunProfile myConfiguration;
 
   public static final String BREAKPOINT_CONDITION = "breakpoint";
-  private ThreadsPanel myThreadsPanel;
+  private final ThreadsPanel myThreadsPanel;
 
   public DebuggerSessionTab(Project project, String sessionName) {
     myProject = project;

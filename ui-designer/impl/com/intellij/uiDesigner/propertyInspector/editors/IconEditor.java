@@ -25,7 +25,7 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class IconEditor extends PropertyEditor<IconDescriptor> {
-  private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
+  private final TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private IconDescriptor myValue;
   private Module myModule;
 

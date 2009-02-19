@@ -5,7 +5,7 @@ import java.util.List;
 
 // todo move to com.intellij.util
 public class Reversed<T> implements Iterable<T> {
-  private List<T> myList;
+  private final List<T> myList;
 
   public static <T> Reversed<T> list(List<T> l) {
     return new Reversed<T>(l);

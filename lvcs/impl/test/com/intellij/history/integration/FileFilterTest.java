@@ -15,11 +15,11 @@ public class FileFilterTest {
   private TestVirtualFile f1 = new TestVirtualFile("", null, -1);
   private TestVirtualFile f2 = new TestVirtualFile("", null, -1);
 
-  private FileType binary = createFileType(true);
-  private FileType nonBinary = createFileType(false);
+  private final FileType binary = createFileType(true);
+  private final FileType nonBinary = createFileType(false);
 
-  private FileIndex fi = createMock(FileIndex.class);
-  private FileTypeManager tm = createMock(FileTypeManager.class);
+  private final FileIndex fi = createMock(FileIndex.class);
+  private final FileTypeManager tm = createMock(FileTypeManager.class);
 
   @Test
   public void testIsAllowedAndUnderContentRoot() {

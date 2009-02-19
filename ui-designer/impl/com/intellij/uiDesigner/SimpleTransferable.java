@@ -14,11 +14,11 @@ import java.io.IOException;
  */
 public final class SimpleTransferable<T> implements Transferable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.SimpleTransferable");
-  private static Map<String, DataFlavor> ourDataFlavorMap = new HashMap<String, DataFlavor>();
+  private static final Map<String, DataFlavor> ourDataFlavorMap = new HashMap<String, DataFlavor>();
 
   private final T myDataProxy;
-  private Class<T> myDataClass;
-  private DataFlavor myDataFlavor;
+  private final Class<T> myDataClass;
+  private final DataFlavor myDataFlavor;
 
   public SimpleTransferable(final T data, final Class<T> dataClass) {
     myDataProxy = data;

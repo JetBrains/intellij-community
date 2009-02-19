@@ -33,8 +33,8 @@ import java.util.List;
  * @author nik
  */
 public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
-  private XDebuggerTreePanel myTreePanel;
-  private List<String> myWatchExpressions = new ArrayList<String>();
+  private final XDebuggerTreePanel myTreePanel;
+  private final List<String> myWatchExpressions = new ArrayList<String>();
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
 

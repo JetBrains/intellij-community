@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DummyEntryPointsTool extends FilteringInspectionTool {
   private RefEntryPointFilter myFilter;
-  private DeadCodeInspection myOwner;
+  private final DeadCodeInspection myOwner;
   private QuickFixAction[] myQuickFixActions;
 
   public DummyEntryPointsTool(DeadCodeInspection owner) {

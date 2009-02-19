@@ -22,7 +22,7 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class VcsMappingConfigurationDialog extends DialogWrapper {
-  private Project myProject;
+  private final Project myProject;
   private JComboBox myVCSComboBox;
   private TextFieldWithBrowseButton myDirectoryTextField;
   private JPanel myPanel;

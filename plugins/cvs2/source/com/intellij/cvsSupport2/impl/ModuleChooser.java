@@ -16,8 +16,8 @@ import java.util.ArrayList;
  * author: lesya
  */
 public class ModuleChooser extends CvsWizard {
-  private SelectCVSConfigurationStep mySelectCVSConfigurationStep;
-  private SelectCvsElementStep mySelectCvsElementStep;
+  private final SelectCVSConfigurationStep mySelectCVSConfigurationStep;
+  private final SelectCvsElementStep mySelectCvsElementStep;
 
   public ModuleChooser(Project project, 
                        boolean allowFileSelection,

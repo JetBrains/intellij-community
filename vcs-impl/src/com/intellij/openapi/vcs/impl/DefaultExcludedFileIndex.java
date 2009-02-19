@@ -9,8 +9,8 @@ import com.intellij.platform.ProjectBaseDirectory;
  * @author yole
  */
 public class DefaultExcludedFileIndex extends ExcludedFileIndex {
-  private Project myProject;
-  private VirtualFile myBaseDir;
+  private final Project myProject;
+  private final VirtualFile myBaseDir;
 
   public DefaultExcludedFileIndex(final Project project) {
     super(project);

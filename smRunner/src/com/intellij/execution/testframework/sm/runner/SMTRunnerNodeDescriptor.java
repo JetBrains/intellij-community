@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
  */
 public class SMTRunnerNodeDescriptor extends NodeDescriptor<SMTestProxy>
 {
-  private SMTestProxy myElement;
+  private final SMTestProxy myElement;
 
   public SMTRunnerNodeDescriptor(final Project project,
                                 final SMTestProxy element,

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
-  private Project myProject;
+  private final Project myProject;
   private static final FileTypeManager FILE_TYPE_MANAGER = FileTypeManager.getInstance();
 
   public JavaCompiler(Project project) {
@@ -67,8 +67,8 @@ public class JavaCompiler implements TranslatingCompiler {
 
   private static class ExitStatusImpl implements ExitStatus {
 
-    private OutputItem[] myOuitputItems;
-    private VirtualFile[] myMyFilesToRecompile;
+    private final OutputItem[] myOuitputItems;
+    private final VirtualFile[] myMyFilesToRecompile;
 
     public ExitStatusImpl(OutputItem[] ouitputItems, VirtualFile[] myFilesToRecompile) {
       myOuitputItems = ouitputItems;

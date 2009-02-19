@@ -118,7 +118,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
   }
 
   private static class EditDependencyRulesAction implements LocalQuickFix {
-    private DependencyRule myRule;
+    private final DependencyRule myRule;
     public EditDependencyRulesAction(DependencyRule rule) {
       myRule = rule;
     }

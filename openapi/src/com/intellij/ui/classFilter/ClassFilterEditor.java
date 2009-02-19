@@ -170,7 +170,7 @@ public class ClassFilterEditor extends JPanel {
   }
 
   protected final class FilterTableModel extends AbstractTableModel implements ItemRemovable{
-    private List<ClassFilter> myFilters = new LinkedList<ClassFilter>();
+    private final List<ClassFilter> myFilters = new LinkedList<ClassFilter>();
     public static final int CHECK_MARK = 0;
     public static final int FILTER = 1;
 
@@ -272,7 +272,7 @@ public class ClassFilterEditor extends JPanel {
   }
 
   private class EnabledCellRenderer extends DefaultTableCellRenderer {
-    private TableCellRenderer myDelegate;
+    private final TableCellRenderer myDelegate;
 
     public EnabledCellRenderer(TableCellRenderer delegate) {
       myDelegate = delegate;

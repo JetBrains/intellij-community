@@ -98,7 +98,7 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
   private static class MyGenerationItem implements GenerationItem {
     private final String myRelPath;
     private final Module myModule;
-    private boolean myIsTestSource;
+    private final boolean myIsTestSource;
 
     public MyGenerationItem(String relPath, Module module, final boolean isTestSource) {
       myRelPath = relPath;

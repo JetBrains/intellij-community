@@ -43,10 +43,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class TemplateCommentPanel implements SearchableConfigurable {
-  private CopyrightManager myManager;
+  private final CopyrightManager myManager;
 
-  private FileType fileType;
-  private TemplateCommentPanel parentPanel;
+  private final FileType fileType;
+  private final TemplateCommentPanel parentPanel;
   private JRadioButton[] fileLocations = null;
 
   private JTextArea preview;
@@ -100,7 +100,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     txtFiller.setEnabled(either);
   }
 
-  private EventListenerList listeners = new EventListenerList();
+  private final EventListenerList listeners = new EventListenerList();
   private boolean allowBlock = false;
 
 

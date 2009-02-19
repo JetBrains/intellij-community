@@ -19,7 +19,7 @@ import java.util.Stack;
  */
 public class TreeBasedMap<T> {
   private Node<T> myRoot = new Node<T>();
-  private StringInterner myInterner;
+  private final StringInterner myInterner;
   private final char mySeparator;
   private int mySize = 0;
 
@@ -145,8 +145,8 @@ public class TreeBasedMap<T> {
 
 
   private class KeysIterator implements Iterator<String> {
-    private Stack<PathElement<T>> myCurrentNodePath = new Stack<PathElement<T>>();
-    private StringBuilder myCurrentName = new StringBuilder();
+    private final Stack<PathElement<T>> myCurrentNodePath = new Stack<PathElement<T>>();
+    private final StringBuilder myCurrentName = new StringBuilder();
 
     public KeysIterator() {
       pushNode("", myRoot);

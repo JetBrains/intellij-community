@@ -12,7 +12,7 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public abstract class BaseColumn extends ColumnInfo<SMTestProxy, String> {
-  private NullableFunction<List<SMTestProxy>, Object> oldSortFun =
+  private final NullableFunction<List<SMTestProxy>, Object> oldSortFun =
       new NullableFunction<List<SMTestProxy>, Object>() {
         @Nullable
         public Object fun(final List<SMTestProxy> proxies) {

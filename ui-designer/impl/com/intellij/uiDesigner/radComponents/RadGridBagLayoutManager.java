@@ -39,9 +39,9 @@ import java.util.Map;
 public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   private int myLastSnapshotRow = -1;
   private int myLastSnapshotCol = -1;
-  private int[] mySnapshotXMax = new int[512];
-  private int[] mySnapshotYMax = new int[512];
-  private Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
+  private final int[] mySnapshotXMax = new int[512];
+  private final int[] mySnapshotYMax = new int[512];
+  private final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
   @Override public String getName() {
     return UIFormXmlConstants.LAYOUT_GRIDBAG;
@@ -446,7 +446,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   private static class WeightProperty extends Property<RadComponent, Double> {
-    private boolean myIsWeightX;
+    private final boolean myIsWeightX;
     private LabelPropertyRenderer<Double> myRenderer;
     private PropertyEditor<Double> myEditor;
 
@@ -503,7 +503,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   private static class IPadProperty extends AbstractIntProperty<RadComponent> {
-    private boolean myIsIpadX;
+    private final boolean myIsIpadX;
 
     public IPadProperty(final boolean isIpadX) {
       super(null, isIpadX ? "Ipad X" : "Ipad Y", 0);

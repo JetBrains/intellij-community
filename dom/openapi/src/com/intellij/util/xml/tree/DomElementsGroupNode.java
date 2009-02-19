@@ -33,10 +33,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
-  private DomElement myParentElement;
-  private DomElement myRootDomElement;
-  private String myChildrenTagName;
-  private DomCollectionChildDescription myChildDescription;
+  private final DomElement myParentElement;
+  private final DomElement myRootDomElement;
+  private final String myChildrenTagName;
+  private final DomCollectionChildDescription myChildDescription;
 
   public DomElementsGroupNode(final DomElement modelElement, DomCollectionChildDescription description, SimpleNode parent,
                               final DomElement rootDomElement) {

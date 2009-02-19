@@ -429,7 +429,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   }
 
   public static class MockProcessingItem implements ProcessingItem {
-    private VirtualFile myFile;
+    private final VirtualFile myFile;
 
     public MockProcessingItem(final VirtualFile file) {
       myFile = file;

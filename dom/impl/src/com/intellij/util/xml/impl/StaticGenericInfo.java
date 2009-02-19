@@ -32,11 +32,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
   private Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> myFixedChildrenMethods;
   private Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenGetterMethods;
-  private Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenAdditionMethods = new THashMap<JavaMethodSignature, CollectionChildDescriptionImpl>();
+  private final Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenAdditionMethods = new THashMap<JavaMethodSignature, CollectionChildDescriptionImpl>();
   private Map<JavaMethodSignature, AttributeChildDescriptionImpl> myAttributeChildrenMethods;
 
-  private Map<JavaMethodSignature, Set<CollectionChildDescriptionImpl>> myCompositeChildrenMethods = new THashMap<JavaMethodSignature, Set<CollectionChildDescriptionImpl>>();
-  private Map<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>> myCompositeCollectionAdditionMethods = new THashMap<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>>();
+  private final Map<JavaMethodSignature, Set<CollectionChildDescriptionImpl>> myCompositeChildrenMethods = new THashMap<JavaMethodSignature, Set<CollectionChildDescriptionImpl>>();
+  private final Map<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>> myCompositeCollectionAdditionMethods = new THashMap<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>>();
 
   @Nullable private JavaMethod myNameValueGetter;
   private boolean myValueElement;

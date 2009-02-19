@@ -18,7 +18,7 @@ import java.util.List;
  */
 public abstract class XDebuggerTreeNode implements TreeNode {
   protected final XDebuggerTree myTree;
-  private XDebuggerTreeNode myParent;
+  private final XDebuggerTreeNode myParent;
   private boolean myLeaf;
   protected final SimpleColoredText myText = new SimpleColoredText();
   private Icon myIcon;

@@ -31,7 +31,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
   private Collection<String> myTags;
   private final JList myList = new JList();
   @NonNls private static final String MORE_LABEL_TEXT = "<html><b>(...)</b></html>";
-  private String myPopupTitle;
+  private final String myPopupTitle;
 
   public TagsPanel(final String popupTitle) {
     super(new BorderLayout());

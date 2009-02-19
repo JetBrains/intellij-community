@@ -65,7 +65,7 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
                             changeLists != null &&  changeLists.length > 0);
   }
 
-  private static ScopeInfo CHANGELIST = new ScopeInfo() {
+  private static final ScopeInfo CHANGELIST = new ScopeInfo() {
     public FilePath[] getRoots(final VcsContext context, final ActionInfo actionInfo) {
       final Collection<FilePath> filePaths = getFilePaths(context);
       return filePaths.toArray(new FilePath[filePaths.size()]);

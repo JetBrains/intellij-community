@@ -55,7 +55,7 @@ import java.util.List;
 
 public class ProjectSettingsPanel extends PanelWithButtons {
     private final Project myProject;
-  private CopyrightProfilesPanel myProfilesModel;
+  private final CopyrightProfilesPanel myProfilesModel;
   private final CopyrightManager myManager;
 
     private final TableView<ScopeSetting> myScopeMappingTable;

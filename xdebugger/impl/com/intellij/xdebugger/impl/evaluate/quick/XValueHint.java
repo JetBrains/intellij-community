@@ -31,7 +31,7 @@ public class XValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.XValueHint");
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession myDebugSession;
-  private String myExpression;
+  private final String myExpression;
 
   public XValueHint(final Project project, final Editor editor, final Point point, final ValueHintType type, final TextRange textRange,
                     final XDebuggerEvaluator evaluator, final XDebugSession session) {

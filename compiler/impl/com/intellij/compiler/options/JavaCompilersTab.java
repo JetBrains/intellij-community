@@ -25,11 +25,11 @@ public class JavaCompilersTab implements Configurable{
   private JPanel myPanel;
   private JPanel myContentPanel;
   private JComboBox myCompiler;
-  private CardLayout myCardLayout;
+  private final CardLayout myCardLayout;
 
-  private BackendCompiler myDefaultCompiler;
+  private final BackendCompiler myDefaultCompiler;
   private BackendCompiler mySelectedCompiler;
-  private CompilerConfigurationImpl myCompilerConfiguration;
+  private final CompilerConfigurationImpl myCompilerConfiguration;
   private final Collection<Configurable> myConfigurables;
 
   public JavaCompilersTab(final Project project, Collection<BackendCompiler> compilers, BackendCompiler defaultCompiler) {

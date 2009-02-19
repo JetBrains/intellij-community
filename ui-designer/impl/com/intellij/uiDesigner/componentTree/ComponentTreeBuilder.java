@@ -37,7 +37,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
    * react on our own events.
    */
   private int myInsideChange;
-  private MyHierarchyChangeListener myHierarchyChangeListener;
+  private final MyHierarchyChangeListener myHierarchyChangeListener;
   private MyTreeSelectionListener myTreeSelectionListener;
 
   public ComponentTreeBuilder(final ComponentTree tree, @NotNull final GuiEditor editor) {

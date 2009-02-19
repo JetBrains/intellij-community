@@ -35,7 +35,7 @@ import java.util.List;
 public class ResourceCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.resourceCompiler.ResourceCompiler");
   private final Project myProject;
-  private CompilerConfiguration myConfiguration;
+  private final CompilerConfiguration myConfiguration;
   private static final FileTypeManager FILE_TYPE_MANAGER = FileTypeManager.getInstance();
 
   public ResourceCompiler(Project project, CompilerConfiguration compilerConfiguration) {

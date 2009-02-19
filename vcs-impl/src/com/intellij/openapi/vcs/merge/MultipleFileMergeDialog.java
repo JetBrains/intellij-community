@@ -55,14 +55,14 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private final MergeSession myMergeSession;
   private final List<VirtualFile> myFiles;
   private final ListTableModel<VirtualFile> myModel;
-  private Project myProject;
-  private ProjectManagerEx myProjectManager;
-  private List<VirtualFile> myProcessedFiles = new ArrayList<VirtualFile>();
-  private Set<VirtualFile> myBinaryFiles = new HashSet<VirtualFile>();
+  private final Project myProject;
+  private final ProjectManagerEx myProjectManager;
+  private final List<VirtualFile> myProcessedFiles = new ArrayList<VirtualFile>();
+  private final Set<VirtualFile> myBinaryFiles = new HashSet<VirtualFile>();
 
-  private VirtualFileRenderer myVirtualFileRenderer = new VirtualFileRenderer();
+  private final VirtualFileRenderer myVirtualFileRenderer = new VirtualFileRenderer();
 
-  private ColumnInfo<VirtualFile, VirtualFile> NAME_COLUMN =
+  private final ColumnInfo<VirtualFile, VirtualFile> NAME_COLUMN =
     new ColumnInfo<VirtualFile, VirtualFile>(VcsBundle.message("multiple.file.merge.column.name")) {
       public VirtualFile valueOf(final VirtualFile virtualFile) {
         return virtualFile;
@@ -74,7 +74,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       }
     };
 
-  private ColumnInfo<VirtualFile, String> TYPE_COLUMN =
+  private final ColumnInfo<VirtualFile, String> TYPE_COLUMN =
     new ColumnInfo<VirtualFile, String>(VcsBundle.message("multiple.file.merge.column.type")) {
       public String valueOf(final VirtualFile virtualFile) {
         return myBinaryFiles.contains(virtualFile)

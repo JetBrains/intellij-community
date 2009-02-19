@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 
 public class CommanderBookmarksDialog extends BookmarksDialog {
-  private Project myProject;
+  private final Project myProject;
 
   private CommanderBookmarksDialog(BookmarkManager bookmarkManager) {
     super(bookmarkManager);

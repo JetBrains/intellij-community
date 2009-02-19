@@ -29,8 +29,8 @@ import java.util.List;
  */
 public class BreakpointsConfigurationDialogFactory {
   private static final @NonNls String BREAKPOINT_PANEL = "breakpoint_panel";
-  private Project myProject;
-  private List<BreakpointPanelProvider> myBreakpointPanelProviders;
+  private final Project myProject;
+  private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
 
   private int myLastSelectedTabIndex = 0;
 
@@ -63,8 +63,8 @@ public class BreakpointsConfigurationDialogFactory {
     private TabbedPaneWrapper myTabbedPane;
     private JComponent myPreferredComponent;
     @Nullable private Runnable myPreparePreferredComponent;
-    private List<Runnable> myDisposeActions = new ArrayList<Runnable>();
-    private List<AbstractBreakpointPanel> myPanels = new ArrayList<AbstractBreakpointPanel>();
+    private final List<Runnable> myDisposeActions = new ArrayList<Runnable>();
+    private final List<AbstractBreakpointPanel> myPanels = new ArrayList<AbstractBreakpointPanel>();
 
     public BreakpointsConfigurationDialog() {
       super(myProject, true);

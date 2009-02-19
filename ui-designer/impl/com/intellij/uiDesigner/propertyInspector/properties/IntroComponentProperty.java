@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
  * @author yole
  */
 public class IntroComponentProperty extends IntrospectedProperty<String> {
-  private ComponentRenderer myRenderer = new ComponentRenderer();
+  private final ComponentRenderer myRenderer = new ComponentRenderer();
   private ComponentEditor myEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
   private final Class myPropertyType;

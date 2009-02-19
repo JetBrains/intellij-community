@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class TempFiles {
-  private Collection<File> myFilesToDelete;
+  private final Collection<File> myFilesToDelete;
 
   public TempFiles(Collection<File> filesToDelete) {
     myFilesToDelete = filesToDelete;

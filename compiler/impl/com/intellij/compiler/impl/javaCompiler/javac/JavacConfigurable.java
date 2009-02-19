@@ -19,7 +19,7 @@ public class JavacConfigurable implements Configurable{
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
   private JTextField myJavacMaximumHeapField;
-  private JavacSettings myJavacSettings;
+  private final JavacSettings myJavacSettings;
 
   public JavacConfigurable(final JavacSettings javacSettings) {
     myJavacSettings = javacSettings;

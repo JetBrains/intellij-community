@@ -101,5 +101,5 @@ public class UpdateCopyrightFactory
     {
     }
 
-    private static Logger logger = Logger.getInstance(UpdateCopyrightFactory.class.getName());
+    private static final Logger logger = Logger.getInstance(UpdateCopyrightFactory.class.getName());
 }

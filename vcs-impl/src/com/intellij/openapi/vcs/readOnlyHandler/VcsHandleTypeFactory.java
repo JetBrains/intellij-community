@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class VcsHandleTypeFactory implements HandleTypeFactory {
-  private Project myProject;
+  private final Project myProject;
 
   public VcsHandleTypeFactory(final Project project) {
     myProject = project;

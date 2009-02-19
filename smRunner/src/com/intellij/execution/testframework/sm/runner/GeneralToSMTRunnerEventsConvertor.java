@@ -25,7 +25,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
   private final TestSuiteStack mySuitesStack = new TestSuiteStack();
   private final List<SMTRunnerEventsListener> myEventsListeners = new ArrayList<SMTRunnerEventsListener>();
-  private SMTestProxy myTestsRootNode;
+  private final SMTestProxy myTestsRootNode;
   private boolean myIsTestingFinished;
 
   public GeneralToSMTRunnerEventsConvertor(@NotNull final SMTestProxy testsRootNode) {

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
-  private HTMLComposerImpl myComposer;
+  private final HTMLComposerImpl myComposer;
 
   public HTMLJavaHTMLComposerImpl(final HTMLComposerImpl composer) {
     myComposer = composer;

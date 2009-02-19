@@ -28,9 +28,9 @@ import java.util.Set;
 public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends DomElement, M extends DomModel<T>, C extends PsiElement>
     extends DomModelFactoryHelper<T> implements SimpleModelFactory<T, M>, MultipleDomModelFactory<S, T, M> {
 
-  private Project myProject;
-  private SimpleModelFactory<T,M> mySimpleDomModelFactory;
-  private MultipleDomModelFactory<S, T, M> myMultipleDomModelFactory;
+  private final Project myProject;
+  private final SimpleModelFactory<T,M> mySimpleDomModelFactory;
+  private final MultipleDomModelFactory<S, T, M> myMultipleDomModelFactory;
 
   protected BaseDomModelFactory(@NotNull Class<T> aClass, final Project project, @NonNls String name) {
     super(aClass, DomService.getInstance().createModelMerger());

@@ -2266,7 +2266,7 @@ public class JBTabsImpl extends JComponent
 
     private final ShadowAction myShadow;
     private final ActionManager myActionManager;
-    private JBTabsImpl myTabs;
+    private final JBTabsImpl myTabs;
 
     protected BaseNavigationAction(final String copyFromID, JBTabsImpl tabs, ActionManager mgr) {
       myActionManager = mgr;

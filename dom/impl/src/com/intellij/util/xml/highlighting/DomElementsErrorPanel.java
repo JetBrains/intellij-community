@@ -34,8 +34,8 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
 
   private static final int ALARM_PERIOD = 241;
 
-  private Project myProject;
-  private DomElement[] myDomElements;
+  private final Project myProject;
+  private final DomElement[] myDomElements;
 
   private final DomElementsTrafficLightRenderer myErrorStripeRenderer;
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;

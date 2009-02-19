@@ -45,12 +45,12 @@ public class ChangesViewContentManager implements ProjectComponent {
     return project.getComponent(ChangesViewContentManager.class);
   }
 
-  private Project myProject;
+  private final Project myProject;
   private ContentManager myContentManager;
   private ToolWindow myToolWindow;
-  private VcsListener myVcsListener = new MyVcsListener();
-  private Alarm myVcsChangeAlarm;
-  private List<Content> myAddedContents = new ArrayList<Content>();
+  private final VcsListener myVcsListener = new MyVcsListener();
+  private final Alarm myVcsChangeAlarm;
+  private final List<Content> myAddedContents = new ArrayList<Content>();
 
   public ChangesViewContentManager(final Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -212,7 +212,7 @@ public class ChangesViewContentManager implements ProjectComponent {
   }
 
   private static class ContentStub extends JPanel {
-    private ChangesViewContentEP myEP;
+    private final ChangesViewContentEP myEP;
 
     public ContentStub(final ChangesViewContentEP EP) {
       myEP = EP;

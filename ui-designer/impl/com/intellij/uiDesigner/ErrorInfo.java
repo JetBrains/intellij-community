@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 public final class ErrorInfo {
   public static final ErrorInfo[] EMPTY_ARRAY = new ErrorInfo[0];
 
-  private RadComponent myComponent;
+  private final RadComponent myComponent;
   public final String myDescription;
   private final String myPropertyName;
   public final QuickFix[] myFixes;

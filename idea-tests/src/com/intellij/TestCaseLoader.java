@@ -137,7 +137,7 @@ public class TestCaseLoader {
     }
   }
   
-  private static List<String> ourRanklist = getTeamCityRankList();
+  private static final List<String> ourRanklist = getTeamCityRankList();
   private static List<String> getTeamCityRankList() {
     final String filepath = System.getProperty("teamcity.tests.recentlyFailedTests.file", null);
     if (filepath == null) {

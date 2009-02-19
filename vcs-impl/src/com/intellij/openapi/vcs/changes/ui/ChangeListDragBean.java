@@ -14,10 +14,10 @@ import java.util.List;
  * @author yole
 */
 class ChangeListDragBean {
-  private JComponent mySourceComponent;
-  private Change[] myChanges;
-  private List<VirtualFile> myUnversionedFiles;
-  private List<VirtualFile> myIgnoredFiles;
+  private final JComponent mySourceComponent;
+  private final Change[] myChanges;
+  private final List<VirtualFile> myUnversionedFiles;
+  private final List<VirtualFile> myIgnoredFiles;
   private ChangesBrowserNode myTargetNode;
 
   public ChangeListDragBean(final JComponent sourceComponent, final Change[] changes, final List<VirtualFile> unversionedFiles,

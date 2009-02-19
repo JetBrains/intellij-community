@@ -29,7 +29,7 @@ import java.awt.event.MouseAdapter;
 
 
 public class DebuggerTreeBase extends DnDAwareTree {
-  private Project myProject;
+  private final Project myProject;
   private DebuggerTreeNodeImpl myCurrentTooltipNode;
 
   private JComponent myCurrentTooltip;

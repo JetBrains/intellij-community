@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
 public class VfsSamplePlugin implements ProjectComponent {
-  private Project myProject;
+  private final Project myProject;
   private MyVfsListener myVfsListener;
 
   private static int ourJavaFilesCount;

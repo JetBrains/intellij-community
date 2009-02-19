@@ -22,7 +22,7 @@ import java.util.Set;
 public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
   public static final Key<Set<Module>> DEPENDENCIES = Key.create("inspection.dependencies");
 
-  private RefManager myManager;
+  private final RefManager myManager;
 
   public UnnecessaryModuleDependencyAnnotator(final RefManager manager) {
     myManager = manager;

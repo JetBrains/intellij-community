@@ -16,7 +16,7 @@ public class DiffTreeTest extends TestCase {
   private static final Node[] EMPTY = new Node[0];
 
   private static class Node {
-    private Node[] myChildren;
+    private final Node[] myChildren;
     int myId;
 
 
@@ -48,7 +48,7 @@ public class DiffTreeTest extends TestCase {
   }
 
   private static class TreeStructure implements FlyweightCapableTreeStructure<Node> {
-    private Node myRoot;
+    private final Node myRoot;
 
     public TreeStructure(final Node root) {
       myRoot = root;
@@ -86,7 +86,7 @@ public class DiffTreeTest extends TestCase {
   }
 
   public static class DiffBuilder implements DiffTreeChangeBuilder<Node, Node> {
-    private List<String> myResults = new ArrayList<String>();
+    private final List<String> myResults = new ArrayList<String>();
 
     public void nodeReplaced(final Node oldNode, final Node newNode) {
       myResults.add("REPLACED: " + oldNode + " to " + newNode);

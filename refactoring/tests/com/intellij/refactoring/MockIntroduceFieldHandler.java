@@ -12,8 +12,8 @@ import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
  * @author ven
  */
 public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
-  private InitializationPlace myInitializationPlace;
-  private boolean myDeclareStatic;
+  private final InitializationPlace myInitializationPlace;
+  private final boolean myDeclareStatic;
 
   public MockIntroduceFieldHandler(final InitializationPlace initializationPlace, final boolean declareStatic) {
     myInitializationPlace = initializationPlace;

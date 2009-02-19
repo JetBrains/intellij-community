@@ -99,7 +99,7 @@ public class ColumnTestTest extends BaseColumnRenderingTest {
   }
 
   private class MyRenderer extends ColumnTest.TestsCellRenderer {
-    private UITestUtil.FragmentsContainer myFragmentsContainer;
+    private final UITestUtil.FragmentsContainer myFragmentsContainer;
 
     public MyRenderer(final SMTestProxy proxy,
                       final UITestUtil.FragmentsContainer fragmentsContainer) {

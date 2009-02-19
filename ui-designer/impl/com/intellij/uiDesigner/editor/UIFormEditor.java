@@ -158,7 +158,7 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
   */
 
   private class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
-    private HighlightingPass[] myPasses;
+    private final HighlightingPass[] myPasses;
 
     public MyBackgroundEditorHighlighter(final GuiEditor editor) {
       myPasses = new HighlightingPass[] { new FormHighlightingPass(editor) };

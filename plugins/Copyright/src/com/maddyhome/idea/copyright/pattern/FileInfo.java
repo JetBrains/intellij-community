@@ -78,5 +78,5 @@ public class FileInfo
         return file.getVirtualFile();
     }
 
-    private PsiFile file;
+    private final PsiFile file;
 }

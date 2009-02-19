@@ -19,7 +19,7 @@ import java.util.Collection;
 public class ChangeListChooser extends DialogWrapper {
   private final Project myProject;
   private LocalChangeList mySelectedList;
-  private ChangeListChooserPanel myPanel;
+  private final ChangeListChooserPanel myPanel;
 
   public ChangeListChooser(@NotNull Project project,
                            @NotNull Collection<? extends ChangeList> changelists,

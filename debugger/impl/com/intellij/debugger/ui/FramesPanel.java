@@ -51,7 +51,7 @@ public class FramesPanel extends UpdatableDebuggerView {
   private final FramesList myFramesList;
   private final ThreadsListener myThreadsListener;
   private final FramesListener myFramesListener;
-  private DebuggerStateManager myStateManager;
+  private final DebuggerStateManager myStateManager;
 
   public FramesPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);

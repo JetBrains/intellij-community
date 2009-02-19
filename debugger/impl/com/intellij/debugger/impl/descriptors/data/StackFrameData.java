@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Comparing;
 public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   private final StackFrameProxyImpl myFrame;
   private final FrameDisplayKey myDisplayKey;
-  private MethodsTracker myMethodsTracker;
+  private final MethodsTracker myMethodsTracker;
 
   public StackFrameData(StackFrameProxyImpl frame) {
     super();

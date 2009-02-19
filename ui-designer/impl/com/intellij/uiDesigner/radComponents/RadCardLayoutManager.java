@@ -156,7 +156,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
   }
 
   private static class CardDropLocation implements ComponentDropLocation {
-    private RadContainer myContainer;
+    private final RadContainer myContainer;
     @NonNls private static final String CARD_NAME_PREFIX = "Card";
 
     public CardDropLocation(final RadContainer container) {
@@ -195,9 +195,9 @@ public class RadCardLayoutManager extends RadLayoutManager {
   }
 
   private static class CardNameProperty extends Property<RadComponent, String> {
-    private LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>();
+    private final LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>();
 
-    private AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<String>() {
+    private final AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<String>() {
       protected void setValueFromComponent(RadComponent component, String value) {
         myTf.setText((String) component.getCustomLayoutConstraints());
       }

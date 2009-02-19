@@ -26,8 +26,8 @@ public class ProcessingItemsBuilderContext {
   private final Map<BuildConfiguration, JarInfo> myCachedJarForConfiguration;
   private final Map<VirtualFile, JarInfo> myCachedJarForDir;
   private final Map<ExplodedDestinationInfo, BuildParticipant> myDestinationOwners;
-  private MultiValuesMap<Module, PackagingProcessingItem> myItemsByModule;
-  private MultiValuesMap<String, JarInfo> myJarsByPath;
+  private final MultiValuesMap<Module, PackagingProcessingItem> myItemsByModule;
+  private final MultiValuesMap<String, JarInfo> myJarsByPath;
   private final CompileContext myCompileContext;
   private final List<ManifestFileInfo> myManifestFiles;
 

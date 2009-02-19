@@ -27,7 +27,7 @@ import java.awt.*;
 public final class BorderProperty extends Property<RadContainer, BorderType> {
   @NonNls public static final String NAME = "border";
 
-  private Project myProject;
+  private final Project myProject;
   private final Property[] myChildren;
 
   private final PropertyRenderer<BorderType> myRenderer = new LabelPropertyRenderer<BorderType>() {
@@ -199,7 +199,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
   }
 
-  private static IntEnumEditor.Pair[] ourJustificationPairs = new IntEnumEditor.Pair[] {
+  private static final IntEnumEditor.Pair[] ourJustificationPairs = new IntEnumEditor.Pair[] {
     new IntEnumEditor.Pair(0, UIDesignerBundle.message("property.default")),
     new IntEnumEditor.Pair(1, UIDesignerBundle.message("property.left")),
     new IntEnumEditor.Pair(2, UIDesignerBundle.message("property.center")),
@@ -208,7 +208,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     new IntEnumEditor.Pair(5, UIDesignerBundle.message("property.trailing"))
   };
 
-  private static IntEnumEditor.Pair[] ourPositionPairs = new IntEnumEditor.Pair[] {
+  private static final IntEnumEditor.Pair[] ourPositionPairs = new IntEnumEditor.Pair[] {
     new IntEnumEditor.Pair(0, UIDesignerBundle.message("property.default")),
     new IntEnumEditor.Pair(1, UIDesignerBundle.message("property.above.top")),
     new IntEnumEditor.Pair(2, UIDesignerBundle.message("property.top")),
@@ -309,7 +309,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   private static class MyBorderColorProperty extends Property<RadContainer, ColorDescriptor> {
     private ColorRenderer myRenderer;
     private ColorEditor myEditor;
-    private boolean myTitleColor;
+    private final boolean myTitleColor;
 
     public MyBorderColorProperty(final Property parent, final boolean titleColor) {
       super(parent, titleColor ? "title color" : "color");

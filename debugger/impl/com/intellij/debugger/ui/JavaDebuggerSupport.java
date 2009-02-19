@@ -28,23 +28,23 @@ import java.util.List;
  * @author nik
  */
 public class JavaDebuggerSupport extends DebuggerSupport {
-  private JavaBreakpointPanelProvider myBreakpointPanelProvider;
-  private StepOverActionHandler myStepOverActionHandler;
-  private StepIntoActionHandler myStepIntoActionHandler;
-  private StepOutActionHandler myStepOutActionHandler;
-  private ForceStepOverActionHandler myForceStepOverActionHandler;
-  private ForceStepIntoActionHandler myForceStepIntoActionHandler;
-  private RunToCursorActionHandler myRunToCursorActionHandler;
-  private ForceRunToCursorActionHandler myForceRunToCursorActionHandler;
-  private ResumeActionHandler myResumeActionHandler;
-  private PauseActionHandler myPauseActionHandler;
-  private ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
-  private ShowExecutionPointActionHandler myShowExecutionPointActionHandler;
-  private EvaluateActionHandler myEvaluateActionHandler;
-  private QuickEvaluateActionHandler myQuickEvaluateHandler;
-  private JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider;
-  private MuteBreakpointsActionHandler myMuteBreakpointsHandler;
-  private DebuggerActionHandler mySmartStepIntoHandler;
+  private final JavaBreakpointPanelProvider myBreakpointPanelProvider;
+  private final StepOverActionHandler myStepOverActionHandler;
+  private final StepIntoActionHandler myStepIntoActionHandler;
+  private final StepOutActionHandler myStepOutActionHandler;
+  private final ForceStepOverActionHandler myForceStepOverActionHandler;
+  private final ForceStepIntoActionHandler myForceStepIntoActionHandler;
+  private final RunToCursorActionHandler myRunToCursorActionHandler;
+  private final ForceRunToCursorActionHandler myForceRunToCursorActionHandler;
+  private final ResumeActionHandler myResumeActionHandler;
+  private final PauseActionHandler myPauseActionHandler;
+  private final ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
+  private final ShowExecutionPointActionHandler myShowExecutionPointActionHandler;
+  private final EvaluateActionHandler myEvaluateActionHandler;
+  private final QuickEvaluateActionHandler myQuickEvaluateHandler;
+  private final JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider;
+  private final MuteBreakpointsActionHandler myMuteBreakpointsHandler;
+  private final DebuggerActionHandler mySmartStepIntoHandler;
 
   public JavaDebuggerSupport() {
     myBreakpointPanelProvider = new JavaBreakpointPanelProvider();

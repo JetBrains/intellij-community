@@ -10,7 +10,7 @@ import javax.swing.*;
  */
 public class SelectFilteringAction extends LabeledComboBoxAction {
   private final Project myProject;
-  private CommittedChangesTreeBrowser myBrowser;
+  private final CommittedChangesTreeBrowser myBrowser;
   private String myPreviousSelection;
 
   public SelectFilteringAction(final Project project, final CommittedChangesTreeBrowser browser) {

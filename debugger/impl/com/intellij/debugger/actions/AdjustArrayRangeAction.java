@@ -92,7 +92,7 @@ public class AdjustArrayRangeAction extends DebuggerAction {
   }
 
   private static class NamedArrayConfigurable extends ArrayRendererConfigurable implements Configurable {
-    private String myTitle;
+    private final String myTitle;
 
     public NamedArrayConfigurable(String title, ArrayRenderer renderer) {
       super(renderer);

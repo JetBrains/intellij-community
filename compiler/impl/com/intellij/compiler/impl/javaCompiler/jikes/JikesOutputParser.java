@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public class JikesOutputParser extends OutputParser {
-  private JikesSettings myJikesSettings;
+  private final JikesSettings myJikesSettings;
   @NonNls private static final String JAVA_FILE_MSG_TAIL = ".java:";
   @NonNls private static final String CAUTION = "Caution";
   @NonNls private static final String WARNING = "Warning";

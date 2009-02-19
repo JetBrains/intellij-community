@@ -21,9 +21,9 @@ import java.util.*;
  * @author max
  */
 public class SwitchedFileHolder implements FileHolder {
-  private Map<VirtualFile, String> myFiles = new HashMap<VirtualFile, String>();
+  private final Map<VirtualFile, String> myFiles = new HashMap<VirtualFile, String>();
   private List<VirtualFile> mySwitchRoots;
-  private Project myProject;
+  private final Project myProject;
 
   public SwitchedFileHolder(Project project) {
     myProject = project;

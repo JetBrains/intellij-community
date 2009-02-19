@@ -20,7 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.util.TextRange;
 
 public class FormEnumConstantReference extends ReferenceInForm {
-  private PsiClassType myEnumClass;
+  private final PsiClassType myEnumClass;
 
   protected FormEnumConstantReference(final PsiPlainTextFile file, final TextRange range, final PsiClassType enumClass) {
     super(file, range);

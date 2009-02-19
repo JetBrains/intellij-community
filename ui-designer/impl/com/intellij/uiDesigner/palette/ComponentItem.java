@@ -72,7 +72,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private boolean myAnyComponent;
   private Dimension myInitialSize;
 
-  @NotNull private Project myProject;
+  @NotNull private final Project myProject;
 
   public ComponentItem(
     @NotNull Project project,

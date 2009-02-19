@@ -8,7 +8,7 @@ package com.intellij.uiDesigner.propertyInspector;
  * @author yole
  */
 public class InplaceContext {
-  private boolean myKeepInitialValue;
+  private final boolean myKeepInitialValue;
   private boolean myStartedByTyping;
   private char myStartChar;
 

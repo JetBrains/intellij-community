@@ -23,7 +23,7 @@ public abstract class EvaluationDialogBase extends DialogWrapper {
   private JPanel myMainPanel;
   private JPanel myResultPanel;
   private JPanel myInputPanel;
-  private XDebuggerTreePanel myTreePanel;
+  private final XDebuggerTreePanel myTreePanel;
   private final XStackFrame myStackFrame;
 
   protected EvaluationDialogBase(@NotNull XDebugSession session, String title, final XDebuggerEditorsProvider editorsProvider, final XStackFrame stackFrame) {

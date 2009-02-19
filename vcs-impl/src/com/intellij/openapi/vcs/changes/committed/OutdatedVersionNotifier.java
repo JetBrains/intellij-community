@@ -39,9 +39,9 @@ import java.util.List;
 public class OutdatedVersionNotifier implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier");
 
-  private FileEditorManager myFileEditorManager;
-  private CommittedChangesCache myCache;
-  private FileEditorManagerListener myFileEditorManagerListener = new MyFileEditorManagerListener();
+  private final FileEditorManager myFileEditorManager;
+  private final CommittedChangesCache myCache;
+  private final FileEditorManagerListener myFileEditorManagerListener = new MyFileEditorManagerListener();
   private static final Key<OutdatedRevisionPanel> PANEL_KEY = new Key<OutdatedRevisionPanel>("OutdatedRevisionPanel");
   private volatile boolean myIncomingChangesRequested;
 
@@ -167,7 +167,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
 
   private static class OutdatedRevisionPanel extends JPanel {
     private CommittedChangeList myChangeList;
-    private JLabel myLabel = new JLabel();
+    private final JLabel myLabel = new JLabel();
 
     public OutdatedRevisionPanel(CommittedChangeList changeList, final Change c) {
       super(new BorderLayout());

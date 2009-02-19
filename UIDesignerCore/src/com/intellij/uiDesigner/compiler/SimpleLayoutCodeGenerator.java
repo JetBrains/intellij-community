@@ -29,7 +29,7 @@ import org.objectweb.asm.commons.Method;
  */
 public class SimpleLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Type myLayoutType;
-  private static Method ourConstructor = Method.getMethod("void <init>(int,int)");
+  private static final Method ourConstructor = Method.getMethod("void <init>(int,int)");
 
   public SimpleLayoutCodeGenerator(final Type layoutType) {
     myLayoutType = layoutType;

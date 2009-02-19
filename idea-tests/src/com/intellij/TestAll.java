@@ -39,18 +39,18 @@ public class TestAll implements Test {
 
   private TestCaseLoader myTestCaseLoader;
   private long myStartTime = 0;
-  private boolean myInterruptedByOutOfMemory = false;
+  private final boolean myInterruptedByOutOfMemory = false;
   private boolean myInterruptedByOutOfTime = false;
   private long myLastTestStartTime = 0;
   private String myLastTestClass;
   private int myRunTests = -1;
   private boolean mySavingMemorySnapshot;
 
-  private static int SAVE_MEMORY_SNAPSHOT = 1;
-  private static int START_GUARD = 2;
-  private static int RUN_GC = 4;
-  private static int CHECK_MEMORY = 8;
-  private static int FILTER_CLASSES = 16;
+  private static final int SAVE_MEMORY_SNAPSHOT = 1;
+  private static final int START_GUARD = 2;
+  private static final int RUN_GC = 4;
+  private static final int CHECK_MEMORY = 8;
+  private static final int FILTER_CLASSES = 16;
 
   public static int ourMode = SAVE_MEMORY_SNAPSHOT | START_GUARD /*| RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
   private int myLastTestTestMethodCount = 0;

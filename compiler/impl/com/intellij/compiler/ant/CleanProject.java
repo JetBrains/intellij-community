@@ -11,7 +11,7 @@ import java.io.PrintWriter;
  *         Date: Mar 24, 2004
  */
 public class CleanProject extends Generator {
-  private Target myTarget;
+  private final Target myTarget;
 
   public CleanProject(GenerationOptions genOptions) {
     StringBuffer dependencies = new StringBuffer();

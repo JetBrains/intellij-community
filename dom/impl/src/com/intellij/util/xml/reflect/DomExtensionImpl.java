@@ -25,7 +25,7 @@ public class DomExtensionImpl implements DomExtension {
   private final XmlName myXmlName;
   private final Type myType;
   private Converter myConverter;
-  private List<Annotation> myCustomAnnos = new SmartList<Annotation>();
+  private final List<Annotation> myCustomAnnos = new SmartList<Annotation>();
   private boolean mySoft;
   private int myCount = 1;
   private Map myUserMap;

@@ -11,13 +11,13 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 public class SortedListModelTest extends TestCase {
-  private SortedListModel myModel = new SortedListModel(new Comparator() {
+  private final SortedListModel myModel = new SortedListModel(new Comparator() {
     public int compare(final Object o1, final Object o2) {
       return ((Comparable) o1).compareTo((Comparable) o2);
     }
   }
   );
-  private Assertion CHECK = new Assertion();
+  private final Assertion CHECK = new Assertion();
 
   public void testAdding() {
     myModel.setAll(new String[]{"5", "0", "9"});

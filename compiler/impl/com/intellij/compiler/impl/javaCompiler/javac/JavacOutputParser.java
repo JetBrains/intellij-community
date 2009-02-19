@@ -23,7 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavacOutputParser extends OutputParser {
-  private int myTabSize;
+  private final int myTabSize;
   private @NonNls String WARNING_PREFIX = "warning:"; // default value
 
   public JavacOutputParser(Project project) {

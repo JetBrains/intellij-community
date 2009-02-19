@@ -44,13 +44,13 @@ import java.util.ArrayList;
  * @author spleaner
  */
 public class XDebugSessionTab implements Disposable {
-  private String mySessionName;
+  private final String mySessionName;
   private Project myProject;
-  private RunnerLayoutUi myUi;
+  private final RunnerLayoutUi myUi;
   private RunContentDescriptor myRunContentDescriptor;
   private ExecutionConsole myConsole;
   private XWatchesView myWatchesView;
-  private List<XDebugViewBase> myViews = new ArrayList<XDebugViewBase>();
+  private final List<XDebugViewBase> myViews = new ArrayList<XDebugViewBase>();
 
   public XDebugSessionTab(@NotNull final Project project, @NotNull final String sessionName) {
     myProject = project;

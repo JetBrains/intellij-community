@@ -8,7 +8,7 @@ import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import javax.swing.table.AbstractTableModel;
 
 public class RevisionsTableModel extends AbstractTableModel {
-  private HistoryDialogModel myModel;
+  private final HistoryDialogModel myModel;
 
   public RevisionsTableModel(HistoryDialogModel m) {
     myModel = m;

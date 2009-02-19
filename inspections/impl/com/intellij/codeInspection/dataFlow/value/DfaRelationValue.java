@@ -24,7 +24,7 @@ public class DfaRelationValue extends DfaValue {
   public static class Factory {
     private final DfaRelationValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaRelationValue>> myStringToObject;
-    private DfaValueFactory myFactory;
+    private final DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;

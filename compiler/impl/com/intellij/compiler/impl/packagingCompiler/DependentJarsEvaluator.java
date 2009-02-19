@@ -13,7 +13,7 @@ import java.util.Set;
  * @author nik
  */
 public class DependentJarsEvaluator {
-  private Set<JarInfo> myJars = new LinkedHashSet<JarInfo>();
+  private final Set<JarInfo> myJars = new LinkedHashSet<JarInfo>();
 
   public void addJarWithDependencies(final JarInfo jarInfo) {
     if (myJars.add(jarInfo)) {

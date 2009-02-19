@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import java.util.List;
 
 public class UnshelveChangesAction extends AnAction {
-  private Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction");
+  private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction");
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);

@@ -14,8 +14,8 @@ import java.awt.*;
  */
 public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
-  private Project myProject;
-  private IssueLinkRenderer myIssueLinkRenderer;
+  private final Project myProject;
+  private final IssueLinkRenderer myIssueLinkRenderer;
   private final boolean myHighlightProblems;
 
   public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten, final boolean highlightProblems) {

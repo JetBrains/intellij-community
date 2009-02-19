@@ -24,7 +24,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
-  private ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManager myVcsManager;
 
   private final Scopes myScopes;
   private final VcsGuess myGuess;

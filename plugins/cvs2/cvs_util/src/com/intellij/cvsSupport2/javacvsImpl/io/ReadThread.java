@@ -24,12 +24,12 @@ public class ReadThread implements Runnable {
   private boolean myAtEndOfStream = false;
   private final ICvsCommandStopper myCvsCommandStopper;
   private static final int INITIAL_BUFFER_SIZE = 128 * 1024;
-  private byte[] myBuffer = new byte[INITIAL_BUFFER_SIZE];
-  private byte[] myReadBuffer = new byte[INITIAL_BUFFER_SIZE];
+  private final byte[] myBuffer = new byte[INITIAL_BUFFER_SIZE];
+  private final byte[] myReadBuffer = new byte[INITIAL_BUFFER_SIZE];
   private int myFirstIndex = 0;
   private int myLastIndex = 0;
   private IOException myException;
-  private InputStream myInputStream;
+  private final InputStream myInputStream;
   private final Semaphore myStarted = new Semaphore();
   public static final int TIMEOUT = 3000;
   public static final int END_OF_STREAM = -1;

@@ -18,7 +18,7 @@ public class UITestUtil {
   }
 
   public static class FragmentsContainer {
-    private UITestUtil.ListOfFragments myFragments;
+    private final UITestUtil.ListOfFragments myFragments;
 
     public FragmentsContainer() {
       myFragments = new ListOfFragments();

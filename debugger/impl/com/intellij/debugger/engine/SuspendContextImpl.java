@@ -41,12 +41,12 @@ public abstract class SuspendContextImpl implements SuspendContext {
   protected int myVotesToVote;
   protected Set<ThreadReferenceProxyImpl> myResumedThreads;
 
-  private EventSet myEventSet;
+  private final EventSet myEventSet;
   private volatile boolean  myIsResumed;
 
   public ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<SuspendContextCommandImpl>();
   public volatile boolean  myInProgress;
-  private HashSet<ObjectReference>       myKeptReferences = new HashSet<ObjectReference>();
+  private final HashSet<ObjectReference>       myKeptReferences = new HashSet<ObjectReference>();
   private EvaluationContextImpl          myEvaluationContext = null;
 
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {

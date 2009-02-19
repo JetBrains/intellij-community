@@ -24,14 +24,14 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class ResizeProcessor extends EventProcessor {
-  private RadComponent myComponent;
-  private int myResizeMask;
+  private final RadComponent myComponent;
+  private final int myResizeMask;
   private Point myLastPoint;
   private Rectangle myBounds;
   private Rectangle myOriginalBounds;
-  private RadContainer myOriginalParent;
+  private final RadContainer myOriginalParent;
   private final GuiEditor myEditor;
-  private GridConstraints myOriginalConstraints;
+  private final GridConstraints myOriginalConstraints;
   private RadComponent myResizedCopy;
 
   public ResizeProcessor(final GuiEditor editor, final RadComponent component, final int resizeMask){

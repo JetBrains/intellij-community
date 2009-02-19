@@ -33,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Time: 6:00:55 PM
  */
 public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
-  private List<HotSwapVetoableListener> myListeners = new CopyOnWriteArrayList<HotSwapVetoableListener>();
+  private final List<HotSwapVetoableListener> myListeners = new CopyOnWriteArrayList<HotSwapVetoableListener>();
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
   private boolean myPerformHotswapAfterThisCompilation = true;

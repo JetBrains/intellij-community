@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class CvsMessagesTranslator implements IFileInfoListener, IMessageListener, IEntryListener {
 
   private static final CvsMessagePattern ABORTED_PATTERD = new CvsMessagePattern("cvs [* aborted]*");
-  @NonNls private static CvsMessagePattern[] ERRORS_PATTERNS = new CvsMessagePattern[]{ABORTED_PATTERD,
+  @NonNls private static final CvsMessagePattern[] ERRORS_PATTERNS = new CvsMessagePattern[]{ABORTED_PATTERD,
     new CvsMessagePattern("cvs* server: invalid option*"), new CvsMessagePattern(new String[]{"cvs checkout: could not check out ", "*"}, 2),
     new CvsMessagePattern("cvs* update: could not merge revision * of *: No such file or directory"),
     new CvsMessagePattern(new String[]{"cvs* update: could not patch ", "*", "; will refetch"}, 2),
@@ -48,7 +48,7 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     new CvsMessagePattern("Root * must be an absolute pathname"), new CvsMessagePattern("protocol error: *"),
     new CvsMessagePattern("cvs* tag: nothing known about *")};
 
-  private static CvsMessagePattern[] WARNINGS_PATTERNS = new CvsMessagePattern[]{
+  private static final CvsMessagePattern[] WARNINGS_PATTERNS = new CvsMessagePattern[]{
     new CvsMessagePattern("cvs server: cannot open *: mismission denied"),
     new CvsMessagePattern("cvs server: cannot make path to *: Permission denied"),
     new CvsMessagePattern("cvs server: cannot find module `*' - ignored"),
@@ -57,12 +57,12 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     new CvsMessagePattern("cvs server: failed to create lock directory for `*' (*#cvs.lock): No such file or directory"),
     new CvsMessagePattern("cvs server: failed to obtain dir lock in repository `*'")};
 
-  private static Pattern[] FILE_MESSAGE_PATTERNS = new Pattern[]{PatternUtil.fromMask("cvs server: Updating*"),
+  private static final Pattern[] FILE_MESSAGE_PATTERNS = new Pattern[]{PatternUtil.fromMask("cvs server: Updating*"),
     PatternUtil.fromMask("Directory * added to the repository"), PatternUtil.fromMask("cvs server: scheduling file `*' for addition"),
     PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *"), PatternUtil.fromMask("RCS file: *,v"),
     PatternUtil.fromMask("cvs server: Tagging*"), PatternUtil.fromMask("cvs add: scheduling file `*' for addition")};
 
-  private static Pattern[] MESSAGE_PATTERNS = new Pattern[]{PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *")};
+  private static final Pattern[] MESSAGE_PATTERNS = new Pattern[]{PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *")};
 
   private final CvsMessagesListener myListener;
   private final ICvsFileSystem myCvsFileSystem;

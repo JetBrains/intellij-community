@@ -12,8 +12,8 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 
 class LiteralEvaluator implements Evaluator {
-  private Object myValue;
-  private String myExpectedType;
+  private final Object myValue;
+  private final String myExpectedType;
 
   public LiteralEvaluator(Object value, String expectedType) {
     myValue = value;

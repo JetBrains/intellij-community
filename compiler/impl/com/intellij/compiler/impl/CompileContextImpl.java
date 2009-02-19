@@ -55,7 +55,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Set<VirtualFile> myGeneratedTestRoots = new java.util.HashSet<VirtualFile>();
   private VirtualFile[] myOutputDirectories;
   private Set<VirtualFile> myTestOutputDirectories;
-  private TIntHashSet myGeneratedSources = new TIntHashSet();
+  private final TIntHashSet myGeneratedSources = new TIntHashSet();
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
@@ -235,7 +235,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
 
-  private Map<Module, VirtualFile[]> myModuleToRootsCache = new HashMap<Module, VirtualFile[]>();
+  private final Map<Module, VirtualFile[]> myModuleToRootsCache = new HashMap<Module, VirtualFile[]>();
 
   public VirtualFile[] getSourceRoots(Module module) {
     VirtualFile[] cachedRoots = myModuleToRootsCache.get(module);

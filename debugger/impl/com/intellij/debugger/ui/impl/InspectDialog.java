@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class InspectDialog extends DialogWrapper implements DebuggerContextListener {
   private InspectPanel myInspectView;
-  private DebuggerContextImpl myDebuggerContext;
+  private final DebuggerContextImpl myDebuggerContext;
 
   public InspectDialog(Project project, DebuggerStateManager stateManager, String title, NodeDescriptorImpl inspectDescriptor) {
     super(project, true);

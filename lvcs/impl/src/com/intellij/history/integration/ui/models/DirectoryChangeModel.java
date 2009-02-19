@@ -6,9 +6,9 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 
 public class DirectoryChangeModel {
-  private Difference myDiff;
-  private IdeaGateway myGateway;
-  private boolean isRightContentEditable;
+  private final Difference myDiff;
+  private final IdeaGateway myGateway;
+  private final boolean isRightContentEditable;
 
   public DirectoryChangeModel(Difference d, IdeaGateway gw, boolean editableRightContent) {
     myDiff = d;

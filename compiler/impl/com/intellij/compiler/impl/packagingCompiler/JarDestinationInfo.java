@@ -13,8 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
  */
 public class JarDestinationInfo extends DestinationInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.JarDestinationInfo");
-  private String myPathInJar;
-  private JarInfo myJarInfo;
+  private final String myPathInJar;
+  private final JarInfo myJarInfo;
 
   public JarDestinationInfo(final String pathInJar, final JarInfo jarInfo, DestinationInfo jarDestination) {
     super(DeploymentUtil.appendToPath(jarDestination.getOutputPath(), pathInJar), jarDestination.getOutputFile(), jarDestination.getOutputFilePath());

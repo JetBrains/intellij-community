@@ -43,7 +43,7 @@ import java.beans.Introspector;
 public class ListenerNavigateButton extends JButton implements ActionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.ListenerNavigateButton");
 
-  private RadComponent myComponent;
+  private final RadComponent myComponent;
 
   public ListenerNavigateButton(RadComponent component) {
     myComponent = component;

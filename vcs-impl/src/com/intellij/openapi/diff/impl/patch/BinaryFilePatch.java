@@ -8,8 +8,8 @@ import java.io.IOException;
  * @author yole
  */
 public class BinaryFilePatch extends FilePatch {
-  private byte[] myBeforeContent;
-  private byte[] myAfterContent;
+  private final byte[] myBeforeContent;
+  private final byte[] myAfterContent;
 
   public BinaryFilePatch(final byte[] beforeContent, final byte[] afterContent) {
     myBeforeContent = beforeContent;

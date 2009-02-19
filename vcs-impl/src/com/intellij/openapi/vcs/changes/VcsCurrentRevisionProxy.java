@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author yole
  */
 public class VcsCurrentRevisionProxy implements ContentRevision {
-  private DiffProvider myDiffProvider;
-  private VirtualFile myFile;
+  private final DiffProvider myDiffProvider;
+  private final VirtualFile myFile;
   private ContentRevision myVcsRevision;
 
   public VcsCurrentRevisionProxy(final DiffProvider diffProvider, final VirtualFile file) {

@@ -92,5 +92,5 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
         }
     }
 
-    private static Logger logger = Logger.getInstance(UpdateJavaFileCopyright.class.getName());
+    private static final Logger logger = Logger.getInstance(UpdateJavaFileCopyright.class.getName());
 }

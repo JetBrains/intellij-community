@@ -38,11 +38,11 @@ import java.awt.event.KeyEvent;
  * To change this template use File | Settings | File Templates.
  */
 public class StatementEvaluationDialog extends EvaluationDialog{
-  private JPanel myPanel;
+  private final JPanel myPanel;
   private final Action mySwitchAction = new SwitchAction();
   private static final @NonNls String STATEMENT_EDITOR_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.StatementEditor";
   private static final @NonNls String EVALUATION_PANEL_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.EvaluationPanel";
-  private JLabel myLanguageLabel;
+  private final JLabel myLanguageLabel;
 
   public StatementEvaluationDialog(final Project project, TextWithImports text) {
     super(project, text);

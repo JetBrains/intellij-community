@@ -98,7 +98,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   public boolean FORCE_NON_EMPTY_COMMENT = false;
 
-  private ArrayList<String> myLastCommitMessages = new ArrayList<String>();
+  private final ArrayList<String> myLastCommitMessages = new ArrayList<String>();
   public String LAST_COMMIT_MESSAGE = null;
 
   public boolean OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = false;

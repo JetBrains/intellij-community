@@ -11,7 +11,7 @@
 package com.intellij.openapi.diff.impl.patch;
 
 public class PatchSyntaxException extends Exception {
-  private int myLine;
+  private final int myLine;
 
   public PatchSyntaxException(int line, String message) {
     super(message);

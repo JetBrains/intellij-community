@@ -188,7 +188,7 @@ public class FontEditorDialog extends DialogWrapper {
   }
 
   private class MyListSelectionListener implements ListSelectionListener {
-    private JTextField myTextField;
+    private final JTextField myTextField;
 
     public MyListSelectionListener(final JTextField textField) {
       myTextField = textField;

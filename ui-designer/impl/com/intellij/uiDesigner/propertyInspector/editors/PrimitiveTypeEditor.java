@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
  * @author yole
  */
 public final class PrimitiveTypeEditor<T> extends AbstractTextFieldEditor<T> {
-  private Class<T> myClass;
+  private final Class<T> myClass;
 
   public PrimitiveTypeEditor(final Class<T> aClass) {
     myClass = aClass;

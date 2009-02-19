@@ -5,7 +5,7 @@ import com.intellij.history.core.tree.Entry;
 import java.io.IOException;
 
 public abstract class SelectiveChangeVisitor extends ChangeVisitor {
-  private ChangeVisitor myVisitor;
+  private final ChangeVisitor myVisitor;
 
   public SelectiveChangeVisitor(ChangeVisitor v) {
     myVisitor = v;

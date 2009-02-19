@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class ClientPropertyProperty extends Property {
-  private PropertyRenderer myRenderer;
+  private final PropertyRenderer myRenderer;
   private PropertyEditor myEditor;
 
   public ClientPropertyProperty(final Property parent, final String name, final String valueClass) {

@@ -78,7 +78,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   private final TestConsoleProperties myConsoleProperties;
 
   private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
-  private Map<LogConsoleImpl, TabsListener> myLogToListenerMap = new HashMap<LogConsoleImpl, TabsListener>();
+  private final Map<LogConsoleImpl, TabsListener> myLogToListenerMap = new HashMap<LogConsoleImpl, TabsListener>();
   private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
   private final List<TestProxySelectionChangedListener> myTestsTreeSelectionListeners = new ArrayList<TestProxySelectionChangedListener>();
 
@@ -88,7 +88,7 @@ public class SMTestRunnerResultsForm implements TestFrameworkRunningModel, LogCo
   private final LogFilesManager myLogFilesManager;
 
   // Additional tabs of LogFilesManager
-  private Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
+  private final Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
 
   private final Project myProject;
   private ProcessHandler myRunProcess;

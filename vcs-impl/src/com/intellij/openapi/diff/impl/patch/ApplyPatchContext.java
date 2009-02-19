@@ -22,9 +22,9 @@ public class ApplyPatchContext {
   private final boolean myCreateDirectories;
   private final boolean myAllowRename;
   private Map<VirtualFile, String> myPendingRenames = null;
-  private Map<VirtualFile, FilePath> myPathsBeforeRename = new HashMap<VirtualFile, FilePath>();
-  private TreeSet<String> myMissingDirectories = new TreeSet<String>();
-  private List<FilePath> myAffectedFiles = new ArrayList<FilePath>();
+  private final Map<VirtualFile, FilePath> myPathsBeforeRename = new HashMap<VirtualFile, FilePath>();
+  private final TreeSet<String> myMissingDirectories = new TreeSet<String>();
+  private final List<FilePath> myAffectedFiles = new ArrayList<FilePath>();
   
   public ApplyPatchContext(final VirtualFile baseDir, final int skipTopDirs, final boolean createDirectories, final boolean allowRename) {
     myBaseDir = baseDir;

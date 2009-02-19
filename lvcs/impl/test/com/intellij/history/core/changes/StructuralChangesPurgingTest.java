@@ -9,7 +9,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class StructuralChangesPurgingTest extends LocalVcsTestCase {
-  private Entry root = new RootEntry();
+  private final Entry root = new RootEntry();
 
   @Test
   public void testChangeFileContentChange() {

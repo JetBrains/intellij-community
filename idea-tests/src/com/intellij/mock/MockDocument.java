@@ -20,7 +20,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Map;
 
 public class MockDocument implements DocumentEx {
-  private Map myUserData = new HashMap();
+  private final Map myUserData = new HashMap();
   private StringBuffer myText = new StringBuffer();
   private long myModStamp = LocalTimeCounter.currentTime();
 

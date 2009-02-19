@@ -25,15 +25,15 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class ClientPropertiesProperty extends ReadOnlyProperty {
-  private Project myProject;
+  private final Project myProject;
 
   public static ClientPropertiesProperty getInstance(Project project) {
     return ServiceManager.getService(project, ClientPropertiesProperty.class);
   }
 
-  private PropertyRenderer myRenderer = new LabelPropertyRenderer(UIDesignerBundle.message("client.properties.configure"));
+  private final PropertyRenderer myRenderer = new LabelPropertyRenderer(UIDesignerBundle.message("client.properties.configure"));
 
-  private PropertyEditor myEditor = new MyPropertyEditor();
+  private final PropertyEditor myEditor = new MyPropertyEditor();
 
   public ClientPropertiesProperty(Project project) {
     super(null, "Client Properties");
@@ -61,7 +61,7 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
   }
 
   private class MyPropertyEditor extends PropertyEditor {
-    private TextFieldWithBrowseButton myTf = new TextFieldWithBrowseButton();
+    private final TextFieldWithBrowseButton myTf = new TextFieldWithBrowseButton();
 
     public MyPropertyEditor() {
       myTf.setText(UIDesignerBundle.message("client.properties.configure"));

@@ -20,13 +20,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class CompilerProgressDialog extends DialogWrapper{
-  private JLabel myStatusLabel = new JLabel();
-  private JLabel myStatisticsLabel = new JLabel();
-  private JButton myCancelButton = new JButton(CommonBundle.getCancelButtonText());
-  private JButton myBackgroundButton = new JButton(CommonBundle.getBackgroundButtonText());
-  private JPanel myFunPanel = new JPanel(new BorderLayout());
-  private CompilerTask myTask;
-  private Alarm myInstallFunAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final JLabel myStatusLabel = new JLabel();
+  private final JLabel myStatisticsLabel = new JLabel();
+  private final JButton myCancelButton = new JButton(CommonBundle.getCancelButtonText());
+  private final JButton myBackgroundButton = new JButton(CommonBundle.getBackgroundButtonText());
+  private final JPanel myFunPanel = new JPanel(new BorderLayout());
+  private final CompilerTask myTask;
+  private final Alarm myInstallFunAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public CompilerProgressDialog(final CompilerTask task, Project project){
     super(project, false);

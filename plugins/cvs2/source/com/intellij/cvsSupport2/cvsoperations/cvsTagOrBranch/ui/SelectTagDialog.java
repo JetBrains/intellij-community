@@ -19,7 +19,7 @@ import java.util.Collection;
  */
 public class SelectTagDialog extends DialogWrapper {
   private final Collection<JList> myLists =  new ArrayList<JList>();
-  private JPanel myPanel;
+  private final JPanel myPanel;
   public static final String EXISTING_REVISIONS = CvsBundle.message("label.existing.revisions");
   public static final String EXISTING_TAGS = CvsBundle.message("label.existing.tags");
 

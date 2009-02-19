@@ -125,7 +125,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
       return J_PANEL;
     }
   };
-  private Observer myObserver;
+  private final Observer myObserver;
 
 
   public AddMultiplyFilesOptionsDialog(Project project,

@@ -37,15 +37,15 @@ import java.util.ArrayList;
 public class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridCaptionPanel");
 
-  private GuiEditor myEditor;
-  private boolean myIsRow;
+  private final GuiEditor myEditor;
+  private final boolean myIsRow;
   private RadContainer mySelectedContainer;
-  private DefaultListSelectionModel mySelectionModel = new DefaultListSelectionModel();
+  private final DefaultListSelectionModel mySelectionModel = new DefaultListSelectionModel();
   private int myResizeLine = -1;
   private int myDropInsertLine = -1;
-  private LineFeedbackPainter myFeedbackPainter = new LineFeedbackPainter();
-  private DeleteProvider myDeleteProvider = new MyDeleteProvider();
-  private Alarm myAlarm = new Alarm();
+  private final LineFeedbackPainter myFeedbackPainter = new LineFeedbackPainter();
+  private final DeleteProvider myDeleteProvider = new MyDeleteProvider();
+  private final Alarm myAlarm = new Alarm();
 
   public GridCaptionPanel(final GuiEditor editor, final boolean isRow) {
     myEditor = editor;

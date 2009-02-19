@@ -14,9 +14,9 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public abstract class LabeledComboBoxAction extends AnAction implements CustomComponentAction {
-  private JLabel myLabel;
+  private final JLabel myLabel;
   private JPanel myPanel;
-  private JComboBox myComboBox;
+  private final JComboBox myComboBox;
 
   protected LabeledComboBoxAction(String label) {
     final String labelString = label;

@@ -30,7 +30,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author yole
  */
 public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
-  private CopyOnWriteArrayList<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
+  private final CopyOnWriteArrayList<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
   private MyUI myUI;
   private final Project myProject;
   private final List<FilePath> mySelection = new ArrayList<FilePath>();
@@ -93,7 +93,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   private class MyUI extends JPanel {
-    private Tree myStructureTree;
+    private final Tree myStructureTree;
     private boolean myRendererInitialized;
 
     public MyUI() {

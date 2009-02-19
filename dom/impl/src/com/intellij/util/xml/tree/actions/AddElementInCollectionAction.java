@@ -162,8 +162,8 @@ public class AddElementInCollectionAction extends AddDomElementAction {
 
   private class MyDefaultAddAction extends DefaultAddAction {
     // we need this properties, don't remove it (shared dataContext assertion)
-    private DomElement myParent;
-    private DomModelTreeView myView;
+    private final DomElement myParent;
+    private final DomModelTreeView myView;
     private final Type myType;
     private final DomCollectionChildDescription myDescription;
 

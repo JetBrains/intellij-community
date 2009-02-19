@@ -24,8 +24,8 @@ import java.util.List;
 
 
 public class RunHotswapDialog extends OptionsDialog {
-  private JPanel myPanel;
-  private ElementsChooser<SessionItem> myElementsChooser;
+  private final JPanel myPanel;
+  private final ElementsChooser<SessionItem> myElementsChooser;
 
   public RunHotswapDialog(Project project, java.util.List<DebuggerSession> sessions) {
     super(project);

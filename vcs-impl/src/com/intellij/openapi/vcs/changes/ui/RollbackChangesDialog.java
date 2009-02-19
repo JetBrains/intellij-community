@@ -20,10 +20,10 @@ import java.util.List;
  * @author max
  */
 public class RollbackChangesDialog extends DialogWrapper {
-  private Project myProject;
+  private final Project myProject;
   private final boolean myRefreshSynchronously;
   private final Runnable myAfterVcsRefreshInAwt;
-  private MultipleChangeListBrowser myBrowser;
+  private final MultipleChangeListBrowser myBrowser;
   @Nullable private JCheckBox myDeleteLocallyAddedFiles;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {

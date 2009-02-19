@@ -31,7 +31,7 @@ import java.util.StringTokenizer;
 public class EclipseCompiler extends ExternalCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler");
 
-  private Project myProject;
+  private final Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
   @NonNls public static final String PATH_TO_COMPILER_JAR = PathManager.getLibPath() + "/org.eclipse.jdt.core.jar";
 

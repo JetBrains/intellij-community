@@ -36,12 +36,12 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   private JPanel myTreePanel;
   private JPanel myPropertiesPanel;
   private JPanel myButtonsPanel;
-  private XBreakpointsTree<B> myTree;
-  private XBreakpointPanelAction<B>[] myActions;
+  private final XBreakpointsTree<B> myTree;
+  private final XBreakpointPanelAction<B>[] myActions;
   private Map<XBreakpointPanelAction<B>, JButton> myButtons;
   private XBreakpointPropertiesPanel<B> mySelectedPropertiesPanel;
-  private Set<XBreakpointGroupingRule<B, ?>> mySelectedGroupingRules;
-  private List<XBreakpointGroupingRule<B, ?>> myAllGroupingRules;
+  private final Set<XBreakpointGroupingRule<B, ?>> mySelectedGroupingRules;
+  private final List<XBreakpointGroupingRule<B, ?>> myAllGroupingRules;
 
   public XBreakpointsPanel(@NotNull Project project, @NotNull DialogWrapper parentDialog, @NotNull XBreakpointType<B, ?> type) {
     super(type.getTitle(), type.getBreakpointsDialogHelpTopic(), XBreakpoint.class);

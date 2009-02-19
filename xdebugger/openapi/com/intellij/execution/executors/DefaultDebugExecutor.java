@@ -19,8 +19,8 @@ public class DefaultDebugExecutor extends Executor {
   private static final Icon TOOLWINDOW_ICON = IconLoader.getIcon("/general/toolWindowDebugger.png");
   private static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
   private static final Icon DISABLED_ICON = IconLoader.getIcon("/process/disabledDebug.png");
-  private String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
-  private String myDescription = XDebuggerBundle.message("string.debugger.runner.description");
+  private final String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
+  private final String myDescription = XDebuggerBundle.message("string.debugger.runner.description");
 
   public String getToolWindowId() {
     return ToolWindowId.DEBUG;

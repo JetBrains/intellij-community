@@ -25,9 +25,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author yole
  */
 public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteringStrategy {
-  private JList myValueList;
-  private CopyOnWriteArrayList<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
-  private ChangeListColumn myColumn;
+  private final JList myValueList;
+  private final CopyOnWriteArrayList<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
+  private final ChangeListColumn myColumn;
   private final Class<? extends CommittedChangesProvider> myProviderClass;
 
   public ColumnFilteringStrategy(final ChangeListColumn column,

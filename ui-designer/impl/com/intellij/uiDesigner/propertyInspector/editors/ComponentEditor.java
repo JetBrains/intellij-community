@@ -15,8 +15,8 @@ import java.util.ArrayList;
  * @author yole
  */
 public class ComponentEditor extends ComboBoxPropertyEditor<String> {
-  private Class myPropertyType;
-  private Condition<RadComponent> myFilter;
+  private final Class myPropertyType;
+  private final Condition<RadComponent> myFilter;
   private String myOldValue;
 
   public ComponentEditor(final Class propertyType, final Condition<RadComponent> filter) {

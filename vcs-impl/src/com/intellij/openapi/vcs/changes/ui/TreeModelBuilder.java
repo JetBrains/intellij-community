@@ -24,10 +24,10 @@ import java.util.*;
 public class TreeModelBuilder {
   @NonNls public static final String ROOT_NODE_VALUE = "root";
 
-  private Project myProject;
-  private boolean showFlatten;
-  private DefaultTreeModel model;
-  private ChangesBrowserNode root;
+  private final Project myProject;
+  private final boolean showFlatten;
+  private final DefaultTreeModel model;
+  private final ChangesBrowserNode root;
 
   public TreeModelBuilder(final Project project, final boolean showFlatten) {
     myProject = project;

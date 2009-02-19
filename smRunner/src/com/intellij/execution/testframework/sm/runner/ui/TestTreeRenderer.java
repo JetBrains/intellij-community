@@ -14,7 +14,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * @author: Roman Chernyatchik
  */
 public class TestTreeRenderer extends ColoredTreeCellRenderer {
-  private TestConsoleProperties myConsoleProperties;
+  private final TestConsoleProperties myConsoleProperties;
   @NonNls private static final String SPACE_STRING = " ";
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {

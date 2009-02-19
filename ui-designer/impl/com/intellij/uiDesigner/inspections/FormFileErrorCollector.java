@@ -17,9 +17,9 @@ import java.util.ArrayList;
  * @author yole
  */
 public class FormFileErrorCollector extends FormErrorCollector {
-  private InspectionManager myManager;
-  private PsiFile myFile;
-  private List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+  private final InspectionManager myManager;
+  private final PsiFile myFile;
+  private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
 
   public FormFileErrorCollector(final PsiFile file, final InspectionManager manager) {
     myManager = manager;

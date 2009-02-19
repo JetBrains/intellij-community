@@ -12,11 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalHistoryFacade {
-  private LocalVcs myVcs;
-  private IdeaGateway myGateway;
+  private final LocalVcs myVcs;
+  private final IdeaGateway myGateway;
   private int myChangeSetDepth = 0;
 
-  private List<String> myLog = new ArrayList<String>();
+  private final List<String> myLog = new ArrayList<String>();
 
   public LocalHistoryFacade(LocalVcs vcs, IdeaGateway gw) {
     myGateway = gw;

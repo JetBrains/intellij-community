@@ -21,7 +21,7 @@ import java.io.File;
  * @author yole
  */
 public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
-  private Project myProject;
+  private final Project myProject;
 
   protected ChangesBrowserChangeNode(final Project project, Change userObject) {
     super(userObject);

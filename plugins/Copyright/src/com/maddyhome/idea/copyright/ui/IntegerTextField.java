@@ -70,8 +70,8 @@ public class IntegerTextField extends JFormattedTextField
             return new IntegerFormatter(min, max);
         }
 
-        private int min;
-        private int max;
+        private final int min;
+        private final int max;
     }
 
     protected static class IntegerFormatter extends JFormattedTextField.AbstractFormatter
@@ -103,8 +103,8 @@ public class IntegerTextField extends JFormattedTextField
             return object.toString();
         }
 
-        private int min;
-        private int max;
-        private NumberFormat formatter = NumberFormat.getIntegerInstance();
+        private final int min;
+        private final int max;
+        private final NumberFormat formatter = NumberFormat.getIntegerInstance();
     }
 }

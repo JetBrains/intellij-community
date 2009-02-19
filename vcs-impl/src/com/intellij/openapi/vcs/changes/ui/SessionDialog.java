@@ -24,7 +24,7 @@ public class SessionDialog extends DialogWrapper {
   private final String myCommitMessage;
 
   private final JPanel myCenterPanel = new JPanel(new BorderLayout());
-  private JComponent myConfigurationComponent;
+  private final JComponent myConfigurationComponent;
 
   public SessionDialog(String title, Project project,
                        CommitSession session, List<Change> changes,

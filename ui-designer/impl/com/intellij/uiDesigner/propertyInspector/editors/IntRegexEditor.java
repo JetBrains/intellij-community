@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class IntRegexEditor<T> extends AbstractTextFieldEditor<T> {
-  @NonNls private Pattern myPattern;
+  @NonNls private final Pattern myPattern;
   private final Class<T> myValueClass;
   private final LabelPropertyRenderer<T> myRenderer;
   private final int[] myMinValues;

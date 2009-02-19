@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponent, FileDocumentSynchronizationVetoListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter");
 
-  private FileDocumentManager myFileDocumentManager;
+  private final FileDocumentManager myFileDocumentManager;
 
   public VetoSavingCommittingDocumentsAdapter(final FileDocumentManager fileDocumentManager) {
     myFileDocumentManager = fileDocumentManager;

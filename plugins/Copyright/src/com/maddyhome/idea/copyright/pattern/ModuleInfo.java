@@ -30,5 +30,5 @@ public class ModuleInfo
         return name;
     }
 
-    private String name;
+    private final String name;
 }

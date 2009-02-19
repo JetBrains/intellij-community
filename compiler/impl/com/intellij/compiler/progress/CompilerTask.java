@@ -72,13 +72,13 @@ public class CompilerTask extends Task.Backgroundable {
   private boolean myIsBackgroundMode;
   private int myErrorCount = 0;
   private int myWarningCount = 0;
-  private String myStatisticsText = "";
+  private final String myStatisticsText = "";
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private boolean myMessagesAutoActivated = false;
 
   private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
   private Runnable myCompileWork;
-  private AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
+  private final AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
   private Runnable myRestartWork;
 
   public CompilerTask(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
@@ -315,11 +315,11 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 
-  private Runnable myRepaintRequest = new Runnable() {
+  private final Runnable myRepaintRequest = new Runnable() {
     public void run() {
       SwingUtilities.invokeLater(myRepaintRunnable);
     }
-    private Runnable myRepaintRunnable = new Runnable() {
+    private final Runnable myRepaintRunnable = new Runnable() {
       public void run() {
         String s = myIndicator.getText();
         if (myIndicator.getFraction() > 0) {

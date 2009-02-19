@@ -82,7 +82,7 @@ public class NoLabelForInspection extends BaseFormInspection {
   }
 
   private static class MyQuickFix extends QuickFix {
-    private RadComponent myLabel;
+    private final RadComponent myLabel;
 
     public MyQuickFix(final GuiEditor editor, RadComponent component, RadComponent label) {
       super(editor, UIDesignerBundle.message("inspection.no.label.for.quickfix",

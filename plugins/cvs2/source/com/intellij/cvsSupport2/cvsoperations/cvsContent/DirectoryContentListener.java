@@ -11,7 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 
 class DirectoryContentListener {
   private String myModulePath;
-  private DirectoryContent myDirectoryContent = new DirectoryContent();
+  private final DirectoryContent myDirectoryContent = new DirectoryContent();
   @NonNls private static final String FILE_MESSAGE_PREFIX = "fname ";
   @NonNls private static final String MODULE_MESSAGE_PREFIX = "cvs server: ignoring module ";
   @NonNls private static final String MODULE_MESSAGE_PREFIX_2 = "cvs server: Updating ";

@@ -21,7 +21,7 @@ public class ViewsGeneralSettings implements PersistentStateComponent<Element> {
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;
-  private NodeRendererSettings myNodeRendererSettings;
+  private final NodeRendererSettings myNodeRendererSettings;
 
   public ViewsGeneralSettings(NodeRendererSettings instance) {
     myNodeRendererSettings = instance;

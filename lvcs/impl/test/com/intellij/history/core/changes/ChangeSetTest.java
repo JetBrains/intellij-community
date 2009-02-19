@@ -83,7 +83,7 @@ public class ChangeSetTest extends LocalVcsTestCase {
   }
 
   private class LoggingChange extends CreateFileChange {
-    private int myId;
+    private final int myId;
 
     public LoggingChange(int id) {
       super(-1, null, null, -1, false);

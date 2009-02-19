@@ -178,13 +178,13 @@ public class RecursionDlg extends DialogWrapper
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null));
     }
 
-    private VirtualFile file;
+    private final VirtualFile file;
     private JPanel mainPanel;
     private JRadioButton rbFile;
     private JRadioButton rbAll;
     private JCheckBox cbSubdirs;
-    private Project project;
+    private final Project project;
 
-    private static Logger logger = Logger.getInstance(RecursionDlg.class.getName());
+    private static final Logger logger = Logger.getInstance(RecursionDlg.class.getName());
 
 }

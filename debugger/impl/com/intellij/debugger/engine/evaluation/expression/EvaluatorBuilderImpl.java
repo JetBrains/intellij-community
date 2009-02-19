@@ -64,7 +64,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
-    private Set<JavaCodeFragment> myVisitedFragments = new HashSet<JavaCodeFragment>();
+    private final Set<JavaCodeFragment> myVisitedFragments = new HashSet<JavaCodeFragment>();
     @Nullable
     private final SourcePosition myPosition;
 

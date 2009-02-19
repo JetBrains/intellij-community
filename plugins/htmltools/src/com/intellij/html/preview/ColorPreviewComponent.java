@@ -18,7 +18,7 @@ import java.awt.*;
  * @author spleaner
  */
 public class ColorPreviewComponent extends JComponent {
-  private Color myColor;
+  private final Color myColor;
 
   private ColorPreviewComponent(final String hexValue, final Color color) {
     myColor = color;

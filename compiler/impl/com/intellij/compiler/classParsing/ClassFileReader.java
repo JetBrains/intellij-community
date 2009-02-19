@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class ClassFileReader {
-  private File myFile;
+  private final File myFile;
   private byte[] myData;
   private int[] myConstantPoolOffsets = null; // the last offset points to the constant pool end
 
@@ -680,8 +680,8 @@ public class ClassFileReader {
   }
 
   private static class ConstantPoolIterator {
-    private BytePointer myPtr;
-    private int myEntryCount;
+    private final BytePointer myPtr;
+    private final int myEntryCount;
     private int myCurrentEntryIndex;
     private int myCurrentOffset;
 

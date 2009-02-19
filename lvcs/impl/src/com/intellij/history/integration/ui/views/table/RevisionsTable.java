@@ -14,7 +14,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class RevisionsTable extends Table {
-  private ShiftedCellRendererWrapper myShiftedCellRenderer = new ShiftedCellRendererWrapper();
+  private final ShiftedCellRendererWrapper myShiftedCellRenderer = new ShiftedCellRendererWrapper();
 
   public RevisionsTable(HistoryDialogModel m, SelectionListener l) {
     super(new RevisionsTableModel(m));
@@ -108,7 +108,7 @@ public class RevisionsTable extends Table {
     private int mySelectedRow2 = 0;
     private int mySelectedColumn1 = 1;
     private int mySelectedColumn2 = 1;
-    private SelectionListener mySelectionListener;
+    private final SelectionListener mySelectionListener;
 
     public MyListSelectionListener(SelectionListener l) {
       mySelectionListener = l;

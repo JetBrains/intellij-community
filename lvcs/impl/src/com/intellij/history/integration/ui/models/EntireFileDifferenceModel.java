@@ -8,8 +8,8 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 
 public class EntireFileDifferenceModel extends FileDifferenceModel {
-  private Entry myLeft;
-  private Entry myRight;
+  private final Entry myLeft;
+  private final Entry myRight;
 
   public EntireFileDifferenceModel(IdeaGateway gw, Entry left, Entry right, boolean editableRightContent) {
     super(gw, editableRightContent);

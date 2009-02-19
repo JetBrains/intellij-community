@@ -28,11 +28,11 @@ import java.util.*;
  */
 public class ChooseCheckoutMode extends WizardStep {
   private File mySelectedLocation;
-  private Collection<File> myCvsPaths = new ArrayList<File>();
+  private final Collection<File> myCvsPaths = new ArrayList<File>();
   private final DefaultListModel myCheckoutModeModel = new DefaultListModel();
   private final JList myCheckoutModeList = new JList(myCheckoutModeModel);
-  private JCheckBox myMakeNewFielsReadOnly = new JCheckBox(com.intellij.CvsBundle.message("checkbox.make.new.files.read.only"));
-  private JCheckBox myPruneEmptyDirectories = new JCheckBox(com.intellij.CvsBundle.message("checkbox.prune.empty.directories"));
+  private final JCheckBox myMakeNewFielsReadOnly = new JCheckBox(com.intellij.CvsBundle.message("checkbox.make.new.files.read.only"));
+  private final JCheckBox myPruneEmptyDirectories = new JCheckBox(com.intellij.CvsBundle.message("checkbox.prune.empty.directories"));
   private final ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;
   private final CheckoutWizard myOwner;
 
@@ -44,7 +44,7 @@ public class ChooseCheckoutMode extends WizardStep {
     "#com.intellij.cvsSupport2.ui.experts.checkout.ChooseCheckoutMode");
   @NonNls public static final String LIST = "LIST";
   @NonNls public static final String MESSAGE = "MESSSAGE";
-  private JLabel myMessage = new JLabel(DUMMY_LABEL_TEXT);
+  private final JLabel myMessage = new JLabel(DUMMY_LABEL_TEXT);
   @NonNls private static final String DUMMY_LABEL_TEXT = "XXX";
 
 

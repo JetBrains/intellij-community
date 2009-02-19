@@ -76,5 +76,5 @@ public class UpdateJspxFileCopyright extends UpdateJspFileCopyright {
     checkComments(doc.getRootTag(), location == XmlOptions.LOCATION_BEFORE_ROOTTAG, comments);
   }
 
-  private static Logger logger = Logger.getInstance(UpdateJspxFileCopyright.class.getName());
+  private static final Logger logger = Logger.getInstance(UpdateJspxFileCopyright.class.getName());
 }

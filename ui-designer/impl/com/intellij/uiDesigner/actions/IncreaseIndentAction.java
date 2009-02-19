@@ -14,7 +14,7 @@ import java.util.List;
  * @author yole
  */
 public class IncreaseIndentAction extends AbstractGuiEditorAction {
-  private IndentProperty myIndentProperty = new IndentProperty();
+  private final IndentProperty myIndentProperty = new IndentProperty();
 
   public IncreaseIndentAction() {
     super(true);

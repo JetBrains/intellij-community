@@ -36,7 +36,7 @@ public class RequestHint {
   private final @Nullable SmartStepFilter myTargetMethodSignature;
   private boolean myIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
-  private boolean mySkipThisMethod = false;
+  private final boolean mySkipThisMethod = false;
 
   public static final class SmartStepFilter {
     private final JVMName myDeclaringClassName;

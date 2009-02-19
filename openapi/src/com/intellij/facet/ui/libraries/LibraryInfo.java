@@ -26,9 +26,9 @@ import java.util.Arrays;
  */
 public class LibraryInfo {
   public static final LibraryInfo[] EMPTY_ARRAY = new LibraryInfo[0];
-  private @Nullable LibraryDownloadInfo myDownloadInfo;
-  private @NonNls String myPresentableName;
-  private @NonNls String[] myRequiredClasses;
+  private @Nullable final LibraryDownloadInfo myDownloadInfo;
+  private @NonNls final String myPresentableName;
+  private @NonNls final String[] myRequiredClasses;
 
   public LibraryInfo(final @NonNls String presentableName, final @Nullable @NonNls String version,
                          final @Nullable @NonNls String downloadingUrl,
@@ -40,6 +40,9 @@ public class LibraryInfo {
       String prefix = presentableName.substring(0, dot);
       String suffix = presentableName.substring(dot);
       myDownloadInfo = new LibraryDownloadInfo(downloadingUrl, presentableUrl, prefix, suffix);
+    }
+    else {
+      myDownloadInfo = null;
     }
   }
 

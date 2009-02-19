@@ -12,7 +12,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
 public class SegmentedInputStream extends InputStream {
-  private PushReader mySourceStream;
+  private final PushReader mySourceStream;
   private PacketProcessor myEventsDispatcher;
   private int myStartupPassed = 0;
 

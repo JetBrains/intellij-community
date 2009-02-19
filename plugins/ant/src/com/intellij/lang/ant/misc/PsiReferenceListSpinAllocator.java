@@ -23,7 +23,7 @@ public class PsiReferenceListSpinAllocator {
     }
   }
 
-  private static SpinAllocator<List<PsiReference>> myAllocator =
+  private static final SpinAllocator<List<PsiReference>> myAllocator =
     new SpinAllocator<List<PsiReference>>(new Creator(), new Disposer());
 
   public static List<PsiReference> alloc() {

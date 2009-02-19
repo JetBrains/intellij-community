@@ -112,10 +112,10 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   private byte[] myFileBytes = null;
   private String myRevision;
-  private String myModuleName;
-  private CvsRootProvider myRoot;
+  private final String myModuleName;
+  private final CvsRootProvider myRoot;
   private CvsRevisionNumber myCvsRevisionNumber;
-  private RevisionOrDate myRevisionOrDate;
+  private final RevisionOrDate myRevisionOrDate;
 
   public static GetFileContentOperation createForFile(VirtualFile file, RevisionOrDate revisionOrDate)
     throws CannotFindCvsRootException {

@@ -3,8 +3,8 @@ package com.intellij.history.core.revisions;
 import com.intellij.history.core.changes.Change;
 
 public class RecentChange {
-  private Revision myBefore;
-  private Revision myAfter;
+  private final Revision myBefore;
+  private final Revision myAfter;
 
   public RecentChange(Revision before, Revision after) {
     myBefore = before;

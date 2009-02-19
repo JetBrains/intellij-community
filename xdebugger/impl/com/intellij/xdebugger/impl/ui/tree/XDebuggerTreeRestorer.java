@@ -17,9 +17,9 @@ import java.awt.*;
  */
 public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelectionListener {
   private final XDebuggerTree myTree;
-  private Rectangle myLastVisibleNodeRect;
-  private Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo>();
-  private Map<XValueNodeImpl, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<XValueNodeImpl, XDebuggerTreeState.NodeInfo>();
+  private final Rectangle myLastVisibleNodeRect;
+  private final Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo>();
+  private final Map<XValueNodeImpl, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<XValueNodeImpl, XDebuggerTreeState.NodeInfo>();
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
 

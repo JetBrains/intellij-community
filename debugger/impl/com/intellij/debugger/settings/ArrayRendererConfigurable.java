@@ -22,7 +22,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   private JTextField myStartIndex;
   private JTextField myEndIndex;
 
-  private ArrayRenderer myRenderer;
+  private final ArrayRenderer myRenderer;
   private JComponent myPanel;
 
   public ArrayRendererConfigurable(ArrayRenderer renderer) {

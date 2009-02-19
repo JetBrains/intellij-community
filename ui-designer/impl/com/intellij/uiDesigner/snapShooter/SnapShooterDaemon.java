@@ -29,10 +29,10 @@ import java.util.concurrent.BlockingQueue;
  * @author yole
  */
 public class SnapShooterDaemon implements Runnable {
-  private Map<Integer, Component> myIdMap = new HashMap<Integer, Component>();
+  private final Map<Integer, Component> myIdMap = new HashMap<Integer, Component>();
   private int myNextId = 1;
-  private BlockingQueue<String> myCommandQueue = new ArrayBlockingQueue<String>(20);
-  private BlockingQueue<String> myResponseQueue = new ArrayBlockingQueue<String>(20);
+  private final BlockingQueue<String> myCommandQueue = new ArrayBlockingQueue<String>(20);
+  private final BlockingQueue<String> myResponseQueue = new ArrayBlockingQueue<String>(20);
   private final int myPort;
 
   public SnapShooterDaemon(final int port) {

@@ -5,8 +5,8 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import java.util.*;
 
 public class SimiliarListsZipper {
-  private LinkedList<SubSequence<CommittedChangeList>> myLists;
-  private List<CommittedChangeList> myResult;
+  private final LinkedList<SubSequence<CommittedChangeList>> myLists;
+  private final List<CommittedChangeList> myResult;
   private final VcsCommittedListsZipper myZipper;
   private final RepositoryLocationGroup myGroup;
 

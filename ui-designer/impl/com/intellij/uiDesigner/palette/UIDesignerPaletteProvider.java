@@ -26,10 +26,10 @@ import java.beans.PropertyChangeSupport;
  * @author yole
  */
 public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectComponent {
-  private Project myProject;
-  private Palette myPalette;
-  private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private MyRefactoringListenerProvider myRefactoringListenerProvider = new MyRefactoringListenerProvider();
+  private final Project myProject;
+  private final Palette myPalette;
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final MyRefactoringListenerProvider myRefactoringListenerProvider = new MyRefactoringListenerProvider();
   @NonNls private static final String PROPERTY_GROUPS = "groups";
 
   public UIDesignerPaletteProvider(Project project, final Palette palette) {
@@ -96,7 +96,7 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
     }
 
     private class MyRefactoringElementListener implements RefactoringElementListener {
-      private ComponentItem myItem;
+      private final ComponentItem myItem;
 
       public MyRefactoringElementListener(final ComponentItem item) {
         myItem = item;

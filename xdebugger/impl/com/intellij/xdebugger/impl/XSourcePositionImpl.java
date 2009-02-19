@@ -14,9 +14,9 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class XSourcePositionImpl implements XSourcePosition {
-  private VirtualFile myFile;
-  private int myLine;
-  private int myOffset;
+  private final VirtualFile myFile;
+  private final int myLine;
+  private final int myOffset;
 
   private XSourcePositionImpl(@NotNull VirtualFile file, final int line, final int offset) {
     myFile = file;

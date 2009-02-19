@@ -70,7 +70,7 @@ public class Java15FormInspection extends BaseFormInspection {
   }
 
   private static class RemovePropertyFix extends QuickFix {
-    private Property myProperty;
+    private final Property myProperty;
 
     public RemovePropertyFix(GuiEditor editor, RadComponent component, Property property) {
       super(editor, UIDesignerBundle.message("remove.property.quickfix"), component);

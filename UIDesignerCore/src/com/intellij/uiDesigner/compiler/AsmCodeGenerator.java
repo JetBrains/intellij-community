@@ -36,20 +36,20 @@ import java.util.*;
  * @author yole
  */
 public class AsmCodeGenerator {
-  private LwRootContainer myRootContainer;
-  private ClassLoader myLoader;
-  private ArrayList myErrors;
-  private ArrayList myWarnings;
+  private final LwRootContainer myRootContainer;
+  private final ClassLoader myLoader;
+  private final ArrayList myErrors;
+  private final ArrayList myWarnings;
 
-  private Map myIdToLocalMap = new HashMap();
+  private final Map myIdToLocalMap = new HashMap();
 
   private static final String CONSTRUCTOR_NAME = "<init>";
   private String myClassToBind;
   private byte[] myPatchedData;
 
-  private static Map myContainerLayoutCodeGenerators = new HashMap();
-  private static Map myComponentLayoutCodeGenerators = new HashMap();
-  private static Map myPropertyCodeGenerators = new HashMap();
+  private static final Map myContainerLayoutCodeGenerators = new HashMap();
+  private static final Map myComponentLayoutCodeGenerators = new HashMap();
+  private static final Map myPropertyCodeGenerators = new HashMap();
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
   public static final String GET_ROOT_COMPONENT_METHOD_NAME = "$$$getRootComponent$$$";
   public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";
@@ -62,7 +62,7 @@ public class AsmCodeGenerator {
   private static final Method ourCreateTitledBorderMethod = Method.getMethod(
     "javax.swing.border.TitledBorder createTitledBorder(javax.swing.border.Border,java.lang.String,int,int,java.awt.Font,java.awt.Color)");
 
-  private NestedFormLoader myFormLoader;
+  private final NestedFormLoader myFormLoader;
   private final boolean myIgnoreCustomCreation;
   private final ClassWriter myClassWriter;
 
@@ -222,8 +222,8 @@ public class AsmCodeGenerator {
   class FormClassVisitor extends ClassAdapter {
     private String myClassName;
     private String mySuperName;
-    private Map myFieldDescMap = new HashMap();
-    private Map myFieldAccessMap = new HashMap();
+    private final Map myFieldDescMap = new HashMap();
+    private final Map myFieldAccessMap = new HashMap();
     private boolean myHaveCreateComponentsMethod = false;
     private int myCreateComponentsAccess;
     private final boolean myExplicitSetupCall;

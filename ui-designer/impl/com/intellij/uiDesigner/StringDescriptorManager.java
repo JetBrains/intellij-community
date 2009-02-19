@@ -29,7 +29,7 @@ import java.util.Map;
  * @author yole
  */
 public class StringDescriptorManager {
-  private Module myModule;
+  private final Module myModule;
   private final Map<Pair<Locale, String>, SoftReference<PropertiesFile>> myPropertiesFileCache = new HashMap<Pair<Locale, String>, SoftReference<PropertiesFile>>();
 
   public StringDescriptorManager(final Module module, MessageBus bus) {

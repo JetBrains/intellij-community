@@ -6,7 +6,7 @@ import com.intellij.history.utils.RunnableAdapter;
 import java.util.Random;
 
 public abstract class PerformanceTestCase extends TempDirTestCase {
-  private Random random = new Random();
+  private final Random random = new Random();
 
   protected int rand(int max) {
     return random.nextInt(max);

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class DeprecatedLVCS extends LocalVcs implements ProjectComponent {
   private final Project myProject;
-  private LocalHistoryConfiguration myConfiguration;
+  private final LocalHistoryConfiguration myConfiguration;
 
   public DeprecatedLVCS(Project project, LocalHistoryConfiguration configuration) {
     myProject = project;

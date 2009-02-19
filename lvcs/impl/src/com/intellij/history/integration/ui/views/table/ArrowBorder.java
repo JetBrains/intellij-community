@@ -6,8 +6,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 public class ArrowBorder implements Border {
-  private int myArrowWidth = 7;
-  private Insets myInsets;
+  private final int myArrowWidth = 7;
+  private final Insets myInsets;
   private Color myColor;
 
   public ArrowBorder() {

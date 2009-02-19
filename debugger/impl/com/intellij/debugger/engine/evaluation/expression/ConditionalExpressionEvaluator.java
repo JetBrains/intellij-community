@@ -12,9 +12,9 @@ import com.sun.jdi.BooleanValue;
 import com.sun.jdi.Value;
 
 class ConditionalExpressionEvaluator implements Evaluator {
-  private Evaluator myConditionEvaluator;
-  private Evaluator myThenEvaluator;
-  private Evaluator myElseEvaluator;
+  private final Evaluator myConditionEvaluator;
+  private final Evaluator myThenEvaluator;
+  private final Evaluator myElseEvaluator;
 
   public ConditionalExpressionEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
     myConditionEvaluator = conditionEvaluator;

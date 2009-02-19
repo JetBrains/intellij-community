@@ -150,7 +150,7 @@ public class AntUIUtil {
   }
 
   public static class ProjectJdkRenderer extends ColoredListCellRenderer {
-    private GlobalAntConfiguration myAntConfiguration;
+    private final GlobalAntConfiguration myAntConfiguration;
     private final boolean myInComboBox;
     private final String myProjectJdkName;
 

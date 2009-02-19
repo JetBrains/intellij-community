@@ -402,10 +402,10 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
   }
 
   private static final class RemoteClassValidityState implements ValidityState {
-    private long myRemoteClassTimestamp;
-    private long myStubTimestamp;
-    private long mySkelTimestamp;
-    private long myTieTimestamp;
+    private final long myRemoteClassTimestamp;
+    private final long myStubTimestamp;
+    private final long mySkelTimestamp;
+    private final long myTieTimestamp;
 
     public RemoteClassValidityState(long remoteClassTimestamp, long stubTimestamp, long skelTimestamp, long tieTimestamp) {
       myRemoteClassTimestamp = remoteClassTimestamp;

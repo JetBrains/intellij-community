@@ -16,9 +16,9 @@ import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
 public class TypeCastEvaluator implements Evaluator {
-  private Evaluator myOperandEvaluator;
-  private String myCastType;
-  private boolean myIsPrimitive;
+  private final Evaluator myOperandEvaluator;
+  private final String myCastType;
+  private final boolean myIsPrimitive;
 
   public TypeCastEvaluator(Evaluator operandEvaluator, String castType, boolean isPrimitive) {
     myOperandEvaluator = operandEvaluator;

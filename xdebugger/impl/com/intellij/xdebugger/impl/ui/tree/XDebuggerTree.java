@@ -29,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
-  private DefaultTreeModel myTreeModel;
+  private final DefaultTreeModel myTreeModel;
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private XSourcePosition mySourcePosition;

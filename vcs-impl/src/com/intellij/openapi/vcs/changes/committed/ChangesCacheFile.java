@@ -36,7 +36,7 @@ public class ChangesCacheFile {
   private final Project myProject;
   private final AbstractVcs myVcs;
   private final CachingCommittedChangesProvider myChangesProvider;
-  private ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManager myVcsManager;
   private final FilePath myRootPath;
   private final RepositoryLocation myLocation;
   private Date myFirstCachedDate;
@@ -676,8 +676,8 @@ public class ChangesCacheFile {
     private Set<FilePath> myDeletedFiles;
     private Set<FilePath> myCreatedFiles;
     private Set<FilePath> myReplacedFiles;
-    private Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
-    private Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
+    private final Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
+    private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
     private List<LocalChangeList> myChangeLists;
     private ChangeListManagerImpl myClManager;
 

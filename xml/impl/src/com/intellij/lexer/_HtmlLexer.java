@@ -365,8 +365,8 @@ public class _HtmlLexer implements FlexLexer {
   private boolean zzEOFDone;
 
   /* user code: */
-  private IElementType elTokenType = XmlTokenType.XML_DATA_CHARACTERS;
-  private IElementType elTokenType2 = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
+  private final IElementType elTokenType = XmlTokenType.XML_DATA_CHARACTERS;
+  private final IElementType elTokenType2 = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
 
   public _HtmlLexer() {
     this((java.io.Reader)null);

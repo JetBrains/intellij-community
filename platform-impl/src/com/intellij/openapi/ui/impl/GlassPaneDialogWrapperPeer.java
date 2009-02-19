@@ -309,7 +309,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     private final JLayeredPane myTransparentPane;
     private JButton myDefaultButton;
     private Dimension myShadowSize = null;
-    private Container myWrapperPane;
+    private final Container myWrapperPane;
     private Component myPreviouslyFocusedComponent;
     private Dimension myCachedSize = null;
 

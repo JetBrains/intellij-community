@@ -30,7 +30,7 @@ import java.util.List;
 public class SurroundAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.SurroundAction");
 
-  private String myComponentClass;
+  private final String myComponentClass;
 
   public SurroundAction(String componentClass) {
     final String className = componentClass.substring(componentClass.lastIndexOf('.') + 1);

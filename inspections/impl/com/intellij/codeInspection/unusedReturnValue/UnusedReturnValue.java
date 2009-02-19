@@ -97,7 +97,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
   }
 
   private static class MakeVoidQuickFix implements LocalQuickFix {
-    private ProblemDescriptionsProcessor myProcessor;
+    private final ProblemDescriptionsProcessor myProcessor;
     private static final Logger LOG = Logger.getInstance("#" + MakeVoidQuickFix.class.getName());
 
     public MakeVoidQuickFix(final ProblemDescriptionsProcessor processor) {

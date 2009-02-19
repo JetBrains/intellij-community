@@ -10,7 +10,7 @@ public class GroupByPackages {
 
   private final Map<File, Collection<File>> myParentToChildrenMap
       = new HashMap<File, Collection<File>>();
-  private Collection<File> myRoots = new HashSet<File>();
+  private final Collection<File> myRoots = new HashSet<File>();
 
   public GroupByPackages(Collection<File> fiels) {
     for (Iterator each = fiels.iterator(); each.hasNext();) {

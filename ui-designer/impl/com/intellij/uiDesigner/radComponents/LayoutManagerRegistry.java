@@ -19,9 +19,9 @@ import java.util.*;
  * @author yole
  */
 public class LayoutManagerRegistry {
-  @NonNls private static Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<String, Class<? extends RadLayoutManager>>();
-  @NonNls private static Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<Class, Class<? extends RadLayoutManager>>();
-  @NonNls private static Map<String, String> ourLayoutManagerDisplayNames = new HashMap<String, String>();
+  @NonNls private static final Map<String, Class<? extends RadLayoutManager>> ourLayoutManagerRegistry = new HashMap<String, Class<? extends RadLayoutManager>>();
+  @NonNls private static final Map<Class, Class<? extends RadLayoutManager>> ourLayoutManagerClassRegistry = new HashMap<Class, Class<? extends RadLayoutManager>>();
+  @NonNls private static final Map<String, String> ourLayoutManagerDisplayNames = new HashMap<String, String>();
 
   private LayoutManagerRegistry() {
   }

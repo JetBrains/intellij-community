@@ -45,8 +45,8 @@ import java.util.ArrayList;
  */
 public final class ComponentItemDialog extends DialogWrapper {
   private JPanel myPanel;
-  private ComponentWithBrowseButton<EditorTextField> myTfClassName;
-  private Project myProject;
+  private final ComponentWithBrowseButton<EditorTextField> myTfClassName;
+  private final Project myProject;
   private final ComponentItem myItemToBeEdited;
   private final boolean myOneOff;
   private JLabel myLblIcon;
@@ -69,7 +69,7 @@ public final class ComponentItemDialog extends DialogWrapper {
   private JLabel myGroupLabel;
   private JCheckBox myIsContainerCheckBox;
   private JLabel myErrorLabel;
-  private EditorTextField myEditorTextField;
+  private final EditorTextField myEditorTextField;
   private Document myDocument;
 
   /**
@@ -364,9 +364,9 @@ public final class ComponentItemDialog extends DialogWrapper {
 
   private static class MyChooseFileActionListener implements ActionListener {
     private final Project myProject;
-    private TreeFileChooser.PsiFileFilter myFilter;
-    private TextFieldWithBrowseButton myTextField;
-    private String myTitle;
+    private final TreeFileChooser.PsiFileFilter myFilter;
+    private final TextFieldWithBrowseButton myTextField;
+    private final String myTitle;
 
     public MyChooseFileActionListener(final Project project,
                                       final TreeFileChooser.PsiFileFilter filter,

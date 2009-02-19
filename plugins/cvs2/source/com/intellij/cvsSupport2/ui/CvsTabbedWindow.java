@@ -25,7 +25,7 @@ import javax.swing.*;
  * author: lesya
  */
 public class CvsTabbedWindow {
-  private Project myProject;
+  private final Project myProject;
   private Editor myOutput = null;
   private ErrorTreeView myErrorsView;
   private boolean myIsInitialized;

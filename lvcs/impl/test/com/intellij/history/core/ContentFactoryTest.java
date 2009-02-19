@@ -129,7 +129,7 @@ public class ContentFactoryTest extends LocalVcsTestCase {
   }
 
   class MyContentFactory extends ContentFactory {
-    private byte[] myBytes;
+    private final byte[] myBytes;
 
     public MyContentFactory(byte[] bytes) {
       myBytes = bytes;

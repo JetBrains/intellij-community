@@ -15,8 +15,8 @@ import java.awt.*;
  */
 public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
   private boolean myHaveGbc = false;
-  @NonNls private static TIntObjectHashMap<String> myFillMap = new TIntObjectHashMap<String>();
-  @NonNls private static TIntObjectHashMap<String> myAnchorMap = new TIntObjectHashMap<String>();
+  @NonNls private static final TIntObjectHashMap<String> myFillMap = new TIntObjectHashMap<String>();
+  @NonNls private static final TIntObjectHashMap<String> myAnchorMap = new TIntObjectHashMap<String>();
 
   static {
     myFillMap.put(GridBagConstraints.HORIZONTAL, "java.awt.GridBagConstraints.HORIZONTAL");

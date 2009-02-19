@@ -26,9 +26,9 @@ import java.awt.*;
 public class CommittedChangesFilterDialog extends DialogWrapper {
   private final ChangesBrowserSettingsEditor myPanel;
   private ChangeBrowserSettings mySettings;
-  private JLabel myErrorLabel = new JLabel();
-  private Alarm myValidateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private Runnable myValidateRunnable = new Runnable() {
+  private final JLabel myErrorLabel = new JLabel();
+  private final Alarm myValidateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Runnable myValidateRunnable = new Runnable() {
     public void run() {
       validateInput();
       myValidateAlarm.addRequest(myValidateRunnable, 500, ModalityState.stateForComponent(myPanel.getComponent()));

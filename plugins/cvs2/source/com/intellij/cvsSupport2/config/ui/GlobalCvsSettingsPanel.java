@@ -14,7 +14,7 @@ import java.nio.charset.Charset;
  * author: lesya
  */
 public class GlobalCvsSettingsPanel {
-  private PServerSettingsPanel myPServerSettingsPanel = new PServerSettingsPanel();
+  private final PServerSettingsPanel myPServerSettingsPanel = new PServerSettingsPanel();
   private JComponent myPanel;
   private JPanel myPServerPanel;
   private JCheckBox myUseGZIPCompression;

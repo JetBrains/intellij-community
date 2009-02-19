@@ -67,7 +67,7 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   private JScrollPane myVcsesScrollPane;
 
   @Nullable
-  private JComboBox myVcsesToUpdate;
+  private final JComboBox myVcsesToUpdate;
 
   public VcsConfigurationsDialog(Project project, @Nullable JComboBox vcses, AbstractVcs selectedVcs) {
     super(project, false);

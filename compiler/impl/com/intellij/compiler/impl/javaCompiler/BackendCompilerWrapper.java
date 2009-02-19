@@ -63,7 +63,7 @@ public class BackendCompilerWrapper {
   private final VirtualFile[] myFilesToCompile;
   private final Project myProject;
   private final Set<VirtualFile> myFilesToRecompile;
-  private Map<Module, VirtualFile> myModuleToTempDirMap = new HashMap<Module, VirtualFile>();
+  private final Map<Module, VirtualFile> myModuleToTempDirMap = new HashMap<Module, VirtualFile>();
   private final ProjectFileIndex myProjectFileIndex;
   @NonNls private static final String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
 
@@ -318,8 +318,8 @@ public class BackendCompilerWrapper {
     });
   }
 
-  private TIntHashSet myProcessedNames = new TIntHashSet();
-  private Set<VirtualFile> myProcessedFiles = new HashSet<VirtualFile>();
+  private final TIntHashSet myProcessedNames = new TIntHashSet();
+  private final Set<VirtualFile> myProcessedFiles = new HashSet<VirtualFile>();
 
   private VirtualFile[] findDependentFiles() throws CacheCorruptedException {
     myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.checking.dependencies"));

@@ -37,19 +37,19 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsEntriesManager");
 
-  private Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new HashMap<VirtualFile, CvsInfo>();
+  private final Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new HashMap<VirtualFile, CvsInfo>();
 
   private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
-  private Collection<CvsEntriesListener> myEntriesListeners = new ArrayList<CvsEntriesListener>();
+  private final Collection<CvsEntriesListener> myEntriesListeners = new ArrayList<CvsEntriesListener>();
   private int myIsActive = 0;
   private final Collection<String> myFilesToRefresh = new HashSet<String>();
   private int mySynchronizationActionLocks = 0;
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new HashMap<String, CvsConnectionSettings>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
-  private MyVirtualFileManagerListener myVirtualFileManagerListener = new MyVirtualFileManagerListener();
-  private CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
+  private final MyVirtualFileManagerListener myVirtualFileManagerListener = new MyVirtualFileManagerListener();
+  private final CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
 
   public static CvsEntriesManager getInstance() {
     return ServiceManager.getService(CvsEntriesManager.class);

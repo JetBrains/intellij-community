@@ -11,8 +11,8 @@ import java.io.File;
  *         Date: Mar 19, 2004
  */
 public class ModuleSources extends CompositeGenerator{
-  private VirtualFile[] mySourceRoots = VirtualFile.EMPTY_ARRAY;
-  private VirtualFile[] myTestSourceRoots = VirtualFile.EMPTY_ARRAY;
+  private final VirtualFile[] mySourceRoots = VirtualFile.EMPTY_ARRAY;
+  private final VirtualFile[] myTestSourceRoots = VirtualFile.EMPTY_ARRAY;
 
   public ModuleSources(Module module, File baseDir, final GenerationOptions genOptions) {
     /*

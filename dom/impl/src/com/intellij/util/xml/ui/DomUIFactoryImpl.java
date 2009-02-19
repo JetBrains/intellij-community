@@ -68,7 +68,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
   public final UserActivityWatcher createEditorAwareUserActivityWatcher() {
     return new UserActivityWatcher() {
-      private DocumentAdapter myListener = new DocumentAdapter() {
+      private final DocumentAdapter myListener = new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
           fireUIChanged();
         }

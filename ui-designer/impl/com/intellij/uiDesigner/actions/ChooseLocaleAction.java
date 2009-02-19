@@ -68,9 +68,9 @@ public class ChooseLocaleAction extends ComboBoxAction {
   }
 
   private class SetLocaleAction extends AnAction {
-    private GuiEditor myEditor;
-    private Locale myLocale;
-    private boolean myUpdateText;
+    private final GuiEditor myEditor;
+    private final Locale myLocale;
+    private final boolean myUpdateText;
 
     public SetLocaleAction(final GuiEditor editor, final Locale locale, final boolean updateText) {
       super(locale.getDisplayName().length() == 0

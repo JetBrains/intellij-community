@@ -230,7 +230,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
   }
 
   private static class AcceptSuggested implements LocalQuickFix {
-    private RefManager myManager;
+    private final RefManager myManager;
 
     public AcceptSuggested(final RefManager manager) {
       myManager = manager;

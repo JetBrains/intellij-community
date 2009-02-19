@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
 
 class ProcessProxyImpl implements ProcessProxy {
   public static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
-  private int myPortNumber;
+  private final int myPortNumber;
 
   private static final int SOCKET_NUMBER_START = 7532;
   private static final int SOCKET_NUMBER = 100;
@@ -41,23 +41,25 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   public ProcessProxyImpl () throws NoMoreSocketsException {
-    ServerSocket s;
+    myPortNumber = getPortNumer();
+    if (myPortNumber == -1) throw new NoMoreSocketsException();
+  }
+
+  private static int getPortNumer() {
     synchronized (ourUsedSockets) {
       for (int j = 0; j < SOCKET_NUMBER; j++) {
         if (ourUsedSockets[j]) continue;
         try {
-          s = new ServerSocket(j + SOCKET_NUMBER_START);
+          ServerSocket s = new ServerSocket(j + SOCKET_NUMBER_START);
           s.close();
-          myPortNumber = j + SOCKET_NUMBER_START;
           ourUsedSockets[j] = true;
-
-          return;
+          return j + SOCKET_NUMBER_START;
         } catch (IOException e) {
           continue;
         }
       }
     }
-    throw new NoMoreSocketsException();
+    return -1;
   }
 
   public void finalize () throws Throwable {

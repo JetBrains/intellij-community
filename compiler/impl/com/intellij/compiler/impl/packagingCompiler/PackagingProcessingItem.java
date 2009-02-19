@@ -17,8 +17,8 @@ import java.util.ArrayList;
  * @author nik
  */
 public class PackagingProcessingItem implements FileProcessingCompiler.ProcessingItem {
-  private VirtualFile mySourceFile;
-  private List<DestinationInfo> myDestinations = new ArrayList<DestinationInfo>();
+  private final VirtualFile mySourceFile;
+  private final List<DestinationInfo> myDestinations = new ArrayList<DestinationInfo>();
 
   public PackagingProcessingItem(final VirtualFile sourceFile) {
     mySourceFile = sourceFile;

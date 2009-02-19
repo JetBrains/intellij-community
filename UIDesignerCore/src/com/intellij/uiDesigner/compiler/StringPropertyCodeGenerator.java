@@ -28,8 +28,8 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
   private static final Method myLoadButtonTextMethod = new Method(AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, Type.VOID_TYPE,
                                                                  new Type[] { Type.getType(AbstractButton.class), Type.getType(String.class) } );
 
-  private Set myClassesRequiringLoadLabelText = new HashSet();
-  private Set myClassesRequiringLoadButtonText = new HashSet();
+  private final Set myClassesRequiringLoadLabelText = new HashSet();
+  private final Set myClassesRequiringLoadButtonText = new HashSet();
   private boolean myHaveSetDisplayedMnemonicIndex = false;
 
   public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final ClassLoader loader) {

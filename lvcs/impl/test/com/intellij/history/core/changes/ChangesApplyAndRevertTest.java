@@ -6,7 +6,7 @@ import com.intellij.history.core.tree.RootEntry;
 import org.junit.Test;
 
 public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
-  private Entry root = new RootEntry();
+  private final Entry root = new RootEntry();
 
   @Test
   public void testCreatingFile() {

@@ -11,10 +11,10 @@ import com.intellij.openapi.actionSystem.DataKey;
  * @author yole
  */
 public class CaptionSelection {
-  private RadContainer myContainer;
-  private boolean myIsRow;
-  private int[] mySelection;
-  private int myFocusedIndex;
+  private final RadContainer myContainer;
+  private final boolean myIsRow;
+  private final int[] mySelection;
+  private final int myFocusedIndex;
 
   public static final DataKey<CaptionSelection> DATA_KEY = DataKey.create(CaptionSelection.class.getName());
 

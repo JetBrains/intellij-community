@@ -44,7 +44,7 @@ public class CvsChangeList implements CommittedChangeList {
   private long myNumber;
   @NotNull private String myDescription;
 
-  private VirtualFile myRootFile;
+  private final VirtualFile myRootFile;
   private String myRootPath;
 
   private final List<RevisionWrapper> myRevisions = new ArrayList<RevisionWrapper>();

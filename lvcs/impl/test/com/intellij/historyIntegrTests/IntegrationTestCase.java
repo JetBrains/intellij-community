@@ -82,8 +82,8 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   }
 
   protected class ContentChangesListener extends VirtualFileAdapter {
-    private VirtualFile myFile;
-    private String[] myContents = new String[2];
+    private final VirtualFile myFile;
+    private final String[] myContents = new String[2];
 
     public ContentChangesListener(VirtualFile f) {
       myFile = f;

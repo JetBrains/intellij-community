@@ -27,12 +27,12 @@ import java.util.Map;
  * @author nik
  */
 public class XFramesView extends XDebugViewBase {
-  private JPanel myMainPanel;
-  private XDebuggerFramesList myFramesList;
-  private JComboBox myThreadComboBox;
+  private final JPanel myMainPanel;
+  private final XDebuggerFramesList myFramesList;
+  private final JComboBox myThreadComboBox;
   private XExecutionStack mySelectedStack;
   private boolean myListenersEnabled;
-  private Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
+  private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
 
   public XFramesView(final XDebugSession session, final Disposable parentDisposable) {
     super(session, parentDisposable);
@@ -160,7 +160,7 @@ public class XFramesView extends XDebugViewBase {
 
   private class StackFramesListBuilder implements XExecutionStack.XStackFrameContainer {
     private XExecutionStack myExecutionStack;
-    private List<XStackFrame> myStackFrames;
+    private final List<XStackFrame> myStackFrames;
     private String myErrorMessage;
     private int myNextFrameIndex;
     private boolean myRunning;

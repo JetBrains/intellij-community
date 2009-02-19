@@ -18,7 +18,7 @@ import com.sun.jdi.Method;
 import javax.swing.*;
 
 class FramesListRenderer extends ColoredListCellRenderer {
-  private EditorColorsScheme myColorScheme;
+  private final EditorColorsScheme myColorScheme;
 
   public FramesListRenderer() {
     myColorScheme = EditorColorsManager.getInstance().getGlobalScheme();

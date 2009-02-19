@@ -23,7 +23,7 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
   private PsiMethod myHashCode;
   private PsiMethod myEquals;
   private JavaPsiFacade myPsiFacade;
-  private AtomicBoolean myInitialized = new AtomicBoolean();
+  private final AtomicBoolean myInitialized = new AtomicBoolean();
 
   public void projectOpened(Project project) {
     myPsiFacade = JavaPsiFacade.getInstance(project);

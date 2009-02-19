@@ -13,8 +13,8 @@ import java.util.*;
  * @author max
  */
 public class VirtualFileHolder implements FileHolder {
-  private Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
-  private Project myProject;
+  private final Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
+  private final Project myProject;
   private final HolderType myType;
 
   public VirtualFileHolder(Project project, final HolderType type) {

@@ -9,8 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.util.*;
 
 public class TestIdeaGateway extends IdeaGateway {
-  private List<MyDocument> myUnsavedDocuments = new ArrayList<MyDocument>();
-  private Map<String, FileType> myFileTypes = new HashMap<String, FileType>();
+  private final List<MyDocument> myUnsavedDocuments = new ArrayList<MyDocument>();
+  private final Map<String, FileType> myFileTypes = new HashMap<String, FileType>();
   private List<VirtualFile> myContentRoots = new ArrayList<VirtualFile>();
 
   public TestIdeaGateway() {
@@ -94,8 +94,8 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   private class MyDocument extends MockDocument {
-    private String myName;
-    private String myContent;
+    private final String myName;
+    private final String myContent;
 
     public MyDocument(String name, String content) {
       myName = name;
@@ -118,7 +118,7 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   private class MyDocumentForFile extends MyDocument {
-    private VirtualFile myFile;
+    private final VirtualFile myFile;
 
     public MyDocumentForFile(String name, String content, final boolean isValid) {
       super(name, content);

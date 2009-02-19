@@ -21,9 +21,9 @@ import java.util.Collections;
 import java.util.List;
 
 class NewClassInstanceEvaluator implements Evaluator {
-  private Evaluator myClassTypeEvaluator;
-  private JVMName myConstructorSignature;
-  private Evaluator[] myParamsEvaluators;
+  private final Evaluator myClassTypeEvaluator;
+  private final JVMName myConstructorSignature;
+  private final Evaluator[] myParamsEvaluators;
 
   public NewClassInstanceEvaluator(Evaluator classTypeEvaluator, JVMName constructorSignature, Evaluator[] argumentEvaluators) {
     myClassTypeEvaluator = classTypeEvaluator;

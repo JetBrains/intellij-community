@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Set;
 
 public class CacheUpdaterProcessor {
-  private LocalVcs myVcs;
+  private final LocalVcs myVcs;
 
   // usage of Set is for quick search
   // usage of LinkedHashSet is for preserving order of files
   // due to performance problems on idea startup caused by hard-drive seeks
-  private Set<VirtualFile> myFilesToCreate = new LinkedHashSet<VirtualFile>();
-  private Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
+  private final Set<VirtualFile> myFilesToCreate = new LinkedHashSet<VirtualFile>();
+  private final Set<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
 
   public CacheUpdaterProcessor(LocalVcs vcs) {
     myVcs = vcs;

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class VcsDirectoryMappingStorage implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage");
 
-  private ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManager myVcsManager;
 
   public VcsDirectoryMappingStorage(final ProjectLevelVcsManager vcsManager) {
     myVcsManager = vcsManager;

@@ -118,5 +118,5 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor
     private static final String TITLE = "Update Copyright";
     private static final String MESSAGE = "Updating copyrights...";
 
-    private static Logger logger = Logger.getInstance(UpdateCopyrightProcessor.class.getName());
+    private static final Logger logger = Logger.getInstance(UpdateCopyrightProcessor.class.getName());
 }

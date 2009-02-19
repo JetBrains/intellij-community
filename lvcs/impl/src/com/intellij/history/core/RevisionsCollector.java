@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RevisionsCollector extends ChangeSetsProcessor {
-  private Entry myRoot;
-  private ChangeList myChangeList;
+  private final Entry myRoot;
+  private final ChangeList myChangeList;
 
-  private List<Revision> myResult = new ArrayList<Revision>();
+  private final List<Revision> myResult = new ArrayList<Revision>();
 
   public RevisionsCollector(LocalVcs vcs, String path, Entry rootEntry, ChangeList cl) {
     super(vcs, path);

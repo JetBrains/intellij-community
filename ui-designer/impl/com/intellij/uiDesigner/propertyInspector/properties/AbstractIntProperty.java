@@ -14,9 +14,9 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public abstract class AbstractIntProperty<T extends RadComponent> extends Property<T, Integer> {
-  private int myDefaultValue;
-  private LabelPropertyRenderer<Integer> myRenderer = new LabelPropertyRenderer<Integer>();
-  private IntEditor myEditor;
+  private final int myDefaultValue;
+  private final LabelPropertyRenderer<Integer> myRenderer = new LabelPropertyRenderer<Integer>();
+  private final IntEditor myEditor;
 
   protected AbstractIntProperty(Property parent, @NotNull @NonNls String name, int defaultValue) {
     super(parent, name);

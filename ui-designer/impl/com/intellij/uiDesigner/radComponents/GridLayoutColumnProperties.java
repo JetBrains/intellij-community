@@ -28,7 +28,7 @@ public class GridLayoutColumnProperties implements CustomPropertiesPanel {
   private RadContainer myContainer;
   private boolean myRow;
   private int mySelectedIndex;
-  private List<ChangeListener> myListeners = new ArrayList<ChangeListener>();
+  private final List<ChangeListener> myListeners = new ArrayList<ChangeListener>();
 
   public GridLayoutColumnProperties() {
     myWantGrowCheckBox.addActionListener(new ActionListener() {

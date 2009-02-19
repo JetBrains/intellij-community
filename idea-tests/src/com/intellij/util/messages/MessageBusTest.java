@@ -27,7 +27,7 @@ public class MessageBusTest extends TestCase {
   private final static Topic<T2Listener> T2 = new Topic<T2Listener>("T1", T2Listener.class);
 
   private class T1Handler implements T1Listener {
-    private String id;
+    private final String id;
 
     public T1Handler(final String id) {
       this.id = id;
@@ -42,7 +42,7 @@ public class MessageBusTest extends TestCase {
     }
   }
   private class T2Handler implements T2Listener {
-    private String id;
+    private final String id;
 
     public T2Handler(final String id) {
       this.id = id;

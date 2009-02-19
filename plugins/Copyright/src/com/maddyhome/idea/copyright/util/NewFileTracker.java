@@ -62,7 +62,7 @@ public class NewFileTracker
         });
     }
 
-    private Set<VirtualFile> newfiles = new HashSet<VirtualFile>();
+    private final Set<VirtualFile> newfiles = new HashSet<VirtualFile>();
 
-    private static NewFileTracker instance = new NewFileTracker();
+    private static final NewFileTracker instance = new NewFileTracker();
 }

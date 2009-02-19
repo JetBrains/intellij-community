@@ -73,12 +73,12 @@ public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
 
   private final Project myProject;
-  private Map<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [IntermediateOutputCompiler, Module] -> [ProductionSources, TestSources]
-  private String myCachesDirectoryPath;
+  private final Map<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [IntermediateOutputCompiler, Module] -> [ProductionSources, TestSources]
+  private final String myCachesDirectoryPath;
   private boolean myShouldClearOutputDirectory;
 
-  private Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
-  private Map<Module, String> myModuleTestOutputPaths = new HashMap<Module, String>();
+  private final Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
+  private final Map<Module, String> myModuleTestOutputPaths = new HashMap<Module, String>();
 
   @NonNls private static final String VERSION_FILE_NAME = "version.dat";
   @NonNls private static final String LOCK_FILE_NAME = "in_progress.dat";
@@ -298,7 +298,7 @@ public class CompileDriver {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
-    
+
     final DependencyCache dependencyCache = createDependencyCache();
     final CompileContextImpl compileContext =
       new CompileContextImpl(myProject, compileTask, scope, dependencyCache, !isRebuild && !forceCompile, isRebuild);
@@ -445,7 +445,7 @@ public class CompileDriver {
   }
 
   private static class ExitStatus {
-    private String myName;
+    private final String myName;
 
     private ExitStatus(@NonNls String name) {
       myName = name;
@@ -511,7 +511,7 @@ public class CompileDriver {
         }
         return ExitStatus.ERRORS;
       }
-      
+
       // need this to make sure the VFS is built
       boolean needRecalcOutputDirs = false;
       final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
@@ -588,18 +588,18 @@ public class CompileDriver {
         dropDependencyCache(context);
 
         final VirtualFile[] allOutputDirs = context.getAllOutputDirectories();
-        
+
         if (didSomething && GENERATE_CLASSPATH_INDEX) {
           context.getProgressIndicator().pushState();
           context.getProgressIndicator().setText("Generating classpath index...");
           int count = 0;
           for (VirtualFile file : allOutputDirs) {
             context.getProgressIndicator().setFraction(((double)++count) / allOutputDirs.length);
-            createClasspathIndex(file); 
+            createClasspathIndex(file);
           }
           context.getProgressIndicator().popState();
         }
-        
+
         if (!context.getProgressIndicator().isCanceled() && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
           RefreshQueue.getInstance().refresh(true, true, new Runnable() {
             public void run() {
@@ -725,7 +725,7 @@ public class CompileDriver {
     boolean didSomething = false;
 
     final TranslatingCompiler[] translators = compilerManager.getCompilers(TranslatingCompiler.class);
-    
+
     final Set<FileType> generatedTypes = new HashSet<FileType>();
     VfsSnapshot snapshot = null;
 
@@ -742,7 +742,7 @@ public class CompileDriver {
           }
         });
       }
-                
+
       final CompileContextEx _context;
       if (translator instanceof IntermediateOutputCompiler) {
         // wrap compile context so that output goes into intermediate directories
@@ -751,7 +751,7 @@ public class CompileDriver {
           public VirtualFile getModuleOutputDirectory(final Module module) {
             return getGenerationOutputDir(_translator, module, false);
           }
-        
+
           public VirtualFile getModuleOutputDirectoryForTests(final Module module) {
             return getGenerationOutputDir(_translator, module, true);
           }
@@ -762,11 +762,11 @@ public class CompileDriver {
       }
       final boolean compiledSomething =
         compileSources(_context, snapshot, translator, forceCompile, isRebuild, trackDependencies, outputDirectories, onlyCheckStatus);
-      
+
       if (compiledSomething) {
         generatedTypes.addAll(compilerManager.getRegisteredOutputTypes(translator));
       }
-      
+
       dropDependencyCache(context);
 
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
@@ -800,13 +800,13 @@ public class CompileDriver {
             if (context.getProgressIndicator().isCanceled()) {
               throw new ExitException(ExitStatus.CANCELLED);
             }
-  
+
             final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile, checkScope, onlyCheckStatus, cacheUpdater);
-  
+
             if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
               throw new ExitException(ExitStatus.ERRORS);
             }
-  
+
             didSomething |= processedSomething;
           }
         }
@@ -897,7 +897,7 @@ public class CompileDriver {
             }
           }
         }
-      }                          
+      }
       if (myShouldClearOutputDirectory) {
         clearOutputDirectories(outputDirectories);
       }
@@ -996,7 +996,7 @@ public class CompileDriver {
 
     for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
       final File[] outputs = {
-        new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)), 
+        new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)),
         new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true))
       };
       for (File output : outputs) {
@@ -1425,7 +1425,7 @@ public class CompileDriver {
     if (ex[0] != null) {
       throw ex[0];
     }
-    
+
     final Collection<String> urls = cache.getUrls();
     final List<String> urlsToRemove = new ArrayList<String>();
     if (!urls.isEmpty()) {
@@ -1832,7 +1832,7 @@ public class CompileDriver {
   private void showConfigurationDialog(String moduleNameToSelect, String tabNameToSelect) {
     ModulesConfigurator.showDialog(myProject, moduleNameToSelect, tabNameToSelect, false);
   }
-  
+
   private static VirtualFile lookupVFile(final IntermediateOutputCompiler compiler, final Module module, final boolean forTestSources) {
     final File file = new File(CompilerPaths.getGenerationOutputPath(compiler, module, forTestSources));
     final VirtualFile vFile;
@@ -1847,7 +1847,7 @@ public class CompileDriver {
   }
 
   private static class CacheDeferredUpdater {
-    private Map<VirtualFile, List<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>> myData = new java.util.HashMap<VirtualFile, List<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>>();
+    private final Map<VirtualFile, List<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>> myData = new java.util.HashMap<VirtualFile, List<Pair<FileProcessingCompilerStateCache, FileProcessingCompiler.ProcessingItem>>>();
     
     public void addFileForUpdate(final FileProcessingCompiler.ProcessingItem item, FileProcessingCompilerStateCache cache) {
       final VirtualFile file = item.getFile();

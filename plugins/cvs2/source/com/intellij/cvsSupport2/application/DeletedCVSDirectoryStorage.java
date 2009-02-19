@@ -11,7 +11,7 @@ import java.io.FileFilter;
 import java.util.Collection;
 
 public class DeletedCVSDirectoryStorage {
-  private File myRoot;
+  private final File myRoot;
   public static final String CVS_ADMIN_DIR = CvsUtil.CVS;
 
   private final Collection<VirtualFile> myFilesToDelete = new HashSet<VirtualFile>();
@@ -93,7 +93,7 @@ public class DeletedCVSDirectoryStorage {
   }
 
   private static class DirectoryFilter implements FileFilter {
-    private static FileFilter instance = new DirectoryFilter();
+    private static final FileFilter instance = new DirectoryFilter();
 
     public static FileFilter getInstance() {
       return instance;

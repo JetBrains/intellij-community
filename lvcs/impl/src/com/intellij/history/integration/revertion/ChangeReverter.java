@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class ChangeReverter extends Reverter {
-  private LocalVcs myVcs;
+  private final LocalVcs myVcs;
   private final IdeaGateway myGateway;
-  private Change myChange;
+  private final Change myChange;
   private List<Change> myChainCache;
 
   public ChangeReverter(LocalVcs vcs, IdeaGateway gw, Change c) {

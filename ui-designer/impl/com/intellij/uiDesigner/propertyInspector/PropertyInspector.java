@@ -29,13 +29,13 @@ public final class PropertyInspector extends JPanel{
   private final ComponentTree myComponentTree;
   private final QuickFixManager myQuickFixManager;
   private GuiEditor myEditor;
-  private PropertyInspector.MyComponentSelectionListener myComponentSelectionListener;
+  private final PropertyInspector.MyComponentSelectionListener myComponentSelectionListener;
   @NonNls private static final String INSPECTOR_CARD = "inspector";
   @NonNls private static final String EMPTY_CARD = "empty";
   @NonNls private static final String CUSTOM_CARD = "column";
-  private JScrollPane myCustomPropertiesScrollPane = new JScrollPane();
+  private final JScrollPane myCustomPropertiesScrollPane = new JScrollPane();
   private CustomPropertiesPanel myCustomPropertiesPanel;
-  private ChangeListener myCustomPropertiesChangeListener;
+  private final ChangeListener myCustomPropertiesChangeListener;
   private RadContainer myPropertiesPanelContainer;
 
   public PropertyInspector(Project project, @NotNull final ComponentTree componentTree) {

@@ -13,8 +13,8 @@ package com.intellij.openapi.diff.impl.patch;
 public class PatchLine {
   public enum Type { CONTEXT, ADD, REMOVE }
 
-  private Type myType;
-  private String myText;
+  private final Type myType;
+  private final String myText;
   private boolean mySuppressNewLine;
 
   public PatchLine(final Type type, final String text) {

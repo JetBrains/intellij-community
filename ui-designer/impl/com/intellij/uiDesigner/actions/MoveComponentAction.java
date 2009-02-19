@@ -18,8 +18,8 @@ import java.util.Comparator;
  * @author yole
  */
 public class MoveComponentAction extends AbstractGuiEditorAction {
-  private int myRowDelta;
-  private int myColumnDelta;
+  private final int myRowDelta;
+  private final int myColumnDelta;
   private final int myRowSpanDelta;
   private final int myColSpanDelta;
 

@@ -24,7 +24,7 @@ public class MethodReturnValueWatcher  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.requests.MethodReturnValueWatcher");
   private @Nullable Method myLastExecutedMethod;
   private @Nullable Value myLastMethodReturnValue;
-  private @NotNull MethodExitRequest myWatchMethodReturnValueRequest;
+  private @NotNull final MethodExitRequest myWatchMethodReturnValueRequest;
   private java.lang.reflect.Method myReturnValueMethod;
   private volatile boolean myIsTrackingEnabled;
   private boolean myFeatureEnabled;

@@ -30,11 +30,11 @@ import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
 public abstract class AbstractUpdateCopyright implements UpdateCopyright {
   private String commentText = null;
-  private Project project;
-  private Module module;
-  private VirtualFile root;
-  private CopyrightProfile myCopyrightProfile;
-  private PsiManager manager;
+  private final Project project;
+  private final Module module;
+  private final VirtualFile root;
+  private final CopyrightProfile myCopyrightProfile;
+  private final PsiManager manager;
 
   protected AbstractUpdateCopyright(Project project, Module module, VirtualFile root, CopyrightProfile copyrightProfile) {
     this.project = project;

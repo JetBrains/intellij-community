@@ -16,8 +16,8 @@ import java.io.File;
 public class LocalHistoryComponentTest extends TempDirTestCase {
   private MyStartupManager sm;
   private LocalHistoryComponent c;
-  private LocalHistoryConfiguration config = new LocalHistoryConfiguration();
-  private long purgePeriod = 0;
+  private final LocalHistoryConfiguration config = new LocalHistoryConfiguration();
+  private final long purgePeriod = 0;
 
   @After
   public void tearDown() {
@@ -209,7 +209,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
   }
 
   private class MyLocalHistoryComponent extends LocalHistoryComponent {
-    private String mySystemPath;
+    private final String mySystemPath;
     private boolean isVcsInitialized;
 
     public MyLocalHistoryComponent(String systemPath, Project p, MyStartupManager sm) {

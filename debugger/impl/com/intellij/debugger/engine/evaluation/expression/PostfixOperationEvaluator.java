@@ -18,8 +18,8 @@ public class PostfixOperationEvaluator implements Evaluator{
   private final Evaluator myOperandEvaluator;
   private static final @NonNls Evaluator myRightEvaluator = new LiteralEvaluator(new Integer(1), "byte");
 
-  private IElementType myOpType;
-  private String myExpectedType; // a result of PsiType.getCanonicalText()
+  private final IElementType myOpType;
+  private final String myExpectedType; // a result of PsiType.getCanonicalText()
 
   private Modifier myModifier;
 

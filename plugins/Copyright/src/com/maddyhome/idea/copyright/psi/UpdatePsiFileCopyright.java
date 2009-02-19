@@ -333,8 +333,8 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
       return last;
     }
 
-    private PsiElement first;
-    private PsiElement last;
+    private final PsiElement first;
+    private final PsiElement last;
   }
 
   protected static class CommentAction implements Comparable<CommentAction> {
@@ -386,16 +386,16 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
       return diff;
     }
 
-    private int type;
-    private int start;
-    private int end;
+    private final int type;
+    private final int start;
+    private final int end;
     private String prefix = null;
     private String suffix = null;
   }
 
-  private PsiFile file;
-  private LanguageOptions langOpts;
-  private TreeSet<CommentAction> actions = new TreeSet<CommentAction>();
+  private final PsiFile file;
+  private final LanguageOptions langOpts;
+  private final TreeSet<CommentAction> actions = new TreeSet<CommentAction>();
 
-  private static Logger logger = Logger.getInstance(UpdatePsiFileCopyright.class.getName());
+  private static final Logger logger = Logger.getInstance(UpdatePsiFileCopyright.class.getName());
 }

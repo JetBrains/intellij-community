@@ -12,8 +12,8 @@ import java.util.List;
 
 public class ChangeSet extends Change {
   private String myName;
-  private long myTimestamp;
-  private List<Change> myChanges;
+  private final long myTimestamp;
+  private final List<Change> myChanges;
 
   public ChangeSet(long timestamp, String name, List<Change> changes) {
     myTimestamp = timestamp;

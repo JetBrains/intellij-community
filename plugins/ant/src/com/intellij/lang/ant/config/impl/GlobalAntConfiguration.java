@@ -31,7 +31,7 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
   public static final StorageProperty PROPERTIES_TABLE_LAYOUT = new StorageProperty("propertiesTableLayout");
   static final ListProperty<AntInstallation> ANTS = ListProperty.create("registeredAnts");
   private final ExternalizablePropertyContainer myProperties = new ExternalizablePropertyContainer();
-  private AntInstallation myBundledAnt;
+  private final AntInstallation myBundledAnt;
   public static final String BUNDLED_ANT_NAME = AntBundle.message("ant.reference.bundled.ant.name");
   public final Condition<AntInstallation> IS_USER_ANT = new Condition<AntInstallation>() {
     public boolean value(AntInstallation antInstallation) {

@@ -120,7 +120,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private final CopyPasteDelegator myCopyPasteDelegator;
   private LightweightHint myHint = null;
   private ListPopupImpl myNodePopup = null;
-  private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
   private MessageBusConnection myConnection;
   private WeakTimerListener myWeakTimerListener;

@@ -17,9 +17,9 @@ import java.awt.*;
  */
 public class CachedGridImage {
   private static final Object CACHED_GRID_IMAGE_KEY = new Object();
-  private static float[] ourDashes = new float[] { 3.0f, 1.0f };
+  private static final float[] ourDashes = new float[] { 3.0f, 1.0f };
 
-  private Image myImage;
+  private final Image myImage;
   private int[] myHorzGridLines;
   private int[] myVertGridLines;
   private int[] myRows;

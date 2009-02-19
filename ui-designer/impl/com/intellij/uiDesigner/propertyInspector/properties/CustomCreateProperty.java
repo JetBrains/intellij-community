@@ -45,9 +45,9 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     return ServiceManager.getService(project, CustomCreateProperty.class);
   }
 
-  private BooleanRenderer myRenderer = new BooleanRenderer();
+  private final BooleanRenderer myRenderer = new BooleanRenderer();
 
-  private BooleanEditor myEditor = new BooleanEditor() {
+  private final BooleanEditor myEditor = new BooleanEditor() {
     @Override
     public JComponent getComponent(final RadComponent component, final Boolean value, final InplaceContext inplaceContext) {
       JCheckBox result = (JCheckBox) super.getComponent(component, value, inplaceContext);

@@ -47,7 +47,7 @@ public abstract class QuickFixManager <T extends JComponent>{
    * My currently visible hint. May be null if there is no visible hint
    */
   private LightweightHint myHint;
-  private Icon myIcon = IconLoader.getIcon("/actions/intentionBulb.png");
+  private final Icon myIcon = IconLoader.getIcon("/actions/intentionBulb.png");
   private Rectangle myLastHintBounds;
 
   public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component, @NotNull final JViewport viewPort) {

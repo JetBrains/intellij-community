@@ -19,8 +19,8 @@ import java.util.*;
  */
 public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevision {
 
-  private Revision myCvsRevision;
-  private LogInformation myLogInformation;
+  private final Revision myCvsRevision;
+  private final LogInformation myLogInformation;
   private Collection<String> myTags;
 
   public CvsFileRevisionImpl(Revision cvsRevision, File file, LogInformation logInfo,

@@ -32,15 +32,15 @@ public class BreakpointPanel extends AbstractBreakpointPanel<Breakpoint> {
   private final BreakpointPanelAction[] myActions;
   private final Key<? extends Breakpoint> myBreakpointCategory;
   private Breakpoint myCurrentViewableBreakpoint;
-  private List<Runnable> myDisposeActions = new ArrayList<Runnable>();
+  private final List<Runnable> myDisposeActions = new ArrayList<Runnable>();
 
   private final Project myProject;
   private JPanel myPanel;
   private JPanel myBreakPointsPanel;
   private JPanel myTablePlace;
   private JPanel myPropertiesPanelPlace;
-  private BreakpointTable myTable;
-  private BreakpointTree myTree;
+  private final BreakpointTable myTable;
+  private final BreakpointTree myTree;
   private JPanel myButtonsPanel;
   private String myCurrentViewId = TABLE_VIEW;
 

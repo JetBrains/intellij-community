@@ -19,10 +19,10 @@ import java.util.*;
  * @author yole
  */
 public class SnapshotContext {
-  private Palette myPalette;
-  private RadRootContainer myRootContainer;
-  private Set<ButtonGroup> myButtonGroups = new HashSet<ButtonGroup>();
-  private Map<JComponent, RadComponent> myImportMap = new HashMap<JComponent, RadComponent>();
+  private final Palette myPalette;
+  private final RadRootContainer myRootContainer;
+  private final Set<ButtonGroup> myButtonGroups = new HashSet<ButtonGroup>();
+  private final Map<JComponent, RadComponent> myImportMap = new HashMap<JComponent, RadComponent>();
 
   private static class ComponentProperty {
     public JComponent owner;
@@ -36,7 +36,7 @@ public class SnapshotContext {
     }
   }
 
-  private List<ComponentProperty> myComponentProperties = new ArrayList<ComponentProperty>();
+  private final List<ComponentProperty> myComponentProperties = new ArrayList<ComponentProperty>();
 
   public SnapshotContext() {
     myPalette = new Palette(null);

@@ -32,13 +32,13 @@ public class CompilerManagerImpl extends CompilerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerManagerImpl");
   private final Project myProject;
 
-  private List<Compiler> myCompilers = new ArrayList<Compiler>();
-  private List<TranslatingCompiler> myTranslators = new ArrayList<TranslatingCompiler>();
+  private final List<Compiler> myCompilers = new ArrayList<Compiler>();
+  private final List<TranslatingCompiler> myTranslators = new ArrayList<TranslatingCompiler>();
   
-  private List<CompileTask> myBeforeTasks = new ArrayList<CompileTask>();
-  private List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
-  private Set<FileType> myCompilableTypes = new HashSet<FileType>();
-  private CompilationStatusListener myEventPublisher;
+  private final List<CompileTask> myBeforeTasks = new ArrayList<CompileTask>();
+  private final List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
+  private final Set<FileType> myCompilableTypes = new HashSet<FileType>();
+  private final CompilationStatusListener myEventPublisher;
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
   private final Map<Compiler, Set<FileType>> myCompilerToInputTypes = new HashMap<Compiler, Set<FileType>>();
   private final Map<Compiler, Set<FileType>> myCompilerToOutputTypes = new HashMap<Compiler, Set<FileType>>();

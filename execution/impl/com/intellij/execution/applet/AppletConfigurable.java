@@ -48,7 +48,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private JLabel myWidthLabel;
   private JLabel myHeightLabel;
   private AlternativeJREPanel myAlternativeJREPanel;
-  private ButtonGroup myAppletRadioButtonGroup = new ButtonGroup();
+  private final ButtonGroup myAppletRadioButtonGroup = new ButtonGroup();
 
   private final Project myProject;
   private final ConfigurationModuleSelector myModuleSelector;

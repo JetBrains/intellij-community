@@ -51,7 +51,7 @@ import java.io.File;
 public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor");
 
-  private Project myProject;
+  private final Project myProject;
   private final UpdatedFiles myUpdatedFiles;
 
   public UpdatedFilesProcessor(Project project, UpdatedFiles updatedFiles) {

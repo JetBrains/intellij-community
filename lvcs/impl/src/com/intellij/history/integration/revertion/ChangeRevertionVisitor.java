@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 public class ChangeRevertionVisitor extends ChangeVisitor {
-  private IdeaGateway myGateway;
-  private Set<DelayedApply> myDelayedApplies = new HashSet<DelayedApply>();
+  private final IdeaGateway myGateway;
+  private final Set<DelayedApply> myDelayedApplies = new HashSet<DelayedApply>();
 
   public ChangeRevertionVisitor(IdeaGateway gw) {
     myGateway = gw;
@@ -170,8 +170,8 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   }
 
   private static class DelayedContentApply extends DelayedApply {
-    private Content myContent;
-    private long myTimestamp;
+    private final Content myContent;
+    private final long myTimestamp;
 
     public DelayedContentApply(VirtualFile f, Entry e) {
       super(f);
@@ -193,7 +193,7 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
   }
 
   private static class DelayedROStatusApply extends DelayedApply {
-    private boolean isReadOnly;
+    private final boolean isReadOnly;
 
     private DelayedROStatusApply(VirtualFile f, Entry e) {
       super(f);

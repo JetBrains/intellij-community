@@ -19,7 +19,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeCo
 class ValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair<NodeDescriptorImpl, String>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHintTreeComponent");
   private final ValueHint myValueHint;
-  private InspectDebuggerTree myTree;
+  private final InspectDebuggerTree myTree;
 
   public ValueHintTreeComponent(final ValueHint valueHint, InspectDebuggerTree tree, final String title) {
     super(valueHint, tree, Pair.create(tree.getInspectDescriptor(), title));

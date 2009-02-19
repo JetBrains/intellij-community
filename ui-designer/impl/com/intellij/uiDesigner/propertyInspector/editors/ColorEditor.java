@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class ColorEditor extends PropertyEditor<ColorDescriptor> {
   private final String myPropertyName;
-  private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
+  private final TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private ColorDescriptor myValue;
   private Project myProject;
 
@@ -72,7 +72,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
   }
 
   private static class ColorDescriptorWrapper extends Color {
-    private ColorDescriptor myDescriptor;
+    private final ColorDescriptor myDescriptor;
 
     public ColorDescriptorWrapper(ColorDescriptor descriptor) {
       super(descriptor.getResolvedColor() == null ? 0 : descriptor.getResolvedColor().getRGB());
@@ -190,8 +190,8 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
   }
 
   private static class MyDescriptorChooserPanel extends AbstractColorChooserPanel {
-    private String myDisplayName;
-    private ColorDescriptor[] myColorDescriptors;
+    private final String myDisplayName;
+    private final ColorDescriptor[] myColorDescriptors;
     private JList myDescriptorList;
 
     public MyDescriptorChooserPanel(final String displayName, List<ColorDescriptor> colorDescriptorList) {

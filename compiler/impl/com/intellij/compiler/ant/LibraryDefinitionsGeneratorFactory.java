@@ -31,8 +31,8 @@ import java.util.*;
  */
 public class LibraryDefinitionsGeneratorFactory {
   private final ProjectEx myProject;
-  private GenerationOptions myGenOptions;
-  private Set<String> myUsedLibraries = new HashSet<String>();
+  private final GenerationOptions myGenOptions;
+  private final Set<String> myUsedLibraries = new HashSet<String>();
 
   public LibraryDefinitionsGeneratorFactory(ProjectEx project, GenerationOptions genOptions) {
     myProject = project;

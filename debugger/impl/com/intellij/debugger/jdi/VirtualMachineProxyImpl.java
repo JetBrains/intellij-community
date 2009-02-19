@@ -35,9 +35,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private int myPausePressedCount = 0;
 
   // cached data
-  private Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<ObjectReference, ObjectReferenceProxyImpl>();
+  private final Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<ObjectReference, ObjectReferenceProxyImpl>();
   private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<ThreadReference, ThreadReferenceProxyImpl>();
-  private Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<ThreadGroupReference, ThreadGroupReferenceProxyImpl>();
+  private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<ThreadGroupReference, ThreadGroupReferenceProxyImpl>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
   private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>();

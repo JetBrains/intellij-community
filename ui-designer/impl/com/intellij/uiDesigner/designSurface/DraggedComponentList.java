@@ -35,7 +35,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     }
   }
 
-  private ArrayList<RadComponent> mySelection;
+  private final ArrayList<RadComponent> mySelection;
   private GridConstraints[] myOriginalConstraints;
   private Rectangle[] myOriginalBounds;
   private RadContainer[] myOriginalParents;

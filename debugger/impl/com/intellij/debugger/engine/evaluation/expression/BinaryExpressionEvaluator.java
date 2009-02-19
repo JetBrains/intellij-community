@@ -17,10 +17,10 @@ import com.sun.jdi.*;
 
 class BinaryExpressionEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.BinaryExpressionEvaluator");
-  private Evaluator myLeftOperand;
-  private Evaluator myRightOperand;
-  private IElementType myOpType;
-  private String myExpectedType; // a result of PsiType.getCanonicalText()
+  private final Evaluator myLeftOperand;
+  private final Evaluator myRightOperand;
+  private final IElementType myOpType;
+  private final String myExpectedType; // a result of PsiType.getCanonicalText()
 
   public BinaryExpressionEvaluator(Evaluator leftOperand, Evaluator rightOperand, IElementType opType, String expectedType) {
     myLeftOperand = leftOperand;

@@ -15,7 +15,7 @@ import javax.swing.*;
  * @author yole
  */
 public class SurroundActionGroup extends ActionGroup {
-  private AnAction[] myChildren;
+  private final AnAction[] myChildren;
 
   public SurroundActionGroup() {
     myChildren = new AnAction[4];

@@ -34,11 +34,11 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
 
   private JPanel myPanel;
   private final BooleanValueHolder myIsInUpdating = new BooleanValueHolder(false);
-  private CvsRootAsStringConfigurationPanel myCvsRootConfigurationPanelView
+  private final CvsRootAsStringConfigurationPanel myCvsRootConfigurationPanelView
     = new CvsRootAsStringConfigurationPanel(myIsInUpdating);
   private JPanel myCvsRootConfigurationPanel;
 
-  private DateOrRevisionOrTagSettings myDateOrRevisionOrTagSettings;
+  private final DateOrRevisionOrTagSettings myDateOrRevisionOrTagSettings;
 
   private JPanel myConnectionSettingsPanel;
   private JPanel myDateOrRevisionOrTagSettingsPanel;

@@ -12,8 +12,8 @@ import java.util.Map;
  */
 
 public class MarkedDescriptorTree {
-  private HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>>();
-  private Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> myRootChildren = new com.intellij.util.containers.HashMap<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>();
+  private final HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>>();
+  private final Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> myRootChildren = new com.intellij.util.containers.HashMap<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>();
 
   public <T extends NodeDescriptor> void addChild(NodeDescriptor parent, T child, DescriptorKey<T> key) {
     Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> children;

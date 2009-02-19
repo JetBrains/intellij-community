@@ -38,7 +38,7 @@ public class JarsBuilder {
   private final FileFilter myFileFilter;
   private final CompileContext myContext;
   private Map<JarInfo, File> myBuiltJars;
-  private List<ExplodedDestinationInfo> myJarsDestinations;
+  private final List<ExplodedDestinationInfo> myJarsDestinations;
   private Set<File> myJarsToDelete;
 
   public JarsBuilder(Set<JarInfo> jarsToBuild, FileFilter fileFilter, CompileContext context) {

@@ -25,8 +25,8 @@ import java.awt.*;
  * @author yole
  */
 public class RectanglePropertyCodeGenerator extends PropertyCodeGenerator {
-  private static Type myRectangleType = Type.getType(Rectangle.class);
-  private static Method myInitMethod = Method.getMethod("void <init>(int,int,int,int)");
+  private static final Type myRectangleType = Type.getType(Rectangle.class);
+  private static final Method myInitMethod = Method.getMethod("void <init>(int,int,int,int)");
 
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     final Rectangle rc = (Rectangle) value;

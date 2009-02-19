@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NonNls;
  * @author nik
  */
 public class ConfigFileVersion {
-  private String myName; 
-  private @NonNls String myTemplateName;
+  private final String myName;
+  private @NonNls final String myTemplateName;
 
   public ConfigFileVersion(final String name, final @NonNls String templateName) {
     myName = name;

@@ -23,10 +23,10 @@ import java.util.Set;
  * User: Sergey.Vasiliev
  */
 public class DomElementsNavigationManagerImpl extends DomElementsNavigationManager {
-  private Map<String, DomElementNavigationProvider> myProviders = new HashMap<String, DomElementNavigationProvider>();
-  private Project myProject;
+  private final Map<String, DomElementNavigationProvider> myProviders = new HashMap<String, DomElementNavigationProvider>();
+  private final Project myProject;
 
-  private DomElementNavigationProvider myTextEditorProvider = new MyDomElementNavigateProvider();
+  private final DomElementNavigationProvider myTextEditorProvider = new MyDomElementNavigateProvider();
 
   public DomElementsNavigationManagerImpl(final Project project) {
     myProject = project;

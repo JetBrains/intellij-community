@@ -13,7 +13,7 @@ import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
  * @author yole
  */
 public class FormHighlightingPass implements HighlightingPass {
-  private GuiEditor myEditor;
+  private final GuiEditor myEditor;
 
   public FormHighlightingPass(final GuiEditor editor) {
     myEditor = editor;

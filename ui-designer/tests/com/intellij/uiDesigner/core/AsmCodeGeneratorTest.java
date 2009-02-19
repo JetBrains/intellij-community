@@ -306,7 +306,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private static class MyClassLoader extends ClassLoader {
-    private byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
+    private final byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
     private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
 
     public MyClassLoader(ClassLoader parent) {
@@ -330,7 +330,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private class MyNestedFormLoader implements NestedFormLoader {
-    private Map<String, String> myFormMap = new HashMap<String, String>();
+    private final Map<String, String> myFormMap = new HashMap<String, String>();
 
     public void registerNestedForm(String formName, String fileName) {
       myFormMap.put(formName, fileName);

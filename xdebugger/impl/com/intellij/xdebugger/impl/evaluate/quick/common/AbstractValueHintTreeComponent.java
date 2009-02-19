@@ -21,10 +21,10 @@ public abstract class AbstractValueHintTreeComponent<H> {
   private static final Icon ICON_BACK = IconLoader.getIcon("/actions/back.png");
   private static final Icon ICON_UNMARK_WEBROOT = IconLoader.getIcon("/modules/unmarkWebroot.png");
   private static final int HISTORY_SIZE = 11;
-  private ArrayList<H> myHistory = new ArrayList<H>();
+  private final ArrayList<H> myHistory = new ArrayList<H>();
   private int myCurrentIndex = -1;
-  private AbstractValueHint myValueHint;
-  private Tree myTree;
+  private final AbstractValueHint myValueHint;
+  private final Tree myTree;
   private JPanel myMainPanel;
 
   protected AbstractValueHintTreeComponent(final AbstractValueHint valueHint, final Tree tree, final H initialItem) {

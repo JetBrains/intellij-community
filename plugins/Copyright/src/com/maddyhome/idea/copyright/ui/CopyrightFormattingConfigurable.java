@@ -32,8 +32,8 @@ import javax.swing.*;
 import java.util.Arrays;
 
 public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract {
-  private Project myProject;
-  private TemplateCommentPanel myPanel;
+  private final Project myProject;
+  private final TemplateCommentPanel myPanel;
 
   CopyrightFormattingConfigurable(Project project) {
     myProject = project;

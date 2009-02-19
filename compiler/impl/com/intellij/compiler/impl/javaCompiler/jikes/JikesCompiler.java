@@ -31,7 +31,7 @@ import java.util.StringTokenizer;
 
 public class JikesCompiler extends ExternalCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.JikesHandler");
-  private Project myProject;
+  private final Project myProject;
   private File myTempFile;
 
   public JikesCompiler(Project project) {

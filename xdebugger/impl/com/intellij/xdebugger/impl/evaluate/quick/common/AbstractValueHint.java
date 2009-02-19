@@ -42,7 +42,7 @@ public abstract class AbstractValueHint {
       }
     }
   };
-  private static TextAttributes ourReferenceAttributes = new TextAttributes();
+  private static final TextAttributes ourReferenceAttributes = new TextAttributes();
   static {
     ourReferenceAttributes.setForegroundColor(Color.blue);
     ourReferenceAttributes.setEffectColor(Color.blue);

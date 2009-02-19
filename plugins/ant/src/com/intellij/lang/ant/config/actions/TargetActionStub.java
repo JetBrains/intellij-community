@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TargetActionStub extends AnAction implements Disposable {
   private final String myActionId;
   private Project myProject;
-  private AtomicBoolean myActionInvoked = new AtomicBoolean(false);
+  private final AtomicBoolean myActionInvoked = new AtomicBoolean(false);
 
   public TargetActionStub(String actionId, Project project) {
     super("ant target action stub");

@@ -42,12 +42,12 @@ import java.util.List;
 public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   private final PsiLiteralExpression myLiteralExpression;
 
-  private JLabel myPreviewLabel;
-  private JPanel myHyperLinkPanel;
-  private JPanel myResourceBundleSuggester;
+  private final JLabel myPreviewLabel;
+  private final JPanel myHyperLinkPanel;
+  private final JPanel myResourceBundleSuggester;
   private EditorComboBox myRBEditorTextField;
-  private JPanel myJavaCodeInfoPanel;
-  private JPanel myPreviewPanel;
+  private final JPanel myJavaCodeInfoPanel;
+  private final JPanel myPreviewPanel;
   private PsiClassType myResourceBundleType;
   protected final ResourceBundleManager myResourceBundleManager;
 

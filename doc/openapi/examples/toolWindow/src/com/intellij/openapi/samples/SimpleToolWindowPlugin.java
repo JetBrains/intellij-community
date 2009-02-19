@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class SimpleToolWindowPlugin implements ProjectComponent {
-  private Project myProject;
+  private final Project myProject;
 
   private ToolWindow myToolWindow;
   private JPanel myContentPanel;

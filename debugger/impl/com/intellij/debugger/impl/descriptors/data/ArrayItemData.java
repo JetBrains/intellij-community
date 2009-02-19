@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorImpl>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.descriptors.data.ArrayItemData");
 
-  private ArrayReference myArray;
-  private int myIndex;
+  private final ArrayReference myArray;
+  private final int myIndex;
 
   public ArrayItemData(@NotNull ArrayReference arrRef, int idx) {
     LOG.assertTrue(0 <= idx);

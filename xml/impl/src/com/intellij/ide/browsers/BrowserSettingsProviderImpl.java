@@ -14,7 +14,7 @@ public class BrowserSettingsProviderImpl extends BrowserSettingsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.BrowserSettingsProviderImpl");
   
   private WebBrowsersPanel mySettingsPanel;
-  private BrowsersConfiguration myConfiguration;
+  private final BrowsersConfiguration myConfiguration;
 
   public BrowserSettingsProviderImpl(@NotNull final BrowsersConfiguration configuration) {
     myConfiguration = configuration;

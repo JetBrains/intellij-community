@@ -22,7 +22,7 @@ import javax.swing.*;
  * @author yole
  */
 public class LayoutManagerProperty extends Property<RadContainer, String> {
-  private PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
+  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
     @Override protected void customize(final String value) {
       setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
     }
@@ -49,7 +49,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     }
   }
 
-  private PropertyEditor<String> myEditor = new LayoutManagerEditor();
+  private final PropertyEditor<String> myEditor = new LayoutManagerEditor();
 
   public LayoutManagerProperty() {
     super(null, "Layout Manager");

@@ -25,10 +25,10 @@ import java.util.*;
  * @author nik
  */
 public class XBreakpointManagerImpl implements XBreakpointManager, PersistentStateComponent<XBreakpointManagerImpl.BreakpointManagerState> {
-  private MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>>(true);
-  private Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<XBreakpointType, EventDispatcher<XBreakpointListener>>();
-  private Map<XBreakpointType<?,?>, XBreakpointTypeDialogState> myBreakpointsDialogSettings = new HashMap<XBreakpointType<?,?>, XBreakpointTypeDialogState>();
-  private EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
+  private final MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>>(true);
+  private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<XBreakpointType, EventDispatcher<XBreakpointListener>>();
+  private final Map<XBreakpointType<?,?>, XBreakpointTypeDialogState> myBreakpointsDialogSettings = new HashMap<XBreakpointType<?,?>, XBreakpointTypeDialogState>();
+  private final EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
   private final XLineBreakpointManager myLineBreakpointManager;
   private final Project myProject;
   private final XDebuggerManagerImpl myDebuggerManager;

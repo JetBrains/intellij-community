@@ -20,20 +20,21 @@ import java.util.Map;
  * User: Sergey.Vasiliev
  */
 public class DomElementsToggleAction extends ToggleAction {
-  private DomModelTreeView myTreeView;
-  private Class myClass;
-  private Icon myIcon;
-  private String myText;
+  private final DomModelTreeView myTreeView;
+  private final Class myClass;
+  private final Icon myIcon;
+  private final String myText;
 
 
   public DomElementsToggleAction(final DomModelTreeView treeView, final Class aClass) {
     myTreeView = treeView;
     myClass = aClass;
 
-    myIcon = ElementPresentationManager.getIcon(myClass);
+    Icon myIcon = ElementPresentationManager.getIcon(myClass);
     if (myIcon == null) {
       myIcon = IconLoader.getIcon("/nodes/pointcut.png");
     }
+    this.myIcon = myIcon;
     myText = TypeNameManager.getTypeName(myClass);
 
     if(getHiders() == null) myTreeView.getRootElement().getRoot().getFile().putUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());

@@ -17,7 +17,7 @@ public abstract class SelectionWatcher {
   private final MyPropertyChangeListener myChangeListener;
   private RadRootContainer myRootContainer;
   private final GuiEditor myEditor;
-  private HierarchyChangeListener myHierarchyChangeListener;
+  private final HierarchyChangeListener myHierarchyChangeListener;
 
   public SelectionWatcher(final GuiEditor editor) {
     myEditor = editor;

@@ -26,9 +26,9 @@ import java.awt.event.KeyEvent;
  * @author nik
  */
 public class XDebuggerTreePanel implements DnDSource {
-  private XDebuggerTree myTree;
-  private JPanel myMainPanel;
-  private PopupHandler myPopupHandler;
+  private final XDebuggerTree myTree;
+  private final JPanel myMainPanel;
+  private final PopupHandler myPopupHandler;
 
   public XDebuggerTreePanel(final XDebugSession session, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition,
                             @NotNull @NonNls final String popupActionGroupId) {

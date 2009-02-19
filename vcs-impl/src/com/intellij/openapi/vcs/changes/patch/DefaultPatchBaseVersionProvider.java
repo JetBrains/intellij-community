@@ -38,7 +38,7 @@ public class DefaultPatchBaseVersionProvider {
   private final String myVersionId;
   private final Pattern myRevisionPattern;
 
-  private AbstractVcs myVcs;
+  private final AbstractVcs myVcs;
 
   public DefaultPatchBaseVersionProvider(final Project project, final VirtualFile file, final String versionId) {
     myProject = project;

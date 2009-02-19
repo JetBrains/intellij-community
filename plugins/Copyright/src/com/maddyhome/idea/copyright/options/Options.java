@@ -217,5 +217,5 @@ public class Options implements JDOMExternalizable, Cloneable
     private Map<String, LanguageOptions> options = new TreeMap<String, LanguageOptions>();
     private static final String LANG_TEMPLATE = "__TEMPLATE__";
 
-    private static Logger logger = Logger.getInstance(Options.class.getName());
+    private static final Logger logger = Logger.getInstance(Options.class.getName());
 }

@@ -27,8 +27,8 @@ public class MethodEvaluator implements Evaluator {
   private final JVMName myClassName;
   private final JVMName myMethodSignature;
   private final String myMethodName;
-  private List myArgumentEvaluators;
-  private Evaluator myObjectEvaluator;
+  private final List myArgumentEvaluators;
+  private final Evaluator myObjectEvaluator;
 
   public MethodEvaluator(Evaluator objectEvaluator, JVMName className, String methodName, JVMName signature, List argumentEvaluators) {
     myObjectEvaluator = objectEvaluator;

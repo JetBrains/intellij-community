@@ -16,7 +16,7 @@ import com.sun.jdi.BooleanValue;
 public class WhileStatementEvaluator implements Evaluator {
   private final Evaluator myConditionEvaluator;
   private final Evaluator myBodyEvaluator;
-  private String myLabelName;
+  private final String myLabelName;
 
   public WhileStatementEvaluator(Evaluator conditionEvaluator, Evaluator bodyEvaluator, String labelName) {
     myConditionEvaluator = conditionEvaluator;

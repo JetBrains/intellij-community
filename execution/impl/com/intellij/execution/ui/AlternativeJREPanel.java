@@ -22,8 +22,8 @@ import java.util.ArrayList;
  * Date: Jun 21, 2005
  */
 public class AlternativeJREPanel extends JPanel{
-  private ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
-  private JCheckBox myCbEnabled;
+  private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
+  private final JCheckBox myCbEnabled;
   final TextFieldWithHistory myFieldWithHistory;
 
   public AlternativeJREPanel() {

@@ -3,8 +3,8 @@ package com.intellij.history.core.storage;
 import java.io.IOException;
 
 public class StoredContent extends Content {
-  private Storage myStorage;
-  private int myId;
+  private final Storage myStorage;
+  private final int myId;
 
   public StoredContent(Storage s, int id) {
     myStorage = s;

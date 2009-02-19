@@ -71,11 +71,11 @@ public final class ComponentTree extends Tree implements DataProvider {
   private UIFormEditor myFormEditor;
   private QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
-  private StartInplaceEditingAction myStartInplaceEditingAction;
-  private MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
+  private final StartInplaceEditingAction myStartInplaceEditingAction;
+  private final MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
 
-  private Icon myButtonGroupIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/buttonGroup.png");
-  private Icon myInspectionSuppressionIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/inspectionSuppression.png");
+  private final Icon myButtonGroupIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/buttonGroup.png");
+  private final Icon myInspectionSuppressionIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/inspectionSuppression.png");
 
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
   private final Project myProject;

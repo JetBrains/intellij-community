@@ -14,8 +14,8 @@ import java.awt.*;
 import java.util.List;
 
 public class RecentChangesPopup {
-  private IdeaGateway myGateway;
-  private LocalVcs myVcs;
+  private final IdeaGateway myGateway;
+  private final LocalVcs myVcs;
 
   public RecentChangesPopup(IdeaGateway gw, LocalVcs vcs) {
     myGateway = gw;
@@ -70,10 +70,10 @@ public class RecentChangesPopup {
   }
 
   private static class RecentChangesListCellRenderer implements ListCellRenderer {
-    private JPanel myPanel = new JPanel(new BorderLayout());
-    private JLabel myActionLabel = new JLabel("", JLabel.LEFT);
-    private JLabel myDateLabel = new JLabel("", JLabel.RIGHT);
-    private JPanel mySpacePanel = new JPanel();
+    private final JPanel myPanel = new JPanel(new BorderLayout());
+    private final JLabel myActionLabel = new JLabel("", JLabel.LEFT);
+    private final JLabel myDateLabel = new JLabel("", JLabel.RIGHT);
+    private final JPanel mySpacePanel = new JPanel();
 
     public RecentChangesListCellRenderer() {
       myPanel.add(myActionLabel, BorderLayout.WEST);

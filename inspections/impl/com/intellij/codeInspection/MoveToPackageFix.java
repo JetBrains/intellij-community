@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveToPackageFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.MoveToPackageFix");
-  private PsiFile myFile;
-  private PsiPackage myTargetPackage;
+  private final PsiFile myFile;
+  private final PsiPackage myTargetPackage;
 
   public MoveToPackageFix(PsiFile file, PsiPackage targetPackage) {
     myFile = file;

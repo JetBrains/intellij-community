@@ -47,11 +47,11 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
   private final XBreakpointManager myBreakpointManager;
   private final B myBreakpoint;
   private final Map<SuspendPolicy, JRadioButton> mySuspendRadioButtons;
-  private List<XBreakpointCustomPropertiesPanel<B>> myCustomPanels;
+  private final List<XBreakpointCustomPropertiesPanel<B>> myCustomPanels;
   private XDebuggerExpressionComboBox myLogExpressionComboBox;
   private XDebuggerExpressionComboBox myConditionComboBox;
-  private ComboBox myMasterBreakpointComboBox;
-  private XDependentBreakpointManager myDependentBreakpointManager;
+  private final ComboBox myMasterBreakpointComboBox;
+  private final XDependentBreakpointManager myDependentBreakpointManager;
 
   public XBreakpointPropertiesPanel(Project project, final XBreakpointManager breakpointManager, @NotNull B breakpoint) {
     myBreakpointManager = breakpointManager;

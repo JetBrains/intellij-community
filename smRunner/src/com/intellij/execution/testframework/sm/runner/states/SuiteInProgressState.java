@@ -9,7 +9,7 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public class SuiteInProgressState extends TestInProgressState {
-  private SMTestProxy mySuiteProxy;
+  private final SMTestProxy mySuiteProxy;
   private Boolean isDefectWasReallyFound = null; // null - is unset
 
   public SuiteInProgressState(@NotNull final SMTestProxy suiteProxy) {

@@ -46,21 +46,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final UpdateRequestsQueue myUpdater;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private static ScheduledExecutorService ourUpdateAlarm = ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater");
+  private static final ScheduledExecutorService ourUpdateAlarm = ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater");
 
   private final Modifier myModifier;
 
   private FileHolderComposite myComposite;
 
-  private ChangeListWorker myWorker;
+  private final ChangeListWorker myWorker;
   private VcsException myUpdateException = null;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
+  private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
   private final Object myDataLock = new Object();
 
-  private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
+  private final List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
 
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
   private ProgressIndicator myUpdateChangesProgressIndicator;
@@ -74,7 +74,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private final DelayedNotificator myDelayedNotificator;
 
-  private VcsListener myVcsListener = new VcsListener() {
+  private final VcsListener myVcsListener = new VcsListener() {
     public void directoryMappingChanged() {
       VcsDirtyScopeManager.getInstanceChecked(myProject).markEverythingDirty();
       scheduleUpdate();

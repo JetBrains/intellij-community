@@ -7,7 +7,7 @@ import com.intellij.history.core.tree.Entry;
 import java.io.IOException;
 
 public class PutSystemLabelChange extends PutLabelChange {
-  private int myColor;
+  private final int myColor;
 
   public PutSystemLabelChange(String name, int color, long timestamp) {
     super(name, timestamp);

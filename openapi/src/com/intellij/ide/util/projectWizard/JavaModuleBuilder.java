@@ -47,7 +47,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   // Pair<Source Path, Package Prefix>
   private List<Pair<String,String>> mySourcePaths;
   // Pair<Library path, Source path>
-  private List<Pair<String, String>> myModuleLibraries = new ArrayList<Pair<String, String>>();
+  private final List<Pair<String, String>> myModuleLibraries = new ArrayList<Pair<String, String>>();
   private Sdk myJdk;
 
   @Nullable

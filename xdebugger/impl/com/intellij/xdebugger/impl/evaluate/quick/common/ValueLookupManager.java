@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class ValueLookupManager implements EditorMouseMotionListener, ProjectComponent {
-  private Project myProject;
-  private Alarm myAlarm = new Alarm();
+  private final Project myProject;
+  private final Alarm myAlarm = new Alarm();
   private AbstractValueHint myRequest = null;
 
   public ValueLookupManager(Project project) {

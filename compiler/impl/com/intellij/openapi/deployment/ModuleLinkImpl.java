@@ -57,7 +57,7 @@ public class ModuleLinkImpl extends ModuleLink {
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
   private Module myModule;
   private String myModuleName;
-  private static Map<PackagingMethod, String> methodToDescription = new HashMap<PackagingMethod, String>();
+  private static final Map<PackagingMethod, String> methodToDescription = new HashMap<PackagingMethod, String>();
 
   static {
     methodToDescription.put(PackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));

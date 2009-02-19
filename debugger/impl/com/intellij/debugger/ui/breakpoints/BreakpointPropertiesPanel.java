@@ -41,12 +41,12 @@ public abstract class BreakpointPropertiesPanel {
   protected final Project myProject;
   private final Key<? extends Breakpoint> myBreakpointCategory;
   private JPanel myPanel;
-  private DebuggerExpressionComboBox myConditionCombo;
-  private DebuggerExpressionComboBox myLogExpressionCombo;
+  private final DebuggerExpressionComboBox myConditionCombo;
+  private final DebuggerExpressionComboBox myLogExpressionCombo;
   private JTextField myPassCountField;
-  private FieldPanel myInstanceFiltersField;
+  private final FieldPanel myInstanceFiltersField;
 
-  private FieldPanel myClassFiltersField;
+  private final FieldPanel myClassFiltersField;
   private ClassFilter[] myClassFilters;
   private ClassFilter[] myClassExclusionFilters;
   private InstanceFilter[] myInstanceFilters;

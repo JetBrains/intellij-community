@@ -40,36 +40,36 @@ import java.util.List;
  * @author max
  */
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
-  private CommitMessage myCommitMessageArea;
+  private final CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
-  private JPanel myAdditionalOptionsPanel;
+  private final JPanel myAdditionalOptionsPanel;
 
-  private ChangesBrowser myBrowser;
-  private ChangesBrowserExtender myBrowserExtender;
+  private final ChangesBrowser myBrowser;
+  private final ChangesBrowserExtender myBrowserExtender;
 
   private CommitLegendPanel myLegend;
 
   private final List<RefreshableOnComponent> myAdditionalComponents = new ArrayList<RefreshableOnComponent>();
   private final List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
-  private String myActionName;
+  private final String myActionName;
   private final Project myProject;
   private final List<CommitExecutor> myExecutors;
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myLastKnownComment = "";
-  private boolean myAllOfDefaultChangeListChangesIncluded;
+  private final boolean myAllOfDefaultChangeListChangesIncluded;
   @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
   private final Action[] myExecutorActions;
   private final boolean myShowVcsCommit;
   private LocalChangeList myLastSelectedChangeList = null;
-  private Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = new HashMap<AbstractVcs, JPanel>();
+  private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = new HashMap<AbstractVcs, JPanel>();
 
   @Nullable
   private final AbstractVcs myVcs;
   private final boolean myIsAlien;
   private boolean myDisposed = false;
-  private JLabel myWarningLabel;
+  private final JLabel myWarningLabel;
 
-  private Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents;
+  private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -95,7 +95,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
+  private final MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
 
   private static void commit(final Project project, final List<Change> changes, final LocalChangeList initialSelection,
                              final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {

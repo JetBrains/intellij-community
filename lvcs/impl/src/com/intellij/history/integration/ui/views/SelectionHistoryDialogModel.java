@@ -15,8 +15,8 @@ import java.util.List;
 
 public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   private SelectionCalculator myCalculatorCache;
-  private int myFrom;
-  private int myTo;
+  private final int myFrom;
+  private final int myTo;
 
   public SelectionHistoryDialogModel(IdeaGateway gw, LocalVcs vcs, VirtualFile f, int from, int to) {
     super(gw, vcs, f);

@@ -17,7 +17,7 @@ import java.awt.*;
  * @author nik
  */
 public class XExpressionEvaluationDialog extends EvaluationDialogBase {
-  private XDebuggerExpressionComboBox myExpressionComboBox;
+  private final XDebuggerExpressionComboBox myExpressionComboBox;
 
   public XExpressionEvaluationDialog(@NotNull final XDebugSession session, XDebuggerEditorsProvider editorsProvider,
                                      @NotNull XStackFrame stackFrame, @Nullable String expression) {

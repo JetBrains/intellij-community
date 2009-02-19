@@ -8,9 +8,9 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class DirectoryContent {
-  private Collection<String> mySubDirectories = new HashSet<String>();
-  private Collection<String> myFiles = new HashSet<String>();
-  private Collection<String> myModules = new HashSet<String>();
+  private final Collection<String> mySubDirectories = new HashSet<String>();
+  private final Collection<String> myFiles = new HashSet<String>();
+  private final Collection<String> myModules = new HashSet<String>();
 
   public void addSubDirectory(String subDirectoryName){
     mySubDirectories.add(subDirectoryName);

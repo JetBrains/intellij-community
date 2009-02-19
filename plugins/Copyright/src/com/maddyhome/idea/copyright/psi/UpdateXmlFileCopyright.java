@@ -161,5 +161,5 @@ public class UpdateXmlFileCopyright extends UpdatePsiFileCopyright
         return res;
     }
 
-    private static Logger logger = Logger.getInstance(UpdateXmlFileCopyright.class.getName());
+    private static final Logger logger = Logger.getInstance(UpdateXmlFileCopyright.class.getName());
 }

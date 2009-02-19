@@ -22,7 +22,7 @@ public class CvsActionVisibility {
   private boolean myCanBePerformedOnFile = true;
   private boolean myCanBePerformedOnDirectory = true;
   private boolean myCanBePerformedOnSeveralFiles = false;
-  private boolean myExpectedCvsAsActiveVcs = true;
+  private final boolean myExpectedCvsAsActiveVcs = true;
 
   private final List myConditions = new ArrayList();
   private boolean myCanBePerformedOnLocallyDeletedFile = false;

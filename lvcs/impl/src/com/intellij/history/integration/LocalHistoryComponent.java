@@ -23,12 +23,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 
 public class LocalHistoryComponent extends LocalHistory implements ProjectComponent {
-  private Project myProject;
-  private StartupManagerEx myStartupManager;
-  private ProjectRootManagerEx myRootManager;
-  private VirtualFileManagerEx myFileManager;
-  private CommandProcessor myCommandProcessor;
-  private LocalHistoryConfiguration myConfiguration;
+  private final Project myProject;
+  private final StartupManagerEx myStartupManager;
+  private final ProjectRootManagerEx myRootManager;
+  private final VirtualFileManagerEx myFileManager;
+  private final CommandProcessor myCommandProcessor;
+  private final LocalHistoryConfiguration myConfiguration;
   private Storage myStorage;
   private LocalVcs myVcs;
   private LocalHistoryService myService;

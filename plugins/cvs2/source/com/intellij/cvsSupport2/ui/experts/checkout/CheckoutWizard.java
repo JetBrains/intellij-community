@@ -20,7 +20,7 @@ public class CheckoutWizard extends CvsWizard {
   private final SelectCvsElementStep mySelectCvsElementStep;
   private final SelectLocationStep mySelectLocationStep;
 
-  private ChooseCheckoutMode myChooseModeStep;
+  private final ChooseCheckoutMode myChooseModeStep;
 
   public CheckoutWizard(final Project project) {
     super(com.intellij.CvsBundle.message("dialog.tittle.check.out.from.cvs.repository"), project);

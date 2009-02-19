@@ -19,7 +19,7 @@ public abstract class XDebuggerEditorBase {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
   @Nullable private final String myHistoryId;
-  private XSourcePosition mySourcePosition;
+  private final XSourcePosition mySourcePosition;
 
   protected XDebuggerEditorBase(final Project project, XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition) {

@@ -11,7 +11,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.ReferenceType;
 
 public class ClassObjectEvaluator implements Evaluator {
-  private TypeEvaluator myTypeEvaluator;
+  private final TypeEvaluator myTypeEvaluator;
 
   public ClassObjectEvaluator(TypeEvaluator typeEvaluator) {
     myTypeEvaluator = typeEvaluator;

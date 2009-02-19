@@ -39,7 +39,7 @@ import java.awt.event.MouseEvent;
 
 public class TargetChooserDialog extends DialogWrapper {
   private AntBuildTarget mySelectedTarget;
-  private AntConfiguration myAntConfiguration;
+  private final AntConfiguration myAntConfiguration;
   private Tree myTree;
 
   protected TargetChooserDialog(final Project project,
@@ -157,8 +157,8 @@ public class TargetChooserDialog extends DialogWrapper {
   }
 
   private static class AntTargetNodeDescriptor {
-    private AntBuildTarget myAntTarget;
-    private AntBuildFile myBuildFile;
+    private final AntBuildTarget myAntTarget;
+    private final AntBuildFile myBuildFile;
 
 
     public AntTargetNodeDescriptor(final AntBuildTarget antTarget, final AntBuildFile buildFile) {

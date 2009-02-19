@@ -20,7 +20,7 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
   public static final int NAME = 1;
 
   private java.util.List<Breakpoint> myBreakpoints = null;
-  private BreakpointManager myBreakpointManager;
+  private final BreakpointManager myBreakpointManager;
 
   public BreakpointTableModel(final Project project) {
     myBreakpoints = new ArrayList<Breakpoint>();

@@ -48,7 +48,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private MyDependentBreakpointListener myDependentBreakpointListener;
   private String mySessionName;
   private XDebugSessionTab mySessionTab;
-  private EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
+  private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private Project myProject;
   private ExecutionEnvironment myEnvironment;
   private ProgramRunner myRunner;

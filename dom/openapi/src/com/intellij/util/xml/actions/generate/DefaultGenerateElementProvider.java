@@ -32,7 +32,7 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public abstract class DefaultGenerateElementProvider<T extends DomElement> extends GenerateDomElementProvider<T> {
-  private Class<? extends DomElement> myChildElementClass;
+  private final Class<? extends DomElement> myChildElementClass;
 
   public DefaultGenerateElementProvider(final String name, Class<T> childElementClass) {
     super(name);

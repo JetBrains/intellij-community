@@ -21,7 +21,7 @@ public class ConnectionWrapper implements IConnection {
   private InputStream myInputStreamWrapper;
   private OutputStreamWrapper myOutputStreamWrapper;
   private final ReadWriteStatistics myStatistics;
-  private ICvsCommandStopper myCommandStopper;
+  private final ICvsCommandStopper myCommandStopper;
   @NonNls private static final String CVS_DONT_READ_IN_THREAD_PROPERTY = "cvs.dont.read.in.thread";
 
   public ConnectionWrapper(IConnection sourceConnection, ReadWriteStatistics statistics, ICvsCommandStopper commandStopper) {

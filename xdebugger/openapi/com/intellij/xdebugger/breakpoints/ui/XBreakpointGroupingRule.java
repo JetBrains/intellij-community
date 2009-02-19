@@ -13,7 +13,7 @@ import java.util.Collection;
  */
 public abstract class XBreakpointGroupingRule<B extends XBreakpoint<?>, G extends XBreakpointGroup> {
   private final String myId;
-  private String myPresentableName;
+  private final String myPresentableName;
 
   protected XBreakpointGroupingRule(final @NotNull @NonNls String id, final @NonNls @Nls String presentableName) {
     myId = id;

@@ -38,20 +38,20 @@ import java.util.List;
  * @author max
  */
 public abstract class ChangesTreeList<T> extends JPanel {
-  private Tree myTree;
-  private JList myList;
-  private Project myProject;
+  private final Tree myTree;
+  private final JList myList;
+  private final Project myProject;
   private final boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
 
-  private Collection<T> myIncludedChanges;
+  private final Collection<T> myIncludedChanges;
   private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
 
   @NonNls private static final String TREE_CARD = "Tree";
   @NonNls private static final String LIST_CARD = "List";
   @NonNls private static final String ROOT = "root";
-  private CardLayout myCards;
+  private final CardLayout myCards;
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 

@@ -29,7 +29,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class BoundIconRenderer extends GutterIconRenderer {
-  private PsiElement myElement;
+  private final PsiElement myElement;
   private Icon myIcon;
 
   public BoundIconRenderer(final PsiElement field) {

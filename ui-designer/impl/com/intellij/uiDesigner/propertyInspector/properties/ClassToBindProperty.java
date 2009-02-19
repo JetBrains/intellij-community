@@ -69,12 +69,12 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
   }
 
   private final class MyEditor extends PropertyEditor<String> {
-    private EditorTextField myEditorTextField;
+    private final EditorTextField myEditorTextField;
     private Document myDocument;
     private final ComponentWithBrowseButton<EditorTextField> myTfWithButton;
     private String myInitialValue;
     private final Project myProject;
-    private ClassToBindProperty.MyEditor.MyActionListener myActionListener;
+    private final ClassToBindProperty.MyEditor.MyActionListener myActionListener;
 
     public MyEditor(final Project project) {
       myProject = project;

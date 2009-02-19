@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
     }
 )
 public class IssueNavigationConfiguration implements PersistentStateComponent<IssueNavigationConfiguration> {
-  @NonNls private static Pattern ourHtmlPattern =
+  @NonNls private static final Pattern ourHtmlPattern =
     Pattern.compile("(http:|https:)\\/\\/([^\\s()](?!&(gt|lt|nbsp)+;))+[^\\p{Pe}\\p{Pc}\\p{Pd}\\p{Ps}\\p{Po}\\s]/?");
 
   public static IssueNavigationConfiguration getInstance(Project project) {
@@ -69,8 +69,8 @@ public class IssueNavigationConfiguration implements PersistentStateComponent<Is
   }
 
   public static class LinkMatch implements Comparable {
-    private TextRange myRange;
-    private String myTargetUrl;
+    private final TextRange myRange;
+    private final String myTargetUrl;
 
     public LinkMatch(final TextRange range, final String targetUrl) {
       myRange = range;

@@ -36,15 +36,15 @@ import java.util.List;
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
 
-  private CommittedChangesTreeBrowser myBrowser;
+  private final CommittedChangesTreeBrowser myBrowser;
   private final Project myProject;
   private CommittedChangesProvider myProvider;
   private ChangeBrowserSettings mySettings;
-  private RepositoryLocation myLocation;
+  private final RepositoryLocation myLocation;
   private int myMaxCount = 0;
-  private FilterComponent myFilterComponent = new MyFilterComponent();
+  private final FilterComponent myFilterComponent = new MyFilterComponent();
   private List<CommittedChangeList> myChangesFromProvider;
-  private JLabel myErrorLabel = new JLabel();
+  private final JLabel myErrorLabel = new JLabel();
   private final List<Runnable> myShouldBeCalledOnDispose;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,

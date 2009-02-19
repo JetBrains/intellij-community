@@ -45,7 +45,7 @@ import java.beans.PropertyChangeSupport;
  * @author Sergey.Vasiliev
  */
 abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
-  private Wrapper myWrapprer = new Wrapper();
+  private final Wrapper myWrapprer = new Wrapper();
   private boolean myInitialised = false;
 
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);

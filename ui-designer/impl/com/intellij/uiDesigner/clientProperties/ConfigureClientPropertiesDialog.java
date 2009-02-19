@@ -39,9 +39,9 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   private JPanel myPropertyToolBarPanel;
   private Class mySelectedClass;
   private ClientPropertiesManager.ClientProperty[] mySelectedProperties = new ClientPropertiesManager.ClientProperty[0];
-  private MyTableModel myTableModel = new MyTableModel();
+  private final MyTableModel myTableModel = new MyTableModel();
   private final Project myProject;
-  private ClientPropertiesManager myManager;
+  private final ClientPropertiesManager myManager;
 
   public ConfigureClientPropertiesDialog(final Project project) {
     super(project, true);

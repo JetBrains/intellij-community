@@ -638,8 +638,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
      * Used from Popup Menu
      */
     class SetEnabledAction extends AnAction {
-      private boolean myNewValue;
-      private Breakpoint myBreakpoint;
+      private final boolean myNewValue;
+      private final Breakpoint myBreakpoint;
 
       public SetEnabledAction(Breakpoint breakpoint, boolean newValue) {
         super(newValue ? DebuggerBundle.message("action.enable.text") : DebuggerBundle.message("action.disable.text"));

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ThisEvaluator implements Evaluator {
-  private int myIterations;
+  private final int myIterations;
 
   public ThisEvaluator() {
     myIterations = 0;

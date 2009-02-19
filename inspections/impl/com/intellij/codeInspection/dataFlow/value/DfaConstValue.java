@@ -103,7 +103,7 @@ public class DfaConstValue extends DfaValue {
     }
   }
 
-  private Object myValue;
+  private final Object myValue;
 
   DfaConstValue(Object value, DfaValueFactory factory) {
     super(factory);

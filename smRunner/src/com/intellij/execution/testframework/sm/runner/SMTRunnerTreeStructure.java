@@ -14,9 +14,9 @@ import java.util.List;
  */
 public class SMTRunnerTreeStructure extends AbstractTreeStructure
 {
-  private Object myRootNode;
+  private final Object myRootNode;
   private Filter myTestNodesFilter;
-  private Project myProject;
+  private final Project myProject;
 
   public SMTRunnerTreeStructure(final Project project, final Object rootNode) {
     myProject = project;

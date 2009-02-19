@@ -172,8 +172,8 @@ public class ImagePreviewComponent extends JPanel {
   }
 
   private static class ImageComp extends JComponent {
-    private BufferedImage myImage;
-    private Dimension myPreferredSize;
+    private final BufferedImage myImage;
+    private final Dimension myPreferredSize;
 
     private ImageComp(@NotNull final BufferedImage image) {
       myImage = image;

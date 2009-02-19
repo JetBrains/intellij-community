@@ -47,11 +47,11 @@ public final class FormSourceCodeGenerator {
   private boolean myNeedLoadLabelText;
   private boolean myNeedLoadButtonText;
 
-  private static Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
-  private static Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<String, LayoutSourceGenerator>();
-  @NonNls private static TIntObjectHashMap<String> ourFontStyleMap = new TIntObjectHashMap<String>();
-  @NonNls private static TIntObjectHashMap<String> ourTitleJustificationMap = new TIntObjectHashMap<String>();
-  @NonNls private static TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<String>();
+  private static final Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
+  private static final Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<String, LayoutSourceGenerator>();
+  @NonNls private static final TIntObjectHashMap<String> ourFontStyleMap = new TIntObjectHashMap<String>();
+  @NonNls private static final TIntObjectHashMap<String> ourTitleJustificationMap = new TIntObjectHashMap<String>();
+  @NonNls private static final TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<String>();
 
   private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
     PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));

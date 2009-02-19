@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 public class RecentChangeDialog extends DirectoryHistoryDialog {
-  private RecentChange myChange;
+  private final RecentChange myChange;
 
   public RecentChangeDialog(IdeaGateway gw, RecentChange c) {
     super(gw, null, false);

@@ -16,7 +16,7 @@ import java.util.List;
 // Therefore we have to move along the changelist, revert only content changes
 // and record file and changeset timestamps to call comparator with.
 public class ByteContentRetriever extends ChangeSetsProcessor {
-  private FileRevisionTimestampComparator myComparator;
+  private final FileRevisionTimestampComparator myComparator;
 
   private long myCurrentFileTimestamp;
   private Content myCurrentFileContent;

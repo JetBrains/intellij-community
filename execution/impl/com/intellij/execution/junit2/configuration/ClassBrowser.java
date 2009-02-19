@@ -123,7 +123,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
   }
 
   public static class NoFilterException extends Exception {
-    private MessagesEx.MessageInfo myMessageInfo;
+    private final MessagesEx.MessageInfo myMessageInfo;
 
     public NoFilterException(final MessagesEx.MessageInfo messageInfo) {
       super(messageInfo.getMessage());

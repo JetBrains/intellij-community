@@ -5,7 +5,7 @@ import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.openapi.vcs.changes.Change;
 
 public class DirectoryChange extends Change {
-  private DirectoryChangeModel myModel;
+  private final DirectoryChangeModel myModel;
 
   public DirectoryChange(DirectoryChangeModel m) {
     super(m.getContentRevision(0), m.getContentRevision(1));

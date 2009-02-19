@@ -20,7 +20,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
 
   @NonNls private static final String[] VARIANTS = {"false", "true"};
 
-  private boolean myAllowEmpty;
+  private final boolean myAllowEmpty;
 
   public static BooleanValueConverter getInstance(final boolean allowEmpty) {
      return new BooleanValueConverter(allowEmpty);

@@ -12,7 +12,7 @@ import java.util.*;
  * Date: 27-Dec-2005
  */
 class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
-  private RefManager myManager;
+  private final RefManager myManager;
   public static int CAN_BE_FINAL_MASK;
 
   public CanBeFinalAnnotator(RefManager manager) {

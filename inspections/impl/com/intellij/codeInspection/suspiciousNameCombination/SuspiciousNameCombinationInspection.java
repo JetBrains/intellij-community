@@ -39,8 +39,8 @@ import java.util.Map;
  * @author yole
  */
 public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool {
-  private List<String> myNameGroups = new ArrayList<String>();
-  private Map<String, String> myWordToGroupMap = new HashMap<String, String>();
+  private final List<String> myNameGroups = new ArrayList<String>();
+  private final Map<String, String> myWordToGroupMap = new HashMap<String, String>();
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";
 
@@ -105,7 +105,7 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
   }
 
   private class MyVisitor extends JavaElementVisitor {
-    private ProblemsHolder myProblemsHolder;
+    private final ProblemsHolder myProblemsHolder;
 
     public MyVisitor(final ProblemsHolder problemsHolder) {
       myProblemsHolder = problemsHolder;

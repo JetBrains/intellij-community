@@ -37,12 +37,12 @@ import java.util.Map;
 
 public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefactoringProcessor {
   public static final String REFACTORING_NAME = "Replace Constructor with Builder";
-  private PsiMethod[] myConstructors;
-  private Map<String, ParameterData> myParametersMap;
+  private final PsiMethod[] myConstructors;
+  private final Map<String, ParameterData> myParametersMap;
   private final String myClassName;
   private final String myPackageName;
   private final boolean myCreateNewBuilderClass;
-  private PsiElementFactory myElementFactory;
+  private final PsiElementFactory myElementFactory;
 
 
   public ReplaceConstructorWithBuilderProcessor(Project project,

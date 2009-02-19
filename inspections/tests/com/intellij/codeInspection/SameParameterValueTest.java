@@ -5,7 +5,7 @@ import com.intellij.testFramework.InspectionTestCase;
 
 public class SameParameterValueTest extends InspectionTestCase {
 
-  private SameParameterValueInspection myTool = new SameParameterValueInspection();
+  private final SameParameterValueInspection myTool = new SameParameterValueInspection();
 
   private String getTestDir() {
     return "sameParameterValue/" + getTestName(false);

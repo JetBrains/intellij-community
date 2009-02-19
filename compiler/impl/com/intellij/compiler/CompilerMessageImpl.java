@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class CompilerMessageImpl implements CompilerMessage {
 
-  private Project myProject;
+  private final Project myProject;
   private final CompilerMessageCategory myCategory;
   @Nullable private final Navigatable myNavigatable;
   private final String myMessage;

@@ -14,11 +14,11 @@ import com.intellij.diff.Block;
 import java.io.IOException;
 
 public class SelectionReverter extends Reverter {
-  private SelectionCalculator myCalculator;
-  private Revision myLeftRevision;
-  private Entry myRightEntry;
-  private int myFromLine;
-  private int myToLine;
+  private final SelectionCalculator myCalculator;
+  private final Revision myLeftRevision;
+  private final Entry myRightEntry;
+  private final int myFromLine;
+  private final int myToLine;
 
   public SelectionReverter(LocalVcs vcs,
                            IdeaGateway gw,

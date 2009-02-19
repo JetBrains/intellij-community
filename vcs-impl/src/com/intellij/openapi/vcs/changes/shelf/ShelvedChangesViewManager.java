@@ -57,12 +57,12 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
-  private ChangesViewContentManager myContentManager;
-  private ShelveChangesManager myShelveChangesManager;
+  private final ChangesViewContentManager myContentManager;
+  private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
-  private Tree myTree = new ShelfTree();
+  private final Tree myTree = new ShelfTree();
   private Content myContent = null;
-  private ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
+  private final ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
   private boolean myUpdatePending = false;
   private Runnable myPostUpdateRunnable = null;
 
@@ -336,7 +336,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
-    private IssueLinkRenderer myIssueLinkRenderer;
+    private final IssueLinkRenderer myIssueLinkRenderer;
     private final Map<Pair<String, String>, String> myMoveRenameInfo;
 
     public ShelfTreeCellRenderer(Project project, final Map<Pair<String, String>, String> moveRenameInfo) {

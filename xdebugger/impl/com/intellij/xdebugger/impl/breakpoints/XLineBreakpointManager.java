@@ -27,8 +27,8 @@ import java.util.Collection;
  * @author nik
  */
 public class XLineBreakpointManager {
-  private BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<XLineBreakpointImpl, Document>();
-  private MergingUpdateQueue myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null);
+  private final BidirectionalMap<XLineBreakpointImpl, Document> myBreakpoints = new BidirectionalMap<XLineBreakpointImpl, Document>();
+  private final MergingUpdateQueue myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null);
   private DocumentAdapter myDocumentListener;
   private final Project myProject;
   private final XDependentBreakpointManager myDependentBreakpointManager;

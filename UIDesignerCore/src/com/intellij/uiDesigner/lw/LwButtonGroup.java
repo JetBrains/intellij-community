@@ -26,7 +26,7 @@ import java.util.ArrayList;
  */
 public class LwButtonGroup implements IButtonGroup {
   private String myName;
-  private ArrayList myComponentIds = new ArrayList();
+  private final ArrayList myComponentIds = new ArrayList();
   private boolean myBound;
 
   public void read(final Element element) {

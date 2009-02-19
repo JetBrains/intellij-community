@@ -12,7 +12,7 @@ import java.util.Map;
  * @author Lex
  */
 public class DebuggerRecents {  
-  private Map<Object, LinkedList<TextWithImports>> myRecentExpressions = new HashMap<Object, LinkedList<TextWithImports>>();
+  private final Map<Object, LinkedList<TextWithImports>> myRecentExpressions = new HashMap<Object, LinkedList<TextWithImports>>();
 
   public static DebuggerRecents getInstance(Project project) {
     return ServiceManager.getService(project, DebuggerRecents.class);

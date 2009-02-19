@@ -618,10 +618,10 @@ public class DependencyCache {
   }
 
   private class DeclaringClassFinder implements ClassInfoProcessor {
-    private int myMemberName;
-    private int myMemberDescriptor;
+    private final int myMemberName;
+    private final int myMemberDescriptor;
     private int myDeclaringClass = Cache.UNKNOWN;
-    private boolean myIsField;
+    private final boolean myIsField;
 
     private DeclaringClassFinder(MemberInfo memberInfo) {
       myMemberName = memberInfo.getName();

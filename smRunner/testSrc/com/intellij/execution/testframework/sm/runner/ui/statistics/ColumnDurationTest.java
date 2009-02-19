@@ -184,7 +184,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
   }
 
   private class MyRenderer extends ColumnDuration.DurationCellRenderer {
-    private UITestUtil.FragmentsContainer myFragmentsContainer;
+    private final UITestUtil.FragmentsContainer myFragmentsContainer;
 
     public MyRenderer(final SMTestProxy proxy,
                        final UITestUtil.FragmentsContainer fragmentsContainer) {

@@ -42,8 +42,8 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private Collection<Change> myAllChanges;
   private Map<Change, LocalChangeList> myChangeListsMap;
 
-  private ChangesBrowserExtender myExtender;
-  private Runnable myRebuildListListener;
+  private final ChangesBrowserExtender myExtender;
+  private final Runnable myRebuildListListener;
 
   public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                    final ChangeList initialListSelection,

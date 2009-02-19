@@ -24,17 +24,17 @@ import com.intellij.openapi.module.Module;
  * @author nik
  */
 public class ExplodedAndJarTargetParameters {
-  private ModuleChunk myChunk;
-  private Module myContainingModule;
-  private GenerationOptions myGenerationOptions;
-  private String myExplodedPathParameter;
-  private String myJarPathParameter;
+  private final ModuleChunk myChunk;
+  private final Module myContainingModule;
+  private final GenerationOptions myGenerationOptions;
+  private final String myExplodedPathParameter;
+  private final String myJarPathParameter;
   private final String myBuildExplodedTargetName;
   private final String myBuildJarTargetName;
   private final String myExplodedPathProperty;
   private final String myJarPathProperty;
-  private BuildConfiguration myBuildConfiguration;
-  private CompoundBuildInstructionNaming myCompoundBuildInstructionNaming;
+  private final BuildConfiguration myBuildConfiguration;
+  private final CompoundBuildInstructionNaming myCompoundBuildInstructionNaming;
 
   public ExplodedAndJarTargetParameters(final ModuleChunk chunk,
                                            final Module containingModule,

@@ -25,7 +25,7 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
   private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
-  private Project myProject;
+  private final Project myProject;
 
   public CompileStepBeforeRun(@NotNull final Project project) {
     myProject = project;

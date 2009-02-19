@@ -17,7 +17,7 @@ import java.awt.*;
  * @author yole
  */
 public class ComponentItemDragObject implements ComponentDragObject {
-  private ComponentItem myItem;
+  private final ComponentItem myItem;
 
   public ComponentItemDragObject(final ComponentItem item) {
     myItem = item;

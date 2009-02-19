@@ -28,7 +28,7 @@ import java.util.List;
 
 public class AntCommandLineBuilder {
   private final List<String> myTargets = new ArrayList<String>();
-  private JavaParameters myCommandLine = new JavaParameters();
+  private final JavaParameters myCommandLine = new JavaParameters();
   private String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;

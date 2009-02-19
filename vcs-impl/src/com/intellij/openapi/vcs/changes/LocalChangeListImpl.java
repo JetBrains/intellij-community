@@ -22,7 +22,7 @@ import java.util.*;
 public class LocalChangeListImpl extends LocalChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
 
-  private Project myProject;
+  private final Project myProject;
   private Collection<Change> myChanges = new HashSet<Change>();
   private Collection<Change> myReadChangesCache = null;
   @NotNull private String myName;

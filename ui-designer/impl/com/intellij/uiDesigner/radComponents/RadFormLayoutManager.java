@@ -46,7 +46,7 @@ import java.util.Map;
  */
 public class RadFormLayoutManager extends RadAbstractGridLayoutManager implements AlignPropertyProvider {
   private FormLayoutColumnProperties myPropertiesPanel;
-  private Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
+  private final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
   @NonNls private static final String ENCODED_FORMSPEC_GROW = "d:grow";
   private static final Size DEFAULT_NOGROW_SIZE = new BoundedSize(Sizes.DEFAULT, new ConstantSize(4, ConstantSize.PIXEL), null);

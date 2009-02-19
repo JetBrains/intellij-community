@@ -80,7 +80,7 @@ public class DebuggerSession {
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
-  private Set<ThreadReferenceProxyImpl> mySteppingThroughThreads = new HashSet<ThreadReferenceProxyImpl>();
+  private final Set<ThreadReferenceProxyImpl> mySteppingThroughThreads = new HashSet<ThreadReferenceProxyImpl>();
 
   public boolean isSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
     return mySteppingThroughThreads.contains(threadProxy);

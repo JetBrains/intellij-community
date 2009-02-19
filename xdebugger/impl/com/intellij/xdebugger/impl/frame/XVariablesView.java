@@ -20,7 +20,7 @@ import javax.swing.*;
  * @author nik
  */
 public class XVariablesView extends XDebugViewBase {
-  private XDebuggerTreePanel myDebuggerTreePanel;
+  private final XDebuggerTreePanel myDebuggerTreePanel;
   private XDebuggerTreeState myTreeState;
   private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;

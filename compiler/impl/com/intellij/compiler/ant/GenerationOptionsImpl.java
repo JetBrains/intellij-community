@@ -53,7 +53,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
     /**
      * map from modules to chunks
      */
-    private Map<Module, ModuleChunk> myModuleToChunkMap = new HashMap<Module, ModuleChunk>();
+    private final Map<Module, ModuleChunk> myModuleToChunkMap = new HashMap<Module, ModuleChunk>();
 
     /**
      * A constructor

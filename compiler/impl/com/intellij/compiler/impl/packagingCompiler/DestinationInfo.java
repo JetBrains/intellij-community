@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class DestinationInfo {
   private VirtualFile myOutputFile;
-  private String myOutputPath;
-  private String myOutputFilePath;
+  private final String myOutputPath;
+  private final String myOutputFilePath;
 
   protected DestinationInfo(final @NotNull String outputPath, final @Nullable VirtualFile outputFile, @NotNull String outputFilePath) {
     myOutputFilePath = outputFilePath;

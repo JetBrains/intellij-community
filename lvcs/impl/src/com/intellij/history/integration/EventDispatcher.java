@@ -18,11 +18,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener, CacheUpdater {
-  private LocalVcs myVcs;
-  private IdeaGateway myGateway;
-  private LocalHistoryFacade myFacade;
+  private final LocalVcs myVcs;
+  private final IdeaGateway myGateway;
+  private final LocalHistoryFacade myFacade;
 
-  private boolean isFirstTimeRefresh = true;
+  private final boolean isFirstTimeRefresh = true;
   private int myRefreshDepth = 0;
   private CacheUpdaterProcessor myProcessor;
 
@@ -275,8 +275,8 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   private static class ReparentedVirtualFile extends NullVirtualFile {
-    private VirtualFile myParent;
-    private VirtualFile myChild;
+    private final VirtualFile myParent;
+    private final VirtualFile myChild;
 
     public ReparentedVirtualFile(VirtualFile newParent, VirtualFile child) {
       myChild = child;
@@ -290,8 +290,8 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   private static class RenamedVirtualFile extends NullVirtualFile {
-    private VirtualFile myFile;
-    private String myNewName;
+    private final VirtualFile myFile;
+    private final String myNewName;
 
     public RenamedVirtualFile(VirtualFile f, String newName) {
       myFile = f;

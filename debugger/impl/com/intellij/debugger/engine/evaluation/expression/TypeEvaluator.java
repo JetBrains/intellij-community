@@ -13,7 +13,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.ReferenceType;
 
 public class TypeEvaluator implements Evaluator {
-  private JVMName myTypeName;
+  private final JVMName myTypeName;
 
   public TypeEvaluator(JVMName typeName) {
     myTypeName = typeName;

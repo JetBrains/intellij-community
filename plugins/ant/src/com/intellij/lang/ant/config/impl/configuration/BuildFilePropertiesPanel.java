@@ -335,7 +335,7 @@ public class BuildFilePropertiesPanel {
     private RawCommandLineEditor myAntCommandLine;
     private ComboboxWithBrowseButton myAnts;
     private ComboboxWithBrowseButton myJDKs;
-    private ChooseAndEditComboBoxController<Sdk, String> myJDKsController;
+    private final ChooseAndEditComboBoxController<Sdk, String> myJDKsController;
     private JButton mySetDefaultAnt;
     private SimpleColoredComponent myDefaultAnt;
     private JRadioButton myUseCastomAnt;

@@ -23,7 +23,7 @@ import java.util.List;
  * @author yole
  */
 public class SurroundPopupAction extends AbstractGuiEditorAction {
-  private SurroundActionGroup myActionGroup = new SurroundActionGroup();
+  private final SurroundActionGroup myActionGroup = new SurroundActionGroup();
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     final ListPopup groupPopup = JBPopupFactory.getInstance()

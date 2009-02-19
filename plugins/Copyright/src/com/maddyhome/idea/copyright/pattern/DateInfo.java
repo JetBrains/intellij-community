@@ -69,5 +69,5 @@ public class DateInfo
         return sdf.format(calendar.getTime());
     }
 
-    private Calendar calendar;
+    private final Calendar calendar;
 }

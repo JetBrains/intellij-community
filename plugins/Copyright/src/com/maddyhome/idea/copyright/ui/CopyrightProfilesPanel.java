@@ -55,9 +55,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CopyrightProfilesPanel extends MasterDetailsComponent {
     private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
-    private Project myProject;
-    private CopyrightManager myManager;
-  private AtomicBoolean myInitialized = new AtomicBoolean(false);
+    private final Project myProject;
+    private final CopyrightManager myManager;
+  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   public CopyrightProfilesPanel(Project project) {
       ServiceManager.getService(project, MasterDetailsStateService.class).register("Copyright.UI", this);

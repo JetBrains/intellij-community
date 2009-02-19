@@ -43,9 +43,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
-  private Project myProject;
-  private ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
-  private FileChooserDescriptor myDescriptor;
+  private final Project myProject;
+  private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
+  private final FileChooserDescriptor myDescriptor;
   private final ExcludedEntriesConfiguration myConfiguration;
 
   public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludedEntriesConfiguration configuration) {
@@ -296,7 +296,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   }
 
   private static class BooleanRenderer extends JCheckBox implements TableCellRenderer {
-    private JPanel myPanel = new JPanel();
+    private final JPanel myPanel = new JPanel();
 
     public BooleanRenderer() {
       setHorizontalAlignment(CENTER);

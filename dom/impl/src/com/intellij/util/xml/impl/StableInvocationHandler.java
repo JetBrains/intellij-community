@@ -23,7 +23,7 @@ import java.util.Set;
 class StableInvocationHandler<T extends DomElement> implements InvocationHandler, StableElement {
   private T myOldValue;
   private T myCachedValue;
-  private Set<Class> myClasses;
+  private final Set<Class> myClasses;
   private final Factory<T> myProvider;
 
   public StableInvocationHandler(final T initial, final Factory<T> provider) {

@@ -25,15 +25,15 @@ import java.util.ArrayList;
  * @author yole
  */
 public class PasteProcessor extends EventProcessor {
-  private GridInsertProcessor myGridInsertProcessor;
-  private PastedComponentList myPastedComponentList;
+  private final GridInsertProcessor myGridInsertProcessor;
+  private final PastedComponentList myPastedComponentList;
   private final GuiEditor myEditor;
   private final ArrayList<RadComponent> myComponentsToPaste;
   private ComponentDropLocation myLastLocation;
-  private int[] myDX;
-  private int[] myDY;
-  private int myMinRow;
-  private int myMinCol;
+  private final int[] myDX;
+  private final int[] myDY;
+  private final int myMinRow;
+  private final int myMinCol;
 
   public PasteProcessor(GuiEditor editor, final ArrayList<RadComponent> componentsToPaste,
                         final TIntArrayList xs, final TIntArrayList ys) {
@@ -62,13 +62,14 @@ public class PasteProcessor extends EventProcessor {
       myDY [i] = ys.get(i) - minY;
     }
 
-    myMinRow = Integer.MAX_VALUE;
-    myMinCol = Integer.MAX_VALUE;
+    int myMinRow = Integer.MAX_VALUE;
+    int myMinCol = Integer.MAX_VALUE;
     for(RadComponent component: myComponentsToPaste) {
       myMinRow = Math.min(myMinRow, component.getConstraints().getRow());
       myMinCol = Math.min(myMinCol, component.getConstraints().getColumn());
     }
-
+    this.myMinRow = myMinRow;
+    this.myMinCol = myMinCol;
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myEditor.getProject());
     statusBar.setInfo(UIDesignerBundle.message("paste.choose.destination.prompt"));
   }

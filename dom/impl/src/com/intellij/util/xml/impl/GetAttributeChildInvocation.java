@@ -7,7 +7,7 @@ package com.intellij.util.xml.impl;
  * @author peter
  */
 public class GetAttributeChildInvocation implements Invocation {
-  private AttributeChildDescriptionImpl myDescription;
+  private final AttributeChildDescriptionImpl myDescription;
 
   public GetAttributeChildInvocation(final AttributeChildDescriptionImpl description) {
     myDescription = description;

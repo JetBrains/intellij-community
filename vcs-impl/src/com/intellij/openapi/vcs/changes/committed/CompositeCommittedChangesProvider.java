@@ -26,7 +26,7 @@ import java.util.List;
  * @author yole
  */
 public class CompositeCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> {
-  private Project myProject;
+  private final Project myProject;
   private List<AbstractVcs> myBaseVcss = new ArrayList<AbstractVcs>();
 
   public CompositeCommittedChangesProvider(final Project project, final AbstractVcs... baseVcss) {
@@ -159,11 +159,11 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   }
 
   private class CompositeChangesBrowserSettingsEditor implements ChangesBrowserSettingsEditor<CompositeChangeBrowserSettings> {
-    private JPanel myCompositePanel;
-    private DateFilterComponent myDateFilter;
+    private final JPanel myCompositePanel;
+    private final DateFilterComponent myDateFilter;
     private CompositeChangeBrowserSettings mySettings;
-    private Map<AbstractVcs, ChangesBrowserSettingsEditor> myEditors = new HashMap<AbstractVcs, ChangesBrowserSettingsEditor>();
-    private Map<AbstractVcs, JCheckBox> myEnabledCheckboxes = new HashMap<AbstractVcs, JCheckBox>();
+    private final Map<AbstractVcs, ChangesBrowserSettingsEditor> myEditors = new HashMap<AbstractVcs, ChangesBrowserSettingsEditor>();
+    private final Map<AbstractVcs, JCheckBox> myEnabledCheckboxes = new HashMap<AbstractVcs, JCheckBox>();
 
     public CompositeChangesBrowserSettingsEditor() {
       myCompositePanel = new JPanel();

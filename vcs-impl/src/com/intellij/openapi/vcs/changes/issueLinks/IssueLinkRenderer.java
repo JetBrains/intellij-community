@@ -12,8 +12,8 @@ import java.util.List;
  * @author yole
  */
 public class IssueLinkRenderer {
-  private SimpleColoredComponent myColoredComponent;
-  private IssueNavigationConfiguration myIssueNavigationConfiguration;
+  private final SimpleColoredComponent myColoredComponent;
+  private final IssueNavigationConfiguration myIssueNavigationConfiguration;
 
   public IssueLinkRenderer(final Project project, final SimpleColoredComponent coloredComponent) {
     myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);

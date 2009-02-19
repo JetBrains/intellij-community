@@ -16,7 +16,7 @@ public class Growl {
   private static final String GROWL_NOTIFICATION_DESCRIPTION = "NotificationDescription";
   private static final String GROWL_NOTIFICATION = "GrowlNotification";
 
-  private String myProductName;
+  private final String myProductName;
   private String[] myAllNotifications;
   private String[] myDefaultNotification;
 

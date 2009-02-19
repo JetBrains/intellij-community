@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 public class TreeUtilTest extends TestCase {
-  private Assertion CHECK = new Assertion();
+  private final Assertion CHECK = new Assertion();
 
   public void testFindNodeWithObject() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();

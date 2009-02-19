@@ -38,7 +38,7 @@ public class CvsConfigurationPanel {
   private JRadioButton myGetLatestVersionOnMergedWithConflict;
   private JRadioButton mySkipOnMergedWithConflict;
   private JRadioButton myShowDialogOnMergedWithConflict;
-  private JRadioButton[] myOnFileMergedWithConflictGroup;
+  private final JRadioButton[] myOnFileMergedWithConflictGroup;
 
   public CvsConfigurationPanel(Project project) {
     myOnFileMergedWithConflictGroup = new JRadioButton[]{

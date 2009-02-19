@@ -20,7 +20,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomFileElement;
 
 public class DomFileElementNode extends BaseDomElementNode {
-  private DomFileElement myFileElement;
+  private final DomFileElement myFileElement;
 
   public DomFileElementNode(final DomFileElement fileElement) {
     super(fileElement);

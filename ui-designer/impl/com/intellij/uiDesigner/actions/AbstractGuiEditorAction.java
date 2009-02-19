@@ -20,7 +20,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class AbstractGuiEditorAction extends AnAction {
-  private boolean myModifying;
+  private final boolean myModifying;
 
   protected AbstractGuiEditorAction() {
     myModifying = false;

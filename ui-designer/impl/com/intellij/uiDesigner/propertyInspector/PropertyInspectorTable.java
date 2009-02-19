@@ -94,8 +94,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    */
   private boolean myShowExpertProperties;
 
-  private Map<HighlightSeverity, SimpleTextAttributes> myHighlightAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
-  private Map<HighlightSeverity, SimpleTextAttributes> myModifiedHighlightAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
+  private final Map<HighlightSeverity, SimpleTextAttributes> myHighlightAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
+  private final Map<HighlightSeverity, SimpleTextAttributes> myModifiedHighlightAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
 
   private final ClassToBindProperty myClassToBindProperty;
   private final BindingProperty myBindingProperty;
@@ -1250,7 +1250,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   private class MyExpandCurrentAction extends AbstractAction {
-    private boolean myExpand;
+    private final boolean myExpand;
 
     public MyExpandCurrentAction(final boolean expand) {
       myExpand = expand;

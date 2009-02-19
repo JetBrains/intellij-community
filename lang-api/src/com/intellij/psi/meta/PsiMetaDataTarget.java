@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class PsiMetaDataTarget extends DelegatePsiTarget implements PomRenameableTarget<PsiMetaDataTarget> {
-  private PsiMetaData myMetaData;
+  private final PsiMetaData myMetaData;
 
   public PsiMetaDataTarget(@NotNull PsiMetaData metaData) {
     super(metaData.getDeclaration());

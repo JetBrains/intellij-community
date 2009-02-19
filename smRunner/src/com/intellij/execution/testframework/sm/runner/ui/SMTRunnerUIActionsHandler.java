@@ -9,7 +9,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
  * @author Roman Chernyatchik
  */
 public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListener {
-  private TestConsoleProperties myConsoleProperties;
+  private final TestConsoleProperties myConsoleProperties;
 
   public SMTRunnerUIActionsHandler(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;

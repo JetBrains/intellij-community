@@ -20,7 +20,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private String myName;
   private int                       myFrameCount = -1;
   // stackframes, 0 - bottom
-  private List<StackFrameProxyImpl> myFramesFromBottom = new ArrayList<StackFrameProxyImpl>();
+  private final List<StackFrameProxyImpl> myFramesFromBottom = new ArrayList<StackFrameProxyImpl>();
   //cache build on the base of myFramesFromBottom 0 - top, initially nothing is cached
   private List<StackFrameProxyImpl> myFrames = null;
 

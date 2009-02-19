@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
   private final Field myField;
-  private ObjectReference myObject;
+  private final ObjectReference myObject;
   private Boolean myIsPrimitive = null;
   private final boolean myIsStatic;
 

@@ -440,7 +440,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   }
 
   private class MyRenderer extends TestTreeRenderer {
-    private UITestUtil.FragmentsContainer myFragmentsContainer;
+    private final UITestUtil.FragmentsContainer myFragmentsContainer;
 
     public MyRenderer(final boolean isPaused,
                       final UITestUtil.FragmentsContainer fragmentsContainer) {

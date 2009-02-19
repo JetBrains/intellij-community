@@ -35,7 +35,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   private final String myRecentsId;
 
-  private List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
+  private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private Document myCurrentDocument;
 
   private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {

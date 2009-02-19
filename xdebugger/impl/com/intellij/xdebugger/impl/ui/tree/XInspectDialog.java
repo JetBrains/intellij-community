@@ -17,7 +17,7 @@ import javax.swing.*;
  * @author nik
  */
 public class XInspectDialog extends DialogWrapper {
-  private XDebuggerTreePanel myTreePanel;
+  private final XDebuggerTreePanel myTreePanel;
 
   public XInspectDialog(final XDebugSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, String nodeName, XValue value) {
     super(session.getProject(), false);

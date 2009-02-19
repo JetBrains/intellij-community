@@ -52,7 +52,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private final Map<ProcessHandler, XDebugSessionData> mySessionData;
   private final Map<ProcessHandler, XDebugSessionTab> mySessionTabs;
   private final List<XDebugSessionImpl> mySessions;
-  private ExecutionPointHighlighter myExecutionPointHighlighter;
+  private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private XDebugSessionImpl myLastActiveSession;
 
   private final RunContentListener myContentListener = new RunContentListener() {

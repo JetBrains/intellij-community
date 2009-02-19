@@ -59,13 +59,13 @@ public class CopyrightManager implements ProjectComponent, JDOMExternalizable, P
   @Nullable
   private CopyrightProfile myDefaultCopyright = null;
 
-  private LinkedHashMap<String, String> myModule2Copyrights = new LinkedHashMap<String, String>();
+  private final LinkedHashMap<String, String> myModule2Copyrights = new LinkedHashMap<String, String>();
 
-  private Map<String, CopyrightProfile> myCopyrights = new HashMap<String, CopyrightProfile>();
+  private final Map<String, CopyrightProfile> myCopyrights = new HashMap<String, CopyrightProfile>();
 
-  private Options myOptions = new Options();
+  private final Options myOptions = new Options();
 
-  private Project myProject;
+  private final Project myProject;
 
   public CopyrightManager(Project project) {
     myProject = project;

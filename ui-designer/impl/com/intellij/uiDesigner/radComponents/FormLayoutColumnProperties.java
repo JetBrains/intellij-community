@@ -49,7 +49,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private FormLayout myLayout;
   private int myIndex;
   private boolean myIsRow;
-  private List<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
+  private final List<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
   private boolean myShowing = false;
   private boolean mySaving = false;
 

@@ -17,10 +17,10 @@ import java.awt.event.ActionEvent;
  * @author yole
  */
 public class FontEditor extends PropertyEditor<FontDescriptor> {
-  private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
+  private final TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private FontDescriptor myValue;
   private Project myProject;
-  private String myPropertyName;
+  private final String myPropertyName;
 
   public FontEditor(String propertyName) {
     myPropertyName = propertyName;

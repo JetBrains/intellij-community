@@ -17,9 +17,9 @@ import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
 class UnaryExpressionEvaluator implements Evaluator {
-  private IElementType myOperationType;
-  private String myExpectedType;
-  private Evaluator myOperandEvaluator;
+  private final IElementType myOperationType;
+  private final String myExpectedType;
+  private final Evaluator myOperandEvaluator;
   private final String myOperationText;
 
   public UnaryExpressionEvaluator(IElementType operationType, String expectedType, Evaluator operandEvaluator, final String operationText) {

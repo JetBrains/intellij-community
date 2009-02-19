@@ -12,7 +12,7 @@ import com.intellij.refactoring.introduceField.LocalToFieldHandler;
  * @author ven
  */
 public class MockLocalToFieldHandler extends LocalToFieldHandler {
-  private boolean myMakeEnumConstant;
+  private final boolean myMakeEnumConstant;
   public MockLocalToFieldHandler(Project project, boolean isConstant, final boolean makeEnumConstant) {
     super(project, isConstant);
     myMakeEnumConstant = makeEnumConstant;

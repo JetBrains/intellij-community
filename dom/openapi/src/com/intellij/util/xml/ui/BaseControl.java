@@ -41,7 +41,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
 
   private Bound myBoundComponent;
-  private DomWrapper<T> myDomWrapper;
+  private final DomWrapper<T> myDomWrapper;
   private boolean myCommitting;
 
   private Color myDefaultForeground;

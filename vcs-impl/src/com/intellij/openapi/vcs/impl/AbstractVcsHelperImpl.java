@@ -62,7 +62,7 @@ import java.util.List;
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
 
-  private Project myProject;
+  private final Project myProject;
 
   public AbstractVcsHelperImpl(Project project) {
     myProject = project;

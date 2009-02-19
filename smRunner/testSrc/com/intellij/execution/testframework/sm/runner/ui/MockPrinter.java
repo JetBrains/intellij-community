@@ -8,9 +8,9 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 public class MockPrinter implements Printer {
   private boolean myShouldReset = false;
   private boolean myHasPrinted = false;
-  private StringBuilder myStdOut = new StringBuilder();
-  private StringBuilder myStdErr = new StringBuilder();
-  private StringBuilder myStdSys = new StringBuilder();
+  private final StringBuilder myStdOut = new StringBuilder();
+  private final StringBuilder myStdErr = new StringBuilder();
+  private final StringBuilder myStdSys = new StringBuilder();
 
   public MockPrinter() {
     this(true);

@@ -98,7 +98,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private final VcsHistoryProvider myProvider;
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
-  private CommittedChangesProvider<S, U> myCommittedChangesProvider;
+  private final CommittedChangesProvider<S, U> myCommittedChangesProvider;
   private final FilePath myFilePath;
   private final DualView myDualView;
 

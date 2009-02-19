@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
 public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroIconProperty_";
 
-  private LabelPropertyRenderer<IconDescriptor> myRenderer = new IconRenderer();
+  private final LabelPropertyRenderer<IconDescriptor> myRenderer = new IconRenderer();
   private IconEditor myEditor;
 
   public IntroIconProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {

@@ -28,8 +28,8 @@ import java.util.*;
 public class FormClassIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("FormClassIndex");
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
-  private MyInputFilter myInputFilter = new MyInputFilter();
-  private MyDataIndexer myDataIndexer = new MyDataIndexer();
+  private final MyInputFilter myInputFilter = new MyInputFilter();
+  private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   public ID<String, Void> getName() {
     return NAME;

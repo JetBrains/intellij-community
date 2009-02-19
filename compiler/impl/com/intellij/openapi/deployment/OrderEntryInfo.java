@@ -19,7 +19,7 @@ import java.util.Set;
 class OrderEntryInfo implements JDOMExternalizable {
   public boolean copy;
   public String URI="";
-  private Map<String,String> attributes = new HashMap<String, String>();
+  private final Map<String,String> attributes = new HashMap<String, String>();
   @NonNls protected static final String ATTRIBUTE_ELEMENT_NAME = "attribute";
   @NonNls protected static final String NAME_ATTR_NAME = "name";
   @NonNls protected static final String VALUE_ATTR_NAME = "value";

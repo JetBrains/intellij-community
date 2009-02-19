@@ -17,9 +17,9 @@ public interface ChangeListGroupingStrategy {
   Comparator<CommittedChangeList> getComparator();
 
   ChangeListGroupingStrategy DATE = new ChangeListGroupingStrategy() {
-    @NonNls private SimpleDateFormat myWeekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
-    @NonNls private SimpleDateFormat myMonthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
-    @NonNls private SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
+    @NonNls private final SimpleDateFormat myWeekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
+    @NonNls private final SimpleDateFormat myMonthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
+    @NonNls private final SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
 
     public String toString() {
       return VcsBundle.message("date.group.title");

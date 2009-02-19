@@ -14,9 +14,9 @@ import javax.swing.tree.TreePath;
  * Time: 6:56:51 PM
  */
 public abstract class TreeBuilder implements TreeModel {
-  private Object userObject;
+  private final Object userObject;
   private TreeBuilderNode myRoot;
-  private EventDispatcher<TreeModelListener> myDispatcher = EventDispatcher.create(TreeModelListener.class);
+  private final EventDispatcher<TreeModelListener> myDispatcher = EventDispatcher.create(TreeModelListener.class);
 
   protected TreeBuilder(Object userObject) {
     this.userObject = userObject;

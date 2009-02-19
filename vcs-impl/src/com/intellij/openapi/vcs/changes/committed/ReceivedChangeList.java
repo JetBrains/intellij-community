@@ -12,8 +12,8 @@ import java.util.Collections;
  * @author yole
  */
 public class ReceivedChangeList extends CommittedChangeListImpl {
-  @NotNull private CommittedChangeList myBaseList;
-  private int myBaseCount;
+  @NotNull private final CommittedChangeList myBaseList;
+  private final int myBaseCount;
   private boolean myForcePartial;
 
   public ReceivedChangeList(@NotNull CommittedChangeList baseList) {

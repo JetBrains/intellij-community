@@ -251,7 +251,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
 
   private class MyComboBoxModel implements ComboBoxModel {
     private CodeFragmentFactory mySelectedItem = null;
-    private EventDispatcher<ListDataListener> myDispatcher = EventDispatcher.create(ListDataListener.class);
+    private final EventDispatcher<ListDataListener> myDispatcher = EventDispatcher.create(ListDataListener.class);
 
     public void setSelectedItem(Object anItem) {
       if ((anItem instanceof CodeFragmentFactory && myFactories.contains(anItem))) {

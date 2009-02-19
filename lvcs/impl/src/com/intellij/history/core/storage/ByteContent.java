@@ -3,7 +3,7 @@ package com.intellij.history.core.storage;
 import java.util.Arrays;
 
 public class ByteContent extends Content {
-  private byte[] myData;
+  private final byte[] myData;
 
   public ByteContent(byte[] bytes) {
     myData = bytes;

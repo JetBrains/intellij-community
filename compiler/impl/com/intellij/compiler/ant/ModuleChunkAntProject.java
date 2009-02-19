@@ -12,7 +12,7 @@ import java.io.PrintWriter;
  *         Date: Mar 16, 2004
  */
 public class ModuleChunkAntProject extends Generator{
-  private AntProject myAntProject;
+  private final AntProject myAntProject;
 
   public ModuleChunkAntProject(Project project, ModuleChunk moduleChunk, GenerationOptions genOptions) {
     myAntProject = new AntProject(BuildProperties.getModuleChunkBuildFileName(moduleChunk), BuildProperties.getCompileTargetName(moduleChunk.getName()));

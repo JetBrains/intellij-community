@@ -13,8 +13,8 @@ import javax.swing.*;
  * @author Roman Chernyatchik
  */
 public class MockTestResultsViewer implements TestResultsViewer {
-  private TestConsoleProperties myProperties;
-  private SMTestProxy myRootSuite;
+  private final TestConsoleProperties myProperties;
+  private final SMTestProxy myRootSuite;
 
   public MockTestResultsViewer(final TestConsoleProperties properties,
                                final SMTestProxy suite) {

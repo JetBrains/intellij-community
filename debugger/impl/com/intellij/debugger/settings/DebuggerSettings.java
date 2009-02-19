@@ -175,7 +175,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   public static class ContentState implements Cloneable {
 
-    private String myType;
+    private final String myType;
     private boolean myMinimized;
     private String mySelectedTab;
     private double mySplitProportion;

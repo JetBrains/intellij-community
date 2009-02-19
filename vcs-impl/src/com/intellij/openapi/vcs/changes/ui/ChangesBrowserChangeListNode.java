@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * @author yole
  */
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
-  private ChangeListDecorator[] myDecorators;
+  private final ChangeListDecorator[] myDecorators;
   private final ChangeListManagerEx myClManager;
 
   public ChangesBrowserChangeListNode(Project project, ChangeList userObject) {

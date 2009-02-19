@@ -18,7 +18,7 @@ public class AdminWriterStoringRepositoryPath implements IAdminWriter, Repositor
   private String myRepositoryPath = null;
   private String myModulePath = null;
   private final String myModuleName;
-  private String myCvsRoot;
+  private final String myCvsRoot;
 
   public AdminWriterStoringRepositoryPath(String moduleName, String cvsRoot) {
     myModuleName = moduleName;

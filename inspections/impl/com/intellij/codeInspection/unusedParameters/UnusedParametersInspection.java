@@ -195,9 +195,9 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
 
   private static class AcceptSuggested implements LocalQuickFix {
-    private RefManager myManager;
-    private String myHint;
-    private ProblemDescriptionsProcessor myProcessor;
+    private final RefManager myManager;
+    private final String myHint;
+    private final ProblemDescriptionsProcessor myProcessor;
 
     public AcceptSuggested(final RefManager manager, final ProblemDescriptionsProcessor processor, final String hint) {
       myManager = manager;

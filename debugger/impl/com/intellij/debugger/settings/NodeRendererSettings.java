@@ -40,7 +40,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
-  private List<NodeRenderer> myPluginRenderers = new ArrayList<NodeRenderer>();
+  private final List<NodeRenderer> myPluginRenderers = new ArrayList<NodeRenderer>();
   private RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
 
   // base renderers

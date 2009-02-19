@@ -10,7 +10,7 @@ import java.awt.*;
  * @author Jeka
  */
 public class BreakpointNameCellRenderer extends DefaultTableCellRenderer {
-  private Color myAnyExceptionForeground = new Color(128, 0, 0);
+  private final Color myAnyExceptionForeground = new Color(128, 0, 0);
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);

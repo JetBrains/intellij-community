@@ -20,8 +20,8 @@ import java.util.List;
  */
 public class FormElementNavigatable implements Navigatable {
   private final Project myProject;
-  private VirtualFile myVirtualFile;
-  private @Nullable String myComponentId;
+  private final VirtualFile myVirtualFile;
+  private @Nullable final String myComponentId;
 
   public FormElementNavigatable(final Project project, final VirtualFile virtualFile, @Nullable final String componentId) {
     myProject = project;

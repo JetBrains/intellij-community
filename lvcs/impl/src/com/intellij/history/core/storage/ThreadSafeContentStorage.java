@@ -1,7 +1,7 @@
 package com.intellij.history.core.storage;
 
 public class ThreadSafeContentStorage implements IContentStorage {
-  private IContentStorage mySubject;
+  private final IContentStorage mySubject;
 
   public ThreadSafeContentStorage(IContentStorage s) {
     mySubject = s;

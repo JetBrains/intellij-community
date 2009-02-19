@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
-  private RecentChange myChange;
+  private final RecentChange myChange;
 
   public RecentChangeDialogModel(IdeaGateway gw, LocalVcs vcs, RecentChange c) {
     super(gw, vcs, null);

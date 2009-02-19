@@ -10,7 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 
 public class MockIntroduceConstantHandler extends IntroduceConstantHandler{
-  private PsiClass myTargetClass;
+  private final PsiClass myTargetClass;
 
   public MockIntroduceConstantHandler(final PsiClass targetClass) {
     myTargetClass = targetClass;

@@ -22,7 +22,7 @@ import java.awt.Rectangle;
 public class GridInsertProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertProcessor");
 
-  private GuiEditor myEditor;
+  private final GuiEditor myEditor;
 
   public GridInsertProcessor(final GuiEditor editor) {
     myEditor = editor;

@@ -42,7 +42,7 @@ public class TestClassesFilter {
   private final Map<String, List<Pattern>> myPatterns = new HashMap<String, List<Pattern>>();
   public static final TestClassesFilter EMPTY_CLASSES_FILTER = new TestClassesFilter(new HashMap<String, List<String>>());
   public static final ArrayList<Pattern> EMPTY_LIST = new ArrayList<Pattern>();
-  private List<Pattern> myAllPatterns = new ArrayList<Pattern>();
+  private final List<Pattern> myAllPatterns = new ArrayList<Pattern>();
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
   private TestClassesFilter(Map<String, List<String>> filters) {

@@ -24,7 +24,7 @@ public class PsiElementWithValueSetSpinAllocator {
     }
   }
 
-  private static SpinAllocator<Set<Pair<PsiElement, String>>> myAllocator =
+  private static final SpinAllocator<Set<Pair<PsiElement, String>>> myAllocator =
     new SpinAllocator<Set<Pair<PsiElement, String>>>(new Creator(), new Disposer());
 
   public static Set<Pair<PsiElement, String>> alloc() {

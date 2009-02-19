@@ -36,7 +36,7 @@ import java.util.List;
 public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTableCellRenderer {
   private final TableCellRenderer myRenderer;
   private final DomElement myRowDomElement;
-  private T myCellValueDomElement;
+  private final T myCellValueDomElement;
   private final DomFileElement<DomElement> myRoot;
 
   public ErrorableTableCellRenderer(@Nullable final T cellValueDomElement, final TableCellRenderer renderer, @NotNull final DomElement rowDomElement) {

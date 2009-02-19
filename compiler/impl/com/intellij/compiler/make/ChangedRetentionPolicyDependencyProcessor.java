@@ -15,7 +15,7 @@ public class ChangedRetentionPolicyDependencyProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.ChangedConstantsDependencyProcessor");
   private final Project myProject;
   private final CachingSearcher mySearcher;
-  private DependencyCache myDependencyCache;
+  private final DependencyCache myDependencyCache;
 
   public ChangedRetentionPolicyDependencyProcessor(Project project, CachingSearcher searcher, DependencyCache dependencyCache) {
     myProject = project;

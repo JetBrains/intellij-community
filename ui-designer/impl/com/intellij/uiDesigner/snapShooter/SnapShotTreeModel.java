@@ -15,8 +15,8 @@ import java.io.IOException;
  * @author yole
  */
 public class SnapShotTreeModel implements TreeModel {
-  private SnapShotClient myClient;
-  private SnapShotRemoteComponent myRoot;
+  private final SnapShotClient myClient;
+  private final SnapShotRemoteComponent myRoot;
 
   public SnapShotTreeModel(final SnapShotClient client) {
     myClient = client;

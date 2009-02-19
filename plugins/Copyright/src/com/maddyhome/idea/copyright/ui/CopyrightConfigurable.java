@@ -34,10 +34,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
-  private CopyrightProfile myCopyrightProfile;
+  private final CopyrightProfile myCopyrightProfile;
   private JPanel myWholePanel;
 
-  private Project myProject;
+  private final Project myProject;
   private boolean myModified;
 
   private String myDisplayName;

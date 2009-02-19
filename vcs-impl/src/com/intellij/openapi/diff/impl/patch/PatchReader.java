@@ -27,7 +27,7 @@ public class PatchReader {
 
   private enum DiffFormat { CONTEXT, UNIFIED }
 
-  private String[] myLines;
+  private final String[] myLines;
   private int myLineIndex = 0;
   private DiffFormat myDiffFormat = null;
   @NonNls private static final String CONTEXT_HUNK_PREFIX = "***************";

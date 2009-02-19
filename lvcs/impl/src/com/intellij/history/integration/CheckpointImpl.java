@@ -12,9 +12,9 @@ import com.intellij.history.Checkpoint;
 import java.io.IOException;
 
 public class CheckpointImpl implements Checkpoint {
-  private Change myLastChange;
-  private IdeaGateway myGateway;
-  private LocalVcs myVcs;
+  private final Change myLastChange;
+  private final IdeaGateway myGateway;
+  private final LocalVcs myVcs;
 
   public CheckpointImpl(IdeaGateway gw, LocalVcs vcs) {
     myGateway = gw;
@@ -36,8 +36,8 @@ public class CheckpointImpl implements Checkpoint {
   }
 
   private class SelectiveChangeVisitor extends ChangeVisitor {
-    private ChangeVisitor myVisitor;
-    private boolean myRevertLastChange;
+    private final ChangeVisitor myVisitor;
+    private final boolean myRevertLastChange;
 
     public SelectiveChangeVisitor(ChangeVisitor v, boolean revertLastChange) {
       myVisitor = v;

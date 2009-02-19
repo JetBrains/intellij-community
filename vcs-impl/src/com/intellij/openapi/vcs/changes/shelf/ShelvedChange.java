@@ -32,10 +32,10 @@ import java.util.List;
 public class ShelvedChange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChange");
 
-  private String myPatchPath;
-  private String myBeforePath;
-  private String myAfterPath;
-  private FileStatus myFileStatus;
+  private final String myPatchPath;
+  private final String myBeforePath;
+  private final String myAfterPath;
+  private final FileStatus myFileStatus;
   private Change myChange;
 
   public ShelvedChange(final String patchPath, final String beforePath, final String afterPath, final FileStatus fileStatus) {

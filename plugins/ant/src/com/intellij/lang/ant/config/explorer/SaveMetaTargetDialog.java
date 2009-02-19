@@ -19,7 +19,7 @@ import java.awt.event.ActionListener;
 public class SaveMetaTargetDialog extends DialogWrapper {
   private JList myTargetList;
   private JTextField myTfName;
-  private ExecuteCompositeTargetEvent myInitialEvent;
+  private final ExecuteCompositeTargetEvent myInitialEvent;
   private final AntConfigurationBase myAntConfiguration;
   private final AntBuildFile myBuildFile;
 

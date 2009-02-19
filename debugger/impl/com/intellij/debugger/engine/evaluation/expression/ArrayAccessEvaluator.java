@@ -15,8 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
 
 class ArrayAccessEvaluator implements Evaluator {
-  private Evaluator myArrayReferenceEvaluator;
-  private Evaluator myIndexEvaluator;
+  private final Evaluator myArrayReferenceEvaluator;
+  private final Evaluator myIndexEvaluator;
   private ArrayReference myEvaluatedArrayReference;
   private int myEvaluatedIndex;
 

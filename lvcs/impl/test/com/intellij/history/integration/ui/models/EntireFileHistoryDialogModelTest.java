@@ -10,7 +10,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class EntireFileHistoryDialogModelTest extends LocalVcsTestCase {
-  private InMemoryLocalVcs vcs = new InMemoryLocalVcs();
+  private final InMemoryLocalVcs vcs = new InMemoryLocalVcs();
   private FileHistoryDialogModel m;
 
   @Test

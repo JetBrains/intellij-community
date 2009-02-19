@@ -73,22 +73,22 @@ public class CommitLegendPanel {
     boolean matches(T item);
   }
 
-  private static Filter<Change> MODIFIED_FILTER = new Filter<Change>() {
+  private static final Filter<Change> MODIFIED_FILTER = new Filter<Change>() {
     public boolean matches(final Change item) {
       return item.getType() == Change.Type.MODIFICATION || item.getType() == Change.Type.MOVED;
     }
   };
-  private static Filter<Change> NEW_FILTER = new Filter<Change>() {
+  private static final Filter<Change> NEW_FILTER = new Filter<Change>() {
     public boolean matches(final Change item) {
       return item.getType() == Change.Type.NEW;
     }
   };
-  private static Filter<Change> DELETED_FILTER = new Filter<Change>() {
+  private static final Filter<Change> DELETED_FILTER = new Filter<Change>() {
     public boolean matches(final Change item) {
       return item.getType() == Change.Type.DELETED;
     }
   };
-  private static Filter<Change> ALL_FILTER = new Filter<Change>() {
+  private static final Filter<Change> ALL_FILTER = new Filter<Change>() {
     public boolean matches(final Change item) {
       return true;
     }

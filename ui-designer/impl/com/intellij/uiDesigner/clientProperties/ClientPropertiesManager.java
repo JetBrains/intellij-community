@@ -88,8 +88,8 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
   }
 
   public static class ClientProperty implements Comparable {
-    private String myName;
-    private String myClass;
+    private final String myName;
+    private final String myClass;
 
     public ClientProperty(final String name, final String aClass) {
       myName = name;

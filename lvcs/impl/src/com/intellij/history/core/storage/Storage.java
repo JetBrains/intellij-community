@@ -16,7 +16,7 @@ public class Storage {
   private static final String STORAGE_FILE = "storage";
   private static final String CONTENTS_FILE = "contents";
 
-  private File myDir;
+  private final File myDir;
   private IContentStorage myContentStorage;
 
   private boolean isBroken = false;

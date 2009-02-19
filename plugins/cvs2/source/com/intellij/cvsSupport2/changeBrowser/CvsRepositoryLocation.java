@@ -9,9 +9,9 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class CvsRepositoryLocation implements RepositoryLocation {
-  private VirtualFile myRootFile;
-  private CvsEnvironment myEnvironment;
-  private String myModuleName;
+  private final VirtualFile myRootFile;
+  private final CvsEnvironment myEnvironment;
+  private final String myModuleName;
 
   public CvsRepositoryLocation(@Nullable final VirtualFile rootFile, final CvsEnvironment environment, final String moduleName) {
     myRootFile = rootFile;
