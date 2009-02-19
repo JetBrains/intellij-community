@@ -12,10 +12,12 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +29,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.Time;
@@ -42,7 +43,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
@@ -390,18 +390,6 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public void installComparator() {
     final ProjectView projectView = ProjectView.getInstance(myProject);
     getTreeBuilder().setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
-  }
-
-  protected void installTreePopupHandler(final String place, final String groupName) {
-    if (ApplicationManager.getApplication() == null) return;
-    PopupHandler popupHandler = new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupName);
-        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, group);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    };
-    myTree.addMouseListener(popupHandler);
   }
 
   public JTree getTree() {

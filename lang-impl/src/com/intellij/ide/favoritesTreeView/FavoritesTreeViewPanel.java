@@ -33,8 +33,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -134,12 +134,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         return getSelectedPsiElements();
       }
     };
-  }
-
-  public void updateTreePopupHandler() {
-    myTree.removeMouseListener(myTreePopupHandler);
-    ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP);
-    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
   }
 
   public void selectElement(final Object selector, final VirtualFile file, final boolean requestFocus) {

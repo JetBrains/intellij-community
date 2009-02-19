@@ -22,6 +22,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -88,7 +89,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     updateFromRoot(true);
 
     myTree = myViewPanel.getTree();
-    installTreePopupHandler(ActionPlaces.SCOPE_VIEW_POPUP, IdeActions.GROUP_SCOPE_VIEW_POPUP);
+    PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
     enableDnD();
 
     return myViewPanel.getPanel();
