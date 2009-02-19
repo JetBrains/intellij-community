@@ -33,6 +33,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,7 +76,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       return o1.order() - o2.order();
     }
   };
-  private volatile DaemonProgressIndicator myProgress;
+  private volatile UserDataHolder myProgress;
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -122,7 +123,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
-    myProgress = (DaemonProgressIndicator)progress;
+    myProgress = (UserDataHolder)progress;
     final Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
