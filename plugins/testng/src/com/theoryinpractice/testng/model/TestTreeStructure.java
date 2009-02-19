@@ -11,9 +11,9 @@ import java.util.List;
 
 public class TestTreeStructure extends AbstractTreeStructure
 {
-    private Object root;
+    private final Object root;
     private Filter filter;
-    private Project project;
+    private final Project project;
 
     public TestTreeStructure(Project project, Object root) {
         this.project = project;

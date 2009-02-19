@@ -18,14 +18,14 @@ import java.io.File;
 import java.util.*;
 
 public class MavenProjectsTree {
-  private ReentrantWriterPreferenceReadWriteLock lock = new ReentrantWriterPreferenceReadWriteLock();
+  private final ReentrantWriterPreferenceReadWriteLock lock = new ReentrantWriterPreferenceReadWriteLock();
 
   private List<String> myProfiles = new ArrayList<String>();
-  private List<MavenProjectModel> myRootProjects = new ArrayList<MavenProjectModel>();
-  private HashMap<MavenId, MavenProjectModel> myMavenIdToProject = new HashMap<MavenId, MavenProjectModel>();
-  private List<Listener> myListeners = new ArrayList<Listener>();
+  private final List<MavenProjectModel> myRootProjects = new ArrayList<MavenProjectModel>();
+  private final HashMap<MavenId, MavenProjectModel> myMavenIdToProject = new HashMap<MavenId, MavenProjectModel>();
+  private final List<Listener> myListeners = new ArrayList<Listener>();
 
-  private Map<MavenProjectModel, List<MavenProjectModel>> myModuleMapping = new HashMap<MavenProjectModel, List<MavenProjectModel>>();
+  private final Map<MavenProjectModel, List<MavenProjectModel>> myModuleMapping = new HashMap<MavenProjectModel, List<MavenProjectModel>>();
 
   public void read(Collection<VirtualFile> filesToImport,
                    List<String> activeProfiles,

@@ -10,9 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class IdeaSVNConfigFile {
-  private Map<String, String> myPatternsMap;
-  private long myLatestUpdate;
-  private File myFile;
+  private final Map<String, String> myPatternsMap;
+  private final long myLatestUpdate;
+  private final File myFile;
   private Map myDefaultProperties;
 
   private final SVNConfigFile mySVNConfigFile;

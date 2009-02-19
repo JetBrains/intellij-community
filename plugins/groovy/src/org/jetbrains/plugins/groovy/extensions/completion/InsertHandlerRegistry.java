@@ -27,7 +27,7 @@ import java.util.ArrayList;
  */
 public class InsertHandlerRegistry implements ApplicationComponent {
 
-  private ArrayList<ContextSpecificInsertHandler> myHandlers = new ArrayList<ContextSpecificInsertHandler>();
+  private final ArrayList<ContextSpecificInsertHandler> myHandlers = new ArrayList<ContextSpecificInsertHandler>();
 
   @NonNls
   @NotNull

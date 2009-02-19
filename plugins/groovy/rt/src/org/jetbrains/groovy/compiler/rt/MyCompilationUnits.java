@@ -153,7 +153,7 @@ public class MyCompilationUnits {
     }
   }
 
-  private static String LINE_AT = " @ line ";
+  private static final String LINE_AT = " @ line ";
 
   private void addErrorMessage(SyntaxException exception, MessageCollector collector) {
     String message = exception.getMessage();
@@ -194,9 +194,9 @@ public class MyCompilationUnits {
 
   public class OutputItemImpl implements OutputItem {
 
-    private String myOutputPath;
-    private String myOutputDir;
-    private String mySourceFileName;
+    private final String myOutputPath;
+    private final String myOutputDir;
+    private final String mySourceFileName;
 
     public OutputItemImpl(String outputDir, String outputPath, String sourceFileName) {
       myOutputDir = outputDir;

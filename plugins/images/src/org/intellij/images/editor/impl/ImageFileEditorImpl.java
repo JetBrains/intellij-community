@@ -137,9 +137,9 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     private static class ImageFileEditorState implements FileEditorState, Serializable {
         private static final long serialVersionUID = -4470317464706072486L;
 
-        private boolean backgroundVisible;
-        private boolean gridVisible;
-        private double zoomFactor;
+        private final boolean backgroundVisible;
+        private final boolean gridVisible;
+        private final double zoomFactor;
 
         private ImageFileEditorState(boolean backgroundVisible, boolean gridVisible, double zoomFactor) {
             this.backgroundVisible = backgroundVisible;

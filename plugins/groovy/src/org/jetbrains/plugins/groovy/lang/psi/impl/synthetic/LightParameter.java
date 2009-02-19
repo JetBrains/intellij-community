@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class LightParameter extends LightVariableBase implements PsiParameter {
   public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
-  private String myName;
+  private final String myName;
 
   public LightParameter(PsiManager manager, String name, PsiIdentifier nameIdentifier, @NotNull PsiType type, PsiElement scope) {
     super(manager, nameIdentifier, type, false, scope);

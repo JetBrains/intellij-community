@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 class SerializableInnerClassHasSerialVersionUIDFieldVisitor
         extends BaseInspectionVisitor {
 
-    private SerializableInspection inspection;
+    private final SerializableInspection inspection;
 
     public SerializableInnerClassHasSerialVersionUIDFieldVisitor(SerializableInspection inspection) {
         this.inspection = inspection;

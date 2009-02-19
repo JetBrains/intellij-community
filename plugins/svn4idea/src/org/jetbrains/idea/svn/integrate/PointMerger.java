@@ -25,7 +25,7 @@ public class PointMerger extends Merger {
   private final List<Change> mySelectedChanges;
   private SVNWCClient myWcClient;
   private SVNCopyClient myCopyClient;
-  private SvnVcs myVcs;
+  private final SvnVcs myVcs;
   private final UpdateEventHandler myHandler;
 
   public PointMerger(final SvnVcs vcs, CommittedChangeList selectedChangeList, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl,

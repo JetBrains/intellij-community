@@ -28,10 +28,10 @@ import java.util.*;
 public class GrGenerateEqualsHelper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.actions.generate.equals.GrGenerateEqualsHelper");
 
-  private PsiClass myClass;
-  private PsiField[] myEqualsFields;
-  private PsiField[] myHashCodeFields;
-  private HashSet<PsiField> myNonNullSet;
+  private final PsiClass myClass;
+  private final PsiField[] myEqualsFields;
+  private final PsiField[] myHashCodeFields;
+  private final HashSet<PsiField> myNonNullSet;
   private final GroovyPsiElementFactory myFactory;
   private String myParameterName;
 
@@ -56,7 +56,7 @@ public class GrGenerateEqualsHelper {
 //  private CodeStyleManager myCodeStyleManager;
 
   private final Project myProject;
-  private boolean myCheckParameterWithInstanceof;
+  private final boolean myCheckParameterWithInstanceof;
 
   public static class NoObjectClassException extends Exception {
   }

@@ -61,9 +61,9 @@ import java.io.File;
 public class CopyDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
 
-  private File mySrcFile;
+  private final File mySrcFile;
   private String mySrcURL;
-  private Project myProject;
+  private final Project myProject;
   private String myURL;
 
   private TextFieldWithBrowseButton myToURLText;
@@ -84,7 +84,7 @@ public class CopyDialog extends DialogWrapper {
 
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfiguration myBranchConfiguration;
-  private VirtualFile mySrcVirtualFile;
+  private final VirtualFile mySrcVirtualFile;
 
   public CopyDialog(final Project project, boolean canBeParent, File file) {
     super(project, canBeParent);
@@ -133,8 +133,9 @@ public class CopyDialog extends DialogWrapper {
       }
     });
 
-    mySrcVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    mySrcVirtualFile = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(mySrcVirtualFile);
+    VirtualFile srcVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    srcVirtualFile = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(srcVirtualFile);
+    this.mySrcVirtualFile = srcVirtualFile;
 
     myRevisionPanel.setRoot(mySrcVirtualFile);
     myRevisionPanel.setProject(myProject);

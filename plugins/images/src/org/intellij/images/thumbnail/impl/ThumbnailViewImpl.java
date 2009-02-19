@@ -42,7 +42,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
   private boolean recursive = false;
   private VirtualFile root = null;
-  private ThumbnailViewUI myThubmnailViewUi;
+  private final ThumbnailViewUI myThubmnailViewUi;
 
   public ThumbnailViewImpl(Project project) {
     this.project = project;

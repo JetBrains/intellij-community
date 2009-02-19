@@ -62,8 +62,8 @@ public abstract class TestObject implements JavaCommandLine {
   protected JavaParameters myJavaParameters;
   private final Project myProject;
   protected final JUnitConfiguration myConfiguration;
-  private RunnerSettings myRunnerSettings;
-  private ConfigurationPerRunnerSettings myConfigurationSettings;
+  private final RunnerSettings myRunnerSettings;
+  private final ConfigurationPerRunnerSettings myConfigurationSettings;
   private File myTempFile = null;
   private CoverageSuite myCurrentCoverageSuite;
 

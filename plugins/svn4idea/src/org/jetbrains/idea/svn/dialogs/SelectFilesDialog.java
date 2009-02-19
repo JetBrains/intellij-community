@@ -39,12 +39,12 @@ import java.util.*;
  */
 public class SelectFilesDialog extends DialogWrapper implements ActionListener {
 
-  private String[] myFiles;
+  private final String[] myFiles;
   private FilesList myFilesList;
   private JButton mySelectAllButton;
   private JButton myDeselectAllButton;
-  private String myLabel;
-  private String myHelpID;
+  private final String myLabel;
+  private final String myHelpID;
 
   public SelectFilesDialog(final Project project, String label, String title, String actionName, String[] paths,
                            @NonNls String helpID) {
@@ -143,7 +143,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
 
   private class FilesList extends OrderPanel {
 
-    private Map mySelectedFiles;
+    private final Map mySelectedFiles;
 
     protected FilesList(String[] files) {
       super(String.class, true);

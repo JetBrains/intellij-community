@@ -219,7 +219,7 @@ public class TestNGReferenceProvider implements ProjectComponent
   private static class TestAnnotationFilter implements ElementFilter
   {
 
-    private String myParameterName;
+    private final String myParameterName;
 
     public TestAnnotationFilter(@NotNull @NonNls String parameterName) {
       myParameterName = parameterName;

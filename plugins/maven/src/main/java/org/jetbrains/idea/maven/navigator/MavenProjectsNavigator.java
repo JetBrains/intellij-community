@@ -50,7 +50,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
   private SimpleTreeBuilder myTreeBuilder;
   private SimpleTree myTree;
 
-  private Map<VirtualFile, PomNode> myFileToNode = new LinkedHashMap<VirtualFile, PomNode>();
+  private final Map<VirtualFile, PomNode> myFileToNode = new LinkedHashMap<VirtualFile, PomNode>();
   private MavenProjectsManager.Listener myMavenProjectsListener;
   private MavenEventsManager.Listener myMavenEventsListener;
 
@@ -92,7 +92,7 @@ public class MavenProjectsNavigator extends MavenProjectsStructure implements Pr
 
   private void initMavenProjectsTree() {
     myTree = new SimpleTree() {
-      private JLabel myLabel = new JLabel(ProjectBundle.message("maven.navigator.nothing.to.display",
+      private final JLabel myLabel = new JLabel(ProjectBundle.message("maven.navigator.nothing.to.display",
                                                                 formatHtmlImage(ADD_ICON_URL),
                                                                 formatHtmlImage(SYNC_ICON_URL)));
 

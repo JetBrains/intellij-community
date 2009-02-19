@@ -40,7 +40,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
    * The version number since which "-v" options is supported.
    */
   // TODO check if they will actially supprot the switch in the released 1.6.0.5
-  private static GitVersion VERBOSE_CLONE_SUPPORTED = new GitVersion(1, 6, 0, 5);
+  private static final GitVersion VERBOSE_CLONE_SUPPORTED = new GitVersion(1, 6, 0, 5);
 
   /**
    * {@inheritDoc}

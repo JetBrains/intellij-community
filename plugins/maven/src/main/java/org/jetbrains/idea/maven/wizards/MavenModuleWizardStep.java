@@ -32,8 +32,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final String ARCHETYPE_GROUP_ID_KEY = "MavenModuleWizard.archetypeGroupIdKey";
   private static final String ARCHETYPE_VERSION_KEY = "MavenModuleWizard.archetypeVersionKey";
 
-  private Project myProjectOrNull;
-  private MavenModuleBuilder myBuilder;
+  private final Project myProjectOrNull;
+  private final MavenModuleBuilder myBuilder;
   private MavenProjectModel myAggregator;
   private MavenProjectModel myParent;
 

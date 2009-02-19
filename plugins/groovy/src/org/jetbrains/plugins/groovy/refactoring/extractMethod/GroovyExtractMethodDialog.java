@@ -47,7 +47,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
 
   private final ExtractMethodInfoHelper myHelper;
   private final Project myProject;
-  private EventListenerList myListenerList = new EventListenerList();
+  private final EventListenerList myListenerList = new EventListenerList();
 
   private JPanel contentPane;
   private EditorTextField myNameField;

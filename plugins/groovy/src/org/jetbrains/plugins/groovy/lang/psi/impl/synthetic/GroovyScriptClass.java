@@ -52,9 +52,9 @@ import java.util.List;
 public class GroovyScriptClass extends LightElement implements GrMemberOwner {
   private String myQualifiedName;
   private String myName;
-  private GroovyFile myFile;
-  private PsiMethod myMainMethod;
-  private PsiMethod myRunMethod;
+  private final GroovyFile myFile;
+  private final PsiMethod myMainMethod;
+  private final PsiMethod myRunMethod;
   private static final String MAIN_METHOD_TEXT = "public static final void main(java.lang.String[] args) {}";
   private static final String RUN_METHOD_TEXT = "public java.lang.Object run() {return null;}";
 

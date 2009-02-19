@@ -52,7 +52,7 @@ public class ImplicitTypeConversion extends XPathInspection {
     private static final String SHORT_NAME = "ImplicitTypeConversion";
 
     public long BITS = 1720;
-    private BitSet OPTIONS = new BitSet(12);
+    private final BitSet OPTIONS = new BitSet(12);
 
     public boolean FLAG_EXPLICIT_CONVERSION = true;
     public boolean IGNORE_NODESET_TO_BOOLEAN_VIA_STRING = true;
@@ -188,7 +188,7 @@ public class ImplicitTypeConversion extends XPathInspection {
         private JCheckBox myAlwaysFlagExplicitConversion;
         private JCheckBox myIgnoreNodesetToString;
 
-        private JCheckBox[][] matrix = new JCheckBox[][]{
+        private final JCheckBox[][] matrix = new JCheckBox[][]{
                 {NS_S, S_S, N_S, B_S},
                 {NS_N, S_N, N_N, B_N},
                 {NS_B, S_B, N_B, B_B},

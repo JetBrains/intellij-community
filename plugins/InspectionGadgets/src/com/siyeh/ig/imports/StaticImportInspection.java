@@ -153,7 +153,7 @@ public class StaticImportInspection extends BaseInspection {
 
             private final JavaResolveResult[] importTargets;
             private final boolean onDemand;
-            private List<PsiJavaCodeReferenceElement> references =
+            private final List<PsiJavaCodeReferenceElement> references =
                     new ArrayList();
 
             StaticImportReferenceCollector(

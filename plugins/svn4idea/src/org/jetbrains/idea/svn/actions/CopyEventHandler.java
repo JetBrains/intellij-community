@@ -8,7 +8,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 public class CopyEventHandler implements ISVNEventHandler {
-  private ProgressIndicator myProgress;
+  private final ProgressIndicator myProgress;
 
   public CopyEventHandler(ProgressIndicator progress) {
     myProgress = progress;

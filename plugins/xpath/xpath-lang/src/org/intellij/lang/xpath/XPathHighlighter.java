@@ -29,8 +29,8 @@ import java.util.Map;
 
 @SuppressWarnings({"RawUseOfParameterizedType", "unchecked"})
 public class XPathHighlighter extends SyntaxHighlighterBase {
-    private static Map keys1;
-    private static Map keys2;
+    private static final Map keys1;
+    private static final Map keys2;
 
     @NotNull
     public Lexer getHighlightingLexer() {

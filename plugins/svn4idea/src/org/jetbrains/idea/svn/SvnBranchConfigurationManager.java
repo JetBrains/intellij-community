@@ -59,7 +59,7 @@ import java.util.Map;
     )}
 )
 public class SvnBranchConfigurationManager implements PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
-  private Project myProject;
+  private final Project myProject;
 
   public SvnBranchConfigurationManager(final Project project) {
     myProject = project;

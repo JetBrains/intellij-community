@@ -505,8 +505,8 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
     private String savedPath = "";
     private String actionIdPrefix = "";
 
-    private LifecycleNode lifecycleNode;
-    private PluginsNode pluginsNode;
+    private final LifecycleNode lifecycleNode;
+    private final PluginsNode pluginsNode;
     public NestedPomsNode modulePomsNode;
     public NestedPomsNode nonModulePomsNode;
 
@@ -1127,7 +1127,7 @@ public abstract class MavenProjectsStructure extends SimpleTreeStructure {
 
   public class PluginNode extends GoalGroupNode {
     private final MavenId myId;
-    private MavenPluginInfo myPluginInfo;
+    private final MavenPluginInfo myPluginInfo;
 
     public PluginNode(PomNode parent, final MavenId id) {
       super(parent);

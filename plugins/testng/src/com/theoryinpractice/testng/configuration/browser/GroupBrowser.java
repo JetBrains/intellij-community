@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GroupBrowser extends BrowseModuleValueActionListener
 {
-    private TestNGConfigurationEditor editor;
+    private final TestNGConfigurationEditor editor;
 
     public GroupBrowser(Project project, TestNGConfigurationEditor editor) {
         super(project);

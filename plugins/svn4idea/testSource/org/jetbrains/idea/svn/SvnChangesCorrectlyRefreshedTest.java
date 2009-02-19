@@ -32,14 +32,14 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
   }
 
   private class SubTree {
-    private VirtualFile myRootDir;
+    private final VirtualFile myRootDir;
     private VirtualFile mySourceDir;
-    private VirtualFile myTargetDir;
+    private final VirtualFile myTargetDir;
 
     private VirtualFile myS1File;
     private VirtualFile myS2File;
 
-    private List<VirtualFile> myTargetFiles;
+    private final List<VirtualFile> myTargetFiles;
     private static final String ourS1Contents = "123";
     private static final String ourS2Contents = "abc";
 

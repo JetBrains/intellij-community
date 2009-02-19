@@ -31,7 +31,7 @@ import java.util.Set;
 
 public abstract class ExecuteOnRunDialog extends DialogWrapper {
   private DefaultMutableTreeNode myRoot;
-  private RunManager myRunManager;
+  private final RunManager myRunManager;
 
   public ExecuteOnRunDialog(final Project project, final String title) {
     super(project, true);

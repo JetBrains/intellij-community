@@ -39,7 +39,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
 
   @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
-  private static UserFileType imageFileType;
+  private static final UserFileType imageFileType;
 
   static {
     imageFileType = new ImageFileType();

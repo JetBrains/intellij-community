@@ -63,38 +63,38 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
 
     private final SplitterProportionsData splitterProportions = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
-    private Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
+    private final Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
 
-    private TableView resultsTable;
+    private final TableView resultsTable;
     private JPanel main;
     private ColorProgressBar progress;
 
-    private TestNGResultsTableModel model;
+    private final TestNGResultsTableModel model;
     private TestNGTestTreeView tree;
     private JTabbedPane tabbedPane;
 
-    private Project project;
+    private final Project project;
     private int count;
     private int total;
-    private Set<TestProxy> failed = new HashSet<TestProxy>();
-    private Map<TestResultMessage, TestProxy> started = new HashMap<TestResultMessage, TestProxy>();
+    private final Set<TestProxy> failed = new HashSet<TestProxy>();
+    private final Map<TestResultMessage, TestProxy> started = new HashMap<TestResultMessage, TestProxy>();
     private TestProxy failedToStart = null;
     private long start;
     private long end;
     private JLabel statusLabel;
-    private TestTreeBuilder treeBuilder;
-    private Animator animator;
+    private final TestTreeBuilder treeBuilder;
+    private final Animator animator;
 
-    private Pattern packagePattern = Pattern.compile("(.*)\\.(.*)");
-    private TreeRootNode rootNode;
-    private TestNGConsoleProperties consoleProperties;
+    private final Pattern packagePattern = Pattern.compile("(.*)\\.(.*)");
+    private final TreeRootNode rootNode;
+    private final TestNGConsoleProperties consoleProperties;
     private JPanel toolbarPanel;
     private JSplitPane splitPane;
     private static final String NO_PACKAGE = "No Package";
-    private TestNGToolbarPanel toolbar;
+    private final TestNGToolbarPanel toolbar;
     private final LogFilesManager myLogFilesManager;
-    private TestNGResults.OpenSourceSelectionListener openSourceListener;
-  private List<ModelListener> myListeners = new ArrayList<ModelListener>();
+    private final TestNGResults.OpenSourceSelectionListener openSourceListener;
+  private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
   private final TestNGConfiguration myConfiguration;
   private ProcessHandler myRunProcess;
 

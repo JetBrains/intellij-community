@@ -28,8 +28,8 @@ import java.util.*;
  */
 public class GroovyImportsTracker {
 
-  private Map<GroovyFile, Set<GrImportStatement>> myUsedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
-  private Map<GroovyFile, Set<GrImportStatement>> myUnusedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
+  private final Map<GroovyFile, Set<GrImportStatement>> myUsedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
+  private final Map<GroovyFile, Set<GrImportStatement>> myUnusedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
 
   public void registerImportUsed(GrImportStatement importStatement) {
     if (importStatement.getParent() == null) return;

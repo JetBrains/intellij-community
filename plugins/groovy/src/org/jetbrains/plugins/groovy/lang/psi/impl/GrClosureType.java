@@ -29,12 +29,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  * @author ven
  */
 public class GrClosureType extends PsiClassType {
-  private GlobalSearchScope myScope;
+  private final GlobalSearchScope myScope;
   @Nullable
-  private PsiType myReturnType;
-  private PsiType[] myParameterTypes;
-  private boolean[] myOptionals;
-  private PsiManager myManager;
+  private final PsiType myReturnType;
+  private final PsiType[] myParameterTypes;
+  private final boolean[] myOptionals;
+  private final PsiManager myManager;
 
   private GrClosureType(GlobalSearchScope scope,
                         @Nullable PsiType returnType,

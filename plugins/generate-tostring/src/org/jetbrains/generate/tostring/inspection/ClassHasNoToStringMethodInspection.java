@@ -44,7 +44,7 @@ import java.awt.*;
  */
 public class ClassHasNoToStringMethodInspection extends AbstractToStringInspection {
 
-    private AbstractGenerateToStringQuickFix fix = new GenerateToStringQuickFix();
+    private final AbstractGenerateToStringQuickFix fix = new GenerateToStringQuickFix();
 
     /** User options for classes to exclude. Must be a regexp pattern */
     public String excludeClassNames = "";  // must be public for JDOMSerialization

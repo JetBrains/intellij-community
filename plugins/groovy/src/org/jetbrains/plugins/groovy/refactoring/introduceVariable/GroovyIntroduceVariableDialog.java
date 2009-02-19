@@ -43,13 +43,13 @@ import java.util.HashMap;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper {
 
-  private Project myProject;
+  private final Project myProject;
   private final GrExpression myExpression;
   private final PsiType myType;
   private final int myOccurrencesCount;
   private final GroovyIntroduceVariableBase.Validator myValidator;
   private HashMap<String, PsiType> myTypeMap = null;
-  private EventListenerList myListenerList = new EventListenerList();
+  private final EventListenerList myListenerList = new EventListenerList();
 
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
 

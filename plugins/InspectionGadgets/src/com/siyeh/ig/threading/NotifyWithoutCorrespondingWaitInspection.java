@@ -86,7 +86,7 @@ public class NotifyWithoutCorrespondingWaitInspection extends BaseInspection {
     private static class ContainsWaitVisitor
             extends JavaRecursiveElementVisitor {
 
-        private PsiField target;
+        private final PsiField target;
         private boolean containsWait = false;
 
         ContainsWaitVisitor(PsiField target) {

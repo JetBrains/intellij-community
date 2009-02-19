@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 public class GroovyInjector implements ProjectComponent {
-  private Project myProject;
+  private final Project myProject;
 
   public GroovyInjector(Project project) {
     myProject = project;

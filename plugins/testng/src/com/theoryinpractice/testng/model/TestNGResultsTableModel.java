@@ -18,7 +18,7 @@ import java.util.List;
 
 public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
 
-  private List<TestResultMessage> testResults;
+  private final List<TestResultMessage> testResults;
 
   public TestNGResultsTableModel() {
     super(new StatusColumnInfo(), new TestNameColumnInfo(), new DurationColumnInfo());

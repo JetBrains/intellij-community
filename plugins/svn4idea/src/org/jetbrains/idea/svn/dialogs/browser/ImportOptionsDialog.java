@@ -24,13 +24,13 @@ import java.util.Collections;
 
 public class ImportOptionsDialog extends DialogWrapper implements ActionListener {
 
-  private SVNURL myURL;
-  private File myFile;
+  private final SVNURL myURL;
+  private final File myFile;
   private TextFieldWithBrowseButton myPathField;
   private DepthCombo myDepth;
   private JCheckBox myIncludeIgnoredCheckbox;
   private JTextArea myCommitMessage;
-  private Project myProject;
+  private final Project myProject;
 
   public ImportOptionsDialog(Project project, SVNURL url, File target) {
     super(project, true);

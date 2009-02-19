@@ -11,7 +11,7 @@ import com.theoryinpractice.testng.ui.TestNGResults;
 import org.testng.remote.strprotocol.*;
 
 public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestListener {
-    private TestNGConsoleView console;
+    private final TestNGConsoleView console;
 
     public TestNGRemoteListener(TestNGConsoleView console) {
         this.console = console;

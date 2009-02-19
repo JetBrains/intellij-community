@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ShiftExpression implements GroovyElementTypes {
 
-  private static TokenSet RANGES = TokenSet.create(
+  private static final TokenSet RANGES = TokenSet.create(
           mRANGE_EXCLUSIVE,
           mRANGE_INCLUSIVE
   );

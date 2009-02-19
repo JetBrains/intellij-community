@@ -25,7 +25,7 @@ public class MkdirOptionsDialog extends DialogWrapper {
   private JComboBox myMessagesBox;
   private JPanel myMainPanel;
   private JLabel myRecentMessagesLabel;
-  private SVNURL myOriginalURL;
+  private final SVNURL myOriginalURL;
 
   public MkdirOptionsDialog(Project project, SVNURL url) {
     super(project, true);

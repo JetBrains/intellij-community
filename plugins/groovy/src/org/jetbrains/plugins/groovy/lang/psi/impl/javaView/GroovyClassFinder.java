@@ -33,7 +33,7 @@ import java.util.List;
  * @author ven
  */
 public class GroovyClassFinder implements ProjectComponent, PsiElementFinder {
-  private Project myProject;
+  private final Project myProject;
 
   public GroovyClassFinder(Project project) {
     myProject = project;

@@ -64,7 +64,7 @@ public class PathExpression implements GroovyElementTypes {
    * @return
    */
 
-  private static TokenSet DOTS = TokenSet.create(
+  private static final TokenSet DOTS = TokenSet.create(
       mSPREAD_DOT,
       mOPTIONAL_DOT,
       mMEMBER_POINTER,
@@ -219,7 +219,7 @@ public class PathExpression implements GroovyElementTypes {
   /**
    * FIRST(1) of PathElement
    */
-  private static TokenSet PATH_ELEMENT_START = TokenSet.create(
+  private static final TokenSet PATH_ELEMENT_START = TokenSet.create(
       mSPREAD_DOT,
       mOPTIONAL_DOT,
       mMEMBER_POINTER,

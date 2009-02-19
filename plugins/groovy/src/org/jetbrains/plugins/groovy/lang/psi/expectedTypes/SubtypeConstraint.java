@@ -23,7 +23,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
  * @author ven
  */
 public  class SubtypeConstraint extends TypeConstraint {
-  private PsiType myDefaultType;
+  private final PsiType myDefaultType;
 
   protected SubtypeConstraint(PsiType type, PsiType defaultType) {
     super(type);

@@ -23,8 +23,8 @@ import com.intellij.openapi.util.TextRange;
  * @author ven
  */
 public class JavaIdentifier extends LightIdentifier {
-  private PsiFile myFile;
-  private TextRange myRange;
+  private final PsiFile myFile;
+  private final TextRange myRange;
 
   public JavaIdentifier(PsiManager manager, PsiFile file, TextRange range) {
     super(manager, range.substring(file.getText()));

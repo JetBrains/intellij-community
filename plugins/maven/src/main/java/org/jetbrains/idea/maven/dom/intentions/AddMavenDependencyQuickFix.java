@@ -18,7 +18,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenId;
 
 public class AddMavenDependencyQuickFix implements IntentionAction {
-  private PsiJavaCodeReferenceElement myRef;
+  private final PsiJavaCodeReferenceElement myRef;
 
   public AddMavenDependencyQuickFix(PsiJavaCodeReferenceElement ref) {
     myRef = ref;

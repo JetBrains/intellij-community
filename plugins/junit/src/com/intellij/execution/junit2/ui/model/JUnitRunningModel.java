@@ -58,7 +58,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   private final JUnitListenersNotifier myNotifier = new JUnitListenersNotifier();
   private final Animator myAnimator = new Animator();
   private PacketExtractorBase myPacketExtractor;
-  private List<ModelListener> myListeners = new ArrayList<ModelListener>();
+  private final List<ModelListener> myListeners = new ArrayList<ModelListener>();
 
   public JUnitRunningModel(final TestProxy root, final TestingStatus status, final JUnitConsoleProperties properties) {
     myRoot = root;

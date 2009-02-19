@@ -48,8 +48,8 @@ public class XPathProjectComponent implements ProjectComponent, JDOMExternalizab
     protected static final String URI = "uri";
 
     /** A set that maintains the history */
-    private LinkedHashMap<String, HistoryElement> history = new LinkedHashMap<String, HistoryElement>();
-    private LinkedHashMap<String, HistoryElement> findHistory = new LinkedHashMap<String, HistoryElement>();
+    private final LinkedHashMap<String, HistoryElement> history = new LinkedHashMap<String, HistoryElement>();
+    private final LinkedHashMap<String, HistoryElement> findHistory = new LinkedHashMap<String, HistoryElement>();
 
 //    private Set<Namespace> namespaces = new HashSet();
 

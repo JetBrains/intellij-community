@@ -16,7 +16,7 @@ import java.util.Collections;
 public class DeleteOptionsDialog extends DialogWrapper {
 
   private JTextArea myCommitMessage;
-  private Project myProject;
+  private final Project myProject;
 
   public DeleteOptionsDialog(Project project) {
     super(project, true);

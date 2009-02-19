@@ -27,7 +27,7 @@ public class MavenIgnoreConfigurable implements Configurable {
 
   private final MavenProjectsManager myManager;
   private final Collection<VirtualFile> myOriginalFiles;
-  private String myOriginalMasks;
+  private final String myOriginalMasks;
 
   private static final char SEPARATOR = ',';
 

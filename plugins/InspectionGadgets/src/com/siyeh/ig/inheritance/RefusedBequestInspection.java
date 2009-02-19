@@ -115,7 +115,7 @@ public class RefusedBequestInspection extends BaseInspection {
 
     private static class SuperCallVisitor extends JavaRecursiveElementVisitor{
 
-        private PsiMethod methodToSearchFor;
+        private final PsiMethod methodToSearchFor;
         private boolean hasSuperCall = false;
 
         SuperCallVisitor(PsiMethod methodToSearchFor){

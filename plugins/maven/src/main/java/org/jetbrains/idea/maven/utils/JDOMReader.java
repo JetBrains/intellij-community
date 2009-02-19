@@ -12,8 +12,8 @@ import java.io.InputStream;
 import java.util.List;
 
 public class JDOMReader {
-  private Element myRootElement;
-  private Namespace myNamespace;
+  private final Element myRootElement;
+  private final Namespace myNamespace;
 
   public JDOMReader(InputStream s) throws IOException {
     try {

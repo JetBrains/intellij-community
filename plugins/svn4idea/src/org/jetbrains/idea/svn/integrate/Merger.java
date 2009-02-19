@@ -33,7 +33,7 @@ public class Merger {
   private final ProgressIndicator myProgressIndicator;
   protected CommittedChangeList myLatestProcessed;
   protected final SVNURL myCurrentBranchUrl;
-  private StringBuilder myCommitMessage;
+  private final StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
   private final Consumer<List<CommittedChangeList>> myAfterProcessing;
 

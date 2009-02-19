@@ -29,9 +29,9 @@ import java.util.Set;
  */
 public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccessorMethod {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl");
-  private GrField myProperty;
+  private final GrField myProperty;
 
-  private boolean myIsSetter;
+  private final boolean myIsSetter;
 
   public GrAccessorMethodImpl(GrField property, boolean isSetter, String name) {
     super(property.getManager(), name);

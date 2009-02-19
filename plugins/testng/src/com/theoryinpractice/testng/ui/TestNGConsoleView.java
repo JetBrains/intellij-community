@@ -33,9 +33,9 @@ import java.util.regex.Pattern;
 
 public class TestNGConsoleView implements ConsoleView
 {
-    @NonNls private static Pattern COMPARISION_PATTERN = Pattern.compile("([^\\<\\>]*)expected[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*");
-    @NonNls private static Pattern EXPECTED_BUT_WAS_PATTERN = Pattern.compile("(.*)expected:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
-    @NonNls private static Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN = Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
+    @NonNls private static final Pattern COMPARISION_PATTERN = Pattern.compile("([^\\<\\>]*)expected[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*");
+    @NonNls private static final Pattern EXPECTED_BUT_WAS_PATTERN = Pattern.compile("(.*)expected:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
+    @NonNls private static final Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN = Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
     private ConsoleView console;
     private TestNGResults testNGResults;
     private final List<Printable> currentTestOutput = new ArrayList<Printable>();

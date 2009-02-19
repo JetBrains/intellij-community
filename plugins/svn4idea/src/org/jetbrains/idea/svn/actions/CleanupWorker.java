@@ -23,9 +23,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CleanupWorker {
-  private VirtualFile[] myRoots;
-  private Project myProject;
-  private String myTitleKey;
+  private final VirtualFile[] myRoots;
+  private final Project myProject;
+  private final String myTitleKey;
 
   public CleanupWorker(final VirtualFile[] roots, final Project project, final String titleKey) {
     myRoots = roots;

@@ -52,17 +52,17 @@ import java.util.*;
 public class SvnChangeList implements CommittedChangeList {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history");
 
-  private SvnVcs myVcs;
-  private SvnRepositoryLocation myLocation;
+  private final SvnVcs myVcs;
+  private final SvnRepositoryLocation myLocation;
   private String myRepositoryRoot;
   private long myRevision;
   private String myAuthor;
   private Date myDate;
   private String myMessage;
-  private Set<String> myChangedPaths = new HashSet<String>();
-  private Set<String> myAddedPaths = new HashSet<String>();
-  private Set<String> myDeletedPaths = new HashSet<String>();
-  private Set<String> myReplacedPaths = new HashSet<String>();
+  private final Set<String> myChangedPaths = new HashSet<String>();
+  private final Set<String> myAddedPaths = new HashSet<String>();
+  private final Set<String> myDeletedPaths = new HashSet<String>();
+  private final Set<String> myReplacedPaths = new HashSet<String>();
 
   private ChangesListCreationHelper myListsHolder;
 
@@ -71,7 +71,7 @@ public class SvnChangeList implements CommittedChangeList {
   private boolean myCachedInfoLoaded;
 
   // key: added path, value: copied-from
-  private Map<String, String> myCopiedAddedPaths = new HashMap<String, String>();
+  private final Map<String, String> myCopiedAddedPaths = new HashMap<String, String>();
   private RootMixedInfo myWcRoot;
   private final CommonPathSearcher myCommonPathSearcher;
 

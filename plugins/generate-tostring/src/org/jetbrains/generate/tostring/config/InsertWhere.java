@@ -8,7 +8,7 @@ public enum InsertWhere {
     AFTER_EQUALS_AND_HASHCODE("After equals() and hashCode()"),
     AT_THE_END_OF_A_CLASS("At the end of class");
 
-    private String displayName;
+    private final String displayName;
 
     InsertWhere(String displayName) {
         this.displayName = displayName;

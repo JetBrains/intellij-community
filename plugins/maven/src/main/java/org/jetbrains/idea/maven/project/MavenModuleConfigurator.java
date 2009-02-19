@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleConfigurator {
-  private Module myModule;
-  private ModifiableModuleModel myModuleModel;
-  private MavenProjectsTree myMavenTree;
-  private MavenProjectModel myMavenProject;
-  private Map<MavenProjectModel, String> myMavenProjectToModuleName;
-  private MavenImportingSettings mySettings;
-  private ModulesProvider myModulesProvider;
-  private ProjectLibrariesProvider myLibrariesProvider;
+  private final Module myModule;
+  private final ModifiableModuleModel myModuleModel;
+  private final MavenProjectsTree myMavenTree;
+  private final MavenProjectModel myMavenProject;
+  private final Map<MavenProjectModel, String> myMavenProjectToModuleName;
+  private final MavenImportingSettings mySettings;
+  private final ModulesProvider myModulesProvider;
+  private final ProjectLibrariesProvider myLibrariesProvider;
   private MavenRootModelAdapter myRootModelAdapter;
 
   public MavenModuleConfigurator(Module module,

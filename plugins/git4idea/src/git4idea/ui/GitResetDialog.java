@@ -32,15 +32,15 @@ public class GitResetDialog extends DialogWrapper {
   /**
    * The --soft reset type
    */
-  private static String SOFT = GitBundle.getString("reset.type.soft");
+  private static final String SOFT = GitBundle.getString("reset.type.soft");
   /**
    * The --mixed reset type
    */
-  private static String MIXED = GitBundle.getString("reset.type.mixed");
+  private static final String MIXED = GitBundle.getString("reset.type.mixed");
   /**
    * The --hard reset type
    */
-  private static String HARD = GitBundle.getString("reset.type.hard");
+  private static final String HARD = GitBundle.getString("reset.type.hard");
   /**
    * Git root selector
    */
@@ -73,7 +73,7 @@ public class GitResetDialog extends DialogWrapper {
   /**
    * The validator for commit text
    */
-  private GitReferenceValidator myGitReferenceValidator;
+  private final GitReferenceValidator myGitReferenceValidator;
 
   /**
    * A constructor

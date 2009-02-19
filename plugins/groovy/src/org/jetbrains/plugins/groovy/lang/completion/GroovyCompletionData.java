@@ -196,7 +196,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
 
-  private CompletionVariant ourReferenceVariant;
+  private final CompletionVariant ourReferenceVariant;
 
   {
     ourReferenceVariant = new CompletionVariant() {

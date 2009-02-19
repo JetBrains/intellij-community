@@ -37,11 +37,11 @@ import java.util.ArrayList;
  * @author ilyas
  */
 public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Validator {
-  private GroovyIntroduceVariableBase myIntroduceVariableBase;
-  private Project myProject;
+  private final GroovyIntroduceVariableBase myIntroduceVariableBase;
+  private final Project myProject;
   private GrExpression myExpression;
-  private GroovyPsiElement myContainer;
-  private PsiElement[] myOccurrences;
+  private final GroovyPsiElement myContainer;
+  private final PsiElement[] myOccurrences;
 
   public boolean isOK(GroovyIntroduceVariableDialog dialog) {
     String varName = dialog.getEnteredName();

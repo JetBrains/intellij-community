@@ -17,9 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenSettings implements SearchableConfigurable.Parent {
-  private Project myProject;
-  private Configurable myConfigurable;
-  private List<Configurable> myChildren;
+  private final Project myProject;
+  private final Configurable myConfigurable;
+  private final List<Configurable> myChildren;
 
   public MavenSettings(Project project) {
     myProject = project;

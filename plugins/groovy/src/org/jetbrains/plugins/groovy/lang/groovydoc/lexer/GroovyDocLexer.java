@@ -28,7 +28,7 @@ import java.io.IOException;
  */
 public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocTokenTypes {
 
-  private static TokenSet TOKENS_TO_MERGE = TokenSet.create(
+  private static final TokenSet TOKENS_TO_MERGE = TokenSet.create(
       mGDOC_COMMENT_DATA,
       mGDOC_WHITESPACE
   );
@@ -40,7 +40,7 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
 
 
   private static class AsteriskStripperLexer extends LexerBase {
-    private _GroovyDocLexer myFlexLexer;
+    private final _GroovyDocLexer myFlexLexer;
     private CharSequence myBuffer;
     private int myBufferIndex;
     private int myBufferEndOffset;

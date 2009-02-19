@@ -53,7 +53,7 @@ class XsltCommandLineState extends JavaCommandLineState {
     public static final Key<XsltCommandLineState> STATE = Key.create("STATE");
 
     private final XsltRunConfiguration myXsltRunConfiguration;
-    private boolean myIsDebugger;
+    private final boolean myIsDebugger;
     private int myPort;
     private UserDataHolder myExtensionData;
 

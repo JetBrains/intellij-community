@@ -1006,7 +1006,7 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   }
 
   private static class MyFileChooserDialog implements FileChooserDialog {
-    private VirtualFile[] myFiles;
+    private final VirtualFile[] myFiles;
 
     public MyFileChooserDialog(VirtualFile[] files) {
       myFiles = files;

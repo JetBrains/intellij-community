@@ -1,11 +1,11 @@
 package org.jetbrains.groovy.compiler.rt;
 
 public class CompilerMessage {
-  private String myCategory;
-  private String myMessage;
-  private String myUrl;
-  private int myLineNum;
-  private int myColumnNum;
+  private final String myCategory;
+  private final String myMessage;
+  private final String myUrl;
+  private final int myLineNum;
+  private final int myColumnNum;
 
   public CompilerMessage(String category, String message, String url, int lineNum, int columnNum) {
     myCategory = category;

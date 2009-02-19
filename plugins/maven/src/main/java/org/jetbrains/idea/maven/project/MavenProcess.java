@@ -8,7 +8,7 @@ import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
 public class MavenProcess {
-  private ProgressIndicator myIndicator;
+  private final ProgressIndicator myIndicator;
 
   public MavenProcess(ProgressIndicator i) {
     myIndicator = i;
@@ -99,9 +99,9 @@ public class MavenProcess {
   }
 
   public static class MavenTaskHandler {
-    private Semaphore myStartSemaphore;
-    private Semaphore myFinishSemaphore;
-    private ProgressIndicator[] myIndicator;
+    private final Semaphore myStartSemaphore;
+    private final Semaphore myFinishSemaphore;
+    private final ProgressIndicator[] myIndicator;
 
     private MavenTaskHandler(Semaphore startSemaphore,
                              Semaphore finishSemaphore,

@@ -37,8 +37,8 @@ import java.util.Set;
  */
 public class ChooseTypeExpression extends Expression {
   protected SmartTypePointer myTypePointer;
-  private LookupItem[] myItems;
-  private PsiManager myManager;
+  private final LookupItem[] myItems;
+  private final PsiManager myManager;
 
   public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager) {
     myManager = manager;

@@ -39,8 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author ven
  */
 public class CreateMethodFromUsageFix implements IntentionAction {
-  private GrMemberOwner myTargetClass;
-  private GrReferenceExpression myRefExpression;
+  private final GrMemberOwner myTargetClass;
+  private final GrReferenceExpression myRefExpression;
 
   public CreateMethodFromUsageFix(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
     myRefExpression = refExpression;

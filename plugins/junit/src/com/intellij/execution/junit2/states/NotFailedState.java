@@ -20,7 +20,7 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 public final class NotFailedState extends TestState {
-  private int myMagnitude;
+  private final int myMagnitude;
   private final boolean myIsFinal;
 
   public NotFailedState(final int magnitude, final boolean aFinal) {

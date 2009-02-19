@@ -9,7 +9,7 @@ import com.intellij.psi.PsiManager;
 import java.util.List;
 
 public class MavenGoalLocation extends PsiLocation<PsiFile> {
-  private List<String> myGoals;
+  private final List<String> myGoals;
 
   public MavenGoalLocation(Project p, VirtualFile f, List<String> goals) {
     super(p, PsiManager.getInstance(p).findFile(f));

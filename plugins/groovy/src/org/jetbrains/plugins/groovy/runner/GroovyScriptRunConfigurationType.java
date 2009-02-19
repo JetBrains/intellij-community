@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import javax.swing.*;
 
 public class GroovyScriptRunConfigurationType implements LocatableConfigurationType {
-  private GroovyScriptConfigurationFactory myConfigurationFactory;
+  private final GroovyScriptConfigurationFactory myConfigurationFactory;
 
   public GroovyScriptRunConfigurationType() {
     myConfigurationFactory = new GroovyScriptConfigurationFactory(this);

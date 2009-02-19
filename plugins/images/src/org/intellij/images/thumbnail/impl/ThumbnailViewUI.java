@@ -495,7 +495,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private final class ThumbnailNavigatable implements Navigatable {
-        private VirtualFile file;
+        private final VirtualFile file;
 
         public ThumbnailNavigatable(VirtualFile file) {
             this.file = file;

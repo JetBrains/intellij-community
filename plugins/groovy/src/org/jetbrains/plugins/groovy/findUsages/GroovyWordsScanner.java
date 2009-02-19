@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 */
 class GroovyWordsScanner implements WordsScanner
 {
-  private Lexer myLexer;
+  private final Lexer myLexer;
   public GroovyWordsScanner()
   {
     myLexer = new GroovyLexer();

@@ -20,7 +20,7 @@ package org.jetbrains.generate.tostring.exception;
  */
 public class PluginException extends RuntimeException {
 
-    private String message;
+    private final String message;
 
     /**
      * Create exception.

@@ -291,8 +291,8 @@ public class SvnUtil {
   }
 
   private static class LocationsCrawler implements SvnWCRootCrawler {
-    private SvnVcs myVcs;
-    private Map<String, File> myLocations;
+    private final SvnVcs myVcs;
+    private final Map<String, File> myLocations;
 
     public LocationsCrawler(SvnVcs vcs) {
       myVcs = vcs;

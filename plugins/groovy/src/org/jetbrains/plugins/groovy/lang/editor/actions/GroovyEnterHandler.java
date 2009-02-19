@@ -147,22 +147,22 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
-  private static TokenSet AFTER_DOLLAR = TokenSet
+  private static final TokenSet AFTER_DOLLAR = TokenSet
     .create(GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mIDENT, GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
             GroovyTokenTypes.mGSTRING_SINGLE_CONTENT);
 
-  private static TokenSet ALL_STRINGS = TokenSet
+  private static final TokenSet ALL_STRINGS = TokenSet
     .create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL, GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
             GroovyTokenTypes.mGSTRING_SINGLE_END, GroovyTokenTypes.mGSTRING_SINGLE_CONTENT, GroovyTokenTypes.mRCURLY,
             GroovyTokenTypes.mIDENT);
 
-  private static TokenSet BEFORE_DOLLAR = TokenSet.create(GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, GroovyTokenTypes.mGSTRING_SINGLE_CONTENT);
+  private static final TokenSet BEFORE_DOLLAR = TokenSet.create(GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, GroovyTokenTypes.mGSTRING_SINGLE_CONTENT);
 
-  private static TokenSet EXPR_END = TokenSet.create(GroovyTokenTypes.mRCURLY, GroovyTokenTypes.mIDENT);
+  private static final TokenSet EXPR_END = TokenSet.create(GroovyTokenTypes.mRCURLY, GroovyTokenTypes.mIDENT);
 
-  private static TokenSet AFTER_EXPR_END = TokenSet.create(GroovyTokenTypes.mGSTRING_SINGLE_END, GroovyTokenTypes.mGSTRING_SINGLE_CONTENT);
+  private static final TokenSet AFTER_EXPR_END = TokenSet.create(GroovyTokenTypes.mGSTRING_SINGLE_END, GroovyTokenTypes.mGSTRING_SINGLE_CONTENT);
 
-  private static TokenSet STRING_END =
+  private static final TokenSet STRING_END =
     TokenSet.create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL, GroovyTokenTypes.mGSTRING_SINGLE_END);
 
 

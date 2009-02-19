@@ -29,7 +29,7 @@ public abstract class MavenExecutor  {
   final MavenRunnerParameters myParameters;
   final MavenGeneralSettings myCoreSettings;
   final MavenRunnerSettings myRunnerSettings;
-  private String myCaption;
+  private final String myCaption;
   protected MavenConsole myConsole;
   private String myAction;
 

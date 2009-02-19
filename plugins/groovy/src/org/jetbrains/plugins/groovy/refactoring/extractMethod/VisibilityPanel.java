@@ -29,9 +29,9 @@ import java.util.EventListener;
  * @author ilyas
  */
 public class VisibilityPanel extends JPanel {
-  private JRadioButton myRbPrivate;
-  private JRadioButton myRbProtected;
-  private JRadioButton myRbPublic;
+  private final JRadioButton myRbPrivate;
+  private final JRadioButton myRbProtected;
+  private final JRadioButton myRbPublic;
 
   public VisibilityPanel() {
     setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), GroovyRefactoringBundle.message("visibility.border.title")));

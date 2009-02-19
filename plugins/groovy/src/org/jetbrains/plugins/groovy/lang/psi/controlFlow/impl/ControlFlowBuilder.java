@@ -604,7 +604,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   class CallInstructionImpl extends InstructionImpl implements CallInstruction {
-    private InstructionImpl myCallee;
+    private final InstructionImpl myCallee;
 
     public String toString() {
       return super.toString() + " CALL " + myCallee.num();
@@ -630,7 +630,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   class PostCallInstructionImpl extends InstructionImpl implements AfterCallInstruction {
-    private CallInstructionImpl myCall;
+    private final CallInstructionImpl myCall;
     private RetInstruction myReturnInsn;
 
     public String toString() {

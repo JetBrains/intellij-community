@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class CachedProvider implements BunchProvider {
-  private Iterator<ChangesBunch> myIterator;
+  private final Iterator<ChangesBunch> myIterator;
   private long myEarliestKeepedRevision;
   protected ChangesBunch myAlreadyReaded;
   protected Origin myOrigin;

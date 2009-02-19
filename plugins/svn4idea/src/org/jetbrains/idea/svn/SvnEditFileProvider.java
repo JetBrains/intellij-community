@@ -34,7 +34,7 @@ import java.io.File;
  * To change this template use File | Settings | File Templates.
  */
 public class SvnEditFileProvider implements EditFileProvider {
-  private SvnVcs myVCS;
+  private final SvnVcs myVCS;
 
   public SvnEditFileProvider(SvnVcs vcs) {
     myVCS = vcs;

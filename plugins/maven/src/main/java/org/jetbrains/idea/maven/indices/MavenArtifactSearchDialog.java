@@ -18,7 +18,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   private MavenArtifactSearchPanel myArtifactsPanel;
   private MavenArtifactSearchPanel myClassesPanel;
 
-  private Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new HashMap<MavenArtifactSearchPanel, Boolean>();
+  private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new HashMap<MavenArtifactSearchPanel, Boolean>();
 
   public static MavenId searchForClass(Project project, String className) {
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, className, true);

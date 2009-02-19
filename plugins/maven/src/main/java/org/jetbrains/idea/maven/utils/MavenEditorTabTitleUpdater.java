@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class MavenEditorTabTitleUpdater extends DummyProjectComponent {
-  private Project myProject;
+  private final Project myProject;
 
   public MavenEditorTabTitleUpdater(Project project) {
     myProject = project;

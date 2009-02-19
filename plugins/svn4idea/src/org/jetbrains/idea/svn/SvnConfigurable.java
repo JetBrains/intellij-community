@@ -55,7 +55,7 @@ import java.io.File;
 
 public class SvnConfigurable implements Configurable {
 
-  private Project myProject;
+  private final Project myProject;
   private JCheckBox myUseDefaultCheckBox;
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
   private JButton myClearAuthButton;

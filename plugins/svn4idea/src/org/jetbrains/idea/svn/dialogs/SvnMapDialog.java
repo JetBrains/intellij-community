@@ -38,7 +38,7 @@ public class SvnMapDialog extends DialogWrapper {
   private ListTableModel<WCInfo> myTableModel;
 
   private final Project myProject;
-  private ActionListener myChangeFormatListener;
+  private final ActionListener myChangeFormatListener;
 
   public SvnMapDialog(final Project project) {
     super(project, true);

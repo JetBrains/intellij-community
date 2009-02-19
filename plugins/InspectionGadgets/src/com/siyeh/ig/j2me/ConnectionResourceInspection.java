@@ -163,7 +163,7 @@ public class ConnectionResourceInspection extends BaseInspection {
     private static class CloseVisitor extends JavaRecursiveElementVisitor {
 
         private boolean containsClose = false;
-        private PsiVariable objectToClose;
+        private final PsiVariable objectToClose;
 
         private CloseVisitor(PsiVariable objectToClose) {
             super();

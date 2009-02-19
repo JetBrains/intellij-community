@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 class ExpandBooleanPredicate implements PsiElementPredicate {
-  private static Logger LOGGER = Logger.getInstance("ExpandBooleanPredicate");
+  private static final Logger LOGGER = Logger.getInstance("ExpandBooleanPredicate");
 
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof GrStatement)) {

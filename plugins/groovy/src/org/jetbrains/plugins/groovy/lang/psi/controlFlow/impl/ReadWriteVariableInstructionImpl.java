@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
  * @author ven
 */
 class ReadWriteVariableInstructionImpl extends InstructionImpl implements ReadWriteVariableInstruction {
-  private boolean myIsWrite;
+  private final boolean myIsWrite;
   public String myName;
 
   ReadWriteVariableInstructionImpl(String varName, PsiElement element, int num, boolean isWrite) {

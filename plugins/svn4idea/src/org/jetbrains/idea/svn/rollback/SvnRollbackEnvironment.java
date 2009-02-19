@@ -142,8 +142,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   private static class UnversionedFilesGroupCollector extends EmptyChangelistBuilder {
     private File myCurrentBeforeFile;
-    private List<Pair<File, File>> myToBeDeleted;
-    private List<Trinity<File, File, File>> myFromTo;
+    private final List<Pair<File, File>> myToBeDeleted;
+    private final List<Trinity<File, File, File>> myFromTo;
 
     private UnversionedFilesGroupCollector() {
       myFromTo = new ArrayList<Trinity<File, File, File>>();

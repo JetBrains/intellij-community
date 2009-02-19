@@ -75,7 +75,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   private JCheckBox myStaticCheckBox;
   private final DynamicManager myDynamicManager;
   private final Project myProject;
-  private EventListenerList myListenerList = new EventListenerList();
+  private final EventListenerList myListenerList = new EventListenerList();
   private final GrReferenceExpression myReferenceExpression;
   private final DynamicElementSettings mySettings;
 

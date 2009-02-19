@@ -35,11 +35,11 @@ import java.util.*;
  * @date: 16.04.2007
  */
 public class GroovycOSProcessHandler extends OSProcessHandler {
-  private Set<TranslatingCompiler.OutputItem> compiledFilesNames = new HashSet<TranslatingCompiler.OutputItem>();
-  private Set<File> toRecompileFiles = new HashSet<File>();
-  private List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
-  private StringBuffer unparsedOutput = new StringBuffer();
-  private CompileContext myContext;
+  private final Set<TranslatingCompiler.OutputItem> compiledFilesNames = new HashSet<TranslatingCompiler.OutputItem>();
+  private final Set<File> toRecompileFiles = new HashSet<File>();
+  private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
+  private final StringBuffer unparsedOutput = new StringBuffer();
+  private final CompileContext myContext;
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
 

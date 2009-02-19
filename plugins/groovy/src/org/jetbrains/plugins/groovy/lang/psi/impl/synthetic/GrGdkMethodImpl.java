@@ -33,11 +33,11 @@ import java.util.LinkedHashSet;
  * @author ven
  */
 public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
-  private PsiMethod myMethod;
+  private final PsiMethod myMethod;
 
   private LightParameterList myParameterList = null;
 
-  private LightModifierList myModifierList;
+  private final LightModifierList myModifierList;
 
   @NotNull
   public Language getLanguage() {

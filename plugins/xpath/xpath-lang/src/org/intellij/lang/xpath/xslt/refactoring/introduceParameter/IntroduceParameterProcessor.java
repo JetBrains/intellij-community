@@ -47,7 +47,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     private final Set<XPathExpression> myOtherExpressions;
     private final IntroduceParameterOptions mySettings;
 
-    private XsltTemplate myTemplate;
+    private final XsltTemplate myTemplate;
 
     public IntroduceParameterProcessor(Project project, XPathExpression expression, Set<XPathExpression> otherExpressions, IntroduceParameterOptions settings) {
         super(project);

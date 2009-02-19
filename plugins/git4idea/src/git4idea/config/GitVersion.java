@@ -28,12 +28,12 @@ public final class GitVersion implements Comparable<GitVersion> {
   /**
    * The format of the "git version" (four components)
    */
-  @NonNls private static MessageFormat FORMAT_4 =
+  @NonNls private static final MessageFormat FORMAT_4 =
     new MessageFormat("git version {0,number,integer}.{1,number,integer}.{2,number,integer}.{3,number,integer}", Locale.US);
   /**
    * The format of the "git version" (three components)
    */
-  @NonNls private static MessageFormat FORMAT_3 =
+  @NonNls private static final MessageFormat FORMAT_3 =
     new MessageFormat("git version {0,number,integer}.{1,number,integer}.{2,number,integer}", Locale.US);
   /**
    * Invalid version number

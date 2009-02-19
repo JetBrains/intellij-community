@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
  * @author ven
  */
 public class ReachingDefinitionsDfaInstance implements DfaInstance<TIntObjectHashMap<TIntHashSet>> {
-  private TObjectIntHashMap<String> myVarToIndexMap = new TObjectIntHashMap<String>();
+  private final TObjectIntHashMap<String> myVarToIndexMap = new TObjectIntHashMap<String>();
 
   public int getVarIndex(String varName) {
     return myVarToIndexMap.get(varName);

@@ -18,7 +18,7 @@ import java.util.List;
 public class CustomArtifactResolver extends DefaultArtifactResolver implements Contextualizable {
   public static final String MAVEN_PROJECT_MODEL_MANAGER = "MAVEN_PROJECT_MODEL_MANAGER";
 
-  private CustomWagonManagerHelper myWagonManagerHelper = new CustomWagonManagerHelper(DefaultArtifactResolver.class, this);
+  private final CustomWagonManagerHelper myWagonManagerHelper = new CustomWagonManagerHelper(DefaultArtifactResolver.class, this);
   private MavenProjectsTree myModelManager;
 
   public void contextualize(Context context) throws ContextException {

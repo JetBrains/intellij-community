@@ -1044,19 +1044,19 @@ public class _GroovyLexer implements FlexLexer, GroovyTokenTypes {
 
   /* user code: */
 
-  private Stack <IElementType> gStringStack = new Stack<IElementType>();
-  private Stack <IElementType> blockStack = new Stack<IElementType>();
+  private final Stack <IElementType> gStringStack = new Stack<IElementType>();
+  private final Stack <IElementType> blockStack = new Stack<IElementType>();
 
   private int afterComment = YYINITIAL;
-  private int afterNls = YYINITIAL;
-  private int afterBrace = YYINITIAL;
+  private final int afterNls = YYINITIAL;
+  private final int afterBrace = YYINITIAL;
 
   private void clearStacks(){
     gStringStack.clear();
     blockStack.clear();
   }
 
-  private Stack<IElementType> braceCount = new Stack <IElementType>();
+  private final Stack<IElementType> braceCount = new Stack <IElementType>();
 
 
 

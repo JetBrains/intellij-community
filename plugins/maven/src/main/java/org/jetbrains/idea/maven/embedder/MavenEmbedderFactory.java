@@ -278,9 +278,9 @@ public class MavenEmbedderFactory {
   }
 
   private static class MyReadResolveCustomizer extends MyBasicCustomizer {
-    private MavenProjectsTree myProjectsTree;
-    private boolean isOnline;
-    private boolean isStrict;
+    private final MavenProjectsTree myProjectsTree;
+    private final boolean isOnline;
+    private final boolean isStrict;
 
     public MyReadResolveCustomizer(MavenProjectsTree projectsTree, boolean online, boolean strict) {
       myProjectsTree = projectsTree;

@@ -50,8 +50,8 @@ public abstract class MavenRunnerConfigurable implements Configurable {
   private final DefaultComboBoxModel comboboxModelChooseJdk = new DefaultComboBoxModel();
   private JCheckBox checkBoxSkipTests;
   private JPanel panelForPropertiesEditor;
-  private MyPropertiesPanel propertiesPanel;
-  private Project myProject;
+  private final MyPropertiesPanel propertiesPanel;
+  private final Project myProject;
   private Map<String, String> myProperties;
 
   public MavenRunnerConfigurable(Project p, boolean isRunConfiguration) {

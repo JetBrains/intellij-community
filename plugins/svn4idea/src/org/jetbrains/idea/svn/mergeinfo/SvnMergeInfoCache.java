@@ -22,8 +22,8 @@ public class SvnMergeInfoCache {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache");
 
   private final Project myProject;
-  private MyState myState;
-  private SVNWCClient myClient;
+  private final MyState myState;
+  private final SVNWCClient myClient;
 
   public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE = new Topic<SvnMergeInfoCacheListener>("SVN_MERGE_INFO_CACHE",
                                                                                                  SvnMergeInfoCacheListener.class);
@@ -176,7 +176,7 @@ public class SvnMergeInfoCache {
   }
 
   private static class MyCurrentUrlData {
-    private Map<String, BranchInfo> myBranchInfo;
+    private final Map<String, BranchInfo> myBranchInfo;
 
     private MyCurrentUrlData() {
       myBranchInfo = new SoftHashMap<String, BranchInfo>();

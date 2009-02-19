@@ -23,15 +23,15 @@ import java.util.Date;
 import java.util.List;
 
 public class MavenIndicesConfigurable extends BaseConfigurable {
-  private Project myProject;
-  private MavenProjectIndicesManager myManager;
+  private final Project myProject;
+  private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
   private JTable myTable;
   private JButton myUpdateButton;
 
   private AnimatedIcon myUpdatingIcon;
-  private Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
+  private final Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
   private Timer myRepaintTimer;
 
   public MavenIndicesConfigurable(Project project) {
@@ -156,7 +156,7 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
             IndicesBundle.message("maven.index.timestamp"),
             ""};
 
-    private List<MavenIndex> myIndices;
+    private final List<MavenIndex> myIndices;
 
     public MyTableModel(List<MavenIndex> indices) {
       myIndices = indices;

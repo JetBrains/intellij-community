@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
  */
 public class GrLightIdentifier extends LightElement {
 
-  private String myText;
+  private final String myText;
 
   public GrLightIdentifier(PsiManager manager, String text) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);

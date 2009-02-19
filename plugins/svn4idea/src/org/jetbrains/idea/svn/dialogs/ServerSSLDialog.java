@@ -36,7 +36,7 @@ import java.security.cert.X509Certificate;
  */
 public class ServerSSLDialog extends DialogWrapper {
 
-  private X509Certificate myCertificate;
+  private final X509Certificate myCertificate;
   private Action myTempAction;
   private int myResult;
   @NonNls public static final String ALGORITHM_SHA1 = "SHA1";

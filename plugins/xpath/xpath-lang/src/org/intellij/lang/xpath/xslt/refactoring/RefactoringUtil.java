@@ -125,7 +125,7 @@ public class RefactoringUtil {
     }
 
     static class VariableReferenceCollector extends DeepXPathVistor {
-        private Set<XPathVariableReference> myList;
+        private final Set<XPathVariableReference> myList;
 
         protected VariableReferenceCollector(Project project) {
             super(project);

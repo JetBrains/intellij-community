@@ -26,7 +26,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  * @author ilyas
  */
 public class GroovyLexer extends LookAheadLexer {
-  private static TokenSet tokensToMerge = TokenSet.create(
+  private static final TokenSet tokensToMerge = TokenSet.create(
       mSL_COMMENT,
       mML_COMMENT,
       mREGEX_BEGIN,

@@ -42,10 +42,10 @@ import java.awt.event.MouseEvent;
 public class OverrideGutter extends GutterIconRenderer {
   private final AnAction myClickAction;
 
-  private GrMethodsListCellRenderer GROOVY_METHOD_LIST_CELL_RENDERER = new GrMethodsListCellRenderer();
-  private boolean myIsImplements;
+  private final GrMethodsListCellRenderer GROOVY_METHOD_LIST_CELL_RENDERER = new GrMethodsListCellRenderer();
+  private final boolean myIsImplements;
 
-  private String myTooltipText;
+  private final String myTooltipText;
 
   @Nullable
   public String getTooltipText() {

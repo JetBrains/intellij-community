@@ -18,9 +18,9 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 
 public class SelectFromMavenProjectsDialog extends DialogWrapper {
-  private Project myProject;
-  private SimpleTree myTree;
-  private NodeSelector mySelector;
+  private final Project myProject;
+  private final SimpleTree myTree;
+  private final NodeSelector mySelector;
 
   public SelectFromMavenProjectsDialog(Project project,
                                    String title,
@@ -71,7 +71,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
   }
 
   private class PopupMavenProjectsStructure extends MavenProjectsStructure {
-    private MavenProjectsNavigatorSettings myTreeViewSettings;
+    private final MavenProjectsNavigatorSettings myTreeViewSettings;
 
     public PopupMavenProjectsStructure(final Project project) {
       super(project,

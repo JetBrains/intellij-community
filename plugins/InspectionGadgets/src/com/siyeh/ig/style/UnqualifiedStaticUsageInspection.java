@@ -86,7 +86,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
     private static class UnqualifiedStaticAccessFix
             extends InspectionGadgetsFix {
 
-        private boolean m_fixField;
+        private final boolean m_fixField;
 
         UnqualifiedStaticAccessFix(boolean fixField) {
             m_fixField = fixField;

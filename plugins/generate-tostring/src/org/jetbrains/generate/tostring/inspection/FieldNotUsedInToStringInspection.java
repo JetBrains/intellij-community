@@ -35,7 +35,7 @@ import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
  */
 public class FieldNotUsedInToStringInspection extends AbstractToStringInspection {
 
-    private AbstractGenerateToStringQuickFix  fix = new GenerateToStringQuickFix();
+    private final AbstractGenerateToStringQuickFix  fix = new GenerateToStringQuickFix();
 
     @NotNull
     public String getDisplayName() {

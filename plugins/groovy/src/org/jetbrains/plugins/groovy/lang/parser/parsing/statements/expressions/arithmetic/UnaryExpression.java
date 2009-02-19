@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class UnaryExpression implements GroovyElementTypes {
 
-  private static TokenSet PREFIXES = TokenSet.create(
+  private static final TokenSet PREFIXES = TokenSet.create(
           mPLUS,
           mMINUS,
           mINC,

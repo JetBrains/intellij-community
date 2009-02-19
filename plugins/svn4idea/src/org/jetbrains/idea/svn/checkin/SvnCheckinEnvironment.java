@@ -352,9 +352,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private class KeepLocksComponent implements RefreshableOnComponent {
-    private JCheckBox myKeepLocksBox;
+    private final JCheckBox myKeepLocksBox;
     private boolean myIsKeepLocks;
-    private JPanel myPanel;
+    private final JPanel myPanel;
 
     public KeepLocksComponent(final Refreshable panel) {
 

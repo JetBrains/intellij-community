@@ -96,7 +96,7 @@ public class TooBroadScopeInspection extends BaseInspection
 
     private class TooBroadScopeInspectionFix extends InspectionGadgetsFix
     {
-        private String variableName;
+        private final String variableName;
 
         TooBroadScopeInspectionFix(String variableName)
         {

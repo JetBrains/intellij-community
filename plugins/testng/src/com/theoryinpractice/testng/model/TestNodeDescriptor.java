@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
  */
 public class TestNodeDescriptor extends NodeDescriptor<TestProxy>
 {
-    private TestProxy node;
+    private final TestProxy node;
 
     public TestNodeDescriptor(Project project, TestProxy node, NodeDescriptor<TestProxy> parent) {
         super(project, parent);

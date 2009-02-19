@@ -76,7 +76,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
   private static final String XMX_COMPILER_PROPERTY = "-Xmx300m";
 
-  private Project myProject;
+  private final Project myProject;
   @NonNls private static final String GROOVY_COMPILER = "groovy compiler";
 
   public GroovyCompiler(Project project) {
@@ -287,8 +287,8 @@ public class GroovyCompiler implements TranslatingCompiler {
   }
 
   static class GroovyCompileExitStatus implements ExitStatus {
-    private OutputItem[] myCompiledItems;
-    private VirtualFile[] myToRecompile;
+    private final OutputItem[] myCompiledItems;
+    private final VirtualFile[] myToRecompile;
 
     public GroovyCompileExitStatus(Set<OutputItem> compiledItems, VirtualFile[] toRecompile) {
       myToRecompile = toRecompile;

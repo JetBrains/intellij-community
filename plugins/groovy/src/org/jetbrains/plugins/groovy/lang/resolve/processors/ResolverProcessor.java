@@ -37,12 +37,11 @@ import java.util.HashSet;
  */
 public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
   protected String myName;
-  private EnumSet<ResolveKind> myResolveTargetKinds;
-  private Set<String> myProcessedClasses = new HashSet<String>();
+  private final EnumSet<ResolveKind> myResolveTargetKinds;
+  private final Set<String> myProcessedClasses = new HashSet<String>();
   protected PsiElement myPlace;
   private
-  @NotNull
-  PsiType[] myTypeArguments;
+  @NotNull final PsiType[] myTypeArguments;
 
   protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
 

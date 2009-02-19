@@ -77,12 +77,12 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   private final TestTreeView myTreeView;
   private TestsOutputConsolePrinter myPrinter;
   private StartingProgress myStartingProgress;
-  private TabbedPaneWrapper myTabs;
+  private final TabbedPaneWrapper myTabs;
 
   private final LogFilesManager myLogFilesManager;
   private ProcessHandler myRunProcess = null;
-  private JUnitConfiguration myConfiguration;
-  private Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
+  private final JUnitConfiguration myConfiguration;
+  private final Map<AdditionalTabComponent, Integer> myAdditionalComponents = new HashMap<AdditionalTabComponent, Integer>();
 
   public ConsolePanel(final JComponent console,
                       final TestsOutputConsolePrinter printer,

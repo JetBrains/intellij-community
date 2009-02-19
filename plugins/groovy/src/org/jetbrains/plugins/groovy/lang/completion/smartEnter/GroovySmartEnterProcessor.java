@@ -45,8 +45,8 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor");
 
-  private static GrFixer[] ourFixers;
-  private static EnterProcessor[] ourEnterProcessors;
+  private static final GrFixer[] ourFixers;
+  private static final EnterProcessor[] ourEnterProcessors;
 
   static {
     final List<GrFixer> fixers = new ArrayList<GrFixer>();

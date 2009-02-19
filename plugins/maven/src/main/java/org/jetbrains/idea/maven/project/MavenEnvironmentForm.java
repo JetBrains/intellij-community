@@ -37,9 +37,9 @@ public class MavenEnvironmentForm {
   private JCheckBox mavenHomeOverrideCheckBox;
   private JCheckBox mavenSettingsFileOverrideCheckBox;
   private JCheckBox localRepositoryOverrideCheckBox;
-  private PathOverrider mavenHomeOverrider;
-  private PathOverrider mavenSettingsFileOverrider;
-  private PathOverrider localRepositoryOverrider;
+  private final PathOverrider mavenHomeOverrider;
+  private final PathOverrider mavenSettingsFileOverrider;
+  private final PathOverrider localRepositoryOverrider;
 
   public MavenEnvironmentForm() {
     mavenHomeComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.home.directory"), "", null,
@@ -113,7 +113,7 @@ public class MavenEnvironmentForm {
     private final PathProvider pathProvider;
 
     private String overrideText;
-    private ActionListener listener = new ActionListener() {
+    private final ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         update();
       }

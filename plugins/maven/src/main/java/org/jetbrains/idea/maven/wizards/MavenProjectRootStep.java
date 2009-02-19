@@ -20,7 +20,7 @@ import java.awt.event.MouseEvent;
 
 public class MavenProjectRootStep extends ProjectImportWizardStep {
   private final JPanel myPanel;
-  private NamePathComponent myRootPathComponent;
+  private final NamePathComponent myRootPathComponent;
   private final MavenImportingSettingsForm myImporterSettingsForm;
 
   public MavenProjectRootStep(WizardContext wizardContext) {

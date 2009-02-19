@@ -55,8 +55,8 @@ public class LogStatementGuardedByLogConditionInspection
             "fine,isLoggable(java.util.logging.Level.FINE)," +
                     "finer,isLoggable(java.util.logging.Level.FINER)," +
                     "finest,isLoggable(java.util.logging.Level.FINEST)";
-    private List<String> logMethodNameList = new ArrayList();
-    private List<String> logConditionMethodNameList = new ArrayList();
+    private final List<String> logMethodNameList = new ArrayList();
+    private final List<String> logConditionMethodNameList = new ArrayList();
 
     public LogStatementGuardedByLogConditionInspection() {
         parseString(loggerMethodAndconditionMethodNames, logMethodNameList,

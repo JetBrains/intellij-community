@@ -75,7 +75,7 @@ import java.util.Set;
  * Date: 09.01.2008
  */
 public class DynamicToolWindowWrapper implements ProjectComponent {
-  private Project myProject;
+  private final Project myProject;
   private ToolWindow myToolWindow = null;
 
   public DynamicToolWindowWrapper(Project project) {
@@ -94,7 +94,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
   private static final int TYPE_COLUMN = 1;
 
-  private static String[] myColumnNames = {"Dynamic element", "Type"};
+  private static final String[] myColumnNames = {"Dynamic element", "Type"};
 
   private MyTreeTable myTreeTable;
 

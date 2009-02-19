@@ -44,7 +44,7 @@ import java.util.Map;
 public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration>
 {
   //private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
-  private Project project;
+  private final Project project;
 
   private JPanel panel;
 
@@ -52,13 +52,13 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private EnvironmentVariablesComponent envVariablesComponent;
   private LabeledComponent<JComboBox> moduleClasspath;
   private AlternativeJREPanel alternateJDK;
-  private ConfigurationModuleSelector moduleSelector;
+  private final ConfigurationModuleSelector moduleSelector;
   private JRadioButton suiteTest;
   private JRadioButton packageTest;
   private JRadioButton classTest;
   private JRadioButton methodTest;
   private JRadioButton groupTest;
-  private TestNGConfigurationModel model;
+  private final TestNGConfigurationModel model;
   private LabeledComponent<TextFieldWithBrowseButton> methodField;
   private LabeledComponent<TextFieldWithBrowseButton> packageField;
   private LabeledComponent<TextFieldWithBrowseButton> groupField;
@@ -78,7 +78,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JList listenersTable;
   private JButton removeListener;
   private LabeledComponent<JComboBox> annotationType;
-  private CommonJavaParameters commonJavaParameters = new CommonJavaParameters();
+  private final CommonJavaParameters commonJavaParameters = new CommonJavaParameters();
   private ArrayList<Map.Entry> propertiesList;
   private TestNGListenersTableModel listenerModel;
 
@@ -391,7 +391,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
   private class AddTestListenerListener implements ActionListener
   {
-    private Logger LOGGER = Logger.getInstance("TestNG Runner");
+    private final Logger LOGGER = Logger.getInstance("TestNG Runner");
 
     public void actionPerformed(ActionEvent event) {
       final String className = selectListenerClass();

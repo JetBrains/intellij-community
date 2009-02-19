@@ -207,7 +207,7 @@ public final class CustomLanguageInjector implements ProjectComponent {
   }
 
   private static class MyLanguageInjector implements MultiHostInjector {
-    private CustomLanguageInjector myInjector;
+    private final CustomLanguageInjector myInjector;
 
     MyLanguageInjector(CustomLanguageInjector injector) {
       myInjector = injector;

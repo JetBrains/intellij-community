@@ -18,7 +18,7 @@ import java.util.List;
  * Date: 22.05.2007
  */
 public class GroovyStmtsSurroundDescriptor extends GroovySurroundDescriptor {
-  private static Surrounder[] stmtsSurrounders = new Surrounder[]{
+  private static final Surrounder[] stmtsSurrounders = new Surrounder[]{
       new GroovyWithWithStatementsSurrounder(),
 
       new GroovyWithIfSurrounder(),
@@ -35,7 +35,7 @@ public class GroovyStmtsSurroundDescriptor extends GroovySurroundDescriptor {
   };
 
       /********** ***********/
-  private static Surrounder[] exprSurrounders = new Surrounder[]{
+  private static final Surrounder[] exprSurrounders = new Surrounder[]{
       new GroovyWithParenthesisExprSurrounder(),
       new GroovyWithTypeCastSurrounder(),
 

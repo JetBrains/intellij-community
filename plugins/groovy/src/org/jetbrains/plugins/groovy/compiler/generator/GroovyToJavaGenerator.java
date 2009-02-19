@@ -84,7 +84,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   private static final CharSequence PREFIX_SEPARATOR = "/";
   private CompileContext myContext;
-  private Project myProject;
+  private final Project myProject;
 
   public GroovyToJavaGenerator(Project project) {
     myProject = project;
@@ -811,10 +811,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   class GenerationItemImpl implements GenerationItem {
     ValidityState myState;
-    private boolean myInTestSources;
+    private final boolean myInTestSources;
     final Module myModule;
     public int myHashCode;
-    private VirtualFile myVFile;
+    private final VirtualFile myVFile;
 
     public GenerationItemImpl(String path, Module module, ValidityState state, boolean isInTestSources, VirtualFile vFile) {
       myVFile = vFile;

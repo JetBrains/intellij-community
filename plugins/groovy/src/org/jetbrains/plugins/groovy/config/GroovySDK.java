@@ -31,7 +31,7 @@ public class GroovySDK implements LibrarySDK {
   protected Library myLibrary;
   private final boolean myProjectLib;
   protected String mySdkVersion;
-  private Module myModule;
+  private final Module myModule;
 
   public GroovySDK(final Library library, final Module module, final boolean isProjectLib) {
     myModule = module;

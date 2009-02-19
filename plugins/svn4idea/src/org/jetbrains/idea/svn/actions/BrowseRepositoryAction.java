@@ -56,7 +56,7 @@ public class BrowseRepositoryAction extends AnAction {
   }
 
   private static class RepositoryToolWindowPanel extends JPanel implements Disposable {
-    private RepositoryBrowserDialog myDialog;
+    private final RepositoryBrowserDialog myDialog;
     private final Project myProject;
 
     private RepositoryToolWindowPanel(final Project project) {

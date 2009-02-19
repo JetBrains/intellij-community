@@ -92,7 +92,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
   @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
 
-  private DeleteAction myDeleteAction = new DeleteAction();
+  private final DeleteAction myDeleteAction = new DeleteAction();
   private AnAction copyUrlAction;
   private AnAction mkDirAction;
 

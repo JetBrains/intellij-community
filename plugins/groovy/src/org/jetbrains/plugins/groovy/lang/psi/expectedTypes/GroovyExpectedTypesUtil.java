@@ -53,7 +53,7 @@ public class GroovyExpectedTypesUtil {
 
   private static class MyCalculator extends GroovyElementVisitor {
     private TypeConstraint[] myResult;
-    private GrExpression myExpression;
+    private final GrExpression myExpression;
 
     public MyCalculator(GrExpression expression) {
       myExpression = expression;

@@ -140,7 +140,7 @@ public class IOResourceInspection extends ResourceInspection {
             extends JavaRecursiveElementVisitor{
 
         private boolean usedAsArgToResourceCreation = false;
-        private PsiVariable ioResource;
+        private final PsiVariable ioResource;
 
         private UsedAsIOResourceArgumentVisitor(PsiVariable ioResource){
             super();

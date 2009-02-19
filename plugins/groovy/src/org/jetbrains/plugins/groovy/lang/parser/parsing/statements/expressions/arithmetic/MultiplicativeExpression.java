@@ -26,13 +26,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class MultiplicativeExpression implements GroovyElementTypes {
 
-  private static TokenSet MULT_DIV = TokenSet.create(
+  private static final TokenSet MULT_DIV = TokenSet.create(
           mSTAR,
           mDIV,
           mMOD
   );
 
-  private static TokenSet PREFIXES = TokenSet.create(
+  private static final TokenSet PREFIXES = TokenSet.create(
           mPLUS,
           mMINUS,
           mINC,

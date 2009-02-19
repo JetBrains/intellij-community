@@ -28,7 +28,7 @@ import java.util.Set;
  * @author ven
  */
 public class LightModifierList extends LightElement implements PsiModifierList {
-  private Set<String> myModifiers;
+  private final Set<String> myModifiers;
 
   public LightModifierList(PsiManager manager, Set<String> modifiers) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);

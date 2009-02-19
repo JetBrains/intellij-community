@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.PathUtil;
 
 public class Path {
-  private String path;
+  private final String path;
 
   public Path(String path) {
     path = PathUtil.getCanonicalPath(path);

@@ -28,7 +28,7 @@ import java.util.List;
  * @author Hani Suleiman Date: Jul 28, 2005 Time: 10:52:51 PM
  */
 public class TestProxy implements AbstractTestProxy {
-  private List<TestProxy> results = new ArrayList<TestProxy>();
+  private final List<TestProxy> results = new ArrayList<TestProxy>();
   private TestResultMessage resultMessage;
   private String name;
   private TestProxy parent;

@@ -27,7 +27,7 @@ public class DummyTestBean extends Config implements Serializable {
 
     public static final String CONST_FIELD = "XXX_XXX";
     private static final String CONST_FIELD_PRIV = "XXX_XXX";
-    private transient String tran = "xxx";
+    private final transient String tran = "xxx";
 
 //    private static String myStaticString;
 //    private String[] nameStrings = new String[] { "Claus", "Ibsen" };
@@ -36,7 +36,7 @@ public class DummyTestBean extends Config implements Serializable {
 //    private List arrList = new ArrayList();
 //
     //    private Calendar cal = Calendar.getInstance();
-    private Date bday = new java.util.Date();
+    private final Date bday = new java.util.Date();
 
 //
 //    public String pubString;
@@ -54,7 +54,7 @@ public class DummyTestBean extends Config implements Serializable {
 
 //    private java.util.Date utilDateTime = new java.util.Date();
 
-    private DummyTestBean singleton = null;
+    private final DummyTestBean singleton = null;
 
     public DummyTestBean getSingleton() {
         return singleton;

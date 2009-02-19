@@ -18,7 +18,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  */
 public class ResultTreeRenderer extends ColoredTreeCellRenderer
 {
-    private TestNGConsoleProperties consoleProperties;
+    private final TestNGConsoleProperties consoleProperties;
 
     public ResultTreeRenderer(TestNGConsoleProperties consoleProperties) {
         this.consoleProperties = consoleProperties;

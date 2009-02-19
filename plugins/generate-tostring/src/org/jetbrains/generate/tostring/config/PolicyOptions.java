@@ -20,9 +20,9 @@ package org.jetbrains.generate.tostring.config;
  */
 public class PolicyOptions {
 
-    private static transient InsertWhere[] newMethodOptions = {InsertWhere.AT_CARET, InsertWhere.AFTER_EQUALS_AND_HASHCODE, InsertWhere.AT_THE_END_OF_A_CLASS};
+    private static final transient InsertWhere[] newMethodOptions = {InsertWhere.AT_CARET, InsertWhere.AFTER_EQUALS_AND_HASHCODE, InsertWhere.AT_THE_END_OF_A_CLASS};
 
-    private static transient DuplicatonPolicy[] conflictOptions = {DuplicatonPolicy.ASK, DuplicatonPolicy.REPLACE, DuplicatonPolicy.DUPLICATE};
+    private static final transient DuplicatonPolicy[] conflictOptions = {DuplicatonPolicy.ASK, DuplicatonPolicy.REPLACE, DuplicatonPolicy.DUPLICATE};
 
     private PolicyOptions() {
     }

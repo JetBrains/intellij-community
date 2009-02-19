@@ -59,7 +59,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
-  private GroovyScriptConfigurationFactory factory;
+  private final GroovyScriptConfigurationFactory factory;
   public String vmParams;
   public boolean isDebugEnabled;
   public String scriptParams;

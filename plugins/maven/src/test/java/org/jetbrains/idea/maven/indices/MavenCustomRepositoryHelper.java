@@ -7,9 +7,9 @@ import java.io.File;
 import java.io.IOException;
 
 public class MavenCustomRepositoryHelper {
-  private File myTempDir;
-  private File myWorkingData;
-  private String[] mySubFolders;
+  private final File myTempDir;
+  private final File myWorkingData;
+  private final String[] mySubFolders;
 
   public MavenCustomRepositoryHelper(File tempDir, String... subFolders) throws IOException {
     myTempDir = tempDir;

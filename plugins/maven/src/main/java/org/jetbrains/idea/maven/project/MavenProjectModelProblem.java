@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.project;
 
 public class MavenProjectModelProblem {
-  private String myDescription;
-  private boolean isCritical;
+  private final String myDescription;
+  private final boolean isCritical;
 
   public MavenProjectModelProblem(String description, boolean critical) {
     myDescription = description;

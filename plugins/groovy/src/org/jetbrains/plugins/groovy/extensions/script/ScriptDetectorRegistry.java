@@ -12,7 +12,7 @@ import java.util.ArrayList;
  */
 public class ScriptDetectorRegistry implements ApplicationComponent {
 
-  private ArrayList<GroovyScriptDetector> myDetectors = new ArrayList<GroovyScriptDetector>();
+  private final ArrayList<GroovyScriptDetector> myDetectors = new ArrayList<GroovyScriptDetector>();
 
   @NonNls
   @NotNull

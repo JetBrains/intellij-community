@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  * @author ven
  */
 public class LightParameterList extends LightElement implements PsiParameterList {
-  private Computable<LightParameter[]> myParametersComputation;
+  private final Computable<LightParameter[]> myParametersComputation;
   private LightParameter[] myParameters = null;
 
   protected LightParameterList(PsiManager manager,

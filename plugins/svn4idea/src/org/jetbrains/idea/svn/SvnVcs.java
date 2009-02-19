@@ -711,10 +711,10 @@ public class SvnVcs extends AbstractVcs {
 
   public static class SVNStatusHolder {
 
-    private SVNStatus myValue;
-    private long myEntriesTimestamp;
-    private long myFileTimestamp;
-    private boolean myIsLocked;
+    private final SVNStatus myValue;
+    private final long myEntriesTimestamp;
+    private final long myFileTimestamp;
+    private final boolean myIsLocked;
 
     public SVNStatusHolder(long entriesStamp, long fileStamp, SVNStatus value) {
       myValue = value;
@@ -742,9 +742,9 @@ public class SvnVcs extends AbstractVcs {
 
   public static class SVNInfoHolder {
 
-    private SVNInfo myValue;
-    private long myEntriesTimestamp;
-    private long myFileTimestamp;
+    private final SVNInfo myValue;
+    private final long myEntriesTimestamp;
+    private final long myFileTimestamp;
 
     public SVNInfoHolder(long entriesStamp, long fileStamp, SVNInfo value) {
       myValue = value;

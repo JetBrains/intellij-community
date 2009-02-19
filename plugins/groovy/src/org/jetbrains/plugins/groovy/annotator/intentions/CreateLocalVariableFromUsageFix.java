@@ -45,8 +45,8 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
  * @author ven
  */
 public class CreateLocalVariableFromUsageFix implements IntentionAction {
-  private GrVariableDeclarationOwner myOwner;
-  private GrReferenceExpression myRefExpression;
+  private final GrVariableDeclarationOwner myOwner;
+  private final GrReferenceExpression myRefExpression;
 
   public CreateLocalVariableFromUsageFix(GrReferenceExpression refExpression, GrVariableDeclarationOwner owner) {
     myRefExpression = refExpression;

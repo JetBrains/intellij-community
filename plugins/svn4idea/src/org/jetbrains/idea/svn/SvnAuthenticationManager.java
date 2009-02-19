@@ -193,7 +193,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
   private static class MySimpleProxyManager implements ISVNProxyManager {
       protected String myProxyHost;
-      private String myProxyPort;
+      private final String myProxyPort;
       protected String myProxyUser;
       protected String myProxyPassword;
 

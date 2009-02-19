@@ -19,7 +19,7 @@ import java.util.Map;
 
 
 public class SurroundStatementsTest extends TestSuite {
-  private static Map<Class, String> surroundersOfStmtToPathsMap = new HashMap<Class, String>();
+  private static final Map<Class, String> surroundersOfStmtToPathsMap = new HashMap<Class, String>();
 
   static {
     {

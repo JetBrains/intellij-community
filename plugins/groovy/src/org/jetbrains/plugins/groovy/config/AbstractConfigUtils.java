@@ -47,7 +47,7 @@ public abstract class AbstractConfigUtils {
   protected String ERR_MESSAGE;
   @NonNls protected String SDK_LIB_PREFIX;
 
-  private Condition<Library> LIB_SEARCH_CONDITION = new Condition<Library>() {
+  private final Condition<Library> LIB_SEARCH_CONDITION = new Condition<Library>() {
     public boolean value(Library library) {
       return isSDKLibrary(library);
     }

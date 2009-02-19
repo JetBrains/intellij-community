@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
 
-    private String name;
+    private final String name;
 
     public MoveAnonymousToInnerClassFix(String name) {
         this.name = name;

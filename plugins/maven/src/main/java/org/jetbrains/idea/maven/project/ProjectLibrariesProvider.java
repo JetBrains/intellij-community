@@ -12,9 +12,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ProjectLibrariesProvider {
-  private Project myProject;
+  private final Project myProject;
   private LibrariesModifiableModel myModifiableModel;
-  private Set<Library> myUsedLibraries = new HashSet<Library>();
+  private final Set<Library> myUsedLibraries = new HashSet<Library>();
 
   public ProjectLibrariesProvider(Project project) {
     myProject = project;

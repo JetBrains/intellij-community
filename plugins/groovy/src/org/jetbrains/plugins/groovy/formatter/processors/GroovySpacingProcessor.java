@@ -126,7 +126,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
    */
   private static class MyGroovySpacingVisitor extends GroovyElementVisitor {
     private PsiElement myParent;
-    private CodeStyleSettings mySettings;
+    private final CodeStyleSettings mySettings;
 
     private Spacing myResult;
     private ASTNode myChild1;

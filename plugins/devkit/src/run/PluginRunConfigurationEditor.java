@@ -45,14 +45,14 @@ import java.util.ArrayList;
 public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> {
 
   private DefaultComboBoxModel myModulesModel = new DefaultComboBoxModel();
-  private JComboBox myModules = new JComboBox(myModulesModel);
-  private JLabel myModuleLabel = new JLabel(DevKitBundle.message("run.configuration.classpath.from.module.choose"));
-  private LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
-  private LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
+  private final JComboBox myModules = new JComboBox(myModulesModel);
+  private final JLabel myModuleLabel = new JLabel(DevKitBundle.message("run.configuration.classpath.from.module.choose"));
+  private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
+  private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
 
-  @NonNls private JCheckBox myShowLogs = new JCheckBox(DevKitBundle.message("show.smth", "idea.log"));
+  @NonNls private final JCheckBox myShowLogs = new JCheckBox(DevKitBundle.message("show.smth", "idea.log"));
 
-  private PluginRunConfiguration myPRC;
+  private final PluginRunConfiguration myPRC;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.run.PluginRunConfigurationEditor");
 
   public PluginRunConfigurationEditor(final PluginRunConfiguration prc) {

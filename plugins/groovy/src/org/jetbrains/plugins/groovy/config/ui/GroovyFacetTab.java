@@ -59,17 +59,17 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   private GroovySDKComboBox myComboBox;
   private JButton myNewButton;
-  private Module myModule;
+  private final Module myModule;
   private JPanel myPanel;
   private JRadioButton myCompile;
   private JRadioButton myCopyToOutput;
-  private FacetEditorContext myEditorContext;
+  private final FacetEditorContext myEditorContext;
 
-  private LibraryTable.Listener myLibraryListener;
+  private final LibraryTable.Listener myLibraryListener;
 
   private String oldGroovyLibName = "";
   private String newGroovyLibName = "";
-  private GroovyFacetConfiguration myConfiguration;
+  private final GroovyFacetConfiguration myConfiguration;
 
   public GroovyFacetTab(FacetEditorContext editorContext, GroovyFacetConfiguration configuration) {
     myConfiguration = configuration;

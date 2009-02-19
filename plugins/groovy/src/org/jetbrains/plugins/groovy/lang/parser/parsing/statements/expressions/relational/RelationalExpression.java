@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class RelationalExpression implements GroovyElementTypes {
 
-  private static TokenSet RELATIONS = TokenSet.create(
+  private static final TokenSet RELATIONS = TokenSet.create(
           mLT,
           mGT,
           mLE,

@@ -52,7 +52,7 @@ public class ScopePanel extends JPanel {
     private JRadioButton myCustomScope;
     private ComboboxWithBrowseButton myCustomScopeSelection;
 
-    private Project myProject;
+    private final Project myProject;
 
     public ScopePanel(@NotNull Project project) {
         myProject = project;

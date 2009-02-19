@@ -84,8 +84,8 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
   }
 
   class GroovyToJavaGeneratorTester extends GroovyToJavaGenerator {
-    private String myRelTestPath;
-    private String myFileContent;
+    private final String myRelTestPath;
+    private final String myFileContent;
 
     public GroovyToJavaGeneratorTester(String relTestPath, String fileContent, Project project) {
       super(project);

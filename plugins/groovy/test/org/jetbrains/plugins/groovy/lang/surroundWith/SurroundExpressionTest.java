@@ -21,7 +21,7 @@ import java.util.Map;
  * Date: 01.06.2007
  */
 public class SurroundExpressionTest extends TestSuite {
-  private static Map<String, String> surroundersOfExprToPathsMap = new HashMap<String, String>();
+  private static final Map<String, String> surroundersOfExprToPathsMap = new HashMap<String, String>();
 
   static {
     {

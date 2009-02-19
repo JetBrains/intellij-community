@@ -21,7 +21,7 @@ class InstructionImpl implements Instruction, Cloneable {
   ArrayList<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
 
   PsiElement myPsiElement;
-  private int myNumber;
+  private final int myNumber;
 
   @Nullable
   public PsiElement getElement() {

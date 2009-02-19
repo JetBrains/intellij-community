@@ -197,7 +197,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
             private final PsiParameter parameter;
             private final PsiElement map;
             private final String variableName;
-            private String parameterName;
+            private final String parameterName;
 
             public ParameterAccessReplacer(
                     PsiParameter parameter, String variableName,

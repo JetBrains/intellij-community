@@ -38,10 +38,10 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
 
   // a subtree just marked under VCS root but not content root
   private class AlienTree {
-    private File myDir;
-    private File myFile;
-    private File myUnversioned;
-    private File myIgnored;
+    private final File myDir;
+    private final File myFile;
+    private final File myUnversioned;
+    private final File myIgnored;
 
     public AlienTree(final String base) throws IOException {
       final String name = "alien";
@@ -117,11 +117,11 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
   }
 
   private class SubTree {
-    private VirtualFile myOuterDir;
-    private VirtualFile myOuterFile;
-    private VirtualFile myRootDir;
-    private VirtualFile myInnerFile;
-    private VirtualFile myNonVersionedUpper;
+    private final VirtualFile myOuterDir;
+    private final VirtualFile myOuterFile;
+    private final VirtualFile myRootDir;
+    private final VirtualFile myInnerFile;
+    private final VirtualFile myNonVersionedUpper;
 
     private SubTree(final VirtualFile base) throws Throwable {
       myOuterDir = createDirInCommand(base, "outer");

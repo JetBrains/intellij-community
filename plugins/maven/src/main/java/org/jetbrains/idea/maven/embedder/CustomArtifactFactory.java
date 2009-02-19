@@ -12,7 +12,7 @@ import org.codehaus.plexus.context.ContextException;
 import java.lang.reflect.Field;
 
 public class CustomArtifactFactory implements ArtifactFactory, Contextualizable {
-  private ArtifactFactory myWrapee = new DefaultArtifactFactory();
+  private final ArtifactFactory myWrapee = new DefaultArtifactFactory();
   private ArtifactHandlerManager artifactHandlerManager;
 
   public void contextualize(Context context) throws ContextException {

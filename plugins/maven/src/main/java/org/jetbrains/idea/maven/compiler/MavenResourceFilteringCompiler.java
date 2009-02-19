@@ -178,7 +178,7 @@ public class MavenResourceFilteringCompiler implements ClassPostProcessingCompil
     private final VirtualFile mySourceFile;
     private final VirtualFile myOutputFile;
     private final boolean myFiltered;
-    private Properties myProperties;
+    private final Properties myProperties;
     private final MyValididtyState myState;
 
     public MyProcessingItem(Module module, VirtualFile sourceFile, VirtualFile outputFile, boolean isFiltered, Properties properties) {

@@ -12,7 +12,7 @@ import java.io.File;
 public final class GenerateGroovyDocDialog extends DialogWrapper {
   private final Project myProject;
   private final GroovyDocConfiguration myConfiguration;
-  private GroovyDocGenerationPanel myPanel;
+  private final GroovyDocGenerationPanel myPanel;
 
   public GenerateGroovyDocDialog(Project project, GroovyDocConfiguration configuration) {
     super(project, true);

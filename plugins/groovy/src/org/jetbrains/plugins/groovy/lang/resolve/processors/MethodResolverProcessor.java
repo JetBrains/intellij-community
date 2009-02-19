@@ -41,13 +41,13 @@ import java.util.*;
  * @author ven
  */
 public class MethodResolverProcessor extends ResolverProcessor {
-  private PsiType myThisType;
+  private final PsiType myThisType;
   @Nullable
   private PsiType[] myArgumentTypes;
-  private PsiType[] myTypeArguments;
+  private final PsiType[] myTypeArguments;
 
-  private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
-  private boolean myIsConstructor;
+  private final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
+  private final boolean myIsConstructor;
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);

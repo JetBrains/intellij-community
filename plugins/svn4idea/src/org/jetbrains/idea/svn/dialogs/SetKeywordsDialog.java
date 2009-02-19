@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class SetKeywordsDialog extends DialogWrapper {
 
-  private String myPropValue;
+  private final String myPropValue;
 
   private JCheckBox myLastChangedDateCheckbox;
   private JCheckBox myLastChangedRevisionCheckbox;

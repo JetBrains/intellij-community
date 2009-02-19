@@ -157,7 +157,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   }
 
-  private static MyTypeCalculator ourTypesCalculator = new MyTypeCalculator();
+  private static final MyTypeCalculator ourTypesCalculator = new MyTypeCalculator();
 
   //PsiMethod implementation
   @Nullable

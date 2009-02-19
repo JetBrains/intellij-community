@@ -47,7 +47,7 @@ public class MainParseTest extends BaseParseTestcase {
         }
     }
 
-    private Map<String, Test> myMap = new LinkedHashMap<String, Test>();
+    private final Map<String, Test> myMap = new LinkedHashMap<String, Test>();
 
     protected void setUp() throws Exception {
         final Document document = new SAXBuilder().build(new File(getTestDataRoot(), "/RETest.xml"));

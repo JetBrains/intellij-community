@@ -29,8 +29,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.completion.filters.SimpleTagN
  */
 public class GroovyDocCompletionData extends CompletionData {
 
-  private static String[] INLINED_DOC_TAGS = {"code", "docRoot", "inheritDoc", "link", "linkplain", "literal"};
-  private static String[] DOC_TAGS = {"author", "deprecated", "exception", "param", "return", "see", "serial", "serialData",
+  private static final String[] INLINED_DOC_TAGS = {"code", "docRoot", "inheritDoc", "link", "linkplain", "literal"};
+  private static final String[] DOC_TAGS = {"author", "deprecated", "exception", "param", "return", "see", "serial", "serialData",
       "serialField", "since", "throws", "version"};
 
   public GroovyDocCompletionData() {

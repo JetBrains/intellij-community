@@ -290,7 +290,7 @@ public class SSHConfig {
     /**
      * The host entry
      */
-    private Host myHost = new Host();
+    private final Host myHost = new Host();
 
     /**
      * Create host entry from patterns

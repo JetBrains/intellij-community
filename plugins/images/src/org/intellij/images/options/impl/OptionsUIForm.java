@@ -172,7 +172,7 @@ final class OptionsUIForm {
     }
 
     private final class CheckboxOptionsListener implements ItemListener {
-        private String name;
+        private final String name;
 
         private CheckboxOptionsListener(String name) {
             this.name = name;
@@ -185,7 +185,7 @@ final class OptionsUIForm {
     }
 
     private final class SpinnerOptionsListener implements ChangeListener {
-        private String name;
+        private final String name;
 
         private SpinnerOptionsListener(String name) {
             this.name = name;
@@ -198,7 +198,7 @@ final class OptionsUIForm {
     }
 
     private final class ColorOptionsListener implements ActionListener {
-        private String name;
+        private final String name;
 
         private ColorOptionsListener(String name) {
             this.name = name;

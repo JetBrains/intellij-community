@@ -47,7 +47,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
     return myInstance;
   }
 
-  private ArrayList<String> myCustomTemplates = new ArrayList<String>();
+  private final ArrayList<String> myCustomTemplates = new ArrayList<String>();
 
   public static final String GSP_TEMPLATE = "GroovyServerPage.gsp";
   @NonNls

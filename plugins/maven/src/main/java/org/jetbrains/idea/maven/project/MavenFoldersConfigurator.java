@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenFoldersConfigurator {
-  private MavenProjectModel myMavenProject;
-  private MavenImportingSettings myImportingSettings;
-  private MavenRootModelAdapter myModel;
+  private final MavenProjectModel myMavenProject;
+  private final MavenImportingSettings myImportingSettings;
+  private final MavenRootModelAdapter myModel;
 
   public static void updateProjectFolders(final Project project, final boolean updateTargetFoldersOnly) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);

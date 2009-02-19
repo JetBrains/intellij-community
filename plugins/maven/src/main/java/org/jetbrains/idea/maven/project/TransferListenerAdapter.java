@@ -6,7 +6,7 @@ import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 
 public class TransferListenerAdapter implements TransferListener {
-  private ProgressIndicator myIndicator;
+  private final ProgressIndicator myIndicator;
 
   private String myRepository;
   private String myResource;

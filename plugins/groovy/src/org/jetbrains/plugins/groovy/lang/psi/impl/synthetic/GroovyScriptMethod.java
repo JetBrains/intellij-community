@@ -36,7 +36,7 @@ import java.util.List;
 public class GroovyScriptMethod extends LightElement implements PsiMethod {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptMethod");
   public PsiMethod myCodeBehindMethod;
-  private GroovyScriptClass myScriptClass;
+  private final GroovyScriptClass myScriptClass;
 
   public GroovyScriptMethod(GroovyScriptClass scriptClass, String codeBehindText) {
     super(scriptClass.getManager(), GroovyFileType.GROOVY_LANGUAGE);

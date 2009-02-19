@@ -21,8 +21,8 @@ import java.io.File;
 
 public class ExportOptionsDialog extends DialogWrapper implements ActionListener {
 
-  private SVNURL myURL;
-  private File myFile;
+  private final SVNURL myURL;
+  private final File myFile;
   private TextFieldWithBrowseButton myPathField;
   private DepthCombo myDepth;
   private JCheckBox myExternalsCheckbox;

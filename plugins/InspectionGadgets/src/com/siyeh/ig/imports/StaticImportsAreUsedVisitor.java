@@ -26,7 +26,7 @@ import java.util.List;
 
 class StaticImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
 
-    private List<PsiImportStaticStatement> importStatements;
+    private final List<PsiImportStaticStatement> importStatements;
 
     StaticImportsAreUsedVisitor(PsiImportStaticStatement[] importStatements) {
         this.importStatements = new ArrayList(Arrays.asList(importStatements));

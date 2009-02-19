@@ -32,10 +32,10 @@ import java.io.File;
 
 public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
 
-  private SVNURL myURL;
-  private Project myProject;
+  private final SVNURL myURL;
+  private final Project myProject;
   private RepositoryBrowserComponent myBrowser;
-  private SVNURL myRootURL;
+  private final SVNURL myRootURL;
 
   private JRadioButton myUnifiedDiffButton;
   private JRadioButton myUIDiffButton;

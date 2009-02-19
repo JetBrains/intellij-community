@@ -13,7 +13,7 @@ import javax.swing.*;
 public class TestNGListenersTableModel extends AbstractListModel
 {
 
-  private List<String> listenerList = new ArrayList<String>();
+  private final List<String> listenerList = new ArrayList<String>();
 
   public int getSize() {
     return listenerList.size();

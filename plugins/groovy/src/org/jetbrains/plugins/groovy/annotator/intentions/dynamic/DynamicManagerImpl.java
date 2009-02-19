@@ -54,7 +54,7 @@ public class DynamicManagerImpl extends DynamicManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl");
 
   private final Project myProject;
-  private List<DynamicChangeListener> myListeners = new ArrayList<DynamicChangeListener>();
+  private final List<DynamicChangeListener> myListeners = new ArrayList<DynamicChangeListener>();
   private DRootElement myRootElement = new DRootElement();
 
   public DynamicManagerImpl(final Project project) {

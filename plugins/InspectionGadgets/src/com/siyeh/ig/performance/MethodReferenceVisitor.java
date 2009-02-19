@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 class MethodReferenceVisitor extends JavaRecursiveElementVisitor{
 
     private boolean m_referencesStaticallyAccessible = true;
-    private PsiMethod m_method;
+    private final PsiMethod m_method;
 
     MethodReferenceVisitor(PsiMethod method){
         super();

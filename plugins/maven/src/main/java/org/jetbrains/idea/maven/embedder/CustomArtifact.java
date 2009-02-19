@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 public class CustomArtifact implements Artifact {
-  private static Map<String, File> ourCache = new HashMap<String, File>();
+  private static final Map<String, File> ourCache = new HashMap<String, File>();
 
-  private Artifact myWrapee;
+  private final Artifact myWrapee;
   private boolean isStub;
 
   public CustomArtifact(Artifact a) {

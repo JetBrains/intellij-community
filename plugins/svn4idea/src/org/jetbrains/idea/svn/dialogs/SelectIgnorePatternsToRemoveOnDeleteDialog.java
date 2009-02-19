@@ -30,7 +30,7 @@ import java.util.List;
 public class SelectIgnorePatternsToRemoveOnDeleteDialog extends DialogWrapper {
   private final JPanel myPanel;
   private final CheckboxTree myTree;
-  private Collection<IgnoredFileInfo> myResult;
+  private final Collection<IgnoredFileInfo> myResult;
 
   public SelectIgnorePatternsToRemoveOnDeleteDialog(final Project project, final Map<String, IgnoredFileInfo> data) {
     super(project, true);

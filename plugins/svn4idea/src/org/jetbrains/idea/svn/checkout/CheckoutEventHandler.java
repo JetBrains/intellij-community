@@ -15,10 +15,10 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 public class CheckoutEventHandler implements ISVNEventHandler {
-  private ProgressIndicator myIndicator;
+  private final ProgressIndicator myIndicator;
   private int myExternalsCount;
-  private SvnVcs myVCS;
-  private boolean myIsExport;
+  private final SvnVcs myVCS;
+  private final boolean myIsExport;
 
   public CheckoutEventHandler(SvnVcs vcs, boolean isExport, ProgressIndicator indicator) {
     myIndicator = indicator;

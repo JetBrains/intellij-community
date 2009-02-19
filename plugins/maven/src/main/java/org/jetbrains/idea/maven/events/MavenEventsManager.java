@@ -67,7 +67,7 @@ public class MavenEventsManager extends DummyProjectComponent implements Persist
   private Map<Pair<String, Integer>, MavenTask> myBeforeRunMap = new HashMap<Pair<String, Integer>, MavenTask>();
 
   private MyKeymapListener myKeymapListener;
-  private Collection<Listener> myListeners = new HashSet<Listener>();
+  private final Collection<Listener> myListeners = new HashSet<Listener>();
   private TaskSelector myTaskSelector;
 
   private final Alarm myKeymapUpdaterAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);

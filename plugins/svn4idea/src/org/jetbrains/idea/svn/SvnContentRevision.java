@@ -40,7 +40,7 @@ class SvnContentRevision implements ContentRevision {
   protected final FilePath myFile;
   private SoftReference<String> myContent;
   private final SVNRevision myRevision;
-  private boolean myUseBaseRevision;
+  private final boolean myUseBaseRevision;
 
   protected SvnContentRevision(SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision, final boolean useBaseRevision) {
     myVcs = vcs;

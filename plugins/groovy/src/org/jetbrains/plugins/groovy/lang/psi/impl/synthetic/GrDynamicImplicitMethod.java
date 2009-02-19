@@ -44,9 +44,9 @@ import java.util.List;
 public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, GrDynamicImplicitElement {
   private final PsiManager myManager;
 
-  private GrMethod myMethod;
-  private String myContainingClassName;
-  private Project myProject;
+  private final GrMethod myMethod;
+  private final String myContainingClassName;
+  private final Project myProject;
 
   public GrDynamicImplicitMethod(PsiManager manager, GrMethod method, String containingClassName) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);

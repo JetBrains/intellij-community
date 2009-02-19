@@ -14,7 +14,7 @@ import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
  */
 public class MethodBrowser extends BrowseModuleValueActionListener
 {
-    private TestNGConfigurationEditor editor;
+    private final TestNGConfigurationEditor editor;
 
     public MethodBrowser(Project project, TestNGConfigurationEditor editor) {
         super(project);

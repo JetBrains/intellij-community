@@ -50,7 +50,7 @@ public class MavenIndex {
   }
 
   private final NexusIndexer myIndexer;
-  private ArtifactContextProducer myArtifactContextProducer;
+  private final ArtifactContextProducer myArtifactContextProducer;
   private final File myDir;
 
   private final String myRepositoryPathOrUrl;
@@ -715,11 +715,12 @@ public class MavenIndex {
   }
 
   private static class MyScanningListener implements ArtifactScanningListener {
-    private ProgressIndicator p;
+    private final ProgressIndicator p;
 
     public MyScanningListener() {
-      p = ProgressManager.getInstance().getProgressIndicator();
+      ProgressIndicator p = ProgressManager.getInstance().getProgressIndicator();
       if (p == null) p = new EmptyProgressIndicator();
+      this.p =p; 
     }
 
     public void scanningStarted(IndexingContext ctx) {

@@ -13,7 +13,7 @@ import java.io.File;
  * @author yole
  */
 public class SvnRepositoryLocation implements RepositoryLocation {
-  private String myURL;
+  private final String myURL;
 
   public SvnRepositoryLocation(final String URL) {
     myURL = URL;

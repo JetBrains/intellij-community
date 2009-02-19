@@ -16,7 +16,7 @@ public class TestClassFilter implements TreeClassChooser.ClassFilterWithScope
 {
     private final GlobalSearchScope scope;
     private final Project project;
-    private boolean includeConfig;
+    private final boolean includeConfig;
     
     public TestClassFilter(GlobalSearchScope scope, Project project, boolean includeConfig) {
         this.scope = scope;

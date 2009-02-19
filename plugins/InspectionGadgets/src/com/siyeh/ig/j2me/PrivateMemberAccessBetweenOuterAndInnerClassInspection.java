@@ -55,7 +55,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
     private static class MakePackagePrivateFix extends InspectionGadgetsFix{
 
-        private String elementName;
+        private final String elementName;
 
         private MakePackagePrivateFix(String elementName){
             this.elementName = elementName;

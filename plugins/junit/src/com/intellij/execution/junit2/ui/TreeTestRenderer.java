@@ -25,7 +25,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import javax.swing.*;
 
 class TreeTestRenderer extends ColoredTreeCellRenderer {
-  private TestConsoleProperties myProperties;
+  private final TestConsoleProperties myProperties;
 
   public TreeTestRenderer(final TestConsoleProperties properties) {
     myProperties = properties;

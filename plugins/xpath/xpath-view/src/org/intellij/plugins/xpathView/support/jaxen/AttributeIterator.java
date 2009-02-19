@@ -25,7 +25,7 @@ import java.util.List;
 
 class AttributeIterator implements Iterator {
 
-    private Iterator<XmlAttribute> theIterator;
+    private final Iterator<XmlAttribute> theIterator;
 
     public AttributeIterator(XmlElement parent) {
         this.theIterator = filterNamespaceAttrs(((XmlTag)parent).getAttributes());

@@ -16,7 +16,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
   private JPanel contentPane;
   private JComboBox myNameBox;
   private JTextField myValueField;
-  private Map<String, String> myAvailableProperties;
+  private final Map<String, String> myAvailableProperties;
 
   public EditMavenPropertyDialog(Project p, Pair<String, String> value, Map<String, String> availableProperties) {
     super(p, false);

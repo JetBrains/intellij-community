@@ -31,11 +31,11 @@ public final class GroovyDocGenerationPanel extends JPanel {
   private JPanel myPackagesPanel;
 
   private DefaultActionGroup myActionGroup;
-  private ActionToolbar myActionToolbar;
+  private final ActionToolbar myActionToolbar;
 
   private GroovyDocAddPackageAction myAddPackageAction;
   private GroovyDocReducePackageAction myReducePackageAction;
-  private DefaultListModel myDataModel;
+  private final DefaultListModel myDataModel;
 
   GroovyDocGenerationPanel() {
     myInputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.input.directory.browse"), null, null,

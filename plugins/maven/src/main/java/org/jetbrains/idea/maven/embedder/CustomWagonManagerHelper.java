@@ -4,8 +4,8 @@ import java.lang.reflect.Field;
 
 public class CustomWagonManagerHelper {
   private CustomWagonManager myWagonManagerCache;
-  private Class myHostClass;
-  private Object myHost;
+  private final Class myHostClass;
+  private final Object myHost;
 
   public <T> CustomWagonManagerHelper(Class<? super T> hostClass, T host) {
     myHostClass = hostClass;

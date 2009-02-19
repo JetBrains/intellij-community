@@ -49,7 +49,7 @@ public class GroovyFacetEditor {
   private JComboBox myComboBox;
   private JCheckBox myAddNewGdkCb;
   private FacetEditorContext myEditorContext;
-  private LibraryTable.Listener myLibraryListener;
+  private final LibraryTable.Listener myLibraryListener;
   @NonNls private static final String GROOVY_HOME = "GROOVY_HOME";
 
   public GroovyFacetEditor(@Nullable Project project, String defaultVersion) {

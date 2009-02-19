@@ -563,8 +563,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   }
 
   private static class CopyFromColumnInfo extends ColumnInfo<VcsFileRevision, String> {
-    private Icon myIcon = IconLoader.getIcon("/actions/menu-copy.png");
-    private ColoredTableCellRenderer myRenderer = new ColoredTableCellRenderer() {
+    private final Icon myIcon = IconLoader.getIcon("/actions/menu-copy.png");
+    private final ColoredTableCellRenderer myRenderer = new ColoredTableCellRenderer() {
       protected void customizeCellRenderer(final JTable table, final Object value, final boolean selected, final boolean hasFocus, final int row, final int column) {
         if (value instanceof String && ((String) value).length() > 0) {
           setIcon(myIcon);

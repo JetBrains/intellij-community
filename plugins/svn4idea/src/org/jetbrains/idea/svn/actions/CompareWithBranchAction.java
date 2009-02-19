@@ -97,8 +97,8 @@ public class CompareWithBranchAction extends AnAction {
 
 
   private class CompareWithBranchOperation {
-    private Project myProject;
-    private VirtualFile myVirtualFile;
+    private final Project myProject;
+    private final VirtualFile myVirtualFile;
     private final SvnBranchConfiguration myConfiguration;
 
     public CompareWithBranchOperation(final Project project, final VirtualFile virtualFile, final SvnBranchConfiguration config) {

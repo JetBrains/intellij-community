@@ -75,10 +75,10 @@ public class EclipseNamespaceStack {
       "@(#) $RCSfile: NamespaceStack.java,v $ $Revision: 1.13 $ $Date: 2004/02/06 09:28:32 $ $Name: jdom_1_0 $";
 
     /** The prefixes available */
-    private Stack prefixes;
+    private final Stack prefixes;
 
     /** The URIs available */
-    private Stack uris;
+    private final Stack uris;
 
     /**
      * This creates the needed storage.

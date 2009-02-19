@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class MergeInfoHolder {
   private final DecoratorManager myManager;
-  private Consumer<Boolean> myMixedRevisionsConsumer;
+  private final Consumer<Boolean> myMixedRevisionsConsumer;
   private final SvnMergeInfoCache myMergeInfoCache;
 
   private final static String ourIntegratedText = SvnBundle.message("committed.changes.merge.status.integrated.text");
@@ -36,11 +36,11 @@ public class MergeInfoHolder {
   // used ONLY when refresh is triggered
   private final Map<Pair<String, String>, MergeinfoCached> myCachedMap;
 
-  private Getter<WCInfoWithBranches> myRootGetter;
-  private Getter<WCInfoWithBranches.Branch> myBranchGetter;
-  private Getter<String> myWcPathGetter;
-  private Getter<Boolean> myEnabledHolder;
-  private MyDecorator myDecorator;
+  private final Getter<WCInfoWithBranches> myRootGetter;
+  private final Getter<WCInfoWithBranches.Branch> myBranchGetter;
+  private final Getter<String> myWcPathGetter;
+  private final Getter<Boolean> myEnabledHolder;
+  private final MyDecorator myDecorator;
 
   public MergeInfoHolder(final Project project, final DecoratorManager manager, final Getter<WCInfoWithBranches> rootGetter,
                          final Getter<WCInfoWithBranches.Branch> branchGetter,

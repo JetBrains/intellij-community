@@ -94,7 +94,7 @@ public class TableSorter extends AbstractTableModel {
     private JTableHeader tableHeader = null;
     private MouseListener mouseListener;
     private TableModelListener tableModelListener;
-    private Map<Class, Comparator> columnComparators = new HashMap();
+    private final Map<Class, Comparator> columnComparators = new HashMap();
     List<Directive> sortingColumns = new ArrayList();
 
     public TableSorter() {
@@ -388,8 +388,8 @@ public class TableSorter extends AbstractTableModel {
 
     private static class Arrow implements Icon {
 
-        private boolean descending;
-        private int size;
+        private final boolean descending;
+        private final int size;
 
         Arrow(boolean descending, int size) {
             this.descending = descending;

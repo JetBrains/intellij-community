@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  */
 public class SvnRevisionNumber implements VcsRevisionNumber {
   @NotNull
-  private SVNRevision myRevision;
+  private final SVNRevision myRevision;
 
   public SvnRevisionNumber(@NotNull SVNRevision revision) {
     myRevision = revision;

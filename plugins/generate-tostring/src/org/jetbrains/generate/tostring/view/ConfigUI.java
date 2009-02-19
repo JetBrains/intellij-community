@@ -42,28 +42,28 @@ import java.io.StringWriter;
  * The configuration is in the menu <b>File - Settings - GenerateToString</b>
  */
 public class ConfigUI extends JPanel {
-    private Border etched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
+    private final Border etched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
 
-    private JCheckBox fullyQualifiedName = new JCheckBox("Use fully qualified classname in code generation ($classname)");
-    private JCheckBox enableMethods = new JCheckBox("Enable getters in code generation ($methods)");
-    private JCheckBox moveCaretToMethod = new JCheckBox("Move caret to generated method");
+    private final JCheckBox fullyQualifiedName = new JCheckBox("Use fully qualified classname in code generation ($classname)");
+    private final JCheckBox enableMethods = new JCheckBox("Enable getters in code generation ($methods)");
+    private final JCheckBox moveCaretToMethod = new JCheckBox("Move caret to generated method");
 
     private JRadioButton[] initialValueForReplaceDialog;
     private JRadioButton[] initialValueForNewMethodDialog;
 
-    private JCheckBox filterConstant = new JCheckBox("Exclude all constant fields");
-    private JCheckBox filterEnum = new JCheckBox("Exclude all enum fields");
-    private JCheckBox filterStatic = new JCheckBox("Exclude all static fields");
-    private JCheckBox filterTransient = new JCheckBox("Exclude all transient fields");
-    private JCheckBox filterLoggers = new JCheckBox("Exclude all logger fields (Log4j, JDK Logging, Jakarta Commons Logging)");
-    private JTextField filterFieldName = new JTextField();
-    private JTextField filterFieldType = new JTextField();
-    private JTextField filterMethodName = new JTextField();
-    private JTextField filterMethodType = new JTextField();
-    private JComboBox sortElementsComboBox = new JComboBox();
-    private JCheckBox sortElements = new JCheckBox("Sort elements");
+    private final JCheckBox filterConstant = new JCheckBox("Exclude all constant fields");
+    private final JCheckBox filterEnum = new JCheckBox("Exclude all enum fields");
+    private final JCheckBox filterStatic = new JCheckBox("Exclude all static fields");
+    private final JCheckBox filterTransient = new JCheckBox("Exclude all transient fields");
+    private final JCheckBox filterLoggers = new JCheckBox("Exclude all logger fields (Log4j, JDK Logging, Jakarta Commons Logging)");
+    private final JTextField filterFieldName = new JTextField();
+    private final JTextField filterFieldType = new JTextField();
+    private final JTextField filterMethodName = new JTextField();
+    private final JTextField filterMethodType = new JTextField();
+    private final JComboBox sortElementsComboBox = new JComboBox();
+    private final JCheckBox sortElements = new JCheckBox("Sort elements");
 
-    private JCheckBox autoAddImplementsSerializable = new JCheckBox("Automatic add implements java.io.Serializable");
+    private final JCheckBox autoAddImplementsSerializable = new JCheckBox("Automatic add implements java.io.Serializable");
 
     /**
      * Constructor.
@@ -359,7 +359,7 @@ public class ConfigUI extends JPanel {
      * Action listener for user clicking syntax check
      */
     private class OnSyntaxCheck implements ActionListener {
-        private JTextArea methodBody = new JTextArea();
+        private final JTextArea methodBody = new JTextArea();
         public void actionPerformed(ActionEvent event) {
 
             // validate template first

@@ -29,7 +29,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
   private boolean myCanNotGoBack;
   private int myCurrentIdx;
   private final BunchFactory myChunkFactory;
-  private Project myProject;
+  private final Project myProject;
 
   public SvnRevisionsNavigationMediator(final SvnRepositoryLocation location, final Project project, final VirtualFile vcsRoot) throws
                                                                                                                                 VcsException {

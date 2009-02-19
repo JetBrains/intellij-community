@@ -123,7 +123,7 @@ public abstract class GroovyCompletionUtil {
     return (next == null || SEPARATORS.contains(next.getNode().getElementType()));
   }
 
-  private static TokenSet SEPARATORS = TokenSet.create(GroovyElementTypes.mNLS,
+  private static final TokenSet SEPARATORS = TokenSet.create(GroovyElementTypes.mNLS,
       GroovyElementTypes.mSEMI);
 
   public static boolean asSimpleVariable(PsiElement context) {

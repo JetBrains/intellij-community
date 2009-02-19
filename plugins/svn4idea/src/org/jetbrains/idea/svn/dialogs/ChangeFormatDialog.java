@@ -11,7 +11,7 @@ import java.awt.*;
 import java.io.File;
 
 public class ChangeFormatDialog extends UpgradeFormatDialog {
-  private boolean myWcRootIsAbove;
+  private final boolean myWcRootIsAbove;
 
   public ChangeFormatDialog(final Project project, final File path, final boolean canBeParent, final boolean wcRootIsAbove) {
     super(project, path, canBeParent, false);

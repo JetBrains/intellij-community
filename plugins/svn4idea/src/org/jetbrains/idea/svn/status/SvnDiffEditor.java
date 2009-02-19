@@ -29,11 +29,11 @@ import java.util.Map;
 public class SvnDiffEditor implements ISVNEditor {
   private VirtualFile mySourceRoot;
   private SVNRepository mySource;
-  private SVNRepository myTarget;
-  private long myTargetRevision;
-  private boolean myReverse;
+  private final SVNRepository myTarget;
+  private final long myTargetRevision;
+  private final boolean myReverse;
 
-  private Map<String, Change> myChanges;
+  private final Map<String, Change> myChanges;
 
   public SvnDiffEditor(@NotNull SVNRepository source, SVNRepository target, long targetRevision, boolean reverse) {
     mySource = source;

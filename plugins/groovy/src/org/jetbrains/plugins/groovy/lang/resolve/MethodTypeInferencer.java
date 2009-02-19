@@ -30,7 +30,7 @@ import java.util.List;
  * @author ven
  */
 public class MethodTypeInferencer implements Computable<PsiType> {
-  private GrCodeBlock myBlock;
+  private final GrCodeBlock myBlock;
 
   public MethodTypeInferencer(GrCodeBlock block) {
     myBlock = block;

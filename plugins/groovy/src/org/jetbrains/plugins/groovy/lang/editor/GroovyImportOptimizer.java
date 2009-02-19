@@ -60,7 +60,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
   }
 
   private class MyProcessor implements Runnable {
-    private GroovyFile myFile;
+    private final GroovyFile myFile;
 
     public MyProcessor(PsiFile file) {
       myFile = (GroovyFile) file;

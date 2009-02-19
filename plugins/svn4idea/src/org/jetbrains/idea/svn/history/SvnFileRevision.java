@@ -42,15 +42,15 @@ public class SvnFileRevision implements VcsFileRevision {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.SvnFileRevision");
 
   private byte[] myContent;
-  private Date myDate;
-  private String myCommitMessage;
-  private String myAuthor;
-  private VcsRevisionNumber myRevisionNumber;
-  private SvnVcs myVCS;
-  private String myURL;
-  private SVNRevision myPegRevision;
-  private SVNRevision myRevision;
-  private String myCopyFromPath;
+  private final Date myDate;
+  private final String myCommitMessage;
+  private final String myAuthor;
+  private final VcsRevisionNumber myRevisionNumber;
+  private final SvnVcs myVCS;
+  private final String myURL;
+  private final SVNRevision myPegRevision;
+  private final SVNRevision myRevision;
+  private final String myCopyFromPath;
   private final List<SvnFileRevision> myMergeSources;
 
   public SvnFileRevision(SvnVcs vcs,
@@ -157,10 +157,10 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   private class ContentLoader implements Runnable {
-    private SVNRevision myRevision;
-    private SVNRevision myPegRevision;
-    private String myURL;
-    private OutputStream myDst;
+    private final SVNRevision myRevision;
+    private final SVNRevision myPegRevision;
+    private final String myURL;
+    private final OutputStream myDst;
     private SVNException myException;
 
     public ContentLoader(String url, OutputStream dst, SVNRevision revision, SVNRevision pegRevision) {

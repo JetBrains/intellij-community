@@ -23,9 +23,9 @@ import com.intellij.openapi.project.Project;
 
 class TestProxyDescriptor extends NodeDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.model.TestProxyDescriptor");
-  private static int STATE_UP_TO_DATE = 0;
-  private static int STATE_OUT_OF_DATE = 1;
-  private static int STATE_UNKNOWN = 2;
+  private static final int STATE_UP_TO_DATE = 0;
+  private static final int STATE_OUT_OF_DATE = 1;
+  private static final int STATE_UNKNOWN = 2;
 
   private final TestProxy myTest;
   private int myTimestamp = -1;

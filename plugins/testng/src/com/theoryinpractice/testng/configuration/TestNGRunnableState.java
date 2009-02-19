@@ -65,9 +65,9 @@ public class TestNGRunnableState extends JavaCommandLineState
 {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
-  private TestNGConfiguration config;
-  private RunnerSettings runnerSettings;
-  private IDEARemoteTestRunnerClient client;
+  private final TestNGConfiguration config;
+  private final RunnerSettings runnerSettings;
+  private final IDEARemoteTestRunnerClient client;
   private int port;
   private String debugPort;
   private CoverageSuite myCurrentCoverageSuite;

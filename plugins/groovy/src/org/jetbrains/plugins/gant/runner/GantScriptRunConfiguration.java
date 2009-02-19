@@ -50,7 +50,7 @@ import java.util.Collection;
  * @author ilyas
  */
 public class GantScriptRunConfiguration extends ModuleBasedConfiguration {
-  private GantScriptConfigurationFactory factory;
+  private final GantScriptConfigurationFactory factory;
   public String vmParams;
   public boolean isDebugEnabled;
   public String scriptParams;

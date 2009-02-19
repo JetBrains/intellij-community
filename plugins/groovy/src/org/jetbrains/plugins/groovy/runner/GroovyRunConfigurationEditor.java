@@ -38,8 +38,8 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   private JPanel scriptPathPanel;
   private JPanel workDirPanel;
   private JCheckBox myDebugCB;
-  private JTextField scriptPathField;
-  private JTextField workDirField;
+  private final JTextField scriptPathField;
+  private final JTextField workDirField;
 
   public GroovyRunConfigurationEditor() {
 

@@ -128,7 +128,7 @@ public class SafeLockInspection extends BaseInspection {
     private static class UnlockVisitor extends JavaRecursiveElementVisitor {
 
         private boolean containsClose = false;
-        private PsiVariable objectToClose;
+        private final PsiVariable objectToClose;
 
         private UnlockVisitor(PsiVariable objectToClose) {
             super();

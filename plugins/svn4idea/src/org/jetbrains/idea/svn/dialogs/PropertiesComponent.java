@@ -45,8 +45,8 @@ public class PropertiesComponent extends JPanel {
   private SvnVcs myVcs;
   private JSplitPane mySplitPane;
   private static final String CONTEXT_ID = "context";
-  private CloseAction myCloseAction = new CloseAction();
-  private RefreshAction myRefreshAction = new RefreshAction();
+  private final CloseAction myCloseAction = new CloseAction();
+  private final RefreshAction myRefreshAction = new RefreshAction();
   private ActionGroup myPopupActionGroup;
 
   public PropertiesComponent() {

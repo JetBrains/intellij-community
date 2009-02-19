@@ -25,10 +25,10 @@ import java.util.Stack;
  * @author ven
  */
 public class DFAEngine<E> {
-  private Instruction[] myFlow;
+  private final Instruction[] myFlow;
 
-  private DfaInstance<E> myDfa;
-  private Semilattice<E> mySemilattice;
+  private final DfaInstance<E> myDfa;
+  private final Semilattice<E> mySemilattice;
 
   public DFAEngine(Instruction[] flow,
                    DfaInstance<E> dfa,

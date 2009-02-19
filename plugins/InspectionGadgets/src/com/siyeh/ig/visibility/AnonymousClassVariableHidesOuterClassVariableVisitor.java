@@ -69,7 +69,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor
 
         private static final PsiVariable[] EMPTY_VARIABLE_LIST = {};
 
-        private Map<String, List<PsiVariable>> variableMap = new HashMap();
+        private final Map<String, List<PsiVariable>> variableMap = new HashMap();
 
         @Override public void visitVariable(PsiVariable variable) {
             super.visitVariable(variable);

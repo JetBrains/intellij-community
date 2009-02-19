@@ -48,19 +48,19 @@ import java.awt.event.ItemListener;
  * Date: Nov 22, 2004
  */
 public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
-  private JLabel mySandboxHomeLabel = new JLabel(DevKitBundle.message("sandbox.home.label"));
-  private TextFieldWithStoredHistory mySandboxHome = new TextFieldWithStoredHistory(SANDBOX_HISTORY);
+  private final JLabel mySandboxHomeLabel = new JLabel(DevKitBundle.message("sandbox.home.label"));
+  private final TextFieldWithStoredHistory mySandboxHome = new TextFieldWithStoredHistory(SANDBOX_HISTORY);
 
-  private JLabel myInternalJreLabel = new JLabel("Internal Java Platform:");
-  private DefaultComboBoxModel myJdksModel = new DefaultComboBoxModel();
-  private JComboBox myInternalJres = new JComboBox(myJdksModel);
+  private final JLabel myInternalJreLabel = new JLabel("Internal Java Platform:");
+  private final DefaultComboBoxModel myJdksModel = new DefaultComboBoxModel();
+  private final JComboBox myInternalJres = new JComboBox(myJdksModel);
 
   private Sdk myIdeaJdk;
 
   private boolean myModified;
   @NonNls private static final String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
 
-  private SdkModel mySdkModel;
+  private final SdkModel mySdkModel;
   private final SdkModificator mySdkModificator;
   private boolean myFreeze = false;
 

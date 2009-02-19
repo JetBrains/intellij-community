@@ -21,7 +21,7 @@ public enum NodeType {
     COMMENT("comment"),
     PROCESSING_INSTRUCTION("processing-instruction");
 
-    private String type;
+    private final String type;
 
     NodeType(String s) {
         type = s;

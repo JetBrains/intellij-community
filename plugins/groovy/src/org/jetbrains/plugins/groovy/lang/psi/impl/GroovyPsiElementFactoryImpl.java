@@ -67,7 +67,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     myProject = project;
   }
 
-  private static String DUMMY = "dummy.";
+  private static final String DUMMY = "dummy.";
 
   @Nullable
   public PsiElement createReferenceNameFromText(String refName) {

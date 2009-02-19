@@ -12,8 +12,8 @@ import java.util.List;
  * Date: 20.08.2007
  */
 class TopLevelDependencyValidityState implements ValidityState {
-  private long myTimestamp;
-  private List<String> myMembers;  //fields
+  private final long myTimestamp;
+  private final List<String> myMembers;  //fields
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.generator.TopLevelDependencyValidityState");
 

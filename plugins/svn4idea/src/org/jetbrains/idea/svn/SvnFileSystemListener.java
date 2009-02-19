@@ -104,15 +104,15 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
   }
 
-  private Map<Project, Map<String, IgnoredFileInfo>> myIgnoredInfo = new HashMap<Project, Map<String, IgnoredFileInfo>>();
+  private final Map<Project, Map<String, IgnoredFileInfo>> myIgnoredInfo = new HashMap<Project, Map<String, IgnoredFileInfo>>();
 
-  private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
-  private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
-  private List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
-  private Map<Project, List<VcsException>> myMoveExceptions = new HashMap<Project, List<VcsException>>();
-  private List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
+  private final List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
+  private final List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
+  private final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
+  private final Map<Project, List<VcsException>> myMoveExceptions = new HashMap<Project, List<VcsException>>();
+  private final List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
   @Nullable private File myStorageForUndo;
-  private List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
+  private final List<Pair<File, File>> myUndoStorageContents = new ArrayList<Pair<File, File>>();
   private boolean myUndoingMove = false;
 
   private void addToMoveExceptions(final Project project, final SVNException e) {

@@ -6,8 +6,8 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import java.util.List;
 
 public class InternallyCachedChangesBunch extends ChangesBunch {
-  private int mySelfAddress;
-  private int myPreviousAddress;
+  private final int mySelfAddress;
+  private final int myPreviousAddress;
 
   public InternallyCachedChangesBunch(final List<CommittedChangeList> list, final boolean consistentWithPrevious,
                                       final int selfAddress,

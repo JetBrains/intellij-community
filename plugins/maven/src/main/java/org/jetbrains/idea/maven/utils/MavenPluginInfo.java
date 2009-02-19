@@ -10,11 +10,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class MavenPluginInfo {
-  private String myGroupId;
-  private String myArtifactId;
-  private String myVersion;
-  private String myGoalPrefix;
-  private Map<String, Mojo> myMojos;
+  private final String myGroupId;
+  private final String myArtifactId;
+  private final String myVersion;
+  private final String myGoalPrefix;
+  private final Map<String, Mojo> myMojos;
 
   public MavenPluginInfo(InputStream inputStream) throws IOException {
     JDOMReader r = new JDOMReader(inputStream);
@@ -67,7 +67,7 @@ public class MavenPluginInfo {
   }
 
   public class Mojo {
-    private String myGoal;
+    private final String myGoal;
 
     private Mojo(String goal) {
       myGoal = goal;

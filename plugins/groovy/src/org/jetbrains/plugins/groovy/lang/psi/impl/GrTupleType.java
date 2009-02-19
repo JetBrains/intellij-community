@@ -28,9 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
  * @author ven
  */
 public class GrTupleType extends PsiClassType {
-  private GlobalSearchScope myScope;
-  private JavaPsiFacade myFacade;
-  private PsiType[] myComponentTypes;
+  private final GlobalSearchScope myScope;
+  private final JavaPsiFacade myFacade;
+  private final PsiType[] myComponentTypes;
   @NonNls
   private static final String JAVA_UTIL_LIST = "java.util.List";
 
@@ -70,7 +70,7 @@ public class GrTupleType extends PsiClassType {
   @NotNull
   public ClassResolveResult resolveGenerics() {
     return new ClassResolveResult() {
-      private PsiClass myListClass = resolve();
+      private final PsiClass myListClass = resolve();
 
       public PsiClass getElement() {
         return myListClass;

@@ -12,7 +12,7 @@ import javax.swing.*;
  * @author Vladislav.Kaznacheev
  */
 public class MavenImportingConfigurable implements Configurable {
-  private MavenImportingSettings myImportingSettings;
+  private final MavenImportingSettings myImportingSettings;
 
   private JPanel panel;
   private MavenImportingSettingsForm mySettingsForm;

@@ -24,7 +24,7 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent{
 
     private TelemetryToolWindow toolWindow = null;
     private boolean telemetryEnabled = true;
-    private Project project;
+    private final Project project;
 
     public InspectionGadgetsProjectComponent(Project project){
         super();

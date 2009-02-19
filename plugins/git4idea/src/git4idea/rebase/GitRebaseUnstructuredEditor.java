@@ -34,7 +34,7 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
   /**
    * The file being edited
    */
-  private File myFile;
+  private final File myFile;
 
   /**
    * The contstructor

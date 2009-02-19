@@ -59,7 +59,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private JLabel myPortLabel;
   private JTextField myPortField;
   private JLabel myPassphraseLabel;
-  private Project myProject;
+  private final Project myProject;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
   @NonNls private static final String USER_HOME_PROPERTY = "user.home";

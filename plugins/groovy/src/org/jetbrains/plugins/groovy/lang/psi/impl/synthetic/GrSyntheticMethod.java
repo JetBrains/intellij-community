@@ -26,7 +26,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class GrSyntheticMethod extends LightElement implements PsiMethod {
-  private LightReferenceList myThrowsList;
+  private final LightReferenceList myThrowsList;
   private LightParameterList myParameterList = null;
   private LightModifierList myModifierList = null;
   private final String myName;

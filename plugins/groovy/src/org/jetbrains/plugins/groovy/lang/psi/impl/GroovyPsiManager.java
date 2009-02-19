@@ -56,7 +56,7 @@ import java.util.Map;
  */
 public class GroovyPsiManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
-  private Project myProject;
+  private final Project myProject;
 
   private Map<String, List<PsiMethod>> myDefaultMethods;
   private Map<String, List<PsiMethod>> myScriptMethods;

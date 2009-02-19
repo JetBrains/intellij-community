@@ -36,7 +36,7 @@ import java.security.cert.X509Certificate;
  * To change this template use File | Settings | File Templates.
  */
 public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
-  private Project myProject;
+  private final Project myProject;
 
   public SvnAuthenticationProvider(Project project) {
     myProject = project;

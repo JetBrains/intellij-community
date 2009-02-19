@@ -288,7 +288,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public static class AuthStorage implements ISVNAuthenticationStorage {
 
-    private Map<String, Object> myStorage = new Hashtable<String, Object>();
+    private final Map<String, Object> myStorage = new Hashtable<String, Object>();
 
     public void clear() {
       myStorage.clear();

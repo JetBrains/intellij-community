@@ -198,8 +198,8 @@ public class SelectBranchPopup {
   }
 
   private static class BranchRenderer extends JPanel implements ListCellRenderer {
-    private JLabel myUrlLabel = new JLabel();
-    private JLabel myDateLabel = new JLabel();
+    private final JLabel myUrlLabel = new JLabel();
+    private final JLabel myDateLabel = new JLabel();
 
     public BranchRenderer() {
       super(new BorderLayout());

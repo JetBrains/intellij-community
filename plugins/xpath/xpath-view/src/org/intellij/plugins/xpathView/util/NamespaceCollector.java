@@ -49,9 +49,9 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
         }
     }
 
-    private Set<Namespace> namespaces = new LinkedHashSet<Namespace>();
-    private Set<QName> elements = new HashSet<QName>(64);
-    private Set<QName> attributes = new HashSet<QName>(64);
+    private final Set<Namespace> namespaces = new LinkedHashSet<Namespace>();
+    private final Set<QName> elements = new HashSet<QName>(64);
+    private final Set<QName> attributes = new HashSet<QName>(64);
 
     private NamespaceCollector() {
 

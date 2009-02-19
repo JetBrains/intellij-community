@@ -28,8 +28,8 @@ public class GroovyMapParameterDialog extends DialogWrapper {
   private JLabel myNameLabel;
   private JCheckBox myCbTypeSpec;
   private JCheckBox myCreateNew;
-  private Project myProject;
-  private EventListenerList myListenerList = new EventListenerList();
+  private final Project myProject;
+  private final EventListenerList myListenerList = new EventListenerList();
 
   public GroovyMapParameterDialog(Project project, final String[] possibleNames, final boolean createNew) {
     super(true);

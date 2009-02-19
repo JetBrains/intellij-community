@@ -25,18 +25,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MavenProjectConfigurator {
-  private Project myProject;
+  private final Project myProject;
   private ModifiableModuleModel myModuleModel;
   private ProjectLibrariesProvider myLibrariesProvider;
-  private MavenProjectsTree myMavenTree;
-  private Map<VirtualFile, Module> myFileToModuleMapping;
-  private MavenImportingSettings myImportingSettings;
-  private List<ModifiableRootModel> myRootModelsToCommit = new ArrayList<ModifiableRootModel>();
+  private final MavenProjectsTree myMavenTree;
+  private final Map<VirtualFile, Module> myFileToModuleMapping;
+  private final MavenImportingSettings myImportingSettings;
+  private final List<ModifiableRootModel> myRootModelsToCommit = new ArrayList<ModifiableRootModel>();
 
-  private Map<MavenProjectModel, Module> myMavenProjectToModule = new HashMap<MavenProjectModel, Module>();
-  private Map<MavenProjectModel, String> myMavenProjectToModuleName = new HashMap<MavenProjectModel, String>();
-  private Map<MavenProjectModel, String> myMavenProjectToModulePath = new HashMap<MavenProjectModel, String>();
-  private List<Module> myCreatedModules = new ArrayList<Module>();
+  private final Map<MavenProjectModel, Module> myMavenProjectToModule = new HashMap<MavenProjectModel, Module>();
+  private final Map<MavenProjectModel, String> myMavenProjectToModuleName = new HashMap<MavenProjectModel, String>();
+  private final Map<MavenProjectModel, String> myMavenProjectToModulePath = new HashMap<MavenProjectModel, String>();
+  private final List<Module> myCreatedModules = new ArrayList<Module>();
 
   public MavenProjectConfigurator(Project p,
                                   MavenProjectsTree projectsTree,

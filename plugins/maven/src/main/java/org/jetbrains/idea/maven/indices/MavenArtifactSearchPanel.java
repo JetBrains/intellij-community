@@ -28,14 +28,14 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class MavenArtifactSearchPanel extends JPanel {
-  private Project myProject;
-  private boolean myClassMode;
-  private Listener myListener;
+  private final Project myProject;
+  private final boolean myClassMode;
+  private final Listener myListener;
 
   private JTextField mySearchField;
   private Tree myResultList;
 
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD);
 
   public MavenArtifactSearchPanel(Project project, String initialText, boolean classMode, Listener listener) {
     myProject = project;

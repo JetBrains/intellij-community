@@ -39,7 +39,7 @@ import org.jdom.Element;
     }
 )
 final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element>, RoamingTypeDisabled {
-  private OptionsImpl options = new OptionsImpl();
+  private final OptionsImpl options = new OptionsImpl();
 
   public Options getOptions() {
     return options;

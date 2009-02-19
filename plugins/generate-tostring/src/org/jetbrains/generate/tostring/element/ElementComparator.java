@@ -22,7 +22,7 @@ import java.util.Comparator;
  */
 public class ElementComparator implements Comparator<Element> {
 
-    private int sort;
+    private final int sort;
 
     /**
      * Construts a comparator that sorts by element name.

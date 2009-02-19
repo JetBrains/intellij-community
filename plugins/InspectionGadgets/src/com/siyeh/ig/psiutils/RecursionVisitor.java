@@ -22,7 +22,7 @@ public class RecursionVisitor extends JavaRecursiveElementVisitor{
 
     private boolean recursive = false;
     private final PsiMethod method;
-    private String methodName;
+    private final String methodName;
 
     public RecursionVisitor(@NotNull PsiMethod method){
         super();

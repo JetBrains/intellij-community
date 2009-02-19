@@ -92,7 +92,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static class RegisterClassFix implements LocalQuickFix {
-    private PsiClass myClass;
+    private final PsiClass myClass;
 
     public RegisterClassFix(final PsiClass aClass) {
       myClass = aClass;

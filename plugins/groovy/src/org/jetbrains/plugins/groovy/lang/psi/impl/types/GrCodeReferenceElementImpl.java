@@ -402,7 +402,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     }
   }
 
-  private static OurResolver RESOLVER = new OurResolver();
+  private static final OurResolver RESOLVER = new OurResolver();
 
   public GroovyResolveResult advancedResolve() {
     ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);

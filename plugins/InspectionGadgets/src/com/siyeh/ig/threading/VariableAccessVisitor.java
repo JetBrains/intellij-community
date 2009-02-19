@@ -43,7 +43,7 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor{
     private boolean m_inInitializer = false;
     private boolean m_inSynchronizedContext = false;
     private boolean privateMethodUsagesCalculated = false;
-    private boolean countGettersAndSetters;
+    private final boolean countGettersAndSetters;
 
     VariableAccessVisitor(PsiClass aClass, boolean countGettersAndSetters){
         super();

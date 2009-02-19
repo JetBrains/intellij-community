@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  * @author ven
  */
 public class GrClassReferenceType extends PsiClassType {
-  private GrCodeReferenceElement myReferenceElement;
+  private final GrCodeReferenceElement myReferenceElement;
 
   public GrClassReferenceType(GrCodeReferenceElement referenceElement) {
     myReferenceElement = referenceElement;

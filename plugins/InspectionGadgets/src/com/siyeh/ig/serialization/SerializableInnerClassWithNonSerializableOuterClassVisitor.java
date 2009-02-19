@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 class SerializableInnerClassWithNonSerializableOuterClassVisitor
         extends BaseInspectionVisitor {
 
-    private SerializableInnerClassWithNonSerializableOuterClassInspection inspection;
+    private final SerializableInnerClassWithNonSerializableOuterClassInspection inspection;
 
     public SerializableInnerClassWithNonSerializableOuterClassVisitor(
             SerializableInnerClassWithNonSerializableOuterClassInspection inspection) {

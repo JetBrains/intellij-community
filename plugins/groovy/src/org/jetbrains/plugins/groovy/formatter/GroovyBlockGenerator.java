@@ -54,7 +54,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private static CodeStyleSettings mySettings;
   private static GroovyBlock myBlock;
 
-  private static TokenSet NESTED = TokenSet.create(REFERENCE_EXPRESSION,
+  private static final TokenSet NESTED = TokenSet.create(REFERENCE_EXPRESSION,
       PATH_INDEX_PROPERTY,
       PATH_METHOD_CALL,
       PATH_PROPERTY_REFERENCE);

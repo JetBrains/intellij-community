@@ -39,15 +39,15 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
 
     private static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
 
-    private PsiClass clazz;
+    private final PsiClass clazz;
     private int index = -1;
-    private Set<MemberSignature> nonPrivateConstructors;
-    private Set<MemberSignature> nonPrivateMethods;
-    private Set<MemberSignature> nonPrivateFields;
-    private List<MemberSignature> staticInitializers;
+    private final Set<MemberSignature> nonPrivateConstructors;
+    private final Set<MemberSignature> nonPrivateMethods;
+    private final Set<MemberSignature> nonPrivateFields;
+    private final List<MemberSignature> staticInitializers;
     private boolean assertStatement = false;
     private boolean classObjectAccessExpression = false;
-    private Map<PsiElement, String> memberMap =
+    private final Map<PsiElement, String> memberMap =
             new HashMap<PsiElement, String>();
 
     private static final Comparator<PsiClass> INTERFACE_COMPARATOR =

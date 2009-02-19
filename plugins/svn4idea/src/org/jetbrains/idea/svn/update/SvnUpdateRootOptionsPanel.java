@@ -45,7 +45,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
 
   private final SvnVcs myVcs;
   private JPanel myPanel;
-  private FilePath myRoot;
+  private final FilePath myRoot;
   private JCheckBox myUpdateToSpecificUrl;
   private TextFieldWithBrowseButton myBranchField;
   private JLabel myBranchLabel;

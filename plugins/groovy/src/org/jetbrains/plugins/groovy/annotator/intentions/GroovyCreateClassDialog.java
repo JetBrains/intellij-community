@@ -36,9 +36,9 @@ public class GroovyCreateClassDialog extends DialogWrapper {
   private MySizeTextField myPackageTextField;
   private JButton myPackageChooseButton;
   private PsiDirectory myTargetDirectory;
-  private Project myProject;
-  private String myClassName;
-  private Module myModule;
+  private final Project myProject;
+  private final String myClassName;
+  private final Module myModule;
 
   public GroovyCreateClassDialog(Project project,
                                  String title,

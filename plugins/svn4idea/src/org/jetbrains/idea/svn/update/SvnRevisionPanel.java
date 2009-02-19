@@ -42,7 +42,7 @@ public class SvnRevisionPanel extends JPanel {
   private TextFieldWithBrowseButton myRevisionField;
   private Project myProject;
   private UrlProvider myUrlProvider;
-  private ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
+  private final ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
   private VirtualFile myRoot;
 
   public SvnRevisionPanel() {

@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class RegexExpression implements GroovyElementTypes {
 
-  private static TokenSet REGEX_DO = TokenSet.create(
+  private static final TokenSet REGEX_DO = TokenSet.create(
       mREGEX_FIND,
       mREGEX_MATCH
   );

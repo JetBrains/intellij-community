@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class FileGroupInfo implements FileIterationListener, IgnoreInfoGetter {
   private String commonExtension;
-  private Map<VirtualFile, Set<String>> folders;
+  private final Map<VirtualFile, Set<String>> folders;
 
   private int fileCount;
   private boolean sameExtensionCase;

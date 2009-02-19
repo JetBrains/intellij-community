@@ -10,7 +10,7 @@ import java.util.List;
 public class MavenException extends Exception {
   private String myPomPath;
   private String mySummary;
-  private List<String> myMessages = new ArrayList<String>();
+  private final List<String> myMessages = new ArrayList<String>();
 
   public MavenException(String message) {
     this(new Exception(message));

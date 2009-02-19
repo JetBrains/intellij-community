@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class PostfixExpression implements GroovyElementTypes {
 
 
-  private static TokenSet POSTFIXES = TokenSet.create(
+  private static final TokenSet POSTFIXES = TokenSet.create(
           mINC,
           mDEC
   );

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  * @author ven
  */
 public class LateBoundUsageGroupingRule implements OrderableUsageGroupingRule {
-  private LateBoundGroup INSTANCE = new LateBoundGroup();
+  private final LateBoundGroup INSTANCE = new LateBoundGroup();
 
   private class LateBoundGroup implements UsageGroup {
 

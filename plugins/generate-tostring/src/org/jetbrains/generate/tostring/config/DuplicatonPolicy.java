@@ -8,7 +8,7 @@ public enum DuplicatonPolicy {
     REPLACE("Replace existing"),
     DUPLICATE("Generate duplicating method");
 
-    private String displayName;
+    private final String displayName;
 
     DuplicatonPolicy(String displayName) {
         this.displayName = displayName;

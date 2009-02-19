@@ -19,7 +19,7 @@ import java.io.IOException;
 public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfoIndex.ImageInfo> {
   public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
 
-  private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       return file.getFileSystem() == LocalFileSystem.getInstance() &&
              file.getFileType() == ImageFileTypeManager.getInstance().getImageFileType();
@@ -38,7 +38,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
     }
   };
 
-  private SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
+  private final SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
     protected ImageInfo computeValue(@NotNull FileContent inputData) {
       final ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent());
       return info != null? new ImageInfo(info.width, info.height, info.bpp) : null;

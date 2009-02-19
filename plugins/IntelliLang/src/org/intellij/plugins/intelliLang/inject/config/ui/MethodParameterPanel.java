@@ -74,10 +74,10 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   private TreeTableView myParamsTable;
 
-  private ReferenceEditorWithBrowseButton myClassField;
+  private final ReferenceEditorWithBrowseButton myClassField;
   private DefaultMutableTreeNode myRootNode;
 
-  private THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<PsiMethod, MethodParameterInjection.MethodInfo>();
+  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<PsiMethod, MethodParameterInjection.MethodInfo>();
 
   public MethodParameterPanel(MethodParameterInjection injection, final Project project) {
     super(injection, project);

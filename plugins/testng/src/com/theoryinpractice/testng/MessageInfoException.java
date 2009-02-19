@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
  */
 public class MessageInfoException extends Exception
 {
-    private MessagesEx.MessageInfo info;
+    private final MessagesEx.MessageInfo info;
 
     public MessageInfoException(MessagesEx.MessageInfo info) {
         this.info = info;

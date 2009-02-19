@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
 
-    private PsiClass innerClass;
+    private final PsiClass innerClass;
     private boolean referencesStaticallyAccessible = true;
 
     public InnerClassReferenceVisitor(PsiClass innerClass) {

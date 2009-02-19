@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class MavenEmbedderWrapper {
-  private MavenEmbedder myEmbedder;
+  private final MavenEmbedder myEmbedder;
 
   public MavenEmbedderWrapper(MavenEmbedder embedder, MavenProcess process) {
     myEmbedder = embedder;
