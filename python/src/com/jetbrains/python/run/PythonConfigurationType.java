@@ -25,7 +25,7 @@ public class PythonConfigurationType implements ConfigurationType {
     return null;
   }
 
-  private Icon _icon = IconLoader.getIcon("/com/jetbrains/python/python.png");
+  private final Icon _icon = IconLoader.getIcon("/com/jetbrains/python/python.png");
 
   private static class PythonConfigurationFactory extends ConfigurationFactory {
     protected PythonConfigurationFactory(ConfigurationType configurationType) {

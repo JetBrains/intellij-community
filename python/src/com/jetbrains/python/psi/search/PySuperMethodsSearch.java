@@ -12,7 +12,7 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
   public static PySuperMethodsSearch INSTANCE = new PySuperMethodsSearch();
 
   public static class SearchParameters {
-    private PyFunction myDerivedMethod;
+    private final PyFunction myDerivedMethod;
 
     public SearchParameters(final PyFunction derivedMethod) {
       myDerivedMethod = derivedMethod;

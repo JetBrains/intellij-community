@@ -32,9 +32,9 @@ public class SdkUtil {
    * A holder for stdout and stderr lines of a finished process.
    */
   public static class ProcessCallInfo {
-    private List<String> myStdoutLines;
-    private List<String> myStderrLines;
-    private int myExitCode;
+    private final List<String> myStdoutLines;
+    private final List<String> myStderrLines;
+    private final int myExitCode;
 
     protected ProcessCallInfo(List<String> stdout_lines, List<String> stderr_lines, int exit_code) {
       myStdoutLines = stdout_lines;
@@ -109,8 +109,8 @@ public class SdkUtil {
   }
 
   public static class ReadLinesThread implements Runnable {
-    private InputStream myStream;
-    private List<String> my_lines = new ArrayList<String>();
+    private final InputStream myStream;
+    private final List<String> my_lines = new ArrayList<String>();
 
     protected ReadLinesThread(InputStream stream) {
       myStream = stream;

@@ -22,7 +22,7 @@ public class JythonManager {
     return ServiceManager.getService(JythonManager.class);
   }
 
-  private PythonInterpreter myInterpreter;
+  private final PythonInterpreter myInterpreter;
 
   public JythonManager() {
     @NonNls Properties postProperties = new Properties();

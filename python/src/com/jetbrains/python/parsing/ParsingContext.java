@@ -18,10 +18,10 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 
 public class ParsingContext {
-  private StatementParsing stmtParser;
-  private ExpressionParsing expressionParser;
-  private FunctionParsing functionParser;
-  private PsiBuilder myBuilder;
+  private final StatementParsing stmtParser;
+  private final ExpressionParsing expressionParser;
+  private final FunctionParsing functionParser;
+  private final PsiBuilder myBuilder;
 
   public ParsingContext(final PsiBuilder builder) {
     myBuilder = builder;

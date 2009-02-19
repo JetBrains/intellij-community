@@ -15,8 +15,8 @@ public class PythonSdkSelectStep extends ModuleWizardStep {
   protected final PythonSdkChooserPanel myPanel;
   protected final PythonModuleBuilder mySettingsHolder;
 
-  private Icon myIcon;
-  private String myHelp;
+  private final Icon myIcon;
+  private final String myHelp;
 
   public PythonSdkSelectStep(@NotNull final PythonModuleBuilder settingsHolder,
                            @Nullable final Icon icon,

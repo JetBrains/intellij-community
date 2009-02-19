@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * A copy of Ruby's visitor helper.
  */
 public class PyInspectionVisitor extends PyElementVisitor {
-  private ProblemsHolder myHolder;
+  private final ProblemsHolder myHolder;
 
   public PyInspectionVisitor(final ProblemsHolder holder) {
     myHolder = holder;

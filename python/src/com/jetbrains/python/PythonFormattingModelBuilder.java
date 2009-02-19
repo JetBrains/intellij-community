@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PythonFormattingModelBuilder implements FormattingModelBuilder {
-  private static boolean DUMP_FORMATTING_AST = false;
+  private static final boolean DUMP_FORMATTING_AST = false;
 
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {

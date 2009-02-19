@@ -12,8 +12,8 @@ import java.util.List;
 public class PythonFutureAwareLexer extends PythonLexer {
   protected static class PendingToken {
     private IElementType _type;
-    private int _start;
-    private int _end;
+    private final int _start;
+    private final int _end;
 
     public PendingToken(IElementType type, int start, int end) {
       _type = type;

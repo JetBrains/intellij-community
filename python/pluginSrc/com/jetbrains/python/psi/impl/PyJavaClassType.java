@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.types.PyType;
  * @author yole
  */
 public class PyJavaClassType implements PyType {
-  private PsiClass myClass;
+  private final PsiClass myClass;
 
   public PyJavaClassType(final PsiClass aClass) {
     myClass = aClass;

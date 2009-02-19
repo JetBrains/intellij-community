@@ -26,7 +26,7 @@ public class PyBuiltinCache {
     return ServiceManager.getService(project, PyBuiltinCache.class);
   }
 
-  private Project myProject;
+  private final Project myProject;
   private PyFile myBuiltinsFile;
 
   public PyBuiltinCache(final Project project) {

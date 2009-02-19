@@ -306,10 +306,10 @@ public class PyResolveUtil {
   }
 
   public static class ResolveProcessor implements PyScopeProcessor {
-    private String myName;
+    private final String myName;
     private PsiElement myResult = null;
     /*private Set<String> mySeen;*/
-    private List<NameDefiner> myDefiners;
+    private final List<NameDefiner> myDefiners;
 
     public ResolveProcessor(final String name) {
       myName = name;
@@ -415,8 +415,8 @@ public class PyResolveUtil {
   }
 
   public static class MultiResolveProcessor implements PsiScopeProcessor {
-    private String _name;
-    private List<ResolveResult> _results = new ArrayList<ResolveResult>();
+    private final String _name;
+    private final List<ResolveResult> _results = new ArrayList<ResolveResult>();
 
     public MultiResolveProcessor(String name) {
       _name = name;
@@ -452,7 +452,7 @@ public class PyResolveUtil {
   }
 
   public static class VariantsProcessor implements PsiScopeProcessor {
-    private Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
+    private final Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
 
     protected String my_notice;
 

@@ -17,7 +17,7 @@ import java.util.Set;
  * @author yole
  */
 public class PyModuleType implements PyType { // TODO: make it a PyClassType referring to builtins.___module
-  private PsiFile myModule;
+  private final PsiFile myModule;
 
   protected static Set<String> ourPossibleFields;
   static {
