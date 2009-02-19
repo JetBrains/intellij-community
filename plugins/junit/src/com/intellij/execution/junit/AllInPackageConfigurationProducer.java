@@ -18,11 +18,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -40,23 +36,8 @@ public class AllInPackageConfigurationProducer extends JUnitConfigurationProduce
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.PACKAGE_NAME = myPackage.getQualifiedName();
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
-    final RunnerAndConfigurationSettingsImpl template =
-        ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
-    if (data.getScope() != TestSearchScope.WHOLE_PROJECT) {
-      final Module contextModule = context.getModule();
-      final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
-      if (predefinedModule != null) {
-        configuration.setModule(predefinedModule);
-      }
-      else if (contextModule != null) {
-        configuration.setModule(contextModule);
-      }
-      else {
-        data.setScope(TestSearchScope.WHOLE_PROJECT);
-      }
-    }
+    data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
     configuration.setGeneratedName();
-    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 
