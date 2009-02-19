@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,25 +32,29 @@ import javax.swing.*;
 public class StringConcatenationInLoopsInspection extends BaseInspection {
 
     /** @noinspection PublicField */
-    public boolean m_ignoreUnlessAssigned = false;
+    public boolean m_ignoreUnlessAssigned = true;
 
+    @Override
     @NotNull
     public String getID() {
         return "StringContatenationInLoop";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.concatenation.in.loops.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.concatenation.in.loops.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -57,6 +62,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                 this, "m_ignoreUnlessAssigned");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringConcatenationInLoopsVisitor();
     }
@@ -94,7 +100,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             if (containingStatementExits(expression)) {
                 return;
             }
-            if (m_ignoreUnlessAssigned && !isOnRHSOfAssignment(expression)) {
+            if (m_ignoreUnlessAssigned && !isAppendedRepeatedly(expression)) {
                 return;
             }
             registerError(sign);
@@ -111,7 +117,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             if (!tokenType.equals(JavaTokenType.PLUSEQ)) {
                 return;
             }
-            final PsiExpression lhs = expression.getLExpression();
+            PsiExpression lhs = expression.getLExpression();
             final PsiType type = lhs.getType();
             if (type == null) {
                 return;
@@ -127,6 +133,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             }
             if (containingStatementExits(expression)) {
                 return;
+            }
+            if (m_ignoreUnlessAssigned) {
+                while (lhs instanceof PsiParenthesizedExpression) {
+                    final PsiParenthesizedExpression parenthesizedExpression =
+                            (PsiParenthesizedExpression)lhs;
+                    lhs = parenthesizedExpression.getExpression();
+                }
+                if (!(lhs instanceof PsiReferenceExpression)) {
+                    return;
+                }
             }
             registerError(sign);
         }
@@ -218,16 +234,40 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             return false;
         }
 
-        private boolean isOnRHSOfAssignment(PsiExpression expression) {
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiParenthesizedExpression) {
-                return isOnRHSOfAssignment((PsiExpression)parent);
+        private boolean isAppendedRepeatedly(PsiExpression expression) {
+            PsiElement parent = expression.getParent();
+            while (parent instanceof PsiParenthesizedExpression ||
+                    parent instanceof PsiBinaryExpression) {
+                parent = parent.getParent();
             }
-            if (parent instanceof PsiAssignmentExpression) {
+            if (!(parent instanceof PsiAssignmentExpression)) {
+                return false;
+            }
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression)parent;
+            PsiExpression lhs = assignmentExpression.getLExpression();
+            while (lhs instanceof PsiParenthesizedExpression) {
+                final PsiParenthesizedExpression parenthesizedExpression =
+                        (PsiParenthesizedExpression)lhs;
+                lhs = parenthesizedExpression.getExpression();
+            }
+            if (!(lhs instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            if (assignmentExpression.getOperationTokenType() ==
+                    JavaTokenType.PLUSEQ) {
                 return true;
             }
-            return parent instanceof PsiBinaryExpression &&
-                    isOnRHSOfAssignment((PsiExpression) parent);
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)lhs;
+            final PsiElement element = referenceExpression.resolve();
+            if (!(element instanceof PsiVariable)) {
+                return false;
+            }
+            final PsiVariable variable = (PsiVariable)element;
+            final PsiExpression rhs = assignmentExpression.getRExpression();
+            return rhs != null &&
+                    VariableAccessUtils.variableIsUsed(variable, rhs);
         }
     }
 }

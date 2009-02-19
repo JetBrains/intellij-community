@@ -1,9 +1,8 @@
-package com.siyeh.igtest.performance;
+package com.siyeh.igtest.performance.string_concatenation_in_loops;
 
-public class
-        StringConcatenationInLoopInspection
+public class StringConcatenationInLoop
 {
-    public StringConcatenationInLoopInspection()
+    public StringConcatenationInLoop()
     {
     }
 
@@ -36,5 +35,15 @@ public class
     private String baz(String s)
     {
         return s;
+    }
+
+    public void oper() {
+        final String[] array = new String[] { "a", "a", "a" };
+        String s = "asdf";
+        final int len =  array.length;
+        for (int k = 0; k < len; k++) {
+            array[k] += "b";
+            s += k;
+        }
     }
 }
