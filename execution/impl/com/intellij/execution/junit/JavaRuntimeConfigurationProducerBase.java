@@ -1,13 +1,19 @@
 package com.intellij.execution.junit;
 
-import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -52,4 +58,23 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
     return fileIndex.getSourceRootForFile(virtualFile) != null;
   }
 
+  protected TestSearchScope setupPackageConfiguration(ConfigurationContext context, Project project, ModuleBasedConfiguration configuration, TestSearchScope scope) {
+    final RunnerAndConfigurationSettingsImpl template =
+        ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
+    if (scope != TestSearchScope.WHOLE_PROJECT) {
+      final Module contextModule = context.getModule();
+      final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+      if (predefinedModule != null) {
+        configuration.setModule(predefinedModule);
+      }
+      else if (contextModule != null) {
+        configuration.setModule(contextModule);
+      }
+      else {
+        return TestSearchScope.WHOLE_PROJECT;
+      }
+    }
+    copyStepsBeforeRun(project, configuration);
+    return scope;
+  }
 }
