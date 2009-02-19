@@ -638,7 +638,7 @@ public class GroovyAnnotator implements Annotator {
       annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
     }
 
-    if (typeDefinition.getParent() instanceof GrTypeDefinitionBody) {
+    if (typeDefinition.getParent() instanceof GrTypeDefinitionBody && !typeDefinition.isEnum()) {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
     }
 
