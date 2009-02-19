@@ -27,7 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
@@ -111,6 +111,7 @@ public abstract class DialogWrapper {
   };
   private ErrorText myErrorText;
 
+  private Alarm myErrorTextAlarm = new Alarm();
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -655,43 +656,71 @@ public abstract class DialogWrapper {
 
   protected void init() {
     myErrorText = new ErrorText();
+    myErrorText.setVisible(false);
+
+    final JPanel root = new JPanel(new BorderLayout());
+    myPeer.setContentPane(root);
+
+    final JPanel northSection = new JPanel(new BorderLayout());
+    root.add(northSection, BorderLayout.NORTH);
 
     JComponent titlePane = createTitlePane();
-    JComponent contentPane = createContentPane();
     if (titlePane != null) {
-      JPanel newContent = new JPanel(new BorderLayout());
-      newContent.add(titlePane, BorderLayout.NORTH);
-      newContent.add(contentPane, BorderLayout.CENTER);
-      myPeer.setContentPane(newContent);
-    }
-    else {
-      myPeer.setContentPane(contentPane);
-    }
-    contentPane.setLayout(new BorderLayout());
-    Border contentPaneBorder = createContentPaneBorder();
-//    if (contentPaneBorder != null) {
-    contentPane.setBorder(contentPaneBorder);
-//    }
-    JComponent northPanel = createNorthPanel();
-    if (northPanel != null) {
-      contentPane.add(northPanel, BorderLayout.NORTH);
-    }
-    JComponent centerPanel = createCenterPanel();
-    if (centerPanel != null) {
-      contentPane.add(centerPanel, BorderLayout.CENTER);
-    }
-    JComponent southPanel = createSouthPanel();
-
-    final NonOpaquePanel southWrapper = new NonOpaquePanel(new BorderLayout());
-    southWrapper.add(myErrorText, BorderLayout.CENTER);
-
-    if (southPanel != null) {
-      southWrapper.add(southPanel, BorderLayout.SOUTH);
+      northSection.add(titlePane, BorderLayout.CENTER);
     }
 
-    contentPane.add(southWrapper, BorderLayout.SOUTH);
+    JComponent centerSection = new JPanel(new BorderLayout());
+    root.add(centerSection, BorderLayout.CENTER);
 
-    new MnemonicHelper().register(contentPane);
+    root.setBorder(createContentPaneBorder());
+
+    final JComponent n = createNorthPanel();
+    if (n != null) {
+      centerSection.add(wrap(n, isNorthStrictedToPreferredSize()), BorderLayout.NORTH);
+    }
+
+    final JComponent c = createCenterPanel();
+    if (c != null) {
+      centerSection.add(wrap(c, isCenterStrictedToPreferredSize()), BorderLayout.CENTER);
+    }
+
+    final JPanel southSection = new JPanel(new BorderLayout());
+    root.add(southSection, BorderLayout.SOUTH);
+
+    southSection.add(myErrorText, BorderLayout.CENTER);
+    final JComponent south = createSouthPanel();
+    if (south != null) {
+      southSection.add(wrap(south, isSouthStrictedToPreferredSize()), BorderLayout.SOUTH);
+    }
+
+    new MnemonicHelper().register(centerSection);
+  }
+
+  private static JComponent wrap(final JComponent c, boolean strict) {
+    if (!strict) return c;
+
+    final JPanel wrapper = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getMinimumSize() {
+        return getComponentCount() == 1 ? getComponent(0).getPreferredSize() : super.getMinimumSize();
+      }
+    };
+
+    wrapper.add(c, BorderLayout.CENTER);
+
+    return wrapper;
+  }
+
+  protected boolean isNorthStrictedToPreferredSize() {
+    return true;
+  }
+
+  protected boolean isCenterStrictedToPreferredSize() {
+    return false;
+  }
+
+  protected boolean isSouthStrictedToPreferredSize() {
+    return true;
   }
 
   protected JComponent createContentPane() {
@@ -1021,10 +1050,15 @@ public abstract class DialogWrapper {
     }
   }
 
-  protected final void setErrorText(@Nullable String text) {
-    myErrorText.setError(text);
-    updateHeightForErrorText();
-    myErrorText.repaint();
+  protected final void setErrorText(@Nullable final String text) {
+    myErrorTextAlarm.cancelAllRequests();
+    myErrorTextAlarm.addRequest(new Runnable() {
+      public void run() {
+        myErrorText.setError(text);
+        updateHeightForErrorText();
+        myErrorText.repaint();
+      }
+    }, 300);
   }
 
   private void updateHeightForErrorText() {
@@ -1042,26 +1076,29 @@ public abstract class DialogWrapper {
 
     public ErrorText() {
       setLayout(new BorderLayout());
-      setBorder(null);
       UIUtil.removeQuaquaVisualMarginsIn(this);
       add(myLabel, BorderLayout.CENTER);
     }
 
     public void setError(String text) {
+      final Dimension oldSize = getPreferredSize();
+
       if (text == null) {
         myLabel.setText("");
         myLabel.setIcon(null);
-        setBorder(null);
+        setVisible(false);
       }
       else {
         myLabel.setText("<html><body><font color=red><left>" + text + "</left></b></font></body></html>");
         myLabel.setIcon(IconLoader.getIcon("/actions/lightning.png"));
-        myLabel.setBorder(new EmptyBorder(2, 2, 0, 0));
-        if (myPrefSize == null) {
-          myPrefSize = myLabel.getPreferredSize();
-        }
+        myLabel.setBorder(new EmptyBorder(4, 10, 0, 2));
+        setVisible(true);
       }
-      revalidate();
+
+      final Dimension size = getPreferredSize();
+      if (oldSize.height < size.height) {
+        revalidate();
+      }
     }
 
     public Dimension getPreferredSize() {

@@ -34,7 +34,6 @@ public class IdeBorderFactory {
   }
 
   public static Border createBorder() {
-    //return BorderFactory.createEtchedBorder();
     return new RoundedLineBorder(Color.GRAY, 5);
   }
 
