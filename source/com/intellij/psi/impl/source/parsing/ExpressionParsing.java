@@ -36,9 +36,9 @@ public class ExpressionParsing extends Parsing {
     expression.putUserData(CharTable.CHAR_TABLE_KEY, table);
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(expression, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     dummyRoot.rawAddChildren(expression);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     return expression;
   }
 
