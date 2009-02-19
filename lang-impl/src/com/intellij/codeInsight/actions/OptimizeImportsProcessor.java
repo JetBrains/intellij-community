@@ -37,7 +37,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   @NotNull
   protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException {
-    final ImportOptimizer optimizer = LanguageImportStatements.INSTANCE.forLanguage(file.getLanguage());
+    final ImportOptimizer optimizer = LanguageImportStatements.INSTANCE.forFile(file);
     return optimizer != null ? optimizer.processFile(file) : EmptyRunnable.getInstance();
   }
 }

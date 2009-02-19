@@ -88,7 +88,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   private void updateState() {
     myCbIncludeSubdirs.setEnabled(myRbDirectory.isSelected());
     myCbOptimizeImports.setEnabled(
-      !myRbSelectedText.isSelected() && !(myFile != null && LanguageImportStatements.INSTANCE.forLanguage(myFile.getLanguage()) == null && myRbFile.isSelected()));
+      !myRbSelectedText.isSelected() && !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile) == null && myRbFile.isSelected()));
   }
 
   protected JComponent createNorthPanel() {

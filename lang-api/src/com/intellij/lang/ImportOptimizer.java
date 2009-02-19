@@ -20,8 +20,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implementors of the inteface encapsulate optimize imports process for the language.
+ * Implementors of the interface encapsulate optimize imports process for the language.
  * @author max
+ * @see ImportOptimizer2
  */
 public interface ImportOptimizer {
   /**

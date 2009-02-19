@@ -158,6 +158,6 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   private static boolean isOptimizeImportsAvailable(final PsiFile file) {
-    return LanguageImportStatements.INSTANCE.forLanguage(file.getLanguage()) != null;
+    return LanguageImportStatements.INSTANCE.forFile(file) != null;
   }
 }
