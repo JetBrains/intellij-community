@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 class DeleteNodesAction implements Runnable {
-  private ArrayList elements;
+  private final ArrayList elements;
 
   DeleteNodesAction(ArrayList _elements) {
     elements = _elements;

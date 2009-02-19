@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CollectingMatchResultSink implements MatchResultSink {
-  private List<MatchResult> matches = new LinkedList<MatchResult>();
+  private final List<MatchResult> matches = new LinkedList<MatchResult>();
 
   public void newMatch(MatchResult result) {
     matches.add(result);

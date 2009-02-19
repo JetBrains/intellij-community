@@ -12,7 +12,7 @@ import com.intellij.structuralsearch.plugin.ui.*;
 public final class StructuralSearchPlugin implements ProjectComponent, JDOMExternalizable {
   private boolean searchInProgress;
   private boolean replaceInProgress;
-  private ConfigurationManager myConfigurationManager = new ConfigurationManager();
+  private final ConfigurationManager myConfigurationManager = new ConfigurationManager();
   private ExistingTemplatesComponent myExistingTemplatesComponent;
 
   public boolean isSearchInProgress() {

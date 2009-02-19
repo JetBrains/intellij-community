@@ -31,11 +31,11 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class SelectTemplateDialog extends DialogWrapper {
-  private boolean showHistory;
+  private final boolean showHistory;
   private Editor searchPatternEditor;
   private Editor replacePatternEditor;
-  private boolean replace;
-  private Project project;
+  private final boolean replace;
+  private final Project project;
   private final ExistingTemplatesComponent existingTemplatesComponent;
 
   private MySelectionListener selectionListener;

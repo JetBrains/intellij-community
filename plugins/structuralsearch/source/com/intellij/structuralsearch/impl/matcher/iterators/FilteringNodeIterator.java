@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
  */
 public final class FilteringNodeIterator extends NodeIterator {
   private NodeIterator delegate;
-  private NodeFilter filter = LexicalNodesFilter.getInstance();
+  private final NodeFilter filter = LexicalNodesFilter.getInstance();
 
   private void advanceToNext() {
     while (delegate.hasNext() && filter.accepts(delegate.current())) {

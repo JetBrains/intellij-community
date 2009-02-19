@@ -109,7 +109,7 @@ public abstract class CompiledPattern {
     }
   }
 
-  private HashMap<Object,MatchingHandler> handlers = new HashMap<Object,MatchingHandler>();
+  private final HashMap<Object,MatchingHandler> handlers = new HashMap<Object,MatchingHandler>();
 
   public MatchingHandler getHandlerSimple(PsiElement node) {
     return handlers.get(node);

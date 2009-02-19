@@ -8,7 +8,7 @@ package com.intellij.structuralsearch.plugin.ui;
  * To change this template use File | Settings | File Templates.
  */
 public class SearchModel {
-  private Configuration config;
+  private final Configuration config;
   private Configuration shadowConfig;
 
   public SearchModel(Configuration config) {

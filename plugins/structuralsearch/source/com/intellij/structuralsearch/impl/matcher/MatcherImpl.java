@@ -53,9 +53,9 @@ public class MatcherImpl {
   private boolean isTesting;
 
   // visitor to delegate the real work
-  private MatchingVisitor visitor = new MatchingVisitor();
+  private final MatchingVisitor visitor = new MatchingVisitor();
   private ProgressIndicator progress;
-  private TaskScheduler scheduler = new TaskScheduler();
+  private final TaskScheduler scheduler = new TaskScheduler();
 
   private int totalFilesToScan;
   private int scannedFilesCount;
@@ -441,7 +441,7 @@ public class MatcherImpl {
     private Runnable taskQueueEndAction;
 
     private boolean suspended;
-    private LinkedList<Runnable> tempList = new LinkedList<Runnable>();
+    private final LinkedList<Runnable> tempList = new LinkedList<Runnable>();
 
     public LinkedList<Runnable> getTempList() {
       return tempList;

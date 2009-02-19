@@ -14,8 +14,8 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
  * To change this template use File | Settings | File Templates.
  */
 public class ExprTypePredicate extends MatchPredicate {
-  private RegExpPredicate delegate;
-  private boolean withinHierarchy;
+  private final RegExpPredicate delegate;
+  private final boolean withinHierarchy;
 
   public ExprTypePredicate(String type, String baseName, boolean _withinHierarchy, boolean caseSensitiveMatch,boolean target) {
     delegate = new RegExpPredicate(type,caseSensitiveMatch,baseName,false,target);

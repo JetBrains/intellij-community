@@ -21,14 +21,14 @@ import java.util.regex.PatternSyntaxException;
  */
 public final class RegExpPredicate extends MatchPredicate {
   private Pattern pattern;
-  private String baseHandlerName;
+  private final String baseHandlerName;
   private boolean simpleString;
-  private boolean couldBeOptimized;
-  private String regexp;
-  private boolean caseSensitive;
+  private final boolean couldBeOptimized;
+  private final String regexp;
+  private final boolean caseSensitive;
   private boolean multiline;
-  private boolean wholeWords;
-  private boolean target;
+  private final boolean wholeWords;
+  private final boolean target;
   private NodeTextGenerator myNodeTextGenerator;
 
   public interface NodeTextGenerator {

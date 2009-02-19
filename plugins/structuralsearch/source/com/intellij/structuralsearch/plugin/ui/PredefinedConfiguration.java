@@ -23,8 +23,8 @@ public class PredefinedConfiguration extends Configuration {
 
   private static PredefinedConfiguration[] infos;
 
-  private Configuration configuration;
-  private String category;
+  private final Configuration configuration;
+  private final String category;
   static final Object USER_DEFINED_TYPE = SSRBundle.message("user.defined.category");
 
   private PredefinedConfiguration(Configuration configuration, String category) {

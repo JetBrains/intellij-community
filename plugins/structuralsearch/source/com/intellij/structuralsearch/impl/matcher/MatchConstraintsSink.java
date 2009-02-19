@@ -14,13 +14,13 @@ import java.util.HashMap;
  * Sink to detect
  */
 class MatchConstraintsSink implements MatchResultSink {
-  private MatchResultSink delegate;
+  private final MatchResultSink delegate;
   private MatchingProcess process;
-  private boolean distinct;
-  private boolean caseSensitive;
+  private final boolean distinct;
+  private final boolean caseSensitive;
   private int matchCount;
-  private int maxMatches;
-  private HashMap matches = new HashMap();
+  private final int maxMatches;
+  private final HashMap matches = new HashMap();
 
   MatchConstraintsSink(MatchResultSink _delegate, int _maxMatches,boolean distinct, boolean _caseSensitive) {
     delegate = _delegate;

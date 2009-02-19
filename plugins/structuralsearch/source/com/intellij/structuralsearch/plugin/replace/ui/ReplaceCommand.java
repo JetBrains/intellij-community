@@ -15,7 +15,7 @@ import com.intellij.usages.Usage;
  * To change this template use File | Settings | File Templates.
  */
 public class ReplaceCommand extends SearchCommand {
-  private ReplaceOptions options;
+  private final ReplaceOptions options;
 
   public ReplaceCommand(Project project, ReplaceUsageViewContext context) {
     super( project, context );

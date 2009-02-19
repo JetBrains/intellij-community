@@ -22,8 +22,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   private static final TooltipGroup SS_INFO_TOOLTIP_GROUP = new TooltipGroup("SS_INFO_TOOLTIP_GROUP", 0);
 
   private long modificationTimeStamp;
-  private ArrayList<Variable> variables = new ArrayList<Variable>();
-  private Editor editor;
+  private final ArrayList<Variable> variables = new ArrayList<Variable>();
+  private final Editor editor;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
 
   SubstitutionShortInfoHandler(Editor _editor) {

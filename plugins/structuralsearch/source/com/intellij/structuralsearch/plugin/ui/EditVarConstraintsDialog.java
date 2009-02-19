@@ -64,10 +64,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JCheckBox partOfSearchResults;
   private JCheckBox notExprType;
   private EditorTextField regexprForExprType;
-  private SearchModel model;
+  private final SearchModel model;
   private JCheckBox exprTypeWithinHierarchy;
 
-  private List<Variable> variables;
+  private final List<Variable> variables;
   private Variable current;
   private JCheckBox wholeWordsOnly;
   private JCheckBox formalArgTypeWithinHierarchy;
@@ -513,7 +513,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private static class EditScriptDialog extends DialogWrapper {
-    private Editor editor;
+    private final Editor editor;
     private JPanel myPanel;
 
     public EditScriptDialog(final Project project, String text) {

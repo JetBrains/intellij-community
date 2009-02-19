@@ -7,7 +7,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
  * Search handler for symbol search
  */
 public class SymbolHandler extends MatchingHandler {
-  private SubstitutionHandler handler;
+  private final SubstitutionHandler handler;
 
   public SymbolHandler(SubstitutionHandler handler) {
     this.handler = handler;

@@ -21,7 +21,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private THashMap<PsiFile,PsiFile> filesToScan;
   private THashMap<PsiFile,PsiFile> filesToScan2;
 
-  private boolean findMatchingFiles;
+  private final boolean findMatchingFiles;
 
   FindInFilesOptimizingSearchHelper(CompileContext _context, boolean _findMatchngFiles, Project project) {
     super(_context);

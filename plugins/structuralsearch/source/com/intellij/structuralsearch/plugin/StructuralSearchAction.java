@@ -9,7 +9,7 @@ import com.intellij.structuralsearch.plugin.ui.SearchDialog;
 
 public class StructuralSearchAction extends AnAction {
   // context of the search
-  private SearchContext searchContext = new SearchContext();
+  private final SearchContext searchContext = new SearchContext();
 
   public StructuralSearchAction() {
     super(SSRBundle.message("structuralsearch.action"));

@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class MatchContext {
   private MatchResultSink sink;
-  private LinkedList<MatchResultImpl> previousResults = new LinkedList<MatchResultImpl>();
+  private final LinkedList<MatchResultImpl> previousResults = new LinkedList<MatchResultImpl>();
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;

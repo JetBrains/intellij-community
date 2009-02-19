@@ -29,15 +29,15 @@ import java.util.LinkedList;
  * To change this template use File | Settings | File Templates.
  */
 public class ExistingTemplatesComponent {
-  private Tree patternTree;
-  private DefaultTreeModel patternTreeModel;
-  private DefaultMutableTreeNode userTemplatesNode;
-  private JComponent panel;
-  private DefaultListModel historyModel;
-  private JList historyList;
-  private JComponent historyPanel;
+  private final Tree patternTree;
+  private final DefaultTreeModel patternTreeModel;
+  private final DefaultMutableTreeNode userTemplatesNode;
+  private final JComponent panel;
+  private final DefaultListModel historyModel;
+  private final JList historyList;
+  private final JComponent historyPanel;
   private DialogWrapper owner;
-  private Project project;
+  private final Project project;
 
   private ExistingTemplatesComponent(Project project) {
 

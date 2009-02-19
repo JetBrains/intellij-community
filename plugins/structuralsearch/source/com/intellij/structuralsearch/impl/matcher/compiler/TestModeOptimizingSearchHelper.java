@@ -10,7 +10,7 @@ import java.util.Set;
  */
 public class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private static String lastString;
-  private StringBuilder builder = new StringBuilder();
+  private final StringBuilder builder = new StringBuilder();
   private int lastLength;
 
   TestModeOptimizingSearchHelper(CompileContext _context) {

@@ -37,7 +37,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ReplacerImpl {
-  private Project project;
+  private final Project project;
   private ReplacementBuilder replacementBuilder;
   private ReplaceOptions options;
   private ReplacementContext context;

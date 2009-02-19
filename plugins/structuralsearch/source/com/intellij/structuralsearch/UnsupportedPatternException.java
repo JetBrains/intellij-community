@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls;
  * Exception about encountering yet unsupported pattern event.
  */
 public class UnsupportedPatternException extends RuntimeException {
-  private String pattern;
+  private final String pattern;
 
   public UnsupportedPatternException(String _pattern) {
     pattern = _pattern;

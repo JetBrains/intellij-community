@@ -8,8 +8,8 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
  */
 public final class CountingNodeIterator extends NodeIterator {
   private int index;
-  private int max;
-  private NodeIterator delegate;
+  private final int max;
+  private final NodeIterator delegate;
 
   public CountingNodeIterator(int _max, NodeIterator _iterator) {
     max = _max;
