@@ -178,6 +178,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitHandler.RM);
     handler.setNoSSH(true);
     handler.addParameters("--cached");
+    handler.addParameters("-f");
     handler.endOptions();
     handler.addRelativePaths(files);
     handler.run();
