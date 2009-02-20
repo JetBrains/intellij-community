@@ -19,6 +19,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private Balloon.Position myPrefferedPosition = Balloon.Position.below;
 
   boolean myShowCalllout = true;
+  private boolean myCloseButtonEnabled;
 
   public BalloonPopupBuilderImpl(@NotNull final JComponent content) {
     myContent = content;
@@ -62,6 +63,12 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   public Balloon createBalloon() {
-    return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myShowCalllout);
+    return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myShowCalllout, myCloseButtonEnabled);
+  }
+
+  @NotNull
+  public BalloonBuilder setCloseButtonEnabled(boolean enabled) {
+    myCloseButtonEnabled = enabled;
+    return this;
   }
 }

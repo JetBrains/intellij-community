@@ -25,6 +25,9 @@ public interface BalloonBuilder {
   BalloonBuilder setShowCallout(boolean show);
 
   @NotNull
+  BalloonBuilder setCloseButtonEnabled(boolean enabled);
+
+  @NotNull
   Balloon createBalloon();
 
 }

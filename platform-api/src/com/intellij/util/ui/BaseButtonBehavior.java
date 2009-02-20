@@ -80,26 +80,31 @@ public abstract class BaseButtonBehavior {
     myMouseDeadzone.setLength(deadZone);
   }
 
+  protected void repaintComponent() {
+    myComponent.repaint();
+  }
+
   private class MyMouseListener extends MouseAdapter {
     public void mouseEntered(MouseEvent e) {
       myMouseDeadzone.reEnter();
 
       setHovered(true);
-      myComponent.repaint();
+      repaintComponent();
     }
 
     public void mouseExited(MouseEvent e) {
       myMouseDeadzone.clear();
 
       setHovered(false);
-      myComponent.repaint();
+      repaintComponent();
     }
 
     public void mousePressed(MouseEvent e) {
       if (passIfNeeded(e)) return;
 
       setPressedByMouse(true);
-      myComponent.repaint();
+
+      repaintComponent();
     }
 
 
@@ -111,6 +116,8 @@ public abstract class BaseButtonBehavior {
       Point point = e.getPoint();
       if (point.x < 0 || point.x > myComponent.getWidth()) return;
       if (point.y < 0 || point.y > myComponent.getHeight()) return;
+
+      repaintComponent();
 
       execute(e);
     }
