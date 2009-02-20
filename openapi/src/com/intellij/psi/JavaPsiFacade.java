@@ -30,6 +30,10 @@ public abstract class JavaPsiFacade {
     ResolveState.defaultsTo(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY);
   }
 
+  public static PsiElementFactory getElementFactory(@NotNull Project project) {
+    return getInstance(project).getElementFactory();
+  }
+
   /**
    * Searches the project and all its libraries for a class with the specified full-qualified
    * name and returns one if it is found.
