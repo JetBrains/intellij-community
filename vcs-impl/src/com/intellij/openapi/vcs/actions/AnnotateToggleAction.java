@@ -169,9 +169,9 @@ public class AnnotateToggleAction extends ToggleAction {
     private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
     private final FileAnnotation myAnnotation;
     private final Editor myEditor;
-    private LineAnnotationAspect myAspect;
+    private final LineAnnotationAspect myAspect;
     private final HighlightAnnotationsActions myHighlighting;
-    private AnnotationListener myListener;
+    private final AnnotationListener myListener;
 
     public AnnotationFieldGutter(UpToDateLineNumberProvider getUpToDateLineNumber,
                                  FileAnnotation annotation,

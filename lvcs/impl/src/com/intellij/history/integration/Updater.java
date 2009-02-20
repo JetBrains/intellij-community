@@ -16,11 +16,11 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Updater implements CacheUpdater {
-  private LocalVcs myVcs;
-  private IdeaGateway myGateway;
-  private VirtualFile[] myVfsRoots;
+  private final LocalVcs myVcs;
+  private final IdeaGateway myGateway;
+  private final VirtualFile[] myVfsRoots;
 
-  private CacheUpdaterProcessor myProcessor;
+  private final CacheUpdaterProcessor myProcessor;
 
   public Updater(LocalVcs vcs, IdeaGateway gw) {
     myVcs = vcs;

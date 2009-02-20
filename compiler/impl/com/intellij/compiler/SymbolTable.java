@@ -20,8 +20,8 @@ public class SymbolTable {
 
   // both caches should have equal size
   private static final int STRING_CACHE_SIZE = 0x4000;
-  private IntObjectCache<String> myIndexStringCache = new IntObjectCache<String>(STRING_CACHE_SIZE);
-  private ObjectIntCache<String> myStringIndexCache = new ObjectIntCache<String>(STRING_CACHE_SIZE);
+  private final IntObjectCache<String> myIndexStringCache = new IntObjectCache<String>(STRING_CACHE_SIZE);
+  private final ObjectIntCache<String> myStringIndexCache = new ObjectIntCache<String>(STRING_CACHE_SIZE);
 
   public SymbolTable(File file) throws CacheCorruptedException {
     try {

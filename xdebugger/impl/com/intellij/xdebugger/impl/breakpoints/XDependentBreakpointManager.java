@@ -14,10 +14,10 @@ import java.util.*;
  * @author nik
  */
 public class XDependentBreakpointManager {
-  private Map<XBreakpointBase,  XDependentBreakpointInfo> mySlave2Info = new HashMap<XBreakpointBase, XDependentBreakpointInfo>();
-  private MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo> myMaster2Info = new MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo>();
-  private XBreakpointManagerImpl myBreakpointManager;
-  private EventDispatcher<XDependentBreakpointListener> myDispatcher;
+  private final Map<XBreakpointBase,  XDependentBreakpointInfo> mySlave2Info = new HashMap<XBreakpointBase, XDependentBreakpointInfo>();
+  private final MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo> myMaster2Info = new MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo>();
+  private final XBreakpointManagerImpl myBreakpointManager;
+  private final EventDispatcher<XDependentBreakpointListener> myDispatcher;
 
   public XDependentBreakpointManager(final XBreakpointManagerImpl breakpointManager) {
     myBreakpointManager = breakpointManager;
@@ -163,7 +163,7 @@ public class XDependentBreakpointManager {
 
   private static class XDependentBreakpointInfo {
     private XBreakpointBase myMasterBreakpoint;
-    private XBreakpointBase mySlaveBreakpoint;
+    private final XBreakpointBase mySlaveBreakpoint;
     private boolean myLeaveEnabled;
 
     private XDependentBreakpointInfo(final @NotNull XBreakpointBase masterBreakpoint, final XBreakpointBase slaveBreakpoint, final boolean leaveEnabled) {

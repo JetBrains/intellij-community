@@ -12,8 +12,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class StackTraceLine {
-  private Project myProject;
-  private String myLine;
+  private final Project myProject;
+  private final String myLine;
   @NonNls
   protected static final String AT_STR = "at";
   protected static final String AT__STR = AT_STR + " ";

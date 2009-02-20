@@ -22,7 +22,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private TestResultsViewer myResultsViewer;
 
   private class MyConsoleView extends SMTRunnerConsoleView {
-    private TestsOutputConsolePrinter myTestsOutputConsolePrinter;
+    private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
     private MyConsoleView(final TestConsoleProperties consoleProperties, final TestResultsViewer resultsViewer) {
       super(consoleProperties, resultsViewer);

@@ -299,8 +299,8 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   }
 
   private final class MyTabGroupProperty extends ReadOnlyProperty {
-    private int myIndex;
-    private LabelPropertyRenderer myRenderer = new LabelPropertyRenderer("");
+    private final int myIndex;
+    private final LabelPropertyRenderer myRenderer = new LabelPropertyRenderer("");
 
     public MyTabGroupProperty(final int index) {
       super(null, "Tab");
@@ -651,7 +651,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private final class InsertTabDropLocation implements ComponentDropLocation {
     private int myInsertIndex;
     private String myInsertBeforeId;
-    private Rectangle myFeedbackRect;
+    private final Rectangle myFeedbackRect;
 
     public InsertTabDropLocation(final int insertIndex, final Rectangle feedbackRect) {
       myInsertIndex = insertIndex;

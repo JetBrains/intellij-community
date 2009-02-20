@@ -18,7 +18,7 @@ import java.awt.*;
  */
 public class EditInstanceFiltersDialog extends DialogWrapper{
   private InstanceFilterEditor myInstanceFilterEditor;
-  private Project myProject;
+  private final Project myProject;
 
   public EditInstanceFiltersDialog (Project project) {
     super(project, true);

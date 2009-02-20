@@ -45,7 +45,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   // icons
   public static Icon ICON = DebuggerIcons.ENABLED_BREAKPOINT_ICON;
   public static final Icon DISABLED_ICON = DebuggerIcons.DISABLED_BREAKPOINT_ICON;
-  private static Icon ourVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
+  private static final Icon ourVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
 
   private String myMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");

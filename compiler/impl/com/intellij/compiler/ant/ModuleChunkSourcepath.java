@@ -23,8 +23,8 @@ import java.util.ArrayList;
  *         Date: Nov 22, 2004
  */
 public class ModuleChunkSourcepath extends CompositeGenerator{
-  private VirtualFile[] mySourceRoots;
-  private VirtualFile[] myTestSourceRoots;
+  private final VirtualFile[] mySourceRoots;
+  private final VirtualFile[] myTestSourceRoots;
 
   public ModuleChunkSourcepath(final Project project, ModuleChunk chunk, final GenerationOptions genOptions) {
     final Path sourcepath = new Path(BuildProperties.getSourcepathProperty(chunk.getName()));

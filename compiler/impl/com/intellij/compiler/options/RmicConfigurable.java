@@ -21,7 +21,7 @@ public class RmicConfigurable implements Configurable{
   private JCheckBox myCbDebuggingInfo;
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
-  private RmicSettings myRmicSettings;
+  private final RmicSettings myRmicSettings;
   private JLabel myFieldLabel;
 
   public RmicConfigurable(final RmicSettings javacSettings) {

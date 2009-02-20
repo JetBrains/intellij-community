@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InMemoryStorage extends Storage {
-  private Map<Integer, byte[]> myContents = new HashMap<Integer, byte[]>();
+  private final Map<Integer, byte[]> myContents = new HashMap<Integer, byte[]>();
 
   public InMemoryStorage() {
     super(null);

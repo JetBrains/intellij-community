@@ -10,7 +10,7 @@ import com.intellij.psi.PsiReturnStatement;
  * @author max
  */
 public class CheckReturnValueInstruction extends Instruction {
-  private PsiReturnStatement myReturn;
+  private final PsiReturnStatement myReturn;
 
   public CheckReturnValueInstruction(final PsiReturnStatement aReturn) {
     myReturn = aReturn;

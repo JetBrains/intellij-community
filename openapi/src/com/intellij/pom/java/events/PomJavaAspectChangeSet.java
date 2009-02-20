@@ -27,7 +27,7 @@ import java.util.List;
 
 public class PomJavaAspectChangeSet implements PomChangeSet{
   private final PomModel myModel;
-  private List<PomJavaChange> myChanges = new ArrayList<PomJavaChange>();
+  private final List<PomJavaChange> myChanges = new ArrayList<PomJavaChange>();
   private final PsiFile myChangedFile;
 
 

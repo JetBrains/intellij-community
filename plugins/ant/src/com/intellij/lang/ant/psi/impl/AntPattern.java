@@ -52,9 +52,9 @@ public class AntPattern extends AntElementVisitor {
     );
   }
 
-  private List<Pattern> myIncludePatterns = new ArrayList<Pattern>(); 
-  private List<Pattern> myExcludePatterns = new ArrayList<Pattern>();
-  private List<PrefixItem[]> myCouldBeIncludedPatterns = new ArrayList<PrefixItem[]>();
+  private final List<Pattern> myIncludePatterns = new ArrayList<Pattern>();
+  private final List<Pattern> myExcludePatterns = new ArrayList<Pattern>();
+  private final List<PrefixItem[]> myCouldBeIncludedPatterns = new ArrayList<PrefixItem[]>();
   
   AntPattern(final boolean caseSensitive) {
     myCaseSensitive = caseSensitive;

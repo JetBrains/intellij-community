@@ -63,8 +63,8 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   private final ArrayList<GroupItem> myGroups;
   /*Listeners, etc*/
   private final ArrayList<Listener> myListeners;
-  private Project myProject;
-  private GroupItem mySpecialGroup = new GroupItem(true);
+  private final Project myProject;
+  private final GroupItem mySpecialGroup = new GroupItem(true);
 
   /**
    * Predefined item for javax.swing.JPanel

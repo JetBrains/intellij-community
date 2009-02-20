@@ -85,7 +85,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   private final TableView myList;
   protected final List<VcsFileRevision> myRevisions;
-  private Splitter mySplitter;
+  private final Splitter mySplitter;
   private final VirtualFile myFile;
   private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
   private final Map<VcsFileRevision, String> myCachedContents = new com.intellij.util.containers.HashMap<VcsFileRevision, String>();

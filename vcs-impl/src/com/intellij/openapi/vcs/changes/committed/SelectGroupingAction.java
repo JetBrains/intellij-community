@@ -6,7 +6,7 @@ import javax.swing.*;
  * @author yole
  */
 public class SelectGroupingAction extends LabeledComboBoxAction {
-  private CommittedChangesTreeBrowser myBrowser;
+  private final CommittedChangesTreeBrowser myBrowser;
 
   public SelectGroupingAction(final CommittedChangesTreeBrowser browser) {
     super("Group by");

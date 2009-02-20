@@ -24,7 +24,7 @@ public class ButtonGroupPropertiesPanel implements CustomPropertiesPanel {
   private JPanel myPanel;
   private final RadRootContainer myRootContainer;
   private final RadButtonGroup myGroup;
-  private CopyOnWriteArrayList<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
+  private final CopyOnWriteArrayList<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
 
   public ButtonGroupPropertiesPanel(final RadRootContainer rootContainer, final RadButtonGroup group) {
     myRootContainer = rootContainer;

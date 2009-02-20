@@ -12,8 +12,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
 public class PutLabelDialog extends DialogWrapper {
-  private IdeaGateway myGateway;
-  private VirtualFile myFile;
+  private final IdeaGateway myGateway;
+  private final VirtualFile myFile;
 
   private JTextField myNameField;
   private JRadioButton myProjectButton;

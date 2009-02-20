@@ -27,7 +27,7 @@ import java.util.Enumeration;
  * @author yole
  */
 public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
-  private FontRenderer myFontRenderer = new FontRenderer();
+  private final FontRenderer myFontRenderer = new FontRenderer();
   private FontEditor myFontEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroFontProperty_";
 

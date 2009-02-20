@@ -237,8 +237,8 @@ public class RadBorderLayoutManager extends RadLayoutManager {
   }
 
   private static class MyDropLocation implements ComponentDropLocation {
-    private RadContainer myContainer;
-    private String myQuadrant;
+    private final RadContainer myContainer;
+    private final String myQuadrant;
 
     public MyDropLocation(final RadContainer container, final String quadrant) {
       myQuadrant = quadrant;

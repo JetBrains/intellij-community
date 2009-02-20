@@ -14,7 +14,7 @@ import java.util.Iterator;
  * @author Eugene Belyaev
  */
 public class ThreadsViewConfigurable extends BaseConfigurable {
-  private ThreadsViewSettings mySettings;
+  private final ThreadsViewSettings mySettings;
   private JPanel myPanel;
   private JCheckBox myShowGroupsCheckBox;
   private JCheckBox myLineNumberCheckBox;
@@ -22,7 +22,7 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
   private JCheckBox mySourceCheckBox;
   private JCheckBox myShowSyntheticsCheckBox;
   private JCheckBox myShowCurrentThreadChechBox;
-  private CompositeDataBinding myDataBinding = new CompositeDataBinding();
+  private final CompositeDataBinding myDataBinding = new CompositeDataBinding();
 
   public ThreadsViewConfigurable(ThreadsViewSettings settings) {
     mySettings = settings;

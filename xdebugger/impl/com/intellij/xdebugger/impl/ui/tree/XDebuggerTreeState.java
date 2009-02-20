@@ -16,7 +16,7 @@ import java.util.Map;
  * @author nik
  */
 public class XDebuggerTreeState {
-  private NodeInfo myRootInfo;
+  private final NodeInfo myRootInfo;
   private Rectangle myLastVisibleNodeRect;
 
   private XDebuggerTreeState(@NotNull XDebuggerTree tree) {
@@ -75,10 +75,10 @@ public class XDebuggerTreeState {
   }
 
   public static class NodeInfo {
-    private String myName;
-    private String myValue;
+    private final String myName;
+    private final String myValue;
     private boolean myExpanded;
-    private boolean mySelected;
+    private final boolean mySelected;
     private Map<String, NodeInfo> myChidlren;
 
     public NodeInfo(final String name, final String value, boolean selected) {

@@ -10,9 +10,9 @@ import com.intellij.openapi.diagnostic.Logger;
  */
 public class RemoteRepositoryInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.libraries.RemoteRepositoryInfo");
-  private String myId;
-  private String myPresentableName;
-  private String[] myMirrors;
+  private final String myId;
+  private final String myPresentableName;
+  private final String[] myMirrors;
 
   public RemoteRepositoryInfo(@NotNull @NonNls String id, final @NotNull @Nls String presentableName, final @NotNull @NonNls String[] mirrors) {
     myId = id;

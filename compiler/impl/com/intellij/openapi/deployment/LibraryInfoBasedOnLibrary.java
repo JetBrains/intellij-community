@@ -20,7 +20,7 @@ import java.util.Arrays;
 */
 class LibraryInfoBasedOnLibrary implements LibraryInfo {
   private final Library myLibrary;
-  private LibraryInfoImpl myInfoToRestore;
+  private final LibraryInfoImpl myInfoToRestore;
 
   public LibraryInfoBasedOnLibrary(@NotNull Library library) {
     assert !(library instanceof LibraryEx) || !((LibraryEx)library).isDisposed();

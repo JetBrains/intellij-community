@@ -17,7 +17,7 @@ import java.util.StringTokenizer;
 
 public class CompilerUIConfigurable implements Configurable {
   private JPanel myPanel;
-  private Project myProject;
+  private final Project myProject;
 
   private JTextField myResourcePatternsField;
   private JCheckBox myCbCompileInBackground;

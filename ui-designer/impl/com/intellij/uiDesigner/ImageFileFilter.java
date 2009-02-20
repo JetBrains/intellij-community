@@ -20,7 +20,7 @@ import java.util.Set;
  * @author yole
  */
 public class ImageFileFilter implements TreeFileChooser.PsiFileFilter {
-  private Set<String> myExtensions;
+  private final Set<String> myExtensions;
   private GlobalSearchScope myModuleScope;
 
   public ImageFileFilter(@Nullable Module module) {

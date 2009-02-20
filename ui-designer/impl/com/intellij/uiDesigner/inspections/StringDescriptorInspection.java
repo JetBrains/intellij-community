@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NonNls;
  * @author yole
  */
 public abstract class StringDescriptorInspection extends BaseFormInspection {
-  private static BorderProperty myBorderProperty = new BorderProperty(null);
+  private static final BorderProperty myBorderProperty = new BorderProperty(null);
 
   public StringDescriptorInspection(@NonNls String inspectionKey) {
     super(inspectionKey);

@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import java.util.List;
 
 public class DirectoryHistoryDialogModelTest extends IntegrationTestCase {
-  private LocalVcs vcs = new InMemoryLocalVcs();
+  private final LocalVcs vcs = new InMemoryLocalVcs();
   private DirectoryHistoryDialogModel m;
 
   public void testTitle() {

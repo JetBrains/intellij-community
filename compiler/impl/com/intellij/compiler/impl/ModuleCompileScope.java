@@ -137,7 +137,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     return (url.length() > root.length()) && url.charAt(root.length()) == '/' && FileUtil.startsWith(url, root);
   }
 
-  private Map<Module, String[]> myContentUrlsCache = new HashMap<Module, String[]>();
+  private final Map<Module, String[]> myContentUrlsCache = new HashMap<Module, String[]>();
 
   private String[] getModuleContentUrls(final Module module) {
     String[] contentRootUrls = myContentUrlsCache.get(module);

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * User: Sergey.Vasiliev
  */
 public abstract class GenerateDomElementProvider<T extends DomElement> {
-  private String myDescription;
+  private final String myDescription;
 
   public GenerateDomElementProvider(String description) {
     myDescription = description;

@@ -15,11 +15,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class PatchHunk {
-  private int myStartLineBefore;
-  private int myEndLineBefore;
-  private int myStartLineAfter;
-  private int myEndLineAfter;
-  private List<PatchLine> myLines = new ArrayList<PatchLine>();
+  private final int myStartLineBefore;
+  private final int myEndLineBefore;
+  private final int myStartLineAfter;
+  private final int myEndLineAfter;
+  private final List<PatchLine> myLines = new ArrayList<PatchLine>();
 
   public PatchHunk(final int startLineBefore, final int endLineBefore, final int startLineAfter, final int endLineAfter) {
     myStartLineBefore = startLineBefore;

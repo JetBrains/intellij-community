@@ -10,9 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 public class OutputItemImpl implements TranslatingCompiler.OutputItem{
 
-  private String myOutputPath;
-  private String myOutputDir;
-  private VirtualFile mySourceFile;
+  private final String myOutputPath;
+  private final String myOutputDir;
+  private final VirtualFile mySourceFile;
 
   /**
    * @param outputDir

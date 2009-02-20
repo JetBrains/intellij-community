@@ -31,7 +31,7 @@ public class CommonJavaParameters extends JPanel {
   private LabeledComponent<RawCommandLineEditor> myProgramParameters;
   private LabeledComponent<RawCommandLineEditor> myVMParameters;
 
-  private LabeledComponent[] myFields = new LabeledComponent[3];
+  private final LabeledComponent[] myFields = new LabeledComponent[3];
   private Module myModule = null;
 
   public CommonJavaParameters() {

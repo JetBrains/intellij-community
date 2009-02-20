@@ -17,10 +17,10 @@ import org.jetbrains.annotations.NonNls;
  * @author yole
  */
 public abstract class RowColumnAction extends AnAction {
-  private String myColumnText;
-  private String myColumnIcon;
-  private String myRowText;
-  private String myRowIcon;
+  private final String myColumnText;
+  private final String myColumnIcon;
+  private final String myRowText;
+  private final String myRowIcon;
 
   public RowColumnAction(final String columnText, @NonNls final String columnIcon,
                          final String rowText, @NonNls final String rowIcon) {

@@ -26,7 +26,7 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public class TooltipUtils {
-  @NonNls private static String MESSAGE_DELIMITER = "<hr size=1 noshade>";
+  @NonNls private static final String MESSAGE_DELIMITER = "<hr size=1 noshade>";
 
   public static String getTooltipText(List<DomElementProblemDescriptor> annotations) {
     if (annotations.size() == 0) return null;

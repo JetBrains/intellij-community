@@ -27,7 +27,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
 
   private HashMap<String, Set<RefEntity>> myOldPackageContents = null;
 
-  private Set<RefEntity> myIgnoreElements = new HashSet<RefEntity>();
+  private final Set<RefEntity> myIgnoreElements = new HashSet<RefEntity>();
  
   public void updateContent() {
     myPackageContents = new HashMap<String, Set<RefEntity>>();

@@ -31,11 +31,11 @@ import java.util.Collection;
 import java.util.Date;
 
 public class CommittedChangeListImpl implements CommittedChangeList {
-  private String myCommitterName;
-  private Date myCommitDate;
-  private String myName;
-  private String myComment;
-  private long myNumber;
+  private final String myCommitterName;
+  private final Date myCommitDate;
+  private final String myName;
+  private final String myComment;
+  private final long myNumber;
   protected ArrayList<Change> myChanges;
 
   public CommittedChangeListImpl(final String name, final String comment, final String committerName,

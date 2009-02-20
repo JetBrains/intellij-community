@@ -23,7 +23,7 @@ import java.util.StringTokenizer;
 public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ComparingReferencesInspection");
 
-  private LocalQuickFix myQuickFix = new MyQuickFix();
+  private final LocalQuickFix myQuickFix = new MyQuickFix();
 
   @SuppressWarnings({"WeakerAccess"}) @NonNls public String CHECKED_CLASSES = "java.lang.String;java.util.Date";
   @NonNls private static final String DESCRIPTION_TEMPLATE = InspectionsBundle.message("inspection.comparing.references.problem.descriptor");

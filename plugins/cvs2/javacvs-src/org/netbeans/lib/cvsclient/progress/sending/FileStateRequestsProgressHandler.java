@@ -28,9 +28,9 @@ public class FileStateRequestsProgressHandler
 	// Fields =================================================================
 
 	private final Set fileObjects = new HashSet(2000);
-	private IProgressViewer progressViewer;
+	private final IProgressViewer progressViewer;
 	private int count;
-	private int maxCount;
+	private final int maxCount;
 
 	// Setup ==================================================================
 

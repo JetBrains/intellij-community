@@ -178,8 +178,8 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   }
 
   private static final class PreviewUpdate extends Update {
-    private ImageOrColorPreviewManager myManager;
-    private Point myPoint;
+    private final ImageOrColorPreviewManager myManager;
+    private final Point myPoint;
 
     public PreviewUpdate(@NonNls final ImageOrColorPreviewManager manager, @NotNull final Point point) {
       super(manager);

@@ -17,7 +17,7 @@ import java.awt.*;
  */
 public class ColorRenderer extends ColoredListCellRenderer implements PropertyRenderer<ColorDescriptor> {
   private ColorDescriptor myColorDescriptor;
-  private Icon myEmptyIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/empty.png");
+  private final Icon myEmptyIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/empty.png");
 
   public ColorRenderer() {
     setOpaque(true);

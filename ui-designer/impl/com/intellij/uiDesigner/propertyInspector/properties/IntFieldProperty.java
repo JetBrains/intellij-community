@@ -20,7 +20,7 @@ public final class IntFieldProperty extends Property<RadComponent, Integer> {
   private final LabelPropertyRenderer<Integer> myRenderer;
   private final IntEditor myEditor;
   @NotNull private final Property myParent;
-  private String myFieldName;
+  private final String myFieldName;
   private final Object myTemplateValue;
   @NonNls private static final String METHOD_CLONE = "clone";
 

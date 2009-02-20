@@ -22,8 +22,8 @@ package com.intellij.uiDesigner.lw;
 public class LwInspectionSuppression {
   public static final LwInspectionSuppression[] EMPTY_ARRAY = new LwInspectionSuppression[0];
 
-  private String myInspectionId;
-  private String myComponentId;
+  private final String myInspectionId;
+  private final String myComponentId;
 
   public LwInspectionSuppression(final String inspectionId, final String componentId) {
     myInspectionId = inspectionId;

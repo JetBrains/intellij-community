@@ -18,8 +18,8 @@ import com.sun.jdi.Value;
 public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl");
 
-  private int myIndex;
-  private ArrayReference myArray;
+  private final int myIndex;
+  private final ArrayReference myArray;
 
   public ArrayElementDescriptorImpl(Project project, ArrayReference array, int index) {
     super(project);

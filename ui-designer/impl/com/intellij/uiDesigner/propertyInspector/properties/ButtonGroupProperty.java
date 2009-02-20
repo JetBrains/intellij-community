@@ -23,13 +23,13 @@ import java.awt.event.ItemListener;
  * @author yole
  */
 public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> {
-  private LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<RadButtonGroup>() {
+  private final LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<RadButtonGroup>() {
     @Override protected void customize(@NotNull final RadButtonGroup value) {
       setText(value.getName());
     }
   };
 
-  private ComboBoxPropertyEditor<RadButtonGroup> myEditor = new MyPropertyEditor();
+  private final ComboBoxPropertyEditor<RadButtonGroup> myEditor = new MyPropertyEditor();
 
   public ButtonGroupProperty() {
     super(null, "Button Group");

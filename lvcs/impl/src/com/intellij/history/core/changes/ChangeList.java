@@ -188,13 +188,13 @@ public class ChangeList {
   }
 
   private static class ChangeCollectingVisitor extends ChangeVisitor {
-    private String myPath;
+    private final String myPath;
     private Entry myEntry;
     private IdPath myIdPath;
     private Change myChangeToAdd;
     private boolean myExists = true;
     private boolean myDoNotAddAnythingElseFromCurrentChangeSet = false;
-    private List<Change> myResult = new ArrayList<Change>();
+    private final List<Change> myResult = new ArrayList<Change>();
 
     public ChangeCollectingVisitor(String path) {
       myPath = path;

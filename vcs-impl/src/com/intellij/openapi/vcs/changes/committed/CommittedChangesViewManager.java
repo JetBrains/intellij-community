@@ -24,12 +24,12 @@ import javax.swing.*;
 import java.util.List;
 
 public class CommittedChangesViewManager implements ChangesViewContentProvider {
-  private ProjectLevelVcsManager myVcsManager;
-  private MessageBus myBus;
+  private final ProjectLevelVcsManager myVcsManager;
+  private final MessageBus myBus;
   private MessageBusConnection myConnection;
   private CommittedChangesPanel myComponent;
-  private Project myProject;
-  private VcsListener myVcsListener = new MyVcsListener();
+  private final Project myProject;
+  private final VcsListener myVcsListener = new MyVcsListener();
 
   public CommittedChangesViewManager(final Project project, final ProjectLevelVcsManager vcsManager, final MessageBus bus) {
     myProject = project;

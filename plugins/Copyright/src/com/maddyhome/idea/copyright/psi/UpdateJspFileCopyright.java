@@ -184,5 +184,5 @@ public class UpdateJspFileCopyright extends UpdatePsiFileCopyright
         return res;
     }
 
-    private static Logger logger = Logger.getInstance(UpdateJspFileCopyright.class.getName());
+    private static final Logger logger = Logger.getInstance(UpdateJspFileCopyright.class.getName());
 }

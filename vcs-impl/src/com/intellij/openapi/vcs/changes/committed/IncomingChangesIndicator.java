@@ -29,7 +29,7 @@ import java.util.List;
 public class IncomingChangesIndicator implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator");
 
-  private Project myProject;
+  private final Project myProject;
   private final CommittedChangesCache myCache;
   private StatusBar myStatusBar;
   private IndicatorComponent myIndicatorComponent;

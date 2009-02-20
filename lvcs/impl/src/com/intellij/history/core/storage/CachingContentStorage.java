@@ -5,8 +5,8 @@ import com.intellij.util.containers.IntObjectCache;
 public class CachingContentStorage implements IContentStorage {
   public static final int MAX_CACHED_CONTENT_LENGTH = 100 * 1024;
 
-  private IContentStorage mySubject;
-  private IntObjectCache<byte[]> myCache = new IntObjectCache<byte[]>(50);
+  private final IContentStorage mySubject;
+  private final IntObjectCache<byte[]> myCache = new IntObjectCache<byte[]>(50);
 
   public CachingContentStorage(IContentStorage s) {
     mySubject = s;

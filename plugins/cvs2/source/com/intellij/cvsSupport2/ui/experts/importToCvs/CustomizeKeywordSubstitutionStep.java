@@ -80,7 +80,7 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
   };
 
   private final TableView myTable;
-  private ListTableModel<FileExtension> myModel;
+  private final ListTableModel<FileExtension> myModel;
   private final ImportConfiguration myImportConfiguration;
 
   public CustomizeKeywordSubstitutionStep(String description, CvsWizard wizard,

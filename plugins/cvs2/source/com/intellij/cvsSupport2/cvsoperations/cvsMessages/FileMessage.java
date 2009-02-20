@@ -39,7 +39,7 @@ public class FileMessage {
   public static final int CREATED = 19;
   public static final int CREATED_BY_SECOND_PARTY = 20;
 
-  private int myType;
+  private final int myType;
   private String myFileAbsolutePath = "";
   private CvsRevisionNumber myRevision;
   @NonNls public static final String CONFLICT = "C";

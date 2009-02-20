@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class XDebuggerHistoryManager {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
-  private Map<String, LinkedList<String>> myRecentExpressions = new HashMap<String, LinkedList<String>>();
+  private final Map<String, LinkedList<String>> myRecentExpressions = new HashMap<String, LinkedList<String>>();
 
   public static XDebuggerHistoryManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, XDebuggerHistoryManager.class);

@@ -309,7 +309,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private int myUpdateNumber;
 
     // vcs name, context object
-    private Map<String, SequentialUpdatesContext> myContextInfo;
+    private final Map<String, SequentialUpdatesContext> myContextInfo;
 
     public Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles) {
       super(project, getTemplatePresentation().getText(), true, VcsConfiguration.getInstance(project).getUpdateOption());

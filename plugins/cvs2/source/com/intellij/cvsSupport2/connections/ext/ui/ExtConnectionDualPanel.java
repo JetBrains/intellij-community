@@ -19,7 +19,7 @@ public class ExtConnectionDualPanel {
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
   private final JPanel myDualPanel = new JPanel(new CardLayout());
-  private JCheckBox myUseInternalImplementationCheckBox = new JCheckBox(CvsBundle.message("checkbox.text.use.internal.ssh.implementation"));
+  private final JCheckBox myUseInternalImplementationCheckBox = new JCheckBox(CvsBundle.message("checkbox.text.use.internal.ssh.implementation"));
   @NonNls private static final String EXT = "EXT";
   @NonNls private static final String SSH = "SSH";
 

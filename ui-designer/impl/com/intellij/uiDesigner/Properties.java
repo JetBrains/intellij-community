@@ -1,20 +1,20 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -25,8 +25,8 @@ import java.util.*;
 public final class Properties implements BaseComponent, JDOMExternalizable{
   private final HashMap<String,String> myClass2InplaceProperty;
   private final HashMap<String,HashSet<String>> myClass2ExpertProperties;
-  private Map<String, Map<String, IntEnumEditor.Pair[]>> myClass2EnumProperties;
-  private Map<String, Set<String>> myClass2DeprecatedProperties;
+  private final Map<String, Map<String, IntEnumEditor.Pair[]>> myClass2EnumProperties;
+  private final Map<String, Set<String>> myClass2DeprecatedProperties;
 
   public static Properties getInstance() {
     return ServiceManager.getService(Properties.class);

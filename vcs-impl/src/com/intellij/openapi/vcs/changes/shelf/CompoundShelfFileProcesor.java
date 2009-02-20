@@ -16,7 +16,7 @@ public class CompoundShelfFileProcesor {
   private final StreamProvider[] myServerStreamProviders;
   private static final RoamingType PER_USER = RoamingType.PER_USER;
   private final String FILE_SPEC;
-  private String myShelfPath;
+  private final String myShelfPath;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.CompoundShelfFileProcesor");
 

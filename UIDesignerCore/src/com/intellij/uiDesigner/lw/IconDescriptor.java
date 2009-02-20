@@ -21,7 +21,7 @@ import javax.swing.*;
  * @author yole
  */
 public class IconDescriptor {
-  private String myIconPath;
+  private final String myIconPath;
   private Icon myIcon;
 
   public IconDescriptor(final String iconPath) {

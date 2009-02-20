@@ -20,7 +20,7 @@ import java.util.List;
  * @author nik
  */
 public class PackagingItemValidityState implements ValidityState {
-  private SmartList<Pair<String, Long>> myDestinations;
+  private final SmartList<Pair<String, Long>> myDestinations;
 
   public PackagingItemValidityState(List<DestinationInfo> destinationInfos) {
     myDestinations = new SmartList<Pair<String, Long>>();

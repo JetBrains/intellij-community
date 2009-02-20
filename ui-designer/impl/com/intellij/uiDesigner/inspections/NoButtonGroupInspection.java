@@ -93,7 +93,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
   }
 
   private static class CreateGroupQuickFix extends QuickFix {
-    private boolean myVerticalGroup;
+    private final boolean myVerticalGroup;
 
     public CreateGroupQuickFix(final GuiEditor editor, final RadComponent component, boolean verticalGroup) {
       super(editor, UIDesignerBundle.message("inspection.no.button.group.quickfix.create"), component);

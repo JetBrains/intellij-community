@@ -28,7 +28,7 @@ public class ObjectMarkupPropertiesDialog extends DialogWrapper {
   private final JTextField myTextMarkupField;
   private final SimpleColoredComponent myColorSample;
   private SimpleTextAttributes myAttributes;
-  private Alarm myUpdateAlarm;
+  private final Alarm myUpdateAlarm;
   private static final int UPDATE_DELAY = 200;
 
   public ObjectMarkupPropertiesDialog(final String suggestedName) {

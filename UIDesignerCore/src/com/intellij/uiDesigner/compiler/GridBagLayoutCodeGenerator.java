@@ -29,11 +29,11 @@ import java.awt.*;
  * @author yole
  */
 public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
-  private static Type ourGridBagLayoutType = Type.getType(GridBagLayout.class);
-  private static Type ourGridBagConstraintsType = Type.getType(GridBagConstraints.class);
-  private static Method ourDefaultConstructor = Method.getMethod("void <init> ()");
+  private static final Type ourGridBagLayoutType = Type.getType(GridBagLayout.class);
+  private static final Type ourGridBagConstraintsType = Type.getType(GridBagConstraints.class);
+  private static final Method ourDefaultConstructor = Method.getMethod("void <init> ()");
 
-  private static Type myPanelType = Type.getType(JPanel.class);
+  private static final Type myPanelType = Type.getType(JPanel.class);
 
   public String mapComponentClass(final String componentClassName) {
     if (componentClassName.equals(Spacer.class.getName())) {

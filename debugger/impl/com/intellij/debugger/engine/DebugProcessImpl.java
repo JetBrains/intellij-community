@@ -117,15 +117,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
   private volatile DebuggerManagerThreadImpl myDebuggerManagerThread;
-  private HashMap myUserData = new HashMap();
-  private static int LOCAL_START_TIMEOUT = 15000;
+  private final HashMap myUserData = new HashMap();
+  private static final int LOCAL_START_TIMEOUT = 15000;
 
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myBreakpointsMuted = new AtomicBoolean(false);
   private boolean myIsFailed = false;
   private DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
-  private Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -1354,7 +1354,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   private class StepOverCommand extends ResumeCommand {
-    private boolean myIsIgnoreBreakpoints;
+    private final boolean myIsIgnoreBreakpoints;
 
     public StepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
       super(suspendContext);

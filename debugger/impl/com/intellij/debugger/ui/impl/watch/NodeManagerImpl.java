@@ -27,11 +27,11 @@ import java.util.Map;
  */
 
 public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager{
-  private static Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
+  private static final Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
 
   private final DebuggerTree myDebuggerTree;
   private String myHistoryKey = null;
-  private Map<String, DescriptorTree> myHistories = new HashMap<String, DescriptorTree>();
+  private final Map<String, DescriptorTree> myHistories = new HashMap<String, DescriptorTree>();
 
   public NodeManagerImpl(Project project, DebuggerTree tree) {
     super(project);

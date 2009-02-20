@@ -16,15 +16,16 @@ public class CreateFileObjects {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.CreateFileObjects");
 
   private final File[] myFiles;
-  private String myRootPath;
+  private final String myRootPath;
   private final Map<File, AbstractFileObject> myFileToDirectoryObjectMap = new com.intellij.util.containers.HashMap<File, AbstractFileObject>();
   private final Collection<AbstractFileObject> myResult = new ArrayList<AbstractFileObject>();
   private final Set<File> myCreatedFiles = new HashSet<File>();
 
   public CreateFileObjects(File root, File[] files) {
-    myRootPath = root.getAbsolutePath();
+    String myRootPath = root.getAbsolutePath();
     if (myRootPath.endsWith(File.separator))
       myRootPath = myRootPath.substring(0, myRootPath.length() - 1);
+    this.myRootPath = myRootPath;
     myFiles = files;
   }
 

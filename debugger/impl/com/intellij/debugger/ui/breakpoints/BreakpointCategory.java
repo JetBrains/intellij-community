@@ -15,7 +15,7 @@ import java.util.Map;
  *         Date: Jan 18, 2007
  */
 public final class BreakpointCategory {
-  private static Map<String, Key> ourMap = new HashMap<String, Key>();
+  private static final Map<String, Key> ourMap = new HashMap<String, Key>();
 
   private BreakpointCategory() {
   }

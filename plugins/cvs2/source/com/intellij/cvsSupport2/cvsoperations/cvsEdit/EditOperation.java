@@ -29,7 +29,7 @@ import java.util.StringTokenizer;
  */
 public class EditOperation extends CvsOperationOnFiles {
   private final boolean myIsReservedEdit;
-  private Collection myEditFileInfos = new ArrayList();
+  private final Collection myEditFileInfos = new ArrayList();
   @NonNls public static final String FILES_BEING_EDITED_EXCEPTION = "cvs [edit aborted]: files being edited";
 
   private final static class EditedFileInfo {

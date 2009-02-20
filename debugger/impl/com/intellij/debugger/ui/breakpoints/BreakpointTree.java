@@ -72,8 +72,8 @@ public class BreakpointTree extends CheckboxTree {
       return 50;
     }
   };
-  private BreakpointManager myBreakpointManager;
-  private BreakpointManagerListener myNodeUpdateListener;
+  private final BreakpointManager myBreakpointManager;
+  private final BreakpointManagerListener myNodeUpdateListener;
 
   protected void installSpeedSearch() {
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {

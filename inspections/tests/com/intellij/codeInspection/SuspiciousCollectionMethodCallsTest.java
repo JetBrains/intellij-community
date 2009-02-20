@@ -7,7 +7,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class SuspiciousCollectionMethodCallsTest extends InspectionTestCase {
-  private SuspiciousCollectionsMethodCallsInspection myTool = new SuspiciousCollectionsMethodCallsInspection();
+  private final SuspiciousCollectionsMethodCallsInspection myTool = new SuspiciousCollectionsMethodCallsInspection();
 
   protected void setUp() throws Exception {
     super.setUp();

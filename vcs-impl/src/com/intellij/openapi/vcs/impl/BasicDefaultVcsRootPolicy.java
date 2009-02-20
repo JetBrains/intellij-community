@@ -15,8 +15,8 @@ import java.util.List;
  * @author yole
  */
 public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
-  private Project myProject;
-  private VirtualFile myBaseDir;
+  private final Project myProject;
+  private final VirtualFile myBaseDir;
 
   public BasicDefaultVcsRootPolicy(Project project) {
     myProject = project;

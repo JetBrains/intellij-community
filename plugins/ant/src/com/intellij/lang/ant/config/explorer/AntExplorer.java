@@ -59,7 +59,7 @@ public class AntExplorer extends JPanel implements DataProvider {
   private AntExplorerTreeBuilder myBuilder;
   private Tree myTree;
   private KeymapListener myKeymapListener;
-  private List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;
 
   private final TreeExpander myTreeExpander = new TreeExpander() {

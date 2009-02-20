@@ -9,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladimir Kondratyev
  */
 public final class FormProperty {
-  @NotNull private LwComponent myLwComponent;
-  @NotNull private String myComponentPropertyGetterName;
-  @NotNull private String myComponentPropertySetterName;
-  @NotNull private String myComponentPropertyClassName;
+  @NotNull private final LwComponent myLwComponent;
+  @NotNull private final String myComponentPropertyGetterName;
+  @NotNull private final String myComponentPropertySetterName;
+  @NotNull private final String myComponentPropertyClassName;
 
   public FormProperty(
     final @NotNull LwComponent component,

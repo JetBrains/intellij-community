@@ -20,7 +20,7 @@ public class ForStatementEvaluator implements Evaluator {
   private final Evaluator myBodyEvaluator;
 
   private Modifier myModifier;
-  private String   myLabelName;
+  private final String   myLabelName;
 
   public ForStatementEvaluator(Evaluator initializationEvaluator, Evaluator conditionEvaluator, Evaluator updateEvaluator, Evaluator bodyEvaluator, String labelName) {
     myInitializationEvaluator = initializationEvaluator;

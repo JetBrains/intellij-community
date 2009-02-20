@@ -244,7 +244,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
   }
 
   private static final class ConfigurationDescriptor extends Descriptor {
-    private RunConfiguration myConfiguration;
+    private final RunConfiguration myConfiguration;
 
     public ConfigurationDescriptor(RunConfiguration configuration, boolean isChecked) {
       myConfiguration = configuration;

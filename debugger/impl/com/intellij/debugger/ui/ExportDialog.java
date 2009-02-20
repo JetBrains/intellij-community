@@ -34,11 +34,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ExportDialog extends DialogWrapper {
-  private JTextArea myTextArea = new JTextArea();
+  private final JTextArea myTextArea = new JTextArea();
   private TextFieldWithBrowseButton myTfFilePath;
-  private Project myProject;
+  private final Project myProject;
   private final DebugProcessImpl myDebugProcess;
-  private CopyToClipboardAction myCopyToClipboardAction = new CopyToClipboardAction();
+  private final CopyToClipboardAction myCopyToClipboardAction = new CopyToClipboardAction();
   private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
 
   public ExportDialog(DebugProcessImpl debugProcess, String destinationDirectory) {

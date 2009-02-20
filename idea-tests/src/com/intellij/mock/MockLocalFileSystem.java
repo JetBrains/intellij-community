@@ -26,7 +26,7 @@ import java.util.Set;
  * @author nik
  */
 public class MockLocalFileSystem extends LocalFileSystem {
-  private MockVirtualFileSystem myDelegate = new MockVirtualFileSystem();
+  private final MockVirtualFileSystem myDelegate = new MockVirtualFileSystem();
 
   @Nullable
   public VirtualFile findFileByIoFile(final File file) {

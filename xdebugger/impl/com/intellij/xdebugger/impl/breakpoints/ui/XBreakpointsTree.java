@@ -25,10 +25,10 @@ import java.util.*;
 public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
   private final TreeNodeComparator myComparator;
   private final CheckedTreeNode myRoot;
-  private Map<B, BreakpointNode<B>> myNodes = new HashMap<B, BreakpointNode<B>>();
+  private final Map<B, BreakpointNode<B>> myNodes = new HashMap<B, BreakpointNode<B>>();
   private List<XBreakpointGroupingRule<B, ?>> myGroupingRules;
-  private Map<XBreakpointGroup, BreakpointsGroupNode> myGroupNodes = new HashMap<XBreakpointGroup, BreakpointsGroupNode>();
-  private MultiValuesMap<XBreakpointGroupingRule<B, ?>, XBreakpointGroup> myGroups = new MultiValuesMap<XBreakpointGroupingRule<B,?>, XBreakpointGroup>();
+  private final Map<XBreakpointGroup, BreakpointsGroupNode> myGroupNodes = new HashMap<XBreakpointGroup, BreakpointsGroupNode>();
+  private final MultiValuesMap<XBreakpointGroupingRule<B, ?>, XBreakpointGroup> myGroups = new MultiValuesMap<XBreakpointGroupingRule<B,?>, XBreakpointGroup>();
 
   private XBreakpointsTree(final XBreakpointType<B, ?> type, final CheckedTreeNode root,
                            Collection<XBreakpointGroupingRule<B, ?>> groupingRules) {
@@ -188,7 +188,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
   }
   
   private static class BreakpointNode<B extends XBreakpoint<?>> extends CheckedTreeNode {
-    private B myBreakpoint;
+    private final B myBreakpoint;
 
     private BreakpointNode(final B breakpoint) {
       super(null);
@@ -211,7 +211,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
   }
 
   private static class TreeNodeComparator<B extends XBreakpoint<?>> implements Comparator<TreeNode> {
-    private Comparator<B> myBreakpointComparator;
+    private final Comparator<B> myBreakpointComparator;
 
     public TreeNodeComparator(final XBreakpointType<B, ?> type) {
       myBreakpointComparator = type.getBreakpointComparator();

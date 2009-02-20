@@ -83,7 +83,7 @@ final public class LogMessageParser extends AbstractMessageParser {
   private boolean addingDescription;
   private boolean processingRevision;
   private List<String> logMessageBuffer;
-  private Pattern myRevisionPattern;
+  private final Pattern myRevisionPattern;
 
   // Setup ==================================================================
 

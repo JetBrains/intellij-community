@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * User: Sergey.Vasiliev
  */
 public class DomTemplateRunnerImpl extends DomTemplateRunner {
-  private Project myProject;
+  private final Project myProject;
 
   public DomTemplateRunnerImpl(Project project) {
     myProject = project;

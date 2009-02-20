@@ -28,7 +28,7 @@ import java.util.List;
 public class DomUINavigationProvider extends DomElementNavigationProvider {
   public static String DOM_UI_NAVIGATION_PROVIDER_NAME = "DOM_UI_NAVIGATION_PROVIDER_NAME";
 
-  private CompositeCommittable myComponent;
+  private final CompositeCommittable myComponent;
 
   public DomUINavigationProvider(final CompositeCommittable component) {
     myComponent = component;

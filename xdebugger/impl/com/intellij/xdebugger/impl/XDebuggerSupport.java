@@ -18,23 +18,23 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class XDebuggerSupport extends DebuggerSupport {
-  private XBreakpointPanelProvider myBreakpointPanelProvider;
-  private XToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
-  private XDebuggerSuspendedActionHandler myStepOverHandler;
-  private XDebuggerSuspendedActionHandler myStepIntoHandler;
-  private XDebuggerSuspendedActionHandler myStepOutHandler;
-  private XDebuggerSuspendedActionHandler myForceStepOverHandler;
-  private XDebuggerSuspendedActionHandler myForceStepIntoHandler;
-  private XDebuggerRunToCursorActionHandler myRunToCursorHandler;
-  private XDebuggerRunToCursorActionHandler myForceRunToCursor;
-  private XDebuggerActionHandler myResumeHandler;
-  private XDebuggerPauseActionHandler myPauseHandler;
-  private XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
-  private XDebuggerEvaluateActionHandler myEvaluateHandler;
-  private XQuickEvaluateHandler myQuickEvaluateHandler;
+  private final XBreakpointPanelProvider myBreakpointPanelProvider;
+  private final XToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
+  private final XDebuggerSuspendedActionHandler myStepOverHandler;
+  private final XDebuggerSuspendedActionHandler myStepIntoHandler;
+  private final XDebuggerSuspendedActionHandler myStepOutHandler;
+  private final XDebuggerSuspendedActionHandler myForceStepOverHandler;
+  private final XDebuggerSuspendedActionHandler myForceStepIntoHandler;
+  private final XDebuggerRunToCursorActionHandler myRunToCursorHandler;
+  private final XDebuggerRunToCursorActionHandler myForceRunToCursor;
+  private final XDebuggerActionHandler myResumeHandler;
+  private final XDebuggerPauseActionHandler myPauseHandler;
+  private final XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
+  private final XDebuggerEvaluateActionHandler myEvaluateHandler;
+  private final XQuickEvaluateHandler myQuickEvaluateHandler;
   private final XDebuggerSettingsPanelProviderImpl mySettingsPanelProvider;
-  private DebuggerToggleActionHandler myMuteBreakpointsHandler;
-  private DebuggerActionHandler mySmartStepIntoHandler;
+  private final DebuggerToggleActionHandler myMuteBreakpointsHandler;
+  private final DebuggerActionHandler mySmartStepIntoHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();

@@ -30,9 +30,9 @@ public class UpdateOptionsPanel {
   private JCheckBox myCreateNewDirectories;
   private JCheckBox myCleanCopy;
   private JPanel myDateOrRevisionPanel;
-  private ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;
+  private final ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;
 
-  private DateOrRevisionOrTagSettings myDateOrRevisionOrTagSettings;
+  private final DateOrRevisionOrTagSettings myDateOrRevisionOrTagSettings;
 
   private JPanel myPanel;
   private JPanel myKeywordSubstitutionPanel;

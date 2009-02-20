@@ -17,7 +17,7 @@ public class RootsCalculator {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.RootsCalculator");
   private final Project myProject;
   private final AbstractVcs myVcs;
-  private ProjectLevelVcsManager myPlManager;
+  private final ProjectLevelVcsManager myPlManager;
   private VirtualFile[] myContentRoots;
 
   public RootsCalculator(final Project project, final AbstractVcs vcs) {

@@ -51,7 +51,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   private final Project myProject;
   private TreeState myTreeState;
   private boolean myShowFlatten = false;
-  private CopyProvider myCopyProvider;
+  private final CopyProvider myCopyProvider;
 
   @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";

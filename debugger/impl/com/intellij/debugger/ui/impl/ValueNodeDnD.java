@@ -16,7 +16,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 
 public class ValueNodeDnD {
-  private DnDAwareTree myTree;
+  private final DnDAwareTree myTree;
 
   public ValueNodeDnD(DnDAwareTree tree, Disposable parent) {
     myTree = tree;

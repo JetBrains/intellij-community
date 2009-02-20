@@ -23,7 +23,7 @@ public class PsiElementSetSpinAllocator {
     }
   }
 
-  private static SpinAllocator<Set<PsiElement>> myAllocator =
+  private static final SpinAllocator<Set<PsiElement>> myAllocator =
     new SpinAllocator<Set<PsiElement>>(new Creator(), new Disposer());
 
   public static Set<PsiElement> alloc() {

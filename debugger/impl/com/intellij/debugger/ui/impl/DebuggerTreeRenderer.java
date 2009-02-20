@@ -25,7 +25,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static final Icon myWatchedValueIcon = IconLoader.getIcon("/debugger/watch.png");
   private static final Icon myStaticFieldIcon = Icons.FIELD_ICON;
 
-  private static Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
+  private static final Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
 
   private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, null);
   private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);

@@ -109,8 +109,8 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {
-    private InspectionManager myManager;
-    private List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+    private final InspectionManager myManager;
+    private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
 
 
     public UnresolvedPropertyVisitor(final InspectionManager manager) {

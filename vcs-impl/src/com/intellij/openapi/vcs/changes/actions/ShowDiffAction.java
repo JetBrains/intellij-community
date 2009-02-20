@@ -32,7 +32,7 @@ import java.util.*;
  * @author max
  */
 public class ShowDiffAction extends AnAction {
-  private static String ourText = ActionsBundle.actionText("ChangesView.Diff");
+  private static final String ourText = ActionsBundle.actionText("ChangesView.Diff");
 
   public ShowDiffAction() {
     super(ourText,

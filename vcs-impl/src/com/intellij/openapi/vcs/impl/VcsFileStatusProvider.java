@@ -16,11 +16,11 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author yole
  */
 public class VcsFileStatusProvider implements FileStatusProvider {
-  private Project myProject;
+  private final Project myProject;
   private final FileStatusManagerImpl myFileStatusManager;
   private final ProjectLevelVcsManager myVcsManager;
-  private ChangeListManager myChangeListManager;
-  private VcsDirtyScopeManager myDirtyScopeManager;
+  private final ChangeListManager myChangeListManager;
+  private final VcsDirtyScopeManager myDirtyScopeManager;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 

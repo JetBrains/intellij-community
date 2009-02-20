@@ -30,13 +30,13 @@ import java.util.List;
  * author: lesya
  */
 public class CvsConfigurationsListEditor extends DialogWrapper implements DataProvider{
-  private BorderLayout myCenterPanelLayout = new BorderLayout();
+  private final BorderLayout myCenterPanelLayout = new BorderLayout();
   private final JPanel myCenterPanel = new JPanel(myCenterPanelLayout);
   private final JList myList = new JList();
   private final DefaultListModel myModel = new DefaultListModel();
   private CvsRootConfiguration mySelection;
 
-  private Cvs2SettingsEditPanel myCvs2SettingsEditPanel;
+  private final Cvs2SettingsEditPanel myCvs2SettingsEditPanel;
   @NonNls private static final String SAMPLE_CVSROOT = ":pserver:user@host/server/home/user/cvs";
   private boolean myIsReadOnly = false;
 

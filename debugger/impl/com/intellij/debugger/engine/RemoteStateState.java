@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public class RemoteStateState implements RemoteState {
   private final Project    myProject;
   private final RemoteConnection myConnection;
-  private RunnerSettings myRunnerSettings;
-  private ConfigurationPerRunnerSettings myConfigurationSettings;
+  private final RunnerSettings myRunnerSettings;
+  private final ConfigurationPerRunnerSettings myConfigurationSettings;
 
   public RemoteStateState(Project project,
                           RemoteConnection connection,

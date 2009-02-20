@@ -27,7 +27,7 @@ import java.util.Set;
 
 
 public class EclipseEmbeddedCompiler implements BackendCompiler {
-  private Project myProject;
+  private final Project myProject;
   private final EclipseCompiler myEclipseExternalCompiler;
   private int myExitCode;
   private IEclipseCompilerDriver myEclipseCompilerDriver;

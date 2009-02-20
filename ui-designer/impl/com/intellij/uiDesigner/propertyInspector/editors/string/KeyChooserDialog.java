@@ -35,7 +35,7 @@ import java.util.List;
 public final class KeyChooserDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.KeyChooserDialog");
 
-  private PropertiesFile myBundle;
+  private final PropertiesFile myBundle;
   private final String myBundleName;
   /** List of bundle's pairs*/
   private ArrayList<Pair<String, String>> myPairs;
@@ -43,8 +43,8 @@ public final class KeyChooserDialog extends DialogWrapper{
   /** Table with key/value pairs */
   private final Table myTable;
   @NonNls private static final String NULL = "null";
-  private MyTableModel myModel;
-  private GuiEditor myEditor;
+  private final MyTableModel myModel;
+  private final GuiEditor myEditor;
 
   /**
    * @param bundle resource bundle to be shown.

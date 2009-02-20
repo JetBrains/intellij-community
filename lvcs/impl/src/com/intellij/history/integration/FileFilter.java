@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class FileFilter {
   public static final long MAX_FILE_SIZE = 100 * 1024;
 
-  private FileIndex myFileIndex;
-  private FileTypeManager myTypeManager;
+  private final FileIndex myFileIndex;
+  private final FileTypeManager myTypeManager;
 
   public FileFilter(FileIndex fi, FileTypeManager tm) {
     myFileIndex = fi;

@@ -25,7 +25,7 @@ class ChangedConstantsDependencyProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.ChangedConstantsDependencyProcessor");
   private final Project myProject;
   private final CachingSearcher mySearcher;
-  private DependencyCache myDependencyCache;
+  private final DependencyCache myDependencyCache;
   private final int myQName;
   private final FieldChangeInfo[] myChangedFields;
   private final FieldChangeInfo[] myRemovedFields;

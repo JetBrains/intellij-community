@@ -16,7 +16,7 @@ import com.intellij.util.Icons;
  * @author yole
  */
 public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
-  private Project myProject;
+  private final Project myProject;
 
   public ChangesBrowserFileNode(Project project, VirtualFile userObject) {
     super(userObject);

@@ -27,8 +27,8 @@ import java.util.Map;
 public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTreeNode{
   private Icon myIcon;
   private SimpleColoredText myText;
-  private DebuggerTree myTree;
-  private Map myProperties = new HashMap();
+  private final DebuggerTree myTree;
+  private final Map myProperties = new HashMap();
 
   private DebuggerTreeNodeImpl(DebuggerTree tree, NodeDescriptor descriptor) {
     super(descriptor);

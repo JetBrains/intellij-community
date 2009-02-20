@@ -24,11 +24,11 @@ import java.util.List;
  * @author yole
  */
 public class IncomingChangesViewProvider implements ChangesViewContentProvider {
-  private Project myProject;
-  private MessageBus myBus;
+  private final Project myProject;
+  private final MessageBus myBus;
   private CommittedChangesTreeBrowser myBrowser;
   private MessageBusConnection myConnection;
-  private JLabel myErrorLabel = new JLabel();
+  private final JLabel myErrorLabel = new JLabel();
 
   public IncomingChangesViewProvider(final Project project, final MessageBus bus) {
     myProject = project;

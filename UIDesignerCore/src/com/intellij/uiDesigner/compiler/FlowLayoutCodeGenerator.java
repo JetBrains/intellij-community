@@ -28,8 +28,8 @@ import java.awt.FlowLayout;
  * @author yole
  */
 public class FlowLayoutCodeGenerator extends LayoutCodeGenerator {
-  private static Type ourFlowLayoutType = Type.getType(FlowLayout.class);
-  private static Method ourConstructor = Method.getMethod("void <init>(int,int,int)");
+  private static final Type ourFlowLayoutType = Type.getType(FlowLayout.class);
+  private static final Method ourConstructor = Method.getMethod("void <init>(int,int,int)");
 
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
     generator.loadLocal(componentLocal);

@@ -26,9 +26,9 @@ import java.util.Comparator;
 import java.util.List;
 
 public class CompilerConfigurable implements SearchableConfigurable.Parent {
-  private Project myProject;
+  private final Project myProject;
   private static final Icon ICON = IconLoader.getIcon("/general/configurableCompiler.png");
-  private CompilerUIConfigurable myCompilerUIConfigurable;
+  private final CompilerUIConfigurable myCompilerUIConfigurable;
   private Configurable[] myKids;
 
   public static CompilerConfigurable getInstance(Project project) {

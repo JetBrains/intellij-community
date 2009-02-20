@@ -20,8 +20,8 @@ import java.util.List;
 
 class InstanceofEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.InstanceofEvaluator");
-  private Evaluator myOperandEvaluator;
-  private TypeEvaluator myTypeEvaluator;
+  private final Evaluator myOperandEvaluator;
+  private final TypeEvaluator myTypeEvaluator;
 
   public InstanceofEvaluator(Evaluator operandEvaluator, TypeEvaluator typeEvaluator) {
     myOperandEvaluator = operandEvaluator;

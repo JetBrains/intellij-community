@@ -65,7 +65,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private HashSet<RefElement> myProcessedSuspicious = null;
   private int myPhase;
-  private QuickFixAction[] myQuickFixActions;
+  private final QuickFixAction[] myQuickFixActions;
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
   private WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
@@ -676,7 +676,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static class PermanentDeleteFix implements IntentionAction {
-    private PsiElement myElement;
+    private final PsiElement myElement;
 
     public PermanentDeleteFix(final PsiElement element) {
       myElement = element;
@@ -739,7 +739,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static class CommentOutFix implements IntentionAction {
-    private PsiElement myElement;
+    private final PsiElement myElement;
 
     public CommentOutFix(final PsiElement element) {
       myElement = element;

@@ -19,7 +19,7 @@ public class ConnectionServiceWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.apiAdapters.ConnectionService");
 
   private static Class myDelegateClass;
-  private Object myConnection;
+  private final Object myConnection;
 
   static {
     try {

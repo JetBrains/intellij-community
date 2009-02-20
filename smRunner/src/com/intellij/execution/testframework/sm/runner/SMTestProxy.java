@@ -30,7 +30,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   private SMTestProxy myParent;
 
   private AbstractState myState = NotRunState.getInstance();
-  private String myName;
+  private final String myName;
   private Integer myDuration = null; // duration is unknown
   @Nullable private final String myLocationUrl;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration

@@ -24,11 +24,11 @@ import java.util.List;
  * @author yole
  */
 class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchFilter<ComponentItem> {
-  private ArrayList<ComponentItem> myItems = new ArrayList<ComponentItem>();
+  private final ArrayList<ComponentItem> myItems = new ArrayList<ComponentItem>();
   private final ComponentItem myInitialSelection;
   private final Processor<ComponentItem> myRunnable;
-  private String myTitle;
-  private Project myProject;
+  private final String myTitle;
+  private final Project myProject;
 
   PaletteListPopupStep(GuiEditor editor, ComponentItem initialSelection, final Processor<ComponentItem> runnable, final String title) {
     myInitialSelection = initialSelection;

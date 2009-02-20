@@ -274,7 +274,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return true;
   }
 
-  private ChangeListColumn<CvsChangeList> BRANCH_COLUMN = new ChangeListColumn<CvsChangeList>() {
+  private final ChangeListColumn<CvsChangeList> BRANCH_COLUMN = new ChangeListColumn<CvsChangeList>() {
     public String getTitle() {
       return CvsBundle.message("changelist.column.branch");
     }

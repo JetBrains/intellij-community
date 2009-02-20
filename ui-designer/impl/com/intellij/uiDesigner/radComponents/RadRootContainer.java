@@ -26,8 +26,8 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   private String myClassToBind;
   private String myMainComponentBinding;
   private Locale myStringDescriptorLocale;
-  private List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
-  private List<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<LwInspectionSuppression>();
+  private final List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
+  private final List<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<LwInspectionSuppression>();
 
   public RadRootContainer(final Module module, final String id) {
     super(module, JPanel.class, id);

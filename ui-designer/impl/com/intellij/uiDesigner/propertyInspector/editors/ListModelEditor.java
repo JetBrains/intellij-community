@@ -19,7 +19,7 @@ import java.awt.event.ActionEvent;
  * @author yole
  */
 public class ListModelEditor extends PropertyEditor<String[]> {
-  private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
+  private final TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private RadComponent myLastComponent;
   private String[] myLastValue;
   private final String myPropertyName;

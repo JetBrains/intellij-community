@@ -57,18 +57,18 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   private List<T> myCollectionElements = new ArrayList<T>();
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
-  private AnAction myAddAction = new AddAction() {
+  private final AnAction myAddAction = new AddAction() {
     protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
       return DomCollectionControl.this;
     }
   };
 
-  private AnAction myEditAction = new EditAction() {
+  private final AnAction myEditAction = new EditAction() {
     protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
       return DomCollectionControl.this;
     }
   };
-  private AnAction myRemoveAction = new RemoveAction() {
+  private final AnAction myRemoveAction = new RemoveAction() {
     protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
       return DomCollectionControl.this;
     }

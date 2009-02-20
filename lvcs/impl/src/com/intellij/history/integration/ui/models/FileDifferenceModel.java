@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 
 public abstract class FileDifferenceModel {
   protected IdeaGateway myGateway;
-  private boolean isRightContentCurrent;
+  private final boolean isRightContentCurrent;
 
   protected FileDifferenceModel(IdeaGateway gw, boolean currentRightContent) {
     myGateway = gw;

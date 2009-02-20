@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class GeneratedCodeFoldingPassFactory implements TextEditorHighlightingPassFactory {
-  private TextEditorHighlightingPassRegistrar myRegistrar;
+  private final TextEditorHighlightingPassRegistrar myRegistrar;
 
   public GeneratedCodeFoldingPassFactory(final TextEditorHighlightingPassRegistrar registrar) {
     myRegistrar = registrar;

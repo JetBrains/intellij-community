@@ -42,7 +42,7 @@ public final class ConnectionStreams
 	private InputStream inputStream;
 	private OutputStream outputStream;
 	private DeflaterOutputStream deflaterOutputStream;
-	private String myCharset;
+	private final String myCharset;
   @NonNls private static final String UNTIL_HERE_THE_CONTENT_IS_GZIPPED_MESSAGE = "@until here the content is gzipped@";
   @NonNls private static final String FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE = "@from now on the content is gzipped@";
 

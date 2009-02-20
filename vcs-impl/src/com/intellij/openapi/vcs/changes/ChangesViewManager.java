@@ -47,16 +47,16 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
 
-  private ChangesListView myView;
+  private final ChangesListView myView;
   private JLabel myProgressLabel;
   private final Project myProject;
 
-  private Alarm myRepaintAlarm;
+  private final Alarm myRepaintAlarm;
 
   private boolean myDisposed = false;
 
-  private ChangeListListener myListener = new MyChangeListListener();
-  private ChangesViewContentManager myContentManager;
+  private final ChangeListListener myListener = new MyChangeListListener();
+  private final ChangesViewContentManager myContentManager;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";

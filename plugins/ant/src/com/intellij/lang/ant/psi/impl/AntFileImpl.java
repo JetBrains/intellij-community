@@ -919,9 +919,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
     private static final List<SoftReference<Pair<ReflectedProject, ClassLoader>>> ourProjects =
       new ArrayList<SoftReference<Pair<ReflectedProject, ClassLoader>>>();
-    private static Alarm ourAlarm = new Alarm();
+    private static final Alarm ourAlarm = new Alarm();
 
-    private Object myProject;
+    private final Object myProject;
     private Hashtable myTaskDefinitions;
     private Hashtable myDataTypeDefinitions;
     private Hashtable myProperties;
@@ -963,7 +963,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
 
     private ReflectedProject(final ClassLoader classLoader) {
-      myProject = null;
+      Object myProject = null;
       try {
         final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");
         if (projectClass != null) {
@@ -983,6 +983,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         LOG.info(e);
         myProject = null;
       }
+      this.myProject = myProject;
     }
 
     private static Method getMethod(final Class introspectionHelperClass, final String name) throws NoSuchMethodException {

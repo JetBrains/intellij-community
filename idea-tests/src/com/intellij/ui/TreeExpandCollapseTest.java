@@ -9,14 +9,14 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 public class TreeExpandCollapseTest extends TestCase {
-  private DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode();
-  private DefaultTreeModel myTreeModel = new DefaultTreeModel(myRoot);
+  private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode();
+  private final DefaultTreeModel myTreeModel = new DefaultTreeModel(myRoot);
   private JTree myTree = new JTree(myTreeModel);
-  private DefaultMutableTreeNode myChildA = new DefaultMutableTreeNode();
-  private DefaultMutableTreeNode myChild2 = new DefaultMutableTreeNode();
+  private final DefaultMutableTreeNode myChildA = new DefaultMutableTreeNode();
+  private final DefaultMutableTreeNode myChild2 = new DefaultMutableTreeNode();
   private TreePath myChildAPath;
   private TreePath myChild2Path;
-  private DefaultMutableTreeNode myChildB = new DefaultMutableTreeNode();
+  private final DefaultMutableTreeNode myChildB = new DefaultMutableTreeNode();
   private TreePath myChildBPath;
 
   protected void setUp() throws Exception {

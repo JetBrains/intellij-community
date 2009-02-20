@@ -23,8 +23,8 @@ import java.util.List;
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
   
-  private List<GeneralTestEventsProcessor> myProcessors = new ArrayList<GeneralTestEventsProcessor>();
-  private MyServiceMessageVisitor myServiceMessageVisitor;
+  private final List<GeneralTestEventsProcessor> myProcessors = new ArrayList<GeneralTestEventsProcessor>();
+  private final MyServiceMessageVisitor myServiceMessageVisitor;
 
   private final StringBuilder myStdoutBuffer;
 

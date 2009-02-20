@@ -164,18 +164,18 @@ public final class GuiEditor extends JPanel implements DataProvider {
    */
   private final SelectionState mySelectionState;
   @NotNull private final GlassLayer myGlassLayer;
-  private ActiveDecorationLayer myActiveDecorationLayer;
+  private final ActiveDecorationLayer myActiveDecorationLayer;
 
   private boolean myShowGrid = true;
   private boolean myShowComponentTags = true;
-  private DesignDropTargetListener myDropTargetListener;
+  private final DesignDropTargetListener myDropTargetListener;
   private JLabel myFormInvalidLabel;
-  private QuickFixManagerImpl myQuickFixManager;
-  private GridCaptionPanel myHorzCaptionPanel;
-  private GridCaptionPanel myVertCaptionPanel;
-  private MyPaletteKeyListener myPaletteKeyListener;
-  private MyPaletteDragListener myPaletteDragListener;
-  private MyPaletteSelectionListener myPaletteSelectionListener;
+  private final QuickFixManagerImpl myQuickFixManager;
+  private final GridCaptionPanel myHorzCaptionPanel;
+  private final GridCaptionPanel myVertCaptionPanel;
+  private final MyPaletteKeyListener myPaletteKeyListener;
+  private final MyPaletteDragListener myPaletteDragListener;
+  private final MyPaletteSelectionListener myPaletteSelectionListener;
   private ComponentPtr mySelectionAnchor;
   private ComponentPtr mySelectionLead;
   /**

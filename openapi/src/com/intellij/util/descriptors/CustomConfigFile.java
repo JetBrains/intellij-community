@@ -21,8 +21,8 @@ package com.intellij.util.descriptors;
  */
 public class CustomConfigFile {
   public static final CustomConfigFile[] EMPTY_ARRAY = new CustomConfigFile[0];
-  private String myUrl;
-  private String myOutputDirectoryPath;
+  private final String myUrl;
+  private final String myOutputDirectoryPath;
 
 
   public CustomConfigFile(final String url, final String outputDirectoryPath) {

@@ -21,10 +21,10 @@ import java.util.List;
  * @author yole
  */
 public class FormEditorErrorCollector extends FormErrorCollector {
-  private GuiEditor myEditor;
-  private RadComponent myComponent;
+  private final GuiEditor myEditor;
+  private final RadComponent myComponent;
   private List<ErrorInfo> myResults = null;
-  private InspectionProfile myProfile;
+  private final InspectionProfile myProfile;
 
   public FormEditorErrorCollector(final GuiEditor editor, final RadComponent component) {
     myEditor = editor;

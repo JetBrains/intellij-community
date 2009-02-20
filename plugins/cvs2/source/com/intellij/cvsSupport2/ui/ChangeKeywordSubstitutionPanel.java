@@ -13,7 +13,7 @@ import java.awt.event.ActionListener;
 public class ChangeKeywordSubstitutionPanel {
   private JComboBox myKeywordSubstitutionComboBox;
   private JCheckBox myChangeCheckbox;
-  private KeywordSubstitutionComboBoxWrapper myComboBoxWrapper;
+  private final KeywordSubstitutionComboBoxWrapper myComboBoxWrapper;
   private JPanel myPanel;
 
   public ChangeKeywordSubstitutionPanel(String defaultSubst) {

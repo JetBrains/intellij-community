@@ -70,7 +70,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
   private ChangeListGroupingStrategy myGroupingStrategy = ChangeListGroupingStrategy.DATE;
-  private CompositeChangeListFilteringStrategy myFilteringStrategy = new CompositeChangeListFilteringStrategy();
+  private final CompositeChangeListFilteringStrategy myFilteringStrategy = new CompositeChangeListFilteringStrategy();
   private final Splitter myFilterSplitter;
   private final JPanel myLeftPanel;
   private final JPanel myToolbarPanel;
@@ -82,7 +82,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   public static final Topic<Runnable> ITEMS_RELOADED = new Topic<Runnable>("ITEMS_RELOADED", Runnable.class);
 
-  private List<CommittedChangeListDecorator> myDecorators;
+  private final List<CommittedChangeListDecorator> myDecorators;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 

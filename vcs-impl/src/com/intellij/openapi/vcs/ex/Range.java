@@ -16,8 +16,8 @@ public class Range {
 
   private int myOffset1;
   private int myOffset2;
-  private int myUpToDateOffset1;
-  private int myUpToDateOffset2;
+  private final int myUpToDateOffset1;
+  private final int myUpToDateOffset2;
   private final byte myType;
   private RangeHighlighter myRangeHighlighter;
 

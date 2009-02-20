@@ -13,9 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class Difference {
-  private boolean myIsFile;
-  private Entry myLeft;
-  private Entry myRight;
+  private final boolean myIsFile;
+  private final Entry myLeft;
+  private final Entry myRight;
 
   public Difference(boolean isFile, Entry left, Entry right) {
     myIsFile = isFile;

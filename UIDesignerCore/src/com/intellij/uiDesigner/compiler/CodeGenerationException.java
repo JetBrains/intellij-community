@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.compiler;
 
 public class CodeGenerationException extends Exception{
-  private String myComponentId;
+  private final String myComponentId;
 
   public CodeGenerationException(final String componentId, final String message) {
     super(message);

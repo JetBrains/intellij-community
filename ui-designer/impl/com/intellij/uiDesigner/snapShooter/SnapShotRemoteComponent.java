@@ -10,11 +10,11 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class SnapShotRemoteComponent {
-  private int myId;
+  private final int myId;
   private boolean myTopLevel;
-  private String myClassName;
+  private final String myClassName;
   private final String myLayoutManager;
-  private String myText;
+  private final String myText;
   private SnapShotRemoteComponent[] myChildren = null;
 
   public SnapShotRemoteComponent(final int id, final String className, final String layoutManager, final String text) {

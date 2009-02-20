@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class FieldEvaluator implements Evaluator {
-  private Evaluator myObjectEvaluator;
+  private final Evaluator myObjectEvaluator;
   private final TargetClassFilter myTargetClassFilter;
   private final String myFieldName;
   private Object myEvaluatedQualifier;

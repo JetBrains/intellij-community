@@ -13,14 +13,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 
 public class LocalHistoryService {
-  private LocalVcs myVcs;
-  private IdeaGateway myGateway;
-  private LocalHistoryConfiguration myConfiguration;
+  private final LocalVcs myVcs;
+  private final IdeaGateway myGateway;
+  private final LocalHistoryConfiguration myConfiguration;
   // todo get rid of all this managers...
-  private StartupManager myStartupManager;
-  private ProjectRootManagerEx myRootManager;
-  private VirtualFileManagerEx myFileManager;
-  private CommandProcessor myCommandProcessor;
+  private final StartupManager myStartupManager;
+  private final ProjectRootManagerEx myRootManager;
+  private final VirtualFileManagerEx myFileManager;
+  private final CommandProcessor myCommandProcessor;
 
   private CacheUpdater myCacheUpdater;
   private EventDispatcher myEventDispatcher;

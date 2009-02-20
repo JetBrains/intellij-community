@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public abstract class AlignProperty extends Property<RadComponent, Integer> {
-  private boolean myHorizontal;
+  private final boolean myHorizontal;
   private IntEnumRenderer myRenderer;
   private IntEnumEditor myEditor;
 

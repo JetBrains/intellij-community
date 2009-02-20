@@ -21,10 +21,10 @@ public class PropertiesBuilder extends AntElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.PropertiesBuilder");
 
   @NotNull private final AntFile myPropertyHolder;
-  private Set<AntTarget> myVisitedTargets = new HashSet<AntTarget>();
-  private Set<AntFile> myVisitedFiles = new HashSet<AntFile>();
-  private Map<AntProject, List<Runnable>> myPostponedProcessing = new HashMap<AntProject, List<Runnable>>();
-  private List<PsiFile> myDependentFiles = new ArrayList<PsiFile>();
+  private final Set<AntTarget> myVisitedTargets = new HashSet<AntTarget>();
+  private final Set<AntFile> myVisitedFiles = new HashSet<AntFile>();
+  private final Map<AntProject, List<Runnable>> myPostponedProcessing = new HashMap<AntProject, List<Runnable>>();
+  private final List<PsiFile> myDependentFiles = new ArrayList<PsiFile>();
   
   private PropertiesBuilder(@NotNull AntFile propertyHolder) {
     myPropertyHolder = propertyHolder;

@@ -62,11 +62,11 @@ public final class StringEditorDialog extends DialogWrapper{
   @NonNls private static final String CARD_STRING = "string";
   @NonNls private static final String CARD_BUNDLE = "bundle";
 
-  private GuiEditor myEditor;
+  private final GuiEditor myEditor;
   /** Descriptor to be edited */
   private StringDescriptor myValue;
   private final MyForm myForm;
-  private Locale myLocale;
+  private final Locale myLocale;
   private boolean myDefaultBundleInitialized = false;
 
   StringEditorDialog(final Component parent,

@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Map;
 
 public class SelectionCalculator {
-  private IdeaGateway myGateway;
-  private List<Revision> myRevisions;
-  private int myFromLine;
-  private int myToLine;
-  private Map<Integer, Block> myCache = new HashMap<Integer, Block>();
+  private final IdeaGateway myGateway;
+  private final List<Revision> myRevisions;
+  private final int myFromLine;
+  private final int myToLine;
+  private final Map<Integer, Block> myCache = new HashMap<Integer, Block>();
 
   public SelectionCalculator(IdeaGateway gw, List<Revision> rr, int fromLine, int toLine) {
     myGateway = gw;

@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 public class InspectionProfileTest extends TestCase {
-  private IdeaTestFixture myFixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
+  private final IdeaTestFixture myFixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
 
   protected void setUp() throws Exception {
     super.setUp();

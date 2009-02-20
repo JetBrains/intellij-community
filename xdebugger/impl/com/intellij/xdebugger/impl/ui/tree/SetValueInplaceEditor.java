@@ -14,8 +14,8 @@ import javax.swing.*;
  * @author nik
  */
 public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
-  private JPanel myEditorPanel;
-  private XValueModifier myModifier;
+  private final JPanel myEditorPanel;
+  private final XValueModifier myModifier;
   private final XValueNodeImpl myValueNode;
 
   public SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {

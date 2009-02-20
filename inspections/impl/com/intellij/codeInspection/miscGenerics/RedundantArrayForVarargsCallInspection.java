@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class RedundantArrayForVarargsCallInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection");
-  private LocalQuickFix myQuickFixAction = new MyQuickFix();
+  private final LocalQuickFix myQuickFixAction = new MyQuickFix();
 
   private static class MyQuickFix implements LocalQuickFix {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

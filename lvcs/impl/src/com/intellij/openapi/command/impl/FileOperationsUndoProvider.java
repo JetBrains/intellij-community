@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvider, Disposable {
-  private Key<Boolean> DELETION_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
+  private final Key<Boolean> DELETION_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
 
   private Project myProject;
   private boolean myIsInsideCommand;
@@ -211,8 +211,8 @@ public class FileOperationsUndoProvider extends VirtualFileAdapter implements Un
   }
 
   private class MyUndoableAction implements UndoableAction {
-    private DocumentReference myDocumentRef;
-    private Checkpoint myAfterActionCheckpoint;
+    private final DocumentReference myDocumentRef;
+    private final Checkpoint myAfterActionCheckpoint;
     private Checkpoint myBeforeUndoCheckpoint;
     private boolean myProcessDuringUndo;
     private boolean myProcessDuringRedo;

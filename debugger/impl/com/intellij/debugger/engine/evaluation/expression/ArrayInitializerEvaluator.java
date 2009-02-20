@@ -11,7 +11,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 
 class ArrayInitializerEvaluator implements Evaluator{
-  private Evaluator[] myValueEvaluators;
+  private final Evaluator[] myValueEvaluators;
 
   public ArrayInitializerEvaluator(Evaluator[] valueEvaluators) {
     myValueEvaluators = valueEvaluators;

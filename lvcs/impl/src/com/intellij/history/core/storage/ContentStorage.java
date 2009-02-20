@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class ContentStorage implements IContentStorage {
-  private com.intellij.util.io.storage.Storage myStore;
+  private final com.intellij.util.io.storage.Storage myStore;
 
   public ContentStorage(File f) throws IOException {
     myStore = com.intellij.util.io.storage.Storage.create(f.getPath());

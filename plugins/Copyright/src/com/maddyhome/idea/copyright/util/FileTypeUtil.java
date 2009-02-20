@@ -483,10 +483,10 @@ public class FileTypeUtil
         }
     }
 
-    private Map<String, FileType> types = new HashMap<String, FileType>();
+    private final Map<String, FileType> types = new HashMap<String, FileType>();
     private static FileTypeUtil instance;
-    private Map<FileType, Set<FileType>> mappings = new HashMap<FileType, Set<FileType>>();
-    private Set<FileType> noSeparators = new HashSet<FileType>();
+    private final Map<FileType, Set<FileType>> mappings = new HashMap<FileType, Set<FileType>>();
+    private final Set<FileType> noSeparators = new HashSet<FileType>();
 
-    private static Logger logger = Logger.getInstance(FileTypeUtil.class.getName());
+    private static final Logger logger = Logger.getInstance(FileTypeUtil.class.getName());
 }

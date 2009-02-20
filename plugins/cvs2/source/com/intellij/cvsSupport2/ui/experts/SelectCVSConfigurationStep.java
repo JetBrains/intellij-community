@@ -13,8 +13,8 @@ import java.util.Observer;
  * author: lesya
  */
 public class SelectCVSConfigurationStep extends WizardStep{
-  private SelectCvsConfgurationPanel mySelectCvsConfgurationPanel;
-  private Observer myObserver;
+  private final SelectCvsConfgurationPanel mySelectCvsConfgurationPanel;
+  private final Observer myObserver;
 
 
   public SelectCVSConfigurationStep(Project project, CvsWizard wizard) {

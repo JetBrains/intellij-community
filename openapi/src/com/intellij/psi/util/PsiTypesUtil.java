@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class PsiTypesUtil {
-  @NonNls private static Map<String, String> ourUnboxedTypes = new THashMap<String, String>();
-  @NonNls private static Map<String, String> ourBoxedTypes = new THashMap<String, String>();
+  @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<String, String>();
+  @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<String, String>();
 
   static {
     ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");

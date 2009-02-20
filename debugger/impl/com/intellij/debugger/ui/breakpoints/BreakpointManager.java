@@ -68,19 +68,19 @@ public class BreakpointManager implements JDOMExternalizable {
   @NonNls private static final String RULES_GROUP_NAME = "breakpoint_rules";
   private final Project myProject;
   private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
-  private List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
-  private List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
+  private final List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
+  private final List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
   private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
-  private Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
-  private Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
-  private Map<Key<? extends Breakpoint>, String> myDefaultSuspendPolicies = new HashMap<Key<? extends Breakpoint>, String>(); 
+  private final Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
+  private final Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
+  private final Map<Key<? extends Breakpoint>, String> myDefaultSuspendPolicies = new HashMap<Key<? extends Breakpoint>, String>();
 
   private BreakpointsConfigurationDialogFactory myBreakpointsConfigurable;
   private EditorMouseListener myEditorMouseListener;
 
   private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
 
-  private StartupManager myStartupManager;
+  private final StartupManager myStartupManager;
 
   private final DocumentListener myDocumentListener = new DocumentAdapter() {
     private final Alarm myUpdateAlarm = new Alarm();

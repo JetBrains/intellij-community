@@ -51,14 +51,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
   private final Project myProject;
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
-  private BreakpointManager myBreakpointManager;
-  private List<NameMapper> myNameMappers = new CopyOnWriteArrayList<NameMapper>();
-  private List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new ArrayList<Function<DebugProcess, PositionManager>>();
+  private final BreakpointManager myBreakpointManager;
+  private final List<NameMapper> myNameMappers = new CopyOnWriteArrayList<NameMapper>();
+  private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new ArrayList<Function<DebugProcess, PositionManager>>();
   
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
 
-  private DebuggerContextListener mySessionListener = new DebuggerContextListener() {
+  private final DebuggerContextListener mySessionListener = new DebuggerContextListener() {
     public void changeEvent(DebuggerContextImpl newContext, int event) {
 
       final DebuggerSession session = newContext.getDebuggerSession();
@@ -81,7 +81,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
   };
   private static final @NonNls String DEBUG_KEY_NAME = "idea.xdebug.key";
-  private EditorColorsListener myColorsListener;
+  private final EditorColorsListener myColorsListener;
 
   public void addClassNameMapper(final NameMapper mapper) {
     myNameMappers.add(mapper);

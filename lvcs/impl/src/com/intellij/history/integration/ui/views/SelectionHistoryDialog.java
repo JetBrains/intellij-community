@@ -6,8 +6,8 @@ import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class SelectionHistoryDialog extends FileHistoryDialog {
-  private int myFrom;
-  private int myTo;
+  private final int myFrom;
+  private final int myTo;
 
   public SelectionHistoryDialog(IdeaGateway gw, VirtualFile f, int from, int to) {
     super(gw, f, false);

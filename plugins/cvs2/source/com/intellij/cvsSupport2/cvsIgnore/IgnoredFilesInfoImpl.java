@@ -21,7 +21,7 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl");
 
-  private static SimpleStringPattern[] PREDEFINED_PATTERNS = new SimpleStringPattern[]{
+  private static final SimpleStringPattern[] PREDEFINED_PATTERNS = new SimpleStringPattern[]{
       new SimpleStringPattern("RCS"),
       new SimpleStringPattern("SCCS"),
       new SimpleStringPattern("CVS"),

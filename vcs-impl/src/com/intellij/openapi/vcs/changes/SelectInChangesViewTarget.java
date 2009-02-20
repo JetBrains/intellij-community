@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class SelectInChangesViewTarget implements SelectInTarget {
-  private Project myProject;
+  private final Project myProject;
 
   public SelectInChangesViewTarget(final Project project) {
     myProject = project;

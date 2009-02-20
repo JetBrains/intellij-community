@@ -14,7 +14,7 @@ import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class UnusedMethodParameterTest extends InspectionTestCase {
-  private UnusedParametersInspection myTool = new UnusedParametersInspection();
+  private final UnusedParametersInspection myTool = new UnusedParametersInspection();
 
   private void doTest() throws Exception {
     doTest("unusedMethodParameter/" + getTestName(false), myTool);

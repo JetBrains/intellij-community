@@ -164,8 +164,8 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
   }
 
   private static class MyQuickFix implements LocalQuickFix {
-    private ProblemDescriptionsProcessor myProcessor;
-    private String myHint;
+    private final ProblemDescriptionsProcessor myProcessor;
+    private final String myHint;
 
     public MyQuickFix(final ProblemDescriptionsProcessor processor, final String hint) {
       myProcessor = processor;

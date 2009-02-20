@@ -16,10 +16,10 @@ import java.awt.*;
  */
 public class FlowDropLocation implements ComponentDropLocation {
   private int myInsertIndex;
-  private String myInsertBeforeId;
-  private RadContainer myContainer;
+  private final String myInsertBeforeId;
+  private final RadContainer myContainer;
   private final int myAlignment;
-  private int myHGap;
+  private final int myHGap;
   private final int myVGap;
 
   public FlowDropLocation(RadContainer container, Point location, int alignment, int hGap, int vGap) {
@@ -46,9 +46,11 @@ public class FlowDropLocation implements ComponentDropLocation {
         }
       }
     }
-    myInsertBeforeId = null;
     if (myInsertIndex < myContainer.getComponentCount()) {
       myInsertBeforeId = myContainer.getComponent(myInsertIndex).getId();
+    }
+    else {
+      myInsertBeforeId = null;
     }
   }
 

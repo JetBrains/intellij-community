@@ -29,7 +29,7 @@ public class DebuggerDataViewsConfigurable implements Configurable {
   private JCheckBox myCbShowObjectId;
 
   private StateRestoringCheckBox myCbShowStaticFinalFields;
-  private ArrayRendererConfigurable myArrayRendererConfigurable;
+  private final ArrayRendererConfigurable myArrayRendererConfigurable;
   private JCheckBox myCbEnableAlternateViews;
 
   private JCheckBox myCbEnableToString;

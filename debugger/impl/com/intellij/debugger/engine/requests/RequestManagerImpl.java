@@ -44,10 +44,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private static final Key CLASS_NAME = Key.create("ClassName");
   private static final Key<Requestor> REQUESTOR = Key.create("Requestor");
 
-  private DebugProcessImpl myDebugProcess;
-  private HashMap<Requestor, String> myRequestWarnings = new HashMap<Requestor, String>();
+  private final DebugProcessImpl myDebugProcess;
+  private final HashMap<Requestor, String> myRequestWarnings = new HashMap<Requestor, String>();
 
-  private Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<Requestor, Set<EventRequest>>();
+  private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<Requestor, Set<EventRequest>>();
   private EventRequestManager myEventRequestManager;
   private @Nullable ThreadReference myFilterThread;
 

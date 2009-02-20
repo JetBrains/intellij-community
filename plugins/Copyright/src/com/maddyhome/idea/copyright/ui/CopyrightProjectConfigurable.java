@@ -28,13 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.Abstract implements ProjectComponent {
-  private Project project;
+  private final Project project;
   private ProjectSettingsPanel optionsPanel = null;
 
   private static final Icon icon = IconLoader.getIcon("/resources/copyright32x32.png");
 
-  private static Logger logger = Logger.getInstance(CopyrightProjectConfigurable.class.getName());
-  private CopyrightProfilesPanel myProfilesPanel;
+  private static final Logger logger = Logger.getInstance(CopyrightProjectConfigurable.class.getName());
+  private final CopyrightProfilesPanel myProfilesPanel;
 
 
   public CopyrightProjectConfigurable(Project project) {

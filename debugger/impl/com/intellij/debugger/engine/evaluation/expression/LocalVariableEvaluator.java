@@ -23,10 +23,10 @@ import com.sun.jdi.Value;
 class LocalVariableEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator");
 
-  private String myLocalVariableName;
+  private final String myLocalVariableName;
   private EvaluationContextImpl myContext;
   private LocalVariableProxyImpl myEvaluatedVariable;
-  private boolean myIsJspSpecial;
+  private final boolean myIsJspSpecial;
 
   public LocalVariableEvaluator(String localVariableName, boolean isJspSpecial) {
     myLocalVariableName = localVariableName;

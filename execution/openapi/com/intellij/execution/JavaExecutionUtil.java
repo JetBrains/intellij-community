@@ -44,10 +44,10 @@ public class JavaExecutionUtil {
   }
 
   private static final class DefaultRunProfile implements RunProfile {
-    private JavaParameters myParameters;
-    private String myContentName;
-    private Filter[] myFilters;
-    private Project myProject;
+    private final JavaParameters myParameters;
+    private final String myContentName;
+    private final Filter[] myFilters;
+    private final Project myProject;
 
     public DefaultRunProfile(final Project project, final JavaParameters parameters, String contentName, Filter[] filters) {
       myProject = project;

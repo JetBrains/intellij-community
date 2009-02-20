@@ -662,9 +662,9 @@ public class CvsUtil {
   }
 
   private static class Conflict {
-    private String myName;
-    private List<String> myRevisions;
-    private long myPreviousTime;
+    private final String myName;
+    private final List<String> myRevisions;
+    private final long myPreviousTime;
     private static final String DELIM = ";";
 
     private Conflict(String name, String originalRevision, List<String> revisions, long time) {

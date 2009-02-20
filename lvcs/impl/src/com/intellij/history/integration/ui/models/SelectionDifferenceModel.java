@@ -9,11 +9,11 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 
 public class SelectionDifferenceModel extends FileDifferenceModel {
-  private SelectionCalculator myCalculator;
-  private Revision myLeftRevision;
-  private Revision myRightRevision;
-  private int myFrom;
-  private int myTo;
+  private final SelectionCalculator myCalculator;
+  private final Revision myLeftRevision;
+  private final Revision myRightRevision;
+  private final int myFrom;
+  private final int myTo;
 
   public SelectionDifferenceModel(IdeaGateway gw,
                                   SelectionCalculator c,

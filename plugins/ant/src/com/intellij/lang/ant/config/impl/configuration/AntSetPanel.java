@@ -81,7 +81,7 @@ public class AntSetPanel {
     private final Splitter mySplitter = new Splitter(false);
     private final StorageAccessors myAccessors = StorageAccessors.createGlobal("antConfigurations");
     private final RightPanel myRightPanel;
-    private AnActionListEditor<AntInstallation> myAnts = new AnActionListEditor<AntInstallation>();
+    private final AnActionListEditor<AntInstallation> myAnts = new AnActionListEditor<AntInstallation>();
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
     private final EditPropertyContainer myGlobalWorkingProperties;
     private final Map<AntInstallation, EditPropertyContainer> myWorkingProperties = new HashMap<AntInstallation, EditPropertyContainer>();

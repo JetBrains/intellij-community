@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PlatformVcsDetector implements ProjectComponent {
-  private Project myProject;
-  private ProjectLevelVcsManagerImpl myVcsManager;
+  private final Project myProject;
+  private final ProjectLevelVcsManagerImpl myVcsManager;
 
   public PlatformVcsDetector(final Project project, final ProjectLevelVcsManagerImpl vcsManager) {
     myProject = project;

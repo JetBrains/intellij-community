@@ -24,9 +24,9 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.ActiveDecorationLayer");
 
   private final GuiEditor myEditor;
-  private JToolTip myToolTip;
+  private final JToolTip myToolTip;
 
-  private Map<RadComponent, ListenerNavigateButton> myNavigateButtons = new HashMap<RadComponent, ListenerNavigateButton>();
+  private final Map<RadComponent, ListenerNavigateButton> myNavigateButtons = new HashMap<RadComponent, ListenerNavigateButton>();
 
   private final FeedbackPainterPanel myFeedbackPainterPanel = new FeedbackPainterPanel();
   private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();

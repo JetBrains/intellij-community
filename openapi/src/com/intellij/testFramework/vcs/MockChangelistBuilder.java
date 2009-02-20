@@ -30,7 +30,7 @@ import java.util.List;
  * @author yole
  */
 public class MockChangelistBuilder implements ChangelistBuilder {
-  private List<Change> myChanges = new ArrayList<Change>();
+  private final List<Change> myChanges = new ArrayList<Change>();
 
   public void processChange(Change change) {
     myChanges.add(change);

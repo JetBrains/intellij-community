@@ -23,7 +23,7 @@ public class CachesHolder {
   private final Project myProject;
   private final Map<String, ChangesCacheFile> myCacheFiles;
   private final RepositoryLocationCache myLocationCache;
-  private ProjectLevelVcsManager myPlManager;
+  private final ProjectLevelVcsManager myPlManager;
 
   public CachesHolder(final Project project, final RepositoryLocationCache locationCache) {
     myProject = project;

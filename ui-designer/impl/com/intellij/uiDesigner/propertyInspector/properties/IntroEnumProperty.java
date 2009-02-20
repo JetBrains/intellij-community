@@ -17,7 +17,7 @@ import java.lang.reflect.Method;
  * @author yole
  */
 public class IntroEnumProperty extends IntrospectedProperty<Enum> {
-  private Class myEnumClass;
+  private final Class myEnumClass;
   private LabelPropertyRenderer<Enum> myRenderer;
   private EnumEditor myEditor;
 

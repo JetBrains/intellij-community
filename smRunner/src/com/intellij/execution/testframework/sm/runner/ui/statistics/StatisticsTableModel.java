@@ -21,7 +21,7 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
 
   private SMTestProxy myCurrentSuite;
 
-  private NullableFunction<List<SMTestProxy>, Object> oldReverseModelItemsFun =
+  private final NullableFunction<List<SMTestProxy>, Object> oldReverseModelItemsFun =
       new NullableFunction<List<SMTestProxy>, Object>() {
         @Nullable
         public Object fun(final List<SMTestProxy> proxies) {

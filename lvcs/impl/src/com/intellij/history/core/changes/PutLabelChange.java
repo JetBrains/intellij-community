@@ -10,8 +10,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class PutLabelChange extends Change {
-  private String myName;
-  private long myTimestamp;
+  private final String myName;
+  private final long myTimestamp;
 
   public PutLabelChange(String name, long timestamp) {
     myName = name;

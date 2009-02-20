@@ -11,7 +11,7 @@ import javax.swing.*;
  * User: Sergey.Vasiliev
  */
 public class BasicDomElementPresentation extends DomElementPresentation {
-  private DomElement myElement;
+  private final DomElement myElement;
 
 
   public BasicDomElementPresentation(final DomElement element) {

@@ -341,7 +341,7 @@ public class ColumnResultsTest extends BaseColumnRenderingTest {
 
 
   private class MyRenderer extends ColumnResults.ResultsCellRenderer {
-    private UITestUtil.FragmentsContainer myFragmentsContainer;
+    private final UITestUtil.FragmentsContainer myFragmentsContainer;
 
     private MyRenderer(final SMTestProxy proxy,
                        final UITestUtil.FragmentsContainer fragmentsContainer) {

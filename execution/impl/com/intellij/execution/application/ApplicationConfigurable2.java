@@ -28,7 +28,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   private AlternativeJREPanel myAlternativeJREPanel;
   private JCheckBox myShowSwingInspectorCheckbox;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
-  private JreVersionDetector myVersionDetector = new JreVersionDetector();
+  private final JreVersionDetector myVersionDetector = new JreVersionDetector();
 
   public ApplicationConfigurable2(final Project project) {
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());

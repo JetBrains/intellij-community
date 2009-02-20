@@ -31,13 +31,13 @@ import java.util.Map;
  * @author yole
  */
 public class GridBagConverter {
-  private Insets myInsets;
+  private final Insets myInsets;
   private int myHGap;
   private int myVGap;
   private boolean mySameSizeHorz;
   private boolean mySameSizeVert;
-  private ArrayList myComponents = new ArrayList();
-  private ArrayList myConstraints = new ArrayList();
+  private final ArrayList myComponents = new ArrayList();
+  private final ArrayList myConstraints = new ArrayList();
   private int myLastRow = -1;
   private int myLastCol = -1;
 

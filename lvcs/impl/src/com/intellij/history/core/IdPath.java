@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class IdPath {
-  private int[] myParts;
+  private final int[] myParts;
 
   public IdPath(int... parts) {
     myParts = parts;

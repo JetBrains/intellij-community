@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.util.*;
 
 public class FileSetCompileScope extends UserDataHolderBase implements CompileScope {
-  private Set<VirtualFile> myRootFiles = new HashSet<VirtualFile>();
-  private Set<String> myDirectoryUrls = new HashSet<String>();
+  private final Set<VirtualFile> myRootFiles = new HashSet<VirtualFile>();
+  private final Set<String> myDirectoryUrls = new HashSet<String>();
   private Set<String> myUrls = null; // urls caching
   private final Module[] myAffectedModules;
 

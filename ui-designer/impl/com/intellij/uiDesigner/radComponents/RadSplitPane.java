@@ -173,7 +173,7 @@ public final class RadSplitPane extends RadContainer {
   }
 
   private class MyDropLocation implements ComponentDropLocation {
-    private boolean myLeft;
+    private final boolean myLeft;
 
     public MyDropLocation(final boolean left) {
       myLeft = left;

@@ -28,7 +28,7 @@ public class RadNestedForm extends RadComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadNestedForm");
 
   private final String myFormFileName;
-  private RadRootContainer myRootContainer;
+  private final RadRootContainer myRootContainer;
 
   public RadNestedForm(final Module module, final String formFileName, final String id) throws Exception {
     super(module, JPanel.class, id);

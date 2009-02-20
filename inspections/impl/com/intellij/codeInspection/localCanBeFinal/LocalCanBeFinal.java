@@ -32,7 +32,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
   public boolean REPORT_VARIABLES = true;
   public boolean REPORT_PARAMETERS = true;
 
-  private LocalQuickFix myQuickFix;
+  private final LocalQuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "LocalCanBeFinal";
 
   public LocalCanBeFinal() {

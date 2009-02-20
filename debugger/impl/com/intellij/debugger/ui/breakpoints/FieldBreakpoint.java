@@ -49,9 +49,9 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   public static Icon ICON = IconLoader.getIcon("/debugger/db_field_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png");
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png");
-  private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
-  private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png");
-  private static Icon ourVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_field_warning_breakpoint.png");
+  private static final Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
+  private static final Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png");
+  private static final Icon ourVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_field_warning_breakpoint.png");
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
   protected FieldBreakpoint(Project project) {

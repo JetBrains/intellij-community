@@ -32,8 +32,8 @@ import java.util.Iterator;
 public final class LwRootContainer extends LwContainer implements IRootContainer{
   private String myClassToBind;
   private String myMainComponentBinding;
-  private ArrayList myButtonGroups = new ArrayList();
-  private ArrayList myInspectionSuppressions = new ArrayList();
+  private final ArrayList myButtonGroups = new ArrayList();
+  private final ArrayList myInspectionSuppressions = new ArrayList();
 
   public LwRootContainer() throws Exception{
     super("javax.swing.JPanel");
