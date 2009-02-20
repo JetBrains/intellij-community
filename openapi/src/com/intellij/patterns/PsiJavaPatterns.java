@@ -71,6 +71,7 @@ public class PsiJavaPatterns extends StandardPatterns{
       }
     });
   }
+  
 
   public static PsiFieldPattern psiField() {
     return new PsiFieldPattern();
