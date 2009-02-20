@@ -22,6 +22,7 @@ import java.util.HashSet;
 
 public class StatisticsManagerImpl extends StatisticsManager {
   private static final int UNIT_COUNT = 997;
+  private static final Object LOCK = new Object();
 
   @NonNls private static final String STORE_PATH = PathManager.getSystemPath() + File.separator + "stat";
 
@@ -33,8 +34,10 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
     String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
-    StatisticsUnit unit = getUnit(unitNumber);
-    return unit.getData(key1, info.getValue());
+    synchronized (LOCK) {
+      StatisticsUnit unit = getUnit(unitNumber);
+      return unit.getData(key1, info.getValue());
+    }
   }
 
   public void incUseCount(@NotNull final StatisticsInfo info) {
@@ -42,14 +45,19 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
     final String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
-    StatisticsUnit unit = getUnit(unitNumber);
-    unit.incData(key1, info.getValue());
-    myModifiedUnits.add(unit);
+    synchronized (LOCK) {
+      StatisticsUnit unit = getUnit(unitNumber);
+      unit.incData(key1, info.getValue());
+      myModifiedUnits.add(unit);
+    }
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   public StatisticsInfo[] getAllValues(final String context) {
-    final String[] strings = getUnit(getUnitNumber(context)).getKeys2(context);
+    final String[] strings;
+    synchronized (LOCK) {
+      strings = getUnit(getUnitNumber(context)).getKeys2(context);
+    }
     return ContainerUtil.map2Array(strings, StatisticsInfo.class, new NotNullFunction<String, StatisticsInfo>() {
       @NotNull
       public StatisticsInfo fun(final String s) {
@@ -59,13 +67,15 @@ public class StatisticsManagerImpl extends StatisticsManager {
   }
 
   public void save() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()){
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      for (StatisticsUnit unit : myModifiedUnits) {
-        saveUnit(unit.getNumber());
+    synchronized (LOCK) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()){
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        for (StatisticsUnit unit : myModifiedUnits) {
+          saveUnit(unit.getNumber());
+        }
       }
+      myModifiedUnits.clear();
     }
-    myModifiedUnits.clear();
   }
 
   private StatisticsUnit getUnit(int unitNumber) {
@@ -153,6 +163,8 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
   @TestOnly
   public void clearStatistics() {
-    Arrays.fill(myUnits, null);
+    synchronized (LOCK) {
+      Arrays.fill(myUnits, null);
+    }
   }
 }
