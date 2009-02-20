@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class AddImportAction implements HintAction, QuestionAction, LocalQuickFix {
   private final PsiReference myReference;
-  private Project myProject;
+  private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#" + AddImportAction.class.getName());
 
   public AddImportAction(final PsiReference reference) {

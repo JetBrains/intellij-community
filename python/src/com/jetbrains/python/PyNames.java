@@ -22,7 +22,7 @@ public class PyNames {
   @NonNls public static final String CLASSMETHOD = "classmethod";
   @NonNls public static final String STATICMETHOD = "staticmethod";
 
-  @NonNls private static Set<String> _UnderscoredNames = new HashSet<String>();
+  @NonNls private static final Set<String> _UnderscoredNames = new HashSet<String>();
   static {
     _UnderscoredNames.add("__abs__");
     _UnderscoredNames.add("__add__");

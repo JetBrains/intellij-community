@@ -11,8 +11,8 @@ public class PyClassInheritorsSearch extends ExtensibleQueryFactory<PyClass, PyC
   public static PyClassInheritorsSearch INSTANCE = new PyClassInheritorsSearch();
 
   public static class SearchParameters {
-    private PyClass mySuperClass;
-    private boolean myCheckDeepInheritance;
+    private final PyClass mySuperClass;
+    private final boolean myCheckDeepInheritance;
 
     public SearchParameters(final PyClass superClass, final boolean checkDeepInheritance) {
       mySuperClass = superClass;

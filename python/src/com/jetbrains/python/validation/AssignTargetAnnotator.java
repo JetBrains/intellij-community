@@ -63,7 +63,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     }
 
     private class ExprVisitor extends PyElementVisitor {
-      private Operation _op;
+      private final Operation _op;
       private final String DELETING_NONE = message("ANN.deleting.none");
       private final String ASSIGNMENT_TO_NONE = message("ANN.assign.to.none");
       private final String CANT_ASSIGN_TO_FUNCTION_CALL = message("ANN.cant.assign.to.call");

@@ -20,7 +20,7 @@ public class PythonPyInspectionToolProvider implements ApplicationComponent {
     return ApplicationManager.getApplication().getComponent(PythonPyInspectionToolProvider.class);
   }
 
-  private InspectionToolRegistrar myRegistrar;
+  private final InspectionToolRegistrar myRegistrar;
 
   public PythonPyInspectionToolProvider(final InspectionToolRegistrar registrar) {
     myRegistrar = registrar;
@@ -54,7 +54,7 @@ public class PythonPyInspectionToolProvider implements ApplicationComponent {
   }
 
   private static class PyInspectionToolFactory implements Factory<InspectionTool> {
-    private String myInspectionToolName;
+    private final String myInspectionToolName;
 
     public PyInspectionToolFactory(final String inspectionToolName) {
       myInspectionToolName = inspectionToolName;

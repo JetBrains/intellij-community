@@ -19,7 +19,7 @@ import java.awt.event.ActionListener;
  * @author oleg, Roman.Chernyatchik
  */
 public class PythonSdkChooserPanel extends JComponent {
-  private JdkChooserPanel myJdkChooser;
+  private final JdkChooserPanel myJdkChooser;
 
   /**
    * RubySdkChooserPanel - the panel to choose Ruby SDK

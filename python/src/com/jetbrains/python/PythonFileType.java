@@ -32,7 +32,7 @@ import javax.swing.*;
 public class PythonFileType extends LanguageFileType {
   public static PythonFileType INSTANCE = new PythonFileType();
 
-  private Icon _icon;
+  private final Icon _icon;
 
   public PythonFileType() {
     super(new PythonLanguage());

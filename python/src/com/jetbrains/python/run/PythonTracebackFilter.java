@@ -13,8 +13,8 @@ import java.util.regex.Matcher;
  * @author yole
  */
 public class PythonTracebackFilter implements Filter {
-    private Project myProject;
-    private Pattern _pattern = Pattern.compile("File \"([^\"]+)\"\\, line (\\d+)\\, in");
+    private final Project myProject;
+    private final Pattern _pattern = Pattern.compile("File \"([^\"]+)\"\\, line (\\d+)\\, in");
 
     public PythonTracebackFilter(Project myProject) {
         this.myProject = myProject;

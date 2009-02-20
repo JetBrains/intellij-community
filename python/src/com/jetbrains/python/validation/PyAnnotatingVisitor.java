@@ -35,7 +35,7 @@ import java.util.ArrayList;
  */
 public class PyAnnotatingVisitor implements Annotator {
   private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
-  private List<PyAnnotator> myAnnotators = new ArrayList<PyAnnotator>();
+  private final List<PyAnnotator> myAnnotators = new ArrayList<PyAnnotator>();
 
   public PyAnnotatingVisitor() {
     for (Class<? extends PyAnnotator> cls : ((PythonLanguage)PythonFileType.INSTANCE.getLanguage()).getAnnotators()) {

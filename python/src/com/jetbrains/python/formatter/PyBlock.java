@@ -39,15 +39,15 @@ import java.util.List;
  */
 public class PyBlock implements Block {
   //TOLATER: fix formatter
-  private PythonLanguage _language;
-  private Alignment _alignment;
-  private Indent _indent;
-  private ASTNode _node;
-  private Wrap _wrap;
-  private CodeStyleSettings _settings;
+  private final PythonLanguage _language;
+  private final Alignment _alignment;
+  private final Indent _indent;
+  private final ASTNode _node;
+  private final Wrap _wrap;
+  private final CodeStyleSettings _settings;
   private List<Block> _subBlocks = null;
-  private Alignment _childListAlignment;
-  private TokenSet _listElementTypes;
+  private final Alignment _childListAlignment;
+  private final TokenSet _listElementTypes;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
 
   public PyBlock(PythonLanguage language,

@@ -25,7 +25,7 @@ import java.util.Stack;
  * @author yole
  */
 public class PythonIndentingLexer extends PythonFutureAwareLexer {
-  private Stack<Integer> _indentStack = new Stack<Integer>();
+  private final Stack<Integer> _indentStack = new Stack<Integer>();
   private int _braceLevel;
   private boolean _lineHasSignificantTokens;
 

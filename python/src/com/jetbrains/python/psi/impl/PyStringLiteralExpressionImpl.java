@@ -33,7 +33,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       Pattern.compile("(u)?(r)?(\"\"\"|\"|'''|')(.*?)(\\3)?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static final Pattern PATTERN_ESCAPE = Pattern
       .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-8]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]){4}|U([0-9a-fA-F]{8}))");
-  private Map<String, String> escapeMap = initializeEscapeMap();
+  private final Map<String, String> escapeMap = initializeEscapeMap();
   private String stringValue;
   private List<TextRange> valueTextRanges;
 
