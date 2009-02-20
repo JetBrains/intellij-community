@@ -29,5 +29,6 @@ public interface DebuggerActions extends XDebuggerActions {
   @NonNls String CUSTOMIZE_THREADS_VIEW = "Debugger.CustomizeThreadsView";
   @NonNls String INSPECT = "Debugger.Inspect";
   @NonNls String EXPORT_THREADS = "ExportThreads";
+  @NonNls String DUMP_THREADS = "DumpThreads";
 
 }

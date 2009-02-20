@@ -1,8 +1,8 @@
 package com.intellij.unscramble;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,28 +67,34 @@ public class ThreadDumpParser {
     for(ThreadState threadState: result) {
       inferThreadStateDetail(threadState);
 
-      String s = findWaitingForLock(threadState.getStackTrace());
+      final String s = findWaitingForLock(threadState.getStackTrace());
       if (s != null) {
-        for(ThreadState threadHoldingLock: result) {
-          if (threadHoldingLock == threadState) continue;
-          String marker = "- locked <" + s + ">";
-          if (threadHoldingLock.getStackTrace().contains(marker)) {
-            if (threadState.isHoldingLock(threadHoldingLock)) {
-              threadState.addDeadlockedThread(threadHoldingLock);
-              threadHoldingLock.addDeadlockedThread(threadState);
+        for(ThreadState lockOwner : result) {
+          if (lockOwner == threadState) {
+            continue;
+          }
+          final String marker = "- locked <" + s + ">";
+          if (lockOwner.getStackTrace().contains(marker)) {
+            if (threadState.isAwaitedBy(lockOwner)) {
+              threadState.addDeadlockedThread(lockOwner);
+              lockOwner.addDeadlockedThread(threadState);
             }
-            threadHoldingLock.addWaitingThread(threadState);
+            lockOwner.addWaitingThread(threadState);
             break;
           }
         }
       }
     }
+    sortThreads(result);
+    return result;
+  }
+
+  public static void sortThreads(List<ThreadState> result) {
     Collections.sort(result, new Comparator<ThreadState>() {
       public int compare(final ThreadState o1, final ThreadState o2) {
         return getInterestLevel(o2) - getInterestLevel(o1);
       }
     });
-    return result;
   }
 
   @Nullable
@@ -127,7 +133,7 @@ public class ThreadDumpParser {
         ourIdleSwingTimerThreadPattern.matcher(stackTrace).find();
   }
 
-  private static void inferThreadStateDetail(final ThreadState threadState) {
+  public static void inferThreadStateDetail(final ThreadState threadState) {
     @NonNls String stackTrace = threadState.getStackTrace();
     if (stackTrace.contains("at java.net.PlainSocketImpl.socketAccept") ||
         stackTrace.contains("at java.net.PlainDatagramSocketImpl.receive") ||
@@ -139,7 +145,10 @@ public class ThreadDumpParser {
       threadState.setOperation(ThreadOperation.IO);
     }
     else if (stackTrace.contains("at java.lang.Thread.sleep")) {
-      threadState.setThreadStateDetail("sleeping");   // JDK 1.6 sets this explicitly, but JDK 1.5 does not
+      final String javaThreadState = threadState.getJavaThreadState();
+      if (!Thread.State.RUNNABLE.name().equals(javaThreadState)) {
+        threadState.setThreadStateDetail("sleeping");   // JDK 1.6 sets this explicitly, but JDK 1.5 does not
+      }
     }
     if (threadState.isEDT()) {
       if (stackTrace.contains("java.awt.EventQueue.getNextEvent")) {

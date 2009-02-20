@@ -218,6 +218,9 @@
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="/actions/export.png">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
+    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Take a thread dump" icon="/actions/dump.png">
+      <add-to-group group-id="RunMenu" anchor="last"/>
+    </action>
 
     <!-- Tools -->
     <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction">

@@ -297,6 +297,7 @@ public class DebuggerSessionTab implements DebuggerLogConsoleManager, Disposable
 
     group.addSeparator();
     addAction(group, DebuggerActions.EXPORT_THREADS);
+    addAction(group, DebuggerActions.DUMP_THREADS);
     group.addSeparator();
 
     group.add(myUi.getOptions().getLayoutActions());

@@ -431,7 +431,7 @@ public class UnscrambleDialog extends DialogWrapper{
     );
   }
 
-  private static ConsoleView addConsole(final Project project, final List<ThreadState> threadDump) {
+  public static ConsoleView addConsole(final Project project, final List<ThreadState> threadDump) {
     final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     JComponent consoleComponent = threadDump.size() > 1
@@ -469,42 +469,7 @@ public class UnscrambleDialog extends DialogWrapper{
       super(new BorderLayout());
 
       final JList threadList = new JList(threadDump.toArray(new ThreadState[threadDump.size()]));
-      threadList.setCellRenderer(new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(final JList list,
-                                             final Object value,
-                                             final int index,
-                                             final boolean selected,
-                                             final boolean hasFocus) {
-          ThreadState threadState = (ThreadState) value;
-          setIcon(getThreadStateIcon(threadState));
-          if (!selected) {
-            ThreadState selectedThread = (ThreadState)list.getSelectedValue();
-            if (threadState.isDeadlocked()) {
-              setBackground(LightColors.RED);
-            }
-            else if (selectedThread != null && threadState.isHoldingLock(selectedThread)) {
-              setBackground(Color.YELLOW);
-            }
-            else {
-              setBackground(UIUtil.getListBackground());
-            }
-          }
-          SimpleTextAttributes attrs = getAttributes(threadState);
-          append(threadState.getName() + " (", attrs);
-          String detail = threadState.getThreadStateDetail();
-          if (detail == null) {
-            detail = threadState.getState().trim();
-          }
-          if (detail.length() > 30) {
-            detail = detail.substring(0, 30) + "...";
-          }
-          append(detail, attrs);
-          append(")", attrs);
-          if (threadState.getExtraState() != null) {
-            append(" [" + threadState.getExtraState() + "]", attrs);
-          }
-        }
-      });
+      threadList.setCellRenderer(new ThreadListCellRenderer());
       threadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       threadList.addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(final ListSelectionEvent e) {
@@ -533,7 +498,7 @@ public class UnscrambleDialog extends DialogWrapper{
       if (threadState.isSleeping()) {
         return PAUSE_ICON;
       }
-      if (threadState.isLocked()) {
+      if (threadState.isWaiting()) {
         return LOCKED_ICON;
       }
       if (threadState.getOperation() == ThreadOperation.Socket) {
@@ -562,6 +527,40 @@ public class UnscrambleDialog extends DialogWrapper{
         return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
       }
       return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+
+    private static class ThreadListCellRenderer extends ColoredListCellRenderer {
+
+      protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+        ThreadState threadState = (ThreadState) value;
+        setIcon(getThreadStateIcon(threadState));
+        if (!selected) {
+          ThreadState selectedThread = (ThreadState)list.getSelectedValue();
+          if (threadState.isDeadlocked()) {
+            setBackground(LightColors.RED);
+          }
+          else if (selectedThread != null && threadState.isAwaitedBy(selectedThread)) {
+            setBackground(Color.YELLOW);
+          }
+          else {
+            setBackground(UIUtil.getListBackground());
+          }
+        }
+        SimpleTextAttributes attrs = getAttributes(threadState);
+        append(threadState.getName() + " (", attrs);
+        String detail = threadState.getThreadStateDetail();
+        if (detail == null) {
+          detail = threadState.getState();
+        }
+        if (detail.length() > 30) {
+          detail = detail.substring(0, 30) + "...";
+        }
+        append(detail, attrs);
+        append(")", attrs);
+        if (threadState.getExtraState() != null) {
+          append(" [" + threadState.getExtraState() + "]", attrs);
+        }
+      }
     }
   }
 

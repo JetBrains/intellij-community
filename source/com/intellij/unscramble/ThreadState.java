@@ -3,9 +3,9 @@ package com.intellij.unscramble;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -19,7 +19,7 @@ public class ThreadState {
   private String myJavaThreadState;
   private String myThreadStateDetail;
   private String myExtraState;
-  private final List<ThreadState> myThreadsWaitingForMyLock = new ArrayList<ThreadState>();
+  private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<ThreadState>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<ThreadState>();
 
   @Nullable
@@ -45,6 +45,10 @@ public class ThreadState {
   public void setStackTrace(final String stackTrace, boolean isEmpty) {
     myStackTrace = stackTrace;
     myEmptyStackTrace = isEmpty;
+  }
+
+  public Collection<ThreadState> getAwaitingThreads() {
+    return Collections.unmodifiableSet(myThreadsWaitingForMyLock);
   }
 
   public String toString() {
@@ -92,7 +96,7 @@ public class ThreadState {
            myStackTrace.contains("java.util.concurrent.ThreadPoolExecutor.getTask");
   }
 
-  public boolean isHoldingLock(ThreadState thread) {
+  public boolean isAwaitedBy(ThreadState thread) {
     return myThreadsWaitingForMyLock.contains(thread);
   }
 
@@ -117,9 +121,10 @@ public class ThreadState {
     myOperation = operation;
   }
 
-  public boolean isLocked() {
-    return "on object monitor".equals(myThreadStateDetail) || "waiting on condition".equals(myState) ||
-        ("parking".equals(myThreadStateDetail) && !isSleeping());
+  public boolean isWaiting() {
+    return "on object monitor".equals(myThreadStateDetail) || 
+           myState.startsWith("waiting") ||
+           ("parking".equals(myThreadStateDetail) && !isSleeping());
   }
 
   public boolean isEDT() {

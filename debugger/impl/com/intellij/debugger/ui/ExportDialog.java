@@ -30,7 +30,6 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.Iterator;
 import java.util.List;
 
 public class ExportDialog extends DialogWrapper {
@@ -126,29 +125,28 @@ public class ExportDialog extends DialogWrapper {
     return "#com.intellij.debugger.ui.ExportDialog";
   }
 
-  public String getExportThreadsText(VirtualMachineProxyImpl vmProxy) {
+  public static String getExportThreadsText(VirtualMachineProxyImpl vmProxy) {
     StringBuffer buffer = new StringBuffer(512);
-    List threads = vmProxy.getVirtualMachine().allThreads();
-    for (Iterator it = threads.iterator(); it.hasNext();) {
-      ThreadReference threadReference = (ThreadReference)it.next();
+    List<ThreadReference> threads = vmProxy.getVirtualMachine().allThreads();
+    for (ThreadReference threadReference : threads) {
       buffer.append(threadName(threadReference));
       ReferenceType referenceType = threadReference.referenceType();
-      if(referenceType != null) {
+      if (referenceType != null) {
         //noinspection HardCodedStringLiteral
         Field daemon = referenceType.fieldByName("daemon");
-        if(daemon != null) {
+        if (daemon != null) {
           Value value = threadReference.getValue(daemon);
-          if(value instanceof BooleanValue && ((BooleanValue)value).booleanValue()) {
+          if (value instanceof BooleanValue && ((BooleanValue)value).booleanValue()) {
             buffer.append(" ").append(DebuggerBundle.message("threads.export.attribute.label.daemon"));
           }
         }
 
         //noinspection HardCodedStringLiteral
         Field priority = referenceType.fieldByName("priority");
-        if(priority != null) {
+        if (priority != null) {
           Value value = threadReference.getValue(priority);
-          if(value instanceof IntegerValue) {
-            buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.priority", ((IntegerValue) value).intValue()));
+          if (value instanceof IntegerValue) {
+            buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.priority", ((IntegerValue)value).intValue()));
           }
         }
       }
@@ -157,34 +155,33 @@ public class ExportDialog extends DialogWrapper {
       if (groupReference != null) {
         buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.group", groupReference.name()));
       }
-      buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.status", DebuggerUtilsEx.getThreadStatusText(threadReference.status())));
+      buffer.append(", ").append(
+        DebuggerBundle.message("threads.export.attribute.label.status", DebuggerUtilsEx.getThreadStatusText(threadReference.status())));
 
       try {
-        if(vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
-          List list = threadReference.ownedMonitors();
-          for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-            ObjectReference reference = (ObjectReference)iterator.next();
-            List waiting = reference.waitingThreads();
-            for (Iterator iterator1 = waiting.iterator(); iterator1.hasNext();) {
-              ThreadReference thread = (ThreadReference)iterator1.next();
+        if (vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
+          List<ObjectReference> list = threadReference.ownedMonitors();
+          for (ObjectReference reference : list) {
+            final List<ThreadReference> waiting = reference.waitingThreads();
+            for (ThreadReference thread : waiting) {
               buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.blocks.thread", threadName(thread)));
             }
           }
         }
 
         ObjectReference waitedMonitor = vmProxy.canGetCurrentContendedMonitor() ? threadReference.currentContendedMonitor() : null;
-        if(waitedMonitor != null) {
-          if(vmProxy.canGetMonitorInfo()) {
+        if (waitedMonitor != null) {
+          if (vmProxy.canGetMonitorInfo()) {
             ThreadReference waitedThread = waitedMonitor.owningThread();
             if (waitedThread != null) {
-              buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", threadName(waitedThread)));
+              buffer.append("\n\t ")
+                .append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", threadName(waitedThread)));
             }
           }
         }
 
-        List frames = threadReference.frames();
-        for (Iterator frit = frames.iterator(); frit.hasNext();) {
-          StackFrame stackFrame = (StackFrame)frit.next();
+        final List<StackFrame> frames = threadReference.frames();
+        for (StackFrame stackFrame : frames) {
           final Location location = stackFrame.location();
           buffer.append("\n\t  ").append(renderLocation(location));
         }
@@ -197,7 +194,7 @@ public class ExportDialog extends DialogWrapper {
     return buffer.toString();
   }
 
-  private String renderLocation(final Location location) {
+  private static String renderLocation(final Location location) {
     String sourceName;
     try {
       sourceName = location.sourceName();
@@ -213,7 +210,7 @@ public class ExportDialog extends DialogWrapper {
     );
   }
 
-  private String threadName(ThreadReference threadReference) {
+  private static String threadName(ThreadReference threadReference) {
     return threadReference.name() + "@" + threadReference.uniqueID();
   }
 
