@@ -22,7 +22,8 @@ import java.util.Set;
  * @author peter
  */
 public class JavaMemberNameCompletionContributor extends CompletionContributor {
-  private static final ElementPattern INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeaf(psiElement().withText("?").afterLeaf(psiElement().withText("<")));
+  public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN =
+    psiElement().afterLeaf(psiElement().withText("?").afterLeaf("<", ","));
 
   public JavaMemberNameCompletionContributor() {
     extend(

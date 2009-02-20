@@ -5,10 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
@@ -74,6 +71,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         psiElement().inside(PsiThisExpression.class),
         psiElement().inside(PsiSuperExpression.class)
         );
+  public static final Key<Boolean> TYPE_CAST = Key.create("TYPE_CAST");
 
   @Nullable
   private static Pair<ElementFilter, TailType> getReferenceFilter(PsiElement element) {
@@ -112,8 +110,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTypeCastExpression.class)), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         for (final ExpectedTypeInfo type : getExpectedTypes(parameters.getPosition())) {
-          result.addElement(LookupItemUtil.objectToLookupItem(type.getDefaultType()).setTailType(TailTypes.CAST_RPARENTH).setAutoCompletionPolicy(
-              AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE));
+          final LookupItem item = PsiTypeLookupItem.createLookupItem(type.getDefaultType()).setTailType(TailTypes.CAST_RPARENTH)
+            .setAutoCompletionPolicy(AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE);
+          item.putUserData(TYPE_CAST, Boolean.TRUE);
+          result.addElement(item);
         }
       }
     });
