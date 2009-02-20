@@ -14,7 +14,9 @@
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="icons" />
+    <orderEntry type="library" name="XmlBeans" level="project" />
   </component>
   <component name="copyright">
     <Base>

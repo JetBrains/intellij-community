@@ -4,9 +4,21 @@
     <group id="ToolsXmlGroup">
       <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>
       <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
+      <action id="XSD2Document" class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentAction" text="Generate XSD schema from XML file"/>
+      <action id="Document2XSD" class="com.intellij.xml.actions.xmlbeans.GenerateInstanceDocumentFromSchemaAction" text="Generate XML document from XSD schema"/>
       <separator/>
 
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
+    </group>
+
+    <group id="XmlGenerateToolsGroup">
+      <separator/>
+      <reference ref="GenerateDTD" />
+      <reference ref="XSD2Document" />
+      <reference ref="Document2XSD" />
+      <separator/>
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </group>
 
     <reference ref="ValidateXml">
