@@ -12,7 +12,7 @@ import org.jdom.Element;
 import java.util.*;
 
 public class CompilerTestData implements JDOMExternalizable {
-  private Set<String> myPathsToDelete = new HashSet<String>();
+  private final Set<String> myPathsToDelete = new HashSet<String>();
   private String[] myDeletedByMake;
   private String[] myToRecompile;
 

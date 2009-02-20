@@ -119,8 +119,8 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
   }
 
   protected static class MockBuildParticipant extends BuildParticipant {
-    private BuildConfiguration myBuildConfiguration;
-    private BuildRecipe myBuildRecipe;
+    private final BuildConfiguration myBuildConfiguration;
+    private final BuildRecipe myBuildRecipe;
 
     public MockBuildParticipant(final BuildConfiguration buildConfiguration, final BuildRecipe buildRecipe) {
       myBuildConfiguration = buildConfiguration;
@@ -184,7 +184,7 @@ public abstract class IncrementalPackagingTestCase extends LiteFixture {
   }
 
   protected class BuildRecipeInfo {
-    private ProcessingItemsBuilderTest.BuildRecipeInfo myParent;
+    private final ProcessingItemsBuilderTest.BuildRecipeInfo myParent;
     protected BuildRecipe myBuildRecipe = new BuildRecipeImpl();
     private int myCount = 2;
     @NonNls private static final String PROJECT_DIR = "project/";
