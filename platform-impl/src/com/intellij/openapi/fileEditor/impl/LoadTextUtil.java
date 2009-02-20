@@ -165,7 +165,7 @@ public final class LoadTextUtil {
     Charset existing = virtualFile.getCharset();
     Charset specified = extractCharsetFromFileContent(project, virtualFile, text);
     Charset charset = chooseMostlyHarmlessCharset(existing, specified, text);
-    if (charset != null) {
+    if (charset != null && !charset.equals(existing)) {
       virtualFile.setCharset(charset);
       if (virtualFile.getBOM() != null) {
         // prevent file to be reloaded in other encoding after save with BOM
@@ -173,7 +173,7 @@ public final class LoadTextUtil {
       }
     }
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
-    return new BufferedWriter(specified == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
+    return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
   }
 
   private static Charset chooseMostlyHarmlessCharset(Charset existing, Charset specified, String text) {
