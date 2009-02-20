@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsReferenceListImpl");
-  private ClsJavaCodeReferenceElementImpl[] myRefs;
+  private ClsJavaCodeReferenceElementImpl[] myRefs; //guarded by PsiLock
 
   public ClsReferenceListImpl(final PsiClassReferenceListStub stub) {
     super(stub);

@@ -322,6 +322,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     return true;
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
     if (sourceClassMirror == null) return this;

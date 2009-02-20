@@ -11,14 +11,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implements PsiArrayInitializerMemberValue {
   private final ClsElementImpl myParent;
-  private PsiAnnotationMemberValue[] myInitializers;
-  private final static Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsArrayInitializerMemberValueImpl");
+  private final PsiAnnotationMemberValue[] myInitializers;
+  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsArrayInitializerMemberValueImpl");
 
-  public ClsArrayInitializerMemberValueImpl(ClsElementImpl parent) {
+  public ClsArrayInitializerMemberValueImpl(ClsElementImpl parent, PsiAnnotationMemberValue[] initializers) {
     myParent = parent;
-  }
-
-  public void setInitializers(PsiAnnotationMemberValue[] initializers) {
     myInitializers = initializers;
   }
 

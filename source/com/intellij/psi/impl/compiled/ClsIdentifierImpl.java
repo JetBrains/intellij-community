@@ -13,7 +13,7 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
   private final PsiElement myParent;
   private final String myText;
 
-  public ClsIdentifierImpl(PsiElement parent, String text) {
+  ClsIdentifierImpl(PsiElement parent, String text) {
     myParent = parent;
     myText = text;
   }

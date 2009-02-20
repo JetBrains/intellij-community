@@ -18,9 +18,9 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     myParent = parent;
     myAttributes = new ClsNameValuePairImpl[psiAttributes.length];
     for (int i = 0; i < myAttributes.length; i++) {
-      myAttributes[i] = new ClsNameValuePairImpl(this);
-      myAttributes[i].setNameIdentifier(new ClsIdentifierImpl(myAttributes[i], psiAttributes[i].getName()));
-      myAttributes[i].setMemberValue(ClsAnnotationsUtil.getMemberValue(psiAttributes[i].getValue(), myAttributes[i]));
+      String name = psiAttributes[i].getName();
+      PsiAnnotationMemberValue value = psiAttributes[i].getValue();
+      myAttributes[i] = new ClsNameValuePairImpl(this, name, value);
     }
   }
 

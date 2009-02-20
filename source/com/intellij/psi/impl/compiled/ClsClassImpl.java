@@ -30,8 +30,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   private volatile Map<String, PsiField> myCachedFieldsMap = null;
   private volatile Map<String, PsiMethod[]> myCachedMethodsMap = null;
   private volatile Map<String, PsiClass> myCachedInnersMap = null;
-  private PsiIdentifier myNameIdentifier;
-  private PsiDocComment myDocComment;
+  private PsiIdentifier myNameIdentifier; //guarded by LOCK
+  private PsiDocComment myDocComment;     //guarded by LOCK
 
   public ClsClassImpl(final PsiClassStub stub) {
     super(stub);
@@ -223,15 +223,16 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
   public PsiField findFieldByName(String name, boolean checkBases) {
     if (!checkBases) {
-      if (myCachedFieldsMap == null) {
-        HashMap<String, PsiField> cachedFieldsMap = new HashMap<String, PsiField>();
+      Map<String, PsiField> cachedFieldsMap = myCachedFieldsMap;
+      if (cachedFieldsMap == null) {
+        cachedFieldsMap = new HashMap<String, PsiField>();
         final PsiField[] fields = getFields();
         for (final PsiField field : fields) {
           cachedFieldsMap.put(field.getName(), field);
         }
         myCachedFieldsMap = cachedFieldsMap;
       }
-      return myCachedFieldsMap.get(name);
+      return cachedFieldsMap.get(name);
     }
     return PsiClassImplUtil.findFieldByName(this, name, checkBases);
   }
@@ -248,8 +249,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
     if (!checkBases) {
-      if (myCachedMethodsMap == null) {
-        Map<String, PsiMethod[]> methodsMap = new HashMap<String, PsiMethod[]>();
+      Map<String, PsiMethod[]> methodsMap = myCachedMethodsMap;
+      if (methodsMap == null) {
+        methodsMap = new HashMap<String, PsiMethod[]>();
         Map<String, List<PsiMethod>> cachedMethodsMap = new HashMap<String, List<PsiMethod>>();
         final PsiMethod[] methods = getMethods();
         for (final PsiMethod method : methods) {
@@ -266,7 +268,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
         }
         myCachedMethodsMap = methodsMap;
       }
-      final PsiMethod[] psiMethods = myCachedMethodsMap.get(name);
+      final PsiMethod[] psiMethods = methodsMap.get(name);
       return psiMethods != null ? psiMethods : PsiMethod.EMPTY_ARRAY;
     }
 
@@ -285,15 +287,16 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
     if (!checkBases) {
-      if (myCachedInnersMap == null) {
-        HashMap<String, PsiClass> cachedInnersMap = new HashMap<String, PsiClass>();
+      Map<String, PsiClass> cachedInnersMap = myCachedInnersMap;
+      if (cachedInnersMap == null) {
+        cachedInnersMap = new HashMap<String, PsiClass>();
         final PsiClass[] classes = getInnerClasses();
         for (final PsiClass psiClass : classes) {
           cachedInnersMap.put(psiClass.getName(), psiClass);
         }
         myCachedInnersMap = cachedInnersMap;
       }
-      return myCachedInnersMap.get(name);
+      return cachedInnersMap.get(name);
     }
     return PsiClassImplUtil.findInnerByName(this, name, checkBases);
   }
@@ -521,6 +524,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     return null;
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     PsiClass aClass = getSourceMirrorClass();
     return aClass != null ? aClass : this;

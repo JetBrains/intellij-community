@@ -25,9 +25,9 @@ import javax.swing.*;
 public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterImpl");
 
-  private PsiTypeElement myType;
-  private String myMirrorName = null;
-  private String myName = null;
+  private PsiTypeElement myType;        //guarded by PsiLock
+  private String myMirrorName = null;   //guarded by PsiLock
+  private String myName = null;         //no point guarding
   public static final ClsParameterImpl[] EMPTY_ARRAY = new ClsParameterImpl[0];
 
   public ClsParameterImpl(final PsiParameterStub stub) {

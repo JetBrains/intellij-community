@@ -30,7 +30,7 @@ import java.util.List;
 public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParameterImpl");
   static final ClsTypeParameterImpl[] EMPTY_ARRAY = new ClsTypeParameterImpl[0];
-  private LightEmptyImplementsList myLightEmptyImplementsList;
+  private LightEmptyImplementsList myLightEmptyImplementsList; //guarded by PsiLock
 
   public ClsTypeParameterImpl(final PsiTypeParameterStub stub) {
     super(stub);

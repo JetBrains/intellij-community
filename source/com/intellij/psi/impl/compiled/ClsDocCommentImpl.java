@@ -15,9 +15,9 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
 
   private final ClsElementImpl myParent;
 
-  private PsiDocTag[] myTags = null;
+  private PsiDocTag[] myTags = null; //guarded by LOCK
 
-  public ClsDocCommentImpl(ClsElementImpl parent) {
+  ClsDocCommentImpl(ClsElementImpl parent) {
     myParent = parent;
   }
 
@@ -48,16 +48,18 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
   }
 
   public PsiElement[] getDescriptionElements() {
-    return PsiElement.EMPTY_ARRAY;
+    return EMPTY_ARRAY;
   }
 
   public PsiDocTag[] getTags() {
-    if (myTags == null){
-      PsiDocTag[] tags = new PsiDocTag[1];
-      tags[0] = new ClsDocTagImpl(this, "@deprecated");
-      myTags = tags;
+    synchronized (PsiLock.LOCK) {
+      if (myTags == null){
+        PsiDocTag[] tags = new PsiDocTag[1];
+        tags[0] = new ClsDocTagImpl(this, "@deprecated");
+        myTags = tags;
+      }
+      return myTags;
     }
-    return myTags;
   }
 
   public PsiDocTag findTagByName(@NonNls String name) {

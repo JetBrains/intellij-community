@@ -19,7 +19,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsClassObjectAccessExpressionImpl");
   private final ClsTypeElementImpl myTypeElement;
   private final ClsElementImpl myParent;
-  private static final @NonNls String CLASS_ENDING = ".class";
+  @NonNls private static final String CLASS_ENDING = ".class";
 
   public ClsClassObjectAccessExpressionImpl(String canonicalClassText, ClsElementImpl parent) {
     myParent = parent;

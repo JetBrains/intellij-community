@@ -9,28 +9,19 @@ import org.jetbrains.annotations.NotNull;
 class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsPackageStatementImpl");
 
-  private ClsFileImpl myFile;
+  private final ClsFileImpl myFile;
   private final String myPackageName;
 
-  public ClsPackageStatementImpl(ClsFileImpl file) {
+  public ClsPackageStatementImpl(@NotNull ClsFileImpl file) {
     myFile = file;
-    final PsiClass[] psiClasses = myFile.getClasses();
+    final PsiClass[] psiClasses = file.getClasses();
     String className = psiClasses.length > 0 ? psiClasses[0].getQualifiedName() : "";
     int index = className.lastIndexOf('.');
-    if (index < 0){
-      myPackageName = null;
-    }
-    else{
-      myPackageName = className.substring(0, index);
-    }
+    myPackageName = index < 0 ? null : className.substring(0, index);
   }
 
   public PsiElement getParent() {
     return myFile;
-  }
-
-  void invalidate() {
-    myFile = null;
   }
 
   /**

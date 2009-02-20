@@ -109,20 +109,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   public PsiPackageStatement getPackageStatement() {
-    if (myPackageStatement == null) {
-      myPackageStatement = new ClsPackageStatementImpl(this);
+    ClsPackageStatementImpl statement = myPackageStatement;
+    if (statement == null) {
+      myPackageStatement = statement = new ClsPackageStatementImpl(this);
     }
-    return myPackageStatement.getPackageName() != null ? myPackageStatement : null;
+    return statement.getPackageName() != null ? statement : null;
   }
 
   @NotNull
   public String getPackageName() {
     PsiPackageStatement statement = getPackageStatement();
-    if (statement == null) {
-      return "";
-    } else {
-      return statement.getPackageName();
-    }
+    return statement == null ? "" : statement.getPackageName();
   }
 
   public void setPackageName(final String packageName) throws IncorrectOperationException {
@@ -240,6 +237,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return myMirror.textToCharArray();
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     String packageName = getPackageName();
     String sourceFileName = ((ClsClassImpl)getClasses()[0]).getSourceFileName();

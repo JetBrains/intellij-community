@@ -13,19 +13,13 @@ import org.jetbrains.annotations.NotNull;
 public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValuePair {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsNameValuePairImpl");
   private final ClsElementImpl myParent;
-  private ClsIdentifierImpl myNameIdentifier;
-  private PsiAnnotationMemberValue myMemberValue;
+  private final ClsIdentifierImpl myNameIdentifier;
+  private final PsiAnnotationMemberValue myMemberValue;
 
-  public ClsNameValuePairImpl(ClsElementImpl parent) {
+  public ClsNameValuePairImpl(ClsElementImpl parent, String name, PsiAnnotationMemberValue value) {
     myParent = parent;
-  }
-
-  void setNameIdentifier(ClsIdentifierImpl nameIdentifier) {
-    myNameIdentifier = nameIdentifier;
-  }
-
-  void setMemberValue(PsiAnnotationMemberValue memberValue) {
-    myMemberValue = memberValue;
+    myNameIdentifier = new ClsIdentifierImpl(this, name);
+    myMemberValue = ClsAnnotationsUtil.getMemberValue(value, this);
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {

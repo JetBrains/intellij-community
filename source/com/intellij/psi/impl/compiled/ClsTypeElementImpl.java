@@ -16,12 +16,11 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   static final char VARIANCE_SUPER = '-';
   static final char VARIANCE_INVARIANT = '*';
 
-
-  private PsiElement myParent;
+  private final PsiElement myParent;
   private final String myTypeText;
 
-  private ClsElementImpl myChild = null;
-  private boolean myChildSet = false;
+  private volatile ClsElementImpl myChild = null;
+  private boolean myChildSet = false;  //guarded by PsiLock
   private volatile PsiType myCachedType;
   private final char myVariance;
   @NonNls private static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
@@ -31,10 +30,6 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     myParent = parent;
     myTypeText = typeText;
     myVariance = variance;
-  }
-
-  void setParent(PsiElement parent){
-    myParent = parent;
   }
 
   @NotNull
@@ -91,7 +86,9 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   private void loadChild() {
     if (isPrimitive()) {
-      myChildSet = true;
+      synchronized (PsiLock.LOCK) {
+        myChildSet = true;
+      }
       return;
     }
 

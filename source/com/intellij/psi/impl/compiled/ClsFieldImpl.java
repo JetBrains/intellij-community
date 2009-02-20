@@ -26,11 +26,11 @@ import java.util.Set;
 public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFieldImpl");
 
-  private volatile PsiIdentifier myNameIdentifier = null;
-  private volatile PsiTypeElement myType = null;
-  private volatile PsiDocComment myDocComment = null;
-  private volatile PsiExpression myInitializer = null;
-  private boolean myInitializerInitialized = false;
+  private PsiIdentifier myNameIdentifier = null; //guarded by PsiLock.LOCK
+  private PsiTypeElement myType = null;          //guarded by PsiLock.LOCK
+  private PsiDocComment myDocComment = null;     //guarded by PsiLock.LOCK
+  private PsiExpression myInitializer = null;    //guarded by PsiLock.LOCK
+  private boolean myInitializerInitialized = false;  //guarded by PsiLock.LOCK
 
   public ClsFieldImpl(final PsiFieldStub stub) {
     super(stub);
@@ -170,10 +170,12 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   public PsiDocComment getDocComment() {
     if (!isDeprecated()) return null;
 
-    if (myDocComment == null) {
-      myDocComment = new ClsDocCommentImpl(this);
+    synchronized (PsiLock.LOCK) {
+      if (myDocComment == null) {
+        myDocComment = new ClsDocCommentImpl(this);
+      }
+      return myDocComment;
     }
-    return myDocComment;
   }
 
   public void normalizeDeclaration() throws IncorrectOperationException {

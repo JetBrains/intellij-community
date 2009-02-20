@@ -39,13 +39,11 @@ public class ClsAnnotationsUtil {
     else if (element instanceof PsiArrayInitializerMemberValue) {
       PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)element).getInitializers();
       PsiAnnotationMemberValue[] clsInitializers = new PsiAnnotationMemberValue[initializers.length];
-      ClsArrayInitializerMemberValueImpl arrayValue = new ClsArrayInitializerMemberValueImpl(parent);
+      ClsArrayInitializerMemberValueImpl arrayValue = new ClsArrayInitializerMemberValueImpl(parent, clsInitializers);
       for (int i = 0; i < initializers.length; i++) {
         clsInitializers[i] = getMemberValue(initializers[i], arrayValue);
       }
-      arrayValue.setInitializers(clsInitializers);
       return arrayValue;
-
     }
     else if (element instanceof PsiAnnotation) {
       final PsiAnnotation psiAnnotation = (PsiAnnotation)element;

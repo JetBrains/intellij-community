@@ -106,13 +106,13 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   public final TextRange getTextRange() {
-    getMirror();
-    return myMirror != null ? myMirror.getTextRange() : new TextRange(0, 0);
+    PsiElement mirror = getMirror();
+    return mirror != null ? mirror.getTextRange() : new TextRange(0, 0);
   }
 
   public final int getStartOffsetInParent() {
-    getMirror();
-    return myMirror != null ? myMirror.getStartOffsetInParent() : -1;
+    PsiElement mirror = getMirror();
+    return mirror != null ? mirror.getStartOffsetInParent() : -1;
   }
 
   public int getTextLength() {
@@ -176,8 +176,8 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   public final int getTextOffset() {
-    getMirror();
-    return myMirror != null ? myMirror.getTextOffset() : -1;
+    PsiElement mirror = getMirror();
+    return mirror != null ? mirror.getTextOffset() : -1;
   }
 
   public String getText() {

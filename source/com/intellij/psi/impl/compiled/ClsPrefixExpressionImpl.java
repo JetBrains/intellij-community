@@ -13,7 +13,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
   private final ClsElementImpl myParent;
   private final PsiExpression myOperand;
 
-  private MySign mySign = null;
+  private MySign mySign = null;  //no point guarding, it's immutable
 
   public ClsPrefixExpressionImpl(ClsElementImpl parent, PsiExpression operand) {
     myParent = parent;
@@ -84,7 +84,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
 
     @NotNull
     public PsiElement[] getChildren() {
-      return PsiElement.EMPTY_ARRAY;
+      return EMPTY_ARRAY;
     }
 
     public PsiElement getParent() {
