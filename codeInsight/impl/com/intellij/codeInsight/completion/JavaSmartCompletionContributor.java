@@ -380,7 +380,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
 
-  private static void processInheritors(final CompletionParameters parameters, final PsiElement identifierCopy, final PsiFile file, final List<PsiClassType> expectedClassTypes,
+  public static void processInheritors(final CompletionParameters parameters, final PsiElement identifierCopy, final PsiFile file, final List<PsiClassType> expectedClassTypes,
                                         final Consumer<PsiType> consumer) {
     //quick
     for (final PsiClassType type : expectedClassTypes) {
