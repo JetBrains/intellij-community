@@ -4,19 +4,9 @@
  */
 package com.intellij.semantic;
 
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author peter
  */
 public interface SemElement {
-
-  boolean isValid();
-
-  @Nullable
-  PsiElement getPsiElement();
-
-  //@Nullable ?? getContainingFile() ??
 
 }

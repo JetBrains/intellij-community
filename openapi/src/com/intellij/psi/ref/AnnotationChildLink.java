@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
@@ -21,6 +22,10 @@ public class AnnotationChildLink extends PsiChildLink<PsiModifierListOwner, PsiA
 
   public String getAnnotationQualifiedName() {
     return myAnnoFqn;
+  }
+
+  public static PsiRef<PsiAnnotation> createRef(@NotNull PsiModifierListOwner parent, @NonNls String fqn) {
+    return new AnnotationChildLink(fqn).createChildRef(parent);
   }
 
   @Override

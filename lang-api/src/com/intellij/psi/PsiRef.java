@@ -33,6 +33,11 @@ public final class PsiRef<T extends PsiElement> {
     return realColleague.getPsiElement();
   }
 
+  @NotNull
+  public final PsiElement getRoot() {
+    return myColleague.getRoot();
+  }
+
   @Override
   public boolean equals(Object o) {
     return o instanceof PsiRef && myColleague.equals(((PsiRef) o).myColleague);
@@ -56,7 +61,7 @@ public final class PsiRef<T extends PsiElement> {
   }
 
   public PsiManager getPsiManager() {
-    return myColleague.getPsiManager();
+    return myColleague.getRoot().getManager();
   }
 
   private interface PsiRefColleague<T extends PsiElement> {
@@ -69,7 +74,8 @@ public final class PsiRef<T extends PsiElement> {
     @NotNull
     Real<T> makeReal();
 
-    PsiManager getPsiManager();
+    @NotNull
+    PsiElement getRoot();
 
     class Real<T extends PsiElement> implements PsiRefColleague<T> {
       private final T myElement;
@@ -109,8 +115,9 @@ public final class PsiRef<T extends PsiElement> {
         return this;
       }
 
-      public PsiManager getPsiManager() {
-        return myElement.getManager();
+      @NotNull
+      public PsiElement getRoot() {
+        return myElement;
       }
     }
 
@@ -156,8 +163,9 @@ public final class PsiRef<T extends PsiElement> {
         return new Real<Child>(myCreator.createChild(myParent.ensurePsiElementExists()));
       }
 
-      public PsiManager getPsiManager() {
-        return myParent.getPsiManager();
+      @NotNull
+      public PsiElement getRoot() {
+        return myParent.getRoot();
       }
     }
 
