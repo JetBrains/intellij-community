@@ -31,7 +31,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
   private static final PsiElementArrayConstructor<PsiDocTag> PSI_TAG_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiDocTag>() {
     public PsiDocTag[] newPsiElementArray(int length) {
-      return length != 0 ? new PsiDocTag[length] : PsiDocTag.EMPTY_ARRAY;
+      return length == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[length];
     }
   };
 

@@ -91,13 +91,7 @@ public class MissingTokenInserter {
     while (leaf != null) {
       commonParents.strongWhiteSpaceHolder = null;
       final IElementType tokenType = getNextTokenType();
-      final TreeElement next;
-      if (tokenType instanceof IChameleonElementType) {
-        next = TreeUtil.nextLeaf(leaf, commonParents, tokenType);
-      }
-      else {
-        next = TreeUtil.nextLeaf(leaf, commonParents, null);
-      }
+      final TreeElement next = TreeUtil.nextLeaf(leaf, commonParents, tokenType instanceof IChameleonElementType ? tokenType : null);
 
       if (next == null || tokenType == null) break;
       if (tokenType != next.getElementType() && myProcessor.isTokenValid(tokenType)) {
