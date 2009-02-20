@@ -38,7 +38,7 @@ import java.util.List;
  * Navigates through the search results (not used)
  */
 public final class NavigateSearchResultsDialog extends DialogBase implements MatchResultSink {
-  private List<ReplacementInfo> replacements = new LinkedList<ReplacementInfo>(); // replacements found
+  private final List<ReplacementInfo> replacements = new LinkedList<ReplacementInfo>(); // replacements found
   private int index; // index of shown match
   private Action previousMatch;
 
@@ -48,15 +48,15 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
   private JComponent southPanel;
   private MatchingProcess matchingProcess;
 
-  private Project project;
+  private final Project project;
   private ReplaceOptions options;
-  private JButton replaceButton;
+  private final JButton replaceButton;
   private JButton replaceAll;
 
   private Replacer processor;
   private RangeHighlighter hilighter;
   private Editor editor;
-  private static TextAttributes attributes = new TextAttributes();
+  private static final TextAttributes attributes = new TextAttributes();
   private StatusBarEx statusBar;
   private boolean preview;
   private boolean ok;
@@ -109,6 +109,9 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
 
       replaceButton.setText(SSRBundle.message("replace.preview.oktext"));
       replaceAll.setText(SSRBundle.message("search.result.dialog.replace.all.button"));
+    }
+    else {
+      replaceButton = null;
     }
 
     class PreviousMatchAction extends AbstractAction {

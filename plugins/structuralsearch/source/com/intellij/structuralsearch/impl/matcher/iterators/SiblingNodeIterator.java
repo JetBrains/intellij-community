@@ -7,7 +7,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
  * Iterates over siblings
  */
 public final class SiblingNodeIterator extends NodeIterator {
-  private PsiElement start;
+  private final PsiElement start;
   private PsiElement current;
   private PsiElement previous;
 

@@ -12,7 +12,7 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
  */
 public class StructuralReplaceAction extends AnAction {
   // context of the search
-  private SearchContext searchContext = new SearchContext();
+  private final SearchContext searchContext = new SearchContext();
 
   public StructuralReplaceAction() {
     super(SSRBundle.message("structuralreplace.action"));

@@ -17,13 +17,13 @@ import java.util.regex.Pattern;
  * To change this template use File | Settings | File Templates.
  */
 class StringToConstraintsTransformer {
-  private static StringBuffer buf = new StringBuffer();
+  private static final StringBuffer buf = new StringBuffer();
   @NonNls private static final String P_STR = "(\\w+)\\('(\\w+)\\)";
-  private static Pattern p = Pattern.compile(P_STR);
+  private static final Pattern p = Pattern.compile(P_STR);
   @NonNls private static final String P2_STR = "(\\w+)";
-  private static Pattern p2 = Pattern.compile(P2_STR);
+  private static final Pattern p2 = Pattern.compile(P2_STR);
   @NonNls private static final String P3_STR = "(\\w+)\\(( ?(?:[\\\"\\*<>!\\.\\?\\:\\$\\\\\\(\\)\\[\\]\\w\\|\\+]+|(?:\\\"[^\\\"]*\\\")) ?)\\)";
-  private static Pattern p3 = Pattern.compile(P3_STR);
+  private static final Pattern p3 = Pattern.compile(P3_STR);
   @NonNls private static final String REF = "ref";
   @NonNls private static final String READ = "read";
   @NonNls private static final String WRITE = "write";

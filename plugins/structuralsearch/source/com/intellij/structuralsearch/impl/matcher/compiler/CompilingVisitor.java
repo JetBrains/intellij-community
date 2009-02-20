@@ -29,10 +29,10 @@ import java.util.regex.Pattern;
  * @author maxim
  */
 class CompilingVisitor {
-  private static NodeFilter filter = LexicalNodesFilter.getInstance();
+  private static final NodeFilter filter = LexicalNodesFilter.getInstance();
 
   private CompileContext context;
-  private ArrayList<PsiElement> lexicalNodes = new ArrayList<PsiElement>();
+  private final ArrayList<PsiElement> lexicalNodes = new ArrayList<PsiElement>();
 
   private final MyJavaVisitor myJavaVisitor = new MyJavaVisitor();
   private final PsiElementVisitor myXmlVisitor = new MyXmlVisitor();
@@ -78,7 +78,7 @@ class CompilingVisitor {
   static Pattern pattern2 = Pattern.compile("/\\*"+COMMENT+"\\*/", Pattern.DOTALL);
   static Pattern pattern3 = Pattern.compile("/\\*\\*"+COMMENT+"\\*/", Pattern.DOTALL);
 
-  private static Pattern alternativePattern = Pattern.compile("^\\((.+)\\)$");
+  private static final Pattern alternativePattern = Pattern.compile("^\\((.+)\\)$");
   enum OccurenceKind {
     LITERAL, COMMENT, CODE
   }
@@ -106,10 +106,10 @@ class CompilingVisitor {
   }
 
   @NonNls private static final String WORD_SEARCH_PATTERN_STR = ".*?\\b(.+?)\\b.*?";
-  private static Pattern wordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
+  private static final Pattern wordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
 
   static class WordTokenizer {
-    private List<String> words = new LinkedList<String>();
+    private final List<String> words = new LinkedList<String>();
 
     WordTokenizer(String text) {
       final StringTokenizer tokenizer = new StringTokenizer(text);
@@ -269,7 +269,7 @@ class CompilingVisitor {
     addFilesToSearchForGivenWord(refname, true, OccurenceKind.CODE);
   }
 
-  private static Set<String> ourReservedWords = new HashSet<String>(
+  private static final Set<String> ourReservedWords = new HashSet<String>(
     Arrays.asList(MODIFIER_ANNOTATION_NAME,INSTANCE_MODIFIER_NAME,PACKAGE_LOCAL_MODIFIER_NAME)
   );
 

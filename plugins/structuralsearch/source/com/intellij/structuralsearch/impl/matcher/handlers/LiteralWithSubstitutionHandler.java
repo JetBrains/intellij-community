@@ -16,9 +16,9 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class LiteralWithSubstitutionHandler extends MatchingHandler {
-  private String matchExpression;
+  private final String matchExpression;
   private Matcher matcher;
-  private List<SubstitutionHandler> handlers;
+  private final List<SubstitutionHandler> handlers;
 
   public LiteralWithSubstitutionHandler(String _matchedExpression,List<SubstitutionHandler> _handlers) {
     matchExpression = _matchedExpression;

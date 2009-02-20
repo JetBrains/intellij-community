@@ -30,10 +30,10 @@ import java.awt.*;
 public final class ReplacementPreviewDialog extends DialogWrapper {
   private Editor replacement;
 
-  private Project project;
+  private final Project project;
   private RangeHighlighter hilighter;
   private Editor editor;
-  private static TextAttributes attributes = new TextAttributes();
+  private static final TextAttributes attributes = new TextAttributes();
 
   static {
     attributes.setBackgroundColor( new Color(162,3,229,32) );
