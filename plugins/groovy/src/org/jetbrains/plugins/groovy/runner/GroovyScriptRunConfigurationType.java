@@ -110,14 +110,6 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     return module.getModuleName();
   }
 
-  public boolean isConfigurationByElement(RunConfiguration configuration, Project project, PsiElement element) {
-    final PsiClass aClass = getScriptClass(element);
-    if (aClass == null) return false;
-    final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-    if (vFile == null) return false;
-    return Comparing.equal(((GroovyScriptRunConfiguration) configuration).scriptPath, vFile.getPath());
-  }
-
   private PsiClass getScriptClass(PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof GroovyFile)) return null;
