@@ -67,10 +67,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTO_POPUP_JAVADOC_LOOKUP = true;
   public int JAVADOC_LOOKUP_DELAY = 1000;
 
-  public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER; // ALL, NONE or FIRST_LETTER
+  public int COMPLETION_CASE_SENSITIVE = UPPERCASE_LETTERS; // ALL, NONE or FIRST_LETTER
   public static final int ALL = 1;
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
+  public static final int UPPERCASE_LETTERS = 4;
 
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;

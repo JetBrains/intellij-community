@@ -103,10 +103,10 @@ public class NameUtil {
     final boolean endsWithSpace = StringUtil.endsWithChar(pattern, ' ');
     pattern = pattern.trim();
     exactPrefixLen = Math.min(exactPrefixLen, pattern.length());
-    final boolean uppercaseOnly = containsOnlyUppercaseLetters(pattern.substring(exactPrefixLen));
+    /*final boolean uppercaseOnly = containsOnlyUppercaseLetters(pattern.substring(exactPrefixLen));
     if (uppercaseOnly) {
       allowToLower = false;
-    }
+    }*/
 
     for (int i = 0; i != exactPrefixLen; ++i) {
       final char c = pattern.charAt(i);
@@ -138,7 +138,7 @@ public class NameUtil {
           }
 
           buffer.append(c);
-          if (allowToLower || i == exactPrefixLen) {
+          if (allowToLower) {
             buffer.append('|');
             buffer.append(Character.toLowerCase(c));
           }

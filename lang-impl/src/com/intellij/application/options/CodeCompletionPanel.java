@@ -38,6 +38,7 @@ public class CodeCompletionPanel {
   private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.casesensitive.all");
   private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.casesensitive.none");
   private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.casesensitive.first.letter");
+  private static final String CASE_SENSITIVE_UPPERCASE_LETTERS = ApplicationBundle.message("combobox.autocomplete.casesensitive.all.uppercase");
   private JRadioButton myRbInsertParenth;
   private JRadioButton myRbInsertBothParenthes;
   private JCheckBox myCbInsertBothParenthesWhenNoArgs;
@@ -45,7 +46,7 @@ public class CodeCompletionPanel {
 
   public CodeCompletionPanel(){
    myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(new String[]{CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE,
-                                                                       CASE_SENSITIVE_FIRST_LETTER}));
+                                                                       CASE_SENSITIVE_FIRST_LETTER, CASE_SENSITIVE_UPPERCASE_LETTERS}));
 
 
    myRbInsertParenth.addActionListener(new ActionListener() {
@@ -134,6 +135,10 @@ public class CodeCompletionPanel {
 
       case CodeInsightSettings.FIRST_LETTER:
         value = CASE_SENSITIVE_FIRST_LETTER;
+      break;
+
+      case CodeInsightSettings.UPPERCASE_LETTERS:
+        value = CASE_SENSITIVE_UPPERCASE_LETTERS;
       break;
     }
     myCaseSensitiveCombo.setSelectedItem(value);
@@ -276,8 +281,11 @@ public class CodeCompletionPanel {
     else if (CASE_SENSITIVE_NONE.equals(value)){
       return CodeInsightSettings.NONE;
     }
-    else { //if (CASE_SENSITIVE_FIRST_LETTER.equals(value)){
+    else if (CASE_SENSITIVE_FIRST_LETTER.equals(value)){
       return CodeInsightSettings.FIRST_LETTER;
+    }
+    else {
+      return CodeInsightSettings.UPPERCASE_LETTERS;
     }
   }
 }
