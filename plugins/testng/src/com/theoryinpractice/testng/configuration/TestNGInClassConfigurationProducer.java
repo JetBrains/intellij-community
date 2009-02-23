@@ -13,11 +13,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Iterator;
 
 public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer{
   private PsiElement myPsiElement = null;
@@ -30,12 +33,16 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   @Nullable
   protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
     PsiElement element = location.getPsiElement();
-    PsiClass psiClass;
-    if (element instanceof PsiClass) {
-      psiClass = (PsiClass)element;
+    PsiClass psiClass = null;
+    for (Iterator<Location<PsiClass>> iterator = location.getAncestors(PsiClass.class, false); iterator.hasNext();) {
+      psiClass = iterator.next().getPsiElement();
+      if (TestNGUtil.hasTest(psiClass)) break;
     }
-    else {
-      psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (psiClass == null) {
+      if (element instanceof PsiJavaFile) {
+        PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+        if (classes.length == 1) psiClass = classes[0];
+      }
     }
     if (psiClass == null) return null;
     if (!PsiClassUtil.isRunnableClass(psiClass, true)) return null;
