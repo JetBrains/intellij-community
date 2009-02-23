@@ -65,11 +65,6 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 2 && arguments.length != 3) {
-                return;
-            }
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             @NonNls final String methodName =
@@ -92,10 +87,18 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
                 return;
             }
             final PsiType firstParameterType = parameters[0].getType();
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
             final int argumentIndex;
             if (firstParameterType.equalsToText("java.lang.String")) {
+                if (arguments.length < 3) {
+                    return;
+                }
                 argumentIndex = 1;
             } else {
+                if (arguments.length < 2) {
+                    return;
+                }
                 argumentIndex = 0;
             }
             final PsiExpression expression1 = arguments[argumentIndex];
@@ -110,7 +113,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
             }
             final PsiType parameterType1 =
                     parameters[argumentIndex].getType();
-            final PsiType parameterType2 = 
+            final PsiType parameterType2 =
                     parameters[argumentIndex + 1].getType();
             if (!parameterType1.equals(parameterType2)) {
                 return;
