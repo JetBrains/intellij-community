@@ -45,7 +45,7 @@ import java.util.Arrays;
 /**
  * The dialog wrapper. The dialog wrapper could be used only on event dispatch thread.
  * In case when the dialog must be created from other threads use
- * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}. 
+ * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}.
  *
  */
 public abstract class DialogWrapper {
@@ -456,7 +456,7 @@ public abstract class DialogWrapper {
    * @see #doCancelAction
    */
   public void doCancelAction(AWTEvent source) {
-    doCancelAction();    
+    doCancelAction();
   }
 
   /**
@@ -693,7 +693,7 @@ public abstract class DialogWrapper {
       southSection.add(wrap(south, isSouthStrictedToPreferredSize()), BorderLayout.SOUTH);
     }
 
-    new MnemonicHelper().register(centerSection);
+    new MnemonicHelper().register(root);
   }
 
   private static JComponent wrap(final JComponent c, boolean strict) {
@@ -1050,15 +1050,10 @@ public abstract class DialogWrapper {
     }
   }
 
-  protected final void setErrorText(@Nullable final String text) {
-    myErrorTextAlarm.cancelAllRequests();
-    myErrorTextAlarm.addRequest(new Runnable() {
-      public void run() {
-        myErrorText.setError(text);
-        updateHeightForErrorText();
-        myErrorText.repaint();
-      }
-    }, 300);
+  protected final void setErrorText(@Nullable String text) {
+    myErrorText.setError(text);
+    updateHeightForErrorText();
+    myErrorText.repaint();
   }
 
   private void updateHeightForErrorText() {
@@ -1076,29 +1071,26 @@ public abstract class DialogWrapper {
 
     public ErrorText() {
       setLayout(new BorderLayout());
+      setBorder(null);
       UIUtil.removeQuaquaVisualMarginsIn(this);
       add(myLabel, BorderLayout.CENTER);
     }
 
     public void setError(String text) {
-      final Dimension oldSize = getPreferredSize();
-
       if (text == null) {
         myLabel.setText("");
         myLabel.setIcon(null);
-        setVisible(false);
+        setBorder(null);
       }
       else {
         myLabel.setText("<html><body><font color=red><left>" + text + "</left></b></font></body></html>");
         myLabel.setIcon(IconLoader.getIcon("/actions/lightning.png"));
-        myLabel.setBorder(new EmptyBorder(4, 10, 0, 2));
-        setVisible(true);
+        myLabel.setBorder(new EmptyBorder(2, 2, 0, 0));
+        if (myPrefSize == null) {
+          myPrefSize = myLabel.getPreferredSize();
+        }
       }
-
-      final Dimension size = getPreferredSize();
-      if (oldSize.height < size.height) {
-        revalidate();
-      }
+      revalidate();
     }
 
     public Dimension getPreferredSize() {
