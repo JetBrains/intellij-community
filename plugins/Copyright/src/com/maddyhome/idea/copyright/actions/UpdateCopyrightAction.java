@@ -30,12 +30,18 @@ import java.util.List;
 
 public class UpdateCopyrightAction extends AnAction {
   public void update(AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
+    final boolean enabled = isEnabled(event);
+    event.getPresentation().setEnabled(enabled);
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      event.getPresentation().setVisible(enabled);
+    }
+  }
+
+  private static boolean isEnabled(AnActionEvent event) {
     final DataContext context = event.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) {
-      presentation.setEnabled(false);
-      return;
+      return false;
     }
 
     final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
@@ -43,8 +49,7 @@ public class UpdateCopyrightAction extends AnAction {
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file)) {
-        presentation.setEnabled(false);
-        return;
+        return false;
       }
     }
     else if (files != null && FileUtil.areFiles(files)) {
@@ -56,8 +61,7 @@ public class UpdateCopyrightAction extends AnAction {
         }
       }
       if (!copyrightEnabled) {
-        presentation.setEnabled(false);
-        return;
+        return false;
       }
 
     }
@@ -77,12 +81,11 @@ public class UpdateCopyrightAction extends AnAction {
           }
         }
         if (!copyrightEnabled){
-          presentation.setEnabled(false);
-          return;
+          return false;
         }
       }
     }
-    presentation.setEnabled(true);
+    return true;
   }
 
   public void actionPerformed(AnActionEvent event) {
