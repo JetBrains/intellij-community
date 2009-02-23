@@ -62,7 +62,9 @@ public class ExportEclipseProjectsAction extends AnAction {
     if(dialog.isOK()){
       if (dialog.isLink()) {
         for (Module module : dialog.getSelectedModules()) {
-          ClasspathStorage.setStorageType(module, EclipseClasspathStorageProvider.ID);
+          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+          ClasspathStorage.setStorageType(model, EclipseClasspathStorageProvider.ID);
+          model.dispose();
         }
       }
       else {

@@ -189,7 +189,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           classpathReader.readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
                                                                   getParameters().converterOptions.testPattern, classpathElement);
         }
-        ClasspathStorage.setStorageType(module,
+        ClasspathStorage.setStorageType(rootModel,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
         if (model != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
