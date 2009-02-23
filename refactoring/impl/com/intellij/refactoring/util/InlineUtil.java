@@ -51,6 +51,17 @@ public class InlineUtil {
             }
             if (varType.equals(copy.getType())) {
               ((PsiCallExpression)expr).getTypeArgumentList().replace(copy.getTypeArgumentList());
+              if (expr instanceof PsiMethodCallExpression) {
+                final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
+                final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+                if (qualifierExpression == null) {
+                  if (((PsiMethod)resolved).getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+                    methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(thisClass));
+                  } else {
+                    methodExpression.setQualifierExpression(createThisExpression(manager, thisClass, refParent));
+                  }
+                }
+              }
               matchedTypes = true;
             }
           }
@@ -103,6 +114,12 @@ public class InlineUtil {
 
     ChangeContextUtil.clearContextInfo(initializer);
 
+    PsiThisExpression thisAccessExpr = createThisExpression(manager, thisClass, refParent);
+
+    return (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
+  }
+
+  private static PsiThisExpression createThisExpression(PsiManager manager, PsiClass thisClass, PsiClass refParent) {
     PsiThisExpression thisAccessExpr = null;
     if (Comparing.equal(thisClass, refParent))
 
@@ -117,8 +134,7 @@ public class InlineUtil {
         thisAccessExpr = RefactoringUtil.createThisExpression(manager, thisClass);
       }
     }
-
-    return (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
+    return thisAccessExpr;
   }
 
   public static void tryToInlineArrayCreationForVarargs(final PsiExpression expr) {

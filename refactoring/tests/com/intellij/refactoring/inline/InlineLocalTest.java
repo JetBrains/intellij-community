@@ -103,6 +103,14 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one.");
   }
 
+  public void testTypeArgumentsStatic() throws Exception {
+    doTest(true);
+  }
+
+  public void testTypeArguments() throws Exception {
+    doTest(true);
+  }
+
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
     try {
       doTest(inlineDef);
