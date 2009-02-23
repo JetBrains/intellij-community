@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Bas Leijdekkers
+ * Copyright 2007-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,14 @@ import org.jetbrains.annotations.NotNull;
 public class AssertEqualsBetweenInconvertibleTypesInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assertequals.between.inconvertible.types.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiType comparedType = (PsiType)infos[0];
@@ -47,10 +49,12 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
                 StringUtil.escapeXml(comparisonTypeText));
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new AssertEqualsBetweenInconvertibleTypesVisitor();
     }
@@ -82,8 +86,20 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
                     !ClassUtils.isSubclass(containingClass, "org.junit.Assert")) {
                 return;
             }
-            final PsiExpression expression1 = arguments[arguments.length - 2];
-            final PsiExpression expression2 = arguments[arguments.length - 1];
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if (parameters.length < 2) {
+                return;
+            }
+            final PsiType firstParameterType = parameters[0].getType();
+            final int argumentIndex;
+            if (firstParameterType.equalsToText("java.lang.String")) {
+                argumentIndex = 1;
+            } else {
+                argumentIndex = 0;
+            }
+            final PsiExpression expression1 = arguments[argumentIndex];
+            final PsiExpression expression2 = arguments[argumentIndex + 1];
             final PsiType type1 = expression1.getType();
             if (type1 == null) {
                 return;
@@ -92,12 +108,10 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
             if (type2 == null) {
                 return;
             }
-            final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiType parameterType1 =
-                    parameters[parameters.length - 2].getType();
+                    parameters[argumentIndex].getType();
             final PsiType parameterType2 = 
-                    parameters[parameters.length - 1].getType();
+                    parameters[argumentIndex + 1].getType();
             if (!parameterType1.equals(parameterType2)) {
                 return;
             }
@@ -111,7 +125,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
                 final PsiClassType boxedType =
                         primitiveType.getBoxedType(manager, scope);
                 if (boxedType != null &&
-                        TypeConversionUtil.areTypesConvertible(boxedType, type2)) {
+                        TypeConversionUtil.areTypesConvertible(type1, boxedType)) {
                     return;
                 }
             }
