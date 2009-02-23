@@ -64,7 +64,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
     private static class RemoveExtendsTestCaseFix extends InspectionGadgetsFix {
         private final String className;
 
-        public RemoveExtendsTestCaseFix(String className) {
+        RemoveExtendsTestCaseFix(String className) {
             this.className = className;
         }
 
@@ -137,7 +137,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
         @Override
         public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
-            if (TestUtils.isJUnit4TestMethod(method)) {
+            if (!TestUtils.isJUnit4TestMethod(method)) {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
