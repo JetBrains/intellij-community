@@ -281,7 +281,8 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public static void setStorageType(final Module module, final String storageID) {
+  public static void setStorageType(final ModifiableRootModel model, final String storageID) {
+    final Module module = model.getModule();
     final String oldStorageType = getStorageType(module);
     if (oldStorageType.equals(storageID)) {
       return;
@@ -295,23 +296,14 @@ public class ClasspathStorage implements StateStorage {
     }
     else {
       module.setOption(CLASSPATH_OPTION, storageID);
-      module.setOption(CLASSPATH_DIR_OPTION, getStorageRoot(module, null));
+      final VirtualFile[] contentRoots = model.getContentRoots();
+      assert contentRoots.length == 1;
+      module.setOption(CLASSPATH_DIR_OPTION, contentRoots[0].getPath());
     }
   }
 
   public static void moduleRenamed(Module module, String newName) {
     getProvider(getStorageType(module)).moduleRenamed(module, newName);
-  }
-
-  @Nullable
-  public static String getStorageRoot(final Module module, final Module moduleBeingLoaded) {
-    if (module == moduleBeingLoaded) {
-      return getStorageRootFromOptions(module);
-    }
-    else {
-      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      return contentRoots.length == 0 ? null : contentRoots[0].getPath();
-    }
   }
 
   private static class DefaultStorageProvider implements ClasspathStorageProvider {
