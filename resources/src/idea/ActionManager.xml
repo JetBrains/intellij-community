@@ -325,20 +325,9 @@
       <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
     </reference>
 
-    <group id="EditorTabPopupMenuEx">
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
-      <separator/>
-      <reference ref="AddAllToFavorites"/>
-      <separator/>
+    <group id="EditorTabCompileGroup">
       <reference ref="Compile"/>
-      <reference ref="RunContextPopupGroup"/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-
-      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="before" relative-to-action="RunContextPopupGroup"/>
     </group>
 
     <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
