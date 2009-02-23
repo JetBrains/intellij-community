@@ -6,7 +6,6 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.highlighter.*;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,7 +21,6 @@ public class DefaultFileTypeFactory extends FileTypeFactory {
     consumer.consume(new WorkspaceFileType(), WorkspaceFileType.DEFAULT_EXTENSION);
     consumer.consume(new ModuleFileType(), ModuleFileType.DEFAULT_EXTENSION);
     consumer.consume(new ProjectFileType(), ProjectFileType.DEFAULT_EXTENSION);
-    consumer.consume(new PatchFileType(), "patch;diff");
   }
 
 }
