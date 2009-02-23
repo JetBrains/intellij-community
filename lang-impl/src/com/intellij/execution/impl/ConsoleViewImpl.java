@@ -213,7 +213,11 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     assertIsDispatchThread();
     flushDeferredText();
     if (myEditor == null) return;
-    myEditor.getCaretModel().moveToOffset(offset);
+    int moveOffset = offset;
+    if (USE_CYCLIC_BUFFER && moveOffset >= myEditor.getDocument().getTextLength()) {
+      moveOffset = 0;
+    }
+    myEditor.getCaretModel().moveToOffset(moveOffset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
