@@ -17,7 +17,7 @@ public class UnnecessaryParenthesesInspection
     {
         final int x = (3 + 4)*5; // no warn
         final int q = (3 + 4)-5; // warn
-        final int p = 3 + (4-5); // no warn
+        final int p = 3 + (4-5); // warn!
         final int y = 3 + (4*5); // warn
         final int z = 3 + (4*(3*5)); // 2 warnings
         final int k = 4 * (3 * 5); // warn
@@ -52,5 +52,30 @@ public class UnnecessaryParenthesesInspection
         boolean b;
         b = (o instanceof String);
         final boolean b1 = (b) ? (true) : false;
+    }
+
+    // http://www.jetbrains.net/jira/browse/IDEADEV-34926
+    class ParenBug extends javax.swing.JPanel {
+        private int resolution;
+        private float pageWidth;  // in cm.
+        private float pageHeight; // in cm.
+
+        public void foo() {
+            final float width = getSize().width; // actual width in dots
+            final float height = getSize().height; // actual height in dots
+
+            // to determine the ratio, do the following:
+            final float ratio;
+            if (pageWidth != -1) {
+                ratio = pageWidth / (width / (float) resolution * (float) 2.54); // should not warn here
+            } else {
+                ratio = pageHeight / (height / (float) resolution * (float) 2.54);
+            }
+
+            System.out.println("resolution: X=" + resolution);
+            System.out.println("page_width (cm): " + pageWidth);
+            System.out.println("ratio=" + ratio);
+            System.out.println(64 / (2 * 16 / 4 * 2 * 2));
+        }
     }
 }
