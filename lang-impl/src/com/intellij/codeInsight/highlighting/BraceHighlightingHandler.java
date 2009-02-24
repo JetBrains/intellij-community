@@ -75,6 +75,7 @@ public class BraceHighlightingHandler {
     Job<Object> job = JobScheduler.getInstance().createJob("Brace highlighter", Job.DEFAULT_PRIORITY);
     job.addTask(new Runnable() {
       public void run() {
+        if (isReallyDisposed(editor, project)) return;
         final PsiFile injected = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
           public PsiFile compute() {
             Document document = editor.getDocument();
@@ -84,8 +85,7 @@ public class BraceHighlightingHandler {
         });
         ApplicationManager.getApplication().invokeLater(new Runnable(){
           public void run() {
-            Project editorProject = editor.getProject();
-            if (editorProject != null && !editorProject.isDisposed() && !project.isDisposed() && editor.getComponent().isShowing() && !editor.isViewer()) {
+            if (!isReallyDisposed(editor, project)) {
               Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
               BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
               processor.process(handler);
@@ -95,6 +95,12 @@ public class BraceHighlightingHandler {
       }
     });
     job.schedule();
+  }
+
+  private static boolean isReallyDisposed(Editor editor, Project project) {
+    Project editorProject = editor.getProject();
+    return editorProject == null ||
+           editorProject.isDisposed() || project.isDisposed() || !editor.getComponent().isShowing() || editor.isViewer();
   }
 
   static PsiFile getInjectedFileIfAny(@NotNull final Editor editor, @NotNull final Project project, int offset, @NotNull PsiFile psiFile, @NotNull final Alarm alarm) {
