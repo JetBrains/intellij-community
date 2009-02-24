@@ -7,18 +7,18 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.deployment.PackagingMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
@@ -128,7 +128,7 @@ public class BuildJarDialog extends DialogWrapper {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     ArrayList<Module> result = new ArrayList<Module>();
     for (Module module : modules) {
-      if (module.getModuleType() == StdModuleTypes.JAVA) {
+      if (module.getModuleType() instanceof JavaModuleType) {
         result.add(module);
       }
     }
