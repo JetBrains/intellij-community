@@ -96,5 +96,8 @@ public class ValidateXmlAction extends AnAction /*extends BaseCodeInsightAction*
     }
 
     presentation.setEnabled(value);
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      presentation.setVisible(value);
+    }
   }
 }

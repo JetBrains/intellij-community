@@ -4,6 +4,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -36,7 +37,9 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     final VirtualFile file = DataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     final boolean enabled = isAcceptableFile(file);
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(enabled);
+    }    
   }
 
   public void actionPerformed(AnActionEvent e) {
