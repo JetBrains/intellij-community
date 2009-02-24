@@ -38,7 +38,8 @@ public class ExpressionUtils {
         return ClassUtils.isImmutable(type);
     }
 
-    public static boolean isEvaluatedAtCompileTime(PsiExpression expression) {
+    public static boolean isEvaluatedAtCompileTime(
+            @Nullable PsiExpression expression) {
         if (expression instanceof PsiLiteralExpression) {
             return true;
         }

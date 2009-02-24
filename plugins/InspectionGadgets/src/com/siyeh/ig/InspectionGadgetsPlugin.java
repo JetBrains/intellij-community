@@ -1,5 +1,5 @@
 /*
-* Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+* Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private static final int NUM_INSPECTIONS = 589;
+    private static final int NUM_INSPECTIONS = 612;
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
@@ -478,6 +478,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerBugInspections() {
         m_inspectionClasses.add(ArchaicSystemPropertyAccessInspection.class);
         m_inspectionClasses.add(ArrayEqualsInspection.class);
+        m_inspectionClasses.add(ConstantAssertConditionInspection.class);
         m_inspectionClasses.add(CastConflictsWithInstanceofInspection.class);
         m_inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
         m_inspectionClasses.add(CollectionAddedToSelfInspection.class);
