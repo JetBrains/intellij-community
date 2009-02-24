@@ -233,7 +233,7 @@ public class WeakestTypeFinder {
         }
         weakestTypeClasses =
                 filterAccessibleClasses(weakestTypeClasses, variableOrMethod);
-        return Collections.unmodifiableCollection(weakestTypeClasses);
+        return weakestTypeClasses;
     }
 
     private static boolean findWeakestType(

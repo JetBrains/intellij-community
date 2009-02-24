@@ -45,6 +45,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean useParameterizedTypeForCollectionMethods = true;
 
+    @SuppressWarnings({"PublicField"})
+    public boolean doNotWeakenToJavaLangObject = true;
+
     @Override @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -94,6 +97,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "type.may.be.weakened.collection.method.option"),
                 "useParameterizedTypeForCollectionMethods");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "type.may.be.weakened.do.not.weaken.to.object.option"),
+                "doNotWeakenToJavaLangObject");
         return optionsPanel;
     }
 
@@ -258,6 +264,14 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     WeakestTypeFinder.calculateWeakestClassesNecessary(variable,
                             useRighthandTypeAsWeakestTypeInAssignments,
                             useParameterizedTypeForCollectionMethods);
+            if (doNotWeakenToJavaLangObject) {
+                final Project project = variable.getProject();
+                final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+                final PsiClass javaLangObjectClass =
+                        facade.findClass("java.lang.Object",
+                                variable.getResolveScope());
+                weakestClasses.remove(javaLangObjectClass);
+            }
             if (weakestClasses.isEmpty()) {
                 return;
             }
@@ -288,6 +302,14 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     WeakestTypeFinder.calculateWeakestClassesNecessary(method,
                             useRighthandTypeAsWeakestTypeInAssignments,
                             useParameterizedTypeForCollectionMethods);
+            if (doNotWeakenToJavaLangObject) {
+                final Project project = method.getProject();
+                final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+                final PsiClass javaLangObjectClass =
+                        facade.findClass("java.lang.Object",
+                                method.getResolveScope());
+                weakestClasses.remove(javaLangObjectClass);
+            }
             if (weakestClasses.isEmpty()) {
                 return;
             }
