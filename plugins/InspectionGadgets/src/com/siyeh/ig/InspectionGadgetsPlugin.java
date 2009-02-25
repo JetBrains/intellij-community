@@ -1036,6 +1036,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(AssertsWithoutMessagesInspection.class);
         m_inspectionClasses.add(BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection.class);
         m_inspectionClasses.add(BeforeOrAfterIsPublicVoidNoArgInspection.class);
+        m_inspectionClasses.add(ConstantJUnitAssertArgumentInspection.class);
         m_inspectionClasses.add(JUnit4AnnotatedMethodInJUnit3TestCaseInspection.class);
         m_inspectionClasses.add(JUnitAbstractTestClassNamingConventionInspection.class);
         m_inspectionClasses.add(JUnitTestClassNamingConventionInspection.class);
