@@ -12,6 +12,7 @@ import com.intellij.compiler.classParsing.MethodInfo;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.make.*;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
@@ -19,7 +20,10 @@ import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -434,6 +438,14 @@ public class BackendCompilerWrapper {
       }
     }).booleanValue()) {
       return; // should not invoke javac with empty sources list
+    }
+
+    ModuleType moduleType = chunk.getModules()[0].getModuleType();
+    if (!(chunk.getJdk().getSdkType() instanceof JavaSdkType) &&
+        !(moduleType instanceof JavaModuleType || moduleType.createModuleBuilder() instanceof JavaModuleBuilder)) {
+      // TODO 
+      // don't try to compile non-java type module
+      return;
     }
 
     int exitValue = 0;
