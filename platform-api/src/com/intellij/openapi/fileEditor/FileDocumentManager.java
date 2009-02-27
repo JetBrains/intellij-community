@@ -64,20 +64,13 @@ public abstract class FileDocumentManager {
   public static boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, Project project) {
     if (project != null) {
       final VirtualFile file = getInstance().getFile(document);
-      if (file != null) {
+      if (file != null && file.isValid()) {
         final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
         return !operationStatus.hasReadonlyFiles();
       }
-      else {
-        document.fireReadOnlyModificationAttempt();
-        return false;
-      }
     }
-    else {
-      document.fireReadOnlyModificationAttempt();
-      return false;
-    }
-
+    document.fireReadOnlyModificationAttempt();
+    return false;
   }
 
   public abstract void reloadFiles(VirtualFile... files);
