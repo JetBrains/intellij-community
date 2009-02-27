@@ -220,8 +220,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   protected boolean isIgnored() {
+    final VirtualFile file = getVirtualFile();
+    if (file instanceof LightVirtualFile) return false;
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    return fileTypeManager.isFileIgnored(getVirtualFile().getName());
+    return fileTypeManager.isFileIgnored(file.getName());
   }
 
   @Nullable
