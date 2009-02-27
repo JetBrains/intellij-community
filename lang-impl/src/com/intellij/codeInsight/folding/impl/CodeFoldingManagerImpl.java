@@ -210,6 +210,23 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
   }
 
+  @Override
+  public void forceDefaultState(final Editor editor) {
+    updateFoldRegions(editor);
+
+    final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
+    editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      public void run() {
+        for (FoldRegion region : regions) {
+          PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
+          if (element != null) {
+            region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
+          }
+        }
+      }
+    });
+  }
+
   @Nullable
   public Runnable updateFoldRegionsAsync(Editor editor) {
     return updateFoldRegions(editor, false);

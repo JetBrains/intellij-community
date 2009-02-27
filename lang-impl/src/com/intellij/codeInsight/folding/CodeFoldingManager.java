@@ -16,6 +16,8 @@ public abstract class CodeFoldingManager {
 
   public abstract void updateFoldRegions(Editor editor);
 
+  public abstract void forceDefaultState(Editor editor);
+
   @Nullable
   public abstract Runnable updateFoldRegionsAsync(Editor editor);
 

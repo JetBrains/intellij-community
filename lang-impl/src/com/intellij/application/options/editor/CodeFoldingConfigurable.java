@@ -1,16 +1,22 @@
 package com.intellij.application.options.editor;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.awt.*;
 
 /**
  * @author yole
@@ -49,6 +55,20 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   public void apply() throws ConfigurationException {
     EditorSettingsExternalizable.getInstance().setFoldingOutlineShown(myCbFolding.isSelected());
     super.apply();
+
+    for (final Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      final Project project = editor.getProject();
+      if (project != null && !project.isDefault()) {
+        final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
+        if (foldingManager != null) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              foldingManager.forceDefaultState(editor);
+            }
+          }, ModalityState.NON_MODAL);
+        }
+      }
+    }
   }
 
   public void reset() {

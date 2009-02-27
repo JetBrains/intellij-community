@@ -42,7 +42,7 @@ class FoldingUpdate {
 
     final long timeStamp = document.getModificationStamp();
     Object lastTimeStamp = editor.getUserData(LAST_UPDATE_STAMP_KEY);
-    if (lastTimeStamp instanceof Long && ((Long)lastTimeStamp).longValue() == timeStamp) return null;
+    if (lastTimeStamp instanceof Long && ((Long)lastTimeStamp).longValue() == timeStamp && !applyDefaultState) return null;
 
     if (file instanceof PsiCompiledElement){
       file = ((PsiCompiledElement)file).getMirror();
@@ -92,8 +92,6 @@ class FoldingUpdate {
         if (element != null && myElementsToFoldMap.containsKey(element)) {
           final FoldingDescriptor descriptor = myElementsToFoldMap.get(element);
           if (!region.isValid() ||
-              descriptor.getGroup() != null ||
-              region.getGroup() != null ||
               region.getStartOffset() != descriptor.getRange().getStartOffset() ||
               region.getEndOffset() != descriptor.getRange().getEndOffset() ||
               !region.getPlaceholderText().equals(descriptor.getPlaceholderText())) {

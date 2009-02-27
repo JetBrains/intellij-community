@@ -216,7 +216,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     final FoldingGroup group = region.getGroup();
     if (group != null) {
       myGroups.removeValue(group, region);
-    }
+      }
     myFoldTree.removeRegion(region);
     myFoldRegionsProcessed = true;
   }
@@ -577,7 +577,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     private boolean contains(FoldRegion region, int offset) {
-      return region.getStartOffset() <= offset && region.getEndOffset() > offset;
+      return region.getStartOffset() < offset && region.getEndOffset() > offset;
     }
 
     public FoldRegion[] fetchCollapsedAt(int offset) {
