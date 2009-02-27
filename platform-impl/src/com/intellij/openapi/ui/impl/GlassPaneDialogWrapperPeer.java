@@ -316,7 +316,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     private MyDialog(IdeGlassPaneEx pane, DialogWrapper wrapper, Project project) {
       setLayout(new BorderLayout());
       setOpaque(false);
-      setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+      setBorder(BorderFactory.createEmptyBorder(ShadowBorderPainter.TOP_SIZE, ShadowBorderPainter.SIDE_SIZE,
+          ShadowBorderPainter.BOTTOM_SIZE, ShadowBorderPainter.SIDE_SIZE));
 
       myPane = pane;
       myDialogWrapper = new WeakReference<DialogWrapper>(wrapper);
@@ -381,8 +382,10 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       result.setOpaque(false);
 
       // to not pass events through transparent pane
-      result.addMouseListener(new MouseAdapter() {});
-      result.addMouseMotionListener(new MouseMotionAdapter() {});
+      result.addMouseListener(new MouseAdapter() {
+      });
+      result.addMouseMotionListener(new MouseMotionAdapter() {
+      });
 
       return result;
     }
@@ -502,18 +505,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     }
 
     private void createShadow() {
-      int w = getWidth() - 20;
-      int h = getHeight() - 20;
-      int shadowSize = 10;
-
-      shadow = GraphicsUtilities.createCompatibleTranslucentImage(w, h);
-      Graphics2D g2 = shadow.createGraphics();
-      g2.setColor(Color.WHITE);
-      g2.fillRect(0, 0, w, h);
-      g2.dispose();
-
-      ShadowRenderer renderer = new ShadowRenderer(shadowSize, 0.4f, Color.BLACK);
-      shadow = renderer.createShadow(shadow);
+      shadow = ShadowBorderPainter.createShadow(this, getWidth(), getHeight());
     }
 
     public void dispose() {
