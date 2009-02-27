@@ -47,7 +47,7 @@ public class SvnDiffProvider implements DiffProvider {
       if (svnStatus.getCommittedRevision().equals(SVNRevision.UNDEFINED) && svnStatus.isCopied()) {
         return new SvnRevisionNumber(svnStatus.getCopyFromRevision());
       }
-      return new SvnRevisionNumber(svnStatus.getRevision());
+      return new SvnRevisionNumber(svnStatus.getCommittedRevision());
     }
     catch (SVNException e) {
       LOG.debug(e);    // most likely the file is unversioned
@@ -84,7 +84,7 @@ public class SvnDiffProvider implements DiffProvider {
       if (remoteRevision != null) {
         return createResult(remoteRevision, exists);
       }
-      return createResult(svnStatus.getRevision(), exists);
+      return createResult(svnStatus.getCommittedRevision(), exists);
     }
     catch (SVNException e) {
       LOG.debug(e);    // most likely the file is unversioned
@@ -98,7 +98,7 @@ public class SvnDiffProvider implements DiffProvider {
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
       final SVNStatus svnStatus = client.doStatus(new File(selectedFile.getPresentableUrl()), false, false);
-      if (svnRevision.equals(svnStatus.getRevision())) {
+      if (svnRevision.equals(svnStatus.getCommittedRevision())) {
         return SvnContentRevision.create(myVcs, filePath, svnRevision);
       }
     }
