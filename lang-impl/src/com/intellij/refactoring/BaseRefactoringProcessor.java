@@ -230,7 +230,7 @@ public abstract class BaseRefactoringProcessor {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            List<UsageInfo> usageInfos = Arrays.asList(usages);
+            Collection<UsageInfo> usageInfos = new HashSet<UsageInfo>(Arrays.asList(usages));
             doRefactoring(usageInfos);
           }
         });
