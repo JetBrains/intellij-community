@@ -4,10 +4,7 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ExtendClass;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.Required;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -54,6 +51,7 @@ public interface Action extends DomElement {
 	@Required
         @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
             instantiatable = true, allowNonPublic = true, allowAbstract = false, allowInterface = false)
+        @Convert(GlobalScopePsiClassConverter.class)
         GenericAttributeValue<PsiClass> getClazz();
 
 
