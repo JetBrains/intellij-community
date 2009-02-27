@@ -22,4 +22,9 @@ public class DummyIdentifierPatcher extends FileCopyPatcher {
     document.replaceString(map.getOffset(CompletionInitializationContext.START_OFFSET), map.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET),
                            myDummyIdentifier);
   }
+
+  @Override
+  public String toString() {
+    return "Insert \"" + myDummyIdentifier + "\"";
+  }
 }

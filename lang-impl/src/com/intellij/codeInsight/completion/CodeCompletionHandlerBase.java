@@ -313,7 +313,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, map);
         PsiElement element = findElementAt(injectedFile, newContext.getStartOffset());
         if (element == null) {
-          LOG.assertTrue(false, "offset " + newContext.getStartOffset() + " at:\ntext=\"" + injectedFile.getText() + "\"\ninstance=" + injectedFile);
+          final String allDoc = hostFile.getViewProvider().getDocument().getText();
+          String docText = allDoc.substring(Math.max(0, context.getStartOffset() - 10), Math.min(allDoc.length(), context.getStartOffset() + 10));
+
+          LOG.assertTrue(false, "offset " + newContext.getStartOffset() + " at:\n" +
+                                "text=\"" + injectedFile.getText() + "\"\n" +
+                                "instance=" + injectedFile + "\n" +
+                                "patcher=" + patcher + "\n" +
+                                "docText=" + docText);
         }
         EditorFactory.getInstance().releaseEditor(editor);
         return Pair.create(newContext, element);
