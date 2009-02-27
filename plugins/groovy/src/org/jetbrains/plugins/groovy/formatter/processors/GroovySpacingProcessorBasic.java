@@ -131,6 +131,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return IMPORT_OTHER_SPACING;
     }
 
+    //todo:check it for multiple assignments
     if ((VARIABLE_DEFINITION.equals(leftType) || VARIABLE_DEFINITION.equals(rightNode.getElementType())) &&
         !(leftNode.getTreeNext() instanceof PsiErrorElement)) {
       return Spacing.createSpacing(0, 0, 1, false, 100);

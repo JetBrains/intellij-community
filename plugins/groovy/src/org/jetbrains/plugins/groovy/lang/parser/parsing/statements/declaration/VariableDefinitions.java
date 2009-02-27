@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2000-2007 JetBrains s.r.o.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 
@@ -39,21 +39,35 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *      LPAREN parameterDeclarationList RPAREN
  *      (throwsClause | )
  *      (	( nlsWarn openBlock ) | )
+ * | (ID {, ID}) = expr
  */
 
 public class VariableDefinitions implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers) {
-    return parseDefinitions(builder, isInClass, false, false, false, hasModifiers);
+    return parseDefinitions(builder, isInClass, false, false, false, hasModifiers, true);
+  }
+
+  public static IElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers, boolean canBeTuple) {
+    return parseDefinitions(builder, isInClass, false, false, false, hasModifiers, canBeTuple);
   }
 
   public static IElementType parseDefinitions(PsiBuilder builder,
-                                                   boolean isInClass,
-                                                   boolean isEnumConstantMember,
-                                                   boolean isAnnotationMember,
-                                                   boolean mustBeMethod,
-                                                   boolean hasModifiers) {
-    if (!(builder.getTokenType() == mIDENT || builder.getTokenType() == mSTRING_LITERAL || builder.getTokenType() == mGSTRING_LITERAL)) {
-      builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
+                                              boolean isInClass,
+                                              boolean isEnumConstantMember,
+                                              boolean isAnnotationMember,
+                                              boolean mustBeMethod,
+                                              boolean hasModifiers,
+                                              boolean canBeTuple) {
+    if (builder.getTokenType() == mLPAREN && !canBeTuple) {
+      builder.error(GroovyBundle.message("indentifier.or.string.or.left.parenth.literal.expected"));
+      return WRONGWAY;
+    }
+
+    if (!(builder.getTokenType() == mIDENT ||
+          builder.getTokenType() == mSTRING_LITERAL ||
+          builder.getTokenType() == mGSTRING_LITERAL ||
+          builder.getTokenType() == mLPAREN)) {
+      builder.error(GroovyBundle.message("indentifier.or.string.or.left.parenth.literal.expected"));
       return WRONGWAY;
     }
 
@@ -65,9 +79,13 @@ public class VariableDefinitions implements GroovyElementTypes {
     }
 
     //eaten one of these tokens
-    boolean eaten = ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL) || ParserUtils.getToken(builder, mGSTRING_LITERAL);
+    boolean isTuple = builder.getTokenType() == mLPAREN;
+    boolean eaten = ParserUtils.getToken(builder, mIDENT) ||
+                    ParserUtils.getToken(builder, mSTRING_LITERAL) ||
+                    ParserUtils.getToken(builder, mGSTRING_LITERAL) ||
+                    ParserUtils.getToken(builder, mLPAREN);
 
-    if (!eaten) return WRONGWAY;
+    if (!eaten && !isTuple) return WRONGWAY;
 
     if (mustBeMethod && mLPAREN != builder.getTokenType()) {
       varMarker.drop();
@@ -129,47 +147,48 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       // a = b, c = d
       PsiBuilder.Marker varAssMarker = builder.mark();
-      if (ParserUtils.getToken(builder, mIDENT)) {
 
-        if (parseAssignment(builder)) { // a = b, c = d
+      final IElementType declarator = parseDeclarator(builder, isInClass, isTuple, hasModifiers);
+
+      if (declarator != WRONGWAY) {
+        final boolean wasAssingment = parseAssignment(builder);
+
+        if (declarator == TUPLE) {
+          varAssMarker.drop();
+          if (!wasAssingment && !hasModifiers) {
+            builder.error(GroovyBundle.message("assignment.expected"));
+          }
+        } else if (declarator == mIDENT) { //if (isAssignment) { // a = b, c = d
           if (isInClass) {
             varAssMarker.done(FIELD);
           } else {
             varAssMarker.done(VARIABLE);
           }
-
-          while (ParserUtils.getToken(builder, mCOMMA)) {
-            ParserUtils.getToken(builder, mNLS);
-
-            if (WRONGWAY.equals(parseVariableDeclarator(builder, isInClass)))
-              return VARIABLE_DEFINITION_ERROR; //parse b = d
-          }
-          return VARIABLE_DEFINITION;
-        } else {
-          if (isInClass) {
-            varAssMarker.done(FIELD);
-          } else {
-            varAssMarker.done(VARIABLE);
-          }
-//          varAssMarker.drop();
-          while (ParserUtils.getToken(builder, mCOMMA)) {// a, b = d, c = d
-            ParserUtils.getToken(builder, mNLS);
-            if (WRONGWAY.equals(parseVariableDeclarator(builder, isInClass))) return VARIABLE_DEFINITION_ERROR;
-          }
-
-          return VARIABLE_DEFINITION;
         }
+
+        while (ParserUtils.getToken(builder, mCOMMA)) {
+          ParserUtils.getToken(builder, mNLS);
+
+          if (WRONGWAY.equals(parseVariableOrField(builder, isInClass)) && declarator == mIDENT) {
+            return VARIABLE_DEFINITION_ERROR; //parse b = d
+          }
+        }
+
+        if (isInClass && declarator == TUPLE) {
+          builder.error(GroovyBundle.message("tuple.cant.be.placed.in.class"));
+        }
+        return declarator == TUPLE ? MULTIPLE_VARIABLE_DEFINITION : VARIABLE_DEFINITION;
       } else {
         varAssMarker.drop();
         builder.error(GroovyBundle.message("identifier.expected"));
-        return VARIABLE_DEFINITION_ERROR;
+        return WRONGWAY;
       }
-
     }
   }
 
   //a, a = b
-  private static IElementType parseVariableDeclarator(PsiBuilder builder, boolean isInClass) {
+
+  private static IElementType parseVariableOrField(PsiBuilder builder, boolean isInClass) {
     PsiBuilder.Marker varAssMarker = builder.mark();
     if (ParserUtils.getToken(builder, mIDENT)) {
       parseAssignment(builder);
@@ -182,6 +201,70 @@ public class VariableDefinitions implements GroovyElementTypes {
       }
     } else {
       varAssMarker.drop();
+      return WRONGWAY;
+    }
+  }
+
+  private static IElementType parseDeclarator(PsiBuilder builder, boolean inClass, boolean isTuple, boolean hasModifiers) {
+    if (!isTuple) {
+      if (builder.getTokenType() == mIDENT) {
+        ParserUtils.getToken(builder, mIDENT);
+        return mIDENT;
+      } else {
+        return WRONGWAY;
+      }
+    } else if (ParserUtils.getToken(builder, mLPAREN)) {
+      PsiBuilder.Marker tupleMarker = builder.mark();
+
+      final PsiBuilder.Marker firstVarMarker = builder.mark();
+      if (!ParserUtils.getToken(builder, mIDENT)) {
+        tupleMarker.drop();
+        firstVarMarker.drop();
+        return WRONGWAY;
+      } else {
+        firstVarMarker.done(VARIABLE);
+      }
+
+      while (!builder.eof() && builder.getTokenType() != mRPAREN && builder.getTokenType() != mASSIGN) {
+        if (!ParserUtils.getToken(builder, mCOMMA)) {
+          builder.error(GroovyBundle.message("comma.expected"));
+
+          if (!hasModifiers) {
+            tupleMarker.drop();
+            return WRONGWAY;
+          }
+
+        } else {
+          PsiBuilder.Marker varMarker = builder.mark();
+          if (!ParserUtils.getToken(builder, mIDENT)) {
+            builder.error(GroovyBundle.message("identifier.expected"));
+            varMarker.drop();
+          } else {
+            varMarker.done(VARIABLE);
+          }                             
+        }
+      }
+
+      if (ParserUtils.getToken(builder, mRPAREN)) {
+        if (builder.getTokenType() != mASSIGN) {
+          if (!hasModifiers) {
+            tupleMarker.drop();
+            return WRONGWAY;
+          }
+        }
+        tupleMarker.done(TUPLE);
+        return TUPLE;
+      }
+
+      if (builder.getTokenType() == mASSIGN) {
+        builder.error("rparen.expected");
+        tupleMarker.done(TUPLE_ERROR);
+        return TUPLE_ERROR;
+      }
+
+      tupleMarker.drop();
+      return WRONGWAY;
+    } else {
       return WRONGWAY;
     }
   }

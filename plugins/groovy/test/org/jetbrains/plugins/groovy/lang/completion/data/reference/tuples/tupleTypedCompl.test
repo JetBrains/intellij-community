@@ -1,0 +1,4 @@
+def (street, home, postCode) = ["Lunocharskogo", 20, 195243]
+def s = street.conc<caret>
+-----
+concat

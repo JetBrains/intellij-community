@@ -54,7 +54,7 @@ public class Declaration implements GroovyElementTypes {
       } else {
         checkMarker.drop();
       }
-      IElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true, modifiersParsed);
+      IElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true, modifiersParsed, false);
 
       if (WRONGWAY.equals(decl)) {
         declMarker.error(GroovyBundle.message("method.definitions.expected"));
@@ -74,6 +74,7 @@ public class Declaration implements GroovyElementTypes {
           builder.error(GroovyBundle.message("type.expected"));
         }
 
+        //current token isn't identifier
         IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
 
         if (WRONGWAY.equals(varDecl)) {
@@ -85,8 +86,9 @@ public class Declaration implements GroovyElementTypes {
           return true;
         }
 
-      } else {  //type was recognized
-        IElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
+      } else {  //type was recognized, identifier here
+        //starts after type
+        IElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false);
 
         if (WRONGWAY.equals(varDeclarationTop)) {
           checkMarker.rollbackTo();
@@ -95,7 +97,8 @@ public class Declaration implements GroovyElementTypes {
             builder.error(GroovyBundle.message("type.expected"));
           }
 
-          IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
+          //starts before "type" identifier, here can't be tuple, because next token is identifier (we are in "type recognized" branch)
+          IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false);
 
           if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
@@ -126,6 +129,17 @@ public class Declaration implements GroovyElementTypes {
         return false;
       }
 
+      if (builder.getTokenType() == mLPAREN) {
+        IElementType tupleDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed, true);
+        if (tupleDef == WRONGWAY) {
+          declMarker.rollbackTo();
+          return false;
+        } else {
+          declMarker.done(tupleDef);
+          return true;
+        }
+      }
+
       boolean typeParsed = false;
       if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
         typeParsed = TypeSpec.parse(builder, true);
@@ -137,7 +151,7 @@ public class Declaration implements GroovyElementTypes {
         }
       }
 
-      IElementType varDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed || typeParsed);
+      IElementType varDef = VariableDefinitions.parse(builder, isInClass, typeParsed);
       if (varDef != WRONGWAY) {
         declMarker.done(varDef);
         return true;

@@ -20,6 +20,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTuple;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -114,7 +116,8 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
 
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
-    return ((GrVariableDeclaration)getParent()).getTypeElementGroovy();
+    PsiElement parent = getParent();
+    return parent instanceof GrTuple ? null : ((GrVariableDeclaration)parent).getTypeElementGroovy();
   }
 
   @Nullable
@@ -127,6 +130,13 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
 
   @Nullable
   public PsiType getTypeGroovy() {
+    GrExpression initializer = getInitializerGroovy();
+    final PsiElement parent = getParent();
+
+    if (parent instanceof GrTuple && initializer != null){
+      return initializer.getType();
+    }
+
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
     if (typeElement != null) {
@@ -136,7 +146,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
       }
     }
 
-    GrExpression initializer = getInitializerGroovy();
     if (initializer != null) {
       PsiType initializerType = initializer.getType(); // WARNING may give rise to SOE
       if (initializerType != null) {
@@ -215,6 +224,21 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
 
   @Nullable
   public GrExpression getInitializerGroovy() {
+    final PsiElement parent = getParent();
+    if (parent instanceof GrTuple){
+      final GrTuple tuple = (GrTuple)parent;
+      final GrExpression initializer = tuple.getInitializerGroovy();
+
+      if (initializer instanceof GrListOrMap){
+        final GrListOrMap listOrMap = (GrListOrMap)initializer;
+        final GrExpression[] initializers = listOrMap.getInitializers();
+
+        final int varNumber = tuple.getVariableNumber(this);
+        if (initializers.length < varNumber + 1) return null;
+
+        return initializers[varNumber];
+      }
+    }
     return findChildByClass(GrExpression.class);
   }
 
@@ -249,6 +273,8 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration) {
       return ((GrVariableDeclaration)parent).getModifierList();
+    } else if (parent instanceof GrTuple) {
+      return ((GrVariableDeclaration)parent.getParent()).getModifierList();
     }
     return null;
   }

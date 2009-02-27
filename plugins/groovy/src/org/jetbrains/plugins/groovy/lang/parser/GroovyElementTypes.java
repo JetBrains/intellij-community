@@ -211,11 +211,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
   GroovyElementType VARIABLE_DEFINITION = new GroovyElementType("variable definitions");
+  GroovyElementType MULTIPLE_VARIABLE_DEFINITION = new GroovyElementType("multivariable definition");
+  GroovyElementType TUPLE = new GroovyElementType("tuple");
+  GroovyElementType TUPLE_ERROR = new GroovyElementType("tuple with error");
 
   GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
 
   //modifiers
-  //  GroovyElementType MODIFIER = new GroovyElementType("modifier"); //node
   GroovyElementType MODIFIERS = new GroovyElementType("modifiers"); //node
 
   GroovyElementType BALANCED_BRACKETS = new GroovyElementType("balanced brackets"); //node
