@@ -939,7 +939,7 @@ public class UIUtil {
   }
 
   public static String addPadding(final String html, int hPadding) {
-    return "<table border=0 hspace=" + hPadding + "><tr><td>" + html + "</td></tr></table>";
+    return String.format("<p style=\"margin: 0 %dpx 0 %dpx;\">%s</p>", hPadding, hPadding, html);
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
