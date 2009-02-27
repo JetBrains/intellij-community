@@ -93,6 +93,8 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
     final VirtualFile tmpVf = LocalFileSystem.getInstance().findFileByIoFile(new File(myTempDirFixture.getTempDirPath()));
     Assert.assertNotNull(tmpVf);
 
+    sleep100();
+
     tmpVf.refresh(false, true);
     
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
@@ -171,5 +173,14 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
     myClManager.ensureUpToDate(false);
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myOuterFile, subTree.myInnerFile},
       myClManager.getDefaultListName(), myClManager);
+  }
+
+  private void sleep100() {
+    try {
+      Thread.sleep(100);
+    }
+    catch (InterruptedException e) {
+      //
+    }
   }
 }
