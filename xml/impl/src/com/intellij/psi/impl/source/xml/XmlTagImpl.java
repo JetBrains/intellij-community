@@ -571,8 +571,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       final XmlAttribute attribute = getAttribute(name);
       if (attribute != null || !sameNsAsTag) return attribute;
     }
+
+    if (name != null && name.indexOf(':') != -1 || XmlUtil.EMPTY_URI.equals(namespace)) {
+      return getAttribute(name);
+    }
     final String prefix = getPrefixByNamespace(namespace);
-    String qname =  prefix != null && prefix.length() > 0 ? prefix + ":" + name : name;
+    if (prefix == null) return null;
+    String qname =  prefix.length() > 0 ? prefix + ":" + name : name;
     return getAttribute(qname);
   }
 
