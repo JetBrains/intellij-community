@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +25,8 @@ import java.util.regex.Pattern;
 public class SdkUtil {
   protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SdkVersionUtil");
 
+  private static final List<String> NO_LINES = new ArrayList<String>();
+
   private SdkUtil() {
     // explicitly none
   }
@@ -35,6 +38,8 @@ public class SdkUtil {
     private final List<String> myStdoutLines;
     private final List<String> myStderrLines;
     private final int myExitCode;
+
+    public static final int TIMEOUT_CODE = -32768;
 
     protected ProcessCallInfo(List<String> stdout_lines, List<String> stderr_lines, int exit_code) {
       myStdoutLines = stdout_lines;
@@ -49,8 +54,8 @@ public class SdkUtil {
     public List<String> getStderr() {
       return myStderrLines;
     }
-    
-    public int exitValue() {
+
+    public int getExitValue() {
       return myExitCode;
     }
   }
@@ -59,43 +64,85 @@ public class SdkUtil {
    * Executes a process and returns its stdout and stderr outputs as lists of lines.
    * @param homePath process run directory
    * @param command command to execute and its arguments
-   * @return a tuple of (stdout lines, stderr lines), lines in them have line terminators stripped, or may be null.
+   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
   @NotNull
   public static ProcessCallInfo getProcessOutput(String homePath, @NonNls String[] command) {
+    return getProcessOutput(homePath, command, -1);
+  }
+
+  /**
+   * Executes a process and returns its stdout and stderr outputs as lists of lines.
+   * Waits for process for possibly limited duration.
+   * @param homePath process run directory
+   * @param command command to execute and its arguments
+   * @param timeout how many milliseconds to wait until the process terminates; non-positive means inifinity.
+   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null. If
+   * the process timed out, exit code is ProcessCallInfo.TIMEOUT_CODE.
+   */
+  @NotNull
+  public static ProcessCallInfo getProcessOutput(String homePath, @NonNls String[] command, final int timeout) {
     if (homePath == null || !new File(homePath).exists()) {
       return new ProcessCallInfo(null, null, -1);
     }
-    List<String> stdout = null;
-    List<String> stderr = null;
+    List<String> stdout = NO_LINES;
+    List<String> stderr = NO_LINES;
     int exit_code = -1;
     try {
       //noinspection HardCodedStringLiteral
       Application app = ApplicationManager.getApplication();
       Process process = Runtime.getRuntime().exec(command);
-      
+
       ReadLinesThread stdout_thread = new ReadLinesThread(process.getInputStream());
       final Future<?> stdout_future = app.executeOnPooledThread(stdout_thread);
-      
+
       ReadLinesThread stderr_thread = new ReadLinesThread(process.getErrorStream());
       final Future<?> stderr_future = app.executeOnPooledThread(stderr_thread);
+
+      final AtomicBoolean done = new AtomicBoolean(false);
+      final AtomicBoolean timed_out = new AtomicBoolean(false);
+
+      if (timeout > 0) {
+        final Thread worker = Thread.currentThread();
+        Runnable watchdog = new Runnable() {
+          public void run() {
+            try {
+              Thread.sleep(timeout);
+              if (! done.get()) {
+                timed_out.set(true);
+                worker.interrupt();
+              }
+            }
+            catch (InterruptedException ignore) { }
+          }
+        };
+        app.executeOnPooledThread(watchdog);
+      }
 
       try {
         try {
           process.waitFor();
         }
         catch (InterruptedException e) {
-          LOG.info(e);
+          if (! timed_out.get()) {
+            LOG.info(e);
+          }
           process.destroy();
         }
       }
       finally {
+        done.set(true);
         try {
           stdout_future.get();
           stderr_future.get();
           stdout = stdout_thread.getResult();
           stderr = stderr_thread.getResult();
-          exit_code = process.exitValue();
+          if (timed_out.get()){
+            exit_code = process.exitValue();
+          }
+          else {
+            exit_code = ProcessCallInfo.TIMEOUT_CODE;
+          }
         }
         catch (Exception e) {
           LOG.info(e);
@@ -117,7 +164,7 @@ public class SdkUtil {
     }
 
     public void run() {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(myStream)); // [dch] I wonder if it needs closing
+      BufferedReader reader = new BufferedReader(new InputStreamReader(myStream)); // NOTE: [dch] I wonder if it needs closing
       try {
         while (true) {
           String s = reader.readLine();
@@ -130,7 +177,8 @@ public class SdkUtil {
         LOG.info(e);
       }
     }
-    
+
+    @NotNull
     public List<String> getResult() {
       return my_lines;
     }

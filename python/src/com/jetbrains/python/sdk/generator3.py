@@ -84,9 +84,9 @@ SANE_REPR_RE = re.compile(IDENT_PATTERN + "(?:\(.*\))?") # identifier with possi
 
 IDENT_RE = re.compile("(" + IDENT_PATTERN + ")") # $1 = identifier
 
-STARS_IDENT_RE = re.compile("(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, maybe with * or **
+STARS_IDENT_RE = re.compile("(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, maybe with a * or **
 
-IDENT_EQ_RE = re.compile("(" + IDENT_PATTERN + "\s*=)") # $1 = identifier with following '='
+IDENT_EQ_RE = re.compile("(" + IDENT_PATTERN + "\s*=)") # $1 = identifier with a following '='
 
 VAL_RE  = re.compile(
   "(-?[0-9]+)|"+
@@ -801,11 +801,19 @@ if __name__ == "__main__":
       fname = dirname + os.path.sep + quals[-1] + ".py"
       #
       action = "importing"
-      mod = __import__(name) 
+      try:
+        mod = __import__(name)
+      except ImportError:
+        sys.stderr.write("Name " + name + " failed to import\n")
+        sys.exit(0)
       # we can't really import a.b.c, only a, so follow the path
       for q in quals[1:]:
         action = "getting submodule " + q
-        mod = getattr(mod, q)
+        try:
+          mod = getattr(mod, q)
+        except AttributeError:
+          sys.stderr.write("Name " + name + " is not really importable at point " + q + "\n")
+          sys.exit(0)
       #
       if update_mode and hasattr(mod, "__file__"):
         action = "probing " + fname

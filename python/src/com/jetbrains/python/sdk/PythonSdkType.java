@@ -120,11 +120,12 @@ public class PythonSdkType extends SdkType {
       // on Linux, Python SDK home points to the /lib directory of a particular Python version
       File f_re = new File(path, "re.py");
       File f_future = new File(path, "__future__.py");
-      File f_site = new File(path, "site-packages");
+      File f_site = new File(path, "site-packages"); // 2.x
+      File f_dist = new File(path, "dist-packages"); // 3.0
       return (
         f_re.exists() &&
         f_future.exists() &&
-        f_site.exists() &&  f_site.isDirectory()
+        (f_site.exists() &&  f_site.isDirectory()) || (f_dist.exists() &&  f_dist.isDirectory()) 
       );
     }
     else {
@@ -347,6 +348,7 @@ public class PythonSdkType extends SdkType {
       indicator.setText("Generating skeletons of binary libs");
     }
     try {
+      final int RUN_TIMEOUT = 10000; // 10 seconds per call is plenty enough; anything more is clearly wrong.
       final String bin_path = getInterpreterPath(sdkPath);
       String text;
       FileWriter out;
@@ -366,7 +368,7 @@ public class PythonSdkType extends SdkType {
       try {
         final SdkUtil.ProcessCallInfo run_result = SdkUtil.getProcessOutput(sdkPath, new String[] {bin_path, find_bin_file.getPath()});
 
-        if (run_result.exitValue() == 0) {
+        if (run_result.getExitValue() == 0) {
           for (String line : run_result.getStdout()) {
             // line = "mod_name path"
             int cutpos = line.indexOf(' ');
@@ -384,9 +386,9 @@ public class PythonSdkType extends SdkType {
               }
               LOG.info("Skeleton for " + modname);
               final SdkUtil.ProcessCallInfo gen_result = SdkUtil.getProcessOutput(sdkPath,
-                new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}
+                new String[] {bin_path, gen3_file.getPath(), "-d", stubsRoot, modname}, RUN_TIMEOUT
               );
-              if (gen_result.exitValue() != 0) {
+              if (gen_result.getExitValue() != 0) {
                 StringBuffer sb = new StringBuffer();
                 for (String err_line : gen_result.getStderr()) {
                   sb.append(err_line).append("\n");
