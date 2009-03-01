@@ -141,61 +141,6 @@ public class ResolveImportUtil {
       }
       // unqualified import can be found:
       // in the same dir
-      /*
-
-      final Module module = ModuleUtil.findModuleForPsiElement(importRef);
-      if (module != null) {
-        // TODO: implement a proper module-like approach in PyCharm for "project's dirs on pythonpath", minding proper search order
-        // Current approach works only for IDEA plugin.
-        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        // look in module sources
-        boolean source_entries_missing = true;
-        for (ContentEntry entry: rootManager.getContentEntries()) {
-          VirtualFile root_file = entry.getFile();
-
-          PsiElement ret = matchToFile(the_name, importRef, root_file);
-          if (ret != null) return ret;
-          for (VirtualFile folder : entry.getSourceFolderFiles()) {
-            source_entries_missing = false;
-            ret = matchToFile(the_name, importRef, folder);
-            if (ret != null) return ret;
-          }
-        }
-        if (source_entries_missing) {
-          // fallback for a case without any source entries: use project root
-          VirtualFile project_root = module.getProject().getBaseDir();
-          PsiElement ret = matchToFile(the_name, importRef, project_root);
-          if (ret != null) return ret;
-        }
-        // else look in SDK roots
-        RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
-          @Nullable
-          public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
-            if (value != null) return value;
-            LookupRootVisitor visitor = new LookupRootVisitor(the_name, importRef.getManager());
-            visitRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), visitor);
-            return visitor.getResult();
-          }
-        };
-        PsiElement ret = rootManager.processOrder(resolvePolicy, null);
-        if (ret != null) return ret;
-      }
-      else {
-        // no module, another way to look in SDK roots
-        try {
-          for (OrderEntry entry: ProjectRootManager.getInstance(importRef.getProject()).getFileIndex().getOrderEntriesForFile(
-                importRef.getContainingFile().getVirtualFile()
-            )
-          ) {
-            PsiElement elt = resolveWithinRoots(entry.getFiles(OrderRootType.SOURCES), the_name, importRef);
-            if (elt != null) return elt;
-          }
-        }
-        catch (NullPointerException ex) {
-          return null; // any cut corners might result in an NPE; resolution fails, but not the IDE.
-        }
-      }
-      */
       PsiElement root_elt = resolveInRoots(importRef, the_name);
       if (root_elt != null) return root_elt;
     }
@@ -268,12 +213,17 @@ public class ResolveImportUtil {
     else {
       // no module, another way to look in SDK roots
       try {
-        for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(
-              elt.getContainingFile().getVirtualFile()
-          )
-        ) {
-          PsiElement root_elt = resolveWithinRoots(entry.getFiles(OrderRootType.SOURCES), refName, elt.getProject());
-          if (root_elt != null) return root_elt;
+        final PsiFile elt_psifile = elt.getContainingFile();
+        if (elt_psifile != null) {  // formality
+          final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
+          if (elt_vfile != null) { // reality
+            for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile
+              )
+            ) {
+              PsiElement root_elt = resolveWithinRoots(entry.getFiles(OrderRootType.SOURCES), refName, elt.getProject());
+              if (root_elt != null) return root_elt;
+            }
+          }
         }
       }
       catch (NullPointerException ex) { // NOTE: not beautiful
