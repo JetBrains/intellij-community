@@ -29,6 +29,15 @@ import com.intellij.util.IncorrectOperationException;
  */
 public interface ElementManipulator<T extends PsiElement> {
 
+  /**
+   * Changes the element's text to a new value
+   *
+   * @param element element to be changed
+   * @param range range within the element
+   * @param newContent new element text
+   * @return changed element
+   * @throws IncorrectOperationException if something goes wrong
+   */
   T handleContentChange(T element, TextRange range, String newContent) throws IncorrectOperationException;
 
   T handleContentChange(T element, String newContent) throws IncorrectOperationException;
