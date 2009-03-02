@@ -20,6 +20,11 @@ public class FileElement extends LazyParseableElement {
     super(type, text);
   }
 
+  @Deprecated  // for 8.1 API compatibility
+  public FileElement(IElementType type) {
+    super(type, null);
+  }
+
   public void setManager(final PsiManagerEx manager) {
     myManager = manager;
   }
