@@ -49,7 +49,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return myVcs;
   }
 
-  public synchronized Set<FilePath> getDirtyFiles() {
+  public Set<FilePath> getDirtyFiles() {
     final THashSet<FilePath> result = new THashSet<FilePath>(myDirtyFiles);
     for(FilePath filePath: myDirtyFiles) {
       VirtualFile vFile = filePath.getVirtualFile();
@@ -66,7 +66,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return new THashSet<FilePath>(myDirtyFiles);
   }
 
-  public synchronized Set<FilePath> getRecursivelyDirtyDirectories() {
+  public Set<FilePath> getRecursivelyDirtyDirectories() {
     THashSet<FilePath> result = new THashSet<FilePath>();
     for(THashSet<FilePath> dirsByRoot: myDirtyDirectoriesRecursively.values()) {
       result.addAll(dirsByRoot);
@@ -165,7 +165,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     });
   }
 
-  public synchronized void iterate(final Processor<FilePath> iterator) {
+  public void iterate(final Processor<FilePath> iterator) {
     if (myProject.isDisposed()) return;
 
     for (VirtualFile root : myAffectedContentRoots) {

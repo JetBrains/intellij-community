@@ -13,11 +13,30 @@ public class DirtBuilder {
 
   private final FilesAndRoots myFiles;
   private final FilesAndRoots myDirs;
+  private boolean myEverythingDirty;
 
   public DirtBuilder(final VcsGuess guess) {
     myGuess = guess;
     myDirs = new FilesAndRoots();
     myFiles = new FilesAndRoots();
+    myEverythingDirty = false;
+  }
+
+  public DirtBuilder(final DirtBuilder builder) {
+    myGuess = builder.myGuess;
+    myDirs = new FilesAndRoots(builder.myDirs);
+    myFiles = new FilesAndRoots(builder.myFiles);
+    myEverythingDirty = builder.myEverythingDirty;
+  }
+
+  public void reset() {
+    myFiles.clear();
+    myDirs.clear();
+    myEverythingDirty = false;
+  }
+
+  public void everythingDirty() {
+    myEverythingDirty = true;
   }
 
   public void addDirtyDirRecursively(final FilePath newcomer) {
@@ -34,6 +53,10 @@ public class DirtBuilder {
 
   public void addDirtyDirRecursively(final VcsRoot root) {
     myDirs.put(root);
+  }
+
+  public boolean isEverythingDirty() {
+    return myEverythingDirty;
   }
 
   public List<MyVcsRoot> getFilesForVcs() {
@@ -61,6 +84,20 @@ public class DirtBuilder {
     private FilesAndRoots() {
       myFiles = new ArrayList<FilePath>();
       myRoots = new ArrayList<MyVcsRoot>();
+      myCorrect = true;
+      myConverted = false;
+    }
+
+    private FilesAndRoots(final FilesAndRoots filesAndRoots) {
+      myFiles = new ArrayList<FilePath>(filesAndRoots.myFiles);
+      myRoots = new ArrayList<MyVcsRoot>(filesAndRoots.myRoots);
+      myCorrect = filesAndRoots.myCorrect;
+      myConverted = filesAndRoots.myConverted;
+    }
+
+    public void clear() {
+      myFiles.clear();
+      myRoots.clear();
       myCorrect = true;
       myConverted = false;
     }

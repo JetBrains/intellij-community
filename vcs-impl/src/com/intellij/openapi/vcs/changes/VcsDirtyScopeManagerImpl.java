@@ -4,6 +4,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -26,7 +28,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
 
-  private final Scopes myScopes;
+  private final DirtBuilder myDirtBuilder;
   private final VcsGuess myGuess;
   private final SynchronizedLife myLife;
 
@@ -38,7 +40,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     myLife = new SynchronizedLife();
     myGuess = new VcsGuess(myProject);
-    myScopes = new Scopes(myProject, myGuess);
+    myDirtBuilder = new DirtBuilder(myGuess);
   }
 
   public void projectOpened() {
@@ -66,7 +68,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     final boolean done = myLife.doIfAlive(new Runnable() {
       public void run() {
-        myScopes.markEverythingDirty();
+        myDirtBuilder.everythingDirty();
       }
     });
 
@@ -110,18 +112,17 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   private boolean takeDirt(final Consumer<DirtBuilder> filler) {
-    final DirtBuilder dirt = new DirtBuilder(myGuess);
     final boolean done = myLife.doIfAlive(new Runnable() {
       public void run() {
-        filler.consume(dirt);
-        myScopes.takeDirt(dirt);
+        filler.consume(myDirtBuilder);
       }
     });
 
-    if (done && (! dirt.isEmpty())) {
+    if (done && (! myDirtBuilder.isEmpty())) {
       myChangeListManager.scheduleUpdate();
     }
-    return (! done) || dirt.correct();
+    // no sence in checking correct here any more: vcs is searched for asynchronously
+    return (! done);
   }
 
   public boolean filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
@@ -142,35 +143,19 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void fileDirty(final VirtualFile file) {
-    final AbstractVcs[] vcs = new AbstractVcs[1];
-    final boolean done = myLife.doIfAlive(new Runnable() {
-      public void run() {
-        vcs[0] = myGuess.getVcsForDirty(file);
-        if (vcs[0] != null) {
-          myScopes.addDirtyFile(vcs[0], new FilePathImpl(file));
-        }
+    takeDirt(new Consumer<DirtBuilder>() {
+      public void consume(DirtBuilder dirtBuilder) {
+        dirtBuilder.addDirtyFile(new FilePathImpl(file));
       }
     });
-
-    if (done && vcs[0] != null) {
-      myChangeListManager.scheduleUpdate();
-    }
   }
 
   public void fileDirty(final FilePath file) {
-    final AbstractVcs[] vcs = new AbstractVcs[1];
-    final boolean done = myLife.doIfAlive(new Runnable() {
-      public void run() {
-        vcs[0] = myGuess.getVcsForDirty(file);
-        if (vcs[0] != null) {
-          myScopes.addDirtyFile(vcs[0], file);
-        }
+    takeDirt(new Consumer<DirtBuilder>() {
+      public void consume(DirtBuilder dirtBuilder) {
+        dirtBuilder.addDirtyFile(file);
       }
     });
-
-    if (done && vcs[0] != null) {
-      myChangeListManager.scheduleUpdate();
-    }
   }
 
   public void dirDirtyRecursively(final VirtualFile dir, final boolean scheduleUpdate) {
@@ -178,46 +163,42 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void dirDirtyRecursively(final VirtualFile dir) {
-    final AbstractVcs[] vcs = new AbstractVcs[1];
-    final boolean done = myLife.doIfAlive(new Runnable() {
-      public void run() {
-        vcs[0] = myGuess.getVcsForDirty(dir);
-        if (vcs[0] != null) {
-          myScopes.addDirtyDirRecursively(vcs[0], new FilePathImpl(dir));
-        }
+    takeDirt(new Consumer<DirtBuilder>() {
+      public void consume(DirtBuilder dirtBuilder) {
+        dirtBuilder.addDirtyDirRecursively(new FilePathImpl(dir));
       }
     });
-
-    if (done && vcs[0] != null) {
-      myChangeListManager.scheduleUpdate();
-    }
   }
 
   public void dirDirtyRecursively(final FilePath path) {
-    final AbstractVcs[] vcs = new AbstractVcs[1];
-    final boolean done = myLife.doIfAlive(new Runnable() {
-      public void run() {
-        vcs[0] = myGuess.getVcsForDirty(path);
-        if (vcs[0] != null) {
-          myScopes.addDirtyDirRecursively(vcs[0], path);
-        }
+    takeDirt(new Consumer<DirtBuilder>() {
+      public void consume(DirtBuilder dirtBuilder) {
+        dirtBuilder.addDirtyDirRecursively(path);
       }
     });
-
-    if (done && vcs[0] != null) {
-      myChangeListManager.scheduleUpdate();
-    }
   }
 
   @Nullable
   public VcsInvalidated retrieveScopes() {
-    final VcsInvalidated[] result = new VcsInvalidated[1];
-    myLife.doIfAlive(new Runnable() {
+    final Ref<DirtBuilder> dirtCopyRef = new Ref<DirtBuilder>();
+
+    final boolean done = myLife.doIfAlive(new Runnable() {
       public void run() {
-        result[0] = myScopes.retrieveAndClear();
+        dirtCopyRef.set(new DirtBuilder(myDirtBuilder));
+        myDirtBuilder.reset();
       }
     });
-    return result[0];
+    
+    if (done && (! dirtCopyRef.isNull())) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<VcsInvalidated>() {
+        public VcsInvalidated compute() {
+          final Scopes scopes = new Scopes(myProject, myGuess);
+          scopes.takeDirt(dirtCopyRef.get());
+          return scopes.retrieveAndClear();
+        }
+      });
+    }
+    return null;
   }
 
   private class MyVfsListener extends VirtualFileAdapter {
