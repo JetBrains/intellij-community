@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.popup;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public interface BalloonBuilder {
 
@@ -28,6 +29,15 @@ public interface BalloonBuilder {
   BalloonBuilder setCloseButtonEnabled(boolean enabled);
 
   @NotNull
+  BalloonBuilder setFadeoutTime(long fadeoutTime);
+
+  @NotNull
+  BalloonBuilder setHideOnFrameResize(boolean hide);
+
+  @NotNull
   Balloon createBalloon();
+
+  @NotNull
+  BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick);
 
 }

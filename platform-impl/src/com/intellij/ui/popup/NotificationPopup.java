@@ -4,143 +4,78 @@
 
 package com.intellij.ui.popup;
 
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.ui.ListenerUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 /**
  * @author max
  */
 public class NotificationPopup {
-  private JComponent myContent;
-  private static final Dimension myPreferredContentSize = new Dimension(300, 100);
-  private JBPopup myPopup;
-  private int myTimerTick;
-  private Color myBackgroud;
-  private final boolean myUseDefaultPreferredSize;
-  private final static int FADE_IN_TICKS = 60;
-  private final static int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
-  private final static int FADE_OUT_TICKS = SHOW_TIME_TICKS + 60;
-
-  private final ActionListener myFadeTracker = new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
-      Window popupWindow = SwingUtilities.windowForComponent(myContent);
-      if (popupWindow != null) {
-        myTimerTick++;
-        if (myTimerTick < FADE_IN_TICKS) {
-          popupWindow.setLocation(popupWindow.getLocation().x,  popupWindow.getLocation().y - 2);
-        }
-        else if (myTimerTick > FADE_OUT_TICKS) {
-          myPopup.cancel();
-          myFadeInTimer.stop();
-        }
-        else if (myTimerTick > SHOW_TIME_TICKS) {
-          popupWindow.setLocation(popupWindow.getLocation().x,  popupWindow.getLocation().y + 2);
-        }
-      }
-    }
-  };
-  private final Timer myFadeInTimer = new Timer(10, myFadeTracker);
-
   public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
     this(owner, content, backgroud, true);
   }
 
   public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, boolean useDefaultPreferredSize) {
-    myBackgroud = backgroud;
-    myUseDefaultPreferredSize = useDefaultPreferredSize;
-    myContent = new ContentComponent(content);
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null)
-      .setForceHeavyweight(true)
-      .setRequestFocus(false)
-      .setResizable(false)
-      .setMovable(true)
-      .setLocateWithinScreenBounds(false)
-      .setAlpha(0.2f).addListener(new JBPopupAdapter() {
-      public void onClosed(final JBPopup popup) {
-        if (myFadeInTimer.isRunning()) {
-          myFadeInTimer.stop();
-        }
-        myFadeInTimer.removeActionListener(myFadeTracker);
+    this(owner, content, backgroud, useDefaultPreferredSize, null, false);
+  }
+
+  public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, final boolean useDefaultPreferredSize, ActionListener clickHandler, boolean closeOnClick) {
+    final IdeFrameImpl frame = findFrame(owner);
+    if (frame == null) {
+      //todo kirillk
+      if (clickHandler != null) {
+        throw new UnsupportedOperationException("Click handler is not supported in frameless mode");
       }
-    })
-      .createPopup();
-    final Point p = RelativePoint.getSouthEastOf(owner).getScreenPoint();
-    Rectangle screen = ScreenUtil.getScreenRectangle(p.x, p.y);
+      new FramelessNotificationPopup(owner, content, backgroud, useDefaultPreferredSize);
+    } else {
+      final Wrapper wrapper = new NonOpaquePanel(content) {
+        @Override
+        public Dimension getPreferredSize() {
+          final Dimension size = super.getPreferredSize();
+          if (useDefaultPreferredSize) {
+            if (size.width > 400 || size.height > 200) {
+              size.width = 400;
+              size.height = 200;
+            }
+          }
+          return size;
+        }
+      };
 
-    final Point initial = new Point(screen.x + screen.width - myContent.getPreferredSize().width - 50,
-                                    screen.y + screen.height - 5);
+      final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(wrapper)
+        .setFadeoutTime(5000)
+        .setHideOnClickOutside(false)
+        .setHideOnFrameResize(false)
+        .setHideOnKeyOutside(false)
+        .setCloseButtonEnabled(true)
+        .setFillColor(backgroud)
+        .setShowCallout(false)
+        .setClickHandler(clickHandler, closeOnClick)
+        .createBalloon();
 
-    myPopup.showInScreenCoordinates(owner, initial);
+      frame.getBalloonLayout().add(frame.getLayeredPane(), balloon);
+    }
+  }
 
-    myFadeInTimer.setRepeats(true);
-    myFadeInTimer.start();
+  private IdeFrameImpl findFrame(JComponent owner) {
+    final Window frame = SwingUtilities.getWindowAncestor(owner);
+    if (frame instanceof IdeFrameImpl) {
+      return (IdeFrameImpl)frame;
+    }
+
+    return null;
   }
 
   public JBPopup getPopup() {
-    return myPopup;
-  }
-
-  private class ContentComponent extends JPanel {
-    private final MouseAdapter myMouseListener;
-
-    public ContentComponent(JComponent content) {
-      super(new BorderLayout());
-      add(content, BorderLayout.CENTER);
-      setBackground(myBackgroud);
-
-      myMouseListener = new MouseAdapter() {
-        @Override
-        public void mouseClicked(final MouseEvent e) {
-          if (e.getButton() == MouseEvent.BUTTON3) {
-            myPopup.cancel();
-          }
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-          if (myFadeInTimer.isRunning()) {
-            myFadeInTimer.stop();
-          }
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-          if (!myFadeInTimer.isRunning()) {
-            myFadeInTimer.start();
-          }
-        }
-      };
-    }
-
-    @Override
-    public void addNotify() {
-      super.addNotify();
-      ListenerUtil.addMouseListener(this, myMouseListener);
-    }
-
-    @Override
-    public void removeNotify() {
-      super.removeNotify();
-      ListenerUtil.removeMouseListener(this, myMouseListener);
-    }
-
-    public Dimension getPreferredSize() {
-      if (myUseDefaultPreferredSize) {
-        return myPreferredContentSize;
-      }
-      return super.getPreferredSize();
-    }   
+    return null;
   }
 
 

@@ -10,10 +10,12 @@ import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -30,6 +32,7 @@ public class BalloonImpl implements Disposable, Balloon {
   private JLayeredPane myLayeredPane;
   private Position myPosition;
   private Point myTargetPoint;
+  private boolean myHideOnFrameResize;
 
   private final Color myBorderColor;
   private final Color myFillColor;
@@ -38,15 +41,30 @@ public class BalloonImpl implements Disposable, Balloon {
 
   private boolean myLastMoveWasInsideBalloon;
 
+  private Rectangle myForcedBounds;
+
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     public void eventDispatched(final AWTEvent event) {
-      if (myHideOnMouse && (event.getID() == MouseEvent.MOUSE_PRESSED
-          || event.getID() == MouseEvent.MOUSE_RELEASED
-          || event.getID() == MouseEvent.MOUSE_CLICKED)) {
+      if (myHideOnMouse &&
+          (event.getID() == MouseEvent.MOUSE_PRESSED ||
+           event.getID() == MouseEvent.MOUSE_RELEASED ||
+           event.getID() == MouseEvent.MOUSE_CLICKED)) {
         final MouseEvent me = (MouseEvent)event;
-        if (isInsideBalloon(me)) return;
+        if (isInsideBalloon(me))  return;
 
         hide();
+        return;
+      }
+
+      if (myClickHandler != null && event.getID() == MouseEvent.MOUSE_CLICKED) {
+        final MouseEvent me = (MouseEvent)event;
+        if (!(me.getComponent() instanceof CloseButton) && isInsideBalloon(me)) {
+          myClickHandler.actionPerformed(new ActionEvent(BalloonImpl.this, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
+          if (myCloseOnClick) {
+            hide();
+            return;
+          }
+        }
       }
 
       if (myEnableCloseButton && event.getID() == MouseEvent.MOUSE_MOVED) {
@@ -66,6 +84,10 @@ public class BalloonImpl implements Disposable, Balloon {
       }
     }
   };
+  private long myFadeoutTime;
+  private Dimension myDefaultPrefSize;
+  private ActionListener myClickHandler;
+  private boolean myCloseOnClick;
 
   private boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
@@ -82,7 +104,9 @@ public class BalloonImpl implements Disposable, Balloon {
 
   private final ComponentAdapter myComponentListener = new ComponentAdapter() {
     public void componentResized(final ComponentEvent e) {
-      hide();
+      if (myHideOnFrameResize) {
+        hide();
+      }
     }
   };
   private Animator myAnimator;
@@ -101,7 +125,11 @@ public class BalloonImpl implements Disposable, Balloon {
                      boolean hideOnMouse,
                      boolean hideOnKey,
                      boolean showPointer,
-                     boolean enableCloseButton) {
+                     boolean enableCloseButton,
+                     long fadeoutTime,
+                     boolean hideOnFrameResize,
+                     ActionListener clickHandler,
+                     boolean closeOnClick) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
     myContent = content;
@@ -109,6 +137,11 @@ public class BalloonImpl implements Disposable, Balloon {
     myHideOnKey = hideOnKey;
     myShowPointer = showPointer;
     myEnableCloseButton = enableCloseButton;
+    myHideOnFrameResize = hideOnFrameResize;
+    myClickHandler = clickHandler;
+    myCloseOnClick = closeOnClick;
+
+    myFadeoutTime = fadeoutTime;
   }
 
   public void show(final RelativePoint target, final Balloon.Position position) {
@@ -151,11 +184,14 @@ public class BalloonImpl implements Disposable, Balloon {
     }
 
     myLayeredPane = root.getLayeredPane();
-    myLayeredPane.addComponentListener(myComponentListener);
     myPosition = position;
 
-    final EmptyBorder border = myShowPointer ? myPosition.createBorder(this) : new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
-    myComp = new MyComponent(myContent, myLayeredPane, this, border);
+    myLayeredPane.addComponentListener(myComponentListener);
+
+    final EmptyBorder border = myShowPointer
+                               ? myPosition.createBorder(this)
+                               : new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
+    myComp = new MyComponent(myContent, this, border);
 
     myTargetPoint = target.getPoint(myLayeredPane);
 
@@ -173,9 +209,23 @@ public class BalloonImpl implements Disposable, Balloon {
     myLayeredPane.revalidate();
     myLayeredPane.repaint();
 
-    
-    Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK | KeyEvent.KEY_EVENT_MASK);
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK |
+                                                                           MouseEvent.MOUSE_MOTION_EVENT_MASK |
+                                                                           KeyEvent.KEY_EVENT_MASK);
   }
+
+  public void show(JLayeredPane pane) {
+    show(pane, null);
+  }
+
+  public void show(JLayeredPane pane, @Nullable Rectangle bounds) {
+    if (bounds != null) {
+      myForcedBounds = bounds;
+    }
+    show(new RelativePoint(pane, new Point(0, 0)), Balloon.Position.above);
+  }
+
 
   private void runAnimation(boolean forward, final JLayeredPane layeredPane) {
     if (myAnimator != null) {
@@ -194,7 +244,10 @@ public class BalloonImpl implements Disposable, Balloon {
         if (isForward()) {
           myComp.clear();
           myComp.repaint();
-        } else {
+
+          startFadeoutTimer();
+        }
+        else {
           layeredPane.remove(myComp);
           layeredPane.revalidate();
           layeredPane.repaint();
@@ -211,6 +264,17 @@ public class BalloonImpl implements Disposable, Balloon {
 
     myAnimator.setTakInitialDelay(false);
     myAnimator.resume();
+  }
+
+  private void startFadeoutTimer() {
+    if (myFadeoutTime > 0) {
+      Alarm fadeoutAlarm = new Alarm(this);
+      fadeoutAlarm.addRequest(new Runnable() {
+        public void run() {
+          hide();
+        }
+      }, (int)myFadeoutTime);
+    }
   }
 
 
@@ -273,20 +337,45 @@ public class BalloonImpl implements Disposable, Balloon {
     return myCloseButton;
   }
 
+  public void setBounds(Rectangle bounds) {
+    myForcedBounds = bounds;
+    if (myPosition != null) {
+      myPosition.updateLocation(this);
+    }
+  }
+
+  public Dimension getPreferredSize() {
+    if (myComp != null) {
+      return myComp.getPreferredSize();
+    } else {
+      if (myDefaultPrefSize == null) {
+        final EmptyBorder border = new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
+        final MyComponent c = new MyComponent(myContent, this, border);
+        myDefaultPrefSize = c.getPreferredSize();
+      }
+      return myDefaultPrefSize;
+    }
+  }
+
   public abstract static class Position {
 
     abstract EmptyBorder createBorder(final BalloonImpl balloon);
 
 
     public void updateLocation(final BalloonImpl balloon) {
-      final Dimension size = balloon.myComp.getPreferredSize();
-      balloon.myComp.setSize(size);
-      final Dimension layeredPaneSize = balloon.myLayeredPane.getSize();
-      Point location = balloon.myShowPointer ? getLocation(layeredPaneSize, balloon.myTargetPoint, size)
-                                             : new Point(balloon.myTargetPoint.x - size.width / 2, balloon.myTargetPoint.y - size.height / 2);
-      final Rectangle bounds = new Rectangle(location.x, location.y, size.width, size.height);
+      Rectangle bounds = balloon.myForcedBounds;
 
-      ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets);
+      if (bounds == null) {
+        final Dimension size = balloon.myComp.getPreferredSize();
+        balloon.myComp.setSize(size);
+        final Dimension layeredPaneSize = balloon.myLayeredPane.getSize();
+        Point location = balloon.myShowPointer
+                         ? getLocation(layeredPaneSize, balloon.myTargetPoint, size)
+                         : new Point(balloon.myTargetPoint.x - size.width / 2, balloon.myTargetPoint.y - size.height / 2);
+        bounds = new Rectangle(location.x, location.y, size.width, size.height);
+
+        ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets);
+      }
 
       balloon.myComp.setBounds(bounds);
     }
@@ -300,7 +389,8 @@ public class BalloonImpl implements Disposable, Balloon {
       Shape shape;
       if (balloon.myShowPointer) {
         shape = getPointingShape(bounds, g, pointTarget, balloon);
-      } else {
+      }
+      else {
         shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - 1, bounds.height - 1, balloon.getArc(), balloon.getArc());
       }
 
@@ -311,7 +401,10 @@ public class BalloonImpl implements Disposable, Balloon {
       cfg.restore();
     }
 
-    protected abstract Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon);
+    protected abstract Shape getPointingShape(final Rectangle bounds,
+                                              final Graphics2D g,
+                                              final Point pointTarget,
+                                              final BalloonImpl balloon);
 
   }
 
@@ -339,8 +432,8 @@ public class BalloonImpl implements Disposable, Balloon {
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.TOP);
       shaper.line(balloon.getPointerWidth() / 2, balloon.getPointerLength()).toRightCurve().roundRightDown().toBottomCurve().roundLeftDown()
-          .toLeftCurve().roundLeftUp().toTopCurve().roundUpRight()
-          .lineTo(pointTarget.x - balloon.getPointerWidth() / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y);
+        .toLeftCurve().roundLeftUp().toTopCurve().roundUpRight()
+        .lineTo(pointTarget.x - balloon.getPointerWidth() / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y);
       shaper.close();
 
       return shaper.getShape();
@@ -379,8 +472,8 @@ public class BalloonImpl implements Disposable, Balloon {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.BOTTOM);
       shaper.line(-balloon.getPointerWidth() / 2, -balloon.getPointerLength() + 1);
       shaper.toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown().toBottomCurve().line(0, 2)
-          .roundLeftDown().lineTo(pointTarget.x + balloon.getPointerWidth() / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y)
-          .close();
+        .roundLeftDown().lineTo(pointTarget.x + balloon.getPointerWidth() / 2, shaper.getCurrent().y).lineTo(pointTarget.x, pointTarget.y)
+        .close();
 
 
       return shaper.getShape();
@@ -401,8 +494,8 @@ public class BalloonImpl implements Disposable, Balloon {
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.LEFT);
       shaper.line(balloon.getPointerLength(), -balloon.getPointerWidth() / 2).toTopCurve().roundUpRight().toRightCurve().roundRightDown()
-          .toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp()
-          .lineTo(shaper.getCurrent().x, pointTarget.y + balloon.getPointerWidth() / 2).lineTo(pointTarget.x, pointTarget.y).close();
+        .toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp()
+        .lineTo(shaper.getCurrent().x, pointTarget.y + balloon.getPointerWidth() / 2).lineTo(pointTarget.x, pointTarget.y).close();
 
       return shaper.getShape();
     }
@@ -438,7 +531,7 @@ public class BalloonImpl implements Disposable, Balloon {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.RIGHT);
       shaper.line(-balloon.getPointerLength(), balloon.getPointerWidth() / 2);
       shaper.toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown()
-          .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth() / 2).lineTo(pointTarget.x, pointTarget.y).close();
+        .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth() / 2).lineTo(pointTarget.x, pointTarget.y).close();
       return shaper.getShape();
     }
 
@@ -448,21 +541,23 @@ public class BalloonImpl implements Disposable, Balloon {
     }
   }
 
-  private static class MyComponent extends JPanel {
+  private class CloseButton extends NonOpaquePanel {
+
+  }
+
+  private class MyComponent extends JPanel {
 
     private BufferedImage myImage;
     private float myAlpha;
-    private final JComponent myParent;
     private final BalloonImpl myBalloon;
-    private JPanel myCloseRec = new NonOpaquePanel();
+    private CloseButton myCloseRec = new CloseButton();
     private BaseButtonBehavior myButton;
 
     private final Wrapper myContent;
 
-    private MyComponent(JComponent content, JComponent parent, BalloonImpl balloon, EmptyBorder shapeBorder) {
+    private MyComponent(JComponent content, BalloonImpl balloon, EmptyBorder shapeBorder) {
       setOpaque(false);
       setLayout(null);
-      myParent = parent;
       myBalloon = balloon;
 
       myContent = new Wrapper(content);
@@ -507,7 +602,7 @@ public class BalloonImpl implements Disposable, Balloon {
       if (myBalloon.myEnableCloseButton) {
         final Icon icon = myBalloon.getCloseButton();
         final Rectangle bounds = getBounds();
-        myCloseRec.setBounds(bounds.width - icon.getIconWidth(),  0, icon.getIconWidth(), icon.getIconHeight());
+        myCloseRec.setBounds(bounds.width - icon.getIconWidth(), 0, icon.getIconWidth(), icon.getIconHeight());
       }
     }
 
@@ -534,7 +629,7 @@ public class BalloonImpl implements Disposable, Balloon {
     @Override
     protected void paintComponent(final Graphics g) {
       super.paintComponent(g);
-      final Point pointTarget = SwingUtilities.convertPoint(myParent, myBalloon.myTargetPoint, this);
+      final Point pointTarget = SwingUtilities.convertPoint(myLayeredPane, myBalloon.myTargetPoint, this);
 
       if (myImage == null && myAlpha != -1) {
         myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -546,7 +641,8 @@ public class BalloonImpl implements Disposable, Balloon {
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
 
         g2d.drawImage(myImage, 0, 0, null);
-      } else {
+      }
+      else {
         myBalloon.myPosition.paintComponent(myBalloon, myContent.getBounds(), (Graphics2D)g, pointTarget);
       }
     }
@@ -683,14 +779,15 @@ public class BalloonImpl implements Disposable, Balloon {
           final JEditorPane pane = new JEditorPane();
           pane.setBorder(new EmptyBorder(6, 6, 6, 6));
           pane.setEditorKit(new HTMLEditorKit());
-          pane.setText(UIUtil.toHtml("<html><body><center>Really cool balloon<br>Really fucking <a href=\\\"http://jetbrains.com\\\">big</a></center></body></html"));
+          pane.setText(UIUtil.toHtml(
+            "<html><body><center>Really cool balloon<br>Really fucking <a href=\\\"http://jetbrains.com\\\">big</a></center></body></html"));
           final Dimension size = new JLabel(pane.getText()).getPreferredSize();
           pane.setEditable(false);
           pane.setOpaque(false);
           pane.setBorder(null);
           pane.setPreferredSize(size);
 
-          balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true));
+          balloon.set(new BalloonImpl(pane, Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 2000, true, null, false));
           balloon.get().setShowPointer(false);
 
           if (e.isControlDown()) {

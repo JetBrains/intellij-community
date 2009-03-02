@@ -1,0 +1,122 @@
+package com.intellij.ui;
+
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.util.ArrayList;
+import java.util.List;
+
+public class BalloonLayout {
+
+  private JComponent myParent;
+  private Insets myInsets;
+
+  private List<Balloon> myBalloons = new ArrayList<Balloon>();
+
+  private Alarm myRelayoutAlarm = new Alarm();
+  private Runnable myRelayoutRunnable = new Runnable() {
+    public void run() {
+      relayout();
+    }
+  };
+
+  public BalloonLayout(@NotNull JComponent parent, @NotNull Insets insets) {
+    myParent = parent;
+    myInsets = insets;
+    myParent.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        queueRelayout();
+      }
+    });
+  }
+
+  public void add(JLayeredPane pane, final Balloon balloon) {
+    myBalloons.add(balloon);
+    Disposer.register(balloon, new Disposable() {
+      public void dispose() {
+        myBalloons.remove(balloon);
+        queueRelayout();
+      }
+    });
+
+    relayout();
+    balloon.show(pane);
+  }
+
+
+  private void queueRelayout() {
+    myRelayoutAlarm.cancelAllRequests();
+    myRelayoutAlarm.addRequest(myRelayoutRunnable, 200);
+  }
+
+  private void relayout() {
+    final Dimension size = myParent.getSize();
+
+    size.width -= myInsets.left + myInsets.right;
+    size.height -= myInsets.top + myInsets.bottom;
+
+    final Rectangle layoutRec = new Rectangle(new Point(myInsets.left, myInsets.top), size);
+
+    List<ArrayList<Balloon>> columns = createColumns(layoutRec);
+    List<Integer> columnWidths = computeWidths(columns);
+
+    int eachCoumnX = (int)layoutRec.getMaxX(); 
+    for (int i = 0; i < columns.size(); i++) {
+      final ArrayList<Balloon> eachColumn = columns.get(i);
+      final Integer eachWidth = columnWidths.get(i);
+      eachCoumnX -= eachWidth.intValue();
+      int eachY = layoutRec.y;
+      for (Balloon eachBalloon : eachColumn) {
+        final Rectangle eachRec = new Rectangle();
+        final Dimension eachPrefSize = eachBalloon.getPreferredSize();
+        eachRec.setSize(eachPrefSize);
+        eachRec.setLocation(eachCoumnX + eachWidth.intValue() - eachRec.width, eachY);
+        eachBalloon.setBounds(eachRec);
+        eachY += eachRec.height;
+      }
+    }
+  }
+
+
+
+  private List<Integer> computeWidths(List<ArrayList<Balloon>> columns) {
+    List<Integer> columnWidths = new ArrayList<Integer>();
+    for (ArrayList<Balloon> eachColumn : columns) {
+      int maxWidth = 0;
+      for (Balloon each : eachColumn) {
+        maxWidth = Math.max(each.getPreferredSize().width, maxWidth);
+      }
+      columnWidths.add(maxWidth);
+    }
+    return columnWidths;
+  }
+
+  private List<ArrayList<Balloon>> createColumns(Rectangle layoutRec) {
+    List<ArrayList<Balloon>> columns = new ArrayList<ArrayList<Balloon>>();
+
+    ArrayList<Balloon> eachColumn = new ArrayList<Balloon>();
+    columns.add(eachColumn);
+
+    int eachColumnHeight = 0;
+    for (Balloon each : myBalloons) {
+      final Dimension eachSize = each.getPreferredSize();
+      if (eachColumnHeight + eachSize.height > layoutRec.getHeight()) {
+        eachColumn = new ArrayList<Balloon>();
+        columns.add(eachColumn);
+        eachColumnHeight = 0;
+      }
+      eachColumn.add(each);
+      eachColumnHeight += eachSize.height;
+    }
+    return columns;
+  }
+
+}

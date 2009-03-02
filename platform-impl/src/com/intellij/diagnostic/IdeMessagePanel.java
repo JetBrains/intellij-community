@@ -10,8 +10,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.status.StatusBarPatch;
 import com.intellij.ui.LightColors;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.NotificationPopup;
 
 import javax.swing.*;
@@ -177,11 +175,13 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
       if (!myNotificationPopupAlreadyShown) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            new NotificationPopup(IdeMessagePanel.this, new LinkLabel(INTERNAL_ERROR_NOTICE, IconLoader.getIcon("/general/ideFatalError.png"), new LinkListener() {
-              public void linkSelected(LinkLabel aSource, Object aLinkData) {
+            final JLabel label = new JLabel(INTERNAL_ERROR_NOTICE);
+            label.setIcon(IconLoader.getIcon("/general/ideFatalError.png"));
+            new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
+              public void actionPerformed(ActionEvent e) {
                 _openFatals();
               }
-            }), LightColors.RED);
+            }, true);
           }
         });
         myNotificationPopupAlreadyShown = true;

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
@@ -15,11 +16,16 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   Color myFill = new Color(186, 238, 186, 230);
   boolean myHideOnMouseOutside = true;
   boolean myHideOnKeyOutside = true;
+  long myFadeoutTime = -1;
 
   private Balloon.Position myPrefferedPosition = Balloon.Position.below;
 
   boolean myShowCalllout = true;
   private boolean myCloseButtonEnabled;
+  private boolean myHideOnFrameResize = true;
+
+  private ActionListener myClickHandler;
+  private boolean myCloseOnClick;
 
   public BalloonPopupBuilderImpl(@NotNull final JComponent content) {
     myContent = content;
@@ -62,13 +68,32 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   }
 
   @NotNull
+  public BalloonBuilder setFadeoutTime(long fadeoutTime) {
+    myFadeoutTime = fadeoutTime;
+    return this;
+  }
+
+  @NotNull
+  public BalloonBuilder setHideOnFrameResize(boolean hide) {
+    myHideOnFrameResize = hide;
+    return this;
+  }
+
+  @NotNull
   public Balloon createBalloon() {
-    return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myShowCalllout, myCloseButtonEnabled);
+    return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myShowCalllout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick);
   }
 
   @NotNull
   public BalloonBuilder setCloseButtonEnabled(boolean enabled) {
     myCloseButtonEnabled = enabled;
+    return this;
+  }
+
+  @NotNull
+  public BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick) {
+    myClickHandler = listener;
+    myCloseOnClick = closeOnClick;
     return this;
   }
 }

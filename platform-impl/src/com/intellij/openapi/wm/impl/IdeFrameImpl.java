@@ -20,8 +20,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private final LayoutFocusTraversalPolicyExt myLayoutFocusTraversalPolicy;
 
   private IdeRootPane myRootPane;
+  private BalloonLayout myBalloonLayout;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManager actionManager, UISettings uiSettings, DataManager dataManager,
                       KeymapManager keymapManager, final Application application, final String[] commandLineArgs) {
@@ -64,6 +66,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
     setupCloseAction();
     new MnemonicHelper().register(this);
+
+    myBalloonLayout = new BalloonLayout(myRootPane.getLayeredPane(), new Insets(8, 8, 8, 8));
   }
 
   /**
@@ -236,5 +240,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     }
 
     return null;
+  }
+
+  public final BalloonLayout getBalloonLayout() {
+    return myBalloonLayout;
   }
 }
