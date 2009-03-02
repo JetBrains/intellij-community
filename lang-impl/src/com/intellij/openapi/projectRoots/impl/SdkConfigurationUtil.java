@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -87,7 +87,9 @@ public class SdkConfigurationUtil {
   public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Sdk>() {
         public Sdk compute(){
-          final ProjectJdkImpl projectJdk = new ProjectJdkImpl(sdkType.suggestSdkName(null, homeDir.getPath()), sdkType);
+          final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
+          final String sdkName = createUniqueSdkName(sdkType, homeDir.getPath(), Arrays.asList(sdks));
+          final ProjectJdkImpl projectJdk = new ProjectJdkImpl(sdkName, sdkType);
           projectJdk.setHomePath(homeDir.getPath());
           sdkType.setupSdkPaths(projectJdk);
           ProjectJdkTable.getInstance().addJdk(projectJdk);
@@ -143,5 +145,19 @@ public class SdkConfigurationUtil {
       }
     }
     return sdk;
+  }
+
+  public static String createUniqueSdkName(SdkType type, String home, final Collection<Sdk> sdks) {
+    final Set<String> names = new HashSet<String>();
+    for (Sdk jdk : sdks) {
+      names.add(jdk.getName());
+    }
+    final String suggestedName = type.suggestSdkName(null, home);
+    String newSdkName = suggestedName;
+    int i = 0;
+    while (names.contains(newSdkName)) {
+      newSdkName = suggestedName + " (" + (++i) + ")";
+    }
+    return newSdkName;
   }
 }

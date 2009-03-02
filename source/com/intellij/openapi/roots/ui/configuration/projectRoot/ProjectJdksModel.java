@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.projectRoots.ui.NotifiableSdkModel;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -27,10 +28,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: anna
@@ -219,16 +217,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     if (home == null) {
       return;
     }
-    final Set<String> names = new HashSet<String>();
-    for (Sdk jdk : myProjectJdks.values()) {
-      names.add(jdk.getName());
-    }
-    final String suggestedName = type.suggestSdkName(null, home);
-    String newSdkName = suggestedName;
-    int i = 0;
-    while (names.contains(newSdkName)) {
-      newSdkName = suggestedName + " (" + (++i) + ")";
-    }
+    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectJdks.values());
     final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
     newJdk.setHomePath(home);
 
