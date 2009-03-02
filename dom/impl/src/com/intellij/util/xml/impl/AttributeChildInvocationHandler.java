@@ -52,7 +52,9 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final XmlTag tag = parent.getXmlTag();
     if (tag == null) return null;
 
-    return tag.getAttribute(getXmlElementName(), getXmlName().getNamespace(tag, parent.getFile()));
+    // TODO: this seems ugly
+    String ns = getXmlName().getNamespace(tag, parent.getFile());
+    return tag.getAttribute(getXmlElementName(), tag.getNamespace().equals(ns)? null:ns);
   }
 
   public final XmlAttribute ensureXmlElementExists() {
@@ -62,7 +64,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final DomManagerImpl manager = getManager();
     final boolean b = manager.setChanging(true);
     try {
-      attribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlElementNamespace(), "");
+      attribute = ensureTagExists().setAttribute(getXmlElementName(), "", "");
       setXmlElement(attribute);
       getManager().cacheHandler(attribute, this);
       manager.fireEvent(new ElementDefinedEvent(getProxy()));
@@ -93,7 +95,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
         public void run() {
           try {
             setXmlElement(null);
-            tag.setAttribute(getXmlElementName(), getXmlElementNamespace(), null);
+            tag.setAttribute(getXmlElementName(), "", null);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -143,7 +145,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     getManager().runChange(new Runnable() {
       public void run() {
         try {
-          XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);
+          XmlAttribute attribute = tag.setAttribute(attributeName, "", newValue);
           setXmlElement(attribute);
           getManager().cacheHandler(attribute, AttributeChildInvocationHandler.this);
         }

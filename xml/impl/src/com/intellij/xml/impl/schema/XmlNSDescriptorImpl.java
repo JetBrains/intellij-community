@@ -72,7 +72,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
       if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
           equalsToSchemaName(tag, IMPORT_TAG_NAME)
         ) {
-        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
         if (schemaLocation != null) {
           final XmlFile xmlFile = XmlUtil.findNamespace(myFile, schemaLocation.getValue());
           addDependency(xmlFile, visited);
@@ -179,7 +179,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
                 )
                )
         ) {
-        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
         if (schemaLocation != null) {
           final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation.getValue());
           if (xmlFile != null) {
@@ -273,7 +273,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
                   namespace.equals(tag.getAttributeValue("namespace"))
                  )
         ) {
-        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
 
         if (schemaLocation != null) {
           final XmlFile xmlFile = XmlUtil.findNamespace(myTag.getContainingFile(), schemaLocation.getValue());

@@ -542,8 +542,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     checkIsValid();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = getXmlTag();
+    
     if (tag != null) {
-      final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), evaluatedXmlName.getNamespace(tag, getFile()));
+      // TODO: this seems ugly
+      String ns = evaluatedXmlName.getNamespace(tag, getFile());
+      final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), ns.equals(tag.getNamespace())? null:ns);
+      
       if (attribute != null) {
         AttributeChildInvocationHandler handler = (AttributeChildInvocationHandler)myManager.getCachedHandler(attribute);
         if (handler == null) {

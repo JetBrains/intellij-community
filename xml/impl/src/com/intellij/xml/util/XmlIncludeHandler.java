@@ -103,7 +103,7 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
 
   @Nullable
   public static XmlFile resolveXIncludeFile(XmlTag xincludeTag) {
-    final XmlAttribute hrefAttribute = xincludeTag.getAttribute("href", XmlUtil.XINCLUDE_URI);
+    final XmlAttribute hrefAttribute = xincludeTag.getAttribute("href", null);
     if (hrefAttribute == null) return null;
 
     final XmlAttributeValue xmlAttributeValue = hrefAttribute.getValueElement();

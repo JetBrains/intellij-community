@@ -121,7 +121,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
     PsiReference classReference = null;
 
-    final XmlAttribute classToBind = rootTag.getAttribute("bind-to-class", Utils.FORM_NAMESPACE);
+    final XmlAttribute classToBind = rootTag.getAttribute("bind-to-class", null);
     if (classToBind != null) {
       // reference to class
       final String className = classToBind.getValue().replace('$','.');
@@ -150,26 +150,26 @@ public class FormReferenceProvider extends PsiReferenceProvider {
                                         final PsiReference classReference,
                                         final PsiPlainTextFile file,
                                         final PsiReferenceProcessor processor) {
-    final XmlAttribute clsAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_CLASS, Utils.FORM_NAMESPACE);
+    final XmlAttribute clsAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_CLASS, null);
     final String classNameStr = clsAttribute != null? clsAttribute.getValue().replace('$','.') : null;
     // field
     {
-      final XmlAttribute bindingAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_BINDING, Utils.FORM_NAMESPACE);
+      final XmlAttribute bindingAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_BINDING, null);
       if (bindingAttribute != null && classReference != null) {
-        final XmlAttribute customCreateAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_CUSTOM_CREATE, Utils.FORM_NAMESPACE);
+        final XmlAttribute customCreateAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_CUSTOM_CREATE, null);
         boolean customCreate = (customCreateAttribute != null && Boolean.parseBoolean(customCreateAttribute.getValue()));
         final TextRange nameRange = clsAttribute != null ? getValueRange(clsAttribute) : null;
         processor.execute(new FieldFormReference(file, classReference, getValueRange(bindingAttribute), classNameStr, nameRange, customCreate));
       }
-      final XmlAttribute titleBundleAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE, Utils.FORM_NAMESPACE);
-      final XmlAttribute titleKeyAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_KEY, Utils.FORM_NAMESPACE);
+      final XmlAttribute titleBundleAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE, null);
+      final XmlAttribute titleKeyAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_KEY, null);
       if (titleBundleAttribute != null && titleKeyAttribute != null) {
         processResourceBundleFileReferences(file, processor, titleBundleAttribute);
         processor.execute(new ResourceBundleKeyReference(file, titleBundleAttribute.getValue(), getValueRange(titleKeyAttribute)));
       }
 
-      final XmlAttribute bundleAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE, Utils.FORM_NAMESPACE);
-      final XmlAttribute keyAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_KEY, Utils.FORM_NAMESPACE);
+      final XmlAttribute bundleAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE, null);
+      final XmlAttribute keyAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_KEY, null);
       if (bundleAttribute != null && keyAttribute != null) {
         processResourceBundleFileReferences(file, processor, bundleAttribute);
         processor.execute(new ResourceBundleKeyReference(file, bundleAttribute.getValue(), getValueRange(keyAttribute)));
@@ -235,7 +235,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   }
 
   private static void processNestedFormReference(final XmlTag tag, final PsiReferenceProcessor processor, final PsiPlainTextFile file) {
-    final XmlAttribute formFileAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_FORM_FILE, Utils.FORM_NAMESPACE);
+    final XmlAttribute formFileAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_FORM_FILE, null);
     if (formFileAttribute != null) {
       processPackageReferences(file, processor, formFileAttribute);
       processor.execute(new ResourceFileReference(file, getValueRange(formFileAttribute)));
@@ -244,8 +244,8 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
   private static void processButtonGroupReference(final XmlTag tag, final PsiReferenceProcessor processor, final PsiPlainTextFile file,
                                                   final PsiReference classReference) {
-    final XmlAttribute boundAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_BOUND, Utils.FORM_NAMESPACE);
-    final XmlAttribute nameAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_NAME, Utils.FORM_NAMESPACE);
+    final XmlAttribute boundAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_BOUND, null);
+    final XmlAttribute nameAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_NAME, null);
     if (boundAttribute != null && Boolean.parseBoolean(boundAttribute.getValue()) && nameAttribute != null) {
       processor.execute(new FieldFormReference(file, classReference, getValueRange(nameAttribute), null, null, false));
     }
@@ -253,7 +253,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
   private static void processPropertyReference(final XmlTag tag, final PsiReferenceProcessor processor, final PsiPlainTextFile file,
                                                final String className) {
-    final XmlAttribute valueAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, Utils.FORM_NAMESPACE);
+    final XmlAttribute valueAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, null);
     if (valueAttribute != null) {
       PsiReference reference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
         @Nullable

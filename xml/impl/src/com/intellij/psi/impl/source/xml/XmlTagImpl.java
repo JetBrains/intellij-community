@@ -566,19 +566,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   public XmlAttribute getAttribute(String name, String namespace) {
-    boolean sameNsAsTag = false;
-    if(namespace == null || namespace.equals(XmlUtil.ANY_URI) || (sameNsAsTag = namespace.equals(getNamespace()))) {
-      final XmlAttribute attribute = getAttribute(name);
-      if (attribute != null || !sameNsAsTag) return attribute;
-    }
-
-    if (name != null && name.indexOf(':') != -1 || XmlUtil.EMPTY_URI.equals(namespace)) {
+    if ((name != null && name.indexOf(':') != -1) ||
+        namespace == null ||
+        XmlUtil.EMPTY_URI.equals(namespace) ||
+        XmlUtil.ANY_URI.equals(namespace)
+       ) {
       return getAttribute(name);
     }
+
     final String prefix = getPrefixByNamespace(namespace);
-    if (prefix == null) return null;
-    String qname =  prefix.length() > 0 ? prefix + ":" + name : name;
-    return getAttribute(qname);
+    if (prefix == null || prefix.length() == 0) return null;
+    return getAttribute(prefix + ":" + name);
   }
 
   @Nullable
@@ -794,7 +792,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   public XmlAttribute setAttribute(String name, String namespace, String value) throws IncorrectOperationException {
-    if (!Comparing.equal(namespace, getNamespace())) {
+    if (!Comparing.equal(namespace, "")) {
       final String prefix = getPrefixByNamespace(namespace);
       if(prefix != null && prefix.length() > 0) name = prefix + ":" + name;
     }

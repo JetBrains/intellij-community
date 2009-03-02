@@ -283,7 +283,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
-        if (tag.getAttribute(attrName, tag.getNamespace()) == null &&
+        if (tag.getAttribute(attrName, "") == null &&
             !XmlExtension.getExtension((XmlFile)tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           final InsertRequiredAttributeFix insertRequiredAttributeIntention = new InsertRequiredAttributeFix(
