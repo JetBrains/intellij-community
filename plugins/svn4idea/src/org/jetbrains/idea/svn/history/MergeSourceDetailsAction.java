@@ -14,11 +14,20 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 
 public class MergeSourceDetailsAction extends AnAction {
+  private static Icon myIcon;
+
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(IconLoader.getIcon("/vcs/mergeSourcesTree.PNG"));
+    e.getPresentation().setIcon(getIcon());
     e.getPresentation().setText("Show merge sources details");
     e.getPresentation().setEnabled(enabled(e));
+  }
+
+  private Icon getIcon() {
+    if (myIcon == null) {
+      myIcon = IconLoader.getIcon("/icons/mergeSourcesTree.PNG");
+    }
+    return myIcon;
   }
 
   public void registerSelf(final JComponent comp) {
