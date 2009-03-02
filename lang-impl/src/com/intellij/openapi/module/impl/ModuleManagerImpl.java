@@ -922,6 +922,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
       final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
+      modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
       final List<Module> modules = new ArrayList<Module>();
       for (final Module aModulesToBeRenamed : modulesToBeRenamed) {
         ModuleImpl module = (ModuleImpl)aModulesToBeRenamed;
