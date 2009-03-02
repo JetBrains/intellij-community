@@ -142,7 +142,7 @@ public class ChangeContextUtil {
     thisExpr.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, null);
     if (qualifier == null){
       if (encodedQualifierClass != null && encodedQualifierClass.isValid()){
-        if (encodedQualifierClass.equals(thisClass) && thisAccessExpr != null){
+        if (encodedQualifierClass.equals(thisClass) && thisAccessExpr != null && thisAccessExpr.isValid()){
           return thisExpr.replace(thisAccessExpr);
         }
       }
@@ -154,7 +154,7 @@ public class ChangeContextUtil {
       }
       else {
         if (qualifierClass != null) {
-          if (qualifierClass.equals(thisClass) && thisAccessExpr != null) {
+          if (qualifierClass.equals(thisClass) && thisAccessExpr != null && thisAccessExpr.isValid()) {
             return thisExpr.replace(thisAccessExpr);
           }
         }
