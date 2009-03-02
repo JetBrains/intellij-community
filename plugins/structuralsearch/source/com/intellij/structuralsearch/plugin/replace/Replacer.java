@@ -1,8 +1,9 @@
 package com.intellij.structuralsearch.plugin.replace;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
 
@@ -18,11 +19,11 @@ public class Replacer extends ReplacerImpl {
     super(project,options);
   }
 
-  public String testReplace(String in, String what, String by, ReplaceOptions options) {
+  public String testReplace(String in, String what, String by, ReplaceOptions options) throws IncorrectOperationException {
     return testReplace(in, what, by, options,false);
   }
 
-  public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern) {
+  public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern) throws IncorrectOperationException {
     return super.testReplace(in, what, by, options, filePattern);
   }
 
