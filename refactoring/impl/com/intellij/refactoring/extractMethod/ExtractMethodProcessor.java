@@ -413,9 +413,11 @@ public class ExtractMethodProcessor implements MatchProvider {
       myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables, new ArrayList<PsiVariable>());
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
-    else {
+    else if (elements.size() > 0){
       myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), myInputVariables, myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null, Arrays.asList(myOutputVariables));
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
+    } else {
+      myDuplicates = new ArrayList<Match>();
     }
 
     return true;
@@ -1290,7 +1292,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (hasDuplicates()) return true;
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : files) {
-      if (!myDuplicatesFinder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
+      if (myDuplicatesFinder != null && !myDuplicatesFinder.findDuplicates(psiManager.findFile(file)).isEmpty()) return true;
     }
     return false;
   }
