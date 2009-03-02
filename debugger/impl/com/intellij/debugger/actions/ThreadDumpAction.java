@@ -41,12 +41,19 @@ public class ThreadDumpAction extends AnAction {
       final DebugProcessImpl process = context.getDebugProcess();
       process.getManagerThread().invoke(new DebuggerCommandImpl() {
         protected void action() throws Exception {
-          final List<ThreadState> threads = buildThreadStates(process.getVirtualMachineProxy());
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              UnscrambleDialog.addConsole(project, threads);
-            }
-          }, ModalityState.NON_MODAL);
+          final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
+          vm.suspend();
+          try {
+            final List<ThreadState> threads = buildThreadStates(vm);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                UnscrambleDialog.addConsole(project, threads);
+              }
+            }, ModalityState.NON_MODAL);
+          }
+          finally {
+            vm.resume();
+          }
         }
       });
     }
@@ -229,6 +236,6 @@ public class ThreadDumpAction extends AnAction {
       return;
     }
     DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
-    presentation.setEnabled(debuggerSession != null && debuggerSession.isPaused());
+    presentation.setEnabled(debuggerSession != null);
   }
 }
