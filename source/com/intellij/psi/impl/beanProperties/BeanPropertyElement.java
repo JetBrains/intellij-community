@@ -9,6 +9,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -30,6 +32,11 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   public BeanPropertyElement(final PsiMethod method, final String name) {
     myMethod = method;
     myName = name;
+  }
+
+  @Nullable
+  public PsiType getPropertyType() {
+    return PropertyUtil.getPropertyType(myMethod);
   }
 
   @NotNull

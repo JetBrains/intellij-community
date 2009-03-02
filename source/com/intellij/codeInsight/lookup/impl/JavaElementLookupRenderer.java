@@ -142,17 +142,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
           final PsiElement element = (PsiElement)o;
           if (element.isValid()) {
             if (element instanceof PsiMethod){
-              PsiMethod method = (PsiMethod)element;
-              PsiType returnType = method.getReturnType();
-              if (returnType != null){
-                final PsiSubstitutor substitutor = (PsiSubstitutor) item.getAttribute(LookupItem.SUBSTITUTOR);
-                if (substitutor != null) {
-                  text = substitutor.substitute(returnType).getPresentableText();
-                }
-                else {
-                  text = returnType.getPresentableText();
-                }
-              }
+              text = getTypeText(item, ((PsiMethod)element).getReturnType());
             }
             else if (element instanceof PsiVariable){
               PsiVariable variable = (PsiVariable)element;
@@ -166,7 +156,9 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
               }
             }
             else if (element instanceof BeanPropertyElement) {
-              return getTypeText(((BeanPropertyElement) element).getMethod(), item);
+              if (showSignature(item)) {
+                return getTypeText(item, ((BeanPropertyElement)element).getPropertyType());
+              }
             }
           }
         }
@@ -174,6 +166,19 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     }
 
     return text;
+  }
+
+  @Nullable
+  private static String getTypeText(LookupItem item, @Nullable PsiType returnType) {
+    if (returnType == null) {
+      return null;
+    }
+
+    final PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
+    if (substitutor != null) {
+      return substitutor.substitute(returnType).getPresentableText();
+    }
+    return returnType.getPresentableText();
   }
 
   @Nullable

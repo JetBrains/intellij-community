@@ -24,7 +24,12 @@ public class BeanProperty {
   }
 
   public PsiNamedElement getPsiElement() {
-    return new BeanPropertyElement(myMethod, getName());
+    return new BeanPropertyElement(myMethod, getName()) {
+      @Override
+      public PsiType getPropertyType() {
+        return BeanProperty.this.getPropertyType();
+      }
+    };
   }
 
   @NotNull
