@@ -294,6 +294,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
     if (fileCopy == null) {
       PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
+      if (wasInjected) {
+        LOG.assertTrue(false, "No injected fragmnent found at offset " + hostStartOffset + " in the patched file copy, found: " + elementAfterCommit);
+      }
       fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
     }
 
