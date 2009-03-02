@@ -57,13 +57,18 @@ public class DuringChangeListManagerUpdateTestScheme {
     System.out.println("Starting timeout..");
     waiter.startTimeout();
     System.out.println("Timeout waiter completed.");
-    assert test.get();
+
+    if (test.getException() != null) {
+      test.getException().printStackTrace();
+    }
+    assert test.get() : (test.getException() == null ? null : test.getException().getMessage());
   }
 
   private class DuringUpdateTest implements Runnable, Getter<Boolean> {
     private boolean myDone;
     private final TimeoutWaiter myWaiter;
     private final Runnable myRunnable;
+    private Exception myException;
 
     protected DuringUpdateTest(final TimeoutWaiter waiter, final Runnable runnable) {
       myWaiter = waiter;
@@ -72,16 +77,25 @@ public class DuringChangeListManagerUpdateTestScheme {
 
     public void run() {
       System.out.println("DuringUpdateTest: before test execution");
-      myRunnable.run();
+      try {
+        myRunnable.run();
+      }
+      catch (final Exception e) {
+        myException = e;
+      }
 
       System.out.println("DuringUpdateTest: setting done");
-      myDone = true;
+      myDone = myException != null;
 
       myChangeProvider.setTest(null);
       myChangeProvider.unlock();
       synchronized (myWaiter) {
         myWaiter.notifyAll();
       }
+    }
+
+    public Exception getException() {
+      return myException;
     }
 
     public Boolean get() {
