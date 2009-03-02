@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.IntentionQuickFix;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RemoveUnusedParameterFix extends IntentionQuickFix {
+public class RemoveUnusedParameterFix extends IntentionAndQuickFixAction {
   private final PsiParameter myParameter;
 
   public RemoveUnusedParameterFix(PsiParameter parameter) {

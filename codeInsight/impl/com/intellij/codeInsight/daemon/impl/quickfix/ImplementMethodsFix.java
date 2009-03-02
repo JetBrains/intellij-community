@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInspection.IntentionQuickFix;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ImplementMethodsFix extends IntentionQuickFix {
+public class ImplementMethodsFix extends IntentionAndQuickFixAction {
   private final PsiClass myClass;
 
   public ImplementMethodsFix(PsiClass aClass) {

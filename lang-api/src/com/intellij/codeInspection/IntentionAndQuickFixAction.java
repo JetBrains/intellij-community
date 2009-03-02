@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Gregory.Shrago
  */
-public abstract class IntentionQuickFix implements LocalQuickFix, IntentionAction{
+public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction{
 
   @NotNull
   public abstract String getName();
@@ -35,7 +35,7 @@ public abstract class IntentionQuickFix implements LocalQuickFix, IntentionActio
   }
 
   /**
-   *  Will be called only if invoked as IntentionAction.
+   *  In general case will be called if invoked as IntentionAction.
    */
   public boolean isAvailable(@NotNull final Project project, @Nullable final Editor editor, final PsiFile file) {
     return true;
