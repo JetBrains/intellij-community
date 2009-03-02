@@ -272,11 +272,17 @@ class XsltDocumentationProvider implements DocumentationProvider {
             return this;
         }
 
+        @Override
+        public boolean isValid() {
+            return myElement != null && myElement.isValid();
+        }
+
         @Nullable
         public PsiFile getContainingFile() {
-            if (myElement == null) {
+            if (!isValid()) {
                 return null;
             }
+
             PsiFile file = myElement.getContainingFile();
             final PsiElement context = myElement.getContext();
             if (file == null && context != null) {
