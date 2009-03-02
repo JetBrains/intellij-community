@@ -85,7 +85,7 @@ public class DuringChangeListManagerUpdateTestScheme {
       }
 
       System.out.println("DuringUpdateTest: setting done");
-      myDone = myException != null;
+      myDone = myException == null;
 
       myChangeProvider.setTest(null);
       myChangeProvider.unlock();
