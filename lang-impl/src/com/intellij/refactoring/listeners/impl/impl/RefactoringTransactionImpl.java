@@ -5,6 +5,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ import java.util.Map;
  * @author dsl
  */
 public class RefactoringTransactionImpl implements RefactoringTransaction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.listeners.impl.impl.RefactoringTransactionImpl");
+
   /**
    * Actions to be performed at commit.
    */
@@ -31,9 +34,14 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
     if(myOldElementToListenerListMap.get(oldElement) != null) return;
     ArrayList<RefactoringElementListener> listenerList = new ArrayList<RefactoringElementListener>();
     for (RefactoringElementListenerProvider provider : myListenerProviders) {
-      final RefactoringElementListener listener = provider.getListener(oldElement);
-      if (listener != null) {
-        listenerList.add(listener);
+      try {
+        final RefactoringElementListener listener = provider.getListener(oldElement);
+        if (listener != null) {
+          listenerList.add(listener);
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
     myOldElementToListenerListMap.put(oldElement, listenerList);
@@ -61,7 +69,12 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
       myRunnables.add(new Runnable() {
         public void run() {
           for (RefactoringElementListener refactoringElementListener : myListenerList) {
-            refactoringElementListener.elementMoved(newElement);
+            try {
+              refactoringElementListener.elementMoved(newElement);
+            }
+            catch (Exception e) {
+              LOG.error(e);
+            }
           }
         }
       });
@@ -71,7 +84,12 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
       myRunnables.add(new Runnable() {
         public void run() {
           for (RefactoringElementListener refactoringElementListener : myListenerList) {
-            refactoringElementListener.elementRenamed(newElement);
+            try {
+              refactoringElementListener.elementRenamed(newElement);
+            }
+            catch (Exception e) {
+              LOG.error(e);
+            }
           }
         }
       });
