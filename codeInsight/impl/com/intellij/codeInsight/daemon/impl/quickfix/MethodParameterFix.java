@@ -51,7 +51,7 @@ public class MethodParameterFix extends IntentionQuickFix {
     return QuickFixBundle.message("fix.parameter.type.family");
   }
 
-  public boolean isAvailable() {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod)

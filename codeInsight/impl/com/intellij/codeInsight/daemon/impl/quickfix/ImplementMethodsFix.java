@@ -28,7 +28,7 @@ public class ImplementMethodsFix extends IntentionQuickFix {
     return QuickFixBundle.message("implement.methods.fix");
   }
 
-  public boolean isAvailable() {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myClass.isValid() && myClass.getManager().isInProject(myClass);
   }
 

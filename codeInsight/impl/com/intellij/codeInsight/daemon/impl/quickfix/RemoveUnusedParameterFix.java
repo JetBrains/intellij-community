@@ -35,7 +35,7 @@ public class RemoveUnusedParameterFix extends IntentionQuickFix {
     return QuickFixBundle.message("remove.unused.parameter.family");
   }
 
-  public boolean isAvailable() {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return
       myParameter.isValid()
       && myParameter.getDeclarationScope() instanceof PsiMethod

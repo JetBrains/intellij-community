@@ -72,7 +72,7 @@ public class AddMethodFix extends IntentionQuickFix {
     return QuickFixBundle.message("add.method.family");
   }
 
-  public boolean isAvailable() {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myMethod != null
            && myMethod.isValid()
            && myClass != null

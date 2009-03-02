@@ -80,7 +80,7 @@ public class ModifierFix extends IntentionQuickFix {
     return QuickFixBundle.message("fix.modifiers.family");
   }
 
-  public boolean isAvailable() {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myModifierList != null &&
            myModifierList.isValid() &&
            myModifierList.getManager().isInProject(myModifierList) &&

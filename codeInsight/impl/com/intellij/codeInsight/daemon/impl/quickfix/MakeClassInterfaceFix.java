@@ -34,7 +34,7 @@ public class MakeClassInterfaceFix extends IntentionQuickFix {
     return QuickFixBundle.message("make.class.an.interface.family");
   }
 
-  public boolean isAvailable() {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myClass.isValid() && myClass.getManager().isInProject(myClass);
   }
 

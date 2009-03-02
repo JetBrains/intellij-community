@@ -21,8 +21,6 @@ public abstract class IntentionQuickFix implements LocalQuickFix, IntentionActio
 
   public abstract void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor);
 
-  public abstract boolean isAvailable();
-
   @NotNull
   public final String getText() {
     return getName();
@@ -32,12 +30,15 @@ public abstract class IntentionQuickFix implements LocalQuickFix, IntentionActio
     applyFix(project, descriptor.getPsiElement().getContainingFile(), null);
   }
 
-  public final boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return isAvailable();
-  }
-
   public final void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     applyFix(project, file, editor);
+  }
+
+  /**
+   *  Will be called only if invoked as IntentionAction.
+   */
+  public boolean isAvailable(@NotNull final Project project, @Nullable final Editor editor, final PsiFile file) {
+    return true;
   }
 
   public boolean startInWriteAction() {

@@ -44,7 +44,7 @@ public class MethodThrowsFix extends IntentionQuickFix {
     return QuickFixBundle.message("fix.throws.list.family");
   }
 
-  public boolean isAvailable() {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod);

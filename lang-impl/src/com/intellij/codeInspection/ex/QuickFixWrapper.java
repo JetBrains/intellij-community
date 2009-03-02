@@ -51,14 +51,16 @@ public class QuickFixWrapper implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement psiElement = myDescriptor.getPsiElement();
-    return psiElement != null && psiElement.isValid();
+    if (psiElement == null || !psiElement.isValid()) return false;
+    final LocalQuickFix fix = getFix();
+    return fix instanceof IntentionAction ? ((IntentionAction)fix).isAvailable(project, editor, file) : true;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     //if (!CodeInsightUtil.prepareFileForWrite(file)) return; 
     // consider all local quick fixes do it themselves
 
-    LocalQuickFix fix = (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
+    LocalQuickFix fix = getFix();
     fix.applyFix(project, myDescriptor);
     DaemonCodeAnalyzer.getInstance(project).restart();
     final PsiElement element = myDescriptor.getPsiElement();
@@ -71,7 +73,8 @@ public class QuickFixWrapper implements IntentionAction {
   }
 
   public boolean startInWriteAction() {
-    return true;
+    final LocalQuickFix fix = getFix();
+    return fix instanceof IntentionAction ? ((IntentionAction)fix).startInWriteAction() : true;
   }
 
   public LocalQuickFix getFix() {
